@@ -5,14 +5,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * Base interface for a command Iris performs on the client alongside a chat answer, such as pointing the student to a position in the lecture combined view. Commands ride along on
- * the {@link PyrisChatStatusUpdateDTO} of a pipeline run; Artemis fans each one out into a COMMAND message (a clickable marker in the chat history) and, where applicable, drives
- * the corresponding client-side action.
+ * Base interface for a command Iris performs on the client alongside a chat answer, such as pointing the student to a position in the lecture combined view.
  * <p>
- * This interface uses Jackson polymorphic type handling to support multiple command types. New command types can be added by:
- * 1. Creating a new record implementing this interface
- * 2. Adding it to the {@code @JsonSubTypes} annotation and the {@code permits} clause
- * 3. Defining a unique type name and handling it in the fan-out dispatch
+ * Uses Jackson polymorphic type handling: add a command type by implementing this interface, listing it in {@code @JsonSubTypes} and {@code permits}, and giving it a unique type
+ * name.
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = PyrisPointOutCommandDTO.class, name = "pointOut") })

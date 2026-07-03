@@ -170,7 +170,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
 
-        // Persist and push any command marker before the answer so it appears first in the chat history.
+        // Persist and push any command marker carried by the status update.
         handleCommand(session, statusUpdate);
 
         if (statusUpdate.result() != null) {

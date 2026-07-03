@@ -5,9 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * A navigation command sent by Pyris alongside a chat result, telling Artemis to point the student to a specific position in the lecture combined view they are currently looking
- * at. Produced by the {@code show_in_combined_view} tool. Artemis persists it as a COMMAND message (a clickable marker in the chat history) and, if the combined view is still open
- * on the client, navigates to the given page / timestamp.
+ * A navigation command sent by Pyris alongside a chat result, telling Artemis to point the student to a page or video timestamp in the lecture combined view.
  *
  * @param lectureUnitId   the lecture unit the student is viewing
  * @param page            the 1-based slide page to display, or {@code null}
