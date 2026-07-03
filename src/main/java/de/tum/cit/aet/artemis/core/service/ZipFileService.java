@@ -4,8 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -57,7 +60,7 @@ public class ZipFileService {
         log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             for (var path : paths) {
-                if (!Files.isReadable(path)) {
+                if (!Files.isReadable(path) || isIgnoredZipFileName(path)) {
                     continue;
                 }
                 if (Files.isDirectory(path)) {
@@ -77,13 +80,20 @@ public class ZipFileService {
      */
     private static void addDirectoryToZip(ZipOutputStream zipOutputStream, Path directory) throws IOException {
         String prefix = directory.getFileName().toString();
-        List<Path> files;
-        try (Stream<Path> walk = Files.walk(directory)) {
-            files = walk.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).toList();
-        }
-        for (Path file : files) {
-            addFileToZip(zipOutputStream, file, prefix + "/" + directory.relativize(file).toString().replace('\\', '/'));
-        }
+        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (Files.isReadable(file) && !isIgnoredZipFileName(file)) {
+                    addFileToZip(zipOutputStream, file, prefix + "/" + directory.relativize(file).toString().replace('\\', '/'));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    private static boolean isIgnoredZipFileName(Path path) {
+        return IGNORED_ZIP_FILE_NAMES.contains(path.getFileName().toString());
     }
 
     /**
