@@ -136,7 +136,7 @@ export class ExerciseActionsComponent {
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {
         const ex = this.exercise();
-        return ex.type === ExerciseType.QUIZ ? (ex as QuizExercise) : undefined;
+        return ex.type === ExerciseType.QUIZ ? ex : undefined;
     });
 
     /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */

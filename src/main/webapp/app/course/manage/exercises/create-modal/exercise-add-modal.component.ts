@@ -167,7 +167,7 @@ export class ExerciseAddModalComponent {
 
         const headerKey = type === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${type}Exercise.home.importLabel`;
         const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, headerKey };
-        const componentToOpen: Type<any> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+        const componentToOpen: Type<unknown> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
         const dialogRef = this.dialogService.open(componentToOpen, {
             width: '50rem',
