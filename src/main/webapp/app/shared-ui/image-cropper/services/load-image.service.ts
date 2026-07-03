@@ -17,8 +17,10 @@ export class LoadImageService {
     loadImageFile(file: File, cropperSettings: CropperSettings): Promise<LoadedImage> {
         return new Promise((resolve, reject) => {
             const fileReader = new FileReader();
-            fileReader.onload = (event: any) => {
-                this.loadImage(event.target.result, file.type, cropperSettings).then(resolve).catch(reject);
+            fileReader.onload = (event: ProgressEvent<FileReader>) => {
+                this.loadImage(event.target?.result as string, file.type, cropperSettings)
+                    .then(resolve)
+                    .catch(reject);
             };
             fileReader.readAsDataURL(file);
         });

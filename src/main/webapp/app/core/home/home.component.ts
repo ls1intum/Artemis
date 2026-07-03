@@ -283,12 +283,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
     }
 
-    inputChange(event: any) {
-        if (event.target && event.target.name === 'username') {
-            this.username = event.target.value;
+    inputChange(event: Event) {
+        const target = event.target as HTMLInputElement | null;
+        if (target && target.name === 'username') {
+            this.username = target.value;
         }
-        if (event.target && event.target.name === 'password') {
-            this.password = event.target.value;
+        if (target && target.name === 'password') {
+            this.password = target.value;
         }
     }
 

@@ -135,7 +135,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isEditFieldDisplayedRecord = computed(() => {
         const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
 
-        const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        const isEditFieldDisplayedMapping: Partial<Record<ProgrammingExerciseInputField, boolean>> = {};
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
             if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
@@ -149,7 +149,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
-        return isEditFieldDisplayedMapping;
+        return isEditFieldDisplayedMapping as Record<ProgrammingExerciseInputField, boolean>;
     });
 
     private readonly translationBasePath = 'artemisApp.programmingExercise.';
@@ -327,7 +327,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.name = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.name;
@@ -340,7 +340,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.checkoutDirectory = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.checkoutDirectory;
@@ -368,7 +368,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         // Check that there are no duplicate checkout directories
         const directories = new Set<string | undefined>();
-        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories!.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
+        const auxReposWithDirectory = this.programmingExercise.auxiliaryRepositories.filter((auxiliaryRepository) => auxiliaryRepository.checkoutDirectory);
         auxReposWithDirectory.forEach((auxiliaryRepository) => {
             directories.add(auxiliaryRepository.checkoutDirectory);
             legalNameAndDirs ||= !this.invalidDirectoryNamePattern.test(auxiliaryRepository.checkoutDirectory!);
@@ -376,7 +376,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryDuplicateDirectories = directories.size !== auxReposWithDirectory.length;
 
         // Check that there are no empty/incorrect repository names and directories
-        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
+        this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
         this.auxiliaryRepositoriesValid.set(this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories);
@@ -609,7 +609,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                     }
                                     this.exerciseCategories = this.programmingExercise.categories || [];
 
-                                    this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
+                                    this.loadCourseExerciseCategories(this.programmingExercise.course.id);
                                 });
                             }
                         }
@@ -904,7 +904,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
-            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+            this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
 
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
@@ -1412,12 +1412,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.bonusPoints! < 0) {
+        } else if (this.programmingExercise.bonusPoints < 0) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMin',
                 translateValues: {},
             });
-        } else if (this.programmingExercise.bonusPoints! > 9999) {
+        } else if (this.programmingExercise.bonusPoints > 9999) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.customMax',
                 translateValues: {},
@@ -1638,7 +1638,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * effect that both reads the config and writes back a two-way model() (e.g. isAuxiliaryRepositoryInputValid)
      * then re-dirties the parent every pass, producing an infinite change-detection loop (NG0103).
      */
-    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = {} as ProgrammingExerciseCreationConfig;
+    private readonly programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig = Object.assign({}) as ProgrammingExerciseCreationConfig;
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return Object.assign(this.programmingExerciseCreationConfig, {

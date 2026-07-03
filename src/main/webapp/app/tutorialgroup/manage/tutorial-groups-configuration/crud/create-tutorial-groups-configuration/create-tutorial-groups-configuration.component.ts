@@ -51,7 +51,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 next: (courseResult) => {
                     if (courseResult.body) {
                         this.course.set(courseResult.body);
-                        this.newTutorialGroupsConfiguration = {} as TutorialGroupConfigurationDTO;
+                        this.newTutorialGroupsConfiguration = {};
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

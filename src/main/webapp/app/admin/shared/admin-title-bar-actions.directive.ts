@@ -5,7 +5,7 @@ import { AdminTitleBarService } from 'app/admin/shared/admin-title-bar.service';
     selector: '[adminTitleBarActions]',
 })
 export class AdminTitleBarActionsDirective implements OnDestroy {
-    private templateRef: TemplateRef<any> = inject(TemplateRef);
+    private templateRef: TemplateRef<unknown> = inject(TemplateRef);
     private adminTitleBarService: AdminTitleBarService = inject(AdminTitleBarService);
 
     constructor() {

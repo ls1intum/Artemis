@@ -231,7 +231,7 @@ export class ShortAnswerQuestionUtil {
     getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
         for (const spot of question.spots!) {
-            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings!, spot);
+            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);
             for (const mapping of question.correctMappings!) {
                 if (
                     mapping.spot!.id === spot.id &&
