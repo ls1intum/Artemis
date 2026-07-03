@@ -27,7 +27,7 @@
                         pInputText
                         type="text"
                         class="artemis-pdf-toolbar__search-input"
-                        [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder' | artemisTranslate"
+                        [placeholder]="searchPlaceholder()"
                         [ngModel]="searchQuery()"
                         (ngModelChange)="performSearch($event)"
                         (keydown.enter)="onSearchInputEnter($event)"
@@ -158,7 +158,7 @@
         </div>
     }
 
-    <div #pagesContainer class="pdf-pages" [class.pdf-pages--hidden]="isLoading()">
+    <div #pagesContainer class="pdf-pages" [class.pdf-pages--hidden]="isLoading()" (wheel)="onWheel($event)">
         @for (page of renderedPages(); track page.index) {
             <div #pageRef class="pdf-page" [attr.data-page-index]="page.index" [id]="'pdf-page-' + page.index" [style.width.px]="page.width" [style.height.px]="page.height">
                 <canvas #pageCanvas class="pdf-page__canvas" [attr.data-page-index]="page.index" [style.width.px]="page.width" [style.height.px]="page.height"></canvas>

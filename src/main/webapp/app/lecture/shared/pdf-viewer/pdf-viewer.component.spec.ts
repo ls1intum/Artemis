@@ -35,8 +35,10 @@ describe('PdfViewerComponent', () => {
     }
 
     beforeEach(async () => {
-        // jsdom does not implement scrollIntoView (used by goToPage); canvas 2d is provided by vitest-canvas-mock.
+        // jsdom does not implement scrollIntoView (used by goToPage) or scrollTo (used to bring a search match into
+        // view); canvas 2d is provided by vitest-canvas-mock.
         HTMLElement.prototype.scrollIntoView = vi.fn();
+        HTMLElement.prototype.scrollTo = vi.fn();
 
         // Capture every IntersectionObserver the component creates so tests can drive its callback manually
         // (jsdom's stub never fires). Restored in afterEach.
@@ -151,6 +153,23 @@ describe('PdfViewerComponent', () => {
         expect(component['searchMatchesCount']()).toEqual({ current: 1, total: 1 });
     });
 
+    it('should scroll the selected match into view rather than the top of its page', async () => {
+        await loadPdf(3);
+        const scrollToSpy = vi.spyOn(HTMLElement.prototype, 'scrollTo');
+        // The match sits far down the page (y = 500pt); scrolling to the page top would leave it off-screen.
+        engineService.engine.searchAllPages.mockReturnValue(
+            task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 5, rects: [{ origin: { x: 0, y: 500 }, size: { width: 3, height: 4 } }], context: {} }], total: 1 }) as any,
+        );
+
+        await component['performSearch']('deep');
+
+        expect(scrollToSpy).toHaveBeenCalled();
+        const options = scrollToSpy.mock.calls.at(-1)![0] as ScrollToOptions;
+        // A positive offset proves the viewer targets the match position, not the page top (which would be 0).
+        expect(options.top).toBeGreaterThan(0);
+        expect(options.behavior).toBe('smooth');
+    });
+
     it('should clear the search results', async () => {
         await loadPdf();
         engineService.engine.searchAllPages.mockReturnValue(task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 1, rects: [], context: {} }], total: 1 }) as any);
@@ -173,6 +192,34 @@ describe('PdfViewerComponent', () => {
         await flushAsync();
 
         expect(engineService.engine.renderPageRaw).toHaveBeenCalled();
+    });
+
+    it('should zoom with Ctrl/Cmd + wheel and ignore a plain wheel scroll', async () => {
+        await loadPdf(3);
+        const applyZoomSpy = vi.spyOn(component as any, 'applyZoom');
+
+        // A plain wheel event scrolls the pages and must not zoom.
+        component['onWheel']({ deltaY: -100, ctrlKey: false, metaKey: false, preventDefault: () => {} } as unknown as WheelEvent);
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        expect(applyZoomSpy).not.toHaveBeenCalled();
+
+        // Ctrl/Cmd + wheel (trackpad pinch / mouse wheel) zooms in after the throttle window.
+        const scaleBefore = component['scale']();
+        component['onWheel']({ deltaY: -100, ctrlKey: true, metaKey: false, preventDefault: () => {} } as unknown as WheelEvent);
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        expect(applyZoomSpy).toHaveBeenCalledOnce();
+        expect(component['scale']()).toBeGreaterThan(scaleBefore);
+    });
+
+    it('should update the search placeholder when the language changes', () => {
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        vi.spyOn(translateService, 'instant').mockImplementation(() => (translateService.getCurrentLang() === 'de' ? 'Suchen…' : 'Search…'));
+
+        translateService.use('en');
+        expect(component['searchPlaceholder']()).toBe('Search…');
+
+        translateService.use('de');
+        expect(component['searchPlaceholder']()).toBe('Suchen…');
     });
 
     it('should toggle fullscreen and emit the change', async () => {

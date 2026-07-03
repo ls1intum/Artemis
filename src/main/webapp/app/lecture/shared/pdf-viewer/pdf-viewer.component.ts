@@ -16,9 +16,11 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import type { Dayjs } from 'dayjs/esm';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faChevronDown,
@@ -38,7 +40,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
-import type { PdfDocumentObject, PdfLinkAnnoObject, PdfLinkTarget, PdfPageObject, Rect, SearchResult } from '@embedpdf/models';
+import type { PdfDocumentObject, PdfLinkTarget, PdfPageObject, Rect, SearchResult } from '@embedpdf/models';
 import { PdfActionType, PdfAnnotationSubtype } from '@embedpdf/models';
 
 /** A single page slot: its CSS display size at the current scale. Its <canvas> is drawn lazily when visible. */
@@ -146,11 +148,21 @@ export class PdfViewerComponent {
     private readonly destroyRef = inject(DestroyRef);
     private readonly injector = inject(Injector);
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly isDarkMode = computed(() => this.themeService.currentTheme() === Theme.DARK);
     protected readonly scaleValue = this.scale.asReadonly();
     protected readonly effectiveUploadDate = computed(() => this.uploadDate());
     protected readonly effectiveVersion = computed(() => this.version());
+
+    // Track the active language as a signal. The impure translate pipe does not re-run on a language switch in an
+    // OnPush, zoneless component (no change detection is scheduled), so bindings computed from a signal are used
+    // instead to keep translated text such as the search placeholder in sync with the selected language.
+    private readonly currentLanguage = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() });
+    protected readonly searchPlaceholder = computed(() => {
+        this.currentLanguage();
+        return this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder');
+    });
 
     /** Per-page search highlights (in PDF points); the template multiplies by the current scale. */
     protected readonly pageHighlights = computed<Map<number, PageHighlight[]>>(() => {
@@ -175,6 +187,13 @@ export class PdfViewerComponent {
     private lastFullscreenState?: boolean;
     private intersectionObserver?: IntersectionObserver;
     private renderObserver?: IntersectionObserver;
+    // Recomputes the toolbar compression level when the viewer width changes (e.g. split view resize, window resize),
+    // which the signal-driven effect alone does not cover.
+    private toolbarResizeObserver?: ResizeObserver;
+    // Ctrl/Cmd + wheel (trackpad pinch / mouse wheel) zoom, accumulated across a burst and applied on a throttle so a
+    // stream of wheel events does not thrash the (re-rendering) zoom.
+    private wheelZoomTarget?: number;
+    private wheelZoomTimer?: ReturnType<typeof setTimeout>;
     // Virtualization bookkeeping: which page indices are drawn, currently drawing, and within the render buffer.
     private readonly renderedIndices = new Set<number>();
     private readonly renderingIndices = new Set<number>();
@@ -218,6 +237,18 @@ export class PdfViewerComponent {
             this.isFullscreen();
             untracked(() => this.scheduleToolbarCompressionUpdate());
         });
+
+        // Also recompute the toolbar compression level whenever the viewer width changes (split-view drag, window
+        // resize, drawer open/close); the signal-driven effect above does not observe layout-only size changes.
+        afterNextRender(
+            () => {
+                // Disconnected on teardown via destroyRef.onDestroy(() => this.cleanup()).
+                // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
+                this.toolbarResizeObserver = new ResizeObserver(() => this.scheduleToolbarCompressionUpdate());
+                this.toolbarResizeObserver.observe(this.hostElementRef.nativeElement);
+            },
+            { injector: this.injector },
+        );
     }
 
     private async loadPdf(url: string): Promise<void> {
@@ -346,7 +377,7 @@ export class PdfViewerComponent {
                 if (annotation.type !== PdfAnnotationSubtype.LINK) {
                     continue;
                 }
-                const resolved = this.resolveLinkTarget((annotation as PdfLinkAnnoObject).target);
+                const resolved = this.resolveLinkTarget(annotation.target);
                 if (resolved) {
                     links.push({ rect: annotation.rect, url: resolved.url, targetPage: resolved.targetPage });
                 }
@@ -452,6 +483,35 @@ export class PdfViewerComponent {
         }
         this.scale.set(clamped);
         this.rerenderAfterScaleChange(doc);
+    }
+
+    /**
+     * Zoom with the trackpad (pinch) or mouse wheel while Ctrl/Cmd is held. Browsers report a pinch gesture as a
+     * wheel event with `ctrlKey` set, so both gestures are handled here. The default (browser page zoom) is
+     * prevented and the target scale is accumulated across the burst, then applied on a short throttle because each
+     * scale change re-renders the visible pages.
+     */
+    protected onWheel(event: WheelEvent): void {
+        if (!event.ctrlKey && !event.metaKey) {
+            return;
+        }
+        event.preventDefault();
+        const base = this.wheelZoomTarget ?? this.scale();
+        // Exponential mapping gives a smooth, symmetric feel; a negative deltaY (scroll up / pinch out) zooms in.
+        const nextScale = base * Math.exp(-event.deltaY * 0.0015);
+        this.wheelZoomTarget = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
+        if (this.wheelZoomTimer === undefined) {
+            this.wheelZoomTimer = setTimeout(() => this.flushWheelZoom(), 90);
+        }
+    }
+
+    private flushWheelZoom(): void {
+        this.wheelZoomTimer = undefined;
+        const target = this.wheelZoomTarget;
+        this.wheelZoomTarget = undefined;
+        if (target !== undefined) {
+            this.applyZoom(target);
+        }
     }
 
     // ---- Page navigation -------------------------------------------------------------------------------------
@@ -618,9 +678,28 @@ export class PdfViewerComponent {
 
     private scrollToActiveResult(): void {
         const result = this.searchResults()[this.activeResultIndex()];
-        if (result) {
-            this.goToPage(result.pageIndex + 1);
+        if (!result || result.rects.length === 0) {
+            return;
         }
+        const container = this.pagesContainer()?.nativeElement;
+        const pageElement = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === result.pageIndex)?.nativeElement;
+        // Fall back to page-top navigation if the geometry is not available yet (e.g. page slot not laid out).
+        if (!container || !pageElement) {
+            this.goToPage(result.pageIndex + 1);
+            return;
+        }
+        // Scroll the actual match rectangle into view (not just the top of its page): a match further down a page
+        // would otherwise stay below the fold. Position it about a third from the top so surrounding context stays
+        // visible. The match top is in unscaled PDF points, so multiply by the current scale.
+        const matchTopWithinPage = result.rects[0].origin.y * this.scale();
+        const containerRect = container.getBoundingClientRect();
+        const pageRect = pageElement.getBoundingClientRect();
+        const matchAbsoluteTop = container.scrollTop + (pageRect.top - containerRect.top) + matchTopWithinPage;
+        const target = Math.max(0, matchAbsoluteTop - container.clientHeight / 3);
+        // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
+        this.programmaticScrollUntil = Date.now() + 700;
+        container.scrollTo({ top: target, behavior: 'smooth' });
+        this.setCurrentPage(result.pageIndex + 1);
     }
 
     // ---- Download / fullscreen -------------------------------------------------------------------------------
@@ -731,6 +810,11 @@ export class PdfViewerComponent {
     private cleanup(): void {
         this.intersectionObserver?.disconnect();
         this.renderObserver?.disconnect();
+        this.toolbarResizeObserver?.disconnect();
+        if (this.wheelZoomTimer !== undefined) {
+            clearTimeout(this.wheelZoomTimer);
+            this.wheelZoomTimer = undefined;
+        }
         this.renderToken++;
         const doc = this.doc();
         if (doc) {
