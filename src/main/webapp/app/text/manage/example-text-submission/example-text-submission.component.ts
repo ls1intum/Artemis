@@ -335,9 +335,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             }
         } else {
             if (this.readOnly() || this.toComplete()) {
-                this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
+                void this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
+                void this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
             }
         }
     }
@@ -416,7 +416,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     readAndUnderstood(): void {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
-            this.back();
+            void this.back();
         });
     }
 

@@ -90,7 +90,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['/courses']);
+            void this.router.navigate(['/courses']);
         }
         this.quizExercise.set(quiz);
         this.maxScore = calculateMaxScore(this.quizExercise());

@@ -205,7 +205,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      * Cancels the parsing and navigates back
      */
     onCancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -239,7 +239,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
         this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
             next: () => {
                 this.submitted = true;
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

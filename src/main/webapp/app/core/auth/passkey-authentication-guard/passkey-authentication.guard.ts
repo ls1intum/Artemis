@@ -52,7 +52,7 @@ export class PasskeyAuthenticationGuard implements CanActivate {
         }
 
         const attemptedUrl = state.url;
-        this.router.navigate(['/passkey-required'], {
+        void this.router.navigate(['/passkey-required'], {
             queryParams: { returnUrl: attemptedUrl },
         });
 

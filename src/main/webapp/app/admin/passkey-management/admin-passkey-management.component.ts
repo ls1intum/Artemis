@@ -45,7 +45,7 @@ export class AdminPasskeyManagementComponent implements OnInit {
     ]);
 
     ngOnInit(): void {
-        this.loadPasskeys().then();
+        void this.loadPasskeys();
     }
 
     /**

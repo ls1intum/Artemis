@@ -205,7 +205,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private initializeApollonCollaborationUser(): void {
-        this.accountService.identity().then((user: User | undefined) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             if (!user) {
                 // Without an identity the editor cannot mount its collaboration layer; surface it instead of failing silently.
                 captureException('Modeling team exercise: no user identity available for Apollon collaboration.');

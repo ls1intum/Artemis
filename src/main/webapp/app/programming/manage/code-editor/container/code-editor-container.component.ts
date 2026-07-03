@@ -304,7 +304,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor()?.onFileChange(fileChange);
+        void this.monacoEditor()?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }

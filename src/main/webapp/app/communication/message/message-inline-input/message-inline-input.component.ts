@@ -43,7 +43,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.loadCurrentUser();
+        void this.loadCurrentUser();
     }
 
     protected override onPostingChanged(): void {

@@ -253,7 +253,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { updateOn: 'change' }),
         });
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.currentAccount.set(user);
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
@@ -558,7 +558,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Transitions to another page and/or sorting order
      */
     transition(): void {
-        this.router.navigate(['/admin/user-management'], {
+        void this.router.navigate(['/admin/user-management'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 page: this.page(),
