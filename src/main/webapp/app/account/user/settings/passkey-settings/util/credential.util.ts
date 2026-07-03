@@ -93,7 +93,6 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         }
         return credential;
     } catch (error) {
-        captureException(error);
         captureException(new Error(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, { cause: error }));
 
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it

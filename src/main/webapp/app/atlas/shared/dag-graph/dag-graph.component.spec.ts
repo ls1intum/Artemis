@@ -76,6 +76,7 @@ describe('DagGraphComponent', () => {
     ];
 
     beforeEach(async () => {
+        vi.mocked(captureException).mockClear();
         await TestBed.configureTestingModule({
             imports: [TestHostComponent, MinimalTestHostComponent],
         }).compileComponents();

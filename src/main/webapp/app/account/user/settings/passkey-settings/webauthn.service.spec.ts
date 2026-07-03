@@ -56,6 +56,7 @@ describe('WebauthnService', () => {
     const originalCredentials = navigator.credentials;
 
     beforeEach(() => {
+        vi.mocked(captureException).mockClear();
         const webauthnApiServiceMock = {
             getAuthenticationOptions: vi.fn(),
             loginWithPasskey: vi.fn(),

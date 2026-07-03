@@ -100,7 +100,7 @@ describe('LearningPathNavOverviewComponent', () => {
         await component.loadCompetencies(learningPathId);
 
         expect(getLearningPathCompetenciesSpy).toHaveBeenCalledWith(learningPathId);
-        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+        expect(alertServiceErrorSpy).toHaveBeenCalledWith(error);
     });
 
     it('should open competency graph modal', async () => {

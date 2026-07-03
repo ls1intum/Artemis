@@ -77,6 +77,7 @@ describe('BuildJobDetailComponent', () => {
     };
 
     beforeEach(() => {
+        vi.mocked(captureException).mockClear();
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },

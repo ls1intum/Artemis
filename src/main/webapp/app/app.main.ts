@@ -9,7 +9,6 @@ import { registerLocaleData } from '@angular/common';
 import locale from '@angular/common/locales/en';
 import { NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { artemisIconPack } from 'app/foundation/icons/icons';
-import { captureException } from '@sentry/angular';
 
 ProdConfig();
 MonacoConfig();
@@ -30,4 +29,10 @@ bootstrapApplication(AppComponent, appConfig)
         tooltipConfig.container = 'body';
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
-    .catch((err) => captureException(err));
+    .catch((err) => {
+        // This is the last-resort handler for a failed application bootstrap. It runs before AppComponent has
+        // initialized Sentry (see AppComponent.initSentry), so captureException would be a no-op here — the
+        // console is the only reliable channel to surface a startup failure instead of it vanishing silently.
+        // eslint-disable-next-line no-console, no-undef -- bootstrap failure handler; Sentry is not yet initialized
+        console.error('Failed to bootstrap the Angular application', err);
+    });

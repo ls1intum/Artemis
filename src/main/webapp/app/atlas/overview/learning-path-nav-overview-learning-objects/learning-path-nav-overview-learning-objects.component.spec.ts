@@ -74,7 +74,7 @@ describe('LearningPathNavOverviewLearningObjectsComponent', () => {
 
         await component.loadLearningObjects();
 
-        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+        expect(alertServiceErrorSpy).toHaveBeenCalledWith(error);
     });
 
     it('should set isLoading correctly', async () => {

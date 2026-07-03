@@ -37,6 +37,7 @@ describe('MonacoEditorComponent', () => {
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
     beforeEach(async () => {
+        vi.mocked(captureException).mockClear();
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
