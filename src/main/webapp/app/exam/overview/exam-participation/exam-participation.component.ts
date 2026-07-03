@@ -34,6 +34,7 @@ import { ProgrammingExamSubmissionComponent } from '../exercises/programming/pro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
@@ -83,6 +84,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         AsyncPipe,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

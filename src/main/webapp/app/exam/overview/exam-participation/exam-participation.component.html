@@ -213,22 +213,27 @@
     }
 }
 @if (!loadingExam() && !exam()) {
-    @if (isAtLeastTutor() && !testRunId()) {
-        <div class="alert alert-warning">
-            <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
-            @if (isAtLeastInstructor()) {
-                <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
-                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                </a>
-            } @else {
-                <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
-                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                </a>
-            }
-        </div>
-    } @else {
-        <div class="alert alert-danger">
-            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
-        </div>
-    }
+    <div class="d-flex align-items-center gap-2">
+        @if (isSidebarCollapsed()) {
+            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+        }
+        @if (isAtLeastTutor() && !testRunId()) {
+            <div class="alert alert-warning flex-grow-1 mb-0">
+                <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+                @if (isAtLeastInstructor()) {
+                    <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
+                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                    </a>
+                } @else {
+                    <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
+                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                    </a>
+                }
+            </div>
+        } @else {
+            <div class="alert alert-danger flex-grow-1 mb-0">
+                <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+            </div>
+        }
+    </div>
 }
