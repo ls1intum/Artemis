@@ -85,9 +85,9 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSpotsForSolutions(mappings?: ShortAnswerMapping[], solution?: ShortAnswerSolution) {
         return mappings
-            ?.filter(function (mapping) {
+            ?.filter((mapping) => {
                 return this.isSameSolution(mapping.solution, solution);
-            }, this)
+            })
             .map(function (mapping) {
                 return mapping.spot!;
             });

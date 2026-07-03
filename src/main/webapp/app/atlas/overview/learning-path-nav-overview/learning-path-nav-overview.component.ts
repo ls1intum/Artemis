@@ -5,6 +5,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
@@ -59,7 +60,7 @@ export class LearningPathNavOverviewComponent {
             const competencies = await this.learningPathApiService.getLearningPathCompetencies(learningPathId);
             this.competencies.set(competencies);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
