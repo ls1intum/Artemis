@@ -17,6 +17,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
 
 @Component({
     selector: 'jhi-app',
@@ -49,6 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer = inject(Renderer2);
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
+    private embedPdfPreloadService = inject(EmbedPdfPreloadService);
 
     readonly globalSearchEnabled = signal(false);
     private examStartedSubscription: Subscription;
@@ -101,6 +103,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.showPageRibbon.set(!this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root));
+
+        // Warm the PDFium engine in the background once the browser is idle, so the first lecture-PDF open is instant.
+        this.embedPdfPreloadService.schedulePreload();
 
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -167,14 +172,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
     /**
      * The skeleton should not be shown for the problem statement component if it is directly accessed,
-     * for the standalone feedback component, and for the PDF viewer iframe content.
+     * nor for the standalone feedback component.
      */
     private shouldShowSkeleton(url: string): boolean {
         const isLandingPage = url === '/' || url === '';
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        const isPdfViewerIframe = url.includes('/pdf-viewer-iframe');
-        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback && !isPdfViewerIframe;
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 
     private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {

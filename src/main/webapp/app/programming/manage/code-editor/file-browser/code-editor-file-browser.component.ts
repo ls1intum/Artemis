@@ -431,7 +431,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * @param tree {array of objects} Current tree structure
      * @param folder {string} Folder name
      */
-    buildTree(files: string[], tree?: FileTreeItem[], folder?: File | string) {
+    buildTree(files: string[], tree?: FileTreeItem[], folder?: string) {
         /**
          * Initialize tree if empty
          */
