@@ -826,7 +826,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.saveWithModalCheck(
             () => this.saveExercise(),
             (reference) => {
-                const requestOptions = {} as any;
+                const requestOptions: { deleteFeedback?: unknown } = {};
                 requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
                 this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
             },
@@ -956,7 +956,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
@@ -1370,6 +1370,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
+                return;
+            }
+            if (this.programmingExercise.maxPoints < 0) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMin',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.maxPoints > 9999) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMax',
+                    translateValues: {},
+                });
+            }
+            return;
+        }
+
         if (this.programmingExercise.maxPoints === undefined) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.points.undefined',

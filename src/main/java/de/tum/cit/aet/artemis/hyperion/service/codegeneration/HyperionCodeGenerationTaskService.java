@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionCodeGenerationTaskService {
+
+    private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationTaskService.class);
 
     private final HyperionCodeGenerationExecutionService executionService;
 
@@ -52,6 +56,7 @@ public class HyperionCodeGenerationTaskService {
             executionService.generateAndCompileCode(exercise, user, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, publisher);
         }
         catch (Exception ex) {
+            log.error("Code generation job {} failed for exercise {}", jobId, exercise.getId(), ex);
             publisher.error("Unhandled error: " + ex.getMessage());
         }
         finally {
@@ -110,11 +115,17 @@ public class HyperionCodeGenerationTaskService {
         }
 
         @Override
+        public void fileDeleted(String path, RepositoryType repoType, int iteration) {
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.FILE_DELETED, jobId, exercise.getId(), iteration, repoType,
+                    path, null, null, null, null, null, null));
+        }
+
+        @Override
         public void done(HyperionCodeGenerationEventDTO.CompletionStatus completionStatus, HyperionCodeGenerationEventDTO.CompletionReason completionReason,
-                Map<String, String> completionReasonParams, int attemptsUsed, String message) {
+                Map<String, String> completionReasonParams, int attempts, String message) {
             boolean success = completionStatus == HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS;
             websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.DONE, jobId, exercise.getId(), null, repositoryType, null,
-                    success, completionStatus, completionReason, completionReasonParams, attemptsUsed, message));
+                    success, completionStatus, completionReason, completionReasonParams, attempts, message));
         }
 
         @Override

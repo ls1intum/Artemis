@@ -4,7 +4,8 @@ import { Observable, map } from 'rxjs';
 import { ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { parseJson } from 'app/foundation/util/json.util';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 @Injectable({ providedIn: 'root' })
@@ -45,7 +46,11 @@ export class CourseDashboardService {
     ): { [key: string]: ExerciseInformation } {
         return Object.keys(exerciseInformation).reduce(
             (acc, key) => {
-                const exerciseCategories = categories[key]?.map((category: string) => JSON.parse(category) as ExerciseCategory) || [];
+                const exerciseCategories =
+                    categories[key]?.map((category: string) => {
+                        const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                        return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                    }) || [];
                 const exercise = exerciseInformation[key];
                 acc[key] = {
                     ...exercise,

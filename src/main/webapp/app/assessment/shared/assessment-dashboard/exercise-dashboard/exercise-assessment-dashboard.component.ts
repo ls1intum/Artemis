@@ -43,6 +43,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/subm
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -343,7 +344,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.modelingExercise.set(modelingExercise);
                         if (modelingExercise.exampleSolutionModel) {
                             this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(modelingExercise.exampleSolutionExplanation));
-                            this.exampleSolutionModel.set(importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)));
+                            this.exampleSolutionModel.set(importDiagram(parseJson(modelingExercise.exampleSolutionModel)));
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
