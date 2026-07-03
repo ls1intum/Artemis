@@ -10,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
@@ -62,7 +63,7 @@ export class CourseTutorialGroupsComponent {
     readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
-    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | undefined>(undefined);
+    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | CourseLectureDetailsComponent | undefined>(undefined);
     protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     constructor() {
@@ -95,7 +96,7 @@ export class CourseTutorialGroupsComponent {
     }
 
     onSubRouteActivate(componentRef: unknown) {
-        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent) {
+        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent || componentRef instanceof CourseLectureDetailsComponent) {
             this.activeDetail.set(componentRef);
         }
     }

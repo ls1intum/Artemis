@@ -23,6 +23,8 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -90,6 +92,32 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
+    });
+
+    describe('sidebar toggle sync', () => {
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+        });
+
+        it('should sync the collapse state into an activated tutorial group detail', () => {
+            const setSidebarToggle = vi.fn();
+            const detail = Object.assign(Object.create(CourseTutorialGroupDetailContainerComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(setSidebarToggle).toHaveBeenCalledWith(component.isCollapsed(), expect.any(Function));
+        });
+
+        it('should sync the collapse state into an activated tutorial lecture detail', () => {
+            const setSidebarToggle = vi.fn();
+            const detail = Object.assign(Object.create(CourseLectureDetailsComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(setSidebarToggle).toHaveBeenCalledWith(component.isCollapsed(), expect.any(Function));
+        });
     });
 
     it('should use cached groups and lectures if available to compute correct sidebar data', async () => {
