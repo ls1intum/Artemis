@@ -53,7 +53,6 @@ public record SpecFidelityReport(List<Finding> findings) {
         return new SpecFidelityReport(List.of());
     }
 
-    /** @return {@code true} when there is at least one finding to surface. */
     public boolean hasFindings() {
         return !findings.isEmpty();
     }

@@ -65,14 +65,16 @@ public class AgentLoopRunner {
     /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
     private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
 
+    /** Max chars of a tool call's raw arguments rendered into a transcript progress line before eliding, so a large body stays out of the progress view. */
+    private static final int TRANSCRIPT_ARG_MAX_CHARS = 160;
+
     /** Output cap for the summary, so the summary itself never becomes a context problem on the next turn. */
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 2_000;
 
     /**
      * Per-turn completion cap (max_tokens) for the main agent call. A turn is a tool-calling step (reasoning + a handful of tool calls), never a long prose essay, so this bound
-     * keeps a single turn from running away in cost/latency. It preserves the prototype's hard default (the deleted {@code GpuEndpointChatModel} pinned max_tokens=2500) so a
-     * deployment that does not set {@code spring.ai.openai.chat.options.max-tokens} still runs with a per-turn bound. An operator can still raise (or lower) the ceiling via that
-     * property, which {@link #configuredTurnMaxTokens()} reads and prefers; this constant is only the fallback the loop pins when none is configured.
+     * keeps a single turn from running away in cost/latency. It is only the fallback: a deployment that sets {@code spring.ai.openai.chat.options.max-tokens} overrides it (see
+     * {@link #configuredTurnMaxTokens()}), and one that does not still runs with this per-turn bound.
      */
     private static final int TURN_MAX_OUTPUT_TOKENS = 2_500;
 
@@ -148,6 +150,11 @@ public class AgentLoopRunner {
 
     /**
      * Drives the agent loop for one generation session.
+     * <p>
+     * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn,
+     * so a
+     * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
+     * cancel hook (see {@code ExerciseGenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
      *
      * @param systemPrompt the system prompt describing the task and the available tools
      * @param userPrompt   the initial user instruction
@@ -334,8 +341,7 @@ public class AgentLoopRunner {
             return name.strip();
         }
         // Everything before the first control token is the real tool name; the rest is leakage.
-        String leading = name.substring(0, name.indexOf("<|"));
-        return HarmonyScrubbingChatModel.HARMONY_CONTROL_TOKEN.matcher(leading).replaceAll("").strip();
+        return name.substring(0, name.indexOf("<|")).strip();
     }
 
     /**
@@ -350,8 +356,8 @@ public class AgentLoopRunner {
         if (path != null) {
             return toolCall.name() + " " + path;
         }
-        if (arguments.length() > 160) {
-            arguments = arguments.substring(0, 160) + "…";
+        if (arguments.length() > TRANSCRIPT_ARG_MAX_CHARS) {
+            arguments = arguments.substring(0, TRANSCRIPT_ARG_MAX_CHARS) + "…";
         }
         return toolCall.name() + " " + arguments;
     }

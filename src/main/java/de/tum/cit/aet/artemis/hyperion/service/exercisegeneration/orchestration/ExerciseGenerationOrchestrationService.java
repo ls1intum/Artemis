@@ -152,7 +152,7 @@ public class ExerciseGenerationOrchestrationService {
             // below stays the sole acceptance truth.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
             // Wrap the tools in the snapshot-emitting decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
-            // re-exposes the identical @Tool surface (the model sees the same tools) and only adds emission; without a sink the bare tools are used unchanged.
+            // re-exposes the identical @Tool surface (the model sees the same tools) and only adds emission.
             Object tools = fileSnapshotSink != null ? new FileSnapshotEmittingAgentTools(baseTools, fileSnapshotSink) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
@@ -196,15 +196,9 @@ public class ExerciseGenerationOrchestrationService {
                 GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE);
                 GenerationWorkspaceService.RepositoryExtraction producedSolution = workspace.extractRepository(sandbox, sessionId, RepositoryType.SOLUTION);
                 Set<String> extractionFailed = new LinkedHashSet<>();
-                if (producedTests.extractionFailed()) {
-                    extractionFailed.add(GenerationWorkspaceService.directoryFor(RepositoryType.TESTS));
-                }
-                if (producedTemplate.extractionFailed()) {
-                    extractionFailed.add(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE));
-                }
-                if (producedSolution.extractionFailed()) {
-                    extractionFailed.add(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
-                }
+                addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
+                addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
+                addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 verification = verifier.verify(sandbox, sessionId, exercise, testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
                         extractionFailed, seededStructuralTestNames, relaxTestsRepoImmutability);
                 emit(progress, verification.report());
@@ -237,6 +231,13 @@ public class ExerciseGenerationOrchestrationService {
         }
         finally {
             jobService.deregisterCancelHook(jobId);
+        }
+    }
+
+    /** Records the repository's directory as extraction-failed so the verifier can fail CLOSED on a read-back error (distinct from a genuinely empty repo). */
+    private static void addIfExtractionFailed(Set<String> extractionFailed, GenerationWorkspaceService.RepositoryExtraction extraction, RepositoryType type) {
+        if (extraction.extractionFailed()) {
+            extractionFailed.add(GenerationWorkspaceService.directoryFor(type));
         }
     }
 

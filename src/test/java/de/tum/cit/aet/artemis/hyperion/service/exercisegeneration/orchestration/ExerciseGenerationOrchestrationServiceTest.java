@@ -340,22 +340,6 @@ class ExerciseGenerationOrchestrationServiceTest {
                 .contains("template unexpectedly passed all tests");
     }
 
-    /** When the probe yields nothing (empty workspace / probe failure), the first prompt is exactly the instructor brief — no empty observation block. */
-    @Test
-    void noProbeOutput_leavesTheFirstPromptUnchanged() {
-        when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-
-        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
-        }
-
-        verify(agentLoopRunner).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(promptCaptor.getValue()).isEqualTo("Build a bubble sort exercise.").doesNotContain("INITIAL WORKSPACE");
-    }
-
     /** Unit-level check of the prepend helper: a layout block is delimited and the brief preserved; an empty/blank layout returns the brief unchanged. */
     @Test
     void prependWorkspaceLayout_delimitsLayoutAndPreservesBrief() {

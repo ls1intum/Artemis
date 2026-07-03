@@ -17,13 +17,13 @@ public final class LanguageGenerationProfile {
     }
 
     /**
-     * The single source of truth for the languages Hyperion offers for one-click whole-exercise generation and adaptation; the client consumes this set verbatim via the generation
-     * resource, so it must never be mirrored by hand. Narrower than "has a {@link #guidanceFor(ProgrammingExercise) profile}": included only when the test runner produces
-     * parseable
-     * reports (JUnit-XML / SCA) so the differential oracle can self-verify. The niche simulator/license-bound targets ({@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER},
-     * {@code MATLAB}, {@code VHDL}) and the template-less languages ({@code EMPTY}, {@code SQL}, {@code POWERSHELL}, {@code ADA}, {@code PHP}) are excluded.
+     * The single source of truth for the languages Hyperion offers for one-click whole-exercise generation and adaptation, served over the generation resource so clients fetch it
+     * rather than mirror it by hand. Currently only Java is enabled (see {@link #SUPPORTED_LANGUAGES}): the set is rollout-gated because only the Java differential oracle is
+     * validated end-to-end. A language becomes eligible only once its test runner produces parseable reports (JUnit-XML / SCA) the oracle can self-verify — the niche
+     * simulator/license-bound targets ({@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER}, {@code MATLAB}, {@code VHDL}) and the template-less languages ({@code EMPTY},
+     * {@code SQL}, {@code POWERSHELL}, {@code ADA}, {@code PHP}) never qualify.
      *
-     * @return the immutable set of oracle-verifiable, generation-supported languages
+     * @return the immutable set of currently-enabled, oracle-verifiable generation-supported languages
      */
     public static Set<ProgrammingLanguage> supportedLanguages() {
         return SUPPORTED_LANGUAGES;

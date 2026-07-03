@@ -59,7 +59,6 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly snapshots = signal<HyperionFileSnapshot[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
 
-    // Preview navigation.
     readonly follow = signal<boolean>(true);
     readonly pinnedPath = signal<string | undefined>(undefined);
     readonly cancelRequested = signal<boolean>(false);
@@ -76,8 +75,6 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     /** The revert button is offered only once an in-place adaptation has finished and was accepted (the server holds a captured pre-run baseline for it). */
     readonly canRevert = computed(() => this.mode() === 'ADAPT' && !this.running() && !this.reverted() && (this.verdict()?.accepted ?? false));
-
-    readonly progressEvents = computed(() => this.events().filter((event) => event.type === 'STARTED' || event.type === 'PROGRESS' || TERMINAL_EVENT_TYPES.has(event.type)));
 
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
         const files = this.snapshots();

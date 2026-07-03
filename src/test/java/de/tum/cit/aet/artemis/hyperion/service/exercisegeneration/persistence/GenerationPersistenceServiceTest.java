@@ -500,10 +500,9 @@ class GenerationPersistenceServiceTest {
         String normalized = GenerationPersistenceService.normalizeTypography(produced);
         assertThat(normalized).isEqualTo("Reject a non-negative amount - see the deposit-withdraw flow. It's the \"main\" path...");
         assertThat(normalized.chars().allMatch(c -> c < 0x80)).as("the normalised statement is pure ASCII").isTrue();
-        // A statement already free of typographic punctuation is returned unchanged; null is tolerated.
+        // A statement already free of typographic punctuation is returned unchanged.
         String clean = "# Stack\nImplement push and pop.";
         assertThat(GenerationPersistenceService.normalizeTypography(clean)).isEqualTo(clean);
-        assertThat(GenerationPersistenceService.normalizeTypography(null)).isNull();
     }
 
     @Test

@@ -20,16 +20,12 @@ import reactor.core.publisher.Flux;
  * the
  * control tokens (the visible text around them is harmless) keeps the conversation replayable.
  * <p>
- * This replaces the prototype's bespoke {@code GpuEndpointChatModel}: the real Spring AI OpenAI starter now does the transport, and this decorator keeps only the small harmony
- * scrubber (mirroring {@code HyperionUtils.stripWrapperMarkers}). It delegates {@link #getDefaultOptions()} so the loop can still read the configured model id, and delegates
- * streaming unchanged (the agent loop never streams).
+ * The Spring AI OpenAI starter does the transport; this decorator adds only the harmony scrubber (mirroring {@code HyperionUtils.stripWrapperMarkers}). It delegates
+ * {@link #getDefaultOptions()} so the loop can still read the configured model id, and delegates streaming unchanged (the agent loop never streams).
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 
-    /**
-     * Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. The {@code >} exclusion keeps one token from spanning into the next. Shared with
-     * {@code AgentLoopRunner} (which strips the same tokens from leaked tool-call names) so the two scrubbers can never diverge on which tokens they remove.
-     */
+    /** Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. The {@code >} exclusion keeps one token from spanning into the next. */
     static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|>");
 
     private final ChatModel delegate;

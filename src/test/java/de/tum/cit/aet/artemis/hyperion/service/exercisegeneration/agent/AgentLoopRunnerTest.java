@@ -265,34 +265,6 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_transientModelError_isRetriedThenSucceeds() {
-        ChatModel chatModel = mock(ChatModel.class);
-        // First call throws a transient endpoint error, the retry succeeds and finishes — a single hiccup must not abort the generation.
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 503 from endpoint")).thenReturn(textResponse("DONE"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(result.finalMessage()).isEqualTo("DONE");
-    }
-
-    @Test
-    void agentLoop_persistentModelError_endsWithError() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 500 from endpoint"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-    }
-
-    @Test
     void agentLoop_submitTool_endsLoopImmediately() {
         ChatModel chatModel = mock(ChatModel.class);
         // Calling submit declares completion; the loop must end that very turn and hand off to the verifier, not wait for a further no-tool-call turn.

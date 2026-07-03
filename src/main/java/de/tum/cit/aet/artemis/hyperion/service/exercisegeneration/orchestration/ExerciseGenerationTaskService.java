@@ -115,7 +115,8 @@ public class ExerciseGenerationTaskService {
                 case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
                 case ERROR -> emitter.milestone(
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
-                default -> {
+                // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
+                case COMPLETED, BUDGET_EXHAUSTED -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                     if (outcome.isAccepted()) {
                         emitter.progress("Checks passed. Saving the exercise.");

@@ -32,6 +32,15 @@
     flex-wrap: wrap;
 }
 
+.hyperion-activity-verdict-reasons {
+    flex-basis: 100%;
+    list-style: disc;
+    margin: 0.2rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.78rem;
+    color: var(--bs-danger, #dc3545);
+}
+
 .hyperion-activity-body {
     display: flex;
     min-height: 18rem;

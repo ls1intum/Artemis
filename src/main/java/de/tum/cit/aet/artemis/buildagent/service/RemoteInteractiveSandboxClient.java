@@ -134,7 +134,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     @Override
     public String createSession(SandboxSessionSpec spec) {
         String targetAgent = selectTargetAgent();
-        SandboxOpRequest request = new SandboxOpRequest(newCorrelationId(), targetAgent, SandboxOp.CREATE, null, spec, null, 0L, null, null);
+        SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
         SandboxOpResponse response = relay(request, CONTROL_OP_TIMEOUT);
         // Encode the owning agent into the handle so every later op can route back to the same agent without any shared lookup state.
         return targetAgent + SESSION_HANDLE_SEPARATOR + response.sessionId();
@@ -144,7 +144,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = new SandboxOpRequest(newCorrelationId(), targetAgent, SandboxOp.EXEC, containerId, null, command, timeout.toSeconds(), null, null);
+        SandboxOpRequest request = SandboxOpRequest.exec(newCorrelationId(), targetAgent, containerId, command, timeout.toSeconds());
         SandboxOpResponse response = relay(request, timeout.plus(RELAY_SLACK));
         return response.execResult();
     }
@@ -154,7 +154,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         byte[] payload = readBounded(tarArchive);
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = new SandboxOpRequest(newCorrelationId(), targetAgent, SandboxOp.COPY_IN, containerId, null, null, 0L, payload, destinationPath);
+        SandboxOpRequest request = SandboxOpRequest.copyIn(newCorrelationId(), targetAgent, containerId, payload, destinationPath);
         relay(request, CONTROL_OP_TIMEOUT);
     }
 
@@ -162,7 +162,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public TarArchiveInputStream copyOut(String sessionId, String path) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = new SandboxOpRequest(newCorrelationId(), targetAgent, SandboxOp.COPY_OUT, containerId, null, null, 0L, null, path);
+        SandboxOpRequest request = SandboxOpRequest.copyOut(newCorrelationId(), targetAgent, containerId, path);
         SandboxOpResponse response = relay(request, CONTROL_OP_TIMEOUT);
         byte[] payload = response.payload() != null ? response.payload() : new byte[0];
         return new TarArchiveInputStream(new ByteArrayInputStream(payload));
@@ -172,7 +172,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public void destroySession(String sessionId) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = new SandboxOpRequest(newCorrelationId(), targetAgent, SandboxOp.DESTROY, containerId, null, null, 0L, null, null);
+        SandboxOpRequest request = SandboxOpRequest.destroy(newCorrelationId(), targetAgent, containerId);
         relay(request, CONTROL_OP_TIMEOUT);
     }
 

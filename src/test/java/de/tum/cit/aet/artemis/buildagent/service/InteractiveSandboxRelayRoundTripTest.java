@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxOp;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
@@ -170,7 +169,7 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void requestForDifferentAgent_isIgnoredByHandler() {
         // A request that targets another agent must be dropped by the self-filter without touching this agent's local sandbox.
-        SandboxOpRequest foreignRequest = new SandboxOpRequest("corr-foreign", "some-other-agent", SandboxOp.DESTROY, CONTAINER_ID, null, null, 0L, null, null);
+        SandboxOpRequest foreignRequest = SandboxOpRequest.destroy("corr-foreign", "some-other-agent", CONTAINER_ID);
         requestsTopic.publish(foreignRequest);
 
         await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(localSandbox, never()).destroySession(anyString()));
@@ -179,7 +178,7 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void duplicateCorrelationId_isHandledOnlyOnce() {
         // A redelivered broadcast carries the same correlation id; the handler's idempotency guard must perform the operation exactly once.
-        SandboxOpRequest request = new SandboxOpRequest("corr-dup", AGENT_SHORT_NAME, SandboxOp.DESTROY, CONTAINER_ID, null, null, 0L, null, null);
+        SandboxOpRequest request = SandboxOpRequest.destroy("corr-dup", AGENT_SHORT_NAME, CONTAINER_ID);
         requestsTopic.publish(request);
         requestsTopic.publish(request);
 

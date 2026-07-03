@@ -322,10 +322,13 @@ public class AgentSystemPromptService {
         return section.toString();
     }
 
+    /** Max chars of a build-phase command previewed in the prompt before eliding, so a long script is listed as a hint rather than dumped in full. */
+    private static final int MAX_COMMAND_PREVIEW_CHARS = 200;
+
     /** Collapses a (possibly multi-line) build-phase command to a single trimmed line and caps its length, so the prompt lists the command without dumping a long script. */
     private static String capCommand(String command) {
         String oneLine = command.replaceAll("\\s+", " ").trim();
-        return oneLine.length() > 200 ? oneLine.substring(0, 200) + " …" : oneLine;
+        return oneLine.length() > MAX_COMMAND_PREVIEW_CHARS ? oneLine.substring(0, MAX_COMMAND_PREVIEW_CHARS) + " …" : oneLine;
     }
 
     /**
@@ -396,7 +399,7 @@ public class AgentSystemPromptService {
 
     /**
      * The single source of truth (defined on {@link LanguageGenerationProfile#supportedLanguages()}) for the languages Hyperion offers for one-click whole-exercise generation —
-     * the oracle-verifiable ones. Exposed so the resource can both guard a run and serve the set to the client, which must never mirror it by hand.
+     * the oracle-verifiable ones. Exposed so the resource can both guard a run and serve the set to clients rather than have them hardcode it.
      *
      * @return the immutable set of generation-supported languages
      */

@@ -38,6 +38,13 @@
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.verdict.template"></span>
                     </p-tag>
                     <p-tag severity="secondary">{{ currentVerdict.testCount }} {{ 'artemisApp.hyperion.generationActivity.verdict.tests' | artemisTranslate }}</p-tag>
+                    @if (!currentVerdict.accepted && currentVerdict.reasons?.length) {
+                        <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
+                            @for (reason of currentVerdict.reasons ?? []; track $index) {
+                                <li>{{ reason }}</li>
+                            }
+                        </ul>
+                    }
                 }
                 @if (canRevert()) {
                     <p-button
@@ -85,7 +92,7 @@
                     }
                 </div>
                 <ul class="hyperion-activity-timeline">
-                    @for (event of progressEvents(); track $index) {
+                    @for (event of events(); track $index) {
                         <li>{{ event.message }}</li>
                     }
                 </ul>

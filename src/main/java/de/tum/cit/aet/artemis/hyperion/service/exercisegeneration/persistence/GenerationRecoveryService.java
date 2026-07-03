@@ -106,12 +106,7 @@ public class GenerationRecoveryService {
             if (findings.isEmpty()) {
                 return new RecoveryResult(0, persistResult.liveExerciseUntouched(), persistResult.draftBranch());
             }
-            List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings);
-            // Notify open editors so the review panel updates live, as the manual consistency check does.
-            for (CommentThread thread : createdThreads) {
-                CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
-                exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadCreated(createdThread));
-            }
+            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings);
             log.info("Recovered generation draft for exercise {} with {} review-comment thread(s) from verification findings", exercise.getId(), createdThreads.size());
             return new RecoveryResult(createdThreads.size(), persistResult.liveExerciseUntouched(), persistResult.draftBranch());
         }
@@ -187,11 +182,7 @@ public class GenerationRecoveryService {
             return 0;
         }
         try {
-            List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exercise.getId(), findings);
-            for (CommentThread thread : createdThreads) {
-                CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
-                exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadCreated(createdThread));
-            }
+            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings);
             log.info("Attached {} advisory spec-fidelity review thread(s) to accepted exercise {}", createdThreads.size(), exercise.getId());
             return createdThreads.size();
         }
@@ -199,6 +190,22 @@ public class GenerationRecoveryService {
             log.warn("Could not attach advisory spec-fidelity review threads to accepted exercise {}; continuing", exercise.getId(), e);
             return 0;
         }
+    }
+
+    /**
+     * Persists the given findings as consistency-check review threads and notifies open editors so the review panel updates live, as the manual consistency check does.
+     *
+     * @param exerciseId the exercise the threads belong to
+     * @param findings   the findings to persist (non-empty)
+     * @return the created threads
+     */
+    private List<CommentThread> createAndBroadcastThreads(long exerciseId, List<ConsistencyIssueDTO> findings) {
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, findings);
+        for (CommentThread thread : createdThreads) {
+            CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
+            exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
+        }
+        return createdThreads;
     }
 
     /**

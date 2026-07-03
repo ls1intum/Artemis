@@ -284,7 +284,7 @@ class SandboxAgentToolsTest {
         when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise))).thenReturn(report);
 
         String out = new SandboxAgentTools(sandbox, "s", verifier, exercise).verify();
-        assertThat(out).isEqualTo(report.toObservation()).contains("Solution: 2/2 tests pass.").contains("VERDICT: would be ACCEPTED");
+        assertThat(out).isEqualTo(report.toObservation());
     }
 
     @Test

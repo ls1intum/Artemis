@@ -5,8 +5,6 @@
 
 export type HyperionGenerationEventType = 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
 
-export type HyperionGenerationCompletionStatus = 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
-
 export type HyperionSnapshotRepo = 'solution' | 'template' | 'tests' | 'other';
 
 export type HyperionSnapshotAction = 'create' | 'edit';
@@ -17,14 +15,14 @@ export interface HyperionGenerationVerdict {
     solutionPassed: boolean;
     templateFailed: boolean;
     testCount: number;
-    reasons: string[];
+    /** Human-readable explanations of any failed gate; absent/empty when accepted (server omits it via {@code @JsonInclude(NON_EMPTY)}). */
+    reasons?: string[];
 }
 
 /** A progress or terminal event of a generation run. */
 export interface HyperionGenerationEvent {
     type: HyperionGenerationEventType;
     message?: string;
-    completionStatus?: HyperionGenerationCompletionStatus;
     verdict?: HyperionGenerationVerdict;
     timestamp?: string;
 }

@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -227,8 +229,8 @@ class SandboxBuildCommandServiceTest {
             VerifyScriptTestHarness.writeString(marker, "");
             Path reportFile = buildDir.resolve("surefire-reports").resolve("planted.xml");
             VerifyScriptTestHarness.writeString(reportFile, SUREFIRE);
-            Files.setLastModifiedTime(reportFile, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(7200))); // older than the marker
-            Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
+            Files.setLastModifiedTime(reportFile, FileTime.from(Instant.now().minusSeconds(7200))); // older than the marker
+            Files.setLastModifiedTime(marker, FileTime.from(Instant.now().minusSeconds(3600)));
 
             String fullScript = factory().verifyScriptContent(new ProgrammingExercise());
             String collectSnippet = VerifyScriptTestHarness.slice(fullScript, "rm -rf \"$REPORTS_DIR\"", "echo \"" + SandboxBuildCommandService.COLLECTED_MARKER);

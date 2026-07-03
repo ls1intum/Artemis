@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  * <p>
  * Handling is idempotent per correlation id: a redelivered broadcast (or a {@code CREATE}/{@code DESTROY} already in flight) is dropped rather than performed twice. A small
  * per-agent session semaphore caps how many concurrent generation sessions this agent will host so a generation cannot silently starve CI capacity; the permit is released on
- * {@code DESTROY}. This is a deliberately simple v1 guard — see the TODO on {@link #sessionPermits}.
+ * {@code DESTROY}. This is a deliberately simple guard — see the deferred-integration note on {@link #maxConcurrentSessions}.
  *
  * @see RemoteInteractiveSandboxClient the core-node client whose requests this handler serves
  * @see InteractiveSandboxService the local implementation that actually performs each operation
@@ -70,9 +70,10 @@ public class InteractiveSandboxRelayHandler {
      * Maximum number of concurrent interactive sandbox sessions this agent will host. A session is long-lived (several minutes), so this is a coarse guard that keeps generation
      * from monopolizing the agent.
      * <p>
-     * TODO(v1): this is a standalone per-agent session limit, intentionally decoupled from the build-job scheduler's thread-pool accounting to keep the change low-risk. A tighter
-     * integration would have a generation session consume a real build-executor slot (so CI and generation share one capacity budget and the existing availability checks apply
-     * uniformly). Wire that in once the scheduler exposes a reservation API.
+     * Deferred integration: this is a standalone per-agent session limit, intentionally decoupled from the build-job scheduler's thread-pool accounting to keep the change
+     * low-risk.
+     * A tighter integration would have a generation session consume a real build-executor slot (so CI and generation share one capacity budget and the existing availability checks
+     * apply uniformly), to be wired in once the scheduler exposes a reservation API.
      */
     @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:1}")
     private int maxConcurrentSessions;
@@ -81,7 +82,7 @@ public class InteractiveSandboxRelayHandler {
      * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. Known gap: if a CREATE succeeds but its response is lost in transit, the core client never learns
      * the
      * container id and can never issue DESTROY, so the permit stays held until this agent restarts. The reaper reclaims the orphaned container but does NOT yet release its permit;
-     * acceptable at the current default cap because agents restart routinely — reclaim it from the reaper when the session-slot integration in the TODO above lands.
+     * acceptable at the current default cap because agents restart routinely — reclaim it from the reaper when the deferred session-slot integration noted above lands.
      */
     private Semaphore sessionPermits;
 
@@ -92,7 +93,7 @@ public class InteractiveSandboxRelayHandler {
      * Bounded FIFO set of handled correlation ids for at-most-once handling; single-use ids (the client mints a fresh UUID per call and never retries one) make oldest-entry
      * eviction safe. Guarded by its own monitor.
      */
-    private final LinkedHashMap<String, Boolean> handledCorrelationIds = new LinkedHashMap<>();
+    private final LinkedHashSet<String> handledCorrelationIds = new LinkedHashSet<>();
 
     /** Container ids of sessions this agent owns and for which a session permit is held, so DESTROY releases a permit at most once. */
     private final Set<String> ownedSessions = ConcurrentHashMap.newKeySet();
@@ -179,10 +180,10 @@ public class InteractiveSandboxRelayHandler {
      */
     private boolean markHandled(String correlationId) {
         synchronized (handledCorrelationIds) {
-            if (handledCorrelationIds.putIfAbsent(correlationId, Boolean.TRUE) != null) {
+            if (!handledCorrelationIds.add(correlationId)) {
                 return false;
             }
-            Iterator<String> iterator = handledCorrelationIds.keySet().iterator();
+            Iterator<String> iterator = handledCorrelationIds.iterator();
             while (handledCorrelationIds.size() > MAX_REMEMBERED_CORRELATION_IDS && iterator.hasNext()) {
                 iterator.next();
                 iterator.remove();

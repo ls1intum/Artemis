@@ -182,25 +182,6 @@ public class AuthoritativeVerificationService {
         return files;
     }
 
-    // Package-private convenience overloads used only by the unit test; production calls the full verify(...) below.
-    VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        return verify(sandbox, sessionId, exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of());
-    }
-
-    VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles,
-            Set<String> extractionFailedRepositories) {
-        return verify(sandbox, sessionId, exercise, seedTestsFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories, Set.of());
-    }
-
-    // Package-private GENERATE-mode convenience (relax=false) used only by the unit test; production calls the full ADAPT-aware verify(...) below.
-    VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
-            Set<String> seededStructuralTestNames) {
-        return verify(sandbox, sessionId, exercise, seedTestsFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
-                seededStructuralTestNames, false);
-    }
-
     /**
      * Runs the differential verification AND the sandbox-free integrity gates (harness immutability and solution-leak); the exercise is accepted only when both pass.
      * <p>
@@ -407,7 +388,7 @@ public class AuthoritativeVerificationService {
 
     /** The solution gate: the solution must compile, run at least one test, and pass every test. Appends a rejection reason to {@code reasons} otherwise. */
     private static boolean checkSolutionPasses(BuildSummary solution, List<String> reasons) {
-        boolean solutionPassed = !solution.timedOut() && solution.exitCode() == 0 && solution.tests() > 0 && solution.failures() == 0 && solution.errors() == 0;
+        boolean solutionPassed = !solution.timedOut() && solution.exitCode() == 0 && solution.tests() > 0 && solution.failures() == 0;
         if (solution.timedOut()) {
             reasons.add("The solution build timed out. The solution must compile and pass every test within the time limit.");
         }
@@ -416,8 +397,8 @@ public class AuthoritativeVerificationService {
                     + "tests can run.");
         }
         else if (!solutionPassed) {
-            reasons.add("The solution does not pass its own tests (" + solution.failures() + " failing, " + solution.errors() + " erroring of " + solution.tests()
-                    + "). The solution must compile and pass every test.");
+            reasons.add(
+                    "The solution does not pass its own tests (" + solution.failures() + " failing of " + solution.tests() + "). The solution must compile and pass every test.");
         }
         return solutionPassed;
     }
@@ -430,9 +411,8 @@ public class AuthoritativeVerificationService {
      */
     private static boolean checkTemplateFails(BuildSummary solution, BuildSummary template, List<String> reasons) {
         int testCount = solution.tests();
-        int templateFailing = template.failures() + template.errors();
+        int templateFailing = template.failures();
         int requiredTemplateFailures = Math.max(1, testCount / 2);
-        boolean templateCompiledAndRan = !template.timedOut() && template.tests() > 0;
         if (template.timedOut()) {
             reasons.add("The template build timed out; it must compile and fail the tests quickly.");
         }
@@ -440,7 +420,7 @@ public class AuthoritativeVerificationService {
             reasons.add("The template does not compile (the tests never ran). The template must compile and only fail because the student's work is missing — use placeholder "
                     + "method bodies (returning null, 0, false) with the same signatures as the solution.");
         }
-        else if (templateCompiledAndRan && solution.tests() > 0 && template.tests() != solution.tests()) {
+        else if (solution.tests() > 0 && template.tests() != solution.tests()) {
             // A differing count means the template silently dropped tests, letting a vacuous template "fail" without the tests discriminating.
             reasons.add("The template runs a different number of tests (" + template.tests() + ") than the solution (" + solution.tests()
                     + "). Both must run the same tests; the template must differ only in its (unimplemented) method bodies, not in which tests compile and run.");
@@ -481,7 +461,7 @@ public class AuthoritativeVerificationService {
                     + " test name(s). The per-test name list must be complete for the grading checks to run; an incomplete list means the test reports could not be parsed "
                     + "reliably (or the build emitted no per-test results), so the exercise cannot be verified. Ensure every test writes a JUnit <testcase> entry.");
         }
-        int templateFailing = template.failures() + template.errors();
+        int templateFailing = template.failures();
         boolean templateCompiledAndRan = !template.timedOut() && template.tests() > 0;
         boolean templateFailNamesSound = !(templateCompiledAndRan && templateFailing > 0 && template.testFailedNames().isEmpty());
         if (!templateFailNamesSound) {
@@ -780,17 +760,17 @@ public class AuthoritativeVerificationService {
      * @param testFailedNames distinct names of cases that FAILED/ERRORED; used by the strict per-test gate; empty if none collected
      * @param scaFindings     SCA findings (tool + real derived category from {@link ReportParser}); populated only when the SCA reports were collected; empty otherwise
      */
-    record BuildSummary(int tests, int failures, int errors, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
+    record BuildSummary(int tests, int failures, int exitCode, boolean timedOut, List<String> testNames, List<String> testFailedNames,
             List<ScaPenaltyParity.ScaFinding> scaFindings) {
 
         /** Build killed for exceeding its timeout; treated as a failed build with no tests. */
         static BuildSummary timedOut(int exitCode) {
-            return new BuildSummary(0, 0, 0, exitCode, true, List.of(), List.of(), List.of());
+            return new BuildSummary(0, 0, exitCode, true, List.of(), List.of(), List.of());
         }
 
         /** Reports archive unreadable or rejected (linked/escaping/oversize entry): treat as a non-compiling build (no tests) so the oracle rejects, fail-closed. */
         static BuildSummary unparseable(int exitCode) {
-            return new BuildSummary(0, 0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of());
+            return new BuildSummary(0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of());
         }
 
         /**
@@ -824,7 +804,7 @@ public class AuthoritativeVerificationService {
             });
             successful.forEach(job -> testNames.add(job.name()));
             int tests = failed.size() + successful.size();
-            return new BuildSummary(tests, failed.size(), 0, exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(scaFindings));
+            return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(scaFindings));
         }
 
         /**

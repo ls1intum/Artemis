@@ -104,8 +104,8 @@ public class HyperionExerciseGenerationResource {
     /**
      * GET programming-exercises/generation/supported-languages : the languages Artemis Intelligence offers for one-click whole-exercise generation (the oracle-verifiable set).
      * <p>
-     * Not exercise-scoped, so guarded by the global least-privilege role that can create exercises ({@link EnforceAtLeastEditor}). The client consumes this instead of mirroring
-     * the set by hand.
+     * Not exercise-scoped, so guarded by the global least-privilege role that can create exercises ({@link EnforceAtLeastEditor}). Exposed as the server-authoritative set for
+     * clients to fetch rather than hardcode.
      *
      * @return the supported programming languages
      */
@@ -193,8 +193,7 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Rejects a malformed set of selected review-comment thread ids early (the count is already capped by {@code @Size} on the DTO; this rejects null/non-positive ids). The ids
-     * survive from the legacy code-generation contract because the adapt flow addresses selected feedback threads.
+     * Rejects a malformed set of selected review-comment thread ids early (the count is already capped by {@code @Size} on the DTO; this rejects null/non-positive ids).
      *
      * @param selectedFeedbackThreadIds the ids to validate (may be {@code null} / empty)
      */

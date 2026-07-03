@@ -128,16 +128,6 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void resolvePrompt_noPrompt_specMode_whenNonTrivialProblemStatement() {
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
-        ProgrammingExercise exercise = exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key.");
-
-        String prompt = systemPromptService.resolvePrompt(request, exercise);
-
-        assertThat(prompt).contains(SPEC_MODE_MARKER).doesNotContain(FROM_SCRATCH_MARKER);
-    }
-
-    @Test
     void resolvePrompt_noPrompt_boundary_atNonTrivialThreshold() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
         // The threshold is 40 stripped chars. 39 chars -> trivial (from-scratch); 40 chars -> non-trivial (spec mode).

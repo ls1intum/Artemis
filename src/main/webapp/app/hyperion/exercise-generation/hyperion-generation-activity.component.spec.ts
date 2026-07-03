@@ -120,9 +120,23 @@ describe('HyperionGenerationActivityComponent', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
         const component = fixture.componentInstance;
 
-        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 5, reasons: [] } });
+        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 5, reasons: [] } });
         expect(component.running()).toBe(false);
         expect(component.verdict()?.accepted).toBe(true);
+    });
+
+    it('surfaces the failed-gate reasons of a rejected verdict', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+
+        service.stream$.next({
+            type: 'ERROR',
+            verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 2, reasons: ['solution failed 1 test', 'no gradable test'] },
+        });
+        fixture.detectChanges();
+
+        const reasons = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-verdict-reasons"]');
+        expect(reasons?.textContent).toContain('solution failed 1 test');
+        expect(reasons?.textContent).toContain('no gradable test');
     });
 
     it('requests cancellation for the owner', () => {
@@ -148,10 +162,10 @@ describe('HyperionGenerationActivityComponent', () => {
         const component = fixture.componentInstance;
 
         component.attachToJob('j9', 'ADAPT');
-        // A generate run never offers revert, even once accepted.
+        // An adapt run offers revert only once it has completed with an accepted verdict; before the DONE event there is nothing to revert to.
         expect(component.canRevert()).toBe(false);
 
-        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
         expect(component.running()).toBe(false);
         expect(component.canRevert()).toBe(true);
 
@@ -167,7 +181,7 @@ describe('HyperionGenerationActivityComponent', () => {
             jobId: 'j5',
             running: false,
             mode: 'ADAPT',
-            events: [{ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 4, reasons: [] } }],
+            events: [{ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 4, reasons: [] } }],
             fileSnapshots: [],
         });
         const component = fixture.componentInstance;
@@ -182,7 +196,7 @@ describe('HyperionGenerationActivityComponent', () => {
         const component = fixture.componentInstance;
 
         component.attachToJob('j9', 'GENERATE');
-        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
         expect(component.canRevert()).toBe(false);
     });
 });

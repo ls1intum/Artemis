@@ -254,7 +254,7 @@ describe('adaptFinding', () => {
     });
 
     it('should coerce a null suggestedFix to undefined', () => {
-        const issue = { severity: ConsistencyIssue.SeverityEnum.Low, category: ConsistencyIssue.CategoryEnum.VisibilityMismatch, text: 't', suggestedFix: undefined } as any;
+        const issue = { severity: ConsistencyIssue.SeverityEnum.Low, category: ConsistencyIssue.CategoryEnum.VisibilityMismatch, text: 't', suggestedFix: null } as any;
         expect(adaptFinding(issue, undefined).suggestedFix).toBeUndefined();
     });
 });

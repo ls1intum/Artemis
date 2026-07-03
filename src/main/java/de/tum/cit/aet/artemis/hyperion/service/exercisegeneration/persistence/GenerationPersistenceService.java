@@ -118,6 +118,13 @@ public class GenerationPersistenceService {
     /** Prefix of the isolated branch a recovery draft is diverted to for an adapt target; the job id is appended so concurrent/repeated runs never collide on the ref. */
     static final String RECOVERY_DRAFT_BRANCH_PREFIX = "hyperion-draft/";
 
+    /** Exercise title column length; an H1 reconciled from a generated statement is capped to this. */
+    private static final int MAX_TITLE_LENGTH = 255;
+
+    private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
+
+    private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
+
     /**
      * The result of persisting a non-accepted recovery draft.
      *
@@ -157,7 +164,7 @@ public class GenerationPersistenceService {
      *         Fails CLOSED to {@code true} when a repository cannot be inspected, so an inspection error never lets a failing draft overwrite the live exercise.
      */
     private boolean anyRepositoryHasContent(ProgrammingExercise exercise) {
-        for (RepositoryType repositoryType : new RepositoryType[] { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS }) {
+        for (RepositoryType repositoryType : PERSIST_ORDER) {
             LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
             if (uri == null) {
                 continue;
@@ -258,7 +265,6 @@ public class GenerationPersistenceService {
                     + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e);
         }
 
-        // Update the problem statement if the agent changed it.
         String producedProblemStatement = normalizeTypography(outcome.producedProblemStatement());
         if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
             // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. updateProblemStatement saves the
@@ -277,21 +283,9 @@ public class GenerationPersistenceService {
             }
         }
 
-        // Trigger the canonical CI build for the tests; its result drives test-case synchronisation and task binding asynchronously, as a manual tests-repo edit does.
-        if (testsCommitHash != null) {
-            // Snapshot the count BEFORE triggering so zeroWeightBuildGateTestCases can wait past a stale/partial set for the complete sync.
-            int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
-            triggerTestsBuild(exercise, testsCommitHash);
-            zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
-        }
-
-        // Record a new exercise version, snapshotting the committed state and refreshing search indexing / notifying open editors. Only reached once every repository committed.
-        try {
-            exerciseVersionService.createExerciseVersion(exercise, user);
-        }
-        catch (RuntimeException e) {
-            log.warn("Failed to create exercise version for exercise {}: {}", exercise.getId(), e.getMessage());
-        }
+        // Trigger the canonical CI build for the tests (drives test-case sync + task binding asynchronously) and record the exercise version — only reached once every repository
+        // committed.
+        syncTestCasesAndRecordVersion(exercise, user, testsCommitHash);
         log.info("Persisted generated exercise {} (test-case synchronisation will complete asynchronously via CI)", exercise.getId());
         return prePersistHashes;
     }
@@ -307,7 +301,22 @@ public class GenerationPersistenceService {
      * @param testsCommitHash the tests repository's commit HEAD after the reset (drives the test-case-sync build); {@code null} skips the build
      */
     public void resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash) {
+        syncTestCasesAndRecordVersion(exercise, user, testsCommitHash);
+        log.info("Re-synchronised exercise {} after reverting an adaptation (test-case synchronisation completes asynchronously via CI)", exercise.getId());
+    }
+
+    /**
+     * Triggers the canonical tests build (when a tests commit exists) so test-case grading follows the committed tests, re-applies the build-gate zero-weighting, and records a new
+     * exercise version so open editors and search see the committed state — the post-commit steps shared by {@link #persist} and {@link #resyncAfterRevert}. Version recording is
+     * best-effort: a failure only logs, leaving the committed repositories (the durable part) intact.
+     *
+     * @param exercise        the exercise whose test cases to sync and version to record
+     * @param user            the exercise-version author
+     * @param testsCommitHash the tests repository's commit HEAD driving the test-case-sync build; {@code null} skips the build
+     */
+    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash) {
         if (testsCommitHash != null) {
+            // Snapshot the count BEFORE triggering so zeroWeightBuildGateTestCases can wait past a stale/partial set for the complete sync.
             int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
             triggerTestsBuild(exercise, testsCommitHash);
             zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
@@ -316,9 +325,8 @@ public class GenerationPersistenceService {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
         catch (RuntimeException e) {
-            log.warn("Failed to create exercise version for reverted exercise {}: {}", exercise.getId(), e.getMessage());
+            log.warn("Failed to create exercise version for exercise {}: {}", exercise.getId(), e.getMessage());
         }
-        log.info("Re-synchronised exercise {} after reverting an adaptation (test-case synchronisation completes asynchronously via CI)", exercise.getId());
     }
 
     /**
@@ -474,13 +482,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /** Exercise title column length; an H1 reconciled from a generated statement is capped to this. */
-    private static final int MAX_TITLE_LENGTH = 255;
-
-    private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
-
-    private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
-
     /**
      * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them
      * ({@link BuildGateTestNames}) but production grades EVERY case, so without this a student submitting the untouched template would score above 0%. Waits (bounded) for the
@@ -524,15 +525,12 @@ public class GenerationPersistenceService {
      * to
      * the problem statement and every generated source file. The substitution is safe: code spans are ASCII and no generation-capable language needs these characters in a literal.
      *
-     * @param problemStatement the produced problem statement (may be {@code null})
-     * @return the statement normalised to ASCII, or {@code null} if the input was {@code null}
+     * @param text the produced problem statement or source-file content (never {@code null})
+     * @return the text normalised to ASCII
      */
-    static String normalizeTypography(String problemStatement) {
-        if (problemStatement == null) {
-            return null;
-        }
-        return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'')
-                .replace('\u201C', '"').replace('\u201D', '"').replace("\u2026", "...");
+    static String normalizeTypography(String text) {
+        return text.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'').replace('\u201C', '"')
+                .replace('\u201D', '"').replace("\u2026", "...");
     }
 
     /**

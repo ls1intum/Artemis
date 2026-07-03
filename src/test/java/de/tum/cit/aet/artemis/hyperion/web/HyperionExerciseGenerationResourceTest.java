@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRende
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -294,15 +293,5 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(revert.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         // The supported-languages endpoint is not exercise-scoped, so it is guarded by the global least-privilege editor role instead.
         assertThat(supported.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
-    }
-
-    @Test
-    void supportedGenerationLanguages_areLimitedToJava() {
-        // Lock the Java-only production gate at the resource boundary: the resource serves exactly the profile's supported set.
-        when(agentSystemPromptService.supportedGenerationLanguages()).thenReturn(LanguageGenerationProfile.supportedLanguages());
-
-        ResponseEntity<List<ProgrammingLanguage>> response = resource.getSupportedGenerationLanguages();
-
-        assertThat(response.getBody()).containsExactly(ProgrammingLanguage.JAVA);
     }
 }

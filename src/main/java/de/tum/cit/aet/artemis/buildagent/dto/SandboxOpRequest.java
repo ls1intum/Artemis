@@ -26,4 +26,29 @@ public record SandboxOpRequest(String correlationId, String targetAgentShortName
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /** A {@link SandboxOp#CREATE} request: only the session spec is carried. */
+    public static SandboxOpRequest create(String correlationId, String targetAgentShortName, SandboxSessionSpec sessionSpec) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.CREATE, null, sessionSpec, null, 0L, null, null);
+    }
+
+    /** An {@link SandboxOp#EXEC} request against an existing session, with the command and its per-op timeout. */
+    public static SandboxOpRequest exec(String correlationId, String targetAgentShortName, String sessionId, String[] command, long timeoutSeconds) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.EXEC, sessionId, null, command, timeoutSeconds, null, null);
+    }
+
+    /** A {@link SandboxOp#COPY_IN} request writing the tar {@code payload} to {@code workspacePath} inside the session. */
+    public static SandboxOpRequest copyIn(String correlationId, String targetAgentShortName, String sessionId, byte[] payload, String workspacePath) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_IN, sessionId, null, null, 0L, payload, workspacePath);
+    }
+
+    /** A {@link SandboxOp#COPY_OUT} request reading {@code workspacePath} out of the session as a tar archive. */
+    public static SandboxOpRequest copyOut(String correlationId, String targetAgentShortName, String sessionId, String workspacePath) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.COPY_OUT, sessionId, null, null, 0L, null, workspacePath);
+    }
+
+    /** A {@link SandboxOp#DESTROY} request tearing down an existing session. */
+    public static SandboxOpRequest destroy(String correlationId, String targetAgentShortName, String sessionId) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0L, null, null);
+    }
 }

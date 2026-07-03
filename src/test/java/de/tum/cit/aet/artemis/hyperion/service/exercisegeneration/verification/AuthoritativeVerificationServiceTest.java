@@ -61,11 +61,13 @@ class AuthoritativeVerificationServiceTest {
     /**
      * One build's report fixture: the JUnit/SCA reports the verifier {@code copyOut}s plus the build's exit code and timeout flag.
      *
-     * @param allNames    every test name the JUnit report carries (one {@code <testcase>} each)
-     * @param failedNames the subset that carry a {@code <failure>}
-     * @param scaReports  SCA reports keyed by their canonical per-tool file name (e.g. {@code spotbugsXml.xml}); empty for the common non-SCA case
-     * @param exitCode    the build's exit code; the solution gate requires 0
-     * @param timedOut    whether the build was killed for exceeding its timeout
+     * @param allNames         every test name the JUnit report carries (one {@code <testcase>} each)
+     * @param failedNames      the subset that carry a {@code <failure>}
+     * @param scaReports       SCA reports keyed by their canonical per-tool file name (e.g. {@code spotbugsXml.xml}); empty for the common non-SCA case
+     * @param exitCode         the build's exit code; the solution gate requires 0
+     * @param timedOut         whether the build was killed for exceeding its timeout
+     * @param explicitJunitXml verbatim JUnit XML to serve instead of one synthesized from {@code allNames}/{@code failedNames} (for the skipped/multi-suite shapes); {@code null}
+     *                             otherwise
      */
     private record BuildReportSpec(List<String> allNames, List<String> failedNames, Map<String, String> scaReports, int exitCode, boolean timedOut, String explicitJunitXml) {
 
@@ -109,7 +111,7 @@ class AuthoritativeVerificationServiceTest {
     }
 
     /** A build spec with explicit names and the subset that fail; the JUnit report carries a {@code <failure>} for each failed name. */
-    private static BuildReportSpec resultWithFails(int tests, int exit, List<String> allNames, List<String> failedNames) {
+    private static BuildReportSpec resultWithFails(int exit, List<String> allNames, List<String> failedNames) {
         return BuildReportSpec.of(allNames, failedNames, exit);
     }
 
@@ -173,7 +175,12 @@ class AuthoritativeVerificationServiceTest {
     }
 
     private static VerificationResult verify(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
+        return verifyGenerate(newVerifier(), new ScriptedSandbox(solution, template, problemStatement), new ProgrammingExercise());
+    }
+
+    /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
+    private static VerificationResult verifyGenerate(AuthoritativeVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
+        return verifier.verify(sandbox, "s", exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
@@ -181,10 +188,10 @@ class AuthoritativeVerificationServiceTest {
         return newVerifier().selfCheck(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise());
     }
 
-    /** Runs the 9-arg verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
+    /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
-                seededStructural);
+                seededStructural, false);
     }
 
     /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
@@ -247,8 +254,8 @@ class AuthoritativeVerificationServiceTest {
     void shouldRunThePristineScriptAndReadTheVerifierOwnedReportsDir() {
         // The verifier must run the PRISTINE verify.sh and read its verdict from the verifier-owned reports dir, never the agent's /workspace copy.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), PROBLEM_STATEMENT_WITH_TASK);
-        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise());
+        PathDispatchingSandbox sandbox = new PathDispatchingSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.accepted()).isTrue();
         assertThat(sandbox.execCommands).anyMatch(c -> c.contains(SandboxBuildCommandService.PRISTINE_VERIFY_PATH + " solution"));
         assertThat(sandbox.execCommands).noneMatch(c -> c.contains("/workspace/verify.sh"));
@@ -258,7 +265,7 @@ class AuthoritativeVerificationServiceTest {
     void shouldRejectWhenPristineReportsShowNoTests() {
         // No JUnit report in the reports dir (compile failure produced none) -> tests=0 both runs -> rejection.
         PathDispatchingSandbox sandbox = new PathDispatchingSandbox(result(0, 0, 0, 0), result(0, 0, 0, 0), PROBLEM_STATEMENT_WITH_TASK);
-        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise());
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.accepted()).isFalse();
         assertThat(result.testCount()).isZero();
         assertThat(result.reasons()).anyMatch(r -> r.contains("No tests were detected"));
@@ -334,7 +341,7 @@ class AuthoritativeVerificationServiceTest {
     void shouldAcceptWhenTaskBindingTestNamesCarryParentheses() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort(),testMergeSort())\n";
         List<String> names = List.of("testBubbleSort()", "testMergeSort()");
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).as("paren-bearing [task] bindings must resolve, not be flagged as unresolved").noneMatch(reason -> reason.contains("match no actual test"));
         assertThat(result.accepted()).isTrue();
         assertThat(result.testCount()).isEqualTo(2);
@@ -345,16 +352,16 @@ class AuthoritativeVerificationServiceTest {
     void shouldAcceptWhenTaskBindingOmitsParenthesesButTestNameHasThem() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort,testMergeSort)\n";
         List<String> names = List.of("testBubbleSort()", "testMergeSort()");
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).noneMatch(reason -> reason.contains("match no actual test"));
         assertThat(result.accepted()).isTrue();
     }
 
-    /** Runs the 8-arg verify with integrity-gate inputs, so the harness-immutability and solution-leak gates run alongside the differential. */
+    /** Runs verify with integrity-gate inputs in GENERATE mode, so the harness-immutability and solution-leak gates run alongside the differential. */
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
-                producedTemplate, producedSolution, Set.of());
+                producedTemplate, producedSolution, Set.of(), Set.of(), false);
     }
 
     /** Same as {@link #verifyWithFiles} but in ADAPT mode (the tests-repo harness-immutability gate is relaxed); every other gate still runs. */
@@ -430,7 +437,7 @@ class AuthoritativeVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of());
+                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
         assertThat(result.accepted()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -441,7 +448,7 @@ class AuthoritativeVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of());
+                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
         assertThat(result.accepted()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -467,7 +474,7 @@ class AuthoritativeVerificationServiceTest {
     @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsViaRealJUnitReports() {
         List<String> names = List.of("stack_initially_empty", "push_then_pop", "size_tracks_elements");
-        VerificationResult result = verify(resultWithFails(3, 0, names, List.of()), resultWithFails(3, 1, names, names),
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names),
                 "# Stack\n[task][Empty](stack_initially_empty)\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n");
         assertThat(result.accepted()).isTrue();
         assertThat(result.testCount()).isEqualTo(3);
@@ -533,7 +540,7 @@ class AuthoritativeVerificationServiceTest {
     void shouldRejectWhenTemplateFailsTooFewTests() {
         // A template failing only 1 of 6 tests is nearly complete; it must fail at least half.
         List<String> names = List.of("t0", "t1", "t2", "t3", "t4", "t5");
-        VerificationResult result = verify(resultWithFails(6, 0, names, List.of()), resultWithFails(6, 1, names, List.of("t0")), "# X\n[task][One](t0)\n[task][Two](t1)\n");
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, List.of("t0")), "# X\n[task][One](t0)\n[task][Two](t1)\n");
         assertThat(result.accepted()).isFalse();
         assertThat(result.templateFailed()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("nearly complete"));
@@ -549,7 +556,7 @@ class AuthoritativeVerificationServiceTest {
     @Test
     void shouldAcceptWhenTaskBindingsResolveToRealTestNames() {
         List<String> names = List.of("sortsUnsortedArray()", "sortsArrayWithDuplicates()");
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names));
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names));
         assertThat(result.accepted()).isTrue();
     }
 
@@ -560,7 +567,7 @@ class AuthoritativeVerificationServiceTest {
     void shouldRejectWhenATaskLineUsesTheWrongKeyword(String wrongKeyword) {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray)\n[" + wrongKeyword + "][Sort with duplicates](sortsArrayWithDuplicates)\n";
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.accepted()).as("a [%s] near-miss must be rejected even though a valid [task] line is present", wrongKeyword).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("wrong keyword") && r.contains(wrongKeyword));
     }
@@ -571,7 +578,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         String problemStatement = "# Sort\nSee [the docs](https://example.com) and the [reference][ref].\n[task][Sort an array](sortsUnsortedArray)\n"
                 + "[task][Sort with duplicates](sortsArrayWithDuplicates)\n";
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.reasons()).noneMatch(r -> r.contains("wrong keyword"));
         assertThat(result.accepted()).isTrue();
     }
@@ -581,7 +588,7 @@ class AuthoritativeVerificationServiceTest {
         // [task] names are @DisplayName/prose text while the real method names differ, so the binding resolves to nothing.
         String problemStatement = "# Sort\n[task][Sort an unsorted array](Sort an unsorted array)\n[task][Sort with duplicates](Sort with duplicates)\n";
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        VerificationResult result = verify(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), problemStatement);
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("match no actual test"));
     }
@@ -611,7 +618,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> failed2 = new ArrayList<>(
                 List.of("test_factorial_of_5", "test_factorial_of_20", "test_fibonacci_of_1", "test_fibonacci_of_10", "test_fibonacci_of_50", "test_factorial_of_0"));
         String ps = "# Factorial & Fibonacci\n[task][Factorial of 0](test_factorial_of_0)\n[task][Fibonacci of 0](test_fibonacci_of_0)\n[task][Fibonacci of 10](test_fibonacci_of_10)\n";
-        VerificationResult result = verify(resultWithFails(7, 0, all, List.of()), resultWithFails(7, 1, all, failed2), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failed2), ps);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_fibonacci_of_0"));
     }
@@ -621,7 +628,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> all = List.of("Stack_push_pop_cycle", "Stack_peek_returns_top_without_removal", "Stack_isEmpty_behaviour", "Stack_pop_on_empty_returns_undefined");
         List<String> failedOnTemplate = List.of("Stack_push_pop_cycle", "Stack_peek_returns_top_without_removal", "Stack_isEmpty_behaviour");
         String ps = "# Stack\n[task][Push/pop](Stack_push_pop_cycle)\n[task][Pop on empty returns undefined](Stack_pop_on_empty_returns_undefined)\n";
-        VerificationResult result = verify(resultWithFails(4, 0, all, List.of()), resultWithFails(4, 1, all, failedOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("Stack_pop_on_empty_returns_undefined"));
     }
@@ -632,7 +639,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> all = List.of("CompileStack", "stack_initially_empty", "stack_push_top", "stack_pop");
         List<String> failedOnTemplate = List.of("stack_initially_empty", "stack_push_top", "stack_pop");
         String ps = "# Stack\n[task][Initially empty](stack_initially_empty)\n[task][Push/top](stack_push_top)\n[task][Pop](stack_pop)\n";
-        VerificationResult result = verify(resultWithFails(4, 0, all, List.of()), resultWithFails(4, 1, all, failedOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).isTrue();
     }
 
@@ -646,7 +653,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> all = List.of("reverse_non_empty", "reverse_empty_string", "is_palindrome_true", "is_palindrome_false");
         List<String> failedOnTemplate = List.of("reverse_non_empty", "is_palindrome_true", "is_palindrome_false");
         String ps = "# Strings\n[task][Reverse](reverse_non_empty)\n[task][Palindrome](is_palindrome_true)\n";
-        VerificationResult result = verify(resultWithFails(4, 0, all, List.of()), resultWithFails(4, 1, all, failedOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).as("an unbound test passing on the template would give a bare-template student >0% in production").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("reverse_empty_string"));
     }
@@ -656,7 +663,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> all = List.of("TestConfigure", "CompileSort", "sorts_ascending", "sorts_with_duplicates", "stable_on_equal_keys");
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates", "stable_on_equal_keys");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n[task][Stable](stable_on_equal_keys)\n";
-        VerificationResult result = verify(resultWithFails(5, 0, all, List.of()), resultWithFails(5, 1, all, failedOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).as("build/configure gates legitimately pass on both; every behaviour test fails on the template").isTrue();
     }
 
@@ -676,7 +683,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> all = List.of("CompileSort", "push_grows", "peek_returns_top");
         List<String> failedOnTemplate = List.of("push_grows");
         String ps = "# Stack\n[task][Push](push_grows)\n";
-        VerificationResult result = verify(resultWithFails(3, 0, all, List.of()), resultWithFails(3, 1, all, failedOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("peek_returns_top"));
     }
@@ -689,7 +696,7 @@ class AuthoritativeVerificationServiceTest {
         List<String> behaviouralFailOnTemplate = List.of("test_new_stack_is_empty", "test_push_makes_not_empty", "test_peek_returns_last_without_removing",
                 "test_pop_returns_last_and_removes", "test_pop_on_empty_raises", "test_peek_on_empty_raises");
         String ps = "# Stack\n[task][Empty](test_new_stack_is_empty)\n[task][Structure](test_stack_structure)\n";
-        VerificationResult result = verify(resultWithFails(7, 0, all, List.of()), resultWithFails(7, 1, all, behaviouralFailOnTemplate), ps);
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, behaviouralFailOnTemplate), ps);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("PASS on the template") && r.contains("test_stack_structure"));
     }
@@ -701,7 +708,7 @@ class AuthoritativeVerificationServiceTest {
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
         // Solution skips peek_does_not_remove (2 executed) while the template runs it (3); the dropped skipped case yields 2 != 3 -> rejection.
         BuildReportSpec solution = skippedSolution();
-        BuildReportSpec template = resultWithFails(3, 1, List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"),
+        BuildReportSpec template = resultWithFails(1, List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"),
                 List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"));
         String ps = "# Stack\n[task][Push/Pop](push_then_pop)\n[task][Size](size_tracks_elements)\n";
         VerificationResult result = verify(solution, template, ps);
@@ -770,7 +777,7 @@ class AuthoritativeVerificationServiceTest {
         // A planted symlink could redirect the verifier to an out-of-tree file; the hardened reader rejects the whole archive.
         TarArchiveInputStream tamperedSolution = symlinkedReportsTar("solution");
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-        BuildReportSpec template = resultWithFails(2, 1, names, names);
+        BuildReportSpec template = resultWithFails(1, names, names);
         InteractiveSandbox sandbox = new InteractiveSandbox() {
 
             @Override
@@ -799,7 +806,7 @@ class AuthoritativeVerificationServiceTest {
             public void destroySession(String sessionId) {
             }
         };
-        VerificationResult result = newVerifier().verify(sandbox, "s", new ProgrammingExercise());
+        VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
         assertThat(result.accepted()).as("a reports archive with a symlinked entry must be rejected, not parsed").isFalse();
         assertThat(result.testCount()).isZero();
     }
@@ -843,7 +850,7 @@ class AuthoritativeVerificationServiceTest {
 
         private BuildReportSpec failingTemplate() {
             List<String> names = List.of(DEFAULT_BOUND_NAMES);
-            return resultWithFails(2, 1, names, names);
+            return resultWithFails(1, names, names);
         }
 
         private StaticCodeAnalysisCategory category(String name, CategoryState state, double penalty) {
@@ -869,7 +876,8 @@ class AuthoritativeVerificationServiceTest {
             // A Java exercise always ships a harness, so the F2 fail-closed gate requires a non-empty seed snapshot; supply an unchanged (seed == produced) pom.xml with no
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
-            return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness, harness, Map.of(), Map.of(), Set.of());
+            return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness, harness, Map.of(), Map.of(), Set.of(), Set.of(),
+                    false);
         }
 
         @Test
@@ -902,7 +910,7 @@ class AuthoritativeVerificationServiceTest {
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness,
-                    harness, Map.of(), Map.of(), Set.of());
+                    harness, Map.of(), Map.of(), Set.of(), Set.of(), false);
             assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -952,7 +960,7 @@ class AuthoritativeVerificationServiceTest {
             when(repo.findByExerciseId(7L)).thenReturn(Set.of(graded));
             var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
-            VerificationResult result = verifier.verify(new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
+            VerificationResult result = verifyGenerate(verifier, new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), exercise);
             assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -983,8 +991,8 @@ class AuthoritativeVerificationServiceTest {
         @ParameterizedTest(name = "{0}")
         @MethodSource("structuralBindingAcceptCases")
         void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds(String caseName, String problemStatement, List<String> allNames, Set<String> seededStructural) {
-            VerificationResult result = verifyWithSeededStructural(resultWithFails(allNames.size(), 0, allNames, List.of()),
-                    resultWithFails(allNames.size(), 1, allNames, allNames), problemStatement, seededStructural);
+            VerificationResult result = verifyWithSeededStructural(resultWithFails(0, allNames, List.of()), resultWithFails(1, allNames, allNames), problemStatement,
+                    seededStructural);
             assertThat(result.reasons()).as("a structural-shaped binding must not be reported as unresolved").noneMatch(r -> r.contains("match no actual test"));
             assertThat(result.accepted()).as("a structural binding/test must not block acceptance while the differential holds").isTrue();
         }
@@ -1004,7 +1012,7 @@ class AuthoritativeVerificationServiceTest {
         void stillRejects_whenAREALBehaviourTestIsLeftUnboundAndDanglingBinding() {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
-            VerificationResult result = verify(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, all), ps);
+            VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
             assertThat(result.accepted()).isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("match no actual test") && r.contains("aDisplayNameNotAMethodName"));
         }
@@ -1015,7 +1023,7 @@ class AuthoritativeVerificationServiceTest {
             List<String> all = List.of("realBehaviour", "testClass[Evil]");
             List<String> failedOnTemplate = List.of("realBehaviour");
             String ps = "# X\n[task][Real](realBehaviour)\n[task][Disguised](testClass[Evil])\n";
-            VerificationResult result = verify(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, failedOnTemplate), ps);
+            VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
             assertThat(result.accepted()).as("a structurally-named real test that passes on the template must still be rejected by the differential").isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("testClass[Evil]"));
         }
@@ -1024,7 +1032,7 @@ class AuthoritativeVerificationServiceTest {
         void differentialStillEnforced_whenAnAutoSeededStructuralTestPassesOnTemplate() {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]");
             List<String> failedOnTemplate = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            VerificationResult result = verifyWithSeededStructural(resultWithFails(3, 0, all, List.of()), resultWithFails(3, 1, all, failedOnTemplate), PROBLEM_STATEMENT_WITH_TASK,
+            VerificationResult result = verifyWithSeededStructural(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), PROBLEM_STATEMENT_WITH_TASK,
                     Set.of("testClass[Sorter]"));
             assertThat(result.accepted()).as("a seeded structural test that passes on the template is a free point and must be rejected").isFalse();
             assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("testClass[Sorter]"));
@@ -1041,7 +1049,7 @@ class AuthoritativeVerificationServiceTest {
         @Test
         void reportsAcceptedWhenSolutionPassesAndTemplateFailsSameTests() {
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 1, names, names), PROBLEM_STATEMENT_WITH_TASK);
+            AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.wouldBeAccepted()).isTrue();
             assertThat(report.solutionPassed()).isTrue();
             assertThat(report.solutionTests()).isEqualTo(2);
@@ -1066,7 +1074,7 @@ class AuthoritativeVerificationServiceTest {
             // A zero-value stub passes a test expecting exactly that; the self-check must name the wrongly-passing test so the agent fixes the stub in-loop.
             List<String> all = List.of("returns_empty_for_empty_input", "reverses_non_empty");
             List<String> failedOnTemplate = List.of("reverses_non_empty");
-            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, failedOnTemplate),
+            AgentVerifyReport report = selfCheck(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate),
                     "# Reverse\n[task][Empty](returns_empty_for_empty_input)\n[task][Non-empty](reverses_non_empty)\n");
             assertThat(report.wouldBeAccepted()).isFalse();
             assertThat(report.templateWronglyPassing()).containsExactly("returns_empty_for_empty_input");
@@ -1076,7 +1084,7 @@ class AuthoritativeVerificationServiceTest {
         @Test
         void reportsSolutionFailuresByName() {
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            AgentVerifyReport report = selfCheck(resultWithFails(2, 1, all, List.of("sortsArrayWithDuplicates")), resultWithFails(2, 1, all, all), PROBLEM_STATEMENT_WITH_TASK);
+            AgentVerifyReport report = selfCheck(resultWithFails(1, all, List.of("sortsArrayWithDuplicates")), resultWithFails(1, all, all), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.solutionPassed()).isFalse();
             assertThat(report.solutionFailedNames()).contains("sortsArrayWithDuplicates");
             assertThat(report.wouldBeAccepted()).isFalse();
@@ -1088,7 +1096,7 @@ class AuthoritativeVerificationServiceTest {
             // A bound display name must be listed as a binding problem so the agent copies a real name from `exactTestNames`.
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
-            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, all, List.of()), resultWithFails(2, 1, all, all), ps);
+            AgentVerifyReport report = selfCheck(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
             assertThat(report.unresolvedTaskBindings()).contains("aDisplayNameNotAMethodName");
             assertThat(report.wouldBeAccepted()).isFalse();
             assertThat(report.toObservation()).contains("[task] binding problems").contains("aDisplayNameNotAMethodName");
@@ -1108,7 +1116,7 @@ class AuthoritativeVerificationServiceTest {
             // read
             // "correctly fails all N".
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            AgentVerifyReport report = selfCheck(resultWithFails(2, 0, names, List.of()), resultWithFails(2, 0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
+            AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.templateCompiled()).isTrue();
             assertThat(report.templateFailed()).isFalse();
             assertThat(report.wouldBeAccepted()).isFalse();
@@ -1119,11 +1127,11 @@ class AuthoritativeVerificationServiceTest {
         void selfCheckAndPostLoopVerifyAgreeOnTheVerdict() {
             // The self-check's wouldBeAccepted must match the post-loop verify's accepted on the same workspace (the integrity gates the self-check skips fail open with no files).
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            BuildReportSpec solution = resultWithFails(2, 0, names, List.of());
-            BuildReportSpec template = resultWithFails(2, 1, names, names);
+            BuildReportSpec solution = resultWithFails(0, names, List.of());
+            BuildReportSpec template = resultWithFails(1, names, names);
             assertThat(selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, template).accepted()).isTrue();
 
-            BuildReportSpec passingTemplate = resultWithFails(2, 0, names, List.of());
+            BuildReportSpec passingTemplate = resultWithFails(0, names, List.of());
             assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).accepted()).isFalse();
         }
     }

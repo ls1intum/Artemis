@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * Spec-fidelity / coverage critic — the one quality axis the differential oracle ({@link AuthoritativeVerificationService}) is structurally blind to.
  * <p>
  * The oracle proves an exercise is internally <em>consistent</em> (the solution passes its own tests, the template fails them, every [task] binds) but never whether the produced
- * tests cover the requirements the <em>instructor's brief</em> actually names. Three real defect classes from a GPU+sandbox hard-exercise audit slip straight through it:
+ * tests cover the requirements the <em>instructor's brief</em> actually names. Real defect classes from a GPU+sandbox hard-exercise audit slip straight through it, for example:
  * <ul>
  * <li><strong>Spec-narrowing:</strong> a "count user-perceived characters incl. emoji and CJK" brief shipped with tests for only precomposed {@code café} and one emoji, with no
  * CJK and no ZWJ/flag-emoji test — internally consistent, but wrong for the real spec.</li>
@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * <li><strong>Grader-mechanics leakage:</strong> grader-internal phrasing ("All functions should raise NotImplementedError in the template file to make the tests fail") leaking
  * into the student-facing problem statement.</li>
  * </ul>
- * It does this in two passes: a cheap deterministic regex pass over the problem statement for grader-mechanics leaks (no model call), and a single bounded LLM pass that marks the
- * brief's named requirements that no test references.
+ * It combines deterministic passes (a regex scan of the problem statement for grader-mechanics leaks and a scan of the produced tests for message-less assertions, both model-free)
+ * with a single bounded LLM pass (uncovered requirements, missing worked examples, and invented requirements). See {@link SpecFidelityReport.Kind} for the full set of findings.
  * <p>
  * <strong>Non-blocking by construction.</strong> The differential oracle stays the sole source of truth for acceptance; this critic NEVER participates in the accept/reject
  * decision,
@@ -52,7 +52,7 @@ public class SpecFidelityCriticService {
 
     private static final Logger log = LoggerFactory.getLogger(SpecFidelityCriticService.class);
 
-    /** Hard cap on the critic's output so the single pass can never explode cost; one finding is a couple of sentences, so this comfortably bounds a realistic finding list. */
+    /** Hard cap on the critic's output so the single LLM pass can never explode cost. */
     private static final int CRITIC_MAX_OUTPUT_TOKENS = 1_500;
 
     /** Defensive cap on how many model-reported uncovered requirements are surfaced, so a degenerate response can never flood the retry prompt or the review panel. */
