@@ -80,24 +80,25 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.noUsersFoundError.set(undefined);
     }
 
-    async onCSVFileSelect(event: any) {
-        if (event.target.files.length > 0) {
+    async onCSVFileSelect(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
             this.resetDialog();
-            const file = event.target.files[0];
+            const file = input.files[0];
             this.isParsing.set(true);
             try {
                 if (this.examUserMode()) {
                     const result = await readExamUserDTOsFromCSVFile(file);
                     if (!result.ok) {
                         this.validationError.set(result.invalidRowIndices.join(', '));
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
                     const examUsers = result.examUsers;
                     if (examUsers.length === 0) {
                         this.noUsersFoundError.set(true);
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
@@ -106,14 +107,14 @@ export class UsersImportDialogComponent implements OnDestroy {
                     const result = await readStudentDTOsFromCSVFile(file);
                     if (!result.ok) {
                         this.validationError.set(result.invalidRowIndices.join(', '));
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
                     const students = result.students;
                     if (students.length === 0) {
                         this.noUsersFoundError.set(true);
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
@@ -121,7 +122,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 }
             } catch {
                 this.alertService.error('artemisApp.importUsers.genericErrorMessage');
-                event.target.value = '';
+                input.value = '';
             } finally {
                 this.isParsing.set(false);
             }

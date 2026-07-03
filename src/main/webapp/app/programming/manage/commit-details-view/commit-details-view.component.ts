@@ -131,14 +131,14 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 ? of(new Map())
                 : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
                       this.exerciseId,
-                      this.repositoryId()!,
+                      this.repositoryId(),
                       previousCommitHash,
                       this.repositoryType,
                   );
 
         const rightCommitObservable = this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
             this.exerciseId,
-            this.repositoryId()!,
+            this.repositoryId(),
             currentCommitHash,
             this.repositoryType,
         );
