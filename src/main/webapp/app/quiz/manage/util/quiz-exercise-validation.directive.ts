@@ -62,9 +62,9 @@ export abstract class QuizExerciseValidationDirective {
             this.quizExercise().quizQuestions != undefined &&
             !!this.quizExercise().quizQuestions!.length;
 
-        const areAllQuestionsValid = this.quizExercise().quizQuestions?.every(function (question) {
+        const areAllQuestionsValid = this.quizExercise().quizQuestions?.every((question) => {
             return isQuizQuestionValid(question, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
-        }, this);
+        });
         const maxPointsReachableInQuiz = this.quizExercise()
             .quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0)
             .reduce((a, b) => a + b, 0);
@@ -158,9 +158,9 @@ export abstract class QuizExerciseValidationDirective {
         //         });
         //     }
         // }
-        this.quizExercise().quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
+        this.quizExercise().quizQuestions!.forEach((question: QuizQuestion, index: number) => {
             computeQuizQuestionInvalidReason(invalidReasons, question, index, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
-        }, this);
+        });
         const invalidFlaggedReasons = !this.quizExercise()
             ? []
             : this.quizExercise()
