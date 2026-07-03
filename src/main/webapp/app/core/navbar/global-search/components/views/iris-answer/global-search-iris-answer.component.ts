@@ -14,9 +14,6 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
 
-/** Delay in ms after a new result before measuring the rendered answer height. */
-const ANSWER_MEASURE_DELAY_MS = 60;
-
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
 
@@ -69,6 +66,11 @@ export class GlobalSearchIrisAnswerComponent {
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
+        // The answer is rendered by the lazily-loaded markdown directive, so its final
+        // height is only known once that chunk resolves and populates the element. A
+        // fixed timer can fire while the element is still empty on a cold load, leaving
+        // long answers unclamped; a ResizeObserver re-measures whenever the rendered
+        // content changes size, so the clamp/show-more control appears reliably.
         effect((onCleanup) => {
             const result = this.irisResult();
             untracked(() => {
@@ -77,15 +79,22 @@ export class GlobalSearchIrisAnswerComponent {
                 this.moreOpen.set(false);
             });
             if (!result?.answer) return;
-            const measureTimeout = setTimeout(() => {
-                const element = this.answerBody()?.nativeElement;
-                if (element) {
-                    const rawLineHeight = getComputedStyle(element).lineHeight;
-                    const lineHeight = rawLineHeight === 'normal' ? DEFAULT_LINE_HEIGHT_PX : parseFloat(rawLineHeight);
-                    untracked(() => this.isOverflowing.set(element.scrollHeight > lineHeight * CLAMP_LINE_COUNT));
-                }
-            }, ANSWER_MEASURE_DELAY_MS);
-            onCleanup(() => clearTimeout(measureTimeout));
+            // Reactive read: the effect re-runs once the `#answerBody` element is rendered.
+            const element = this.answerBody()?.nativeElement;
+            if (!element) return;
+
+            const measure = () => {
+                const rawLineHeight = getComputedStyle(element).lineHeight;
+                const lineHeight = rawLineHeight === 'normal' ? DEFAULT_LINE_HEIGHT_PX : parseFloat(rawLineHeight);
+                untracked(() => this.isOverflowing.set(element.scrollHeight > lineHeight * CLAMP_LINE_COUNT));
+            };
+
+            measure();
+            if (typeof ResizeObserver === 'undefined') return;
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- disconnected via the effect's onCleanup, which runs on destroy
+            const observer = new ResizeObserver(() => measure());
+            observer.observe(element);
+            onCleanup(() => observer.disconnect());
         });
 
         // Iris answer pipeline — runs alongside the main search.
