@@ -17,7 +17,6 @@
 
 // Content column beside the sidebar; holds the search above the message/thread row.
 .communication-content-main {
-    // No course title bar on this page, so the content reclaims that space (matches the sidebar no-header-bar convention).
     --header-height: 16px;
 
     flex: 1 1 0;

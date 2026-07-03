@@ -1,7 +1,6 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
 :host {
-    // No course title bar on this page, so only reserve the small residual gap (matches the sidebar/exercises no-header-bar convention).
     --header-height: 16px;
 
     @include dynamic-content-height(--header-height);
