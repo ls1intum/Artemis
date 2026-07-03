@@ -4,7 +4,7 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { onError } from 'app/foundation/util/global.utils';
+import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -513,7 +513,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         } catch (error) {
             this.isSaving.set(false);
-            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: message });
         }
     }
 
@@ -734,7 +735,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isFileChanged.set(true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: message });
         } finally {
             this.isPdfLoading.set(false);
             this.dialogErrorSource.next('');
@@ -763,7 +765,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: message });
             if (objectUrl) {
                 URL.revokeObjectURL(objectUrl);
             }
