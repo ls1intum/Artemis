@@ -228,6 +228,7 @@ describe('PdfPreviewComponent', () => {
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
         });
+        expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
         expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
         expect(alertService.success).toHaveBeenCalled();
     });
