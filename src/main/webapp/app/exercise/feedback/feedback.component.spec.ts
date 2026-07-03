@@ -243,7 +243,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exercise()).toEqual(exercise);
+        expect(comp.resolvedExercise()).toEqual(exercise);
         expect(comp.course()).toEqual(exercise.course);
     });
 
@@ -254,7 +254,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exerciseType()).toBe(ExerciseType.MODELING);
+        expect(comp.resolvedExerciseType()).toBe(ExerciseType.MODELING);
     });
 
     it('should set the exercise type from a programming participation if not available otherwise', () => {
@@ -264,7 +264,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
+        expect(comp.resolvedExerciseType()).toBe(ExerciseType.PROGRAMMING);
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {

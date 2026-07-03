@@ -34,12 +34,12 @@
                                 @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                                     <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                                 } @else {
-                                    @if (!exercise()?.maxPoints) {
+                                    @if (!resolvedExercise()?.maxPoints) {
                                         <span
                                             jhiTranslate="artemisApp.result.score"
                                             [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result().score, course()) }"
                                         ></span>
-                                    } @else if (exercise(); as exercise) {
+                                    } @else if (resolvedExercise(); as exercise) {
                                         @if (exercise.maxPoints) {
                                             <span
                                                 jhiTranslate="artemisApp.result.scoreWithPoints"
@@ -61,7 +61,7 @@
                         </div>
 
                         <!-- Show and link to the commit hash in case of programming exercise results -->
-                        @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
+                        @if (resolvedExerciseType() === ExerciseType.PROGRAMMING && result().submission) {
                             <p>
                                 {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
                                 <span [ngbTooltip]="result().submission!.submissionDate | artemisDate">
@@ -75,7 +75,7 @@
                     </div>
                 }
 
-                @if (showScoreChart() && result().submission?.participation?.exercise) {
+                @if (scoreChartVisible() && result().submission?.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" class="chart-space" style="height: 80px">
                             <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
@@ -102,10 +102,10 @@
                         @if (result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                             <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
                         } @else {
-                            @if (exercise()?.assessmentType !== AssessmentType.AUTOMATIC) {
+                            @if (resolvedExercise()?.assessmentType !== AssessmentType.AUTOMATIC) {
                                 <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
                             }
-                            @if (exercise()?.assessmentType === AssessmentType.AUTOMATIC) {
+                            @if (resolvedExercise()?.assessmentType === AssessmentType.AUTOMATIC) {
                                 <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
                             }
                         }
