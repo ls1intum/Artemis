@@ -85,41 +85,26 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var enrichedStatusUpdate = enrichCommand(statusUpdate);
+        var enrichedStatusUpdate = enrichPointOutCommand(statusUpdate);
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, enrichedStatusUpdate);
 
         removeJobIfTerminatedElseUpdate(enrichedStatusUpdate.stages(), updatedJob);
     }
 
     /**
-     * Enriches the command carried by a status update with data that only Artemis can resolve authoritatively (e.g. display names looked up from the database). Returns the
-     * original status update unchanged when there is no command or nothing to enrich for its type.
+     * Fills in the lecture unit's display name on a point-out navigation marker. Pyris may already provide it; if it does not, the name is resolved authoritatively from the
+     * database
+     * by lecture unit id and a copy of the status update carrying the enriched command is returned. Returns the original status update unchanged when the command is not a
+     * point-out,
+     * its id is missing, a name is already present, or no name can be resolved.
      *
      * @param statusUpdate the incoming status update
-     * @return the status update with an enriched command, or the original if nothing to enrich
+     * @return the status update with an enriched point-out command, or the original if nothing to enrich
      */
-    private PyrisChatStatusUpdateDTO enrichCommand(PyrisChatStatusUpdateDTO statusUpdate) {
-        var enrichedCommand = switch (statusUpdate.command()) {
-            case PyrisPointOutCommandDTO pointOut -> enrichPointOutWithUnitName(pointOut);
-            case null -> null;
-        };
-        if (enrichedCommand == statusUpdate.command()) {
+    private PyrisChatStatusUpdateDTO enrichPointOutCommand(PyrisChatStatusUpdateDTO statusUpdate) {
+        if (!(statusUpdate.command() instanceof PyrisPointOutCommandDTO pointOut) || pointOut.lectureUnitId() == null
+                || (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank())) {
             return statusUpdate;
-        }
-        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
-                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedCommand);
-    }
-
-    /**
-     * Ensures a point-out navigation marker carries the lecture unit's display name. Pyris may already provide it; if it does not, the name is resolved authoritatively from the
-     * database by lecture unit id. Returns the original command unchanged when its id is missing, a name is already present, or no name can be resolved.
-     *
-     * @param pointOut the point-out command to enrich
-     * @return a point-out command with a resolved name, or the original if nothing to enrich
-     */
-    private PyrisPointOutCommandDTO enrichPointOutWithUnitName(PyrisPointOutCommandDTO pointOut) {
-        if (pointOut.lectureUnitId() == null || (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank())) {
-            return pointOut;
         }
         String name = lectureUnitRepositoryApi.flatMap(api -> {
             try {
@@ -131,9 +116,11 @@ public class PyrisStatusUpdateService {
             }
         }).orElse(null);
         if (name == null || name.isBlank()) {
-            return pointOut;
+            return statusUpdate;
         }
-        return new PyrisPointOutCommandDTO(pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp(), name);
+        var enrichedCommand = new PyrisPointOutCommandDTO(pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp(), name);
+        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
+                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedCommand);
     }
 
     /**
