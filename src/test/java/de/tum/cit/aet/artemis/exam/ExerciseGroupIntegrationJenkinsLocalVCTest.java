@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -65,7 +66,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     private ExamTestRepository examRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository exerciseGroupRepository;
+    private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
     private UserUtilService userUtilService;

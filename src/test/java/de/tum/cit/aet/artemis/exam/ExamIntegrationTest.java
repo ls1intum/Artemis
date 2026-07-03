@@ -1332,6 +1332,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
             assertThat(exam.endDate()).as("for exam with index %d and id %d", i, exam.id()).isAfterOrEqualTo(currentDay);
             assertThat(exam.course()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
             assertThat(exam.course().id()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
+            // The DTO no longer carries isTestCourse, so verify the query's test-course exclusion against the database.
+            assertThat(examRepository.findByIdElseThrow(exam.id()).getCourse().isTestCourse()).as("for exam with index %d and id %d", i, exam.id()).isFalse();
         }
         // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
         UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();

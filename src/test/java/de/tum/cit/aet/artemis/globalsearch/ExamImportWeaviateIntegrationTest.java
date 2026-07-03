@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -47,7 +48,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     private WeaviateService weaviateService;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
