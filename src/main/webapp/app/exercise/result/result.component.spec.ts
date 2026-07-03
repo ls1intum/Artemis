@@ -197,7 +197,7 @@ describe('ResultComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({
+                    inputValues: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,
                         exerciseType: preparedFeedback.exerciseType,

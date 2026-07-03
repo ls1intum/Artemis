@@ -27,7 +27,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 describe('FeedbackComponent', () => {
     setupTestBed({ zoneless: true });
@@ -204,14 +203,14 @@ describe('FeedbackComponent', () => {
         course.id = 3;
         course.title = 'Testcourse';
         exercise.course = course;
-        comp.exercise = exercise;
-        comp.participation = {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', {
             id: 55,
             type: ParticipationType.PROGRAMMING,
             participantIdentifier: 'student42',
             repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
-        } as ProgrammingExerciseStudentParticipation;
-        comp.result = {
+        } as ProgrammingExerciseStudentParticipation);
+        fixture.componentRef.setInput('result', {
             id: 89,
             submission: {
                 participation: {
@@ -222,7 +221,7 @@ describe('FeedbackComponent', () => {
                 },
                 buildFailed: true,
             },
-        } as Result;
+        } as Result);
         buildLogService = TestBed.inject(BuildLogService);
         resultService = TestBed.inject(ResultService);
         profileService = TestBed.inject(ProfileService);
@@ -239,41 +238,41 @@ describe('FeedbackComponent', () => {
     });
 
     it('should set the exercise from the participation if available', () => {
-        comp.exercise = undefined;
-        comp.participation.exercise = exercise;
+        fixture.componentRef.setInput('exercise', undefined);
+        comp.participation().exercise = exercise;
 
         comp.ngOnInit();
 
-        expect(comp.exercise).toEqual(exercise);
+        expect(comp.exercise()).toEqual(exercise);
         expect(comp.course()).toEqual(exercise.course);
     });
 
     it('should set the exercise type from the exercise if not available otherwise', () => {
-        comp.exerciseType = undefined as any;
+        fixture.componentRef.setInput('exerciseType', undefined);
         exercise.type = ExerciseType.MODELING;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         comp.ngOnInit();
 
-        expect(comp.exerciseType).toBe(ExerciseType.MODELING);
+        expect(comp.exerciseType()).toBe(ExerciseType.MODELING);
     });
 
     it('should set the exercise type from a programming participation if not available otherwise', () => {
-        comp.exerciseType = undefined as any;
-        comp.exercise = undefined;
-        comp.result.submission!.participation!.type = ParticipationType.PROGRAMMING;
+        fixture.componentRef.setInput('exerciseType', undefined);
+        fixture.componentRef.setInput('exercise', undefined);
+        comp.result().submission!.participation!.type = ParticipationType.PROGRAMMING;
 
         comp.ngOnInit();
 
-        expect(comp.exerciseType).toBe(ExerciseType.PROGRAMMING);
+        expect(comp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
-        comp.result.submission = {
-            ...comp.result.submission,
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().feedbacks = feedbacks;
+        comp.result().submission = {
+            ...comp.result().submission,
             type: SubmissionType.MANUAL,
             commitHash: '123456789ab',
         } as ProgrammingSubmission;
@@ -285,8 +284,8 @@ describe('FeedbackComponent', () => {
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().feedbacks = feedbacks;
 
         comp.ngOnInit();
 
@@ -296,18 +295,18 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result());
         expect(comp.isLoading()).toBe(false);
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
 
         comp.ngOnInit();
 
@@ -318,8 +317,8 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
-        comp.exerciseType = ExerciseType.MODELING;
-        comp.result.submission = new ModelingSubmission();
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
+        comp.result().submission = new ModelingSubmission();
 
         comp.ngOnInit();
 
@@ -329,8 +328,8 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.submission = generateProgrammingSubmission(false);
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().submission = generateProgrammingSubmission(false);
 
         comp.ngOnInit();
 
@@ -340,7 +339,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         const response = new HttpErrorResponse({ status: 403 });
         buildlogsStub.mockReturnValue(throwError(() => response));
 
@@ -353,7 +352,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
-        comp.exerciseType = ExerciseType.PROGRAMMING;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         const response = new HttpErrorResponse({ status: 500 });
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
@@ -367,8 +366,8 @@ describe('FeedbackComponent', () => {
     it('should not show test details to students', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().feedbacks = feedbacks;
 
         comp.ngOnInit();
 
@@ -378,11 +377,11 @@ describe('FeedbackComponent', () => {
     it('should show test details to tutors', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().feedbacks = feedbacks;
 
         exercise.isAtLeastTutor = true;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         comp.ngOnInit();
 
@@ -392,11 +391,11 @@ describe('FeedbackComponent', () => {
     it('should show test details to students for programming exercises with show test names on', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+        comp.result().feedbacks = feedbacks;
 
         exercise.showTestNamesToStudents = true;
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
 
         comp.ngOnInit();
 
@@ -438,10 +437,10 @@ describe('FeedbackComponent', () => {
         expect((comp.feedbackItemNodes()![0] as unknown as FeedbackGroup).open).toBe(false);
     });
 
-    describe('when opened via DialogService (DynamicDialogConfig.data)', () => {
-        it('copies the dialog data into the component inputs before initializing feedback', () => {
-            // The standalone-feedback page binds inputs via the template; PrimeNG dialogs deliver them through DynamicDialogConfig.data.
-            // This verifies the dialog-data path (skipped by the other tests, which inject no DynamicDialogConfig).
+    describe('when opened via DialogService (inputValues forwarded via setInput)', () => {
+        it('reads the inputs forwarded by the dialog before initializing feedback', () => {
+            // The standalone-feedback page binds inputs via the template; PrimeNG's DialogService forwards `inputValues`
+            // by calling componentRef.setInput on the same signal inputs. This verifies that dialog-forwarded path.
             TestBed.resetTestingModule();
 
             const dialogExercise = { id: 7, type: ExerciseType.PROGRAMMING, maxPoints: 100, bonusPoints: 0, course: exercise.course } as ProgrammingExercise;
@@ -452,20 +451,6 @@ describe('FeedbackComponent', () => {
                 providers: [
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },
-                    {
-                        provide: DynamicDialogConfig,
-                        useValue: {
-                            data: {
-                                exercise: dialogExercise,
-                                result: dialogResult,
-                                participation: dialogParticipation,
-                                exerciseType: ExerciseType.PROGRAMMING,
-                                showScoreChart: true,
-                                taskName: 'Task 1',
-                                numberOfNotExecutedTests: 4,
-                            },
-                        },
-                    },
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
@@ -477,15 +462,23 @@ describe('FeedbackComponent', () => {
             vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
             vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
+            dialogFixture.componentRef.setInput('exercise', dialogExercise);
+            dialogFixture.componentRef.setInput('result', dialogResult);
+            dialogFixture.componentRef.setInput('participation', dialogParticipation);
+            dialogFixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
+            dialogFixture.componentRef.setInput('showScoreChart', true);
+            dialogFixture.componentRef.setInput('taskName', 'Task 1');
+            dialogFixture.componentRef.setInput('numberOfNotExecutedTests', 4);
+
             dialogComp.ngOnInit();
 
-            expect(dialogComp.exercise).toBe(dialogExercise);
-            expect(dialogComp.result).toBe(dialogResult);
-            expect(dialogComp.participation).toBe(dialogParticipation);
-            expect(dialogComp.exerciseType).toBe(ExerciseType.PROGRAMMING);
-            expect(dialogComp.showScoreChart).toBe(true);
-            expect(dialogComp.taskName).toBe('Task 1');
-            expect(dialogComp.numberOfNotExecutedTests).toBe(4);
+            expect(dialogComp.exercise()).toBe(dialogExercise);
+            expect(dialogComp.result()).toBe(dialogResult);
+            expect(dialogComp.participation()).toBe(dialogParticipation);
+            expect(dialogComp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
+            expect(dialogComp.showScoreChart()).toBe(true);
+            expect(dialogComp.taskName()).toBe('Task 1');
+            expect(dialogComp.numberOfNotExecutedTests()).toBe(4);
         });
     });
 });

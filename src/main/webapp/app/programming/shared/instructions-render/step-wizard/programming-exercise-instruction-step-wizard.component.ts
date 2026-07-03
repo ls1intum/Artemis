@@ -72,7 +72,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise: this.exercise(),
                 result: latestResult,
                 participation: this.participation(),
