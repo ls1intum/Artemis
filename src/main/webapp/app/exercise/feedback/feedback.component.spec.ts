@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -248,28 +248,25 @@ describe('FeedbackComponent', () => {
     });
 
     it('should set the exercise type from the exercise if not available otherwise', () => {
-        fixture.componentRef.setInput('exerciseType', undefined);
         exercise.type = ExerciseType.MODELING;
         fixture.componentRef.setInput('exercise', exercise);
 
         comp.ngOnInit();
 
-        expect(comp.resolvedExerciseType()).toBe(ExerciseType.MODELING);
+        expect(comp.exerciseType()).toBe(ExerciseType.MODELING);
     });
 
     it('should set the exercise type from a programming participation if not available otherwise', () => {
-        fixture.componentRef.setInput('exerciseType', undefined);
         fixture.componentRef.setInput('exercise', undefined);
         comp.result().submission!.participation!.type = ParticipationType.PROGRAMMING;
 
         comp.ngOnInit();
 
-        expect(comp.resolvedExerciseType()).toBe(ExerciseType.PROGRAMMING);
+        expect(comp.exerciseType()).toBe(ExerciseType.PROGRAMMING);
     });
 
     it('should generate commit link for programming exercise result with submission, participation and exercise', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().feedbacks = feedbacks;
         comp.result().submission = {
             ...comp.result().submission,
@@ -284,7 +281,6 @@ describe('FeedbackComponent', () => {
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().feedbacks = feedbacks;
 
         comp.ngOnInit();
@@ -295,7 +291,6 @@ describe('FeedbackComponent', () => {
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
         comp.ngOnInit();
@@ -306,8 +301,6 @@ describe('FeedbackComponent', () => {
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
-
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
@@ -317,7 +310,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.MODELING } as Exercise);
         comp.result().submission = new ModelingSubmission();
 
         comp.ngOnInit();
@@ -328,7 +321,6 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().submission = generateProgrammingSubmission(false);
 
         comp.ngOnInit();
@@ -339,7 +331,6 @@ describe('FeedbackComponent', () => {
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         const response = new HttpErrorResponse({ status: 403 });
         buildlogsStub.mockReturnValue(throwError(() => response));
 
@@ -352,7 +343,6 @@ describe('FeedbackComponent', () => {
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         const response = new HttpErrorResponse({ status: 500 });
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
@@ -366,7 +356,6 @@ describe('FeedbackComponent', () => {
     it('should not show test details to students', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().feedbacks = feedbacks;
 
         comp.ngOnInit();
@@ -377,7 +366,6 @@ describe('FeedbackComponent', () => {
     it('should show test details to tutors', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().feedbacks = feedbacks;
 
         exercise.isAtLeastTutor = true;
@@ -391,7 +379,6 @@ describe('FeedbackComponent', () => {
     it('should show test details to students for programming exercises with show test names on', () => {
         const createSpy = vi.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
-        fixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
         comp.result().feedbacks = feedbacks;
 
         exercise.showTestNamesToStudents = true;
@@ -465,7 +452,6 @@ describe('FeedbackComponent', () => {
             dialogFixture.componentRef.setInput('exercise', dialogExercise);
             dialogFixture.componentRef.setInput('result', dialogResult);
             dialogFixture.componentRef.setInput('participation', dialogParticipation);
-            dialogFixture.componentRef.setInput('exerciseType', ExerciseType.PROGRAMMING);
             dialogFixture.componentRef.setInput('showScoreChart', true);
             dialogFixture.componentRef.setInput('taskName', 'Task 1');
             dialogFixture.componentRef.setInput('numberOfNotExecutedTests', 4);

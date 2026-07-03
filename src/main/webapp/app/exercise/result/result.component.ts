@@ -277,7 +277,6 @@ export class ResultComponent {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackComponentParameters.exerciseType,
                 showScoreChart: feedbackComponentParameters.showScoreChart,
                 messageKey: feedbackComponentParameters.messageKey,
                 latestDueDate: feedbackComponentParameters.latestDueDate,

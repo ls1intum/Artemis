@@ -101,16 +101,18 @@ export class FeedbackComponent implements OnInit, OnChanges {
     readonly showMissingAutomaticFeedbackInformation = input(false);
 
     // These inputs may be omitted by callers: the component derives the effective value below (and can override it at
-    // runtime), so read `resolvedExercise` / `resolvedExerciseType` / `scoreChartVisible` internally, never the raw inputs.
+    // runtime), so read `resolvedExercise` / `exerciseType` / `scoreChartVisible` internally, never the raw inputs.
     readonly exercise = input<Exercise | undefined>(undefined);
-    readonly exerciseType = input<ExerciseType | undefined>(undefined);
     readonly showScoreChart = input(false);
 
     /** The exercise to show feedback for; defaults to the participation's exercise when not bound. */
     readonly resolvedExercise = computed<Exercise | undefined>(() => this.exercise() ?? this.participation()?.exercise);
-    /** The exercise type; inferred from the resolved exercise (or a programming participation) when not bound. */
-    readonly resolvedExerciseType = computed<ExerciseType | undefined>(
-        () => this.exerciseType() ?? this.resolvedExercise()?.type ?? (isProgrammingExerciseParticipation(this.participation()) ? ExerciseType.PROGRAMMING : undefined),
+    /**
+     * The exercise type: the resolved exercise's type, or PROGRAMMING when only a programming participation is known.
+     * There is no dedicated input — every caller previously passed `exercise.type`, so it is derived here instead.
+     */
+    readonly exerciseType = computed<ExerciseType | undefined>(
+        () => this.resolvedExercise()?.type ?? (isProgrammingExerciseParticipation(this.participation()) ? ExerciseType.PROGRAMMING : undefined),
     );
     /** Whether the score chart is currently shown; seeded from the input, hidden at runtime once we know there is no chart data (see updateChart). */
     readonly scoreChartVisible = linkedSignal(() => this.showScoreChart());
@@ -170,7 +172,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         this.initializeExerciseInformation();
 
         this.feedbackItemService =
-            this.resolvedExerciseType() === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
+            this.exerciseType() === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.initFeedbackInformation();
 
         this.commitHash.set(this.getCommitHash().slice(0, 11));
@@ -211,7 +213,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }
 
         this.showTestDetails =
-            exercise?.isAtLeastTutor || (this.resolvedExerciseType() === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise)?.showTestNamesToStudents) || false;
+            exercise?.isAtLeastTutor || (this.exerciseType() === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise)?.showTestNamesToStudents) || false;
     }
 
     /**
@@ -250,7 +252,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     // If the submission is marked with buildFailed, fetch the build logs.
                     const buildFailed = submission?.buildFailed;
 
-                    if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.resolvedExerciseType() === ExerciseType.PROGRAMMING && buildFailed) {
+                    if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType() === ExerciseType.PROGRAMMING && buildFailed) {
                         return this.fetchAndSetBuildLogs(participation.id!, result.id);
                     }
 

@@ -283,7 +283,6 @@ export class ResultHistoryDropdownComponent {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackParams.exerciseType,
                 showScoreChart: feedbackParams.showScoreChart,
                 messageKey: feedbackParams.messageKey,
                 latestDueDate: feedbackParams.latestDueDate,

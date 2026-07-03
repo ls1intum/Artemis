@@ -61,7 +61,7 @@
                         </div>
 
                         <!-- Show and link to the commit hash in case of programming exercise results -->
-                        @if (resolvedExerciseType() === ExerciseType.PROGRAMMING && result().submission) {
+                        @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
                             <p>
                                 {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
                                 <span [ngbTooltip]="result().submission!.submissionDate | artemisDate">
