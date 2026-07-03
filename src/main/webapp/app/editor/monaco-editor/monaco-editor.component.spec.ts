@@ -76,8 +76,6 @@ describe('MonacoEditorComponent', () => {
 
     it('should catch error during action re-registration', () => {
         fixture.detectChanges();
-        // Suppress console.warn as it causes test failure with fail-on-console
-        const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         const mockAction = {
             id: 'mock-action',
@@ -94,8 +92,6 @@ describe('MonacoEditorComponent', () => {
         expect(mockAction.dispose).toHaveBeenCalled();
         expect(mockAction.register).toHaveBeenCalled();
         expect(vi.mocked(captureException)).toHaveBeenCalled();
-
-        consoleWarnSpy.mockRestore();
     });
 
     it('should set the text of the editor', () => {

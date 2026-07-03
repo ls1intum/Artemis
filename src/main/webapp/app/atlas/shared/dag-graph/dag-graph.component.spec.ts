@@ -234,7 +234,6 @@ describe('DagGraphComponent', () => {
         });
 
         it('should fall back to an empty graph and log when the layout engine throws', () => {
-            const consoleSpy = vi.spyOn(globalThis.console, 'error').mockImplementation(() => undefined);
             vi.mocked(dagreLayout).mockImplementationOnce(() => {
                 throw new Error('layout failure');
             });
@@ -245,7 +244,6 @@ describe('DagGraphComponent', () => {
             // the try/catch around the dagre call must degrade gracefully instead of breaking change detection
             expect(component.layout()).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
             expect(vi.mocked(captureException)).toHaveBeenCalled();
-            consoleSpy.mockRestore();
         });
     });
 

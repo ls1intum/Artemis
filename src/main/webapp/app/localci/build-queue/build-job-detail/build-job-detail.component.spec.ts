@@ -305,13 +305,10 @@ describe('BuildJobDetailComponent', () => {
             throw new Error('Failed to create object URL');
         });
 
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
         component.downloadBuildLogs();
 
         expect(vi.mocked(captureException)).toHaveBeenCalled();
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.buildQueue.logs.downloadError');
-        consoleErrorSpy.mockRestore();
     });
 
     it('should not load logs if already loading', () => {

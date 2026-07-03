@@ -168,14 +168,16 @@ export class WebauthnService {
             });
         } catch (error) {
             const domError = error as DOMException;
-            const userPressedCancelInPasskeyCreationDialog = domError.name === UserAbortedPasskeyCreationError.name && domError.code === UserAbortedPasskeyCreationError.code;
+            // A standard DOMException's name uniquely determines its (deprecated) legacy `code`, so matching on
+            // `name` alone is equivalent to also checking `code` — and avoids the deprecated DOMException.code API.
+            const userPressedCancelInPasskeyCreationDialog = domError.name === UserAbortedPasskeyCreationError.name;
             if (userPressedCancelInPasskeyCreationDialog) {
                 return;
             }
 
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (domError.name === InvalidStateError.name && domError.code === InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+            } else if (domError.name === InvalidStateError.name) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');

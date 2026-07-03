@@ -312,13 +312,11 @@ describe('BuildJobStatisticsComponent', () => {
         };
         mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(initialStats));
 
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         component.ngOnInit();
         component.incrementStatisticsByStatus('UNKNOWN_STATUS');
 
         expect(component.buildJobStatistics().totalBuilds).toBe(10);
         expect(vi.mocked(captureException)).toHaveBeenCalledWith(new Error('Unknown build job status received: UNKNOWN_STATUS'));
-        consoleSpy.mockRestore();
     });
 
     it('should not increment statistics when status is undefined', () => {

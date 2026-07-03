@@ -25,8 +25,8 @@ export class DragAndDropQuestionUtil {
         let remainingDropLocations = question.dropLocations?.filter((dropLocation) => {
             return question.correctMappings?.some((mapping) => {
                 return this.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
-            }, this);
-        }, this);
+            });
+        });
 
         if (mappings) {
             // add mappings that are already correct
@@ -156,7 +156,7 @@ export class DragAndDropQuestionUtil {
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         return mappings.find((mapping: DragAndDropMapping) => {
             return this.isSameEntityWithTempId(dropLocation, mapping.dropLocation) && this.isSameEntityWithTempId(dragItem, mapping.dragItem);
-        }, this);
+        });
     }
 
     /**
