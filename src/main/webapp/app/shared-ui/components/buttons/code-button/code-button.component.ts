@@ -331,7 +331,7 @@ export class CodeButtonComponent implements OnInit {
      * (Usually the token exists, as it is created when the server creates the participation)
      */
     loadParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
+        this.accountService.getVcsAccessToken(participation.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
@@ -357,7 +357,7 @@ export class CodeButtonComponent implements OnInit {
      * Sends the request to create a new participation VCS access token
      */
     createNewParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
+        this.accountService.createVcsAccessToken(participation.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;

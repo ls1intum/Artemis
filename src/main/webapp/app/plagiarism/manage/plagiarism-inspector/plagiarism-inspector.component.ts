@@ -359,7 +359,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     downloadPlagiarismResultsCsv() {
         const plagiarismResult = this.plagiarismResult();
         if (plagiarismResult && plagiarismResult.comparisons.length > 0) {
-            const rowData = (plagiarismResult.comparisons as PlagiarismComparison[]).map((comparison) => {
+            const rowData = plagiarismResult.comparisons.map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
                     Status: comparison.status,
