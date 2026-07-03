@@ -34,6 +34,7 @@ import { ProgrammingExamSubmissionComponent } from '../exercises/programming/pro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
@@ -83,6 +84,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         AsyncPipe,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -123,6 +125,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly testExam = signal(false);
     readonly studentExamId = signal<number>(undefined!);
     readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     // determines if component was once drawn visited
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
@@ -310,6 +316,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.currentPageComponents().find(
             (submissionComponent) => !this.activeExamPage().isOverviewPage && submissionComponent.getExerciseId() === this.activeExamPage().exercise!.id,
         );
+    }
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     /**

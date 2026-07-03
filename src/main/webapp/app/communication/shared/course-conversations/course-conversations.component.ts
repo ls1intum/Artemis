@@ -1,7 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
-import { outputToObservable } from '@angular/core/rxjs-interop';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -63,9 +62,8 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
-import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -125,6 +123,9 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
+// The sidebar renders as a mobile overlay below Bootstrap `sm`; keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
+
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
@@ -136,7 +137,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FormsModule,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
-        NgClass,
         SidebarComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
@@ -165,7 +165,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
+    readonly isMobile = toSignal(this.breakpointObserver.observe(MOBILE_SIDEBAR_BREAKPOINT).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(MOBILE_SIDEBAR_BREAKPOINT),
+    });
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
@@ -188,6 +190,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
     readonly openThreadOnFocus = signal(false);
@@ -626,6 +629,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     toggleSidebar() {
         this.setIsCollapsed(!this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     closeSidebarOnMobile() {

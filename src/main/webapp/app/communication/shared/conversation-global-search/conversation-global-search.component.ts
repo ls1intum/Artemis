@@ -12,6 +12,7 @@ import { Subject, catchError, map, of, takeUntil } from 'rxjs';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -53,7 +54,7 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
+    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip, CourseSidebarToggleButtonComponent],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
@@ -70,6 +71,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     onSearch = output<ConversationGlobalSearchConfig>();
     onSelectionChange = output<ConversationGlobalSearchConfig>();
     onClearSearch = output<void>();
+    isSidebarCollapsed = input(false);
+    toggleSidebar = output<void>();
 
     readonly searchElement = viewChild<ElementRef>('searchInput');
 

@@ -35,7 +35,7 @@ export class CourseIrisComponent {
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 
-    isCollapsed = false;
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     constructor() {
         // When the user opts out of AI from the chat's LLM selection modal while on this page,
@@ -50,6 +50,5 @@ export class CourseIrisComponent {
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this.isCollapsed = !this.isCollapsed;
     }
 }
