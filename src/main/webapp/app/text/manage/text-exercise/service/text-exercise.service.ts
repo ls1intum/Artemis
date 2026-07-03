@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
@@ -28,7 +28,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     create(textExercise: TextExercise): Observable<EntityResponseType> {
         let copy = ExerciseService.convertExerciseDatesFromClient(textExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -44,7 +44,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     import(adaptedSourceTextExercise: TextExercise) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceTextExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<TextExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -55,7 +55,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be updated of type {TextExercise}
      * @param req optional request options
      */
-    update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
+    update(textExercise: TextExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateTextExerciseDTO(textExercise);
         return this.http
@@ -78,7 +78,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * Queries all text exercises for the given request options.
      * @param req optional request options
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: Record<string, unknown>): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<TextExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -129,7 +129,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be updated of type {TextExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(textExercise: TextExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateTextExerciseDTO(textExercise);
         return this.http

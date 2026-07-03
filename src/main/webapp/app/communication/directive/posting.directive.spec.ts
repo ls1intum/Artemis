@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { MetisService } from 'app/communication/service/metis.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,6 +21,7 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/account/user/user.model';
 import * as courseModel from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 class MockOneToOneChatService {
     createWithId = vi.fn().mockReturnValue(of({ body: { id: 1 } }));
@@ -51,7 +53,7 @@ class MockReactionsBar {
     template: `<div jhiPosting></div>`,
 })
 class TestPostingComponent extends PostingDirective<MockPosting> {
-    reactionsBar: MockReactionsBar = new MockReactionsBar();
+    reactionsBar = new MockReactionsBar() as unknown as PostingReactionsBarComponent<MockPosting>;
 
     get reactionsBarInstance() {
         return this.reactionsBar;
@@ -90,7 +92,7 @@ describe('PostingDirective', () => {
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
         mockReactionsBar = new MockReactionsBar();
-        component.reactionsBar = mockReactionsBar;
+        component.reactionsBar = mockReactionsBar as unknown as PostingReactionsBarComponent<MockPosting>;
         const user = new User();
         user.id = 123;
         component.posting.set(new MockPosting(123, 'Test content', user));
@@ -154,7 +156,7 @@ describe('PostingDirective', () => {
     });
 
     it('should call selectReaction on reactionsBar and hide reaction selector', () => {
-        const event = { reaction: 'like' };
+        const event = { reaction: 'like' } as unknown as EmojiEvent;
         component.showReactionSelector = true;
         component.selectReaction(event);
         expect(mockReactionsBar.selectReaction).toHaveBeenCalledWith(event);
