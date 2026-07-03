@@ -165,14 +165,18 @@ class HyperionAdaptWithFeedbackEndToEndTest extends AbstractSpringIntegrationLoc
                         })),
 
                 // --- Requirement change: change a behavioural contract (throw instead of return a sentinel) consistently. ---
+                // KNOWN GAP (live GPU, gpt-oss-120b): the TypeScript two-stage `tsc -b` npm-workspace build is the most fragile adapt target. On a real run the agent tends to
+                // thrash the seeded build manifests (package.json / tsconfig.json / package-lock.json, mostly via bash npm/cp) under compile-failure pressure and can exhaust its
+                // turn budget without converging — even for this in-domain contract change. Java and Python adapt converge reliably; TS is the open weak spot (see the evaluation
+                // notes). This case is deliberately kept in-domain (a sorting-contract change, NOT the earlier stack-on-a-sorter mismatch) so it fairly measures that gap.
                 adaptCase("requirement-change-typescript", ProgrammingLanguage.TYPESCRIPT, null, "HFREQ",
-                        "Adapt this existing TypeScript exercise. Instructor feedback: change the contract so that popping or peeking an EMPTY stack now THROWS an Error instead of "
-                                + "returning undefined. Update the problem statement, the reference solution, the template (its placeholder must still fail), and the tests to assert "
-                                + "the thrown error. Keep the reference solution passing all tests and the template failing them. Run `sh verify.sh solution` and `sh verify.sh "
-                                + "template`, then submit.",
+                        "Adapt this existing TypeScript SORTING exercise. Instructor feedback: change the contract so that sorting a `null` or `undefined` input now THROWS an Error "
+                                + "instead of returning an empty array. Update the problem statement, the reference solution, the template (its placeholder must still fail the tests), "
+                                + "and the tests to assert the thrown error on a null input. Keep the exercise's sorting topic and public structure, keep the reference solution passing "
+                                + "all tests and the template failing them. Run `sh verify.sh solution` and `sh verify.sh template`, then submit.",
                         new AdaptCheck(1, outcome -> {
                             String all = (allTestSources(outcome) + "\n" + allSolutionSources(outcome) + "\n" + outcome.producedProblemStatement()).toLowerCase();
-                            assertThat(all).as("the throw-on-empty contract is present").containsAnyOf("throw", "error");
+                            assertThat(all).as("the throw-on-null contract is present").containsAnyOf("throw", "error");
                         })),
 
                 // --- Contradictory / under-specified: a self-contradicting brief. The agent must degrade GRACEFULLY: pick one coherent reading and stay verifiable, not thrash to
