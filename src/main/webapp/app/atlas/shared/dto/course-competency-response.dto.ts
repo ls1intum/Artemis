@@ -2,7 +2,6 @@ import {
     Competency,
     CompetencyExerciseLink,
     CompetencyLectureUnitLink,
-    CompetencyProgress,
     CompetencyRelationDTO,
     CompetencyTaxonomy,
     ConfidenceReason,
@@ -10,7 +9,6 @@ import {
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -22,7 +20,6 @@ import { captureException } from '@sentry/angular';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UMLDiagramType as UMLDiagramTypes } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -170,7 +167,7 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
         teachingAssistantGroupName: dto.teachingAssistantGroupName,
         editorGroupName: dto.editorGroupName,
         instructorGroupName: dto.instructorGroupName,
-    } as Course;
+    };
 };
 
 const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {
@@ -279,7 +276,7 @@ const toLectureUnit = (dto?: LectureUnitForCompetencyDTO): LectureUnit | undefin
     lectureUnit.completed = dto.completed;
     lectureUnit.visibleToStudents = dto.visibleToStudents;
     lectureUnit.type = dto.type;
-    lectureUnit.lecture = dto.lecture ? ({ id: dto.lecture.id } as Lecture) : undefined;
+    lectureUnit.lecture = dto.lecture ? { id: dto.lecture.id } : undefined;
 
     return lectureUnit;
 };
@@ -296,13 +293,13 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
         competency.type = dto.type;
     }
     if (dto.linkedStandardizedCompetencyId) {
-        competency.linkedStandardizedCompetency = { id: dto.linkedStandardizedCompetencyId } as StandardizedCompetency;
+        competency.linkedStandardizedCompetency = { id: dto.linkedStandardizedCompetencyId };
     }
     competency.userProgress = dto.userProgress?.map((progress) => ({
         progress: progress.progress,
         confidence: progress.confidence,
         confidenceReason: progress.confidenceReason,
-    })) as CompetencyProgress[] | undefined;
+    }));
 
     if (dto.course) {
         competency.course = toCourse(dto.course);
@@ -315,7 +312,7 @@ const mapCourseCompetencyBase = <T extends CourseCompetency>(dto: CourseCompeten
             id: dto.linkedCourseCompetency.courseId,
             title: dto.linkedCourseCompetency.courseTitle,
             semester: dto.linkedCourseCompetency.semester,
-        } as Course;
+        };
         competency.linkedCourseCompetency = linked;
     }
 

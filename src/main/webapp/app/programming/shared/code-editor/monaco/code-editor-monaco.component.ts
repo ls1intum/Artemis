@@ -499,7 +499,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     private setupAddFeedbackShortcut(): void {
         this.disposeAddFeedbackShortcut();
-        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event) => {
             const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
             const code = browserEvent?.code;
             const key = browserEvent?.key;
