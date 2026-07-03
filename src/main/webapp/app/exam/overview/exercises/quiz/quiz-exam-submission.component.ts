@@ -27,6 +27,8 @@ import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -322,7 +324,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmissionVersion(): void {
-        this.studentSubmission().submittedAnswers = JSON.parse(this.submissionVersion.content);
+        this.studentSubmission().submittedAnswers = parseJson<SubmittedAnswer[]>(this.submissionVersion.content);
         this.updateViewFromSubmission();
     }
 

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -107,7 +108,7 @@ export class TeamComponent implements OnInit {
         }
     }
 
-    private onLoadError = (error: any) => {
+    private onLoadError = (error: HttpErrorResponse) => {
         this.alertService.error(error.message);
         this.isLoading.set(false);
     };

@@ -676,7 +676,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving.set(true);
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise().id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }

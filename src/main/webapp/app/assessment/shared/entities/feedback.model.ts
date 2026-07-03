@@ -242,7 +242,8 @@ export class Feedback implements BaseEntity {
         that.text = text;
         // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
         // Support both: dropInfo.instruction.id (expected shape) and dropInfo.id (actual Apollon shape)
-        const instruction = dropInfo?.instruction ?? ((dropInfo as any)?.id ? (dropInfo as any) : undefined);
+        const flatDropInfo = dropInfo as (GradingInstruction & { instruction?: GradingInstruction }) | undefined;
+        const instruction = flatDropInfo?.instruction ?? (flatDropInfo?.id ? flatDropInfo : undefined);
         if (instruction?.id) {
             that.gradingInstruction = instruction;
         }
@@ -362,10 +363,10 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
     feedback.positive = dto.positive;
     feedback.type = dto.type;
     feedback.testCase = dto.testCaseName
-        ? ({
+        ? {
               testName: dto.testCaseName,
               visibility: dto.visibility,
-          } as ProgrammingExerciseTestCase)
+          }
         : undefined;
     if (dto.reference) {
         const split = dto.reference.split(':');
@@ -375,14 +376,15 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
         }
     }
     if (dto.gradingInstruction) {
-        feedback.gradingInstruction = {
+        const gradingInstruction: Partial<GradingInstruction> = {
             id: dto.gradingInstruction.id,
             feedback: dto.gradingInstruction.feedback,
             credits: dto.gradingInstruction.credits,
             usageCount: dto.gradingInstruction.usageCount,
             instructionDescription: dto.gradingInstruction.instructionDescription,
             gradingScale: dto.gradingInstruction.gradingScale,
-        } as GradingInstruction;
+        };
+        feedback.gradingInstruction = gradingInstruction as GradingInstruction;
     }
     return feedback;
 }

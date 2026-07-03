@@ -43,7 +43,7 @@ const question3: QuizQuestion = {
 
 const course = { id: 1, title: 'Test Course' };
 
-const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoints: 2 }] };
+const answer = { selectedOptions: [{ scoreInPoints: 2 }] } as unknown as SubmittedAnswerAfterEvaluation;
 
 describe('CourseTrainingQuizComponent', () => {
     setupTestBed({ zoneless: true });

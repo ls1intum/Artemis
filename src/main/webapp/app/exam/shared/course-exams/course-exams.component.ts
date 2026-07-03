@@ -226,17 +226,17 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @return value for sort()-function
      */
     sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
-        if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isBefore(exam2.startDate)) {
             return -1;
         }
-        if (dayjs(exam1.startDate!).isAfter(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isAfter(exam2.startDate)) {
             return 1;
         }
         return 0;
     }
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));

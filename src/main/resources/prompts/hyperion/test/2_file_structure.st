@@ -10,6 +10,8 @@ Based on the following testing plan and programming language, determine the nece
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+Existing test files that are no longer needed after this regenerated test structure should be marked as obsolete only when they are in the test repository's test-source area. `.gitkeep` placeholder files may also be marked obsolete when they are explicitly obsolete or selected feedback requests their removal.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
 
@@ -26,6 +28,7 @@ If the selected feedback payload contains threads, treat those threads as reques
 2. Do not add files for invented helpers such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless they are explicitly required by the plan and you also generate them in the output.
 3. Prefer the smallest file set that satisfies the testing plan and compiles against the provided codebase.
 4. Keep package names and paths consistent with the existing repository layout and testing conventions.
+5. For Java, a physical `/test/` directory is only a repository/build layout convention and does not require a Java `package test;` declaration. Only use named package directories when the production/test context already uses the matching Java package.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
@@ -35,11 +38,11 @@ Treat the issues above as hard constraints. Be critical and explicit:
 4. Verify the structure stays consistent with the testing plan and repository conventions.
 5. If multiple structures are possible, pick the most conservative and justify it.
 
-**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
+**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files. The only allowed deletion outside regular test-source files is an explicitly obsolete `.gitkeep` placeholder.
 First, think step-by-step.
 1.  **Analyze the plan:** Review the test classes and cases mentioned in the testing plan.
 2.  **Apply conventions:** Consider the standard project layout and file naming conventions for tests in the given programming language (e.g., `src/test/java`, `*Test.java`).
 3.  **Check for missing dependencies:** Decide whether the plan requires any helper or support file. Only include such a file if it is explicitly necessary and will be generated.
 4.  **List the files:** Create a minimal list of all test files that need to be created.
 
-After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.
+After your analysis, provide the file structure as a JSON object. The JSON object must contain a "files" key which is an array of objects, where each object has a "path" key. You may also include a "deletedFiles" array with obsolete test-source paths and explicitly obsolete `.gitkeep` placeholder paths.
