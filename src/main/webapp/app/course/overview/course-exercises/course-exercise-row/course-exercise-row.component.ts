@@ -146,16 +146,17 @@ export class CourseExerciseRowComponent implements OnInit {
             isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(courseForRoleCheck),
             isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(courseForRoleCheck),
             course,
-        } as Exercise;
+        };
 
         // Quiz-specific enrichment via spread to avoid mutating the object after creation
         if (enrichedExercise.type === ExerciseType.QUIZ) {
             const quizExercise = enrichedExercise as QuizExercise;
-            enrichedExercise = {
+            const enrichedQuizExercise: QuizExercise = {
                 ...quizExercise,
                 isActiveQuiz: this.exerciseService.isActiveQuiz(quizExercise),
                 isPracticeModeAvailable: quizExercise.quizEnded,
-            } as QuizExercise;
+            };
+            enrichedExercise = enrichedQuizExercise;
         }
 
         this._enrichedExercise.set(enrichedExercise);
@@ -174,6 +175,6 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 }

@@ -37,7 +37,7 @@ export class ExamChecklistExerciseGroupTableComponent {
         let totalParticipants = this.totalParticipants();
         if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
-            this.exerciseGroups()!.forEach((exerciseGroup) => {
+            this.exerciseGroups().forEach((exerciseGroup) => {
                 const exerciseGroupVariantColumn = new ExerciseGroupVariantColumn();
                 exerciseGroupVariantColumn.exerciseGroupTitle = exerciseGroup.title;
                 exerciseGroupVariantColumn.indexExerciseGroup = exerciseGroupIndex;
@@ -56,7 +56,7 @@ export class ExamChecklistExerciseGroupTableComponent {
                     exerciseGroupVariantColumn.noExercises = false;
                     let exerciseVariantIndex = 1;
                     totalParticipants = 0;
-                    exerciseGroup.exercises!.forEach((exercise, index) => {
+                    exerciseGroup.exercises.forEach((exercise, index) => {
                         // generate columns for each exercise
                         let exerciseVariantColumn;
                         if (index === 0) {

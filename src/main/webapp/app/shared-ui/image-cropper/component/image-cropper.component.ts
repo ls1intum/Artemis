@@ -111,7 +111,7 @@ export class ImageCropperComponent implements OnInit {
     readonly backgroundColor = input<string | undefined>(defaultSettings.backgroundColor);
     readonly containWithinAspectRatio = input<boolean>(defaultSettings.containWithinAspectRatio);
     readonly hideResizeSquares = input<boolean>(defaultSettings.hideResizeSquares);
-    readonly cropperInput = input<CropperPosition>(defaultCropperPosition(), { alias: 'cropper' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly cropperInput = input<CropperPosition>(defaultCropperPosition(), { alias: 'cropper' });
     readonly alignImage = input<'left' | 'center'>(defaultSettings.alignImage);
     readonly disabled = input<boolean>(false);
 
@@ -442,7 +442,7 @@ export class ImageCropperComponent implements OnInit {
         const moveEvent = getEventForKey(event.key, this.settings.stepSize);
         event.preventDefault();
         event.stopPropagation();
-        this.startMove({ clientX: 0, clientY: 0 } as MouseEvent, moveType, position);
+        this.startMove(new MouseEvent('mousemove', { clientX: 0, clientY: 0 }), moveType, position);
         this.moveImg(moveEvent);
         this.moveStop();
     }

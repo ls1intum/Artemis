@@ -182,7 +182,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const trimmedValue = value.trim();
-        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
         if (!channelOrGroupChat) return;
 
         this.saveStatus.set('saving');

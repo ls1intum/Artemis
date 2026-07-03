@@ -11,6 +11,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/program
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable()
@@ -189,7 +190,7 @@ export class ProgrammingExerciseTaskService {
      * Set the tasks currently displayed. Used for showing of active/inactive test cases
      */
     private setCurrentTasks = () => {
-        const tasksCopy: ProgrammingExerciseTask[] = JSON.parse(JSON.stringify(this.tasks));
+        const tasksCopy = parseJson<ProgrammingExerciseTask[]>(JSON.stringify(this.tasks));
         if (this.ignoreInactive) {
             this.currentTasks = tasksCopy.filter((task) => {
                 task.testCases = task.testCases.filter((test) => test.active);
@@ -221,8 +222,8 @@ export class ProgrammingExerciseTaskService {
             }
 
             testCase.testCaseStats = testStats;
-            task.stats!.numPassed += testStats.numPassed;
-            task.stats!.numFailed += testStats.numFailed;
+            task.stats.numPassed += testStats.numPassed;
+            task.stats.numFailed += testStats.numFailed;
         }
 
         return task;
@@ -278,13 +279,14 @@ export class ProgrammingExerciseTaskService {
  * Gets a single value from a list if there is only one unique value. otherwise returns undefined
  * @param values
  */
-const getSingleValue = (values: any[]) => {
+const getSingleValue = <T>(values: T[]): T | undefined => {
     const set = new Set(values);
     if (set.size == 1) {
         return set.values().next().value;
     }
+    return undefined;
 };
 
-const sum = (values: any[]): number => {
-    return (values ?? []).reduce((a: number, b: number) => Number(a) + Number(b), 0);
+const sum = (values: (number | undefined)[]): number => {
+    return (values ?? []).reduce<number>((a, b) => Number(a) + Number(b), 0);
 };
