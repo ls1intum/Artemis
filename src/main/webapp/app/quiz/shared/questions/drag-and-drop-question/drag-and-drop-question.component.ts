@@ -182,7 +182,7 @@ export class DragAndDropQuestionComponent {
             // remove existing mappings that contain the drop location or drag item and save their old partners
             let oldDragItem;
             let oldDropLocation;
-            this._mappings = this.mappings().filter(function (mapping) {
+            this._mappings = this.mappings().filter((mapping) => {
                 if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation)) {
                     oldDragItem = mapping.dragItem;
                     return false;
@@ -192,7 +192,7 @@ export class DragAndDropQuestionComponent {
                     return false;
                 }
                 return true;
-            }, this);
+            });
 
             // add new mapping
             this._mappings.push(new DragAndDropMapping(dragItem, dropLocation));
@@ -205,9 +205,9 @@ export class DragAndDropQuestionComponent {
         } else {
             const lengthBefore = this.mappings().length;
             // remove existing mapping that contains the drag item
-            this._mappings = this.mappings().filter(function (mapping) {
+            this._mappings = this.mappings().filter((mapping) => {
                 return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
-            }, this);
+            });
             if (this._mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
                 return;
@@ -270,9 +270,9 @@ export class DragAndDropQuestionComponent {
             return MappingResult.MAPPED_INCORRECT;
         }
         const validDragItems = this.dragAndDropQuestion()
-            .correctMappings!.filter(function (mapping) {
+            .correctMappings!.filter((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
-            }, this)
+            })
             .map(function (mapping) {
                 return mapping.dragItem;
             });
@@ -281,9 +281,9 @@ export class DragAndDropQuestionComponent {
         if (!selectedItem) {
             return validDragItems.length === 0 ? MappingResult.NOT_MAPPED : MappingResult.MAPPED_INCORRECT;
         } else {
-            return validDragItems.some(function (dragItem) {
+            return validDragItems.some((dragItem) => {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dragItem, selectedItem);
-            }, this)
+            })
                 ? MappingResult.MAPPED_CORRECT
                 : MappingResult.MAPPED_INCORRECT;
         }

@@ -57,13 +57,13 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
             this.registerChangeListeners();
         });
 
-        effect(
-            function removeInitialTitleInEditFromForbiddenTitles() {
-                if (this.titleOnPageLoad()) {
-                    this.alreadyUsedTitles().delete(this.titleOnPageLoad());
-                }
-            }.bind(this),
-        );
+        // removeInitialTitleInEditFromForbiddenTitles
+        effect(() => {
+            const titleOnPageLoad = this.titleOnPageLoad();
+            if (titleOnPageLoad) {
+                this.alreadyUsedTitles().delete(titleOnPageLoad);
+            }
+        });
     }
 
     ngAfterViewInit() {

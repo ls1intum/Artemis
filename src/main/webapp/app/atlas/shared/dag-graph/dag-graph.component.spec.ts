@@ -1,4 +1,10 @@
 import { Component, signal } from '@angular/core';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { curveBundle, line } from 'd3-shape';
@@ -68,6 +74,7 @@ describe('DagGraphComponent', () => {
     ];
 
     beforeEach(async () => {
+        vi.mocked(captureException).mockClear();
         await TestBed.configureTestingModule({
             imports: [TestHostComponent, MinimalTestHostComponent],
         }).compileComponents();
@@ -225,7 +232,6 @@ describe('DagGraphComponent', () => {
         });
 
         it('should fall back to an empty graph and log when the layout engine throws', () => {
-            const consoleSpy = vi.spyOn(globalThis.console, 'error').mockImplementation(() => undefined);
             vi.mocked(dagreLayout).mockImplementationOnce(() => {
                 throw new Error('layout failure');
             });
@@ -235,8 +241,7 @@ describe('DagGraphComponent', () => {
 
             // the try/catch around the dagre call must degrade gracefully instead of breaking change detection
             expect(component.layout()).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
-            expect(consoleSpy).toHaveBeenCalled();
-            consoleSpy.mockRestore();
+            expect(vi.mocked(captureException)).toHaveBeenCalled();
         });
     });
 

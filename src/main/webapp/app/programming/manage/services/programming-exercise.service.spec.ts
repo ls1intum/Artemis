@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -363,11 +364,11 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
     ])('should call correct exercise endpoint', (test) => {
         const exerciseId = 1;
-        const functionToCall = service[test.method as keyof ProgrammingExerciseService];
+        const functionToCall = service[test.method as keyof ProgrammingExerciseService] as (...args: unknown[]) => Observable<unknown>;
         if (typeof functionToCall !== 'function') {
             throw new Error(`Method ${test.method} does not exist on service`);
         }
-        functionToCall.bind(service, exerciseId).apply().subscribe();
+        functionToCall.apply(service, [exerciseId]).subscribe();
         const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
 
         // Custom matcher function

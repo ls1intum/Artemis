@@ -1,5 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/editor/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -28,6 +35,7 @@ describe('MonacoEditorComponent', () => {
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
     beforeEach(async () => {
+        vi.mocked(captureException).mockClear();
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
@@ -66,8 +74,6 @@ describe('MonacoEditorComponent', () => {
 
     it('should catch error during action re-registration', () => {
         fixture.detectChanges();
-        // Suppress console.warn as it causes test failure with fail-on-console
-        const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         const mockAction = {
             id: 'mock-action',
@@ -83,9 +89,7 @@ describe('MonacoEditorComponent', () => {
         expect(() => comp['reRegisterActions']()).not.toThrow();
         expect(mockAction.dispose).toHaveBeenCalled();
         expect(mockAction.register).toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalled();
-
-        consoleWarnSpy.mockRestore();
+        expect(vi.mocked(captureException)).toHaveBeenCalled();
     });
 
     it('should set the text of the editor', () => {

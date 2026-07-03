@@ -288,30 +288,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
-        effect(
-            function updateStatusBarSectionsWhenEditModeChanges() {
-                // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
-                // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
-                // the difficulty/mode section, so e.g. "Problem" sits at a different index. Recalculating only when
-                // entering simple mode left the sections stale (still simple-mode-shaped) after switching to detailed
-                // mode, so the status bar pointed each section circle at the wrong headline.
-                this.isSimpleMode();
-                this.calculateFormStatusSections();
-            }.bind(this),
-        );
+        effect(() => {
+            // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
+            // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
+            // the difficulty/mode section, so e.g. "Problem" sits at a different index. Recalculating only when
+            // entering simple mode left the sections stale (still simple-mode-shaped) after switching to detailed
+            // mode, so the status bar pointed each section circle at the wrong headline.
+            this.isSimpleMode();
+            this.calculateFormStatusSections();
+        });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
 
-        effect(
-            function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            if (editModeRetrievedFromLocalStorage !== undefined) {
+                this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
+            } else {
+                const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
+                this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
+            }
+        });
     }
 
     showGenerateWithAi = computed(() => {

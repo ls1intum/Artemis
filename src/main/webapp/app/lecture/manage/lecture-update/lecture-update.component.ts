@@ -148,14 +148,12 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             this.updateFormStatusBar();
         });
 
-        effect(
-            function scrollToLastSectionAfterLectureCreation() {
-                if (this.unitSection() && this.isNewlyCreatedExercise) {
-                    this.isNewlyCreatedExercise = false;
-                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            if (this.unitSection() && this.isNewlyCreatedExercise) {
+                this.isNewlyCreatedExercise = false;
+                this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
+            }
+        });
 
         effect(() => {
             if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {

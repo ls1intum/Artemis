@@ -87,7 +87,9 @@ export const appConfig: ApplicationConfig = {
                       // from booting. We log so the failure is observable but recover by rendering
                       // the landing page (or sign-in if the user navigates there manually).
                       .catch((error) => {
-                          // eslint-disable-next-line no-undef
+                          // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
+                          // captureException would be a no-op here; log to the console so the failure stays observable.
+                          // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
                           console.warn('SAML2 second-step exchange failed during app initialization', error);
                           return undefined;
                       })
@@ -108,7 +110,9 @@ export const appConfig: ApplicationConfig = {
             // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
             // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
             const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
-                // eslint-disable-next-line no-undef
+                // Runs inside APP_INITIALIZER, before AppComponent initializes Sentry (see app.main), so
+                // captureException would be a no-op here; log to the console so a flaky i18n load stays observable.
+                // eslint-disable-next-line no-console, no-undef -- app-initializer diagnostic; Sentry is not yet initialized
                 console.warn('Translation load failed during app initialization', error);
                 return undefined;
             });

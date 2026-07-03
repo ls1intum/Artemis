@@ -59,13 +59,12 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
             this.registerChangeListeners();
         });
 
-        effect(
-            function removeInitialTitleInEditFromForbiddenTitles() {
-                if (this.titleOnPageLoad()) {
-                    this.alreadyUsedTitles().delete(this.titleOnPageLoad());
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const titleOnPageLoad = this.titleOnPageLoad();
+            if (titleOnPageLoad) {
+                this.alreadyUsedTitles().delete(titleOnPageLoad);
+            }
+        });
     }
 
     ngAfterViewInit() {
