@@ -363,10 +363,10 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
     feedback.positive = dto.positive;
     feedback.type = dto.type;
     feedback.testCase = dto.testCaseName
-        ? ({
+        ? {
               testName: dto.testCaseName,
               visibility: dto.visibility,
-          } as ProgrammingExerciseTestCase)
+          }
         : undefined;
     if (dto.reference) {
         const split = dto.reference.split(':');
@@ -376,14 +376,15 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
         }
     }
     if (dto.gradingInstruction) {
-        feedback.gradingInstruction = {
+        const gradingInstruction: Partial<GradingInstruction> = {
             id: dto.gradingInstruction.id,
             feedback: dto.gradingInstruction.feedback,
             credits: dto.gradingInstruction.credits,
             usageCount: dto.gradingInstruction.usageCount,
             instructionDescription: dto.gradingInstruction.instructionDescription,
             gradingScale: dto.gradingInstruction.gradingScale,
-        } as GradingInstruction;
+        };
+        feedback.gradingInstruction = gradingInstruction as GradingInstruction;
     }
     return feedback;
 }

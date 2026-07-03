@@ -60,7 +60,7 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
             forceRun: parsed.forceRun ?? false,
             resultPaths: parsed.resultPaths ?? [],
         })),
-    } as BuildPlanPhases;
+    };
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
@@ -89,6 +89,6 @@ function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
     return typeof value === 'string' && value in BUILD_PHASE_CONDITION;
 }
 
-function isResultPaths(resultPaths: any) {
+function isResultPaths(resultPaths: unknown): resultPaths is string[] {
     return Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string');
 }
