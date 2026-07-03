@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -56,10 +57,12 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
@@ -95,11 +98,13 @@ public class LectureService {
 
     private final YouTubeUrlService youTubeUrlService;
 
+    private final SlideRepository slideRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
             Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
             LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService, SlideRepository slideRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
@@ -113,6 +118,7 @@ public class LectureService {
         this.irisChatSessionApi = irisChatSessionApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -328,8 +334,44 @@ public class LectureService {
     }
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
+        return mapAttachment(attachment, attachment.getDisplayPageNumbers());
+    }
+
+    private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment, List<Integer> displayPageNumbers) {
         return new LectureDetailsDTO.AttachmentDTO(attachment.getId(), attachment.getName(), attachment.getLink(), attachment.getReleaseDate(), attachment.getUploadDate(),
-                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion());
+                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion(), displayPageNumbers);
+    }
+
+    /**
+     * Aligns {@code displayPageNumbers} with the student version of the PDF, which has hidden slides removed.
+     * <p>
+     * The raw list is indexed by slide number of the full (instructor) PDF (index 0 = slide 1), the same deck PyRIS detected
+     * the numbers on. The student PDF (what learners actually see) drops the currently hidden slides, so the entries of those
+     * slides must be removed and the rest compacted, mirroring {@code AttachmentService.generateStudentVersionPdf}. This keeps
+     * the client mapping "list index + 1 = student PDF page" correct, and a display page number that only existed on a hidden
+     * slide simply disappears, so video-slide synchronization treats it as non-existent.
+     *
+     * @param unit               the attachment video unit the display page numbers belong to
+     * @param displayPageNumbers the full-deck display page numbers, or {@code null}
+     * @return the display page numbers aligned with the student PDF, or {@code null} if the input was {@code null}
+     */
+    private List<Integer> alignDisplayPageNumbersWithStudentVersion(AttachmentVideoUnit unit, List<Integer> displayPageNumbers) {
+        if (displayPageNumbers == null || displayPageNumbers.isEmpty()) {
+            return displayPageNumbers;
+        }
+        Set<Integer> hiddenSlideNumbers = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(unit.getId()).stream().map(Slide::getSlideNumber).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (hiddenSlideNumbers.isEmpty()) {
+            return displayPageNumbers;
+        }
+        List<Integer> visibleDisplayPageNumbers = new ArrayList<>();
+        for (int index = 0; index < displayPageNumbers.size(); index++) {
+            int slideNumber = index + 1; // displayPageNumbers is 0-based indexed by slide number
+            if (!hiddenSlideNumbers.contains(slideNumber)) {
+                visibleDisplayPageNumbers.add(displayPageNumbers.get(index));
+            }
+        }
+        return visibleDisplayPageNumbers;
     }
 
     private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit) {
@@ -342,7 +384,9 @@ public class LectureService {
 
         switch (lectureUnit) {
             case AttachmentVideoUnit attachmentVideoUnit -> {
-                LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment()).map(this::mapAttachment).orElse(null);
+                LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment())
+                        .map(attachment -> mapAttachment(attachment, alignDisplayPageNumbersWithStudentVersion(attachmentVideoUnit, attachment.getDisplayPageNumbers())))
+                        .orElse(null);
                 Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(attachmentVideoUnit.getVideoSource());
                 VideoSourceType videoSourceType = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
                 String youtubeVideoId = ytId.orElse(null);
