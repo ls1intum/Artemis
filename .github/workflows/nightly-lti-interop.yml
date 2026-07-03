@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   moodle-interop:
@@ -38,10 +39,15 @@ jobs:
         with:
           name: nightly-lti-reports-moodle
           path: build/reports/tests/test
-      - name: Notify on failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661  # v2.3.3
-        env:
-          SLACK_WEBHOOK: ${{ secrets.LTI_NIGHTLY_SLACK_WEBHOOK }}
-          SLACK_TITLE: "Nightly LTI interop FAILED on develop (moodle)"
-          SLACK_COLOR: danger
+      - name: Open a tracking issue on failure
+        # Only on the scheduled nightly: manual workflow_dispatch runs are actively watched by whoever
+        # triggered them, so they should not create tracking issues.
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/open-failure-issue
+        with:
+          title: Nightly LTI interop failed (Moodle)
+          assignee: krusche
+          github-token: ${{ github.token }}
+          body: >-
+            The nightly LTI Moodle interop suite failed on develop. This is a non-blocking monitor;
+            investigate the linked workflow run to see whether the Moodle <-> Artemis LTI contract drifted.
