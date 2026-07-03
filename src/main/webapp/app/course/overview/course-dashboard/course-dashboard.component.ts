@@ -65,7 +65,6 @@ export class CourseDashboardComponent implements OnDestroy {
     private readonly _competencies = signal<CompetencyInformation[]>([]);
     private readonly _openedAccordionIndex = signal<number | undefined>(undefined);
     private readonly _course = signal<Course | undefined>(undefined);
-    private readonly _isCollapsed = signal(false);
 
     readonly courseId = this._courseId.asReadonly();
     readonly points = this._points.asReadonly();
@@ -87,10 +86,8 @@ export class CourseDashboardComponent implements OnDestroy {
      * `points` can exceed `maxPoints`) would overflow the track. Clamping here keeps the bar within its track.
      */
     readonly progressBarValue = computed(() => Math.min(100, Math.max(0, this.progress())));
-    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
-    get isCollapsed(): boolean {
-        return this._isCollapsed();
-    }
+    // Derived from the chat-history state so the inner panel toggle and the title-bar toggle stay in sync.
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     private metricsSubscription?: Subscription;
 
@@ -101,7 +98,6 @@ export class CourseDashboardComponent implements OnDestroy {
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this._isCollapsed.set(!this._isCollapsed());
     }
 
     constructor() {
