@@ -43,7 +43,7 @@ export class CourseIrisComponent {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
             }
         });
     }

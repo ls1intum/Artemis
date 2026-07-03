@@ -139,10 +139,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
             // First, try to navigate to the last selected exam
-            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
             // Second, try to navigate to the upcoming exam
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
             this.examSelected.set(!!examId);
@@ -160,7 +160,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
                 studentExams.forEach((exam) => {
                     const studentExam = cloneDeep(exam) as StudentExam;
                     this.studentExamsForRealExams.set(studentExam.id!, studentExam);
@@ -226,17 +226,17 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @return value for sort()-function
      */
     sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
-        if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isBefore(exam2.startDate)) {
             return -1;
         }
-        if (dayjs(exam1.startDate!).isAfter(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isAfter(exam2.startDate)) {
             return 1;
         }
         return 0;
     }
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));

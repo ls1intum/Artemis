@@ -97,7 +97,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
 
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
     }
@@ -163,14 +163,11 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         }
 
         this.filteredOptions.set(
-            matchingConversations.map(
-                (conversation) =>
-                    ({
-                        id: conversation.id!,
-                        name: this.getConversationName(conversation),
-                        type: 'conversation',
-                    }) as CombinedOption,
-            ),
+            matchingConversations.map((conversation) => ({
+                id: conversation.id!,
+                name: this.getConversationName(conversation),
+                type: 'conversation',
+            })),
         );
     }
 

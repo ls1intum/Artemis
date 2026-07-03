@@ -253,7 +253,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
-        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
         if (!transcriptColumnEl) {
             return;
         }

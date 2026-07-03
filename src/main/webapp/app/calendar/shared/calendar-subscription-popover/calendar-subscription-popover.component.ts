@@ -54,7 +54,7 @@ export class CalendarSubscriptionPopoverComponent {
         const url = this.subscriptionUrl();
         if (url) {
             this.copiedUrl.set(true);
-            navigator.clipboard.writeText(url);
+            void navigator.clipboard.writeText(url);
         }
     }
 

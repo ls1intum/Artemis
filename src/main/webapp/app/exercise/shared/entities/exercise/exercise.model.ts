@@ -43,7 +43,7 @@ export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
 
 export interface ValidationReason {
     translateKey: string;
-    translateValues: any;
+    translateValues: { [key: string]: unknown };
 }
 
 export interface PlagiarismDetectionConfig {
@@ -180,7 +180,7 @@ export abstract class Exercise implements BaseEntity {
  */
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons: Record<string, IconProp> = {
@@ -191,7 +191,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] ?? (faQuestion as IconProp);
+    return icons[exerciseType] ?? faQuestion;
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {

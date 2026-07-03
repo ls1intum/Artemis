@@ -165,7 +165,7 @@ export class ListOfComplaintsComponent implements OnInit {
             undefined,
             complaint.result.id,
         );
-        this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+        void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
     sortRows() {

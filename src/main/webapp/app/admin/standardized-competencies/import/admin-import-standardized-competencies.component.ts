@@ -29,6 +29,7 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeNode, convertToTreeNodes } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { parseJson } from 'app/foundation/util/json.util';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -162,7 +163,7 @@ export class AdminImportStandardizedCompetenciesComponent {
             next: () => {
                 this.isLoading.set(false);
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
@@ -176,7 +177,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -189,7 +190,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
         let parsedData: KnowledgeAreasForImportDTO | undefined;
         try {
-            parsedData = JSON.parse(this.fileReader.result as string);
+            parsedData = parseJson<KnowledgeAreasForImportDTO>(this.fileReader.result as string);
             this.importData.set(parsedData);
         } catch (e) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');

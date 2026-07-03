@@ -98,7 +98,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.formattedConfirmationText.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.confirmationEndText));
             }
 
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 if (user && user.name) {
                     this.accountName.set(user.name);
                 }
@@ -234,7 +234,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             exam &&
             exam.visibleDate &&
             exam.visibleDate.isBefore(now) &&
-            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate!)
+            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate)
         );
     }
 

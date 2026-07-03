@@ -25,6 +25,7 @@ import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
 import { getPointOutData } from 'app/iris/shared/entities/iris-content-type.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -363,7 +364,7 @@ export class IrisChatService implements OnDestroy {
         if (error.status === 403) {
             this.error.next(IrisErrorMessageKey.IRIS_DISABLED);
         } else if (error.status === 429) {
-            const map = new Map<string, any>();
+            const map = new Map<string, number | undefined>();
             map.set('hours', this.rateLimitInfo?.rateLimitTimeframeHours);
             this.error.next(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
         } else {
@@ -377,7 +378,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
+        return this.irisChatHttpService.rateMessage(this.sessionId, message.id, !!helpful).pipe(
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 if (this.stateGeneration !== generation) return;
@@ -549,7 +550,7 @@ export class IrisChatService implements OnDestroy {
             return;
         }
 
-        const suggestions = JSON.parse(str);
+        const suggestions = parseJson<string[]>(str);
         this.suggestions.next(suggestions);
     }
 

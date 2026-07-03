@@ -111,7 +111,7 @@ The easiest way to set up a MySQL database for development is by using Docker.
 Run the following command to start a MySQL database using the provided Docker Compose file:
 
 ```bash
-docker compose -f docker/mysql.yml up
+docker compose --env-file .env -f docker/mysql.yml up
 ```
 
 This method simplifies setup and management, making it ideal for development environments.
