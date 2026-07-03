@@ -409,7 +409,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
             return;
         }
 
-        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, this.exercise!));
+        this.chartData.set(this.feedbackChartService.create(feedbackItemNodes, this.exercise));
     }
 
     getCommitHash(): string {

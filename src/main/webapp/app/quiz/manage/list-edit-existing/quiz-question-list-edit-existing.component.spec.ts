@@ -304,7 +304,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
     describe('import questions', () => {
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
-            const ev = { target: { files: [file] } };
+            const ev = { target: { files: [file] } } as unknown as Event;
             component.setImportFile(ev);
             expect(component.importFile()).toEqual(file);
             expect(component.importFileName()).toBe('testFileName');

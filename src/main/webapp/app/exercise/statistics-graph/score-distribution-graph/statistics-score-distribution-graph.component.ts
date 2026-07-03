@@ -80,7 +80,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      * Handles the event if a user clicks on a certain chart bar
      * @param event the event passed by p-chart
      */
-    selectChartBar(event: any): void {
+    selectChartBar(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         if (!selected) {
             return;

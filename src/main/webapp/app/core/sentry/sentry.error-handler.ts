@@ -1,5 +1,5 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
-import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
+import { Event as SentryEvent, browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -76,7 +76,7 @@ export class SentryErrorHandler extends ErrorHandler {
         this.reportIfPasskeyIsNotSupported();
     }
 
-    private scrubSentryPayload(trans: any): any {
+    private scrubSentryPayload<T extends SentryEvent>(trans: T): T {
         if (trans.user) {
             delete trans.user;
         }
@@ -131,13 +131,19 @@ export class SentryErrorHandler extends ErrorHandler {
      * Send an HttpError to Sentry. Only if it's not in the range 400-499.
      * @param error
      */
-    override handleError(error: any): void {
-        if (error && error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
+    override handleError(error: unknown): void {
+        // Narrow to the loosely-typed error shape without changing runtime behavior:
+        // errors reaching Angular's ErrorHandler may be reconstructed HttpErrorResponses, so we keep the
+        // existing string-based `name` check (rather than `instanceof`) and read fields defensively.
+        const err = error as { name?: string; status?: number; error?: unknown; message?: unknown; originalError?: unknown };
+        if (err && err.name === 'HttpErrorResponse' && err.status! < 500 && err.status! >= 400) {
             super.handleError(error);
             return;
         }
         if (this.environment !== 'local') {
-            const exception = error.error || error.message || error.originalError || error;
+            // Non-optional access is deliberate: it preserves the original behavior where a null/undefined
+            // error throws here (a pre-existing quirk asserted by the spec) rather than capturing `null`.
+            const exception = err.error || err.message || err.originalError || error;
             captureException(exception);
         }
         super.handleError(error);

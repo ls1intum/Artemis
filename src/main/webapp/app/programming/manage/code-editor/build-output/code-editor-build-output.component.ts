@@ -39,7 +39,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
-    onToggleCollapse = output<{ event: any; horizontal: boolean }>();
+    onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();
     onError = output<string>();
 
     readonly isBuilding = signal(false);
@@ -166,7 +166,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
                 // when the result identity actually changes.
                 distinctUntilChanged((previous, current) => previous?.id === current?.id),
                 tap((result) => {
-                    this.result.set(result!);
+                    this.result.set(result);
                 }),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
@@ -187,7 +187,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
             map((res) => res?.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -223,7 +223,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         this.onToggleCollapse.emit({
             event,
             horizontal: false,

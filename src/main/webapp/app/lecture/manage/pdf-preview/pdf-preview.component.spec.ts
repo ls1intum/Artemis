@@ -993,7 +993,7 @@ describe('PdfPreviewComponent', () => {
 
             const lastOperation = component.operations()[component.operations().length - 1];
             expect(lastOperation.type).toBe('REORDER');
-            expect(lastOperation.data.pageOrder).toEqual(
+            expect((lastOperation.data as { pageOrder: { slideId: string; order: number }[] }).pageOrder).toEqual(
                 newPageOrder.map((page) => ({
                     slideId: page.slideId,
                     order: page.order,
@@ -1019,8 +1019,8 @@ describe('PdfPreviewComponent', () => {
 
             const lastOperation = component.operations()[component.operations().length - 1];
             expect(lastOperation.type).toBe('SHOW');
-            expect(lastOperation.data.slideIds).toContain('slide1');
-            expect(lastOperation.data.slideIds).toContain('slide3');
+            expect((lastOperation.data as { slideIds: string[] }).slideIds).toContain('slide1');
+            expect((lastOperation.data as { slideIds: string[] }).slideIds).toContain('slide3');
         });
     });
 
@@ -1518,7 +1518,7 @@ describe('PdfPreviewComponent', () => {
                 {
                     type: 'MERGE',
                     timestamp: dayjs('2023-01-01'),
-                    data: { sourceId: 'merged' },
+                    data: { sourceId: 'merged' } as { sourceId: string; pageCount: number },
                 },
             ]);
 

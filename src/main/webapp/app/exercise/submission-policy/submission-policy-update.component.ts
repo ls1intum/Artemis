@@ -176,7 +176,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             if (programmingExercise.submissionPolicy) {
                 newPolicy.id = programmingExercise.submissionPolicy.id;
                 newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy!.submissionLimit;
+                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
 
                 if (programmingExercise.submissionPolicy?.exceedingPenalty) {
                     newPolicy.exceedingPenalty = programmingExercise.submissionPolicy?.exceedingPenalty;
@@ -193,7 +193,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
         this.submissionPolicyTypeChange.emit();
-        return submissionPolicyType!;
+        return submissionPolicyType;
     }
 
     /**

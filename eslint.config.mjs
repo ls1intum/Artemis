@@ -252,6 +252,46 @@ export default tseslint.config(
             ],
         },
     },
+    // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
+    // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'error',
+        },
+    },
+    // Curb unsafe `as` casts in production code without banning `as` outright (downcasts the type system cannot
+    // infer — e.g. `event.target as HTMLInputElement` — remain the honest tool and stay allowed). Two targeted rules:
+    //   - `no-unnecessary-type-assertion`: removes redundant casts that do not change the type (noise, and they
+    //     silently hide the day the underlying type shifts). Auto-fixable.
+    //   - `consistent-type-assertions` with `objectLiteralTypeAssertions: 'never'`: forbids `{ … } as T` on object
+    //     literals, which bypasses excess-property checking. Use `satisfies T` (verifies shape, keeps the inferred
+    //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
+    // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
+    // Keep diagnostics out of the console and off `globalThis` in production code.
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
+    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
+    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
+    //     mocking (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-console': 'error',
+            'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
+        },
+    },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
     // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
     // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above
