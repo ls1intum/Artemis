@@ -23,7 +23,7 @@ export class CreateFaqDTO {
         public faqState: FaqState,
         public questionTitle: string,
         public courseId?: number,
-        public categories?: FaqCategory[],
+        public categories?: (FaqCategory | string)[],
         public questionAnswer?: string,
     ) {}
 
@@ -41,7 +41,7 @@ export class UpdateFaqDTO {
         public id: number,
         public faqState: FaqState,
         public questionTitle: string,
-        public categories?: FaqCategory[],
+        public categories?: (FaqCategory | string)[],
         public questionAnswer?: string,
     ) {}
 

@@ -2,7 +2,6 @@
     id="course-{{ courseId() }}-header"
     class="card-header text-white px-3"
     [ngClass]="{ 'rounded-bottom-4': archiveMode() }"
-    [routerLink]="['/courses', courseId()]"
     [ngStyle]="{ '--background-color-for-hover': color() }"
 >
     <div class="d-flex align-items-center justify-content-between gap-1">

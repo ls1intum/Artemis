@@ -22,7 +22,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { routes } from 'app/modeling/overview/modeling-participation.route';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
@@ -114,10 +113,10 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, TeamParticipateInfoBoxComponent, RatingComponent],
+                imports: [ModelingEditorComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(TeamParticipateInfoBoxComponent), MockComponent(RatingComponent)],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent)],
             },
         });
 
@@ -158,7 +157,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockComponent(ResizeableContainerComponent),
-                MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(FullscreenComponent),

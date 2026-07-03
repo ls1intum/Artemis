@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
@@ -19,7 +19,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -34,6 +33,7 @@ import { CourseExercisesComponent } from 'app/course/overview/course-exercises/c
 import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -182,14 +182,13 @@ describe('CourseOverviewComponent', () => {
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
-            snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
+            snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();
 
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
@@ -459,7 +458,8 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
+        // getCourse is read both in ngOnInit (initial cache lookup) and in loadCourse (reuse-vs-fetch decision)
+        expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
@@ -528,6 +528,82 @@ describe('CourseOverviewComponent', () => {
 
         expect(subscribeStub).toHaveBeenCalledOnce();
         expect(refreshSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should fetch the course exactly once when navigating into the course', async () => {
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+    });
+
+    it('should reuse the cached full course without fetching when the guard already loaded it', async () => {
+        // The guard loads + stores the full course before activation; loadCourse must reuse it instead of fetching again (load once)
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(component.course()).toEqual(course1);
+    });
+
+    it('should still re-check access on the reused cached course (in-place switch) and redirect when inaccessible', async () => {
+        // On an in-place course switch the guard is not re-evaluated, so the reuse path must run the access check itself
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course1, lectures: undefined } as Course);
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(findOneForDashboardStub).not.toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
+    it('should re-check access for the target child route after loading the course and redirect when it is not accessible', async () => {
+        // Deep link into the lectures tab of a course without lectures, reaching loadCourse without the guard having
+        // decided (e.g. unguarded entry / in-place switch): the container fetches and must redirect after the load.
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: undefined } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).toHaveBeenCalledWith([`/courses/${course1.id}/exercises`]);
+    });
+
+    it('should not redirect after loading the course when the target child route is accessible', async () => {
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'lectures' } };
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: { ...course1, lectures: [new Lecture()] } as Course, headers: new HttpHeaders() })));
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not redirect after loading the course for child routes that the guard does not protect', async () => {
+        // settings/statistics/calendar are CourseOverviewRoutePath members without an access rule; they must never be redirected
+        (route.snapshot as any).firstChild = { routeConfig: { path: 'settings' } };
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        await component.ngOnInit();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the course when navigating to a different course in place', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        (route as any).params = paramsSubject.asObservable();
+        await component.ngOnInit();
+        expect(findOneForDashboardStub).toHaveBeenCalledExactlyOnceWith(course1.id);
+
+        const getSidebarItemsSpy = vi.spyOn(component, 'getSidebarItems');
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.courseId()).toBe(999);
+        expect(findOneForDashboardStub).toHaveBeenCalledTimes(2);
+        expect(findOneForDashboardStub).toHaveBeenLastCalledWith(999);
+        expect(getSidebarItemsSpy).toHaveBeenCalled();
     });
 
     it('should have visible exams', () => {
@@ -681,6 +757,16 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
+    it('should hide the sidebar while an exam is started and show it otherwise', () => {
+        component.isExamStarted.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(true);
+
+        component.isExamStarted.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(false);
+    });
+
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         await component.ngOnInit();
@@ -697,84 +783,6 @@ describe('CourseOverviewComponent', () => {
 
         courseSidebarService.toggleSidebar();
         expect(component.isSidebarCollapsed()).toBe(true);
-    });
-
-    describe('determineManageViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-            component.course.set({ isAtLeastTutor: true });
-        });
-
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.course.set({ isAtLeastTutor: true });
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
-        });
-
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
-        });
-
-        it('should set lectures link when URL includes "lectures"', () => {
-            component.course.set({ isAtLeastEditor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
-        });
-
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
-        });
-
-        it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
-        });
-
-        it('should set competency-management link when URL includes "competencies + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
-        });
-
-        it('should set faqs link when URL includes "faq"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
-        });
-
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
-            component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-
-        it('should default to course management base link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123']);
-        });
-
-        it('should set course statistics link when URL includes course statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
-        });
     });
 
     it('should initialize course notification values when both settingInfo and info are available', async () => {

@@ -102,8 +102,8 @@ export class ChartCategoryFilter extends ChartFilter {
             if (!exercise.categories) {
                 return this.includeExercisesWithNoCategory;
             }
-            return exercise
-                .categories!.flatMap((category: ExerciseCategory) => this.filterMap.get(category.category!)!)
+            return exercise.categories
+                .flatMap((category: ExerciseCategory) => this.filterMap.get(category.category!)!)
                 .reduce((value1: boolean, value2: boolean) => value1 || value2);
         }) as Array<E>;
     }

@@ -1,0 +1,442 @@
+// ── Shared values ──
+// File-scoped variables, placeholders and mixins for the recurring literals and
+// declaration groups used across the Iris course settings page. Keeping these in
+// one place removes duplication without changing any computed value.
+
+$iris-radius: 0.5rem;
+$iris-card-padding: 1.5rem;
+$iris-text-sm: 0.875rem;
+$iris-text-xs: 0.75rem;
+$iris-label: var(--iris-label-color);
+$iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+// Card-like surface shared by the content cards and the enable/disable toggle row.
+%iris-surface {
+    background: var(--iris-secondary-background);
+    border: 1px solid var(--iris-accent-background);
+    border-radius: $iris-radius;
+}
+
+// A white dot with a coloured ring, centred on its host. Used for both the small
+// clickable slider ticks and (scaled up) the slider handle.
+@mixin iris-dot($size, $ring-color) {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: $size;
+    height: $size;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid $ring-color;
+    transform: translate(-50%, -50%);
+}
+
+// Chat bubble shared between the user and Iris example messages.
+%iris-bubble {
+    border-radius: 1rem;
+    color: var(--body-color);
+    padding: 0.5rem 0.75rem;
+    font-size: $iris-text-sm;
+}
+
+.iris-settings-content {
+    max-width: 800px;
+    margin: 0 auto;
+
+    // PrimeNG's dark theme paints the tab list and panel area with its own
+    // surface token, which clashes with the page background here. The Iris
+    // cards already provide their own surfaces, so the tab chrome itself
+    // should be transparent in both themes.
+    ::ng-deep .p-tablist,
+    ::ng-deep .p-tabpanels {
+        background: transparent;
+    }
+}
+
+// Stacks the enable/disable toggle row and the revealed cards as flex children
+// so the spacing between them comes from a single `gap` instead of margins.
+.iris-general-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.iris-card {
+    @extend %iris-surface;
+
+    padding: $iris-card-padding;
+}
+
+.iris-card-title {
+    font-size: 1rem;
+}
+
+// On a <small> this also overrides the element's default 0.875em shrink
+.iris-card-subtitle {
+    color: $iris-label !important;
+    font-size: $iris-text-sm;
+}
+
+.iris-toggle-row {
+    @extend %iris-surface;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.25rem $iris-card-padding;
+}
+
+// Group of cards revealed when the Iris toggle is switched on. Stacked as a
+// flex column so the inter-card spacing is a single `gap`, not stacked
+// margins. Each direct child also slides down and fades in, staggered so the
+// cards cascade out from under the toggle row.
+.iris-enabled-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    > * {
+        animation: iris-card-slide-in 0.32s $iris-card-easing both;
+
+        @for $i from 1 through 4 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{($i - 1) * 0.06}s;
+            }
+        }
+    }
+}
+
+// Respect users who prefer reduced motion — show the cards without sliding.
+@media (prefers-reduced-motion: reduce) {
+    .iris-enabled-cards > * {
+        animation: none;
+    }
+}
+
+// Stack the two example chat bubbles as flex children so the spacing between
+// them comes from `gap`, not from a margin on the user bubble.
+.iris-example-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@keyframes iris-card-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Slider with clickable tick markers at the start, middle and end of the track
+.iris-slider-wrapper {
+    position: relative;
+    max-width: 80%;
+    margin-inline: auto;
+
+    // Vertical room so the enlarged tick hit-area is not clipped
+    padding: 0.5rem 0;
+
+    // PrimeNG 21: the slider root is `.p-slider` (no `-horizontal` variant
+    // class) and is the <p-slider> host element itself.
+    ::ng-deep .iris-slider.p-slider {
+        // Thin rounded track in a light grey
+        height: 6px;
+        border-radius: 999px;
+        background: var(--iris-accent-background);
+
+        // Filled portion from the start up to the handle
+        .p-slider-range {
+            background: var(--primary);
+            border-radius: 999px;
+        }
+    }
+
+    // Clickable tick: a 20px-square button (generous hit area) with a
+    // visible 10px dot centred inside it. Clicking it jumps the slider here.
+    .iris-slider-tick {
+        position: absolute;
+        top: 50%;
+        left: 0; // overridden inline per tick
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+        z-index: 2; // sit above the track + handle
+        appearance: none;
+
+        // The visible dot: white fill with a border-coloured ring
+        &::before {
+            @include iris-dot(10px, var(--iris-accent-border-color));
+
+            transition:
+                border-color 0.15s ease,
+                opacity 0.15s ease,
+                transform 0.15s ease;
+        }
+
+        // A "covered" tick sits behind the handle (its level is selected) —
+        // promote its ring to the primary colour. Plain (unselected) ticks
+        // ahead of the handle keep the grey ring.
+        &.covered::before {
+            border-color: var(--primary);
+        }
+
+        // The handle currently sits over this tick — hide it so the handle
+        // is the only marker at that position (no double dot).
+        &.active::before {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.4);
+        }
+    }
+
+    // The slider handle ("big tick"): a larger version of the small tick's
+    // dot. PrimeNG draws the handle itself, so we strip its default skin and
+    // render the dot through the `&::before` pseudo-element, exactly like the
+    // small ticks (white fill with a primary-coloured ring).
+    ::ng-deep .p-slider-handle {
+        // `position` is set by PrimeNG; force `relative` so the ring
+        // pseudo-element anchors to the handle itself.
+        position: relative;
+        width: 24px;
+        height: 24px;
+        background: transparent;
+        border: none;
+        z-index: 3; // sit above the decorative ticks
+
+        // The visible dot — same look as the small ticks, scaled up.
+        &::before {
+            @include iris-dot(20px, var(--primary));
+        }
+
+        // Expanding ring for the "pop" micro animation. A separate
+        // pseudo-element so we never touch PrimeNG's positioning transform
+        // on the handle itself. Centred on the handle so it stays a true
+        // concentric circle around the white core.
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: none;
+        }
+    }
+
+    // When the pop class is active, replay the ring animation on the handle
+    &.handle-popping ::ng-deep .p-slider-handle::after {
+        animation: iris-handle-pop 0.32s ease-out;
+    }
+}
+
+// Brief expanding ring played on the slider handle when it lands on a tick.
+// Keeps the -50%/-50% translate so the ring stays concentric while it scales.
+@keyframes iris-handle-pop {
+    0% {
+        opacity: 0.55;
+        transform: translate(-50%, -50%) scale(0.6);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.9);
+    }
+}
+
+// Each label is absolutely positioned at the same percentage as its tick
+// (see .iris-slider-tick) so the two always stay aligned. The container only
+// needs to provide the positioning context and reserve vertical space.
+.iris-slider-labels {
+    position: relative;
+
+    // Match the slider width and centering so labels line up with the track
+    max-width: 80%;
+    margin-inline: auto;
+    margin-top: 0.25rem;
+
+    // Reserve room for the absolutely positioned labels
+    height: 1.5em;
+    color: var(--body-color);
+    font-size: $iris-text-xs;
+
+    .iris-slider-label {
+        position: absolute;
+        top: 0;
+        left: 0; // overridden inline per label
+        // Centre the label on its tick percentage
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+}
+
+.iris-support-description {
+    background: var(--iris-primary-background);
+    border-radius: $iris-radius;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    font-size: $iris-text-sm;
+    color: $iris-label !important;
+
+    strong {
+        color: var(--body-color);
+        font-weight: 500;
+    }
+
+    // "Best suited for" line — cancel the <small> shrink to match the body text
+    > small {
+        font-size: $iris-text-sm;
+        color: $iris-label !important;
+
+        // The "Best suited for:" label is wrapped in <em>; render it upright
+        em {
+            font-style: normal;
+        }
+    }
+}
+
+.iris-example-conversation {
+    background: var(--iris-secondary-background);
+    border-radius: $iris-radius;
+    padding: 1rem;
+    margin-top: 1rem;
+
+    // "Example conversation at this level" label
+    > small {
+        font-size: $iris-text-sm;
+    }
+}
+
+.iris-user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--iris-tertiary-background);
+    color: $iris-label;
+    font-size: 1rem;
+}
+
+.iris-message-user {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0.5rem;
+
+    .bubble {
+        @extend %iris-bubble;
+
+        background: var(--iris-tertiary-background);
+        border-bottom-right-radius: 0.25rem;
+        max-width: 55%;
+    }
+}
+
+.iris-message-iris {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+
+    .iris-message-logo {
+        flex-shrink: 0;
+    }
+
+    .bubble {
+        @extend %iris-bubble;
+
+        background: var(--iris-primary-background);
+        border-bottom-left-radius: 0.25rem;
+        max-width: 55%;
+
+        // Soft drop shadow to lift the bubble off the conversation background
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+        // Inline code snippets embedded in the example reply (via <code> tags
+        // in the translation, rendered with [innerHTML]).
+        code {
+            font-family: var(--bs-font-monospace);
+            font-size: 0.85em;
+            background: var(--iris-accent-background);
+            color: var(--body-color);
+            padding: 0.1em 0.35em;
+            border-radius: 0.25rem;
+        }
+    }
+}
+
+.iris-info-banner {
+    background: var(--iris-blue-background);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    border-radius: $iris-radius;
+    padding: 1rem;
+    font-size: $iris-text-sm;
+    font-weight: 500;
+    color: var(--primary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.admin-section {
+    ::ng-deep .p-message-content {
+        color: var(--primary);
+    }
+
+    .iris-save-row {
+        margin-top: 1rem;
+    }
+}
+
+.iris-save-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+
+    button {
+        font-size: $iris-text-sm;
+
+        // PrimeNG's pButton inserts a leading <span class="p-button-icon">
+        // for the loading spinner. With `.p-button { gap: ... }` that empty
+        // span pushes the label visibly to the right, even after loading
+        // ends. Collapse the slot so the label sits flush against the
+        // button's normal padding.
+        ::ng-deep .p-button-icon:empty {
+            display: none;
+        }
+    }
+}
+
+// Additional Guidelines textarea: rounded, non-resizable, and (via pTextarea's
+// [autoResize]) it grows with the content. The growth is capped at max-height,
+// past which the textarea becomes scrollable instead of expanding further.
+.iris-guidelines-textarea {
+    border-radius: $iris-radius;
+    font-size: $iris-text-sm;
+
+    // Disable the manual drag handle — height is driven by autoResize
+    resize: none;
+
+    // Cap the auto-expansion; beyond this the textarea scrolls internally.
+    max-height: 14rem;
+
+    // autoResize sets `overflow: hidden` inline; re-enable scrolling once the
+    // content exceeds max-height so long input stays reachable.
+    overflow-y: auto !important;
+}

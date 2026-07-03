@@ -20,6 +20,7 @@
             "casesTrimmed": "Nur 100 Fälle mit der höchsten Ähnlichkeit werden angezeigt!",
             "generateJplagReport": "JPlag Report generieren",
             "noFileSelected": "Keine Datei ausgewählt",
+            "synchronizeFiles": "Die Dateiauswahl beim Navigieren über beide Abgaben hinweg synchronisieren",
             "binaryFileNotRendered": "Binäre Datei nicht angezeigt.",
             "cannotLoadFiles": "Die Abgabe kann aufgrund eines ungültigen Repository-Status nicht geladen werden.",
             "noFilesFound": "Keine Dateien gefunden",

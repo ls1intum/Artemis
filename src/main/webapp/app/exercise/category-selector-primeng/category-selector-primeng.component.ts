@@ -1,18 +1,11 @@
-import { Component, ElementRef, ViewEncapsulation, input, linkedSignal, output, viewChild } from '@angular/core';
+import { Component, ViewEncapsulation, computed, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { Observable, combineLatest, map, startWith } from 'rxjs';
+import { FormsModule } from '@angular/forms';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
-import { MatFormField } from '@angular/material/form-field';
-import { AsyncPipe, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatOption } from '@angular/material/core';
+import { AutoComplete, AutoCompleteCompleteEvent, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
@@ -22,27 +15,10 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     templateUrl: './category-selector-primeng.component.html',
     styleUrls: ['./category-selector-primeng.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        MatFormField,
-        MatChipGrid,
-        MatChipRow,
-        NgStyle,
-        MatChipRemove,
-        FaIconComponent,
-        FormsModule,
-        MatAutocompleteTrigger,
-        MatChipInput,
-        ReactiveFormsModule,
-        MatAutocomplete,
-        MatOption,
-        ColorSelectorComponent,
-        AsyncPipe,
-        ArtemisTranslatePipe,
-    ],
+    imports: [AutoComplete, FormsModule, FaIconComponent, ColorSelectorComponent, ArtemisTranslatePipe],
 })
 export class CategorySelectorPrimengComponent {
     protected readonly faTimes = faTimes;
-    protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
     private readonly COLOR_SELECTOR_HEIGHT = 150;
     protected readonly MAX_CATEGORIES = 3;
 
@@ -55,28 +31,25 @@ export class CategorySelectorPrimengComponent {
     readonly selectedCategoryItems = linkedSignal<ExerciseCategory[] | FaqCategory[]>(() => this.categories() ?? []);
 
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
-    readonly categoryInput = viewChild.required<ElementRef<HTMLInputElement>>('categoryInput');
-    readonly autocompleteTrigger = viewChild.required(MatAutocompleteTrigger);
+    readonly autoComplete = viewChild.required(AutoComplete);
 
     readonly selectedCategories = output<ExerciseCategory[]>();
 
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
 
-    categoryCtrl = new FormControl<string | undefined>(undefined);
+    /**
+     * Suggestions shown in the p-autoComplete dropdown. Updated on every keystroke via {@link onComplete}.
+     * Excludes already-selected categories.
+     */
+    readonly categorySuggestions = signal<string[]>([]);
 
-    // Re-emit when the user types, but also when the parent updates the existing or selected categories, so the options never go stale after the initial render.
-    readonly uniqueCategoriesForAutocomplete: Observable<string[]> = combineLatest([
-        this.categoryCtrl.valueChanges.pipe(startWith(undefined)),
-        toObservable(this.existingCategories),
-        toObservable(this.selectedCategoryItems),
-    ]).pipe(
-        map(([userInput]) => (userInput ? this.filterCategories(userInput) : this.existingCategoriesAsStringArray().slice())),
-        // remove duplicated values
-        map((categories: string[]) => [...new Set(categories)]),
-        // remove categories that have already been selected in the exercise
-        map((categories: string[]) => categories.filter((category) => !this.categoriesAsStringArray().includes(category.toLowerCase()))),
-    );
+    /**
+     * The labels of the selected categories. Used as the p-autoComplete `multiple` model so each category renders
+     * as a removable chip token. The colored chip rendering is provided by the `selecteditem` template, which looks
+     * the color up from {@link selectedCategoryItems} by label.
+     */
+    readonly selectedCategoryLabels = computed<string[]>(() => this.selectedCategoryItems().map((category) => category.category ?? ''));
 
     private categoriesAsStringArray(): string[] {
         return this.selectedCategoryItems().map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
@@ -97,6 +70,27 @@ export class CategorySelectorPrimengComponent {
     }
 
     /**
+     * Recompute the autocomplete suggestions for the current query. Mirrors the previous combineLatest logic:
+     * filter the existing categories by the typed text (or show all when empty), de-duplicate, and drop categories
+     * that are already selected.
+     * @param event the p-autoComplete complete event carrying the current query
+     */
+    onComplete(event: AutoCompleteCompleteEvent): void {
+        const query = event.query;
+        const candidates = query ? this.filterCategories(query) : this.existingCategoriesAsStringArray().slice();
+        const selected = this.categoriesAsStringArray();
+        this.categorySuggestions.set([...new Set(candidates)].filter((category) => !selected.includes(category.toLowerCase())));
+    }
+
+    /**
+     * Look up the color for a selected category label so the chip token can be rendered in the category color.
+     * @param label the category label rendered as a chip token
+     */
+    colorFor(label: string): string | undefined {
+        return this.selectedCategoryItems().find((category) => category.category === label)?.color;
+    }
+
+    /**
      * open colorSelector for tagItem
      * @param {MouseEvent} event
      * @param {ExerciseCategory} tagItem
@@ -104,6 +98,18 @@ export class CategorySelectorPrimengComponent {
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
         this.colorSelector().openColorSelector(event, undefined, this.COLOR_SELECTOR_HEIGHT);
+    }
+
+    /**
+     * open the color selector for the category identified by its label (used from the chip token template).
+     * @param event the originating mouse event
+     * @param label the category label rendered as a chip token
+     */
+    openColorSelectorForLabel(event: MouseEvent, label: string) {
+        const category = this.selectedCategoryItems().find((item) => item.category === label);
+        if (category) {
+            this.openColorSelector(event, category);
+        }
     }
 
     /**
@@ -118,14 +124,52 @@ export class CategorySelectorPrimengComponent {
     }
 
     /**
-     * set color if not selected and add exerciseCategory
-     * @param event a new category was added
+     * Commits the typed free-text category on Enter, comma, or Tab — restoring the separator behaviour of the
+     * previous Material chip input (`separatorKeysCodes = [ENTER, COMMA, TAB]`). PrimeNG's p-autoComplete does not
+     * add free text on these keys natively, so we wire it via a keydown handler. An empty field still tabs away.
+     * @param event the keydown event coming from the input
      */
-    onItemAdd(event: MatChipInputEvent) {
-        const categoryString = (event.value || '').trim();
+    onSeparatorKeydown(event: KeyboardEvent): void {
+        // Only the text input commits separators. Ignore keydowns bubbling up from chip controls (e.g. the
+        // remove button), otherwise Enter on such a control would be preventDefault'd here and never activate it.
+        if (!(event.target instanceof HTMLInputElement)) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ',' && event.key !== 'Tab') {
+            return;
+        }
+        // Let an empty field tab to the next control instead of trapping focus.
+        if (event.key === 'Tab' && !event.target.value.trim()) {
+            return;
+        }
+        this.onEnter(event);
+    }
+
+    /**
+     * Adds the typed free-text value as a new category. Invoked by {@link onSeparatorKeydown} for a separator key
+     * (PrimeNG does not add free text natively while typeahead is enabled, so we wire it via a keydown handler).
+     * @param event the keyboard event coming from the input (typed as the base `Event` because only `Event` members —
+     * `preventDefault`/`stopPropagation`/`target` — are used)
+     */
+    onEnter(event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const input = event.target as HTMLInputElement;
+        this.addCategoryByString(input.value);
+        // Clear the input and close the suggestion overlay so the next add starts fresh.
+        input.value = '';
+        this.autoComplete().hide();
+    }
+
+    /**
+     * set color if not selected and add exerciseCategory
+     * @param categoryString a new category to add
+     */
+    private addCategoryByString(categoryString: string) {
+        categoryString = (categoryString || '').trim();
         // prevent adding duplicated categories
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < this.MAX_CATEGORIES) {
+        if (categoryString && !categoryArray.includes(categoryString.toLowerCase()) && categoryArray.length < this.MAX_CATEGORIES) {
             let category = this.findExistingCategory(categoryString);
             if (!category) {
                 category = this.createCategory(categoryString);
@@ -138,10 +182,6 @@ export class CategorySelectorPrimengComponent {
             this.selectedCategoryItems.set(updated);
             this.selectedCategories.emit(updated);
         }
-        // Clear the input value
-        event.chipInput!.clear();
-        this.categoryCtrl.setValue(null);
-        this.autocompleteTrigger().closePanel();
     }
 
     private createCategory(categoryString: string): ExerciseCategory {
@@ -153,11 +193,14 @@ export class CategorySelectorPrimengComponent {
         return this.categoryColors[randomIndex];
     }
 
-    // only invoked for autocomplete
-    onItemSelect(event: MatAutocompleteSelectedEvent): void {
-        const categoryString = (event.option.value || '').trim();
+    /**
+     * Adds the category picked from the autocomplete dropdown, reusing an existing category's color when available.
+     * @param event the p-autoComplete select event carrying the chosen suggestion label
+     */
+    onItemSelect(event: AutoCompleteSelectEvent): void {
+        const categoryString = (event.value || '').trim();
         const categoryArray = this.categoriesAsStringArray();
-        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < this.MAX_CATEGORIES) {
+        if (categoryString && !categoryArray.includes(categoryString.toLowerCase()) && categoryArray.length < this.MAX_CATEGORIES) {
             // check if there is an existing category and reuse the same color
             let category = this.findExistingCategory(categoryString);
             if (!category) {
@@ -167,9 +210,11 @@ export class CategorySelectorPrimengComponent {
             const updated = [...this.selectedCategoryItems(), category];
             this.selectedCategoryItems.set(updated);
             this.selectedCategories.emit(updated);
+        } else {
+            // The selection was rejected (duplicate or MAX_CATEGORIES reached). PrimeNG has already added the option
+            // to its internal model, so resync it back to the accepted labels to avoid leaving a phantom chip.
+            this.autoComplete().writeValue(this.selectedCategoryLabels());
         }
-        this.categoryInput().nativeElement.value = '';
-        this.categoryCtrl.setValue(null);
     }
 
     private findExistingCategory(categoryString: string): ExerciseCategory | undefined {
@@ -177,12 +222,35 @@ export class CategorySelectorPrimengComponent {
     }
 
     /**
+     * Removes the category whose chip token was removed via the built-in p-autoComplete remove icon.
+     * @param event the p-autoComplete unselect event carrying the removed label
+     */
+    onItemUnselect(event: AutoCompleteUnselectEvent): void {
+        this.removeCategoryByLabel(event.value);
+    }
+
+    /**
      * cancel colorSelector and remove exerciseCategory
      * @param {ExerciseCategory} categoryToRemove
      */
     onItemRemove(categoryToRemove: ExerciseCategory): void {
+        this.removeCategoryByLabel(categoryToRemove.category);
+    }
+
+    /**
+     * Removes the category via the in-chip remove icon. Stops propagation so the click does not also open the
+     * color selector on the surrounding tag.
+     * @param label the category label of the chip to remove
+     * @param event the originating click event
+     */
+    removeChip(label: string, event: Event): void {
+        event.stopPropagation();
+        this.removeCategoryByLabel(label);
+    }
+
+    private removeCategoryByLabel(label: string | undefined): void {
         this.colorSelector().cancelColorSelector();
-        const updated = this.selectedCategoryItems().filter((exerciseCategory) => exerciseCategory.category !== categoryToRemove.category);
+        const updated = this.selectedCategoryItems().filter((exerciseCategory) => exerciseCategory.category !== label);
         this.selectedCategoryItems.set(updated);
         this.selectedCategories.emit(updated);
     }

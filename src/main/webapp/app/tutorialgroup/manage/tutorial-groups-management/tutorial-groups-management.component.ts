@@ -81,7 +81,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
-                this.courseId.set(course.id!);
+                this.courseId.set(course.id);
                 this.isAtLeastInstructor.set(course.isAtLeastInstructor);
                 this.isAtLeastEditor.set(course.isAtLeastEditor);
                 this.loadTutorialGroups();

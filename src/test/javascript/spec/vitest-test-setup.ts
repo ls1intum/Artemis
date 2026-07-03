@@ -9,7 +9,6 @@
  * NOTE: All tests run in zoneless mode - do not import zone.js
  */
 import '@angular/compiler';
-import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
 // Mock the canvas 2D context in jsdom (used by the PDF preview and Apollon diagram specs).
 import 'vitest-canvas-mock';

@@ -15,10 +15,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 
-vi.mock('split.js', () => ({
-    default: vi.fn(() => ({ destroy: vi.fn(), getSizes: vi.fn(() => [65, 35]) })),
-}));
-
 class ResizeObserverMock {
     observe = vi.fn();
     unobserve = vi.fn();

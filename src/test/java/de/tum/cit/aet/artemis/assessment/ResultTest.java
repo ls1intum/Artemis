@@ -111,6 +111,14 @@ class ResultTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
+    void setScoreShouldUseZeroIfMaxPointsAreZero() {
+        result.setScore(5.0, 0.0, course);
+
+        assertThat(result.getScore()).isZero();
+        assertThat(result.isSuccessful()).isFalse();
+    }
+
+    @Test
     void filterSensitiveFeedbacksAfterDueDate() {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);

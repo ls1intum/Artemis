@@ -22,7 +22,6 @@ import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.serv
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
@@ -45,7 +44,7 @@ describe('PrerequisiteFormComponent', () => {
         courseCompetencyServiceMock.getCourseCompetencyTitles.mockReturnValue(of(new HttpResponse({ body: [] })));
 
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule, OwlNativeDateTimeModule],
+            imports: [CompetencyFormComponent, ReactiveFormsModule, NgbDropdownModule],
             providers: [
                 { provide: PrerequisiteService, useValue: prerequisiteServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

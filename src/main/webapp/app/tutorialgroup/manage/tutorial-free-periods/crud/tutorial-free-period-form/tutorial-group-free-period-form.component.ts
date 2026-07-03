@@ -1,17 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-
-export const MY_NATIVE_FORMATS = {
-    datePickerInput: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
-    timePickerInput: { hour: 'numeric', minute: 'numeric' },
-};
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -38,8 +32,7 @@ export enum TimeFrame {
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit {
     private fb = inject(FormBuilder);
