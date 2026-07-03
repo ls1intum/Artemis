@@ -16,7 +16,7 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 @Directive({ selector: '[jhiHasAnyAuthority]' })
 export class HasAnyAuthorityDirective {
     private accountService = inject(AccountService);
-    private templateRef = inject<TemplateRef<any>>(TemplateRef);
+    private templateRef = inject<TemplateRef<unknown>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
 
     /** Required authorities; a single authority string is normalized to an array. */

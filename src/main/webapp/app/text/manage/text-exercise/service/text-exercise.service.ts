@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
@@ -55,7 +55,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be updated of type {TextExercise}
      * @param req optional request options
      */
-    update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
+    update(textExercise: TextExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateTextExerciseDTO(textExercise);
         return this.http
@@ -78,7 +78,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * Queries all text exercises for the given request options.
      * @param req optional request options
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: Record<string, unknown>): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<TextExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -129,7 +129,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be updated of type {TextExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(textExercise: TextExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateTextExerciseDTO(textExercise);
         return this.http

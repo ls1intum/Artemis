@@ -68,7 +68,7 @@ export interface SidebarCardElement {
     /**
      * If set to true, the icons for quick actions will be displayed on the top right
      */
-    quickActionIcons?: any;
+    quickActionIcons?: unknown;
     /**
      * If set to true, a subtitle will be displayed on left side
      */

@@ -23,7 +23,7 @@ export class CourseTitleBarComponent {
     toggleSidebar = output<void>();
 
     private courseTitleBarService = inject(CourseTitleBarService);
-    readonly customTitleTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
-    readonly customActionsTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
-    readonly customToolbarTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.toolbarTemplate());
+    readonly customTitleTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
+    readonly customActionsTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
+    readonly customToolbarTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.toolbarTemplate());
 }

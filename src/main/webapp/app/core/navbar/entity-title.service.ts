@@ -120,7 +120,7 @@ export class EntityTitleService implements OnDestroy {
                 subject: new ReplaySubject<string>(1),
             }));
 
-            subject.next(title!);
+            subject.next(title);
 
             if (timeout) {
                 clearTimeout(timeout);

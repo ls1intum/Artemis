@@ -7,6 +7,6 @@
  * - This declaration is a workaround to still enable the import
  */
 declare module '@primeuix/themes/*' {
-    const preset: any;
+    const preset: import('@primeuix/themes/types').Preset;
     export default preset;
 }

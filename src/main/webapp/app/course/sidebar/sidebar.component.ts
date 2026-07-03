@@ -76,7 +76,7 @@ export class SidebarComponent implements OnDestroy {
 
     /** Working copy of the sidebar data, seeded from the {@link sidebarData} input. It is replaced locally when
      *  the user applies exercise filters, without mutating the parent-owned input. */
-    readonly sidebarDataInternal = signal<SidebarData>({} as SidebarData);
+    readonly sidebarDataInternal = signal<SidebarData>({ groupByCategory: false });
 
     exerciseId: string;
 

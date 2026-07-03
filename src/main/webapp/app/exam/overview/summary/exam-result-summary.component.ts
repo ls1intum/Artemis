@@ -218,7 +218,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
-    get resultsArePublished(): boolean | any {
+    get resultsArePublished(): boolean {
         if (this.isTestRun() || this.isTestExam) {
             return true;
         }
@@ -456,7 +456,7 @@ export class ExamResultSummaryComponent implements OnInit {
     private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
         const canCalculatePercentage = maxScore !== undefined && achievedPoints !== undefined;
         if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(achievedPoints! / maxScore, course);
+            return roundScorePercentSpecifiedByCourseSettings(achievedPoints / maxScore, course);
         }
 
         return undefined;
@@ -510,7 +510,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     toggleCollapseExercise(exerciseInfo: ResultSummaryExerciseInfo) {
-        return () => (exerciseInfo!.isCollapsed = !exerciseInfo!.isCollapsed);
+        return () => (exerciseInfo.isCollapsed = !exerciseInfo.isCollapsed);
     }
 
     protected readonly getIcon = getIcon;

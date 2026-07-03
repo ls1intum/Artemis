@@ -234,7 +234,7 @@ export class CourseOverviewService {
     }
 
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
-        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const exercise of sortedExercises) {
             const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
@@ -309,7 +309,7 @@ export class CourseOverviewService {
     }
 
     groupLecturesByStartDate(sortedLectures: Lecture[]): AccordionGroups {
-        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const lecture of sortedLectures) {
             const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
@@ -328,7 +328,7 @@ export class CourseOverviewService {
                   directMessages: { entityData: [] },
               }
             : DEFAULT_CHANNEL_GROUPS;
-        const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
+        const groupedConversationGroups = cloneDeep(channelGroups);
 
         groupedConversationGroups.savedPosts = {
             isHideCount: true,

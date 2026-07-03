@@ -286,7 +286,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id!)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -402,7 +402,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -430,7 +430,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
@@ -472,7 +472,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             return;
         } else {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(markdownWithoutTasks as string, 'text/html');
+            const doc = parser.parseFromString(markdownWithoutTasks, 'text/html');
             const tables = doc.querySelectorAll('table');
 
             tables.forEach((table) => {

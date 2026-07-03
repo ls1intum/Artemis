@@ -59,7 +59,7 @@ export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
-    triggerBuild: (participationId: number) => Observable<any>;
+    triggerBuild: (participationId: number) => Observable<object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
@@ -307,7 +307,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
-                                const programmingSubmissionError = submission as ProgrammingSubmissionError;
+                                const programmingSubmissionError = submission;
                                 // Resolve the exercise id through the mapping instead of the callback-captured exerciseId:
                                 // the shared /user/topic/newSubmissions subscription can carry errors for other participations
                                 // (different exercises), and the mapping is gone once a participation has been cleaned up.
@@ -318,7 +318,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, errorExerciseId);
                                 return;
                             }
-                            const programmingSubmission = submission as ProgrammingSubmission;
+                            const programmingSubmission = submission;
                             const submissionParticipationId = programmingSubmission.participation!.id!;
                             if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
                                 return;
@@ -596,7 +596,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // If we already have a value cached for the participation we don't override it.
-                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations![0].id!]) {
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id!]) {
                     return false;
                 }
                 // Without submissions, we can't determine if the latest submission is pending.
@@ -654,7 +654,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.participationIdToExerciseId.set(participationId, exerciseId);
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
-            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined));
         }
         // If all submission states for the exercise are currently loaded, don't send a new rest request.
         // Instead, wait for the exercise request to finish and return this result
@@ -689,7 +689,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             this.processPendingSubmission(undefined, participationId, exerciseId, personal).subscribe();
         }
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
-        return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+        return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined));
     }
 
     /**
@@ -708,7 +708,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
         const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
+            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined));
         }
         this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
         this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
@@ -737,15 +737,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!
             .asObservable()
-            .pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
+            .pipe(filter((val) => val !== undefined));
     }
 
     getResultEtaInMs() {
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     }
 
-    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
+    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL): Observable<object> {
+        return this.http.post<object>(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {

@@ -3,8 +3,6 @@ import { Injectable, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import dayjs from 'dayjs/esm';
@@ -96,7 +94,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredTemplateParticipation
             } = copy.templateParticipation as ParticipationWithCircularReferences;
-            copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
+            copy.templateParticipation = { ...filteredTemplateParticipation };
         }
         if (copy.solutionParticipation) {
             const {
@@ -105,7 +103,7 @@ export class ProgrammingExerciseSharingService {
                 submissions: _ignoredSubmissions,
                 ...filteredSolutionParticipation
             } = copy.solutionParticipation as ParticipationWithCircularReferences;
-            copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
+            copy.solutionParticipation = { ...filteredSolutionParticipation };
         }
 
         ExerciseService.stringifyExerciseCategories(copy);

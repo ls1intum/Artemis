@@ -85,16 +85,16 @@
                     [class.muted]="item.conversation?.isMuted"
                     [ngClass]="sidebarType() === 'conversation' ? (unreadCount() > 0 && !item.conversation?.isMuted ? 'fw-bold' : 'fw-normal') : 'fw-semibold'"
                 >
-                    @if (otherUser()) {
+                    @if (otherUser(); as otherUser) {
                         <jhi-profile-picture
                             [imageSizeInRem]="'1.1'"
                             [fontSizeInRem]="'0.5'"
                             [imageId]="'sidebar-profile-picture'"
                             [defaultPictureId]="'sidebar-default-profile-picture'"
                             [isGray]="false"
-                            [authorId]="otherUser().id"
-                            [authorName]="otherUser().name"
-                            [imageUrl]="addPublicFilePrefix(otherUser().imageUrl)"
+                            [authorId]="otherUser.id"
+                            [authorName]="otherUser.name"
+                            [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
                             [isEditable]="false"
                         />
                     } @else if (displayIcon()) {
