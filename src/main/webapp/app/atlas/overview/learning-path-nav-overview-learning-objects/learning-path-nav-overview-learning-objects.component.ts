@@ -43,7 +43,7 @@ export class LearningPathNavOverviewLearningObjectsComponent {
 
     constructor() {
         effect(() => {
-            untracked(() => this.loadLearningObjects());
+            untracked(() => void this.loadLearningObjects());
         });
     }
 

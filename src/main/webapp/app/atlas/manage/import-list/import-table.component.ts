@@ -68,7 +68,7 @@ export class ImportTableComponent<T extends BaseEntity> {
 
     constructor() {
         effect(() => {
-            untracked(async () => await this.loadData());
+            void untracked(async () => await this.loadData());
         });
     }
 

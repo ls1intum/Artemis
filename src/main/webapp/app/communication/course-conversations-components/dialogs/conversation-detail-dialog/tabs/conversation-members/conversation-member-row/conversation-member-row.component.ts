@@ -99,7 +99,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
-            this.accountService.identity().then((loggedInUser: User) => {
+            void this.accountService.identity().then((loggedInUser: User) => {
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
                     this.isCurrentUser.set(true);

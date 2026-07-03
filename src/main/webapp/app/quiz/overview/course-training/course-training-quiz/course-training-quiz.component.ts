@@ -325,7 +325,7 @@ export class CourseTrainingQuizComponent {
      * navigates to the course practice page
      */
     navigateToTraining(): void {
-        this.router.navigate(['courses', this.courseId(), 'training']);
+        void this.router.navigate(['courses', this.courseId(), 'training']);
     }
 
     confirmUnratedPractice(): void {

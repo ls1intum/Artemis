@@ -147,6 +147,6 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     redirectToIris(): void {
         const content = this.question();
-        this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
+        void this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
     }
 }

@@ -77,7 +77,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     authenticateUserThenRedirect(error: HttpErrorResponse): void {
         const loginName = error.headers.get('ltiSuccessLoginRequired');
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             if (user) {
                 this.redirectUserToTargetLink(error);
             } else {
@@ -102,7 +102,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     redirectUserToLoginThenTargetLink(error: HttpErrorResponse): void {
         // Redirect the user to the login page
-        this.router.navigate(['/sign-in']).then(() => {
+        void this.router.navigate(['/sign-in']).then(() => {
             // After navigating to the login page, set up a listener for when the user logs in
             this.accountService
                 .getAuthenticationState()
@@ -174,6 +174,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             });
         }
 
-        this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
+        void this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
     }
 }

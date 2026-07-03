@@ -67,7 +67,7 @@ export class PasswordComponent implements OnInit {
      * Password change is only enabled for internal users (not SSO/external).
      */
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.user.set(user);
             // Only internal users can change their password; external/SSO users must use their identity provider
             this.passwordResetEnabled.set(user?.internal || false);

@@ -88,7 +88,7 @@ export class SettingsComponent implements OnInit {
      * Loads the current user's account data and populates the form.
      */
     ngOnInit() {
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             if (user) {
                 this.settingsForm.patchValue({
                     firstName: user.firstName,

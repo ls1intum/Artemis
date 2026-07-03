@@ -101,7 +101,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     ]);
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
         });
@@ -159,7 +159,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     updateTeamFilter(filter: FilterProp) {
         this.teamCriteria.filterProp = filter;
-        this.router.navigate([], { relativeTo: this.route, queryParams: { filter }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { filter }, queryParamsHandling: 'merge', replaceUrl: true });
         this.loadAll();
     }
 

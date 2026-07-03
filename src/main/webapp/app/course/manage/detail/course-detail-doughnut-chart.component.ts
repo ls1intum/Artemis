@@ -137,7 +137,7 @@ export class CourseDetailDoughnutChartComponent {
         const course = this.course();
         const titleLink = this.titleLink();
         if (course.id && titleLink) {
-            this.router.navigate(['/course-management', course.id, titleLink]);
+            void this.router.navigate(['/course-management', course.id, titleLink]);
         }
     }
 

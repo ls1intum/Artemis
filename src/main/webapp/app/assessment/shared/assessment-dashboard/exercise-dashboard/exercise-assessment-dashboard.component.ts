@@ -736,7 +736,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             queryParams.toComplete = toComplete;
         }
 
-        this.router.navigate([route], { queryParams });
+        void this.router.navigate([route], { queryParams });
     }
 
     isComplaintLocked(complaint: Complaint) {

@@ -213,7 +213,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.pinnedCount.emit(pinnedPosts.length);
             });
 
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentUser = user!;
         });
 
