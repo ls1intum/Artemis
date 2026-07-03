@@ -33,7 +33,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { finalize } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -50,7 +49,6 @@ import {
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -111,7 +109,6 @@ export class ExerciseHeaderActionsComponent {
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
-    private readonly profileService = inject(ProfileService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
 
@@ -127,6 +124,7 @@ export class ExerciseHeaderActionsComponent {
     readonly submitLabel = input<string>('entity.action.submit');
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+    readonly athenaEnabled = input<boolean>(false);
 
     readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
@@ -188,8 +186,6 @@ export class ExerciseHeaderActionsComponent {
     readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
-
-    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();

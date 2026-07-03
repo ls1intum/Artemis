@@ -149,7 +149,7 @@
                 }
                 @if (
                     exercise().type === ExerciseType.PROGRAMMING &&
-                    athenaEnabled &&
+                    athenaEnabled() &&
                     !examMode() &&
                     hasUserAcceptedLLM() &&
                     exercise().allowFeedbackRequests &&

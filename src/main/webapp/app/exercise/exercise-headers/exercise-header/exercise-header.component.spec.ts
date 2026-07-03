@@ -20,7 +20,6 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -55,7 +54,6 @@ describe('ExerciseHeaderComponent', () => {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
                 }),
-                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
                 MockProvider(AccountService, { userIdentity: signal({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User) }),
             ],
         });
@@ -132,6 +130,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('courseId', 5);
             fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.componentRef.setInput('athenaEnabled', true);
             fixture.detectChanges();
         }
 
