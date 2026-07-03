@@ -70,10 +70,19 @@ export class RatingListComponent implements OnInit {
 
         if (rating.exerciseType === ExerciseType.PROGRAMMING) {
             // Programming exercises use a different route structure (no resultId)
-            this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessment']);
+            void this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessment']);
         } else {
             // Text, Modeling, and File Upload exercises use assessments/:resultId
-            this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessments', rating.resultId]);
+            void this.router.navigate([
+                '/course-management',
+                this.courseId,
+                exerciseTypePath,
+                rating.exerciseId,
+                'submissions',
+                rating.submissionId,
+                'assessments',
+                rating.resultId,
+            ]);
         }
     }
 

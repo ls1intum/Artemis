@@ -167,7 +167,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
             this.attachmentVideoUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     this.isLoading.set(false);
                 },
                 error: (res: HttpErrorResponse) => {
@@ -195,7 +195,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
      * Go back to the lecture page
      */
     cancelSplit() {
-        this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
+        void this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
     }
 
     addRow() {

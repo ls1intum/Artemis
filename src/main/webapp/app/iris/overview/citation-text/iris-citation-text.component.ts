@@ -313,7 +313,7 @@ export class IrisCitationTextComponent {
             queryParams.page = page;
         }
 
-        this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });
+        void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });
     }
 
     /**

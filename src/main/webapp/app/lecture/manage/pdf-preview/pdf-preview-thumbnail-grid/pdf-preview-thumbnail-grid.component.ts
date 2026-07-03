@@ -62,7 +62,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['orderedPages']) {
             if (!this.reordering()) {
-                this.renderPages();
+                void this.renderPages();
             }
             this.reordering.set(false);
         }

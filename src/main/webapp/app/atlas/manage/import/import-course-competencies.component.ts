@@ -198,7 +198,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      * Cancels the import and navigates back
      */
     onCancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
