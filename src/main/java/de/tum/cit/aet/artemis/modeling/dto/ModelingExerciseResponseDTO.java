@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         Boolean presentationScoreEnabled, String problemStatement, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation,
         String gradingInstructions, Set<String> categories, String channelName, String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments,
         boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId,
-        ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode,
         ModelingExerciseExamGroupDTO exerciseGroup) implements Serializable {
 
@@ -85,10 +86,10 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
             }
         }
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
         }
         else {
             gradingCriterionDTOs = null;

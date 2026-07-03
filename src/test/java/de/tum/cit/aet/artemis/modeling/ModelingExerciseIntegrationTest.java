@@ -228,9 +228,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedModelingExercise.id());
 
         assertThat(receivedModelingExercise.gradingCriteria()).hasSize(3);
-        // The test data builds one criterion with three value-identical instructions; they collapse to one in the
-        // Set<GradingInstructionDTO> (record value equality), so every criterion carries a single distinct instruction.
-        assertThat(receivedModelingExercise.gradingCriteria().stream().map(criterion -> criterion.structuredGradingInstructions().size())).containsExactlyInAnyOrder(1, 1, 1);
+        assertThat(receivedModelingExercise.gradingCriteria().stream().map(criterion -> criterion.structuredGradingInstructions().size())).containsExactlyInAnyOrder(1, 1, 3);
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
@@ -365,6 +363,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
 
         GradingCriterion criterionToUpdate = modelingExercise.getGradingCriteria().stream().findAny().orElseThrow();
+        var currentInstructionsSize = criterionToUpdate.getStructuredGradingInstructions().size();
         var newInstruction = new GradingInstruction();
         newInstruction.setInstructionDescription("New Instruction");
 
@@ -372,10 +371,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         ModelingExerciseResponseDTO createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
-        // The freshly added (distinct) instruction must be carried. An exact size assertion is avoided because the test
-        // data may contain value-identical instructions that collapse in the Set<GradingInstructionDTO>.
-        assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions())
-                .anyMatch(instruction -> "New Instruction".equals(instruction.instructionDescription()));
+        assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions()).hasSize(currentInstructionsSize + 1);
 
         criterionToUpdate.getStructuredGradingInstructions().stream().findFirst().orElseThrow().setInstructionDescription("UPDATE");
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
@@ -385,7 +381,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(findCriterionByTitle(createdModelingExercise, criterionToUpdate.getTitle()).structuredGradingInstructions())
                 .anyMatch(instruction -> "UPDATE".equals(instruction.instructionDescription()));
 
-        criterionToUpdate.setStructuredGradingInstructions(Set.of());
+        criterionToUpdate.setStructuredGradingInstructions(null);
         modelingExercise.setChannelName("testchannelname-" + UUID.randomUUID().toString().substring(0, 8));
         createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
@@ -1230,6 +1226,55 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setPlagiarismDetectionConfig(config);
 
         request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise), ModelingExerciseResponseDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createModelingExercise_courseExercise_persistsDefaultPlagiarismDetectionConfig() throws Exception {
+        // The flat create DTO does not carry a plagiarism detection config; the create path fills the default for course
+        // exercises (createAndSaveDefaultIfNullAndCourseExercise) so it is not persisted as null. Pin that here.
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("Course exercise with default plagiarism config");
+        modelingExercise.setChannelName("test-modeling-channel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(created.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).as("course exercise create persists a non-null default plagiarism config").isNotNull();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(PlagiarismDetectionConfig.createDefault());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseIntoCourse_persistsPlagiarismDetectionConfigFromDto() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
+        // Carry a non-default (valid) plagiarism config on the source so the import DTO transports it and we can assert it is persisted.
+        var config = new PlagiarismDetectionConfig();
+        config.setContinuousPlagiarismControlEnabled(true);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(9);
+        config.setSimilarityThreshold(42);
+        config.setMinimumScore(13);
+        config.setMinimumSize(7);
+        sourceExercise.setPlagiarismDetectionConfig(config);
+        modelingExerciseTestRepository.save(sourceExercise);
+
+        sourceExercise.setCourse(course2);
+        sourceExercise.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+
+        var importedDto = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
+                ImportModelingExerciseDTO.of(sourceExercise), ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+
+        // Reload through a fresh persistence context that eagerly fetches the (lazy) plagiarism config.
+        ModelingExercise reloaded = modelingExerciseTestRepository.findForVersioningById(importedDto.id()).orElseThrow();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).as("import persists the plagiarism config carried on the DTO").isNotNull();
+        assertThat(reloaded.getPlagiarismDetectionConfig()).usingRecursiveComparison().ignoringFields("id").isEqualTo(config);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public record ImportModelingExerciseDTO(Long id, String title, String channelNam
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate,
         DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, TeamAssignmentConfigDTO teamAssignmentConfig,
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks)
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks)
         implements CompetencyLinksHolderDTO {
 
     /**
@@ -51,9 +52,7 @@ public record ImportModelingExerciseDTO(Long id, String title, String channelNam
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        Set<GradingCriterionDTO> gradingCriterionDTOs = criteria != null && Hibernate.isInitialized(criteria)
-                ? criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet())
-                : null;
+        List<GradingCriterionDTO> gradingCriterionDTOs = criteria != null && Hibernate.isInitialized(criteria) ? criteria.stream().map(GradingCriterionDTO::of).toList() : null;
         Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
         Set<CompetencyLinkDTO> competencyLinkDTOs = links != null && Hibernate.isInitialized(links) ? links.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet()) : null;
         TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())

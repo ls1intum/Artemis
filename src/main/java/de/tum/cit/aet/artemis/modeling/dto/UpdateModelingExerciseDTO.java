@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DiagramType diagramType,
         String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, ExerciseMode mode, TeamAssignmentConfigDTO teamAssignmentConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a ModelingExercise entity.
@@ -50,14 +51,14 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<CompetencyLinkDTO> competencyLinkDTOs;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
         }
         else {
             gradingCriterionDTOs = null;
