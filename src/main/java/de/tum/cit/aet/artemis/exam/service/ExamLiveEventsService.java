@@ -119,8 +119,10 @@ public class ExamLiveEventsService {
         event.setOldWorkingTime(oldWorkingTime);
         event.setCourseWide(courseWide);
 
-        // Always include the current exam schedule so a conducting student can refresh the pre-start countdown and the
-        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes.
+        // Include the current exam schedule so a conducting student can refresh the pre-start countdown and the
+        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes. An
+        // exam a student is conducting always has both dates set; the null checks are defensive and the client treats
+        // the dates as optional accordingly.
         var exam = studentExam.getExam();
         if (exam.getStartDate() != null) {
             event.setNewStartDate(exam.getStartDate().toInstant());

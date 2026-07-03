@@ -47,7 +47,8 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             this.eventCount.set(filteredEvents.length);
         });
 
-        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe(() => {
+        // Pass the signal itself (not a snapshot) so the pre-start filter honours a live start-date change.
+        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe(() => {
             // If any unacknowledged event comes in, open the dialog to display it
             if (!this.dialogRef) {
                 this.openDialog();

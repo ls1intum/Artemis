@@ -317,8 +317,32 @@ describe('ExamParticipationLiveEventsService', () => {
         const stored = service['events'][0] as WorkingTimeUpdateEvent;
         expect(dayjs.isDayjs(stored.newStartDate)).toBe(true);
         expect(dayjs.isDayjs(stored.newEndDate)).toBe(true);
-        expect(stored.newStartDate.toISOString()).toBe('2021-08-02T12:05:00.000Z');
-        expect(stored.newEndDate.toISOString()).toBe('2021-08-02T13:05:00.000Z');
+        expect(stored.newStartDate!.toISOString()).toBe('2021-08-02T12:05:00.000Z');
+        expect(stored.newEndDate!.toISOString()).toBe('2021-08-02T13:05:00.000Z');
+    });
+
+    // Regression test for issue #13071: when the start is postponed, a problem statement update created between the old
+    // and the new start must stay hidden from the user. The user observer reads the start date per emission, so passing
+    // a getter (as the button/overlay do with their examStartDate signal) reflects the postponement.
+    it('should hide a problem statement update created before the current (postponed) start (issue #13071)', async () => {
+        service['events'] = [];
+        let currentStartDate = dayjs('2021-08-02T12:00:00.000Z');
+        const received: ExamLiveEvent[] = [];
+        service.observeNewEventsAsUser([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE], () => currentStartDate).subscribe((event) => received.push(event));
+
+        // Instructor postpones the start; the getter now returns the later start date.
+        currentStartDate = dayjs('2021-08-02T13:00:00.000Z');
+
+        // A problem statement update created between the old and the new start must not surface.
+        const beforeNewStart = { id: 1, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: '2021-08-02T12:30:00.000Z' } as unknown as ExamLiveEvent;
+        // A problem statement update created after the new start must surface.
+        const afterNewStart = { id: 2, eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE, createdDate: '2021-08-02T13:30:00.000Z' } as unknown as ExamLiveEvent;
+        service['receiveExamLiveEvent'](beforeNewStart);
+        service['receiveExamLiveEvent'](afterNewStart);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(received.map((event) => event.id)).not.toContain(1);
+        expect(received.map((event) => event.id)).toContain(2);
     });
 
     // Regression test for issue #13071: a schedule-only working time update (working time unchanged) is sent purely to

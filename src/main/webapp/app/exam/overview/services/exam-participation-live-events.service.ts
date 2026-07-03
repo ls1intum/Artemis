@@ -44,9 +44,10 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
     newWorkingTime: number;
     courseWide: boolean;
     // The exam's current start and end date, sent with every working time update so a conducting student can refresh
-    // the pre-start countdown and the start-based content visibility when the schedule changes.
-    newStartDate: dayjs.Dayjs;
-    newEndDate: dayjs.Dayjs;
+    // the pre-start countdown and the start-based content visibility when the schedule changes. Optional because an
+    // exam without dates has none to send; a conducting student's exam always carries them.
+    newStartDate?: dayjs.Dayjs;
+    newEndDate?: dayjs.Dayjs;
 };
 
 export type ProblemStatementUpdateEvent = ExamLiveEvent & {
@@ -295,8 +296,9 @@ export class ExamParticipationLiveEventsService {
         event.createdDate = convertDateFromServer(event.createdDate)!;
         if (event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE) {
             const workingTimeEvent = event as WorkingTimeUpdateEvent;
-            workingTimeEvent.newStartDate = convertDateFromServer(workingTimeEvent.newStartDate)!;
-            workingTimeEvent.newEndDate = convertDateFromServer(workingTimeEvent.newEndDate)!;
+            // The dates are optional (see the type); convert them only when present and keep undefined otherwise.
+            workingTimeEvent.newStartDate = convertDateFromServer(workingTimeEvent.newStartDate);
+            workingTimeEvent.newEndDate = convertDateFromServer(workingTimeEvent.newEndDate);
         }
     }
 
@@ -483,17 +485,21 @@ export class ExamParticipationLiveEventsService {
      *   - Schedule-only working time updates (working time unchanged) are suppressed; they only drive the countdown.
      *
      * @param eventTypes    optional filter for specific event types
-     * @param examStartDate the exam's official start date, used to suppress pre-exam events
+     * @param examStartDate the exam's official start date, used to suppress pre-exam events. Pass a getter (e.g. a
+     *                      signal) rather than a snapshot so that a live schedule change (postponed start) is honoured:
+     *                      the filter reads the current start date at emission time.
      */
-    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = [], examStartDate: dayjs.Dayjs): Observable<ExamLiveEvent> {
+    public observeNewEventsAsUser(eventTypes: ExamLiveEventType[] = [], examStartDate: dayjs.Dayjs | (() => dayjs.Dayjs | undefined)): Observable<ExamLiveEvent> {
+        const resolveExamStartDate = () => (typeof examStartDate === 'function' ? examStartDate() : examStartDate);
         const observable = this.newUserEventSubject.asObservable().pipe(
             filter(
                 (event: ExamLiveEvent) =>
                     !this.lastAcknowledgedEventStatus?.acknowledgedEvents[String(event.id)]?.user &&
                     (eventTypes.length === 0 || eventTypes.includes(event.eventType)) &&
-                    // Suppress problem statement updates that were created before the exam started,
-                    // as these reflect instructor preparation, not live exam changes
-                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)) &&
+                    // Suppress problem statement updates that were created before the exam started, as these reflect
+                    // instructor preparation, not live exam changes. Resolved per emission so a postponed start keeps a
+                    // problem statement update created between the old and new start hidden until the new start.
+                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(resolveExamStartDate())) &&
                     // Suppress schedule-only working time updates (working time unchanged); they only drive the countdown
                     !this.isScheduleOnlyWorkingTimeUpdate(event),
             ),

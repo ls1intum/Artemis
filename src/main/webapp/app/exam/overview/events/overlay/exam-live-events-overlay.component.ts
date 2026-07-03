@@ -59,7 +59,8 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()!).subscribe((event: ExamLiveEvent) => {
+        // Pass the signal itself (not a snapshot) so the pre-start filter honours a live start-date change.
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe((event: ExamLiveEvent) => {
             this.unacknowledgedEvents.update((events) => [event, ...events]);
             this.updateEventsToDisplay();
         });
