@@ -159,7 +159,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
         }
 
-        void this.calculateFormSectionStatus().then();
+        void this.calculateFormSectionStatus();
     }
 
     /**
