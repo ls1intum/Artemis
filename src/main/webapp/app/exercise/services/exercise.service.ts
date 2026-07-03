@@ -23,15 +23,24 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { UMLModel } from '@tumaet/apollon';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export type ExampleSolutionInfo = {
     modelingExercise?: ModelingExercise;
     exampleSolution?: SafeHtml;
-    exampleSolutionUML?: any;
+    exampleSolutionUML?: UMLModel;
     programmingExercise?: ProgrammingExercise;
     exampleSolutionPublished: boolean;
+};
+
+/**
+ * Request options that are appended as query parameters when creating, updating or re-evaluating an exercise.
+ */
+export type ExerciseUpdateRequestOptions = {
+    notificationText?: string;
+    deleteFeedback?: boolean;
 };
 
 export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
@@ -50,9 +59,9 @@ export interface ExerciseServicable<T extends Exercise> {
 
     import?(exercise: T): Observable<HttpResponse<T>>;
 
-    update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+    update(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
 
-    reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
+    reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -186,7 +195,7 @@ export class ExerciseService {
      */
     getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
         if (exercise.id === undefined || exercise.type === undefined) {
-            return of({} as EntitySummary);
+            return of<EntitySummary>({});
         }
 
         return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
@@ -229,7 +238,7 @@ export class ExerciseService {
      * @returns void
      */
     evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<any>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
+        return this.http.post<void>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
@@ -252,7 +261,7 @@ export class ExerciseService {
                     return true;
                 }
 
-                const dueDate = exercise.dueDate!;
+                const dueDate = exercise.dueDate;
                 return dayjs().isBefore(dueDate) && dayjs().add(delayInDays, 'day').isSameOrAfter(dueDate);
             })
             .sort((exerciseA: Exercise, exerciseB: Exercise) => {
@@ -280,7 +289,7 @@ export class ExerciseService {
                     return {
                         exerciseTitles: new Set(details.exerciseTitles ?? []),
                         shortNames: new Set(details.shortNames ?? []),
-                    } as CourseExistingExerciseDetailsType;
+                    };
                 }),
             );
     }
@@ -546,7 +555,7 @@ export class ExerciseService {
 
     public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body);
         }
         return res;
     }
@@ -594,16 +603,16 @@ export class ExerciseService {
             return { exampleSolutionPublished: false };
         }
 
-        let modelingExercise = undefined;
-        let exampleSolution = undefined;
-        let exampleSolutionUML = undefined;
-        let programmingExercise = undefined;
+        let modelingExercise: ModelingExercise | undefined = undefined;
+        let exampleSolution: SafeHtml | undefined = undefined;
+        let exampleSolutionUML: UMLModel | undefined = undefined;
+        let programmingExercise: ProgrammingExercise | undefined = undefined;
 
         switch (exercise.type) {
             case ExerciseType.MODELING:
-                modelingExercise = exercise as ModelingExercise;
+                modelingExercise = exercise;
                 if (modelingExercise.exampleSolutionModel) {
-                    exampleSolutionUML = parseJson(modelingExercise.exampleSolutionModel);
+                    exampleSolutionUML = parseJson<UMLModel>(modelingExercise.exampleSolutionModel);
                 }
                 break;
             case ExerciseType.TEXT:
@@ -614,7 +623,7 @@ export class ExerciseService {
                 }
                 break;
             case ExerciseType.PROGRAMMING:
-                programmingExercise = exercise as ProgrammingExercise;
+                programmingExercise = exercise;
                 break;
         }
 

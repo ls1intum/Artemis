@@ -1,5 +1,6 @@
 import { Component, computed, effect, input, signal } from '@angular/core';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,7 +33,7 @@ export class SidebarCardItemComponent {
     readonly sidebarType = input<SidebarTypes>();
     readonly groupKey = input<string>();
     readonly unreadCount = input<number>(0);
-    readonly otherUser = signal<any>(undefined);
+    readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
 
     readonly faPeopleGroup = faPeopleGroup;
     readonly shouldDisplayUnreadCount = computed<boolean>(() => !this.sidebarItem().conversation?.isMuted);

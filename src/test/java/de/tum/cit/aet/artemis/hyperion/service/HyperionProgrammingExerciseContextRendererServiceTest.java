@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -17,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -83,6 +87,31 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
         String result = contextRendererService.getExistingSolutionCode(exercise, gitService);
 
         assertThat(result).isEqualTo("No solution code available. Please refer to the problem statement.");
+    }
+
+    @Test
+    void getExistingTestCode_withNullRepositoryUri_returnsMarker() {
+        String result = contextRendererService.getExistingTestCode(exercise, gitService);
+
+        assertThat(result).isEqualTo("No tests available yet.");
+    }
+
+    @Test
+    void getExistingTestCode_ordersStructuralSpecBeforeTestSources() throws Exception {
+        // AaaTest.java sorts before test.json alphabetically; the reader must still emit the structural spec first so it survives length capping.
+        FileUtils.writeStringToFile(tempDir.resolve("AaaTest.java").toFile(), "class AaaTest {}", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(tempDir.resolve("test.json").toFile(), "{\"structural\":true}", StandardCharsets.UTF_8);
+
+        ProgrammingExercise exerciseWithTestRepo = spy(exercise);
+        when(exerciseWithTestRepo.getVcsTestRepositoryUri()).thenReturn(mock(LocalVCRepositoryUri.class));
+        Repository testRepository = mock(Repository.class);
+        when(testRepository.getLocalPath()).thenReturn(tempDir);
+        when(gitService.getOrCheckoutRepository(any(), eq(true), eq("main"), eq(false))).thenReturn(testRepository);
+
+        String result = contextRendererService.getExistingTestCode(exerciseWithTestRepo, gitService);
+
+        assertThat(result).contains("test.json").contains("AaaTest.java");
+        assertThat(result.indexOf("test.json")).isLessThan(result.indexOf("AaaTest.java"));
     }
 
     @Test

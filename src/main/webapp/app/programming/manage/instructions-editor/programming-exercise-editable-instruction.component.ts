@@ -243,7 +243,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Save the problem statement on the server.
      * @param event
      **/
-    saveInstructions(event: any) {
+    saveInstructions(event: Event) {
         event.stopPropagation();
         this.persistProblemStatement().subscribe();
     }

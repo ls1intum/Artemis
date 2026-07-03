@@ -96,9 +96,10 @@ export class TeamsImportFromFileFormComponent {
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setImportFile(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files?.length) {
+            const fileList: FileList = input.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile.name;
             this.loading.set(true);
@@ -123,7 +124,7 @@ export class TeamsImportFromFileFormComponent {
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvEntry[]),
-                error: (error: any) => reject(error),
+                error: (error: Error) => reject(error),
             });
         });
     }
@@ -133,28 +134,18 @@ export class TeamsImportFromFileFormComponent {
      * @param entries All entries of the csv file
      */
     convertCsvEntries(entries: CsvEntry[]): StudentWithTeam[] {
-        return entries.map(
-            (entry) =>
-                ({
-                    registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
-                    username:
-                        entry[csvColumns.login] ||
-                        entry[csvColumns.username] ||
-                        entry[csvColumns.user] ||
-                        entry[csvColumns.benutzer] ||
-                        entry[csvColumns.benutzerName] ||
-                        undefined,
-                    firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
-                    lastName:
-                        entry[csvColumns.lastName] ||
-                        entry[csvColumns.familyName] ||
-                        entry[csvColumns.surname] ||
-                        entry[csvColumns.name] ||
-                        entry[csvColumns.nachname] ||
-                        undefined,
-                    teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || undefined,
-                }) as StudentWithTeam,
-        );
+        return entries.map((entry): StudentWithTeam => {
+            const student: StudentWithTeam = {
+                registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
+                username:
+                    entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || undefined,
+                firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
+                lastName:
+                    entry[csvColumns.lastName] || entry[csvColumns.familyName] || entry[csvColumns.surname] || entry[csvColumns.name] || entry[csvColumns.nachname] || undefined,
+                teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || '',
+            };
+            return student;
+        });
     }
 
     /**
