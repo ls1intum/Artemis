@@ -10,6 +10,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
@@ -38,7 +39,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
-    onToggleCollapse = output<{ event: any; horizontal: boolean }>();
+    onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();
     onError = output<string>();
 
     readonly isBuilding = signal(false);
@@ -117,7 +118,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
         const buildLogErrors = this.rawBuildLogs().extractErrors(exercise?.programmingLanguage, exercise?.projectType);
         const codeAnalysisIssues = (this.result()!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
-            .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
+            .map<StaticCodeAnalysisIssue>((feedback) => parseJson<StaticCodeAnalysisIssue>(feedback.detailText!));
         const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
             text: issue.message || '',
             fileName: issue.filePath || '',
@@ -165,7 +166,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
                 // when the result identity actually changes.
                 distinctUntilChanged((previous, current) => previous?.id === current?.id),
                 tap((result) => {
-                    this.result.set(result!);
+                    this.result.set(result);
                 }),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
@@ -186,7 +187,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
             map((res) => res?.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -222,7 +223,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         this.onToggleCollapse.emit({
             event,
             horizontal: false,

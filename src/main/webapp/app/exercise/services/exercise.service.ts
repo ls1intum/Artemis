@@ -9,8 +9,9 @@ import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -22,15 +23,24 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { UMLModel } from '@tumaet/apollon';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export type ExampleSolutionInfo = {
     modelingExercise?: ModelingExercise;
     exampleSolution?: SafeHtml;
-    exampleSolutionUML?: any;
+    exampleSolutionUML?: UMLModel;
     programmingExercise?: ProgrammingExercise;
     exampleSolutionPublished: boolean;
+};
+
+/**
+ * Request options that are appended as query parameters when creating, updating or re-evaluating an exercise.
+ */
+export type ExerciseUpdateRequestOptions = {
+    notificationText?: string;
+    deleteFeedback?: boolean;
 };
 
 export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
@@ -49,9 +59,9 @@ export interface ExerciseServicable<T extends Exercise> {
 
     import?(exercise: T): Observable<HttpResponse<T>>;
 
-    update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+    update(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
 
-    reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
+    reevaluateAndUpdate(exercise: T, req?: ExerciseUpdateRequestOptions): Observable<HttpResponse<T>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -185,7 +195,7 @@ export class ExerciseService {
      */
     getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
         if (exercise.id === undefined || exercise.type === undefined) {
-            return of({} as EntitySummary);
+            return of<EntitySummary>({});
         }
 
         return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
@@ -228,7 +238,7 @@ export class ExerciseService {
      * @returns void
      */
     evaluateQuizExercise(quizExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.post<any>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
+        return this.http.post<void>(`api/quiz/quiz-exercises/${quizExerciseId}/evaluate`, {}, { observe: 'response' });
     }
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
@@ -251,7 +261,7 @@ export class ExerciseService {
                     return true;
                 }
 
-                const dueDate = exercise.dueDate!;
+                const dueDate = exercise.dueDate;
                 return dayjs().isBefore(dueDate) && dayjs().add(delayInDays, 'day').isSameOrAfter(dueDate);
             })
             .sort((exerciseA: Exercise, exerciseB: Exercise) => {
@@ -279,7 +289,7 @@ export class ExerciseService {
                     return {
                         exerciseTitles: new Set(details.exerciseTitles ?? []),
                         shortNames: new Set(details.shortNames ?? []),
-                    } as CourseExistingExerciseDetailsType;
+                    };
                 }),
             );
     }
@@ -413,8 +423,9 @@ export class ExerciseService {
             exercise.categories = exercise.categories
                 .map((category) => {
                     try {
-                        // Handle both JSON strings (from some endpoints) and objects (from DTOs)
-                        const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs). The explicit
+                        // type makes property access below compiler-checked (JSON.parse alone returns `any`).
+                        const categoryObj: SerializedExerciseCategory = typeof category === 'string' ? parseJson<SerializedExerciseCategory>(category) : category;
                         return new ExerciseCategory(categoryObj.category, categoryObj.color);
                     } catch {
                         // Skip malformed category entries
@@ -430,7 +441,18 @@ export class ExerciseService {
      * @param categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        // Build real ExerciseCategory instances (not plain parsed objects) so callers can use equals()/compare().
+        // Skip malformed entries instead of throwing, mirroring parseExerciseCategories above.
+        return categories
+            .map((category) => {
+                try {
+                    const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                    return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                } catch {
+                    return undefined;
+                }
+            })
+            .filter((category): category is ExerciseCategory => category !== undefined);
     }
 
     /**
@@ -533,7 +555,7 @@ export class ExerciseService {
 
     public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body);
         }
         return res;
     }
@@ -581,16 +603,16 @@ export class ExerciseService {
             return { exampleSolutionPublished: false };
         }
 
-        let modelingExercise = undefined;
-        let exampleSolution = undefined;
-        let exampleSolutionUML = undefined;
-        let programmingExercise = undefined;
+        let modelingExercise: ModelingExercise | undefined = undefined;
+        let exampleSolution: SafeHtml | undefined = undefined;
+        let exampleSolutionUML: UMLModel | undefined = undefined;
+        let programmingExercise: ProgrammingExercise | undefined = undefined;
 
         switch (exercise.type) {
             case ExerciseType.MODELING:
-                modelingExercise = exercise as ModelingExercise;
+                modelingExercise = exercise;
                 if (modelingExercise.exampleSolutionModel) {
-                    exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+                    exampleSolutionUML = parseJson<UMLModel>(modelingExercise.exampleSolutionModel);
                 }
                 break;
             case ExerciseType.TEXT:
@@ -601,7 +623,7 @@ export class ExerciseService {
                 }
                 break;
             case ExerciseType.PROGRAMMING:
-                programmingExercise = exercise as ProgrammingExercise;
+                programmingExercise = exercise;
                 break;
         }
 

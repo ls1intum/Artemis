@@ -464,6 +464,6 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 }

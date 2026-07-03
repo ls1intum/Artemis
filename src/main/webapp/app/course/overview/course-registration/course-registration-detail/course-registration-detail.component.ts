@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, map, of, throwError } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
@@ -21,11 +21,11 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     readonly loading = signal(false);
     courseId: number;
     readonly course = signal<Course | undefined>(undefined);
-    private paramSubscription: any;
+    private paramSubscription?: Subscription;
 
     ngOnInit(): void {
         this.loading.set(true);
-        this.paramSubscription = this.route!.params.subscribe((params) => {
+        this.paramSubscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
                 this.course.set(res.body!);

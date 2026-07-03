@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
@@ -84,7 +85,7 @@ export class FaqService {
     }
 
     convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        return categories.map((category) => parseJson<FaqCategory>(category));
     }
 
     /**
@@ -106,7 +107,7 @@ export class FaqService {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
                 // Server sends categories as JSON strings; the model field carries FaqCategory objects after parsing.
-                const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                const categoryObj = typeof category === 'string' ? parseJson<FaqCategory>(category) : category;
                 return new FaqCategory(categoryObj.category, categoryObj.color);
             });
         }

@@ -67,7 +67,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             this.reordering.set(false);
         }
         if (changes['updatedSelectedPages']) {
-            this.selectedPages.set(new Set(this.updatedSelectedPages()!));
+            this.selectedPages.set(new Set(this.updatedSelectedPages()));
             this.updateCheckboxStates();
         }
     }
@@ -125,7 +125,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const scrollOptions: ScrollToOptions = {
             top: this.pdfContainer().nativeElement.scrollHeight,
             left: 0,
-            behavior: 'smooth' as ScrollBehavior,
+            behavior: 'smooth',
         };
         this.pdfContainer().nativeElement.scrollTo(scrollOptions);
     }
@@ -215,7 +215,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * */
     displayEnlargedCanvas(pageOrder: number, slideId: string): void {
         const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${slideId} canvas`) as HTMLCanvasElement;
-        this.originalCanvas.set(canvas!);
+        this.originalCanvas.set(canvas);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageOrder);
     }

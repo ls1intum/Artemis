@@ -25,7 +25,7 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
             router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/test-assessment-dashboard/${exercise.id}`);
         } else {
             if (exercise.exerciseGroup) {
-                const exam = exercise.exerciseGroup!.exam!;
+                const exam = exercise.exerciseGroup.exam!;
                 router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
             } else if (exercise.teamMode && submission) {
                 const teamId = (submission.participation as StudentParticipation).team?.id;

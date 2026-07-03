@@ -382,7 +382,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         const moveEvent = getEventForKey(event.key, this.settings.stepSize);
         event.preventDefault();
         event.stopPropagation();
-        this.startMove({ clientX: 0, clientY: 0 } as MouseEvent, moveType, position);
+        this.startMove(new MouseEvent('mousemove', { clientX: 0, clientY: 0 }), moveType, position);
         this.moveImg(moveEvent);
         this.moveStop();
     }
