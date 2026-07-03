@@ -9,6 +9,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -25,7 +26,7 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {

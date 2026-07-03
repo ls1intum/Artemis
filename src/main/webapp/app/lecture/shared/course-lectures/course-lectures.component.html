@@ -21,7 +21,12 @@
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
-            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex flex-column">
+                @if (isCollapsed()) {
+                    <div>
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
                 <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.lectureDetails.selectLecture"></div>
             </div>
         }
