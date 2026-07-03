@@ -235,9 +235,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
-        switch (lectureUnit!.type) {
+        switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO: {
-                const attachmentVideoUnit = <AttachmentVideoUnit>lectureUnit;
+                const attachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
                 return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
             default:
@@ -263,7 +263,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
-                return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
+                return (lectureUnit as ExerciseUnit)?.exercise?.releaseDate || undefined;
             default:
                 return lectureUnit.releaseDate || undefined;
         }
@@ -272,7 +272,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
-                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.version || undefined;
+                return (lectureUnit as AttachmentVideoUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
         }
@@ -444,7 +444,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         // Row 1: Release date badge (always)
         // Row 2: Transcription + Processing badges side by side (for attachment video units)
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+            const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
             return hasSecondRow ? '-40px' : '-18px';
         }
         return '-18px';
@@ -457,7 +457,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
             return null;
         }
-        const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+        const hasSecondRow = this.hasTranscriptionBadge(lectureUnit) || this.hasProcessingBadge(lectureUnit);
         return hasSecondRow ? '67px' : '45px';
     }
 

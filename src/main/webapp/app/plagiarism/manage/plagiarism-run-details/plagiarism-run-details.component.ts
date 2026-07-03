@@ -147,7 +147,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * Emits the selected range to {@link PlagiarismInspectorComponent#filterByChart} so that the comparisons shown in the sidebar can be filtered accordingly
      * @param event the event that is passed by p-chart
      */
-    onSelect(event: any): void {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         const interval = selected?.label;
         if (!interval) {

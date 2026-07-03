@@ -101,7 +101,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             untracked(() => {
                 if (!postingValue) return;
                 this.updatePostingWithReactions();
-                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
+                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue);
                 this.isAtLeastTutorInCourse.set(this.metisService.metisUserIsAtLeastTutorInCourse());
                 this.isAuthorOfOriginalPost.set(this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false);
                 if (this.getPostingType() === 'post') {
@@ -312,9 +312,9 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
         const reaction = new Reaction();
         reaction.emojiId = emojiId;
         if (this.getPostingType() === 'answerPost') {
-            reaction.answerPost = this.posting() as AnswerPost;
+            reaction.answerPost = this.posting();
         } else {
-            reaction.post = this.posting() as Post;
+            reaction.post = this.posting();
         }
         return reaction;
     }
@@ -493,7 +493,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     editPosting() {
         if (this.getPostingType() === 'post') {
-            if ((this.posting() as Post)!.title != '') {
+            if ((this.posting() as Post).title != '') {
                 this.createEditModal().open();
             } else {
                 this.isModalOpen.emit();
@@ -544,10 +544,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                     // Filter only non-announcement channels for forwarding
                     conversations.forEach((conversation) => {
                         if (conversation.type === ConversationType.CHANNEL && !(conversation as ChannelDTO).isAnnouncementChannel) {
-                            this.channels.push(conversation as ChannelDTO);
+                            this.channels.push(conversation);
                         } else if (conversation.type === ConversationType.GROUP_CHAT) {
                             (conversation as GroupChatDTO).name = this.conversationService.getConversationName(conversation);
-                            this.channels.push(conversation as GroupChatDTO);
+                            this.channels.push(conversation);
                         }
                     });
 
@@ -652,10 +652,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     }
 
     getSaved(): boolean {
-        return <boolean>(this.posting() as Posting)?.isSaved;
+        return (this.posting() as Posting)?.isSaved as boolean;
     }
 
     getResolvesPost(): boolean {
-        return <boolean>(this.posting() as AnswerPost)?.resolvesPost;
+        return (this.posting() as AnswerPost)?.resolvesPost as boolean;
     }
 }

@@ -45,8 +45,8 @@ export class ProgrammingExercisePlantUmlService {
             .pipe(retry(1));
     }
 
-    private convertPlantUmlResponseToBase64(res: any): string {
-        return Buffer.from(res, 'binary').toString('base64');
+    private convertPlantUmlResponseToBase64(res: ArrayBuffer): string {
+        return Buffer.from(res).toString('base64');
     }
 }
 

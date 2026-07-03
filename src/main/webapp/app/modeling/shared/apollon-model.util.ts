@@ -138,7 +138,7 @@ export function getModelElementIds(model: UMLModel | ApollonModelData | undefine
 }
 
 export function hasExplicitInteractiveConfig(model: UMLModel | ApollonModelData | undefined): boolean {
-    return !!(model as ApollonModelData | undefined)?.interactive;
+    return !!model?.interactive;
 }
 
 export function getExplicitInteractiveElementIds(model: UMLModel | ApollonModelData | undefined): string[] | undefined {

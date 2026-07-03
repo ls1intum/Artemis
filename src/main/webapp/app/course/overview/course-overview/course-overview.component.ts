@@ -39,6 +39,18 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 
+/**
+ * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
+ * method or as a boolean property. Returns undefined if the component does not provide the information.
+ */
+function readComponentCollapsed(componentRef: unknown): boolean | undefined {
+    if (typeof componentRef !== 'object' || !componentRef) {
+        return undefined;
+    }
+    const isCollapsed = (componentRef as { isCollapsed?: (() => boolean) | boolean }).isCollapsed;
+    return typeof isCollapsed === 'function' ? isCollapsed.call(componentRef) : isCollapsed;
+}
+
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
@@ -112,7 +124,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => {
                 const componentRef = this.activatedComponentReference();
-                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
                 return componentCollapsed ?? !value;
             });
         });
@@ -149,7 +161,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         this.courseActionItems.set(this.getCourseActionItems());
         const componentRef = this.activatedComponentReference();
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
@@ -237,7 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         return !!this.route.snapshot.firstChild?.data?.hasSidebar;
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
@@ -254,7 +266,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef.setPageTitle(this.pageTitle());
         }
 
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = readComponentCollapsed(componentRef);
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.getShowRefreshButton();
     }
@@ -265,7 +277,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
+        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : childRouteComponent!.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed);
     }
 

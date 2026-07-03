@@ -66,11 +66,11 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         }
     }
 
-    registerOnChange(onChange: any) {
+    registerOnChange(onChange: (_: number) => void) {
         this.onChange = onChange;
     }
 
-    registerOnTouched(onTouched: any) {
+    registerOnTouched(onTouched: () => void) {
         this.onTouched = onTouched;
     }
 

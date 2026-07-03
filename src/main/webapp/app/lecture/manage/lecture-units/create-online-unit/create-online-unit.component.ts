@@ -52,7 +52,7 @@ export class CreateOnlineUnitComponent implements OnInit {
         this.isLoading.set(true);
 
         this.onlineUnitService
-            .create(this.onlineUnitToCreate!, this.lectureId)
+            .create(this.onlineUnitToCreate, this.lectureId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);

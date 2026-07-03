@@ -500,6 +500,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     onTextEditorInput(event: Event) {
-        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+        this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 }

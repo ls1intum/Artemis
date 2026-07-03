@@ -139,8 +139,8 @@ export class ProgrammingExerciseInstructionAnalysisService {
             })
             .filter(([, testCases]) => !!testCases)
             .map(([lineNumber, match]: [number, string]) => {
-                const cleanedMatches = cleanMatches(match!.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
+                const cleanedMatches = cleanMatches(match.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
                 return [lineNumber, cleanedMatches];
-            }) as [number, string[]][];
+            });
     }
 }

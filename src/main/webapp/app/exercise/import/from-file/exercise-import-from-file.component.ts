@@ -64,7 +64,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
         }
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
-                this.exercise = parseJson<ProgrammingExercise>(exerciseDetails as string);
+                this.exercise = parseJson<ProgrammingExercise>(exerciseDetails);
                 const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
@@ -77,7 +77,7 @@ export class ExerciseImportFromFileComponent implements OnInit {
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
-                    progEx.auxiliaryRepositories!.forEach((repo, index) => {
+                    progEx.auxiliaryRepositories.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;
                     });
                 }

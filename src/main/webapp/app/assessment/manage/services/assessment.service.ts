@@ -18,7 +18,7 @@ export const isAllowedToRespondToComplaintAction = (isTestRun: boolean, isAssess
     if (exercise?.assessmentType === AssessmentType.AUTOMATIC && complaint.result && complaint.result.assessor === undefined) {
         return true;
     }
-    return complaint!.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
+    return complaint.complaintType === ComplaintType.COMPLAINT ? !isAssessor : isAssessor;
 };
 
 /**

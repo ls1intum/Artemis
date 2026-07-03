@@ -46,8 +46,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly documentationType: DocumentationType = 'Exercise';
     protected readonly FeatureToggle = FeatureToggle;
 
-    titleTitleTpl?: TemplateRef<any>;
-    actionButtonsTpl?: TemplateRef<any>;
+    titleTitleTpl?: TemplateRef<unknown>;
+    actionButtonsTpl?: TemplateRef<unknown>;
 
     readonly course = signal<Course | undefined>(undefined);
     readonly showSearch = signal(false);

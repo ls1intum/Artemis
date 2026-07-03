@@ -206,7 +206,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {
-        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
+        return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs());
     }
 
     attachmentExtension(attachment: Attachment): string {

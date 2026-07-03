@@ -20,7 +20,7 @@ export class OnlineUnitComponent extends LectureUnitDirective<OnlineUnit> {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         if (this.lectureUnit().source) {
-            window.open(this.lectureUnit().source!, '_blank');
+            window.open(this.lectureUnit().source, '_blank');
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

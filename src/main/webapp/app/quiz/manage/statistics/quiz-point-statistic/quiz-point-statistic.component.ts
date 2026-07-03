@@ -55,7 +55,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     waitingForQuizStart = false;
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval: ReturnType<typeof setInterval>;
 
     // Icons
     faSync = faSync;

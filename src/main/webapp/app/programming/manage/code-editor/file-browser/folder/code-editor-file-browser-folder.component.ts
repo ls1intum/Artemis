@@ -30,7 +30,7 @@ export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserN
     faChevronDown = faChevronDown;
     faFolderOpen = faFolderOpen;
 
-    setCreatingNodeInFolder(event: any, fileType: FileType) {
+    setCreatingNodeInFolder(event: Event, fileType: FileType) {
         event.stopPropagation();
         this.onSetCreatingNodeInFolder.emit({ item: this.item(), fileType });
     }

@@ -51,7 +51,7 @@ export class ConversationThreadSidebarComponent {
             const conversation = this.activeConversation();
             untracked(() => {
                 if (conversation) {
-                    this.conversation.set(conversation as ConversationDTO);
+                    this.conversation.set(conversation);
                     this.hasChannelModerationRights.set(getAsChannelDTO(this.conversation())?.hasChannelModerationRights ?? false);
                 }
             });

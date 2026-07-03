@@ -218,7 +218,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             .subscribe();
     }
 
-    saveChangedFiles(andCommit = false): Observable<any> {
+    saveChangedFiles(andCommit = false): Observable<FileSubmission | undefined> {
         const unsavedFilesValue = this.unsavedFiles();
         if (!_isEmpty(unsavedFilesValue)) {
             this.editorState.set(EditorState.SAVING);

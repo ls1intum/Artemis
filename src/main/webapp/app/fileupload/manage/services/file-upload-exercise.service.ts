@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
@@ -38,7 +38,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param req request options passed to the server
      * @throws Error if the exercise does not have an id
      */
-    update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+    update(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         if (fileUploadExercise.id === undefined) {
             throw new Error('Cannot update exercise without an ID');
         }
@@ -46,7 +46,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
         const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, dto, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -64,7 +64,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * Sends request to get all available file upload exercises
      * @param req request options passed to the server
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: Record<string, unknown>): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -86,7 +86,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param req optional request options
      * @throws Error if the exercise does not have an id
      */
-    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         if (fileUploadExercise.id === undefined) {
             throw new Error('Cannot re-evaluate exercise without an ID');
         }

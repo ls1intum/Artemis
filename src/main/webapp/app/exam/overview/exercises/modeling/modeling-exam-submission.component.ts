@@ -94,12 +94,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission()) {
-            if (this.studentSubmission()!.model) {
+            if (this.studentSubmission().model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel.set(importDiagram(parseJson(this.studentSubmission()!.model!)));
+                this.umlModel.set(importDiagram(parseJson(this.studentSubmission().model!)));
             }
             // Updates explanation text with the latest submission
-            this.explanationText.set(this.studentSubmission()!.explanationText ?? '');
+            this.explanationText.set(this.studentSubmission().explanationText ?? '');
         }
     }
 
@@ -116,9 +116,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
         if (this.studentSubmission()) {
             if (diagramJson) {
-                this.studentSubmission()!.model = diagramJson;
+                this.studentSubmission().model = diagramJson;
             }
-            this.studentSubmission()!.explanationText = this.explanationText();
+            this.studentSubmission().explanationText = this.explanationText();
         }
     }
 
@@ -126,7 +126,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the submission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission()!.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     /**
@@ -137,12 +137,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     modelChanged(_model: UMLModel) {
-        this.studentSubmission()!.isSynced = false;
+        this.studentSubmission().isSynced = false;
     }
 
     // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
-        this.studentSubmission()!.isSynced = false;
+        this.studentSubmission().isSynced = false;
         this.explanationText.set(explanation);
     }
 

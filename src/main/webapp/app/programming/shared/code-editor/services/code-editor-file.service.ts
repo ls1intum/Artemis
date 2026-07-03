@@ -17,7 +17,7 @@ export class CodeEditorFileService {
      * @param refs
      * @param fileChange
      */
-    updateFileReferences = (refs: { [fileName: string]: any }, fileChange: FileChange) => {
+    updateFileReferences = <T>(refs: { [fileName: string]: T }, fileChange: FileChange): { [fileName: string]: T } => {
         if (fileChange instanceof RenameFileChange) {
             const testRegex = new RegExp(`^${fileChange.oldFileName}($|/.*)`);
             const replaceRegex = new RegExp(`^${fileChange.oldFileName}`);

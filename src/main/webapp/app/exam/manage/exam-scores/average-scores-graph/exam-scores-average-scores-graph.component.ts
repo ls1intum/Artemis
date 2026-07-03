@@ -15,7 +15,14 @@ import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
 import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-type NameToValueMap = { [name: string]: any };
+/** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
+interface ExamScoreLookupEntry {
+    absoluteValue?: number;
+    exerciseId?: number;
+    exerciseType?: ExerciseType;
+}
+
+type NameToValueMap = { [name: string]: ExamScoreLookupEntry };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
@@ -96,7 +103,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course()!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course().accuracyOfScores);
     }
 
     /**
@@ -119,7 +126,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
      * @param event the event that is fired by p-chart
      */
-    onSelect(event: any) {
+    onSelect(event: { element?: { datasetIndex: number; index: number } }) {
         const selected = toChartSelectEvent(event, this.chartData());
         if (!selected?.label) {
             return;

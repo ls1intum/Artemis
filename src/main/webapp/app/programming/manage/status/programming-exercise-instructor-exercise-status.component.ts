@@ -67,7 +67,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
                         // Read the current participation from the signal at emit time so that a new
                         // instance carrying the same id (which does not trigger a re-subscription)
                         // still receives the update that findIssues() subsequently reads.
-                        tap((result) => (this.templateParticipation()!.submissions!.last()!.results = [result!])),
+                        tap((result) => (this.templateParticipation()!.submissions!.last()!.results = [result])),
                         tap(() => this.findIssues()),
                     )
                     .subscribe();
@@ -85,7 +85,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
                         // Read the current participation from the signal at emit time so that a new
                         // instance carrying the same id (which does not trigger a re-subscription)
                         // still receives the update that findIssues() subsequently reads.
-                        tap((result) => (this.solutionParticipation()!.submissions!.last()!.results = [result!])),
+                        tap((result) => (this.solutionParticipation()!.submissions!.last()!.results = [result])),
                         tap(() => this.findIssues()),
                     )
                     .subscribe();

@@ -16,9 +16,9 @@ export class NotificationInterceptor implements HttpInterceptor {
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         return next.handle(request).pipe(
-            tap((event: HttpEvent<any>) => {
+            tap((event: HttpEvent<unknown>) => {
                 if (event instanceof HttpResponse) {
                     let alert: string | undefined = undefined;
                     let alertParams: string | undefined = undefined;

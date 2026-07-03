@@ -100,12 +100,12 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     saveSshKey() {
-        const newUserSshKey = {
+        const newUserSshKey: Partial<UserSshPublicKey> = {
             label: this.displayedKeyLabel,
             publicKey: this.displayedSshKey,
             expiryDate: this.displayedExpiryDate,
-        } as UserSshPublicKey;
-        this.sshUserSettingsService.addNewSshPublicKey(newUserSshKey).subscribe({
+        };
+        this.sshUserSettingsService.addNewSshPublicKey(newUserSshKey as UserSshPublicKey).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
                 this.goBack();

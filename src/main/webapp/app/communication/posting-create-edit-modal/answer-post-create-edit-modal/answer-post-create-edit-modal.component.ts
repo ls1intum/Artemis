@@ -42,7 +42,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     resetFormGroup(): void {
         if (!this.posting()) {
-            this.posting.set({ content: '' } as AnswerPost);
+            this.posting.set({ content: '' });
         }
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character

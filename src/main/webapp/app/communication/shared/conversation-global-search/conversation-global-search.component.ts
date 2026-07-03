@@ -163,14 +163,11 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         }
 
         this.filteredOptions.set(
-            matchingConversations.map(
-                (conversation) =>
-                    ({
-                        id: conversation.id!,
-                        name: this.getConversationName(conversation),
-                        type: 'conversation',
-                    }) as CombinedOption,
-            ),
+            matchingConversations.map((conversation) => ({
+                id: conversation.id!,
+                name: this.getConversationName(conversation),
+                type: 'conversation',
+            })),
         );
     }
 

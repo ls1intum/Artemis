@@ -192,7 +192,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     if (!this.isExamMode()) {
                         this.exerciseCategories.set(this.modelingExercise.categories || []);
                         if (this.modelingExercise.course) {
-                            courseId = this.modelingExercise.course!.id!;
+                            courseId = this.modelingExercise.course.id!;
                         } else {
                             courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
@@ -313,10 +313,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         }
 
         const focusableElements = Array.from(
-            formRoot.querySelectorAll(
+            formRoot.querySelectorAll<HTMLElement>(
                 'input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]):not([type="hidden"]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])',
             ),
-        ) as HTMLElement[];
+        );
 
         const currentIndex = focusableElements.indexOf(activeElement);
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {

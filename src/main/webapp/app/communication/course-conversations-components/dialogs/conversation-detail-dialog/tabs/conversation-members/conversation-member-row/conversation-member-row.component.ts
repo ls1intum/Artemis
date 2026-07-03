@@ -114,7 +114,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 this.userLabel.set(getUserLabel(this.conversationMember()!));
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
-                this.canBeRemovedFromConversation.set(!this.isCurrentUser() && this.canRemoveUsersFromConversation(this.activeConversation()!));
+                this.canBeRemovedFromConversation.set(!this.isCurrentUser() && this.canRemoveUsersFromConversation(this.activeConversation()));
                 if (isChannelDTO(this.activeConversation())) {
                     // the creator of a channel can not be removed from the channel
                     const channelDTO = this.activeConversation() as ChannelDTO;
@@ -134,7 +134,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openGrantChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -162,7 +162,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -190,7 +190,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -229,7 +229,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const groupChat = getAsGroupChatDTO(this.activeConversation()!);
+        const groupChat = getAsGroupChatDTO(this.activeConversation());
         if (!groupChat) {
             return;
         }
@@ -287,9 +287,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openRemoveFromConversationDialog(event: MouseEvent) {
-        if (isChannelDTO(this.activeConversation()!)) {
+        if (isChannelDTO(this.activeConversation())) {
             this.openRemoveFromChannelDialog(event);
-        } else if (isGroupChatDTO(this.activeConversation()!)) {
+        } else if (isGroupChatDTO(this.activeConversation())) {
             this.openRemoveFromGroupChatDialog(event);
         } else {
             throw new Error('Unsupported conversation type');

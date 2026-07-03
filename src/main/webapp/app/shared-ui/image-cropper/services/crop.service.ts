@@ -11,7 +11,7 @@ export class CropService {
         const imagePosition = CropService.getImagePosition(sourceImage, loadedImage, cropper, settings);
         const width = imagePosition.x2 - imagePosition.x1;
         const height = imagePosition.y2 - imagePosition.y1;
-        const cropCanvas = document.createElement('canvas') as HTMLCanvasElement;
+        const cropCanvas = document.createElement('canvas');
         cropCanvas.width = width;
         cropCanvas.height = height;
 

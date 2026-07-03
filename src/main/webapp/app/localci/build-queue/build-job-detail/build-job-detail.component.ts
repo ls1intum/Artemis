@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BuildJob } from 'app/localci/shared/entities/build-job.model';
+import { BuildJob, BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -21,6 +21,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 @Component({
     selector: 'jhi-build-job-detail',
@@ -48,11 +49,12 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
     /**
      * The build job data - either a BuildJob (queued/running) or FinishedBuildJob.
-     * Uses 'any' type because BuildJob and FinishedBuildJob have incompatible structures
-     * and this component accesses properties from both types dynamically.
+     * Uses the combined BuildJobDetail shape because BuildJob and FinishedBuildJob have
+     * overlapping but non-identical structures and this component accesses properties from
+     * both types dynamically.
      */
 
-    buildJob = signal<any | undefined>(undefined);
+    buildJob = signal<BuildJobDetail | undefined>(undefined);
 
     /** Build log content */
     buildLogs = signal<string>('');
@@ -221,7 +223,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         const observable = courseId ? this.buildQueueService.getBuildJobByIdForCourse(courseId, this.buildJobId) : this.buildQueueService.getBuildJobById(this.buildJobId);
 
         observable.subscribe({
-            next: (job: any) => {
+            next: (job: BuildJobDetail) => {
                 this.buildJob.set(job);
                 this.isLoading.set(false);
                 // Auto-load logs for finished jobs
@@ -374,21 +376,21 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     }
 
     /** Get submission date */
-    getSubmissionDate(): any {
+    getSubmissionDate(): dayjs.Dayjs | undefined {
         const job = this.buildJob();
         if (!job) return undefined;
         return job.buildSubmissionDate || job.jobTimingInfo?.submissionDate;
     }
 
     /** Get build start date */
-    getBuildStartDate(): any {
+    getBuildStartDate(): dayjs.Dayjs | undefined {
         const job = this.buildJob();
         if (!job) return undefined;
         return job.buildStartDate || job.jobTimingInfo?.buildStartDate;
     }
 
     /** Get build completion date */
-    getBuildCompletionDate(): any {
+    getBuildCompletionDate(): dayjs.Dayjs | undefined {
         const job = this.buildJob();
         if (!job) return undefined;
         return job.buildCompletionDate || job.jobTimingInfo?.buildCompletionDate;
@@ -405,7 +407,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     }
 
     /** Get submission result (for finished successful jobs) */
-    getSubmissionResult(): any {
+    getSubmissionResult(): Result | undefined {
         return this.buildJob()?.submissionResult;
     }
 }

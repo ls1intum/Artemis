@@ -258,7 +258,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
 
         return entries.map((entry) => ({
             labelKey: entry.labelKey,
-            value: config ? config[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
+            value: config ? config[entry.key] : undefined,
         }));
     }
 

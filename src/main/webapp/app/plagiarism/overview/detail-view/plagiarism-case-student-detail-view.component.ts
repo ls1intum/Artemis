@@ -19,7 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
-import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -79,7 +78,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
+                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
 
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({

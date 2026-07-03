@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, take } from 'rxjs';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
 import { LtiService } from 'app/foundation/service/lti.service';
@@ -10,6 +10,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 type LtiLaunchResponse = {
+    targetLinkUri: string;
+    ltiIdToken: string;
+    clientRegistrationId: string;
+};
+
+/** Body returned by the LTI auth-login endpoint on a 401 that requires an interactive login/redirect. */
+type LtiLaunchErrorBody = {
     targetLinkUri: string;
     ltiIdToken: string;
     clientRegistrationId: string;
@@ -68,7 +75,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             });
     }
 
-    authenticateUserThenRedirect(error: any): void {
+    authenticateUserThenRedirect(error: HttpErrorResponse): void {
         const loginName = error.headers.get('ltiSuccessLoginRequired');
         this.accountService.identity().then((user) => {
             if (user) {
@@ -82,17 +89,18 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         });
     }
 
-    redirectUserToTargetLink(data: any): void {
-        const ltiIdToken = data.error['ltiIdToken'];
-        const clientRegistrationId = data.error['clientRegistrationId'];
+    redirectUserToTargetLink(data: HttpErrorResponse): void {
+        const errorBody = data.error as LtiLaunchErrorBody;
+        const ltiIdToken = errorBody['ltiIdToken'];
+        const clientRegistrationId = errorBody['clientRegistrationId'];
 
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         // Redirect to target link since the user is already logged in
-        this.replaceWindowLocationWrapper(data.error['targetLinkUri'].toString());
+        this.replaceWindowLocationWrapper(errorBody['targetLinkUri'].toString());
     }
 
-    redirectUserToLoginThenTargetLink(error: any): void {
+    redirectUserToLoginThenTargetLink(error: HttpErrorResponse): void {
         // Redirect the user to the login page
         this.router.navigate(['/sign-in']).then(() => {
             // After navigating to the login page, set up a listener for when the user logs in

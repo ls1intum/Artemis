@@ -23,7 +23,7 @@ export enum IrisErrorMessageKey {
 export interface IrisErrorType {
     key: IrisErrorMessageKey;
     fatal: boolean;
-    paramsMap?: Map<string, any>;
+    paramsMap?: Map<string, unknown>;
 }
 
 const IrisErrors: IrisErrorType[] = [
@@ -48,12 +48,9 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.AI_USAGE_DECLINED, fatal: true },
 ];
 
-export const errorMessages: Readonly<{ [key in IrisErrorMessageKey]: IrisErrorType }> = Object.freeze(
-    IrisErrors.reduce(
-        (map, obj) => {
-            map[obj.key] = obj;
-            return map;
-        },
-        {} as { [key in IrisErrorMessageKey]: IrisErrorType },
-    ),
+export const errorMessages: Readonly<Partial<{ [key in IrisErrorMessageKey]: IrisErrorType }>> = Object.freeze(
+    IrisErrors.reduce<Partial<{ [key in IrisErrorMessageKey]: IrisErrorType }>>((map, obj) => {
+        map[obj.key] = obj;
+        return map;
+    }, {}),
 );

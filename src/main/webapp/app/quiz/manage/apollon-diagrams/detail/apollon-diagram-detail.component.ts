@@ -136,7 +136,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const diagram = this.apollonDiagram();
-        const editorOptions = {
+        const editorOptions: ConstructorParameters<typeof ApollonEditor>[1] = {
             mode: ApollonMode.Modelling,
             view: ApollonView.Modelling,
             readonly: false,
@@ -144,7 +144,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             type: diagram?.diagramType,
             locale: this.translateService.getCurrentLang() as Locale,
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
-        } as ConstructorParameters<typeof ApollonEditor>[1];
+        };
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
@@ -245,7 +245,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor && diagram && course) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const question = await generateDragAndDropQuizExercise(course, diagram.title!, this.apollonEditor.model!);
+                const question = await generateDragAndDropQuizExercise(course, diagram.title!, this.apollonEditor.model);
                 this.closeEdit.emit(question);
             }
         }

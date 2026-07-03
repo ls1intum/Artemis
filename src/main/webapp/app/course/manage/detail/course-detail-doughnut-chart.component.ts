@@ -159,7 +159,7 @@ export class CourseDetailDoughnutChartComponent {
      * @param data the default tooltip content that has to be replaced
      * returns string representing custom tooltip content
      */
-    valueFormatting(data: any): string {
-        return this.currentMax() === 0 ? '0' : data.value;
+    valueFormatting(data: { value: number }): string {
+        return this.currentMax() === 0 ? '0' : `${data.value}`;
     }
 }

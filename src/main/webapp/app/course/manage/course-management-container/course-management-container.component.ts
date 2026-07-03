@@ -194,7 +194,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
-            this.subscribeToCourseUpdates(this.courseId()!);
+            this.subscribeToCourseUpdates(this.courseId());
         });
     }
 
@@ -255,14 +255,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
-                this.course.set(courseResponse.body!);
+                this.course.set(courseResponse.body);
             }
             this.sidebarItems.set(this.getSidebarItems());
         });
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()!).pipe(
+        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -275,7 +275,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseDetailComponent ||
             componentRef instanceof CourseManagementExercisesComponent ||

@@ -88,7 +88,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             .subscribe(() => {
                 const key = this.calculateMapKey();
                 if (this.cachedDiffInformation().has(key)) {
-                    this.diffInformation.set(this.cachedDiffInformation().get(key)!);
+                    this.diffInformation.set(this.cachedDiffInformation().get(key));
                     this.diffReady.set(true);
                 } else {
                     this.fetchRepositoriesAndProcessDiff();

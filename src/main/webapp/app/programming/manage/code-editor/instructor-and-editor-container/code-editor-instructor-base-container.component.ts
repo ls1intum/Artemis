@@ -114,7 +114,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route!.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const repositoryType = params['repositoryType'];
             const repositoryId = Number(params['repositoryId']);
@@ -234,7 +234,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribeDomainChange()
             .pipe(
                 filter((domain) => !!domain),
-                map((domain) => domain as DomainChange),
+                map((domain) => domain),
                 tap(([domainType, domainValue]) => {
                     this.applyDomainChange(domainType, domainValue);
                 }),
@@ -242,7 +242,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe();
     }
 
-    protected applyDomainChange(domainType: any, domainValue: any) {
+    protected applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
         if (this.codeEditorContainer() != undefined) {
             this.codeEditorContainer()!.initializeProperties();
         }
@@ -250,9 +250,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.fileSyncService.reset();
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
             this.selectedRepository = RepositoryType.AUXILIARY;
-            this.selectedRepositoryId = domainValue.id;
+            this.selectedRepositoryId = domainValue.id!;
         } else if (domainType === DomainType.PARTICIPATION) {
-            this.setSelectedParticipation(domainValue.id);
+            this.setSelectedParticipation(domainValue.id!);
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
@@ -283,7 +283,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = RepositoryType.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = this.exercise.studentParticipations[0];
             this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
@@ -404,7 +404,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];
-        this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+        this.participationService
+            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
                 tap(() => {

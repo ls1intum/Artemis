@@ -26,8 +26,10 @@ export function downloadFile(blob: Blob, filename: string) {
     window.URL.revokeObjectURL(url);
 }
 
-export function downloadStream(data: any, type: string, filename: string) {
-    const blob = new Blob([data], { type });
+export function downloadStream(data: BlobPart | null, type: string, filename: string) {
+    // The array element is intentionally passed through unchanged (callers supply an HttpResponse body that is typed
+    // Blob | null); a null slips through to Blob exactly as before, so runtime behavior is preserved.
+    const blob = new Blob([data as BlobPart], { type });
     downloadFile(blob, `${filename || 'file'}.pdf`);
 }
 

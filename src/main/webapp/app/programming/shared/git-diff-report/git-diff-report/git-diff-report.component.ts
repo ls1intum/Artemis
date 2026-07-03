@@ -255,6 +255,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
     private findScrollRoot(): HTMLElement | null {
         const hostElement = this.hostElementRef.nativeElement;
-        return (hostElement.closest('.modal-body') as HTMLElement | null) ?? null;
+        return hostElement.closest('.modal-body') ?? null;
     }
 }

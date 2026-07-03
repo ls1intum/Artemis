@@ -38,7 +38,7 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.isLoading.set(true);
 
         this.competencyService
-            .create(this.competencyToCreate!, this.courseId)
+            .create(this.competencyToCreate, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);

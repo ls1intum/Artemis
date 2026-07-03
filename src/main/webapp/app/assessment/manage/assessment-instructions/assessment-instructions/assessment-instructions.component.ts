@@ -52,9 +52,9 @@ export class AssessmentInstructionsComponent {
         return exercise.gradingInstructions ? this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions) : undefined;
     });
 
-    readonly programmingExercise = computed(() => {
+    readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
+        return exercise.type === ExerciseType.PROGRAMMING ? exercise : undefined;
     });
 
     readonly sampleSolutionModel = computed<UMLModel | undefined>(() => {

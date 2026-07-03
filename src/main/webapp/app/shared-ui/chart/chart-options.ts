@@ -177,7 +177,7 @@ export function barChartOptions(config: BarChartConfig): ChartOptions<'bar'> {
                   }
                 : { display: false },
         },
-    } as ChartOptions<'bar'>;
+    };
 }
 
 /**
@@ -202,7 +202,7 @@ export function lineChartOptions(config: LineChartConfig): ChartOptions<'line'> 
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'line'>;
+    };
 }
 
 /**
@@ -222,5 +222,5 @@ export function doughnutChartOptions(config: DoughnutChartConfig): ChartOptions<
             tooltip: buildTooltip(config.tooltip),
             datalabels: { display: false },
         },
-    } as ChartOptions<'doughnut'>;
+    };
 }

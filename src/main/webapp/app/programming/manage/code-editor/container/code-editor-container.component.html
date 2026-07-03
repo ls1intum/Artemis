@@ -54,7 +54,6 @@
         <jhi-code-editor-instructions
             [hidden]="!shouldShowProblemStatement()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
             [disableCollapse]="true"
             [isEditor]="true"
@@ -98,7 +97,6 @@
         <jhi-code-editor-instructions
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
         >
             <ng-content select="[editorSidebar]" />

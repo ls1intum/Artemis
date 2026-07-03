@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/co
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
+import { Observable, Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
@@ -24,7 +24,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     disabled = input<boolean>(false);
     question = input<string>();
     course = input<Course>();
-    extraClass = input<any>();
+    extraClass = input<string | string[] | Set<string> | { [klass: string]: boolean }>();
 
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
@@ -74,7 +74,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     private updateIrisStatus<T>(
         cachedSettings: T | undefined,
-        fetchSettings: () => any,
+        fetchSettings: () => Observable<T | undefined>,
         extractEnabled: (settings: T) => boolean | undefined,
         channelDTO: ChannelDTO,
         cacheSetter: (settings: T) => void,
@@ -89,7 +89,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
                         return of(undefined);
                     }),
                 )
-                .subscribe((newSettings: T) => {
+                .subscribe((newSettings: T | undefined) => {
                     if (newSettings) {
                         cacheSetter(newSettings);
                         this.setIrisStatus(extractEnabled(newSettings), channelDTO);

@@ -52,5 +52,11 @@ export function expectBase64UrlFieldsForLogin(credential: SerializableLoginCrede
  * are base64url-encoded strings in the serializable credential types.
  */
 function getNestedValue(obj: SerializableRegistrationCredential | SerializableLoginCredential | undefined, path: string): string | undefined {
-    return path.split('.').reduce((current: any, key: string) => current?.[key], obj) as string | undefined;
+    const value = path.split('.').reduce<unknown>((current, key) => {
+        if (current && typeof current === 'object') {
+            return (current as Record<string, unknown>)[key];
+        }
+        return undefined;
+    }, obj);
+    return value as string | undefined;
 }

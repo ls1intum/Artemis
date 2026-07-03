@@ -36,7 +36,7 @@ export class SubmissionService {
      * @param submissionId - The id of the submission to be deleted
      * @param req - A request with additional options in it
      */
-    delete(submissionId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(submissionId: number, req?: Record<string, string | number | boolean>): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
     }
@@ -234,9 +234,9 @@ export class SubmissionService {
      */
     public handleFeedbackCorrectionRoundTag(correctionRound: number, submission: Submission) {
         if (correctionRound > 0 && submission?.results && submission.results.length > 1) {
-            const firstResult = submission!.results![0] as Result;
-            const secondCorrectionFeedback1 = submission!.results![1].feedbacks as Feedback[];
-            secondCorrectionFeedback1!.forEach((secondFeedback) => {
+            const firstResult = submission.results[0];
+            const secondCorrectionFeedback1 = submission.results[1].feedbacks as Feedback[];
+            secondCorrectionFeedback1.forEach((secondFeedback) => {
                 firstResult.feedbacks!.forEach((firstFeedback) => {
                     if (secondFeedback.copiedFeedbackId === undefined && this.areFeedbacksCopies(firstFeedback, secondFeedback)) {
                         secondFeedback.copiedFeedbackId = firstFeedback.id;

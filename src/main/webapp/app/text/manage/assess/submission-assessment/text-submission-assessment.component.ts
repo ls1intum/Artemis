@@ -5,8 +5,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -120,7 +118,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private feedbackSuggestionsObservable?: Subscription;
 
     private get referencedFeedback(): Feedback[] {
-        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
+        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined);
     }
 
     private get assessments(): Feedback[] {
@@ -205,15 +203,15 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.participation = studentParticipation;
-        this.submission = this.participation?.submissions?.last() as TextSubmission;
-        this.exercise = this.participation?.exercise as TextExercise;
+        this.submission = this.participation?.submissions?.last();
+        this.exercise = this.participation?.exercise;
         this.course.set(getCourseFromExercise(this.exercise));
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(this.submission.results?.findIndex((result) => result.id === this.resultId())!);
+            this.correctionRound.set(this.submission!.results?.findIndex((result) => result.id === this.resultId())!);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
@@ -230,7 +228,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.loadFeedbackSuggestions();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission!);
     }
 
     private updateUrlIfNeeded() {
@@ -242,7 +240,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         ExerciseType.TEXT,
                         this.courseId,
                         this.exerciseId,
-                        this.participation!.id!,
+                        this.participation!.id,
                         this.submission!.id!,
                         this.examId,
                         this.exerciseGroupId,
@@ -341,12 +339,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         // Update the text on all text block refs
         for (const blockRef of newTextBlockRefs) {
-            blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex!);
+            blockRef.block!.text = this.submission!.text!.substring(blockRef.block!.startIndex!, blockRef.block!.endIndex);
         }
 
         this.textBlockRefs = newTextBlockRefs;
         this.submission!.blocks = this.textBlockRefs.map((blockRef) => blockRef.block!);
-        this.result()!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined) as Feedback[];
+        this.result()!.feedbacks = this.textBlockRefs.map((blockRef) => blockRef.feedback).filter((feedback) => feedback != undefined);
     }
 
     /**
@@ -427,7 +425,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy.set(true);
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission!.id!).subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!).subscribe(() => this.navigateBack());
         }
     }
 
@@ -435,7 +433,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Go to next submission
      */
     async nextSubmission(): Promise<void> {
-        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id!, 'new', this.examId, this.exerciseGroupId);
+        const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy.set(true);
         await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
     }
@@ -485,7 +483,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise!, this.submission!, this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun());
     }
 
     /**
@@ -556,7 +554,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.exercise.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.exercise.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor() && isBeforeAssessmentDueDate;

@@ -41,6 +41,20 @@ interface VersionedUMLModel {
     edges?: ApollonEdge[];
 }
 
+/**
+ * Structural superset of {@link DiagramElement} covering every field the mapping generation reads across
+ * both diagram formats. Apollon's v4 nodes expose `parentId`/`type`/`data`, whereas the legacy v3 elements
+ * expose `owner`/`name`; all fields are optional so any concrete {@link DiagramElement} is assignable here.
+ */
+interface MappingElement {
+    id?: string;
+    type?: string;
+    parentId?: string;
+    owner?: string;
+    name?: string;
+    data?: { name?: unknown };
+}
+
 function getInteractiveElements(model: UMLModel): string[] {
     return getQuizRelevantElementIds(model);
 }
@@ -344,12 +358,12 @@ function forceSVGClip(renderedSVG: SVG, clip: SVG['clip']): SVG {
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes = ['class', 'package', 'attribute', 'method', 'actionRow'];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const allElements = getModelElements(model);
+    const allElements = getModelElements(model) as MappingElement[];
     // Helper to get parent ID (v3 uses 'owner', v4 uses 'parentId')
-    const getParentId = (element: any) => element.parentId ?? element.owner;
+    const getParentId = (element: MappingElement) => element.parentId ?? element.owner;
     // Helper to get element name (v3 uses 'name', v4 uses 'data.name')
-    const getElementName = (element: any) => element.data?.name ?? element.name;
-    const textualElements = allElements.filter((element: any) => textualElementTypes.includes(element.type?.toLowerCase?.() ?? element.type));
+    const getElementName = (element: MappingElement) => element.data?.name ?? element.name;
+    const textualElements = allElements.filter((element: MappingElement) => textualElementTypes.includes(element.type?.toLowerCase() ?? ''));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
@@ -363,17 +377,17 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements within the same parent and same type
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find((element: any) => element.id === dragItemElementId);
+        const dragElement = textualElements.find((element: MappingElement) => element.id === dragItemElementId);
         if (!dragElement || !getParentId(dragElement)) {
             continue;
         }
-        const dragElementSiblings = textualElements.filter((element: any) => getParentId(element) === getParentId(dragElement) && element.type === dragElement.type);
+        const dragElementSiblings = textualElements.filter((element: MappingElement) => getParentId(element) === getParentId(dragElement) && element.type === dragElement.type);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
             }
-            if (mappings.has(dragElementSibling.id)) {
-                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id)!);
+            if (mappings.has(dragElementSibling.id!)) {
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id!));
                 mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
             }
         }
@@ -383,12 +397,12 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
 
     // Create all mapping permutations for textual based elements with the same name and different parents
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = textualElements.find((element: any) => element.id === dragItemElementId);
+        const dragElement = textualElements.find((element: MappingElement) => element.id === dragItemElementId);
         if (!dragElement || !getElementName(dragElement)) {
             continue;
         }
         for (const [dropLocationElementId] of dropLocations.entries()) {
-            const dropElement = textualElements.find((element: any) => element.id === dropLocationElementId);
+            const dropElement = textualElements.find((element: MappingElement) => element.id === dropLocationElementId);
             if (
                 !dropElement ||
                 dropElement.id === dragElement.id ||

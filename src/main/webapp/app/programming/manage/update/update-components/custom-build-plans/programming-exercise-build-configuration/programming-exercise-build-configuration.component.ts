@@ -156,16 +156,19 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
         this.cpuCount.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
         this.memory.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
         this.memorySwap.set(event.target.value);
         this.parseDockerFlagsToString();
@@ -197,10 +200,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
-        const newEnv = {} as { [key: string]: string } | undefined;
+        const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
-                newEnv![key] = value;
+                newEnv[key] = value;
             }
         });
         const network = this.network() === '' ? undefined : this.network();

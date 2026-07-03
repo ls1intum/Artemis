@@ -116,9 +116,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * Function that writes the value safely.
      * @param value as dayjs or date
      */
-    writeValue(value: any) {
+    writeValue(value?: dayjs.Dayjs | Date | null) {
         // convert dayjs to date, because p-datepicker only works correctly with date objects
-        const next = dayjs.isDayjs(value) ? (value as dayjs.Dayjs).toDate() : (value ?? null);
+        const next = dayjs.isDayjs(value) ? value.toDate() : (value ?? null);
         // Idempotency guard: Angular re-invokes writeValue on every change-detection pass while
         // p-datepicker's CVA write calls markForCheck. Re-setting the `value` signal with an equal
         // value would never let change detection settle (NG0103), so skip no-op writes.
@@ -174,13 +174,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * Registers a callback function is called by the forms API on initialization to update the form model on blur.
      * @param _fn
      */
-    registerOnTouched(_fn: any) {}
+    registerOnTouched(_fn: () => void) {}
 
     /**
      *
      * @param fn
      */
-    registerOnChange(fn: any) {
+    registerOnChange(fn: (val?: dayjs.Dayjs) => void) {
         this.onChange = fn;
     }
 

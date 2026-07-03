@@ -346,9 +346,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   '/course-management',
                   course.id!.toString(),
                   'exams',
-                  ex.exerciseGroup!.exam!.id!.toString(),
+                  ex.exerciseGroup.exam!.id!.toString(),
                   'exercise-groups',
-                  ex.exerciseGroup!.id!.toString(),
+                  ex.exerciseGroup.id!.toString(),
                   ex.type + '-exercises',
                   ex.id!.toString(),
                   'participations',
@@ -466,7 +466,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                       },
                   ]
                 : [],
-        } as Participation;
+        };
     }
 
     /**

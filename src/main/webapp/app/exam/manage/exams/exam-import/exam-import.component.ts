@@ -117,7 +117,7 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
             // summary of any skipped or incomplete exercises (so the editor cannot overlook them).
             const totalExercises = (exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
             const importId = this.examManagementService.generateImportId();
-            const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!, importId);
+            const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups, importId);
             this.examImportProgressDialog()
                 .runImport(importId, totalExercises, request$)
                 .then((response: HttpResponse<ExerciseGroupImportResultDTO>) => {

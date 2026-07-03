@@ -133,6 +133,15 @@ export class CoursesComponent implements OnInit {
     }
 
     /**
+     * Types the implicit context value of the shared course-card template. The `*ngTemplateOutlet` context is
+     * always populated with a `Course[]` (either {@link recentlyAccessedCourses} or {@link regularCourses}), but
+     * the template compiler widens template `let-` variables to `unknown`; this narrows it back in one safe place.
+     */
+    asCourses(courses: unknown): Course[] {
+        return courses as Course[];
+    }
+
+    /**
      * Sorts the courses in alphabetical order
      */
     onSort(): void {

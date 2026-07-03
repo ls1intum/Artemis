@@ -81,7 +81,7 @@ export class TestRunManagementComponent implements OnInit {
         this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), true).subscribe({
             next: (response: HttpResponse<Exam>) => {
                 this.exam.set(response.body!);
-                this.course.set(this.exam()!.course!);
+                this.course.set(this.exam()!.course);
                 const course = this.course()!;
                 course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
                 this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({

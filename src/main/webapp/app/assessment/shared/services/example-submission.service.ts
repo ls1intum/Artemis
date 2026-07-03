@@ -111,7 +111,7 @@ export class ExampleSubmissionService {
         const jsonCopy = Object.assign({}, exampleSubmission);
         if (jsonCopy.exercise) {
             jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
-            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
+            jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise);
             ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
         }
         return jsonCopy;

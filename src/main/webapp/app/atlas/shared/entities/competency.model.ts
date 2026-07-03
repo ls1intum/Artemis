@@ -210,7 +210,7 @@ export class CompetencyWithTailRelationDTO {
 
 export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
     if (!competencyTaxonomy) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons = {
@@ -222,7 +222,7 @@ export function getIcon(competencyTaxonomy?: CompetencyTaxonomy): IconProp {
         [CompetencyTaxonomy.CREATE]: faCubesStacked,
     };
 
-    return icons[competencyTaxonomy] as IconProp;
+    return icons[competencyTaxonomy];
 }
 
 /**

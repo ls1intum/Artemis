@@ -74,7 +74,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
         if (this.subjects[exerciseId]) {
-            return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | undefined>;
+            return this.subjects[exerciseId];
         }
         return this.getTestCases(exerciseId).pipe(
             map((testCases) => (testCases.length ? testCases : undefined)),

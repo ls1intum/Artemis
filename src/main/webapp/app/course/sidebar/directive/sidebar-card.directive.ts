@@ -88,7 +88,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
 
-        if (channelTypes.includes(<string>this.groupKey())) {
+        if (channelTypes.includes(this.groupKey() as string)) {
             prefixes.forEach((prefix) => {
                 if (name?.startsWith(prefix)) {
                     name = name.substring(prefix.length);

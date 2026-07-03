@@ -118,7 +118,7 @@ export class BonusService {
             const sourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
             const studentPointsOfBonusSource = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(sourceGradeStep);
 
-            examples.push(new BonusExample(studentPointsOfBonusTo!, studentPointsOfBonusSource!));
+            examples.push(new BonusExample(studentPointsOfBonusTo, studentPointsOfBonusSource));
 
             // Source grade steps descend and bonusTo grade steps ascend to provide somewhat more balanced examples
             // although this is not a hard rule.
@@ -144,7 +144,7 @@ export class BonusService {
         }
         const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(lastSourceGradeStep);
 
-        examples.push(new BonusExample(lastStudentPointsOfBonusTo!, lastStudentPointsOfBonusSource!));
+        examples.push(new BonusExample(lastStudentPointsOfBonusTo, lastStudentPointsOfBonusSource));
 
         return examples;
     }
@@ -226,7 +226,7 @@ export class BonusService {
      * @param calculationSign a negative or positive number to indicate decreasing or increasing direction, respectively
      */
     doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
-        return (valueWithBonus - maxValue) * calculationSign! > 0;
+        return (valueWithBonus - maxValue) * calculationSign > 0;
     }
 
     /**

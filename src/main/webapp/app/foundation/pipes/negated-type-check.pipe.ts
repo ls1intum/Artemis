@@ -8,7 +8,7 @@ export class NegatedTypeCheckPipe implements PipeTransform {
      * @param classType The class' type that array items are checked against.
      */
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    transform(items: Array<any>, classType: Function): any[] {
+    transform<T>(items: Array<T>, classType: Function): T[] {
         return items.filter((item) => !(item instanceof classType));
     }
 }

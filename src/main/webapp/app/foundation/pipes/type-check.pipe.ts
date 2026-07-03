@@ -7,7 +7,7 @@ export class TypeCheckPipe implements PipeTransform {
      * @param items The array of items to filter.
      * @param classType The class' type that array items are checked against.
      */
-    transform(items: Array<any>, classType: any): any[] {
-        return items.filter((item) => item instanceof classType);
+    transform<T, R extends T>(items: Array<T>, classType: abstract new (...args: never[]) => R): R[] {
+        return items.filter((item): item is R => item instanceof classType);
     }
 }

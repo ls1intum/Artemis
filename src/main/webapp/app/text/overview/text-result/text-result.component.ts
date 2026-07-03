@@ -34,7 +34,7 @@ export class TextResultComponent {
                 return;
             }
 
-            this.submission = result.submission as TextSubmission;
+            this.submission = result.submission;
             this.submissionText.set(this.submission.text || '');
             this.convertTextToResultBlocks(result.feedbacks);
         });
@@ -50,9 +50,7 @@ export class TextResultComponent {
         const referenceBasedResultBlocks = referenceBasedFeedback.map(this.feedbackToTextResultBlock, this);
         const blockBasedResultBlocks = blockBasedFeedback.map(this.textBlockToTextResultBlock, this);
 
-        const resultBlocks = ([...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter((elem) => elem !== undefined) as TextResultBlock[]).sort(
-            (a, b) => b.startIndex - a.startIndex,
-        );
+        const resultBlocks = [...referenceBasedResultBlocks, ...blockBasedResultBlocks].filter((elem) => elem !== undefined).sort((a, b) => b.startIndex - a.startIndex);
 
         let nextBlock = resultBlocks.pop();
         let startIndex = 0;

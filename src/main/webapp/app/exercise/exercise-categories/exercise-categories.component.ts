@@ -40,6 +40,6 @@ export class ExerciseCategoriesComponent {
     });
 
     asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 }

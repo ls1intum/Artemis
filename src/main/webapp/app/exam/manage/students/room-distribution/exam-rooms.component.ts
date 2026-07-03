@@ -70,7 +70,7 @@ export class ExamRoomsComponent implements OnInit {
         return {
             examRooms: this.numberOfUniqueExamRooms(),
             examSeats: this.numberOfUniqueExamSeats(),
-        } as ExamRoomOverviewNumberOfAvailable;
+        };
     });
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
@@ -184,7 +184,12 @@ export class ExamRoomsComponent implements OnInit {
         this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute(), this.ascending());
     }
 
-    private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
+    private showErrorNotification(
+        translationKey: string,
+        interpolationValues?: Record<string, unknown>,
+        trailingText?: string,
+        translatePath: string = this.baseTranslationPath,
+    ): void {
         const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
         this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
@@ -203,13 +208,10 @@ export class ExamRoomsComponent implements OnInit {
     }
 
     private calculateExamRoomData() {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                }) as ExamRoomDTOExtended,
-        );
+        return this.overview()?.newestUniqueExamRooms?.map((examRoomDTO) => ({
+            ...examRoomDTO,
+            defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
+            maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
+        }));
     }
 }

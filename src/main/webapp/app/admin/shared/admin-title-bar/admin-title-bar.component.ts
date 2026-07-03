@@ -11,6 +11,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class AdminTitleBarComponent {
     private adminTitleBarService = inject(AdminTitleBarService);
 
-    readonly customTitleTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.adminTitleBarService.titleTemplate());
-    readonly customActionsTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.adminTitleBarService.actionsTemplate());
+    readonly customTitleTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.adminTitleBarService.titleTemplate());
+    readonly customActionsTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.adminTitleBarService.actionsTemplate());
 }

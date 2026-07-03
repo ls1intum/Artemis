@@ -322,7 +322,7 @@ export class ExerciseSplitPanelComponent {
         return false;
     }
 
-    onOutletActivate(component: any): void {
+    onOutletActivate(component: unknown): void {
         if (component instanceof QuizParticipationComponent) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {

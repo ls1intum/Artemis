@@ -68,13 +68,13 @@ export class LearningPathsTableComponent {
     private async loadLearningPaths(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const searchState = <SearchTermPageableSearch>{
+            const searchState = {
                 page: this.page(),
                 pageSize: this.pageSize(),
                 searchTerm: this.searchTerm(),
                 sortingOrder: this.sortingOrder(),
                 sortedColumn: this.sortedColumn(),
-            };
+            } satisfies SearchTermPageableSearch;
             const searchResults = await this.learningPathApiService.getLearningPathInformation(courseId, searchState);
             this.searchResults.set(searchResults);
         } catch (error) {

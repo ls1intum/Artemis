@@ -168,8 +168,8 @@ export class TextSelectDirective implements OnInit, OnDestroy {
         // up to the host element and add any relevant scroll offsets to the calculated
         // local position.
         while (node !== host && node.parentNode != undefined) {
-            localLeft += (<Element>node).scrollLeft;
-            localTop += (<Element>node).scrollTop;
+            localLeft += (node as Element).scrollLeft;
+            localTop += (node as Element).scrollTop;
             node = node.parentNode;
         }
 

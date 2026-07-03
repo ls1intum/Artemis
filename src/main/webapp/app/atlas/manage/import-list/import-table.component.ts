@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -83,7 +83,7 @@ export class ImportTableComponent<T extends BaseEntity> {
     private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
-            const searchState = <SearchTermPageableSearch>{
+            const searchState = {
                 searchTerm: this.searchTerm(),
                 page: this.page(),
                 sortedColumn: this.sortedColumn(),
@@ -115,7 +115,7 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
-        return <SearchResult<T>>{
+        return {
             ...searchResults,
             resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)),
         };

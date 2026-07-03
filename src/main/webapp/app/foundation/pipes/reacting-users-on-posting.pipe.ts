@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 
 export const USER_COUNT_LIMIT = 10;
 export const PLACEHOLDER_USER_REACTED = 'REPLACE_WITH_TRANSLATED_YOU';
@@ -18,7 +18,7 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
      * @returns {Observable<string>} observable of concatenated, translated (and shortened if required) string of reacting users
      */
     transform(reactingUsers: string[]): Observable<string> {
-        return new Observable((observer: any) => {
+        return new Observable((observer: Subscriber<string>) => {
             observer.next(this.updateReactingUsersString(reactingUsers));
             this.translateService.onLangChange.subscribe(() => {
                 observer.next(this.updateReactingUsersString(reactingUsers));

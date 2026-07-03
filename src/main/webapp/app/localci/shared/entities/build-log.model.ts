@@ -9,7 +9,7 @@ export enum BuildLogType {
 }
 
 export type BuildLogEntry = {
-    time: any;
+    time: string;
     log: string;
     type?: BuildLogType;
 };
@@ -77,7 +77,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                 .map(({ log, time }) => {
                     const sortedLog = [...log!];
                     if (programmingLanguage === ProgrammingLanguage.SWIFT || projectType === ProjectType.PLAIN_GRADLE || projectType === ProjectType.GRADLE_GRADLE) {
-                        const errorIndicator = sortedLog!.splice(sortedLog!.indexOf('error:'), 1)[0];
+                        const errorIndicator = sortedLog.splice(sortedLog.indexOf('error:'), 1)[0];
                         sortedLog.unshift(errorIndicator);
                     }
                     return { log: sortedLog, time };

@@ -12,8 +12,8 @@ export class RepositoryService {
      * Checks whether the participation data is clean or not.
      * @param participationId The identifier of the participation.
      */
-    isClean(participationId: number): Observable<any> {
-        return this.http.get<any>(`api/programming/participations/${participationId}/repository`).pipe(map((data) => ({ isClean: data.isClean })));
+    isClean(participationId: number): Observable<{ isClean: boolean | undefined }> {
+        return this.http.get<{ isClean?: boolean }>(`api/programming/participations/${participationId}/repository`).pipe(map((data) => ({ isClean: data.isClean })));
     }
 
     /**
@@ -35,8 +35,8 @@ export class RepositoryService {
 
 export interface IRepositoryFileService {
     query: (participationId: number) => Observable<{ [fileName: string]: FileType }>;
-    get: (participationId: number, fileName: string) => Observable<any>;
-    update: (participationId: number, fileName: string, fileContent: string) => Observable<any>;
+    get: (participationId: number, fileName: string) => Observable<{ fileContent: string }>;
+    update: (participationId: number, fileName: string, fileContent: string) => Observable<void>;
     createFile: (participationId: number, fileName: string) => Observable<void>;
     createFolder: (participationId: number, folderName: string) => Observable<void>;
     rename: (participationId: number, currentFilePath: string, newFilename: string) => Observable<void>;
@@ -60,7 +60,7 @@ export class RepositoryFileService implements IRepositoryFileService {
      * @param participationId The identifier of the participation.
      * @param fileName The name of the file to be obtained.
      */
-    get(participationId: number, fileName: string): Observable<any> {
+    get(participationId: number, fileName: string): Observable<{ fileContent: string }> {
         return this.http
             .get(`api/programming/participations/${participationId}/repository/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' })
             .pipe(map((data) => ({ fileContent: data })));
@@ -72,8 +72,8 @@ export class RepositoryFileService implements IRepositoryFileService {
      * @param fileName The name of the file to be updated.
      * @param fileContent The content of the file.
      */
-    update(participationId: number, fileName: string, fileContent: string): Observable<any> {
-        return this.http.put(`api/programming/participations/${participationId}/repository/file`, fileContent, {
+    update(participationId: number, fileName: string, fileContent: string): Observable<void> {
+        return this.http.put<void>(`api/programming/participations/${participationId}/repository/file`, fileContent, {
             params: new HttpParams().set('file', fileName),
         });
     }

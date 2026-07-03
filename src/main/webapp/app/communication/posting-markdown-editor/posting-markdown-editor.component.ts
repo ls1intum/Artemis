@@ -184,7 +184,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * i.e. sets the value programmatically
      * @param value
      */
-    writeValue(value: any): void {
+    writeValue(value: string | undefined): void {
         this.content.set(value ?? '');
     }
 
@@ -192,7 +192,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * upon UI element value changes, this method is triggered (required)
      * @param fn
      */
-    registerOnChange(fn: any): void {
+    registerOnChange(fn: (value: string) => void): void {
         this.onChange = fn;
     }
 

@@ -169,7 +169,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * @param value to be sanitized or replaced with -
      * @private
      */
-    private sanitizeCSVField(value: any): string {
+    private sanitizeCSVField(value: unknown): string {
         if (value === null || value === undefined) {
             // used as placeholder for null or if the passed value does not exist
             return '-';

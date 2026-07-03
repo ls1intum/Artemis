@@ -13,7 +13,7 @@ export class GlobalNotificationSettingsService {
         return this.httpClient.get<{ [key: string]: boolean }>(`${this.resourceUrl}`);
     }
 
-    update(type: GlobalNotificationType, enabled: boolean): Observable<any> {
-        return this.httpClient.put(`${this.resourceUrl}/${type}`, { enabled });
+    update(type: GlobalNotificationType, enabled: boolean): Observable<void> {
+        return this.httpClient.put<void>(`${this.resourceUrl}/${type}`, { enabled });
     }
 }

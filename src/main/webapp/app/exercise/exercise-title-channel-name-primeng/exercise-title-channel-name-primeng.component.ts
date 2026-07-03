@@ -15,7 +15,7 @@ export class ExerciseTitleChannelNamePrimengComponent {
     readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     readonly courseId = input<number>();
 
-    readonly exercise = input<Exercise>({} as Exercise);
+    readonly exercise = input<Exercise>(undefined!);
     readonly titlePattern = input<string>();
     readonly minTitleLength = input<number>();
     readonly isExamMode = input<boolean>(false);

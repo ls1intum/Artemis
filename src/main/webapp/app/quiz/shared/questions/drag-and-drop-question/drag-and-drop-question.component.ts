@@ -71,7 +71,7 @@ export class DragAndDropQuestionComponent {
 
     forceSampleSolution = input<boolean>(false);
 
-    onMappingUpdate = input<any>();
+    onMappingUpdate = input<() => void>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     mappingsChange = output<DragAndDropMapping[]>();
@@ -153,10 +153,10 @@ export class DragAndDropQuestionComponent {
 
     /**
      * Prevent scrolling when dragging elements on mobile devices
-     * @param event
+     * @param event the native drag event emitted by the drop location element
      */
-    preventDefault(event: any) {
-        event.mouseEvent.preventDefault();
+    preventDefault(event: Event) {
+        event.preventDefault();
         return false;
     }
 

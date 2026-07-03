@@ -7,7 +7,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Observable, from, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseServicable } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -32,7 +32,7 @@ export class SaveExerciseCommand<T extends Exercise> {
     ) {}
 
     save(exercise: T, isExamMode: boolean, notificationText?: string): Observable<T> {
-        const prepareRequestOptions = (): any => {
+        const prepareRequestOptions = (): ExerciseUpdateRequestOptions => {
             switch (this.editType) {
                 case EditType.UPDATE:
                     return notificationText ? { notificationText } : {};
@@ -41,6 +41,8 @@ export class SaveExerciseCommand<T extends Exercise> {
             }
         };
 
+        type SaveStep = [shouldReevaluate: boolean, requestOptions?: ExerciseUpdateRequestOptions];
+
         if (exercise.exampleSolutionPublicationDateWarning) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
@@ -48,7 +50,7 @@ export class SaveExerciseCommand<T extends Exercise> {
             });
         }
 
-        const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
+        const callServer = ([shouldReevaluate, requestOptions]: SaveStep) => {
             const ex = Exercise.sanitize(exercise);
             switch (this.editType) {
                 case EditType.IMPORT:
@@ -64,17 +66,19 @@ export class SaveExerciseCommand<T extends Exercise> {
             }
         };
 
-        let saveObservable = of([false, prepareRequestOptions()]);
+        let saveObservable: Observable<SaveStep> = of([false, prepareRequestOptions()]);
 
         const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise, isExamMode));
 
         if (this.modalService.hasOpenModals()) {
             const confirmedCase = popupRefObs.pipe(
-                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
+                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map((): SaveStep => [false, prepareRequestOptions()]))),
             );
             const reEvaluatedCase = popupRefObs.pipe(
                 mergeMap((ref) =>
-                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }])),
+                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(
+                        map((): SaveStep => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }]),
+                    ),
                 ),
             );
             const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
@@ -84,7 +88,7 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         return saveObservable.pipe(
             mergeMap(callServer),
-            map((res) => res.body! as T),
+            map((res) => res.body!),
         );
     }
 }

@@ -163,7 +163,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     const exampleSubmission = exampleSubmissionResponse.body!;
                     this.exampleSubmission.set(exampleSubmission);
                     if (exampleSubmission.submission) {
-                        this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
+                        this.modelingSubmission = exampleSubmission.submission;
                         if (this.modelingSubmission.model) {
                             this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                         }
@@ -231,7 +231,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.exampleSubmission.set(exampleSubmission);
                 this.exampleSubmissionId = exampleSubmission.id!;
                 if (exampleSubmission.submission) {
-                    this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
+                    this.modelingSubmission = exampleSubmission.submission;
                     if (this.modelingSubmission.model) {
                         this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
@@ -279,7 +279,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 this.exampleSubmission.set(updatedExampleSubmission);
                 this.exampleSubmissionId = updatedExampleSubmission.id!;
                 if (updatedExampleSubmission.submission) {
-                    this.modelingSubmission = updatedExampleSubmission.submission as ModelingSubmission;
+                    this.modelingSubmission = updatedExampleSubmission.submission;
                     if (this.modelingSubmission.model) {
                         this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }

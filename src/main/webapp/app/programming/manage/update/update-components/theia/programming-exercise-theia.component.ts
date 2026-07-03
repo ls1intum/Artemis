@@ -79,7 +79,7 @@ export class ProgrammingExerciseTheiaComponent {
 
                 // Set the first image as default if none is selected
                 if (programmingExercise.buildConfig && !programmingExercise.buildConfig.theiaImage && Object.values(images).length > 0) {
-                    programmingExercise.buildConfig.theiaImage = Object.values(images).first() as string;
+                    programmingExercise.buildConfig.theiaImage = Object.values(images).first();
                 }
             },
             error: () => {
