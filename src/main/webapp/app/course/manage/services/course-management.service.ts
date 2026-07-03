@@ -269,7 +269,7 @@ export class CourseManagementService implements OnDestroy {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined, true)),
         );
     }
 
