@@ -18,13 +18,16 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 17;
+        return 12;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
+    // Note: the import-exercise-group endpoint deliberately keeps its entity request body (see PR description); the
+    // shared exercise-import services copy basis fields off the incoming exercise graph, which the slim
+    // ExerciseImportDTO cannot carry, so switching it to a DTO would silently drop those fields.
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 5;
+        return 4;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs.
@@ -33,6 +36,6 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // (the more severe anti-pattern) for two DTO-wrapped-entity fields; both should be reduced to 0 eventually.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 2;
     }
 }
