@@ -57,7 +57,7 @@ export class Result implements BaseEntity {
 export function isPracticeResult(result: Result | undefined): boolean {
     let studentParticipation: StudentParticipation | undefined;
     if (result?.submission?.participation instanceof StudentParticipation) {
-        studentParticipation = result.submission.participation as StudentParticipation;
+        studentParticipation = result.submission.participation;
     }
     return studentParticipation?.testRun ?? false;
 }

@@ -359,7 +359,7 @@ export class WebauthnService {
         const credentialRequestOptions: CredentialRequestOptions = {
             publicKey: assertionOptions,
             signal,
-            ...(isConditional && { mediation: 'conditional' as CredentialMediationRequirement }),
+            ...(isConditional && { mediation: 'conditional' }),
         };
 
         const credentialPromise = navigator.credentials.get(credentialRequestOptions);
