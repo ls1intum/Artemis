@@ -6,7 +6,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     private _elRef = inject(ElementRef);
     private _render = inject(Renderer2);
 
-    jhiStickyPopover = input.required<TemplateRef<any>>();
+    jhiStickyPopover = input.required<TemplateRef<unknown>>();
 
     popoverTitle: string;
 
@@ -14,7 +14,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     container: string;
     canClosePopover: boolean;
 
-    private closeTimeout: any;
+    private closeTimeout: ReturnType<typeof setTimeout>;
     private clickInPopover = false;
 
     toggle(): void {

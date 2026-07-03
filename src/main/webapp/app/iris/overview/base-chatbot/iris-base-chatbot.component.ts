@@ -66,7 +66,7 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -285,7 +285,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () =>
             this.isLoading() ||
             !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.hasActiveStage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
@@ -294,7 +294,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!this.suggestions()?.length &&
             this.isAIEnabled() &&
             this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);
@@ -523,7 +523,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         // Handle route query params (irisQuestion)
-        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: Params) => {
             if (params?.irisQuestion) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }

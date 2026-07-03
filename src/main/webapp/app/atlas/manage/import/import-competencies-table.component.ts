@@ -20,7 +20,7 @@ export class ImportCompetenciesTableComponent {
     search = model.required<PageableSearch>();
     displayPagination = input<boolean>(true);
 
-    buttonsTemplate = contentChild(TemplateRef<any>);
+    buttonsTemplate = contentChild(TemplateRef<{ competency: Competency }>);
 
     ascending = false;
 

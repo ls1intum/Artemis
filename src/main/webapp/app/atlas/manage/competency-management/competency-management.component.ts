@@ -13,7 +13,6 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
-    ImportAllCourseCompetenciesModalData,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -21,12 +20,9 @@ import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import {
-    CourseCompetenciesRelationModalComponent,
-    CourseCompetenciesRelationModalData,
-} from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
-import { AgentChatModalComponent, AgentChatModalData } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -166,7 +162,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             resizable: false,
             showHeader: false,
             styleClass: 'course-competencies-relation-graph-modal',
-            data: <CourseCompetenciesRelationModalData>{
+            data: {
                 courseId: this.courseId(),
                 courseCompetencies: this.courseCompetencies(),
             },
@@ -186,7 +182,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             draggable: false,
             resizable: false,
             showHeader: false,
-            data: <ImportAllCourseCompetenciesModalData>{ courseId: this.courseId() },
+            data: { courseId: this.courseId() },
         });
         if (!dialogRef) {
             return;
@@ -266,7 +262,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             draggable: false,
             resizable: false,
             showHeader: false,
-            data: <AgentChatModalData>{
+            data: {
                 courseId: this.courseId(),
                 onCompetencyChanged: () => this.loadCourseCompetencies(this.courseId()),
             },

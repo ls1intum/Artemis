@@ -15,7 +15,7 @@ import {
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -143,7 +143,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     const exerciseUnit = new ExerciseUnit();
                     exerciseUnit.id = exerciseLink.exercise?.id;
                     exerciseUnit.exercise = exerciseLink.exercise;
-                    return new CompetencyLectureUnitLink(competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                    return new CompetencyLectureUnitLink(competency, exerciseUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
                 }),
             );
         }
@@ -161,7 +161,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         if (userProgress?.length) {
             return userProgress.first()!;
         }
-        return { progress: 0, confidence: 1 } as CompetencyProgress;
+        return { progress: 0, confidence: 1 };
     }
 
     get progress(): number {
@@ -185,7 +185,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture!.id!, event.completed).subscribe({
+        this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture.id!, event.completed).subscribe({
             next: () => {
                 event.lectureUnit.completed = event.completed;
 

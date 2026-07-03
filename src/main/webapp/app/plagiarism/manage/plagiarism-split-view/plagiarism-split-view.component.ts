@@ -27,7 +27,7 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
-    readonly comparison = input<PlagiarismComparison | PlagiarismComparisonSummary | undefined>(undefined!);
+    readonly comparison = input<PlagiarismComparison | PlagiarismComparisonSummary | undefined>(undefined);
     readonly exercise = input<Exercise | PlagiarismCaseExercise>();
     readonly splitControlSubject = input<Subject<string>>();
     readonly sortByStudentLogin = input<string>();
@@ -217,11 +217,11 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     }
 
     getTextSubmissionA() {
-        return this.plagiarismComparison()!.submissionA as PlagiarismSubmission;
+        return this.plagiarismComparison()!.submissionA;
     }
 
     getTextSubmissionB() {
-        return this.plagiarismComparison()!.submissionB as PlagiarismSubmission;
+        return this.plagiarismComparison()!.submissionB;
     }
 
     handleSplitControl(pane: string) {

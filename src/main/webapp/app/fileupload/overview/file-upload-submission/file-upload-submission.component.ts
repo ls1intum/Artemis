@@ -177,7 +177,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         const participation = submission.participation as StudentParticipation;
 
         // reconnect participation <--> submission
-        participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
+        participation.submissions = [omit(submission, 'participation')];
 
         this.submission.set(submission);
         this.result.set(tmpResult);

@@ -33,7 +33,7 @@ export class CompetencyCardComponent {
         if (userProgress) {
             return userProgress;
         }
-        return { progress: 0, confidence: 1 } as CompetencyProgress;
+        return { progress: 0, confidence: 1 };
     }
 
     get progress(): number {
