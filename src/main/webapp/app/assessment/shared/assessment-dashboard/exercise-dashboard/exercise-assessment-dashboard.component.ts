@@ -787,6 +787,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (result !== undefined) {
             return this.getAssessmentQueryParams(result.results!.length - 1);
         }
+        return undefined;
     }
 
     /**
@@ -804,6 +805,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             }
             return submissionToView;
         }
+        return undefined;
     }
 
     toggleSecondCorrection() {

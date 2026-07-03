@@ -274,7 +274,7 @@ export class AlertService {
         // Some callers forward a server error field that is typed `any`, so it may not actually be a string at
         // runtime; coerce defensively before display.
         if (message && typeof message !== 'string') {
-            message = '' + message;
+            message = String(message);
         }
         this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
     }

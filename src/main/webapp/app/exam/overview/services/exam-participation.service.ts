@@ -339,6 +339,7 @@ export class ExamParticipationService {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
             return studentParticipation.submissions.last();
         }
+        return undefined;
     }
 
     /**
@@ -350,6 +351,7 @@ export class ExamParticipationService {
         if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
             return exercise.studentParticipations[0];
         }
+        return undefined;
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {

@@ -146,7 +146,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     /**
      * Calls ngOnDestroy of super to unsubscribe from domain/participation changes.
      */
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
     }
 
@@ -168,7 +168,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * Calls setDomain of super and updates fileUpdateUrl. If this service is used at the time complete usage and unsubscribe.
      * @param domain - defines new domain of super.
      */
-    setDomain(domain: DomainChange) {
+    override setDomain(domain: DomainChange) {
         super.setDomain(domain);
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();

@@ -91,7 +91,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         return this.glyphMarginWidget.getDomNode();
     }
 
-    protected setupListeners() {
+    protected override setupListeners() {
         this.updateListener = this.editor.onDidChangeModelContent(() => {
             // The displayed annotations may not apply anymore if the files have changed. For convenience, we still display them for the user's reference.
             this.setOutdatedAndUpdate(true);
@@ -113,7 +113,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.decorationsCollection.clear();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.glyphMarginWidget.dispose();
         this.updateListener.dispose();

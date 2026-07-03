@@ -10,7 +10,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> extends
     /**
      * on initialization: sets the content, and the modal title (edit or create)
      */
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
         this.updateModalTitle();
     }

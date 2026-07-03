@@ -101,6 +101,7 @@ export abstract class QuizExerciseValidationDirective {
                               translateValues: { index: index + 1 },
                           };
                       }
+                      return undefined;
                   })
                   .filter(Boolean);
 
@@ -171,6 +172,7 @@ export abstract class QuizExerciseValidationDirective {
                               translateValues: { index: index + 1 },
                           };
                       }
+                      return undefined;
                   })
                   .filter(Boolean);
 

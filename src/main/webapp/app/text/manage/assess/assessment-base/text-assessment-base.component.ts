@@ -114,9 +114,9 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
             } else if (previousIndex > nextIndex) {
                 const previousRef = textBlockRefs.pop();
                 if (!previousRef) {
-                    captureException('Overlapping Text Blocks with nothing? previousRef: ' + previousRef + ' ref: ' + ref);
+                    captureException('Overlapping Text Blocks with nothing? previousRef: ' + JSON.stringify(previousRef) + ' ref: ' + JSON.stringify(ref));
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.AUTOMATIC)) {
-                    captureException('Overlapping AUTOMATIC Text Blocks! previousRef: ' + previousRef + ' ref: ' + ref);
+                    captureException('Overlapping AUTOMATIC Text Blocks! previousRef: ' + JSON.stringify(previousRef) + ' ref: ' + JSON.stringify(ref));
                 } else if ([ref, previousRef].every((r) => r.block?.type === TextBlockType.MANUAL)) {
                     // Make sure to select a TextBlockRef that has a feedback.
                     let selectedRef = ref;

@@ -48,6 +48,7 @@ describe('CreateOnlineUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return undefined;
                                     },
                                 }),
                                 parent: {
@@ -57,6 +58,7 @@ describe('CreateOnlineUnitComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
+                                            return undefined;
                                         },
                                     }),
                                 },

@@ -156,6 +156,7 @@ export class FaqService {
         if (categories) {
             return categories.some((category) => filteredCategory.has(category!));
         }
+        return undefined;
     }
 
     hasSearchTokens(faq: Faq, searchTerm: string): boolean {

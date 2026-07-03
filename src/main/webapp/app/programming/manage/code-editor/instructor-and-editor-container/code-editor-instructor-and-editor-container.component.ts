@@ -246,7 +246,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
 
     readonly faTableColumns = faTableColumns;
-    readonly ButtonSize = ButtonSize;
+    override readonly ButtonSize = ButtonSize;
 
     readonly refinementPopover = viewChild<Popover>('refinementPopover');
     readonly codeGenerationSettingsPopover = viewChild<Popover>('codeGenerationSettingsPopover');

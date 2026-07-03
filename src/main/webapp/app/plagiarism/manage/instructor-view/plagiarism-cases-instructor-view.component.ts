@@ -175,7 +175,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             return '-';
         }
         // sanitize the operators away in case they appear in the values
-        return String(value).replace(/;/g, '";"');
+        const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+        return stringValue.replace(/;/g, '";"');
     }
 
     /**

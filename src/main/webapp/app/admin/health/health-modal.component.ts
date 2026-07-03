@@ -73,10 +73,9 @@ export class HealthModalComponent {
             return `${(bytes / 1048576).toFixed(2)} MB`;
         }
 
-        if (typeof value === 'object') {
-            return JSON.stringify(value);
-        }
-        return String(value);
+        // strings pass through; everything else (numbers, booleans, nested objects) is JSON-encoded, which avoids
+        // Object's '[object Object]' default and matches the output String() produced for the numeric/boolean values.
+        return typeof value === 'string' ? value : JSON.stringify(value);
     }
 
     /**

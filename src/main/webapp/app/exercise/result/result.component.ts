@@ -217,6 +217,7 @@ export class ResultComponent {
             }
             return 'artemisApp.result.preliminaryTooltip';
         }
+        return undefined;
     }
 
     /**

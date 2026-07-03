@@ -241,7 +241,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     /**
      * Auxiliary method that
      */
-    resetTableFilter(): void {
+    override resetTableFilter(): void {
         this.tableFiltered = false;
         this.testCaseRowFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
     }

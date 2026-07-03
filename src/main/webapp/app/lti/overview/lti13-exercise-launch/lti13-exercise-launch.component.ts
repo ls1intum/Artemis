@@ -149,7 +149,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             this.sessionStorageService.store<string>('ltiIdToken', ltiIdToken);
             this.sessionStorageService.store<string>('clientRegistrationId', clientRegistrationId);
         } catch (error) {
-            captureException('Failed to store session data: ' + error);
+            captureException('Failed to store session data: ' + String(error));
         }
     }
 

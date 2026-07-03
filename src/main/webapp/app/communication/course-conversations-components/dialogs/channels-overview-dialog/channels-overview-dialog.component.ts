@@ -45,11 +45,11 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     readonly isLoading = signal(false);
     readonly channels = signal<ChannelDTO[]>([]);
 
-    isInitialized = false;
+    override isInitialized = false;
 
     faChevronRight = faChevronRight;
 
-    initialize() {
+    override initialize() {
         super.initialize(['course']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();

@@ -592,7 +592,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.suppressUnsavedForNextProblemStatementChange = true;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
-            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            const replacedText = this.normalizeLineEndings(syncState.text.toJSON());
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);

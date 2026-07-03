@@ -56,6 +56,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                                     case 'attachmentUnitId':
                                         return 1;
                                 }
+                                return undefined;
                             },
                         }),
                         parent: {
@@ -66,6 +67,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return undefined;
                                     },
                                 }),
                             },
