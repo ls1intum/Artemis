@@ -39,6 +39,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -1703,6 +1705,39 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         instruction.setCredits(3);
         request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate?deleteFeedback=false",
                 de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateWithEmptyCompetencyLinksDoesNotCrash() throws Exception {
+        // Dogus's repro (500 on test4): re-evaluate an EXISTING exercise (past due date) that has grading criteria
+        // and an assessed submission. The client ALWAYS sends "competencyLinks": [] (never null), but the re-evaluate
+        // load query did not fetch competencyLinks. With OSIV disabled the exercise is detached, so
+        // CompetencyExerciseLinkService.updateCompetencyLinks() -> getCompetencyLinks().clear() on the lazy,
+        // uninitialized collection threw a LazyInitializationException -> 500. Note: UpdateTextExerciseDTO.of() emits
+        // competencyLinks=null for an uninitialized collection, which hid this in earlier tests; we mirror the real
+        // client payload by sending an initialized empty set.
+        textExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        textExercise.setStartDate(null);
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        textExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        textExercise.setExampleSolutionPublicationDate(null);
+        textExerciseRepository.save(textExercise);
+
+        Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, TEST_PREFIX + "instructor1");
+
+        TextExercise reloaded = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(textExercise.getId());
+
+        // The Angular client serializes competencyLinks as [] (empty, non-null). UpdateTextExerciseDTO is
+        // @JsonInclude(NON_EMPTY), so serializing the DTO object would drop an empty set and the server would see null
+        // (which hides the bug). Build the JSON tree and set an explicit empty competencyLinks array to mirror the
+        // real client payload; a JsonNode body is serialized verbatim, bypassing NON_EMPTY.
+        ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(reloaded));
+        body.set("competencyLinks", request.getObjectMapper().createArrayNode());
+
+        request.putWithResponseBody("/api/text/text-exercises/" + reloaded.getId() + "/re-evaluate?deleteFeedback=false", body, TextExerciseResponseDTO.class, HttpStatus.OK);
     }
 
     @Test
