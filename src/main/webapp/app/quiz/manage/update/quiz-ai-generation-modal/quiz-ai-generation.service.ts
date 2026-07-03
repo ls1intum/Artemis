@@ -7,7 +7,7 @@ import { QuizQuestionRefinementRequest } from 'app/openapi/models/quiz-question-
 import { QuizQuestionGenerationRequest } from 'app/openapi/models/quiz-question-generation-request';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/models/quiz-question-bulk-refinement-request';
 import { QuizQuestionRefinementResponse } from 'app/openapi/models/quiz-question-refinement-response';
-import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -35,9 +35,9 @@ export class QuizAiGenerationService {
         question: MultipleChoiceQuestion,
         refinementPrompt: string,
     ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }> {
-        const request = {
+        const request: QuizQuestionRefinementRequest = {
             question: {
-                type: (question.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
+                type: question.singleChoice ? 'single-choice' : 'multiple-choice',
                 title: question.title?.trim() || 'Untitled Question',
                 questionText: question.text ?? '',
                 hint: question.hint ?? undefined,
@@ -50,7 +50,7 @@ export class QuizAiGenerationService {
                 })),
             },
             refinementPrompt,
-        } as QuizQuestionRefinementRequest;
+        };
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
@@ -78,7 +78,7 @@ export class QuizAiGenerationService {
     refineAllMultipleChoiceQuestions(courseId: number, questions: MultipleChoiceQuestion[], refinementPrompt: string): Observable<Map<MultipleChoiceQuestion, string>> {
         const request: QuizQuestionBulkRefinementRequest = {
             questions: questions.map((q) => ({
-                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
+                type: q.singleChoice ? 'single-choice' : 'multiple-choice',
                 title: q.title?.trim() || 'Untitled Question',
                 questionText: q.text ?? '',
                 hint: q.hint ?? undefined,
