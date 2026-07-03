@@ -216,6 +216,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
     readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
+    readonly liveAssistantDraft = toSignal(this.chatService.currentLiveAssistantDraft(), { initialValue: undefined });
     readonly rateLimitInfo = toSignal(this.statusService.currentRatelimitInfo(), { requireSync: true });
     readonly active = toSignal(this.statusService.getActiveStatus(), { initialValue: true });
     readonly citationInfo = toSignal(this.chatService.currentCitationInfo(), { initialValue: [] as IrisCitationMetaDTO[] });
@@ -239,8 +240,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
         return active?.chatMessage;
     });
-    readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
-    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0);
+    readonly isEmptyState = computed(() => !this.messages()?.length && !this.liveAssistantDraft() && !this.isEmbeddedChat());
+    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0 || !!this.liveAssistantDraft());
     readonly hasSessionSwitcher = computed(
         () => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader() && (this.hasCurrentSessionContent() || this.hasPastSessions()),
     );
@@ -596,7 +597,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // initial gap between send and the first websocket update doesn't release early.
         // A genuine upward gesture also releases it (see onMessagesUserScroll).
         effect(() => {
-            const streaming = this.hasActiveStage() || !!this.activeChatMessage();
+            const streaming = this.hasActiveStage() || !!this.activeChatMessage() || !!this.liveAssistantDraft();
             if (this.forcePinToBottom) {
                 if (streaming) {
                     this.pinSawStreaming = true;
@@ -619,6 +620,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
         effect(() => {
             if (this.activeChatMessage() && (this.forcePinToBottom || this.isScrolledToBottom())) {
+                this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
+            }
+        });
+
+        // Scroll while a streamed assistant draft grows, if the user is at the bottom or just sent a message.
+        effect(() => {
+            if (this.liveAssistantDraft() && (this.forcePinToBottom || this.isScrolledToBottom())) {
                 this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
             }
         });

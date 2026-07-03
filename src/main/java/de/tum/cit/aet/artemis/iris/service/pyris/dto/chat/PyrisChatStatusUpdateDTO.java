@@ -12,5 +12,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisChatStatusUpdateDTO(@Nullable String result, List<PyrisStageDTO> stages, @Nullable String sessionTitle, @Nullable List<String> suggestions,
-        @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories) {
+        @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable String partialResult,
+        @Nullable Integer partialSeq) {
+
+    public PyrisChatStatusUpdateDTO(@Nullable String result, List<PyrisStageDTO> stages, @Nullable String sessionTitle, @Nullable List<String> suggestions,
+            @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories) {
+        this(result, stages, sessionTitle, suggestions, tokens, accessedMemories, createdMemories, null, null);
+    }
 }

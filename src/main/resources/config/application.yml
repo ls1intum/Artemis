@@ -156,6 +156,7 @@ artemis:
         enabled: false # Set this to true in prod if you want to use Iris
         url: # Set this in production environment (e.g., https://pyris.example.com)
         secret-token: # Set this in production environment
+        response-streaming-enabled: false
         ratelimit:
             # Use -1 for both values to indicate unlimited (no rate limiting)
             # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1

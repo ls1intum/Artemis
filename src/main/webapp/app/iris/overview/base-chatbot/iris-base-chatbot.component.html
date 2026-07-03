@@ -232,7 +232,7 @@
             </div>
         }
         <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
-            @if (messages()?.length) {
+            @if (messages()?.length || liveAssistantDraft()) {
                 <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
@@ -332,6 +332,16 @@
                                 }
                             </div>
                         }
+                        @if (liveAssistantDraft(); as draft) {
+                            <div class="llm-message-wrapper streaming-draft-wrapper">
+                                <div class="bubble-left streaming-draft-bubble">
+                                    <jhi-iris-citation-text [text]="draft.text" [citationInfo]="citationInfo()" />
+                                    <div class="streaming-draft-meta" aria-hidden="true">
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
                         @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
@@ -358,7 +368,7 @@
                     </div>
                 </div>
             }
-            @if (!messages()?.length && !isEmbeddedChat()) {
+            @if (!messages()?.length && !liveAssistantDraft() && !isEmbeddedChat()) {
                 <div class="empty-chat-message">
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>

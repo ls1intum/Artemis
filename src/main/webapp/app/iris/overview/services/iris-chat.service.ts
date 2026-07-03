@@ -38,6 +38,11 @@ interface SessionContext {
     entityId: number;
 }
 
+export interface IrisLiveAssistantDraft {
+    runId: string;
+    text: string;
+}
+
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
  */
@@ -79,6 +84,7 @@ export class IrisChatService implements OnDestroy {
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject<IrisStageDTO[]>([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
+    liveAssistantDraft: BehaviorSubject<IrisLiveAssistantDraft | undefined> = new BehaviorSubject<IrisLiveAssistantDraft | undefined>(undefined);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
 
@@ -108,6 +114,10 @@ export class IrisChatService implements OnDestroy {
     private stateGeneration = 0;
 
     private sessionContext?: SessionContext;
+
+    private lastSeenPartialSeqByRunId = new Map<string, number>();
+
+    private finalizedRunIds = new Set<string>();
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
@@ -182,6 +192,7 @@ export class IrisChatService implements OnDestroy {
         this.stages.next([]);
         this.suggestions.next([]);
         this.citationInfo.next([]);
+        this.resetLiveAssistantDraftTracking();
         this.numNewMessages.next(0);
         this.newIrisMessage.next(undefined);
         this.error.next(undefined);
@@ -510,6 +521,7 @@ export class IrisChatService implements OnDestroy {
                 this.citationInfo.next(newIrisSession.citationInfo || []);
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
+                this.resetLiveAssistantDraftTracking();
                 // Flip the gate before subscribing to the websocket: the load itself has
                 // succeeded, so consumers waiting on "messages have settled" are unblocked
                 // even if the websocket layer throws synchronously (e.g. mocked-out in tests).
@@ -570,6 +582,11 @@ export class IrisChatService implements OnDestroy {
         }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
+                this.liveAssistantDraft.next(undefined);
+                if (payload.runId) {
+                    this.finalizedRunIds.add(payload.runId);
+                    this.lastSeenPartialSeqByRunId.delete(payload.runId);
+                }
                 if (payload.message?.sender === IrisSender.LLM) {
                     this.numNewMessages.next(this.numNewMessages.getValue() + 1);
                 }
@@ -580,6 +597,9 @@ export class IrisChatService implements OnDestroy {
                     this.stages.next(this.filterStages(payload.stages));
                 }
                 break;
+            case IrisChatWebsocketPayloadType.PARTIAL:
+                this.handlePartialWebsocketMessage(payload);
+                break;
             case IrisChatWebsocketPayloadType.STATUS:
                 this.stages.next(this.filterStages(payload.stages || []));
                 if (payload.suggestions) {
@@ -587,6 +607,27 @@ export class IrisChatService implements OnDestroy {
                 }
                 break;
         }
+    }
+
+    private handlePartialWebsocketMessage(payload: IrisChatWebsocketDTO): void {
+        if (!payload.runId || payload.partialResult === undefined || payload.partialSeq === undefined) {
+            return;
+        }
+        if (this.finalizedRunIds.has(payload.runId)) {
+            return;
+        }
+        const lastSeenSeq = this.lastSeenPartialSeqByRunId.get(payload.runId);
+        if (lastSeenSeq !== undefined && payload.partialSeq <= lastSeenSeq) {
+            return;
+        }
+        this.lastSeenPartialSeqByRunId.set(payload.runId, payload.partialSeq);
+        this.liveAssistantDraft.next({ runId: payload.runId, text: payload.partialResult });
+    }
+
+    private resetLiveAssistantDraftTracking(): void {
+        this.liveAssistantDraft.next(undefined);
+        this.lastSeenPartialSeqByRunId.clear();
+        this.finalizedRunIds.clear();
     }
 
     private mapMessageDTO(dto: IrisMessageResponseDTO): IrisMessage {
@@ -611,6 +652,7 @@ export class IrisChatService implements OnDestroy {
             this.stages.next([]);
             this.suggestions.next([]);
             this.citationInfo.next([]);
+            this.resetLiveAssistantDraftTracking();
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
             this.initialLoadCompleteSubject.next(false);
@@ -768,6 +810,10 @@ export class IrisChatService implements OnDestroy {
 
     public currentCitationInfo(): Observable<IrisCitationMetaDTO[]> {
         return this.citationInfo.asObservable();
+    }
+
+    public currentLiveAssistantDraft(): Observable<IrisLiveAssistantDraft | undefined> {
+        return this.liveAssistantDraft.asObservable();
     }
 
     public currentError(): Observable<IrisErrorMessageKey | undefined> {

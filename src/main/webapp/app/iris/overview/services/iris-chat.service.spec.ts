@@ -30,7 +30,7 @@ import 'app/foundation/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
@@ -64,6 +64,14 @@ describe('IrisChatService', () => {
     const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
     const waitForCurrentChatMode = () => firstValueFrom(service.currentChatMode().pipe(filter((value): value is ChatServiceMode => value !== undefined)));
     const waitForCurrentRelatedEntityId = () => firstValueFrom(service.currentRelatedEntityId().pipe(filter((value): value is number => value !== undefined)));
+    const startSessionWithWebsocket = async (websocketSubject: Subject<IrisChatWebsocketDTO>) => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(websocketSubject.asObservable());
+
+        service.switchTo(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+    };
 
     beforeEach(() => {
         routerMock = { url: '' };
@@ -371,6 +379,49 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         const lastMessage = messages.last();
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
+    });
+
+    it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {
+        const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+        await startSessionWithWebsocket(websocketSubject);
+
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hel', partialSeq: 1 });
+
+        const draft = await firstValueFrom(service.currentLiveAssistantDraft());
+        expect(draft).toEqual({ runId: 'run-1', text: 'Hel' });
+        expect(await firstValueFrom(service.currentNumNewMessages())).toBe(0);
+    });
+
+    it('should ignore stale websocket partial sequence numbers', async () => {
+        const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+        await startSessionWithWebsocket(websocketSubject);
+
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hello', partialSeq: 2 });
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hel', partialSeq: 1 });
+
+        expect(await firstValueFrom(service.currentLiveAssistantDraft())).toEqual({ runId: 'run-1', text: 'Hello' });
+    });
+
+    it('should clear live assistant draft on final websocket message and ignore later partials for the same run', async () => {
+        const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+        await startSessionWithWebsocket(websocketSubject);
+
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hello', partialSeq: 2 });
+        websocketSubject.next({ ...mockWebsocketServerMessage, runId: 'run-1' });
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'late', partialSeq: 3 });
+
+        expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
+    });
+
+    it('should clear live assistant draft on session switch', async () => {
+        const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+        await startSessionWithWebsocket(websocketSubject);
+        websocketSubject.next({ type: IrisChatWebsocketPayloadType.PARTIAL, runId: 'run-1', partialResult: 'Hello', partialSeq: 2 });
+
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id + 1)));
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
+
+        expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
     });
 
     it('should emit sessionId when set', async () => {

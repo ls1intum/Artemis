@@ -15,9 +15,13 @@ export class IrisChatWebsocketDTO {
     suggestions?: string[];
     sessionTitle?: string;
     citationInfo?: IrisCitationMetaDTO[];
+    runId?: string;
+    partialResult?: string;
+    partialSeq?: number;
 }
 
 export enum IrisChatWebsocketPayloadType {
     MESSAGE = 'MESSAGE',
     STATUS = 'STATUS',
+    PARTIAL = 'PARTIAL',
 }
