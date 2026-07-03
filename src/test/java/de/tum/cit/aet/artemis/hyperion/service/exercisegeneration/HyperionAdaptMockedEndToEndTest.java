@@ -236,7 +236,7 @@ class HyperionAdaptMockedEndToEndTest extends AbstractSpringIntegrationLocalCILo
                 HyperionMockedLlmE2eSupport.bash("sh verify.sh template"), HyperionMockedLlmE2eSupport.submit("Added a subtraction operation and its test"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Also require the calculator to subtract, and add a test for it.", "mock-adapt",
-                GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line))) {
+                GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (adapt) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes after the adapt").isTrue();

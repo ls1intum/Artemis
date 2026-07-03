@@ -10,12 +10,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faScrewdriverWrench, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { firstConsistencyIssueContent, sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
@@ -85,17 +85,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
-    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
-        const firstComment = this.firstComment();
-        if (!firstComment || !this.isConsistencyCheckComment(firstComment)) {
-            return undefined;
-        }
-        const content = firstComment.content as CommentContent | undefined;
-        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
-            return undefined;
-        }
-        return content;
-    });
+    readonly firstConsistencyIssueContent = computed(() => firstConsistencyIssueContent(this.thread()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     /** Whether to offer the per-thread "Adapt with feedback" action: a consistency finding, host-permitted, and not outdated. */
     readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().outdated);

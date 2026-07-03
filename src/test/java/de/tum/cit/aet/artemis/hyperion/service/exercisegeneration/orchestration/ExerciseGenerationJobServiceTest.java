@@ -73,16 +73,16 @@ class ExerciseGenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(42L);
         User owner = user("owner");
 
-        assertThat(jobService.startJob(owner, exercise, "do it")).isNotBlank();
+        assertThat(jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE)).isNotBlank();
         // Single-flight: a second start while the first slot is still claimed must be rejected.
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again"));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
     }
 
     @Test
     void recordEvent_beyondCap_keepsStartedHeadAndDropsIndexOne_preservingOrder() {
         ProgrammingExercise exercise = exercise(7L);
         User owner = user("owner");
-        String jobId = jobService.startJob(owner, exercise, "go");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
 
         jobService.recordEvent(7L, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "STARTED-HEAD"), false);
         int overflow = 600;
@@ -114,7 +114,7 @@ class ExerciseGenerationJobServiceTest {
     @Test
     void getStatus_forDifferentUser_returnsEmpty_privacyBoundary() {
         ProgrammingExercise exercise = exercise(99L);
-        jobService.startJob(user("instructorA"), exercise, "go");
+        jobService.startJob(user("instructorA"), exercise, "go", GenerationMode.GENERATE);
 
         assertThat(jobService.getStatus(user("instructorA"), exercise)).isPresent();
         // A different instructor must NOT see another instructor's transcript (privacy boundary).
@@ -123,7 +123,7 @@ class ExerciseGenerationJobServiceTest {
 
     @Test
     void requestCancellation_runsCancelHookExactlyOnce_thenRemovesIt() {
-        String jobId = jobService.startJob(user("owner"), exercise(11L), "go");
+        String jobId = jobService.startJob(user("owner"), exercise(11L), "go", GenerationMode.GENERATE);
         AtomicInteger hookRuns = new AtomicInteger(0);
         jobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
 
@@ -138,7 +138,7 @@ class ExerciseGenerationJobServiceTest {
 
     @Test
     void requestCancellation_byANonOwner_isRefused_andDoesNotCancel() {
-        String jobId = jobService.startJob(user("owner"), exercise(12L), "go");
+        String jobId = jobService.startJob(user("owner"), exercise(12L), "go", GenerationMode.GENERATE);
         AtomicInteger hookRuns = new AtomicInteger(0);
         jobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
 

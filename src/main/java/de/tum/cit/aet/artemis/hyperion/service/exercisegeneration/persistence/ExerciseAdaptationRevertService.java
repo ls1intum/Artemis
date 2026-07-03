@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -88,11 +87,10 @@ public class ExerciseAdaptationRevertService {
      * cannot be reverted, never that the persisted adaptation is unsound — so it never throws.
      *
      * @param exercise           the exercise that was adapted
-     * @param user               the instructor who performed the adaptation
      * @param jobId              the adaptation job id
      * @param preAdaptationHeads the per-repository commit HEAD captured immediately before the accepted adaptation was committed in place
      */
-    public void recordBaseline(ProgrammingExercise exercise, User user, String jobId, Map<RepositoryType, String> preAdaptationHeads) {
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads) {
         try {
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
             for (RepositoryType repositoryType : REVERT_ORDER) {
@@ -101,20 +99,12 @@ public class ExerciseAdaptationRevertService {
                     heads.put(repositoryType, head);
                 }
             }
-            baselineMap.put(exercise.getId(), new AdaptationBaseline(jobId, user.getLogin(), exercise.getId(), heads, Instant.now()));
+            baselineMap.put(exercise.getId(), new AdaptationBaseline(jobId, heads));
             log.info("Recorded revertible adaptation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
         }
         catch (RuntimeException e) {
             log.warn("Could not record the adaptation baseline for exercise {} (job {}); this run will not be revertible: {}", exercise.getId(), jobId, e.getMessage());
         }
-    }
-
-    /**
-     * @param exercise the exercise
-     * @return the most recent revertible adaptation baseline for the exercise, if any is still retained
-     */
-    public Optional<AdaptationBaseline> latestBaseline(ProgrammingExercise exercise) {
-        return Optional.ofNullable(baselineMap.get(exercise.getId()));
     }
 
     /**

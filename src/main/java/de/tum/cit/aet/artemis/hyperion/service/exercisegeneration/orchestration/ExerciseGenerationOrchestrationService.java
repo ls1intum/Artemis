@@ -111,26 +111,9 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     /**
-     * Runs one generation/adaptation session for an exercise.
-     *
-     * @param exercise   the exercise to generate or adapt (its repositories must already be scaffolded)
-     * @param user       the instructor performing the generation, recorded with the LLM token-usage trace
-     * @param userPrompt the instruction for this run (a generation brief, or the feedback to address)
-     * @param jobId      the job id, used to register a node-local cancel hook
-     * @param mode       the explicit run intent (generate vs. adapt); branches only the prompt framing and, for {@link GenerationMode#ADAPT}, relaxes the tests-repo immutability
-     *                       gate
-     * @param cancelled  polled cooperatively; if it returns {@code true} the session is aborted
-     * @param progress   receives short human-readable progress lines for the live transcript; may be {@code null}
-     * @return the outcome including the verification verdict and the produced files
-     */
-    public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            Consumer<String> progress) {
-        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, null);
-    }
-
-    /**
-     * Runs one generation/adaptation session, additionally streaming a whole-file snapshot to {@code fileSnapshotSink} on every successful {@code write_file}/{@code edit_file} so
-     * the triggering instructor's editor can render a live preview of what the agent produces.
+     * Runs one generation/adaptation session, streaming a whole-file snapshot to {@code fileSnapshotSink} on every successful {@code write_file}/{@code edit_file} so the
+     * triggering
+     * instructor's editor can render a live preview of what the agent produces.
      *
      * @param exercise         the exercise to generate or adapt (its repositories must already be scaffolded)
      * @param user             the instructor performing the generation, recorded with the LLM token-usage trace

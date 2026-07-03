@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -78,11 +79,25 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
+    private final Duration testCaseSyncTimeout;
+
+    private final Duration testCaseSyncPoll;
+
+    @Autowired
     public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseCreationUpdateService creationUpdateService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
+        this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, creationUpdateService,
+                exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService, TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
+    }
+
+    // Package-private so tests can inject a shrunken sync wait and exercise the baseline-settle logic without sleeping for seconds.
+    GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingExerciseCreationUpdateService creationUpdateService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -93,6 +108,8 @@ public class GenerationPersistenceService {
         this.exerciseVersionService = exerciseVersionService;
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.testCaseSyncTimeout = testCaseSyncTimeout;
+        this.testCaseSyncPoll = testCaseSyncPoll;
     }
 
     /** The repositories persisted, in the order they are committed. Tests are committed LAST so the test-triggered build sees the final solution. */
@@ -463,22 +480,6 @@ public class GenerationPersistenceService {
     private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
-
-    // Mutable so setTestCaseSyncTimingForTests can shrink them; defaults to the constants above.
-    private Duration testCaseSyncTimeout = TEST_CASE_SYNC_TIMEOUT;
-
-    private Duration testCaseSyncPoll = TEST_CASE_SYNC_POLL;
-
-    /**
-     * Test seam: shrink the bounded test-case-sync wait so unit tests exercise the baseline-settle logic without sleeping for seconds.
-     *
-     * @param timeout the maximum time to wait for the complete test-case set
-     * @param poll    the interval between polls
-     */
-    void setTestCaseSyncTimingForTests(Duration timeout, Duration poll) {
-        this.testCaseSyncTimeout = timeout;
-        this.testCaseSyncPoll = poll;
-    }
 
     /**
      * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them

@@ -172,7 +172,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
                 HyperionMockedLlmE2eSupport.bash("sh verify.sh template"), HyperionMockedLlmE2eSupport.submit("Add two integers"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a Java Calculator exercise.", "mock-generate-valid", GenerationMode.GENERATE,
-                () -> false, line -> log.info("[mock-generate] {}", line))) {
+                () -> false, line -> log.info("[mock-generate] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (valid) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes its own test").isTrue();
@@ -202,7 +202,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, CALCULATOR_TEST), HyperionMockedLlmE2eSupport.submit("Add two integers"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a Java Calculator exercise.", "mock-generate-bad", GenerationMode.GENERATE,
-                () -> false, line -> log.info("[mock-generate-bad] {}", line))) {
+                () -> false, line -> log.info("[mock-generate-bad] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (bad) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the broken solution does NOT pass its own test").isFalse();

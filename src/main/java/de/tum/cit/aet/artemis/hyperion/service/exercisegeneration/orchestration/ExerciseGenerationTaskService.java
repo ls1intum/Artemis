@@ -127,7 +127,7 @@ public class ExerciseGenerationTaskService {
                             // errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing to revert to.
                             Map<RepositoryType, String> preAdaptationHeads = persistenceService.persist(exercise, user, outcome);
                             if (event.mode() == GenerationMode.ADAPT) {
-                                adaptationRevertService.recordBaseline(exercise, user, jobId, preAdaptationHeads);
+                                adaptationRevertService.recordBaseline(exercise, jobId, preAdaptationHeads);
                             }
                             // Advisory only: surface any spec-fidelity / coverage gaps as review comments WITHOUT changing the accepted status. The differential oracle accepted
                             // the

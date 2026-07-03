@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -222,7 +223,7 @@ class GenerationRecoveryServiceTest {
     @Test
     void toFindings_hostileAndNullReasons_doNotCrash_andSurviveSanely() {
         String hostile = "  ‮gap‬ 💩  \t" + "X".repeat(50_000) + "  ";
-        VerificationResult verification = new VerificationResult(false, false, true, 1, java.util.Arrays.asList(null, hostile, ""));
+        VerificationResult verification = new VerificationResult(false, false, true, 1, Arrays.asList(null, hostile, ""));
         GenerationOutcome outcome = outcome(verification, null);
 
         List<ConsistencyIssueDTO> findings = GenerationRecoveryService.toFindings(outcome);

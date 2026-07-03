@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,36 +104,28 @@ class ExerciseAdaptationRevertServiceTest {
     }
 
     @Test
-    void recordBaseline_recordsEveryRepositoryHead() {
-        revertService.recordBaseline(exercise, user, "job-1", preAdaptationHeads());
-
-        Optional<AdaptationBaseline> baseline = revertService.latestBaseline(exercise);
-        assertThat(baseline).isPresent();
-        assertThat(baseline.get().headFor(RepositoryType.TEMPLATE)).isEqualTo("sha-template");
-        assertThat(baseline.get().headFor(RepositoryType.SOLUTION)).isEqualTo("sha-solution");
-        assertThat(baseline.get().headFor(RepositoryType.TESTS)).isEqualTo("sha-tests");
-        assertThat(baseline.get().jobId()).isEqualTo("job-1");
-    }
-
-    @Test
-    void recordBaseline_omitsRepositoriesWithoutACapturedHead() {
-        // A persist that only committed solution + tests hands back only those pre-persist heads; the untouched template is not part of the revertible baseline.
+    void recordBaseline_omitsRepositoriesWithoutACapturedHead() throws Exception {
+        // A persist that only committed solution + tests hands back only those pre-persist heads; the untouched template is not part of the revertible baseline, so a later revert
+        // resets only solution + tests and never touches the template.
         Map<RepositoryType, String> onlySolutionAndTests = new EnumMap<>(RepositoryType.class);
         onlySolutionAndTests.put(RepositoryType.SOLUTION, "sha-solution");
         onlySolutionAndTests.put(RepositoryType.TESTS, "sha-tests");
 
-        revertService.recordBaseline(exercise, user, "job-1", onlySolutionAndTests);
+        revertService.recordBaseline(exercise, "job-1", onlySolutionAndTests);
 
-        Optional<AdaptationBaseline> baseline = revertService.latestBaseline(exercise);
-        assertThat(baseline).isPresent();
-        assertThat(baseline.get().headFor(RepositoryType.TEMPLATE)).isNull();
-        assertThat(baseline.get().headFor(RepositoryType.SOLUTION)).isEqualTo("sha-solution");
-        assertThat(baseline.get().headFor(RepositoryType.TESTS)).isEqualTo("sha-tests");
+        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.SOLUTION, RepositoryType.TESTS);
+        verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", DEFAULT_BRANCH);
+        verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", DEFAULT_BRANCH);
+        // The template had no captured head, so it is never force-reset.
+        verify(gitService, never()).resetToCommitAndForcePush(eq(templateRepo), any(), any());
     }
 
     @Test
     void revert_resetsEveryRepositoryToItsCapturedSha_andResyncsAndConsumesTheBaseline() throws Exception {
-        revertService.recordBaseline(exercise, user, "job-1", preAdaptationHeads());
+        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads());
 
         Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
 

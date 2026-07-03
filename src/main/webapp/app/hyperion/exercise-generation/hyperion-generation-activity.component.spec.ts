@@ -123,7 +123,6 @@ describe('HyperionGenerationActivityComponent', () => {
         service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 5, reasons: [] } });
         expect(component.running()).toBe(false);
         expect(component.verdict()?.accepted).toBe(true);
-        expect(component.completionStatus()).toBe('SUCCESS');
     });
 
     it('requests cancellation for the owner', () => {

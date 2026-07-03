@@ -77,6 +77,12 @@ public class InteractiveSandboxRelayHandler {
     @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:1}")
     private int maxConcurrentSessions;
 
+    /**
+     * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. Known gap: if a CREATE succeeds but its response is lost in transit, the core client never learns
+     * the
+     * container id and can never issue DESTROY, so the permit stays held until this agent restarts. The reaper reclaims the orphaned container but does NOT yet release its permit;
+     * acceptable at the current default cap because agents restart routinely — reclaim it from the reaper when the session-slot integration in the TODO above lands.
+     */
     private Semaphore sessionPermits;
 
     /** Bound on {@link #handledCorrelationIds}: far more than any realistic in-flight + recently-completed redelivery window, yet bounded on a long-lived agent. */

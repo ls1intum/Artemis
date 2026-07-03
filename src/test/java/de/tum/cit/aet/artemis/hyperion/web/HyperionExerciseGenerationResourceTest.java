@@ -222,12 +222,13 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void getSupportedGenerationLanguages_returnsSortedSet() {
-        when(agentSystemPromptService.supportedGenerationLanguages()).thenReturn(Set.of(ProgrammingLanguage.JAVA));
+        // An unordered supported set must be served in a stable (natural enum) order; JAVA precedes PYTHON.
+        when(agentSystemPromptService.supportedGenerationLanguages()).thenReturn(Set.of(ProgrammingLanguage.PYTHON, ProgrammingLanguage.JAVA));
 
         ResponseEntity<List<ProgrammingLanguage>> response = resource.getSupportedGenerationLanguages();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).containsExactly(ProgrammingLanguage.JAVA);
+        assertThat(response.getBody()).containsExactly(ProgrammingLanguage.JAVA, ProgrammingLanguage.PYTHON);
     }
 
     @Test

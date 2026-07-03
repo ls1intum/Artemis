@@ -96,8 +96,8 @@ public class SandboxAgentTools {
      * @param path the workspace-relative path to read
      * @return the file content, or an actionable error message if the path is invalid or unreadable
      */
-    @Tool(name = "read_file", description = "Read a UTF-8 text file in the workspace and return its full contents. The path is workspace-relative (e.g. 'solution/src/Calculator.java'). Prefer this over 'cat'. For a large file, or to find one thing, use bash with grep/sed instead of reading the whole file.")
-    public String readFile(@ToolParam(description = "workspace-relative path to read, e.g. 'tests/test/sorting/SortTest.java'") String path) {
+    @Tool(name = "read_file", description = AgentToolDescriptions.READ_FILE)
+    public String readFile(@ToolParam(description = AgentToolDescriptions.READ_FILE_PATH) String path) {
         String safe = workspaceRelativePath(path);
         if (safe == null) {
             return invalidPathError(path);
@@ -113,9 +113,9 @@ public class SandboxAgentTools {
      * @param content the complete new file content
      * @return a confirmation, or an actionable error message
      */
-    @Tool(name = "write_file", description = "Write the full content of a workspace file, creating it (and any parent directories) or overwriting it if it exists. Use only for new files or complete rewrites; for small changes to an existing file use edit_file. The path is workspace-relative.")
-    public String writeFile(@ToolParam(description = "workspace-relative path to write, e.g. 'solution/palindrome.py'") String path,
-            @ToolParam(description = "the complete new content of the file") String content) {
+    @Tool(name = "write_file", description = AgentToolDescriptions.WRITE_FILE)
+    public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
+            @ToolParam(description = AgentToolDescriptions.WRITE_FILE_CONTENT) String content) {
         String safe = workspaceRelativePath(path);
         if (safe == null) {
             return invalidPathError(path);
@@ -136,10 +136,9 @@ public class SandboxAgentTools {
      * @param newText the replacement text
      * @return a confirmation, or an actionable error message if the match is missing or ambiguous
      */
-    @Tool(name = "edit_file", description = "Replace an exact, unique snippet in an existing workspace file. 'oldText' must match the file byte-for-byte including whitespace and newlines, and must occur exactly once — keep it as small as possible while still unique, do not pad with unchanged lines. Prefer this over write_file for small, targeted changes.")
-    public String editFile(@ToolParam(description = "workspace-relative path to edit") String path,
-            @ToolParam(description = "the exact existing text to replace, byte-for-byte; must be unique in the file") String oldText,
-            @ToolParam(description = "the replacement text") String newText) {
+    @Tool(name = "edit_file", description = AgentToolDescriptions.EDIT_FILE)
+    public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
+            @ToolParam(description = AgentToolDescriptions.EDIT_FILE_OLD_TEXT) String oldText, @ToolParam(description = AgentToolDescriptions.EDIT_FILE_NEW_TEXT) String newText) {
         String safe = workspaceRelativePath(path);
         if (safe == null) {
             return invalidPathError(path);
@@ -169,9 +168,8 @@ public class SandboxAgentTools {
      * @param command the shell command to run, as a single string
      * @return the exit status followed by the combined stdout/stderr
      */
-    @Tool(name = "bash", description = "Run a shell command in the workspace, e.g. {\"command\":\"ls -R\"}. Send the command as a single string (NOT a JSON array). Returns its exit code plus combined stdout/stderr. Use it to run 'sh verify.sh solution' / 'sh verify.sh template', inspect the project, and debug. Long output is truncated to the LAST 10000 characters (build failures and the verify.sh HYPERION_COLLECTED line are at the end); the COMPLETE output is saved in the sandbox to /tmp/hyperion/bash-<n>.log, so read earlier parts with sed/grep/head/tail on that file. After a verify.sh run the test reports are collected under /opt/hyperion/reports/<solution|template>/ — grep them for exact test names and pass/fail. Prefer grep/sed here over re-reading whole files.")
-    public String bash(
-            @ToolParam(description = "the shell command to run, as ONE string (not a JSON array), e.g. 'sh verify.sh solution', 'ls -R', or 'grep -n sort tests/test/sorting/SortTest.java'") String command) {
+    @Tool(name = "bash", description = AgentToolDescriptions.BASH)
+    public String bash(@ToolParam(description = AgentToolDescriptions.BASH_COMMAND) String command) {
         if (command == null || command.isBlank()) {
             return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
@@ -241,7 +239,7 @@ public class SandboxAgentTools {
      *
      * @return the agent-readable observation (solution/template test outcomes, exact test names to bind, current verdict), or an error message if the verifier is unavailable
      */
-    @Tool(name = "verify", description = "Run the authoritative self-check: builds the solution and the template, parses the test reports with the SAME production parser the final grader uses, and returns which tests pass/fail on each, the EXACT test names to bind your [task]s to (copy them verbatim — never guess), any template tests that wrongly pass, and a VERDICT. This is your primary self-check — call it after changes and iterate until the VERDICT says ACCEPTED before you submit. Each call re-runs both builds (no cache); it takes the same time as one 'sh verify.sh solution' plus one 'sh verify.sh template'.")
+    @Tool(name = "verify", description = AgentToolDescriptions.VERIFY)
     public String verify() {
         if (verifier == null || exercise == null) {
             return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
@@ -256,8 +254,8 @@ public class SandboxAgentTools {
      * @param summary an optional one-line summary of what was created or changed
      * @return a confirmation that the work was submitted for verification
      */
-    @Tool(name = "submit", description = "Submit the finished exercise for authoritative verification and end the session. Only call this after the 'verify' tool's VERDICT says ACCEPTED. Stop immediately after calling it.")
-    public String submit(@ToolParam(required = false, description = "one-line summary of what you created or changed") String summary) {
+    @Tool(name = "submit", description = AgentToolDescriptions.SUBMIT)
+    public String submit(@ToolParam(required = false, description = AgentToolDescriptions.SUBMIT_SUMMARY) String summary) {
         return "Submitted for verification" + (summary == null || summary.isBlank() ? "." : ": " + summary);
     }
 

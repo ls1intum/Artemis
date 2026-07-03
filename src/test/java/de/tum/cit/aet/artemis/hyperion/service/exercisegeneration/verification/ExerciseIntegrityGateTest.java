@@ -59,12 +59,12 @@ class ExerciseIntegrityGateTest {
         // accept.
         String producedAfterPipelineSubstitution = SEED_TEST_CABAL.replace("${studentParentWorkingDirectoryName}", "assignment").replace("${solutionWorkingDirectory}",
                 "assignment");
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", producedAfterPipelineSubstitution))).isEmpty();
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", producedAfterPipelineSubstitution), false)).isEmpty();
     }
 
     @Test
     void harness_acceptsByteIdenticalHarness() {
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", SEED_TEST_CABAL))).isEmpty();
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", SEED_TEST_CABAL), false)).isEmpty();
     }
 
     @Test
@@ -72,7 +72,7 @@ class ExerciseIntegrityGateTest {
         // The exact Haskell defect: the agent rewrote the solution library's hs-source-dirs to assignment/solution/src, which is NOT where production lays the solution out.
         String tampered = SEED_TEST_CABAL.replace("${studentParentWorkingDirectoryName}/src", "assignment/src").replace("${solutionWorkingDirectory}/src",
                 "assignment/solution/src");
-        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", tampered));
+        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", tampered), false);
         assertThat(reasons).hasSize(1);
         assertThat(reasons.getFirst()).contains("tests/test.cabal").contains("harness is graded");
     }
@@ -81,7 +81,7 @@ class ExerciseIntegrityGateTest {
     void harness_rejectsCsprojProjectReferencePathChange() {
         String seed = "<Project>\n  <ItemGroup>\n    <ProjectReference Include=\"${studentParentWorkingDirectoryName}/assignment.csproj\"/>\n  </ItemGroup>\n</Project>";
         String tampered = "<Project>\n  <ItemGroup>\n    <ProjectReference Include=\"../solution/assignment.csproj\"/>\n  </ItemGroup>\n</Project>";
-        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("Test.csproj", seed), map("Test.csproj", tampered));
+        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("Test.csproj", seed), map("Test.csproj", tampered), false);
         assertThat(reasons).hasSize(1);
         assertThat(reasons.getFirst()).contains("tests/Test.csproj");
     }
@@ -89,7 +89,7 @@ class ExerciseIntegrityGateTest {
     @Test
     void harness_rejectsDeletedHarnessFileThatHadBuildLayout() {
         // A seeded *.cabal that defined hs-source-dirs and was deleted: production grades it verbatim, so its absence breaks the build.
-        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map());
+        var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map(), false);
         assertThat(reasons).hasSize(1);
         assertThat(reasons.getFirst()).contains("deleted").contains("tests/test.cabal");
     }
@@ -100,14 +100,14 @@ class ExerciseIntegrityGateTest {
         // This is not build-layout, so it must NOT be flagged — only the hs-source-dirs/path lines are enforced.
         String seedPubspec = "name: ${packageName}\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
         String producedPubspec = "name: test_package\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("pubspec.yaml", seedPubspec), map("pubspec.yaml", producedPubspec))).isEmpty();
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("pubspec.yaml", seedPubspec), map("pubspec.yaml", producedPubspec), false)).isEmpty();
     }
 
     @Test
     void harness_ignoresTestSourceFiles_onlyBuildFilesAreGraded() {
         // The agent is SUPPOSED to edit test source files; a changed Test.hs / *.test.ts must not be flagged.
         var reasons = ExerciseIntegrityGate.harnessTamperingReasons(map("test/Test.hs", "old", "src/stack.test.ts", "old"),
-                map("test/Test.hs", "completely rewritten", "src/stack.test.ts", "completely rewritten"));
+                map("test/Test.hs", "completely rewritten", "src/stack.test.ts", "completely rewritten"), false);
         assertThat(reasons).isEmpty();
     }
 
@@ -125,7 +125,7 @@ class ExerciseIntegrityGateTest {
 
     @Test
     void harness_failsOpenWithoutSeedSnapshot() {
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(Map.of(), map("test.cabal", "anything"))).isEmpty();
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(Map.of(), map("test.cabal", "anything"), false)).isEmpty();
     }
 
     @Test

@@ -176,24 +176,13 @@ public final class ExerciseIntegrityGate {
 
     /**
      * Detects harness tampering (see class javadoc): only the seed's build-layout lines are compared positionally, after placeholder normalization, so a deleted harness file or a
-     * moved source/solution/template path is flagged while creation-time placeholders the sandbox does not substitute never count. Fails OPEN when no seed snapshot is available.
-     *
-     * @param seedTestsFiles     the tests-repo files snapshotted at seed time (repository-relative); empty disables the gate
-     * @param producedTestsFiles the tests-repo files read back after generation (repository-relative)
-     * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is disabled)
-     */
-    static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles) {
-        return harnessTamperingReasons(seedTestsFiles, producedTestsFiles, false);
-    }
-
-    /**
-     * Detects harness tampering (see class javadoc). Same behaviour as {@link #harnessTamperingReasons(Map, Map)}, but with an explicit fail-CLOSED signal for languages whose
-     * tests
-     * repository ALWAYS ships a build harness (Java: {@code pom.xml}/{@code build.gradle}).
+     * moved source/solution/template path is flagged while creation-time placeholders the sandbox does not substitute never count.
      * <p>
-     * F2: the gate fails OPEN on an empty seed snapshot (a genuinely harness-free language, or a best-effort snapshot that read nothing). For such a language an EMPTY snapshot is
-     * not "no harness to protect" — it means the snapshot capture FAILED, which would silently disable the whole harness-immutability gate and let a tampered harness through. When
-     * {@code requireNonEmptySnapshot} is set we therefore REJECT on an empty snapshot rather than skipping the gate.
+     * The gate fails OPEN on an empty seed snapshot (a genuinely harness-free language, or a best-effort snapshot that read nothing). But for a language whose tests repository
+     * ALWAYS ships a build harness (Java: {@code pom.xml}/{@code build.gradle}) an EMPTY snapshot is not "no harness to protect" — it means the snapshot capture FAILED, which
+     * would
+     * silently disable the whole harness-immutability gate and let a tampered harness through. When {@code requireNonEmptySnapshot} is set we therefore REJECT on an empty snapshot
+     * rather than skipping the gate.
      *
      * @param seedTestsFiles          the tests-repo files snapshotted at seed time (repository-relative)
      * @param producedTestsFiles      the tests-repo files read back after generation (repository-relative)

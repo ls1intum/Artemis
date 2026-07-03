@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -24,6 +25,12 @@ import reactor.core.publisher.Flux;
  * streaming unchanged (the agent loop never streams).
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
+
+    /**
+     * Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. The {@code >} exclusion keeps one token from spanning into the next. Shared with
+     * {@code AgentLoopRunner} (which strips the same tokens from leaked tool-call names) so the two scrubbers can never diverge on which tokens they remove.
+     */
+    static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile("<\\|[^|>]*\\|>");
 
     private final ChatModel delegate;
 
@@ -85,6 +92,6 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         if (content == null || content.indexOf("<|") < 0) {
             return content;
         }
-        return content.replaceAll("<\\|[^|>]*\\|>", "");
+        return HARMONY_CONTROL_TOKEN.matcher(content).replaceAll("");
     }
 }

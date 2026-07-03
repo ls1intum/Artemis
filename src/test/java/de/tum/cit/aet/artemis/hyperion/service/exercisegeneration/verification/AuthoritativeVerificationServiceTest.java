@@ -13,6 +13,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -736,7 +737,7 @@ class AuthoritativeVerificationServiceTest {
      * dot-prefixed names (multiple top-level suites each contribute their name as a prefix).
      */
     private static BuildReportSpec multiSuiteSpec(List<String> dotPrefixedNames, List<String> failedDotPrefixed) {
-        java.util.LinkedHashMap<String, List<String[]>> bySuite = new java.util.LinkedHashMap<>();
+        LinkedHashMap<String, List<String[]>> bySuite = new LinkedHashMap<>();
         for (String full : dotPrefixedNames) {
             int lastDot = full.lastIndexOf('.');
             String suite = full.substring(0, lastDot);

@@ -69,7 +69,7 @@ public class SpecFidelityCriticService {
 
     private static final String CRITIC_SYSTEM_PROMPT = """
             You are a meticulous QA reviewer for programming-exercise test suites. You are given an instructor's BRIEF (what the exercise must require), the produced PROBLEM \
-            STATEMENT, and the exact list of TEST NAMES that were written. You produce TWO kinds of finding.
+            STATEMENT, and the exact list of TEST NAMES that were written. You produce THREE kinds of finding.
 
             (1) UNCOVERED requirements: the concrete, checkable requirements and edge cases that the brief (or problem statement) explicitly names but that NO test appears to cover. \
             Count as a requirement only something concrete and assertable that the brief actually states, e.g.: a named input class to handle ("CJK characters", "emoji", \
@@ -197,8 +197,8 @@ public class SpecFidelityCriticService {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
         return "INSTRUCTOR BRIEF:\n" + brief + "\n\nPRODUCED PROBLEM STATEMENT:\n" + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip())
                 + "\n\nTEST NAMES (" + testNames.size() + "):\n" + tests
-                + "\n\nList (1) the brief's concrete requirements/edge-cases that no test covers and (2) the error/edge behaviours that have no concrete fenced example, as the "
-                + "specified JSON.";
+                + "\n\nList (1) the brief's concrete requirements/edge-cases that no test covers, (2) the error/edge behaviours that have no concrete fenced example, and (3) the "
+                + "graded requirements the problem statement invents beyond the brief (scope drift), as the specified JSON.";
     }
 
     /**
@@ -376,7 +376,8 @@ public class SpecFidelityCriticService {
                 case MISSING_FAILURE_MESSAGE -> builder.append("\n- The graded test file ").append(finding.requirement())
                         .append(" asserts without a human-readable failure message, so a failing student sees only \"expected X but was Y\". Add a short message to each assertion "
                                 + "naming the behaviour that broke, e.g. assertEquals(expected, actual, \"calculateSize must sum every file regardless of nesting depth\").");
-                default -> builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
+                case UNCOVERED_REQUIREMENT ->
+                    builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
             }
         }
         return builder.toString();

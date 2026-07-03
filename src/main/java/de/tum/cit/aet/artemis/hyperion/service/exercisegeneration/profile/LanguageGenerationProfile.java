@@ -349,7 +349,7 @@ public final class LanguageGenerationProfile {
             and in XCTestManifests.swift, or it silently will not run on Linux. %s
             - Stub bodies return a wrong value (e.g. `return input` unsorted) with a `// TODO:` telling the STUDENT what to implement. COVERAGE: do NOT ship only a couple of tests for a \
             multi-operation type — cover each operation across happy, empty, single-element, and a >=3-element ordering case, and assert every invariant the statement promises (e.g. peek \
-            does not mutate the stack). A promise with no test is a hole that lets a broken solution score full marks. Every test method must be registered in `allTests` AND XCTestManifests.swift."""
+            does not mutate the stack). A promise with no test is a hole that lets a broken solution score full marks."""
             .formatted(TASK_NAME_RULE);
 
     private static final String HASKELL = """

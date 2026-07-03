@@ -282,9 +282,6 @@ public class AgentLoopRunner {
         return new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText);
     }
 
-    /** Matches a harmony / channel control token such as {@code <|channel|>} or {@code <|end|>}. */
-    private static final Pattern HARMONY_CONTROL_TOKEN = Pattern.compile("<\\|[^|]*\\|>");
-
     /**
      * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash}. Rebuilds the response only when a
      * name actually changes (usually a no-op).
@@ -338,7 +335,7 @@ public class AgentLoopRunner {
         }
         // Everything before the first control token is the real tool name; the rest is leakage.
         String leading = name.substring(0, name.indexOf("<|"));
-        return HARMONY_CONTROL_TOKEN.matcher(leading).replaceAll("").strip();
+        return HarmonyScrubbingChatModel.HARMONY_CONTROL_TOKEN.matcher(leading).replaceAll("").strip();
     }
 
     /**

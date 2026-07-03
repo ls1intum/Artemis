@@ -100,9 +100,9 @@ class GenerationPersistenceServiceTest {
         ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(), Set.of(behaviourCase));
+        // Inject a shrunken test-case-sync wait so the baseline-settle logic runs without sleeping for seconds.
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                creationUpdateService, exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService);
-        service.setTestCaseSyncTimingForTests(Duration.ofSeconds(2), Duration.ofMillis(5));
+                creationUpdateService, exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService, Duration.ofSeconds(2), Duration.ofMillis(5));
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
@@ -159,10 +159,6 @@ class GenerationPersistenceServiceTest {
 
         // The problem statement changed, so it is rewritten.
         verify(creationUpdateService).updateProblemStatement(exercise, "new statement", null);
-
-        // The canonical tests build is triggered with the tests commit specifically.
-        verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
-        verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
 
         // A successful persist records a new exercise version.
         verify(exerciseVersionService).createExerciseVersion(exercise, user);

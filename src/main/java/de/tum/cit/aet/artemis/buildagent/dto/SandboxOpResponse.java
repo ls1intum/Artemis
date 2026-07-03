@@ -24,24 +24,12 @@ public record SandboxOpResponse(String correlationId, boolean success, String se
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Builds a success response carrying no further data (used by {@link SandboxOp#COPY_IN} and {@link SandboxOp#DESTROY}).
-     *
-     * @param correlationId the request correlation id
-     * @param sessionId     the session id the operation acted on
-     * @return a success response with no exec result and no payload
-     */
+    /** A success response carrying no further data (used by {@link SandboxOp#COPY_IN} and {@link SandboxOp#DESTROY}). */
     public static SandboxOpResponse ok(String correlationId, String sessionId) {
         return new SandboxOpResponse(correlationId, true, sessionId, null, null, null);
     }
 
-    /**
-     * Builds a failure response.
-     *
-     * @param correlationId the request correlation id
-     * @param errorMessage  a short description of the failure
-     * @return a failure response
-     */
+    /** A failure response carrying a short error description for the blocked caller to rethrow. */
     public static SandboxOpResponse failure(String correlationId, String errorMessage) {
         return new SandboxOpResponse(correlationId, false, null, null, null, errorMessage);
     }

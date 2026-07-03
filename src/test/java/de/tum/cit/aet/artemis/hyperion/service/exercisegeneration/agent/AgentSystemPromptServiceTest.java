@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -92,7 +94,7 @@ class AgentSystemPromptServiceTest {
     @Test
     void resolvePrompt_explicitPrompt_fromScratch_isHonouredVerbatim() {
         // No reviewed spec (empty statement) -> the brief is the whole instruction.
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, "Make it about graph traversal.", null);
         ProgrammingExercise exercise = exerciseWithStatement("");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
@@ -104,7 +106,7 @@ class AgentSystemPromptServiceTest {
     void resolvePrompt_briefWithSpec_isAuthoritativeButKeepsTheStatementWhereSilent() {
         // A statement on one topic plus a brief that changes it: the brief governs (so an adaptation can change the task) while the existing statement is still referenced as the
         // starting point, never discarded into a bare from-scratch run.
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, "Make it about graph traversal.", null);
         ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
@@ -117,7 +119,7 @@ class AgentSystemPromptServiceTest {
     @Test
     void resolvePrompt_blankPrompt_fallsBackToModeAwareDefault() {
         // A whitespace-only prompt is treated as "no prompt".
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("   \n  ");
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, "   \n  ", null);
         ProgrammingExercise exercise = exerciseWithStatement("");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
@@ -127,7 +129,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void resolvePrompt_noPrompt_specMode_whenNonTrivialProblemStatement() {
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null);
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
         ProgrammingExercise exercise = exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key.");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
@@ -137,7 +139,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void resolvePrompt_noPrompt_boundary_atNonTrivialThreshold() {
-        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null);
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
         // The threshold is 40 stripped chars. 39 chars -> trivial (from-scratch); 40 chars -> non-trivial (spec mode).
         String just39 = "a".repeat(39);
         String exactly40 = "a".repeat(40);
@@ -277,6 +279,8 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_mandatesStudentFacingTemplateAndCoverageSelfCheck() {
+        // Audit found agents skipped a coverage pass and shipped grader-mechanics-leaking statements; the prompt must mandate a scratchpad plan and a re-read-your-tests coverage
+        // self-check before submitting.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).contains("scratchpad").contains("re-read your tests");
     }
@@ -288,8 +292,8 @@ class AgentSystemPromptServiceTest {
     }
 
     /** Languages present in the enum but with no Artemis exercise templates / not creatable in this deployment — they correctly get no generation profile. */
-    private static final java.util.Set<ProgrammingLanguage> LANGUAGES_WITHOUT_TEMPLATES = java.util.EnumSet.of(ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL,
-            ProgrammingLanguage.POWERSHELL, ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
+    private static final Set<ProgrammingLanguage> LANGUAGES_WITHOUT_TEMPLATES = EnumSet.of(ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL,
+            ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
 
     @ParameterizedTest
     @EnumSource(ProgrammingLanguage.class)

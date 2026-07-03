@@ -23,15 +23,6 @@ public record ExerciseGenerationRequestDTO(@Nullable GenerationMode mode, @Nulla
         @Nullable @Size(max = 25) List<@Nullable Long> selectedFeedbackThreadIds) {
 
     /**
-     * Convenience constructor for a prompt-only request in the default {@link GenerationMode#GENERATE} mode (no selected feedback threads).
-     *
-     * @param prompt the optional brief
-     */
-    public ExerciseGenerationRequestDTO(@Nullable String prompt) {
-        this(null, prompt, null);
-    }
-
-    /**
      * @return the requested mode, defaulting to {@link GenerationMode#GENERATE} when the client did not send one (the safe, non-destructive default)
      */
     public GenerationMode effectiveMode() {

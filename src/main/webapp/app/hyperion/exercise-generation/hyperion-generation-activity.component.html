@@ -26,9 +26,9 @@
                     <p-tag [severity]="currentVerdict.accepted ? 'success' : 'danger'" data-testid="hyperion-generation-verdict">
                         <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
                         <span
-                            jhiTranslate="{{
+                            [jhiTranslate]="
                                 currentVerdict.accepted ? 'artemisApp.hyperion.generationActivity.verdict.accepted' : 'artemisApp.hyperion.generationActivity.verdict.rejected'
-                            }}"
+                            "
                         ></span>
                     </p-tag>
                     <p-tag [severity]="currentVerdict.solutionPassed ? 'success' : 'danger'">
@@ -66,7 +66,7 @@
                 <div class="hyperion-activity-files">
                     @for (group of filesByRepo(); track group.repo) {
                         <div class="hyperion-activity-repo">
-                            <div class="hyperion-activity-repo-label" jhiTranslate="artemisApp.hyperion.generationActivity.repo.{{ group.repo }}"></div>
+                            <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
                             @for (file of group.files; track file.path) {
                                 <button
                                     type="button"
@@ -76,7 +76,7 @@
                                     data-testid="hyperion-generation-file"
                                 >
                                     <span class="hyperion-activity-file-path">{{ file.path }}</span>
-                                    <span class="hyperion-activity-file-action" jhiTranslate="artemisApp.hyperion.generationActivity.action.{{ file.action }}"></span>
+                                    <span class="hyperion-activity-file-action" [jhiTranslate]="'artemisApp.hyperion.generationActivity.action.' + file.action"></span>
                                 </button>
                             }
                         </div>

@@ -94,7 +94,7 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Initialises the Hazelcast-backed job, cancellation and transcript maps with their TTL safety nets.
+     * Initialises the Hazelcast-backed job, cancellation, transcript and snapshot maps with their TTL safety nets.
      */
     @PostConstruct
     public void init() {
@@ -112,18 +112,6 @@ public class ExerciseGenerationJobService {
         MapConfig snapshotMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_MAP_NAME);
         snapshotMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
         snapshotMap = hazelcastInstance.getMap(SNAPSHOT_MAP_NAME);
-    }
-
-    /**
-     * Starts a new whole-exercise generation job in the default {@link GenerationMode#GENERATE} mode.
-     *
-     * @param user       the requesting instructor
-     * @param exercise   the target exercise
-     * @param userPrompt the generation brief or the feedback to address
-     * @return the started job id
-     */
-    public String startJob(User user, ProgrammingExercise exercise, String userPrompt) {
-        return startJob(user, exercise, userPrompt, GenerationMode.GENERATE);
     }
 
     /**

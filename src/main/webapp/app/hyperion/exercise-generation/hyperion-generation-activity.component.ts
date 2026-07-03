@@ -14,7 +14,6 @@ import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.co
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
     HyperionFileSnapshot,
-    HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationMode,
@@ -58,9 +57,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly running = signal<boolean>(false);
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly snapshots = signal<HyperionFileSnapshot[]>([]);
-    readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
-    readonly terminalMessage = signal<string | undefined>(undefined);
 
     // Preview navigation.
     readonly follow = signal<boolean>(true);
@@ -143,8 +140,6 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     /**
      * Attaches the drawer to a freshly started run so it streams live on the same surface that triggered it. The mode drives the header label ("Adapting…" vs "Generating…") and
      * whether the revert affordance is offered when the run completes.
-     * @param jobId the started job id
-     * @param mode the explicit run intent
      */
     attachToJob(jobId: string, mode: HyperionGenerationMode): void {
         if (this.exerciseId() === undefined) {
@@ -200,10 +195,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             return;
         }
         this.cancelRequested.set(true);
-        this.service
-            .cancel(id, job)
-            .pipe()
-            .subscribe({ error: () => this.cancelRequested.set(false) });
+        this.service.cancel(id, job).subscribe({ error: () => this.cancelRequested.set(false) });
     }
 
     private loadStatus(exerciseId: number): void {
@@ -247,9 +239,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.events.update((list) => [...list, message]);
         if (TERMINAL_EVENT_TYPES.has(message.type)) {
             this.running.set(false);
-            this.completionStatus.set(message.completionStatus);
             this.verdict.set(message.verdict);
-            this.terminalMessage.set(message.message);
         }
     }
 
@@ -269,9 +259,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         for (let index = events.length - 1; index >= 0; index--) {
             const event = events[index];
             if (TERMINAL_EVENT_TYPES.has(event.type)) {
-                this.completionStatus.set(event.completionStatus);
                 this.verdict.set(event.verdict);
-                this.terminalMessage.set(event.message);
                 return;
             }
         }
@@ -319,9 +307,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.reverted.set(false);
         this.events.set([]);
         this.snapshots.set([]);
-        this.completionStatus.set(undefined);
         this.verdict.set(undefined);
-        this.terminalMessage.set(undefined);
         this.follow.set(true);
         this.pinnedPath.set(undefined);
         this.cancelRequested.set(false);

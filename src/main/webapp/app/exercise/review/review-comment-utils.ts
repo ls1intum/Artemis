@@ -4,12 +4,7 @@ import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, Inl
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 
-/**
- * Sorts comments by creation timestamp and then by id for deterministic ordering.
- *
- * @param comments The comments to sort.
- * @returns A sorted copy of the provided comments.
- */
+/** Sorts comments by creation timestamp and then by id for deterministic ordering. */
 export function sortCommentsByCreatedDateThenId(comments: Comment[] | undefined): Comment[] {
     if (!comments?.length) {
         return [];
@@ -25,24 +20,12 @@ export function sortCommentsByCreatedDateThenId(comments: Comment[] | undefined)
     });
 }
 
-/**
- * Returns the first comment according to chronological ordering by creation timestamp and id.
- *
- * @param comments The comments to inspect.
- * @returns The first chronological comment, if present.
- */
+/** Returns the first comment according to chronological ordering by creation timestamp and id. */
 export function getFirstCommentByCreatedDateThenId(comments: Comment[] | undefined): Comment | undefined {
     return sortCommentsByCreatedDateThenId(comments)[0];
 }
 
-/**
- * Checks whether a thread belongs to the currently selected repository.
- *
- * @param thread The comment thread to check.
- * @param repositoryType The selected repository type.
- * @param auxiliaryRepositoryId The selected auxiliary repository id, if any.
- * @returns True if the thread matches the repository selection.
- */
+/** Checks whether a thread belongs to the currently selected repository. */
 export function matchesSelectedRepository(thread: CommentThread, repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): boolean {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -65,12 +48,7 @@ export function matchesSelectedRepository(thread: CommentThread, repositoryType?
     }
 }
 
-/**
- * Maps a repository type to the corresponding thread target type.
- *
- * @param repositoryType The repository type from the code editor.
- * @returns The matching comment thread location type.
- */
+/** Maps a repository type to the corresponding thread target type. */
 export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType): CommentThreadLocationType | undefined {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -86,12 +64,7 @@ export function mapRepositoryToThreadLocationType(repositoryType: RepositoryType
     }
 }
 
-/**
- * Checks whether review comments are supported for the selected repository.
- *
- * @param repositoryType The repository type from the code editor.
- * @returns True if review comments are supported for this repository type.
- */
+/** Checks whether review comments are supported for the selected repository. */
 export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryType): boolean {
     switch (repositoryType) {
         case RepositoryType.SOLUTION:
@@ -107,9 +80,6 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
 /**
  * Returns the consistency-issue content of a thread's first (chronological) comment, or {@code undefined} if that comment is not a consistency-check finding. Used to decide whether
  * a thread can be turned into Artemis Intelligence adapt feedback.
- *
- * @param thread The comment thread to inspect.
- * @returns The consistency-issue content, if the first comment is one.
  */
 export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
     const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
@@ -123,13 +93,7 @@ export function firstConsistencyIssueContent(thread: CommentThread): Consistency
     return content;
 }
 
-/**
- * Maps a thread location type to its human-readable repository label.
- *
- * @param targetType The thread location type.
- * @param translate The translate service used to resolve the label.
- * @returns The translated repository label.
- */
+/** Maps a thread location type to its human-readable repository label. */
 export function reviewRepositoryLabel(targetType: CommentThreadLocationType, translate: TranslateService): string {
     switch (targetType) {
         case CommentThreadLocationType.PROBLEM_STATEMENT:
@@ -147,13 +111,7 @@ export function reviewRepositoryLabel(targetType: CommentThreadLocationType, tra
     }
 }
 
-/**
- * Builds a short location label ({@code Repository: file:line}) for a thread, or {@code undefined} when it has no concrete line.
- *
- * @param thread The comment thread whose location to label.
- * @param translate The translate service used to resolve the repository label.
- * @returns The location label, if the thread has a concrete line.
- */
+/** Builds a short location label ({@code Repository: file:line}) for a thread, or {@code undefined} when it has no concrete line. */
 export function threadLocationLabel(thread: CommentThread, translate: TranslateService): string | undefined {
     const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
     if (!lineNumber || lineNumber < 1) {
@@ -185,13 +143,7 @@ export interface AdaptFinding {
     suggestedFix?: InlineCodeChange;
 }
 
-/**
- * Builds the structured {@link AdaptFinding} shown in the adapt dialog for a single consistency-issue content.
- *
- * @param issueContent The consistency-issue content.
- * @param locationLabel The optional {@code Repository: file:line} label.
- * @returns The structured finding for display.
- */
+/** Builds the structured {@link AdaptFinding} shown in the adapt dialog for a single consistency-issue content. */
 export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined): AdaptFinding {
     return {
         category: issueContent.category,
@@ -203,12 +155,7 @@ export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locat
 }
 
 /**
- * The structured findings for a set of threads (only consistency-issue threads contribute), highest-severity first is left to the dialog. Used for the read-only cards in the adapt
- * dialog.
- *
- * @param threads The threads to derive findings from.
- * @param translate The translate service used to resolve location labels.
- * @returns The structured findings, in thread order.
+ * The structured findings for a set of threads (only consistency-issue threads contribute), in thread order. Used for the read-only cards in the adapt dialog.
  */
 export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
     return threads

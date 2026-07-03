@@ -230,22 +230,12 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         return UUID.randomUUID().toString();
     }
 
-    /**
-     * Extracts the owning agent short name from a composite session handle produced by {@link #createSession}.
-     *
-     * @param sessionHandle the composite handle {@code "<agentShortName>::<containerId>"}
-     * @return the agent short name
-     */
+    /** The owning agent short name of a composite session handle produced by {@link #createSession}. */
     private static String agentOf(String sessionHandle) {
         return splitSessionHandle(sessionHandle)[0];
     }
 
-    /**
-     * Extracts the container id from a composite session handle produced by {@link #createSession}.
-     *
-     * @param sessionHandle the composite handle {@code "<agentShortName>::<containerId>"}
-     * @return the container id the owning agent understands
-     */
+    /** The container id (as the owning agent understands it) of a composite session handle produced by {@link #createSession}. */
     private static String containerOf(String sessionHandle) {
         return splitSessionHandle(sessionHandle)[1];
     }
