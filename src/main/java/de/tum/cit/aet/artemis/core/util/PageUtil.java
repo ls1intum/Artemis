@@ -107,7 +107,7 @@ public class PageUtil {
      *
      * <p>
      * If the mapped column name contains a "COUNT(" expression, this method treats it as an unsafe sort expression
-     * and uses {@link JpaSort(String)} to apply sorting directly to the database column.
+     * and uses {@link JpaSort} to apply sorting directly to the database column.
      * </p>
      *
      * @param search        The {@link PageableSearchDTO} containing pagination and sorting parameters (e.g., page number, page size, sorted column, and sorting order).

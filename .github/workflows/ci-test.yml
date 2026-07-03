@@ -40,6 +40,9 @@ jobs:
   server-tests:
     name: Server Tests (PostgreSQL)
     runs-on: aet-large-ubuntu
+    # Outermost bound of the hang ladder: watchdog 45m (run_with_hang_dump.sh) < Gradle Test timeout
+    # 55m (gradle/test.gradle) < this 80m. Keep it above 55 so a hang fails as a deterministic Gradle
+    # `failure`, not an opaque job-level `cancelled`.
     timeout-minutes: 80
     permissions:
       contents: read
@@ -65,6 +68,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Java Tests (module-affected)
         if: ${{ !inputs.run_all_tests }}
+        # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
+        # timeout (gradle/test.gradle) fires — the only forensic data a silent hang leaves.
         env:
           DEFAULT_BRANCH: ${{ inputs.base_branch }}
         run: |
@@ -78,17 +83,27 @@ jobs:
           if [ -n "${CHANGED_MODULES}" ]; then
             TEST_MODULE_TAGS="-DincludeModules=${CHANGED_MODULES}"
             echo "Executing tests for modules: $CHANGED_MODULES"
-            ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS" 2>&1 | tee tests.log
+            ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS"
             exit 0
           fi
 
           echo "No module-specific changes detected — executing all tests."
-          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification
       - name: Java Tests (All)
         if: ${{ inputs.run_all_tests }}
         run: |
           set -Eeuo pipefail
-          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
+          ./supporting_scripts/run_with_hang_dump.sh ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification
+      - name: Upload Thread Dumps (on hang)
+        # `always()`, not `!cancelled()`: if a wedge defeats the Gradle timeout and the job hits its
+        # own 80-min cap, the run is `cancelled` — and that is exactly when the watchdog's dump is the
+        # only forensic data. `if-no-files-found: ignore` keeps the normal (no-hang) path quiet.
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Server Test Thread Dumps
+          path: build/hang-thread-dumps/*.txt
+          if-no-files-found: ignore
       - name: Upload JUnit Test Results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

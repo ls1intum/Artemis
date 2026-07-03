@@ -46,7 +46,7 @@ import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -89,10 +89,10 @@ const CODE_GENERATION_STATUS_SESSION_STORAGE_TTL_MS = 3_600_000;
 
 type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
 type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'warning' | 'error' | 'skipped';
-type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
+type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE' | 'FILE_DELETED';
 type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.codeGeneration.repositories.${Lowercase<SupportedCodeGenerationRepositoryType>}`;
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
-type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated'}`;
+type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated' | 'fileDeleted'}`;
 // The generated OpenAPI CodeGenerationRequest.repositoryType uses lowercase repository names (exercise, ...),
 // but the backend deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
 // request be built type-safely with the client RepositoryType enum; only repositoryType differs from the generated type.
@@ -111,6 +111,7 @@ const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string
 const CODE_GENERATION_FILE_ACTION_TRANSLATION_KEYS: Record<CodeGenerationFileEventType, CodeGenerationFileActionTranslationKey> = {
     FILE_UPDATED: 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated',
     NEW_FILE: 'artemisApp.programmingExercise.codeGeneration.status.fileCreated',
+    FILE_DELETED: 'artemisApp.programmingExercise.codeGeneration.status.fileDeleted',
 };
 
 interface CodeGenerationFileActivity {
@@ -400,7 +401,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Starts Hyperion code generation after user confirmation.
      */
     generateCode(): void {
-        if (!this.exercise?.id || this.isGeneratingCode()) {
+        if (!this.exercise?.id || !this.canGenerateCode() || this.isGeneratingCode()) {
             return;
         }
 
@@ -423,6 +424,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.startCodeGeneration(repositories);
             }
         });
+    }
+
+    /**
+     * Returns whether code generation is available for the current exercise (Java exercises only).
+     */
+    protected canGenerateCode(): boolean {
+        return this.exercise?.programmingLanguage === ProgrammingLanguage.JAVA;
     }
 
     /**
@@ -520,7 +528,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private maybeAutoStartCodeGenerationFromNavigation(): void {
-        if (!this.shouldAutoStartCodeGenerationAllRepositories || !this.exercise?.id || this.isGeneratingCode()) {
+        if (!this.shouldAutoStartCodeGenerationAllRepositories || !this.exercise?.id || !this.canGenerateCode() || this.isGeneratingCode()) {
             return;
         }
 
@@ -818,7 +826,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param event websocket event emitted by Hyperion
      */
     private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
-        if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE') {
+        if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE' || event.type === 'FILE_DELETED') {
             this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path, event.iteration);
             this.scheduleCodeGenerationRepositoryPull(repositoryType);
             return;
@@ -1381,7 +1389,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private isCodeGenerationFileEventType(eventType: unknown): eventType is CodeGenerationFileEventType {
-        return eventType === 'FILE_UPDATED' || eventType === 'NEW_FILE';
+        return eventType === 'FILE_UPDATED' || eventType === 'NEW_FILE' || eventType === 'FILE_DELETED';
     }
 
     /**
