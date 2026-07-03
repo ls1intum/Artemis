@@ -291,13 +291,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
         this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
 
-        effect(
-            function updateStatusBarSectionsWhenEditModeChanges() {
-                if (this.isSimpleMode()) {
-                    this.calculateFormStatusSections();
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            if (this.isSimpleMode()) {
+                this.calculateFormStatusSections();
+            }
+        });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
     }
 
