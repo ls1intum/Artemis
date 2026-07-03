@@ -245,7 +245,7 @@ export class AttachmentVideoUnitFormComponent {
         }
     }
 
-    setEmbeddedVideoUrl(event: any) {
+    setEmbeddedVideoUrl(event: Event) {
         event.stopPropagation();
 
         const originalUrl = this.urlHelperControl!.value;

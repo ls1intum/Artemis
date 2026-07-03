@@ -115,11 +115,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             }
             // check MultipleChoiceQuestions
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                this.checkMultipleChoiceQuestion(question as MultipleChoiceQuestion, backUpQuestion as MultipleChoiceQuestion);
+                this.checkMultipleChoiceQuestion(question, backUpQuestion);
             }
             // check DragAndDropQuestions
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
+                this.checkDragAndDropQuestion(question, backUpQuestion);
             }
             // check ShortAnswerQuestions
             if (question.type === QuizQuestionType.SHORT_ANSWER) {

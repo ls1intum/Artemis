@@ -149,7 +149,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    readonly overrideNextSubmission = input<(submissionId: number) => any>();
+    readonly overrideNextSubmission = input<(submissionId: number) => void>();
 
     // Icons
     faTimesCircle = faTimesCircle;

@@ -401,7 +401,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * Used by other components to display errors.
      * @param error the translation key of the error that should be displayed
      */
-    onError(error: any) {
+    onError(error: string) {
         let errorTranslationKey: string;
         const translationParams = { connectionIssue: '' };
         if (!error.includes(ConnectionError.message)) {

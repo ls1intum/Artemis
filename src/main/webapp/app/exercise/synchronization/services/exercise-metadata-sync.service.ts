@@ -150,7 +150,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
             // Both absent/invalid → equal; one valid and one not → not equal
             return leftValid === rightValid;
         }
-        return normalizedLeft!.isSame(normalizedRight!);
+        return normalizedLeft!.isSame(normalizedRight);
     }
     return isEqual(value, otherValue);
 };
@@ -192,7 +192,7 @@ export class ExerciseMetadataSyncService {
         if (this.subscriptionActive && this.context?.exerciseId !== context.exerciseId) {
             this.destroy();
         }
-        this.context = context as ExerciseMetadataSyncContext<Exercise>;
+        this.context = context;
         this.cachedHandlers = this.buildHandlers(this.context);
         if (this.subscriptionActive) {
             return;
