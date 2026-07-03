@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { captureException } from '@sentry/angular';
 
 vi.mock('@sentry/angular', async (importOriginal) => ({
     ...(await importOriginal<typeof import('@sentry/angular')>()),
     captureException: vi.fn(),
 }));
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobDetailComponent } from './build-job-detail.component';

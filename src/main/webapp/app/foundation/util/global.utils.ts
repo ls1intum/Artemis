@@ -13,16 +13,11 @@ import { TranslateService } from '@ngx-translate/core';
  * @param disableTranslation whether the error message should be translated
  */
 export const onError = (alertService: AlertService, error: unknown, disableTranslation: boolean = true) => {
-    // `catch (e)` yields `unknown` (useUnknownInCatchVariables); narrow to the HTTP error we normally handle.
-    if (!(error instanceof HttpErrorResponse)) {
-        alertService.addAlert({
-            type: AlertType.DANGER,
-            message: error instanceof Error ? error.message : String(error),
-            disableTranslation: disableTranslation,
-        });
-        return;
-    }
-    switch (error.status) {
+    // `catch (e)` yields `unknown` (useUnknownInCatchVariables). This historically received an HttpErrorResponse and
+    // was read structurally; preserve that exact behavior by reading `.status`/`.message` off the value — real HTTP
+    // errors carry them, and anything else falls through to the default alert.
+    const httpError = error as HttpErrorResponse;
+    switch (httpError?.status) {
         case 400:
             alertService.error('error.http.400');
             break;
@@ -42,7 +37,7 @@ export const onError = (alertService: AlertService, error: unknown, disableTrans
         default:
             alertService.addAlert({
                 type: AlertType.DANGER,
-                message: error.message,
+                message: httpError?.message ?? String(error),
                 disableTranslation: disableTranslation,
             });
             break;

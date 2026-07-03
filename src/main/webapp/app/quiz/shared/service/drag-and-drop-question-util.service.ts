@@ -68,29 +68,31 @@ export class DragAndDropQuestionUtil {
         remainingDropLocations: DropLocation[] | undefined,
         availableDragItems: DragItem[] | undefined,
         sampleMappings: DragAndDropMapping[],
-    ): boolean | undefined {
+    ): boolean {
         if (!remainingDropLocations || remainingDropLocations.length === 0) {
             return true;
         }
 
         const dropLocation = remainingDropLocations[0];
-        return availableDragItems?.some((dragItem, index) => {
-            const correctMapping = this.getMapping(correctMappings, dragItem, dropLocation);
-            if (correctMapping) {
-                sampleMappings.push(correctMapping); // add new mapping
-                remainingDropLocations.splice(0, 1); // remove first dropLocation
-                availableDragItems.splice(index, 1); // remove the used dragItem
-                const solved = this.solveRec(correctMappings, remainingDropLocations, availableDragItems, sampleMappings);
-                remainingDropLocations.splice(0, 0, dropLocation); // re-insert first dropLocation
-                availableDragItems.splice(index, 0, dragItem); // re-insert the used dragItem
-                if (!solved) {
-                    sampleMappings.pop(); // remove new mapping (only if solution was not found)
+        return (
+            availableDragItems?.some((dragItem, index) => {
+                const correctMapping = this.getMapping(correctMappings, dragItem, dropLocation);
+                if (correctMapping) {
+                    sampleMappings.push(correctMapping); // add new mapping
+                    remainingDropLocations.splice(0, 1); // remove first dropLocation
+                    availableDragItems.splice(index, 1); // remove the used dragItem
+                    const solved = this.solveRec(correctMappings, remainingDropLocations, availableDragItems, sampleMappings);
+                    remainingDropLocations.splice(0, 0, dropLocation); // re-insert first dropLocation
+                    availableDragItems.splice(index, 0, dragItem); // re-insert the used dragItem
+                    if (!solved) {
+                        sampleMappings.pop(); // remove new mapping (only if solution was not found)
+                    }
+                    return solved;
+                } else {
+                    return false;
                 }
-                return solved;
-            } else {
-                return false;
-            }
-        });
+            }) ?? false
+        );
     }
 
     /**

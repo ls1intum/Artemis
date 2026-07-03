@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { captureException } from '@sentry/angular';
 
 vi.mock('@sentry/angular', async (importOriginal) => ({
@@ -6,7 +7,6 @@ vi.mock('@sentry/angular', async (importOriginal) => ({
     captureException: vi.fn(),
 }));
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { vi } from 'vitest';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/editor/monaco-editor/model/monaco-editor-build-annotation.model';
