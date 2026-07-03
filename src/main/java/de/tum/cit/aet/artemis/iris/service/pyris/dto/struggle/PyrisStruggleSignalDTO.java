@@ -23,8 +23,12 @@ public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, L
     public record AlertDTO(double tSessionS, String primaryBoundary, List<String> boundaryTypes, double severity, String path, boolean inWarmup, boolean inGrace) {
     }
 
+    /**
+     * One 10-s engine tick of the severity trajectory. {@code severity} on the alert is the decision signal
+     * sBase at the firing tick.
+     */
     @JsonInclude
-    public record TickDTO(double t, double s, double v) {
+    public record TickDTO(double t, double s) {
     }
 
     @JsonInclude
