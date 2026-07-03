@@ -75,7 +75,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             dismissableMask: false,
             styleClass: 'live-events-modal-window',
             data: {
-                examStartDate: this.examStartDate(),
+                examStartDate: () => this.examStartDate(),
             },
         });
 
