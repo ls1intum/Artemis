@@ -142,6 +142,18 @@ class LectureContentUpdateClassifierTest {
     }
 
     @Test
+    void classifiesAllMetadataAndVisibilityChangesTogether() {
+        var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
+                Map.of(1, HIDDEN_UNTIL));
+        var after = snapshot("Updated exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
+                RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL));
+
+        var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKinds).containsExactlyInAnyOrder(LectureContentUpdateKind.METADATA, LectureContentUpdateKind.VISIBILITY);
+    }
+
+    @Test
     void snapshotDefensivelyCopiesSlideHiddenMapAndNormalizesNullToEmptyMap() {
         var source = new HashMap<Integer, ZonedDateTime>();
         source.put(1, HIDDEN_UNTIL);

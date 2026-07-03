@@ -125,7 +125,7 @@ public class LectureContentProcessingService {
             }
             case METADATA -> irisLectureApi.ifPresent(api -> api.updateLectureUnitMetadataInPyris(attachmentVideoUnit));
             case VISIBILITY -> irisLectureApi.ifPresent(api -> api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit));
-            case CONTENT -> triggerProcessing(attachmentVideoUnit);
+            case CONTENT -> throw new IllegalArgumentException("CONTENT updates must use triggerProcessing");
             case DELETE -> deleteUnitsFromPyris(List.of(attachmentVideoUnit));
         }
     }

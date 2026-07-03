@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -66,25 +67,31 @@ class AttachmentVideoUnitServiceTest {
     @Mock
     private SlideRepository slideRepository;
 
+    @Mock
+    private IrisLectureUnitSyncService irisLectureUnitSyncService;
+
     private AttachmentVideoUnitService service;
 
     @BeforeEach
     void setUp() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
-                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifier(), slideRepository);
+                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifier(), slideRepository,
+                irisLectureUnitSyncService);
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
 
     @Test
-    void updateAttachmentVideoUnitRoutesMetadataOnlyChangeThroughUpdateKindDispatcher() {
+    void updateAttachmentVideoUnitMarksMetadataOnlyChangeDirtyForRetryableSync() {
         var unit = attachmentVideoUnit("Old name", null);
         var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), null,
                 AttachmentUpdateIntent.NO_FILE_CHANGE);
 
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
-        verify(contentProcessingService).triggerProcessingForUpdateKind(unit, LectureContentUpdateKind.METADATA);
+        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -102,7 +109,39 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class));
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class), any(), any());
-        verify(contentProcessingService).triggerProcessingForUpdateKind(unit, LectureContentUpdateKind.NONE);
+        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
+        verify(contentProcessingService, never()).triggerProcessing(any());
+        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+        verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitTriggersAsyncContentProcessingForVideoSourceChange() {
+        var unit = attachmentVideoUnit("Unit", null);
+        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, unit.getName(), unit.getReleaseDate(), unit.getDescription(), "https://video.example/updated", null,
+                AttachmentUpdateIntent.NO_FILE_CHANGE);
+
+        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+
+        verify(contentProcessingService).triggerProcessing(unit);
+        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), eq(LectureContentUpdateKind.CONTENT));
+        verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
+        verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitMarksMetadataAndVisibilityDirtyWhenBothChange() {
+        var unit = attachmentVideoUnit("Old name", null);
+        var updatedReleaseDate = unit.getReleaseDate().plusDays(1);
+        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", updatedReleaseDate, unit.getDescription(), unit.getVideoSource(), null,
+                AttachmentUpdateIntent.NO_FILE_CHANGE);
+
+        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+
+        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 

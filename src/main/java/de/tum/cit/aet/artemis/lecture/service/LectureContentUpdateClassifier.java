@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -25,20 +26,46 @@ public class LectureContentUpdateClassifier {
      * @return the required Pyris update kind
      */
     public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
-        if (after == null) {
+        Set<LectureContentUpdateKind> updateKinds = classifyAll(before, after, fileUpdateResult);
+        if (updateKinds.contains(LectureContentUpdateKind.DELETE)) {
             return LectureContentUpdateKind.DELETE;
         }
-        Objects.requireNonNull(before, "before");
-        if (isContentUpdate(before, after, fileUpdateResult)) {
+        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
             return LectureContentUpdateKind.CONTENT;
         }
-        if (isVisibilityUpdate(before, after)) {
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
             return LectureContentUpdateKind.VISIBILITY;
         }
-        if (isMetadataUpdate(before, after)) {
+        if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
             return LectureContentUpdateKind.METADATA;
         }
         return LectureContentUpdateKind.NONE;
+    }
+
+    /**
+     * Classifies all Pyris update dimensions touched by a lecture unit snapshot change.
+     *
+     * @param before           the previous detached lecture unit snapshot
+     * @param after            the current detached lecture unit snapshot, or null if the unit was deleted
+     * @param fileUpdateResult the attachment file update result, if an attachment update was attempted
+     * @return all required Pyris update kinds, or an empty set if no update is required
+     */
+    public Set<LectureContentUpdateKind> classifyAll(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
+        if (after == null) {
+            return Set.of(LectureContentUpdateKind.DELETE);
+        }
+        Objects.requireNonNull(before, "before");
+        var updateKinds = java.util.EnumSet.noneOf(LectureContentUpdateKind.class);
+        if (isContentUpdate(before, after, fileUpdateResult)) {
+            updateKinds.add(LectureContentUpdateKind.CONTENT);
+        }
+        if (isVisibilityUpdate(before, after)) {
+            updateKinds.add(LectureContentUpdateKind.VISIBILITY);
+        }
+        if (isMetadataUpdate(before, after)) {
+            updateKinds.add(LectureContentUpdateKind.METADATA);
+        }
+        return updateKinds;
     }
 
     private static boolean isContentUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {

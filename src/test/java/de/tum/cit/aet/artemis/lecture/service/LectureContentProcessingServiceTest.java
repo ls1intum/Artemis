@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -136,14 +137,9 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void contentUpdateUsesFullProcessingPath() {
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
-
-            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.CONTENT);
-
-            verify(processingStateRepository).save(any(LectureUnitProcessingState.class));
+        void contentUpdateMustUseAsyncTriggerProcessingEntrypoint() {
+            assertThatIllegalArgumentException().isThrownBy(() -> service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.CONTENT))
+                    .withMessage("CONTENT updates must use triggerProcessing");
             verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
             verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
             verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());

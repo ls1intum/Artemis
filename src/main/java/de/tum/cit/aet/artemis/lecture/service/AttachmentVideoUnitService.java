@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
@@ -61,6 +62,8 @@ public class AttachmentVideoUnitService {
 
     private final SlideRepository slideRepository;
 
+    private final IrisLectureUnitSyncService irisLectureUnitSyncService;
+
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -72,7 +75,7 @@ public class AttachmentVideoUnitService {
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
-            LectureContentUpdateClassifier lectureContentUpdateClassifier, SlideRepository slideRepository) {
+            LectureContentUpdateClassifier lectureContentUpdateClassifier, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -80,6 +83,7 @@ public class AttachmentVideoUnitService {
         this.attachmentService = attachmentService;
         this.lectureContentUpdateClassifier = lectureContentUpdateClassifier;
         this.slideRepository = slideRepository;
+        this.irisLectureUnitSyncService = irisLectureUnitSyncService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -202,11 +206,29 @@ public class AttachmentVideoUnitService {
         }
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit);
-        var updateKind = lectureContentUpdateClassifier.classify(beforeSnapshot, afterSnapshot, fileUpdateResult);
-        contentProcessingService.ifPresent(api -> api.triggerProcessingForUpdateKind(savedAttachmentVideoUnit, updateKind));
+        var updateKinds = lectureContentUpdateClassifier.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
+        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
+    }
+
+    private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
+            Set<LectureContentUpdateKind> updateKinds) {
+        if (updateKinds.isEmpty() || contentProcessingService.isEmpty()) {
+            return;
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
+            contentProcessingService.get().triggerProcessing(savedAttachmentVideoUnit);
+        }
+        else if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
+            irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
+        }
+
+        if (updateKinds.contains(LectureContentUpdateKind.VISIBILITY)) {
+            irisLectureUnitSyncService.markVisibilityDirtyAfterCommit(afterSnapshot);
+        }
     }
 
     private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
