@@ -3,6 +3,8 @@ import { Component, ElementRef, OnInit, effect, inject, signal, viewChildren } f
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCase, PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import dayjs from 'dayjs/esm';
 import { getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { downloadFile } from 'app/foundation/util/download.util';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -169,14 +171,13 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * @param value to be sanitized or replaced with -
      * @private
      */
-    private sanitizeCSVField(value: unknown): string {
-        if (value === null || value === undefined) {
-            // used as placeholder for null or if the passed value does not exist
+    private sanitizeCSVField(value: string | dayjs.Dayjs | PlagiarismVerdict | undefined): string {
+        if (value === undefined) {
+            // used as placeholder if the passed value does not exist
             return '-';
         }
-        // sanitize the operators away in case they appear in the values
-        const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-        return stringValue.replace(/;/g, '";"');
+        // sanitize the operators away in case they appear in the values; String() keeps dates unquoted and never throws
+        return String(value).replace(/;/g, '";"');
     }
 
     /**

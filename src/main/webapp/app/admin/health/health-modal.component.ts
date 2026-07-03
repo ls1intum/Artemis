@@ -73,9 +73,18 @@ export class HealthModalComponent {
             return `${(bytes / 1048576).toFixed(2)} MB`;
         }
 
-        // strings pass through; everything else (numbers, booleans, nested objects) is JSON-encoded, which avoids
-        // Object's '[object Object]' default and matches the output String() produced for the numeric/boolean values.
-        return typeof value === 'string' ? value : JSON.stringify(value);
+        if (typeof value === 'object') {
+            return JSON.stringify(value);
+        }
+        // primitives keep the exact String() output (e.g. 'NaN', 'Infinity', 'undefined'); narrowing positively
+        // avoids no-base-to-string (String() is only ever applied to number/boolean/bigint here).
+        if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+            return String(value);
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        return 'undefined';
     }
 
     /**
