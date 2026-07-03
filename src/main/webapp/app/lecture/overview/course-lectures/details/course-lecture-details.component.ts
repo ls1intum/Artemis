@@ -29,6 +29,7 @@ import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachmen
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,6 +56,7 @@ export interface LectureUnitCompletionEvent {
         TextUnitComponent,
         OnlineUnitComponent,
         FaIconComponent,
+        CourseSidebarToggleButtonComponent,
         DiscussionSectionComponent,
         UpperCasePipe,
         ArtemisDatePipe,
@@ -95,6 +97,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     courseParamsSubscription: Subscription;
     irisEnabled = false;
     readonly informationBoxData = signal<InformationBox[]>([]);
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
@@ -197,6 +203,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
         }
+    }
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {

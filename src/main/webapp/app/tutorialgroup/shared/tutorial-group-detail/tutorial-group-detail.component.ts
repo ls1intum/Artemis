@@ -5,6 +5,7 @@ import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutor
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import {
     faBan,
     faBuildingColumns,
@@ -122,6 +123,7 @@ export enum TutorialGroupDetailAccessLevel {
         ConfirmDialogModule,
         TutorialSessionCreateOrEditModalComponent,
         TooltipModule,
+        CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
@@ -159,6 +161,8 @@ export class TutorialGroupDetailComponent {
     courseId = input.required<number>();
     isMessagingEnabled = input.required<boolean>();
     loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
     userIsNotTutor = computed(() => this.loggedInUserAccessLevel() !== TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());

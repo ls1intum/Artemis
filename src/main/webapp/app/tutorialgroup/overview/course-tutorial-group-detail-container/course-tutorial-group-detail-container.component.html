@@ -9,6 +9,8 @@
                 [courseId]="courseIdToPass"
                 [isMessagingEnabled]="isMessagingEnabledToPass"
                 [loggedInUserAccessLevel]="TutorialGroupDetailManagementAccessLevel.STUDENT"
+                [isSidebarCollapsed]="isSidebarCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
             />
         </div>
     }
