@@ -154,14 +154,14 @@
                     hasUserAcceptedLLM() &&
                     exercise().allowFeedbackRequests &&
                     exercise().feedbackSuggestionModule &&
-                    !programmingExercise()?.allowOnlineEditor &&
-                    hasSubmittedProgrammingSubmission()
+                    programmingExercise()?.allowOnlineEditor === false &&
+                    hasProgrammingSubmission()
                 ) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
                         [smallButtons]="smallButtons()"
                         [isGeneratingFeedback]="isGeneratingFeedback()"
-                        [isSubmitted]="hasSubmittedProgrammingSubmission()"
+                        [isSubmitted]="hasProgrammingSubmission()"
                         (generatingFeedback)="generatingFeedback.emit()"
                     />
                 }

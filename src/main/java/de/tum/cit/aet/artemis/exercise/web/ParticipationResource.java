@@ -318,16 +318,15 @@ public class ParticipationResource {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
+        var latestResult = participation.findLatestResult();
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) {
             var submissions = submissionRepository.findAllByParticipationId(participation.getId());
-            // Only count real submitted entries, not auto-created placeholders
-            boolean hasSubmittedOnce = submissions.stream().anyMatch(Submission::isSubmitted);
+            boolean hasSubmittedOnce = latestResult != null || submissions.stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }
         }
 
-        var latestResult = participation.findLatestResult();
         boolean hasFeedbackBeenRequested = latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate() != null
                 && latestResult.getCompletionDate().isAfter(now());
         if (hasFeedbackBeenRequested) {
