@@ -436,7 +436,7 @@ export class ExerciseActionsComponent {
 
     /**
      * The lifecycle component emits `loadOne` to reload a quiz from the server (e.g. after a failed mutation reverts the
-     * optimistic state). The experimental view holds the exercise locally, so we just re-emit the current value to force
+     * optimistic state). This view holds the exercise locally, so we just re-emit the current value to force
      * the parent to refresh that row.
      */
     protected onQuizReload(): void {

@@ -68,7 +68,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrls: ['../../../course/manage/course-exercise-card/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    styleUrls: ['./exam-summary-card.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
     imports: [
         FaIconComponent,
         TranslateDirective,

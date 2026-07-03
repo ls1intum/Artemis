@@ -648,10 +648,6 @@ public class Course extends DomainObject {
         return exerciseVariantGroups;
     }
 
-    public void setExerciseVariantGroups(Set<ExerciseVariantGroup> exerciseVariantGroups) {
-        this.exerciseVariantGroups = exerciseVariantGroups;
-    }
-
     public void addExerciseVariantGroup(ExerciseVariantGroup exerciseVariantGroup) {
         this.exerciseVariantGroups.add(exerciseVariantGroup);
     }
