@@ -30,6 +30,11 @@ $graded-color: #28a745;
             color: white;
         }
 
+        // Non-interactive badge shown when only a single participation mode exists: keep the default cursor
+        &--static {
+            cursor: default;
+        }
+
         &--practice {
             background-color: $practice-color;
         }
