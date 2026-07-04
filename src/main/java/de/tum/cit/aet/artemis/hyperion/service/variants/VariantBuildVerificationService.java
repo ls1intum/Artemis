@@ -1,13 +1,21 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
+
+import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -17,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -112,6 +121,25 @@ public class VariantBuildVerificationService {
      * @throws InterruptedException when the polling thread is interrupted
      */
     public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
+        return waitForBuildResult(exercise, commitHash, repositoryType, null);
+    }
+
+    /**
+     * Polls for the build result of the given commit and evaluates it against the repository-type target, optionally
+     * requiring a result produced after a given instant. The {@code notBefore} filter matters when re-verifying a
+     * commit that already has an older result (e.g. the test repository changed but the solution/template commit did
+     * not): without it, the poll would immediately return the stale pre-change result (variants plan Section 3,
+     * build-dependency constraint).
+     *
+     * @param exercise       the exercise whose participation is polled
+     * @param commitHash     the commit the build was triggered for
+     * @param repositoryType which repository the build belongs to (TESTS builds use the solution participation)
+     * @param notBefore      when non-null, only results completed after this instant are accepted
+     * @return the outcome; {@link BuildResultState#SUCCESS} iff the target result was reached
+     * @throws InterruptedException when the polling thread is interrupted
+     */
+    public BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType, @Nullable Instant notBefore)
+            throws InterruptedException {
         long startTime = System.currentTimeMillis();
         ProgrammingExerciseParticipation participation = switch (repositoryType) {
             case TEMPLATE -> templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
@@ -133,7 +161,7 @@ public class VariantBuildVerificationService {
                 if (submission != null) {
                     Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
 
-                    if (result.isPresent()) {
+                    if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
                         return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                     }
@@ -179,5 +207,88 @@ public class VariantBuildVerificationService {
     private static boolean isExactScore(Result result, double targetScore) {
         Double score = result.getScore();
         return score != null && Double.compare(score, targetScore) == 0;
+    }
+
+    private static boolean isFreshEnough(Result result, @Nullable Instant notBefore) {
+        if (notBefore == null) {
+            return true;
+        }
+        return result.getCompletionDate() != null && result.getCompletionDate().toInstant().isAfter(notBefore);
+    }
+
+    // Truncation limits for build/test feedback fed back to the agent: enough signal to debug failures, small enough
+    // to keep the LLM context cheap (mirrors the codegen retry-prompt limits).
+    private static final int MAX_FEEDBACK_SUMMARY_ITEMS = 20;
+
+    private static final int MAX_FEEDBACK_SUMMARY_TEXT_LENGTH = 500;
+
+    private static final int MAX_BUILD_LOG_LENGTH = 10_000;
+
+    /**
+     * Renders a build result as the structured failure description fed back into the agent loop: build logs
+     * (compiler output) plus a per-test PASSED/FAILED summary with assertion messages ("closed-loop repair on real
+     * signals", variants plan Sections 2.5 and 7).
+     *
+     * @param result the build result, or {@code null} when the build produced none
+     * @return a human-readable description safe to inject into a prompt
+     */
+    public String describeBuildResult(@Nullable Result result) {
+        if (result == null) {
+            return "The build did not produce a result.";
+        }
+        String buildLogs = extractBuildLogs(result);
+        String testFeedback = extractTestFeedbackSummary(result);
+        String scoreLine = "Score: " + (result.getScore() != null ? result.getScore() + "%" : "unknown")
+                + (result.getTestCaseCount() != null ? " (" + result.getPassedTestCaseCount() + "/" + result.getTestCaseCount() + " tests passed)" : "");
+        if (testFeedback.isBlank()) {
+            return scoreLine + "\n\nBuild logs:\n" + buildLogs;
+        }
+        return scoreLine + "\n\nTest results:\n" + testFeedback + "\n\nBuild logs:\n" + buildLogs;
+    }
+
+    private String extractBuildLogs(Result result) {
+        if (!(result.getSubmission() instanceof ProgrammingSubmission programmingSubmission)) {
+            return "(no build logs available)";
+        }
+        // The result is fetched without build logs, so the lazy association is detached here. Re-load the submission
+        // with an eager build-log graph; otherwise a compile failure (the most common repair trigger) is invisible.
+        try {
+            List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
+                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
+            if (!buildLogEntries.isEmpty()) {
+                String logs = buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
+                return logs.length() > MAX_BUILD_LOG_LENGTH ? logs.substring(logs.length() - MAX_BUILD_LOG_LENGTH) : logs;
+            }
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not load build log entries for submission {}: {}", programmingSubmission.getId(), e.getMessage());
+        }
+        return "(build logs could not be retrieved)";
+    }
+
+    private String extractTestFeedbackSummary(Result result) {
+        try {
+            return result.getFeedbacks().stream().filter(Objects::nonNull).filter(feedback -> feedback.getTestCase() != null)
+                    .sorted((left, right) -> Boolean.compare(Boolean.TRUE.equals(left.isPositive()), Boolean.TRUE.equals(right.isPositive()))).limit(MAX_FEEDBACK_SUMMARY_ITEMS)
+                    .map(VariantBuildVerificationService::formatFeedbackSummary).filter(summary -> !summary.isBlank()).collect(Collectors.joining("\n"));
+        }
+        catch (LazyInitializationException e) {
+            log.warn("Could not load feedback entries for result {}: {}. Continuing with build logs only.", result.getId(), e.getMessage());
+            return "";
+        }
+    }
+
+    private static String formatFeedbackSummary(Feedback feedback) {
+        String testName = Optional.ofNullable(feedback.getTestCase().getTestName()).filter(name -> !name.isBlank()).orElse("Unnamed test");
+        String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASSED" : "FAILED";
+        String text = Optional.ofNullable(feedback.getDetailText()).filter(detail -> !detail.isBlank()).orElse(feedback.getText());
+        if (text == null || text.isBlank()) {
+            return "- " + testName + ": " + status;
+        }
+        String summaryText = text.lines().findFirst().orElse("").trim();
+        if (summaryText.length() > MAX_FEEDBACK_SUMMARY_TEXT_LENGTH) {
+            summaryText = summaryText.substring(0, MAX_FEEDBACK_SUMMARY_TEXT_LENGTH) + "...";
+        }
+        return "- " + testName + ": " + status + " - " + summaryText;
     }
 }
