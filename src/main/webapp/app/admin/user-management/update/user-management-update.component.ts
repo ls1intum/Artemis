@@ -273,7 +273,6 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
-     /**
      * Get the translation key for an authority
      * @param authority the authority string (e.g., ROLE_ADMIN)
      */

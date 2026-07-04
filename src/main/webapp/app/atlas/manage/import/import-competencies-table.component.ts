@@ -7,13 +7,13 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-import-competencies-table',
     templateUrl: './import-competencies-table.component.html',
-    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, NgbPagination, HtmlForMarkdownPipe],
+    imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, PaginatorModule, HtmlForMarkdownPipe],
 })
 export class ImportCompetenciesTableComponent {
     content = input.required<SearchResult<Competency>>();
@@ -34,6 +34,11 @@ export class ImportCompetenciesTableComponent {
      */
     onPageChange(pageNumber: number) {
         this.search.update((search) => ({ ...search, page: pageNumber }));
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPaginatorPageChange(event: PaginatorState): void {
+        this.onPageChange((event.page ?? 0) + 1);
     }
 
     /**

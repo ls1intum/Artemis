@@ -34,6 +34,17 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("SELECT ucr.user FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role = :role AND ucr.user.deleted = FALSE")
     Set<User> findUsersByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
 
+    /**
+     * Batch variant of {@link #findUsersByCourse_IdAndRole} that matches any of the given roles, e.g. to fetch all
+     * staff (teaching assistants, editors, instructors) of a course in a single query.
+     *
+     * @param courseId the id of the course
+     * @param roles    the roles to match
+     * @return the set of non-deleted users holding any of the given roles in the course
+     */
+    @Query("SELECT DISTINCT ucr.user FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role IN :roles AND ucr.user.deleted = FALSE")
+    Set<User> findUsersByCourse_IdAndRoleIn(@Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
+
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 

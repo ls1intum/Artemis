@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.EnrollmentService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 
 /**
  * Service for managing course access, including enrollment and unenrollment of users.
@@ -61,9 +62,11 @@ public class CourseAccessService {
 
     private final Optional<LearningPathApi> learningPathApi;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     public CourseAccessService(AuthorizationCheckService authCheckService, EnrollmentService enrollmentService, CourseRepository courseRepository, UserService userService,
             UserCourseRoleRepository userCourseRoleRepository, Optional<LearnerProfileApi> learnerProfileApi, AuditEventRepository auditEventRepository,
-            Optional<LearningPathApi> learningPathApi) {
+            Optional<LearningPathApi> learningPathApi, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.authCheckService = authCheckService;
         this.enrollmentService = enrollmentService;
         this.courseRepository = courseRepository;
@@ -72,6 +75,7 @@ public class CourseAccessService {
         this.learnerProfileApi = learnerProfileApi;
         this.auditEventRepository = auditEventRepository;
         this.learningPathApi = learningPathApi;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
     /**
@@ -188,6 +192,11 @@ public class CourseAccessService {
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
             learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
         }
+        // Pre-provision repository-scoped VCS access tokens for the staff member across all base repositories of the course's programming exercises. Run asynchronously so adding a
+        // staff member to a course with many programming exercises does not block the request; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        if (isStaffRole(role)) {
+            repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourseAsync(user, course);
+        }
     }
 
     /**
@@ -199,6 +208,15 @@ public class CourseAccessService {
      */
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         userService.removeUserFromCourse(user, course, role);
+        // Remove the staff member's repository-scoped VCS access tokens for this course, unless they still hold another staff role in it. Run asynchronously so the request does
+        // not block; a token that lingers briefly is harmless because authorization is re-checked on every git operation.
+        if (isStaffRole(role)) {
+            repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaffAsync(user, course);
+        }
+    }
+
+    private boolean isStaffRole(CourseRole role) {
+        return role == CourseRole.TEACHING_ASSISTANT || role == CourseRole.EDITOR || role == CourseRole.INSTRUCTOR;
     }
 
 }

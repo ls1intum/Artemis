@@ -1,5 +1,5 @@
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
@@ -8,8 +8,6 @@ import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
@@ -30,7 +28,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
-export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnDestroy {
+export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     private buildLogService = inject(CodeEditorBuildLogService);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -40,16 +38,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
-    onToggleCollapse = output<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
+    onToggleCollapse = output<{ event: any; horizontal: boolean }>();
     onError = output<string>();
 
     readonly isBuilding = signal(false);
     readonly rawBuildLogs = signal(new BuildLogEntryArray());
     readonly result = signal<Result | undefined>(undefined);
-
-    /** Resizable constants **/
-    resizableMinHeight = 150;
-    interactResizable: Interactable;
 
     private resultSubscription: Subscription;
     private submissionSubscription: Subscription;
@@ -110,17 +104,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     ngOnInit(): void {
         this.setupSubmissionWebsocket();
-    }
-
-    /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinHeight = window.screen.height / 6;
-        this.interactResizable = interact('.resizable-buildoutput');
     }
 
     /**
@@ -243,9 +226,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         this.onToggleCollapse.emit({
             event,
             horizontal: false,
-            interactable: this.interactResizable,
-            resizableMinWidth: undefined,
-            resizableMinHeight: this.resizableMinHeight,
         });
     }
 
@@ -255,9 +235,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         }
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
-        }
-        if (this.interactResizable) {
-            this.interactResizable.unset();
         }
     }
 }

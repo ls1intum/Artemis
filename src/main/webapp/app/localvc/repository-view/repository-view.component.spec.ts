@@ -236,6 +236,34 @@ describe('RepositoryViewComponent', () => {
         expect(component.paramSub?.closed).toBe(true);
     });
 
+    it('should clear stale participation when switching from TEMPLATE to TESTS repository type', () => {
+        const mockExercise: ProgrammingExercise = {
+            id: 1,
+            templateParticipation: { id: 2, repositoryUri: 'template-repo-uri' },
+            testRepositoryUri: 'test-repo-uri',
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+        const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TEMPLATE' });
+        component.ngOnInit();
+
+        expect(component.participation()).toEqual(mockExercise.templateParticipation);
+        expect(component.repositoryUri()).toBe('template-repo-uri');
+
+        activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TESTS' });
+
+        expect(component.participation()).toBeUndefined();
+        expect(component.repositoryUri()).toBe('test-repo-uri');
+        expect(component.auxiliaryRepositoryId()).toBeUndefined();
+        expect(component.domainService.setDomain).toHaveBeenLastCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
+
+        component.ngOnDestroy();
+    });
+
     it('should load AUXILIARY repository type', () => {
         // Mock exercise and participation data
         const mockAuxiliaryRepository: AuxiliaryRepository = { id: 5, repositoryUri: 'repositoryUri', checkoutDirectory: 'dir', name: 'AuxRepo', description: 'description' };

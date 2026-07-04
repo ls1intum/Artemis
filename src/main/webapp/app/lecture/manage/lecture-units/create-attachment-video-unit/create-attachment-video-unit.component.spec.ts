@@ -14,7 +14,6 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -32,7 +31,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),

@@ -201,10 +201,13 @@
                 @if (exercise().type === ExerciseType.PROGRAMMING) {
                     <div class="col-12">
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.exampleSolution"></h4>
+                        <!-- Pass exerciseId (not the full exercise) on purpose: it is enough to provision the repository-scoped token, and avoids triggering the online IDE setup for the solution clone. -->
                         <jhi-code-button
                             [smallButtons]="true"
                             [repositoryUri]="programmingExercise().solutionParticipation?.repositoryUri || ''"
                             [routerLinkForRepositoryView]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', 'SOLUTION']"
+                            [repositoryType]="RepositoryType.SOLUTION"
+                            [exerciseId]="exerciseId()"
                         />
                     </div>
                 }

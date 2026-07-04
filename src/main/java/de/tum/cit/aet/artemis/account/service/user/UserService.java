@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
@@ -113,6 +114,8 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
@@ -128,7 +131,8 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
+            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
             UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
@@ -142,6 +146,7 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
         this.userSshPublicKeyService = userSshPublicKeyService;
@@ -460,6 +465,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
+            repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());

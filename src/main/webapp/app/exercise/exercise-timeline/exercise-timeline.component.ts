@@ -1,4 +1,4 @@
-import { Component, WritableSignal, computed, effect, inject, input, output } from '@angular/core';
+import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -24,6 +24,7 @@ type InternalTimelineItem = TimelineItem & {
     isInputRequiredButUndefined: boolean;
     isBeforePreviousDate: boolean;
     isOtherRequiredItemDateUndefined: boolean;
+    isInvalidInput: boolean;
     tooltip: string | undefined;
 };
 
@@ -39,6 +40,9 @@ export class ExerciseTimelineComponent {
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
+    /** Label keys of items whose currently-typed text is non-empty but not a valid date. Drives the
+     *  invalid (red border + tooltip) state so a malformed entry is flagged instead of silently dropped. */
+    private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
@@ -67,27 +71,45 @@ export class ExerciseTimelineComponent {
         const parsedDate = this.parseManualInput(value);
         if (parsedDate !== undefined) {
             this.setDateIfChanged(item, parsedDate);
-        }
-        if (value === '') {
+            this.setInvalidInput(item, false);
+        } else if (value === '') {
             this.setDateIfChanged(item, undefined);
+            this.setInvalidInput(item, false);
         }
+        // A non-empty, not-yet-parseable value is left untouched while the user is still typing; it is
+        // only flagged as invalid once they leave the field (see handleBlur).
     }
 
     handleBlur(item: TimelineItem, event: Event) {
-        const inputElement = event.target as HTMLInputElement;
-        const input = inputElement.value;
+        const input = (event.target as HTMLInputElement).value;
         const inputWasCleared = input === '';
         const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
-        if (currentInputIsInvalidDate && !inputWasCleared) {
-            const previousDate = item.date();
-            inputElement.value = previousDate ? previousDate.format(this.dateTimeFormat) : '';
-        }
+        // Previously an invalid entry was silently reverted to the last valid value, leaving the user
+        // unaware of the mistake (PR #13009 review). Instead keep the entered text (keepInvalid) and flag
+        // the field invalid so the red border + tooltip explain the problem and the form blocks saving.
+        this.setInvalidInput(item, currentInputIsInvalidDate && !inputWasCleared);
     }
 
     private setDateIfChanged(item: TimelineItem, newDate?: Dayjs) {
         const currentDate = item.date();
         if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);
+    }
+
+    /** Adds or removes the item's label key from the invalid-input set (no-op if already in that state). */
+    private setInvalidInput(item: TimelineItem, invalid: boolean) {
+        this.invalidInputKeys.update((keys) => {
+            if (invalid === keys.has(item.labelStringKey)) {
+                return keys;
+            }
+            const next = new Set(keys);
+            if (invalid) {
+                next.add(item.labelStringKey);
+            } else {
+                next.delete(item.labelStringKey);
+            }
+            return next;
+        });
     }
 
     private parseManualInput(value: string): Dayjs | undefined {
@@ -97,6 +119,7 @@ export class ExerciseTimelineComponent {
     }
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {
+        const invalidInputKeys = this.invalidInputKeys();
         return this.timelineItems().map((item, index, items) => {
             this.currentLocale();
             const date = item.date();
@@ -109,8 +132,11 @@ export class ExerciseTimelineComponent {
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             const otherRequiredItem = item.otherRequiredItem;
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
+            const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
             let tooltip: string | undefined;
-            if (isBeforePreviousDate) {
+            if (isInvalidInput) {
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
+            } else if (isBeforePreviousDate) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateOrderTooltip');
             } else if (isInputRequiredButUndefined) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
@@ -128,6 +154,7 @@ export class ExerciseTimelineComponent {
                 isInputRequiredButUndefined,
                 isBeforePreviousDate,
                 isOtherRequiredItemDateUndefined,
+                isInvalidInput,
                 tooltip,
             };
         });
@@ -136,7 +163,7 @@ export class ExerciseTimelineComponent {
     private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
         const items = this.internalTimelineItems();
         return {
-            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined),
+            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
             empty: items.some((item) => item.date() === undefined),
         };
     }

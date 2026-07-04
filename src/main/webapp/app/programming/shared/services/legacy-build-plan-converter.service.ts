@@ -10,30 +10,30 @@ export class LegacyBuildPlanConverterService {
     private static readonly LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = '/var/tmp';
 
     convertLegacyBuildPlanConfiguration(script: string | undefined, buildPlanConfiguration: string | undefined): BuildPlanPhases | undefined {
-        if (script === undefined || buildPlanConfiguration === undefined) {
+        let parsed: Record<string, unknown> | undefined;
+        const buildScript = script?.trim() ? script : undefined;
+
+        if (buildPlanConfiguration?.trim()) {
+            try {
+                const parsedJson = JSON.parse(buildPlanConfiguration);
+                if (this.isObject(parsedJson)) {
+                    parsed = parsedJson;
+                }
+            } catch {
+                if (buildScript === undefined) {
+                    return undefined;
+                }
+            }
+        }
+
+        const actionsNode = parsed?.['actions'];
+        if (buildScript === undefined && !Array.isArray(actionsNode)) {
             return undefined;
         }
 
-        try {
-            const parsed = JSON.parse(buildPlanConfiguration);
-            if (!this.isObject(parsed)) {
-                return undefined;
-            }
+        const convertedBuildScript = buildScript ?? this.createLegacyBuildScriptFromActions(actionsNode);
 
-            const dockerImage = this.parseDockerImage(parsed);
-            if (dockerImage === undefined) {
-                return undefined;
-            }
-
-            const resultPaths = this.parseResultPaths(parsed);
-            if (resultPaths === undefined) {
-                return undefined;
-            }
-
-            return { phases: this.wrapLegacyBuildScript(script, resultPaths), dockerImage: dockerImage };
-        } catch {
-            return undefined;
-        }
+        return { phases: this.wrapLegacyBuildScript(convertedBuildScript, this.parseResultPaths(actionsNode)), dockerImage: parsed ? this.parseDockerImage(parsed) : undefined };
     }
 
     private isObject(value: unknown): value is Record<string, unknown> {
@@ -59,17 +59,44 @@ export class LegacyBuildPlanConverterService {
         return dockerImageNode.trim();
     }
 
-    private parseResultPaths(parsed: Record<string, unknown>): string[] | undefined {
-        const actionsNode = parsed['actions'];
-
+    private createLegacyBuildScriptFromActions(actionsNode: unknown): string {
+        let buildScript = `#!/bin/bash
+cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
+`;
         if (!Array.isArray(actionsNode)) {
-            return undefined;
+            return buildScript;
+        }
+
+        for (const actionNode of actionsNode) {
+            if (!this.isObject(actionNode) || typeof actionNode['script'] !== 'string') {
+                continue;
+            }
+
+            const workdir = typeof actionNode['workdir'] === 'string' ? actionNode['workdir'].trim() : undefined;
+            if (workdir) {
+                buildScript += `cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir/${workdir}
+`;
+            }
+            buildScript += `${actionNode['script']}
+`;
+            if (workdir) {
+                buildScript += `cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
+`;
+            }
+        }
+
+        return buildScript;
+    }
+
+    private parseResultPaths(actionsNode: unknown): string[] {
+        if (!Array.isArray(actionsNode)) {
+            return [];
         }
 
         const resultPaths: string[] = [];
         for (const actionNode of actionsNode) {
             if (!this.isObject(actionNode)) {
-                return undefined;
+                continue;
             }
 
             const resultsNode = actionNode['results'];
@@ -77,17 +104,12 @@ export class LegacyBuildPlanConverterService {
                 continue;
             }
             if (!Array.isArray(resultsNode)) {
-                return undefined;
+                continue;
             }
 
             for (const resultNode of resultsNode) {
-                if (
-                    !this.isObject(resultNode) ||
-                    !Object.prototype.hasOwnProperty.call(resultNode, 'path') ||
-                    resultNode['path'] === null ||
-                    typeof resultNode['path'] !== 'string'
-                ) {
-                    return undefined;
+                if (!this.isObject(resultNode) || typeof resultNode['path'] !== 'string') {
+                    continue;
                 }
 
                 resultPaths.push(resultNode['path'].trim());
@@ -101,7 +123,7 @@ export class LegacyBuildPlanConverterService {
         const wrappedScript = `# feel free to remove the code surrounding your script and split your script into multiple phases
 cd ${LegacyBuildPlanConverterService.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY}/testing-dir
 local tmp_file=$(mktemp)
-cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will indented be for a phase
+cat << '  __LEGACY_INNER_SCRIPT_END__' > "\${tmp_file}"  # two leading spaces are intentional as the final script will be indented be for a phase
 ${script}
 __LEGACY_INNER_SCRIPT_END__
 chmod +x "\${tmp_file}"

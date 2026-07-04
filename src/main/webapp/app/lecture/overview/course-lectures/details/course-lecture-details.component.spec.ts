@@ -455,6 +455,78 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
         });
     });
+
+    describe('Context Collection', () => {
+        it('collectVisibleContexts: returns empty array when no units', () => {
+            fixture.changeDetectorRef.detectChanges();
+
+            const contexts = courseLecturesDetailsComponent['collectVisibleContexts']();
+
+            expect(contexts).toEqual([]);
+        });
+
+        it('isElementVisible: returns false for null element', () => {
+            const result = courseLecturesDetailsComponent['isElementVisible'](null);
+
+            expect(result).toBe(false);
+        });
+
+        it('isElementVisible: returns true when element is in viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 100,
+                bottom: 200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 100,
+                x: 50,
+                y: 100,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(true);
+        });
+
+        it('isElementVisible: returns false when element is below viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 1000,
+                bottom: 1200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 200,
+                x: 50,
+                y: 1000,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(false);
+        });
+
+        it('contextProvider: returns a function that calls collectVisibleContexts', () => {
+            const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([]);
+
+            const provider = courseLecturesDetailsComponent.contextProvider();
+            expect(provider).toBeDefined();
+
+            const contexts = provider!();
+
+            expect(collectSpy).toHaveBeenCalledTimes(1);
+            expect(contexts).toEqual([]);
+        });
+    });
 });
 
 const getAttachmentVideoUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {

@@ -30,6 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -194,6 +195,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     reverseOrders = [true, false, false];
 
     readonly ExerciseType = ExerciseType;
+    protected readonly RepositoryType = RepositoryType;
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {

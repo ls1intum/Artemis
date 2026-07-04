@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -87,10 +88,10 @@ public class IrisSessionService {
     /**
      * @param session The session to get a message for
      * @param <S>     The type of the session
-     * @see #requestMessageFromIris(IrisSession, Map)
+     * @see #requestMessageFromIris(IrisSession, Map, List)
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
-        requestMessageFromIris(session, Map.of());
+        requestMessageFromIris(session, Map.of(), List.of());
     }
 
     /**
@@ -99,14 +100,15 @@ public class IrisSessionService {
      *
      * @param session          The session to get a message for
      * @param uncommittedFiles The uncommitted files from the client
+     * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      * @param <S>              The type of the session
      * @throws BadRequestException If the session type is invalid
      */
-    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            if (!uncommittedFiles.isEmpty() && session instanceof IrisChatSession chatSession) {
-                irisChatSessionService.requestAndHandleResponseWithUncommittedChanges(chatSession, uncommittedFiles);
+            if (session instanceof IrisChatSession chatSession) {
+                irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);
             }
             else {
                 chatWrapper.requestAndHandleResponse(wrapper.irisSession);

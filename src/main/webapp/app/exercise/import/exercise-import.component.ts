@@ -14,7 +14,8 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 
@@ -28,7 +29,7 @@ const DEFAULT_SORT_COLUMN = 'ID';
 @Component({
     selector: 'jhi-exercise-import',
     templateUrl: './exercise-import.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExerciseCourseTitlePipe],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, PaginatorModule, ExerciseCourseTitlePipe],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);

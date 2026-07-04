@@ -46,6 +46,12 @@ spring:
                 useServerPrepStmts: true
     jpa:
         show-sql: false
+        # Tell Hibernate the dialect explicitly so it does not probe JDBC DatabaseMetaData while bootstrapping the EntityManagerFactory. For a schema with ~200 tables that
+        # metadata access means repeated database round-trips on every startup (slower the further the DB is), so skipping it shortens production startup. Default to PostgreSQL
+        # (the production database going forward); MySQL deployments must override this with `spring.jpa.database: MYSQL` until MySQL support is removed.
+        database: POSTGRESQL
+        properties:
+            hibernate.boot.allow_jdbc_metadata_access: false
     mail:
         host: localhost
         port: 25

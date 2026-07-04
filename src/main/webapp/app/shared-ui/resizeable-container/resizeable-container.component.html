@@ -24,7 +24,13 @@
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         } @else {
-            <div #expandedPanel class="expanded right" [style.width]="isBeingPrinted() ? 'fit-content' : '30vw'">
+            <div
+                class="expanded right"
+                jhiResizable
+                [resizableEdges]="{ left: '.draggable-left' }"
+                [resizableConstraints]="{ minWidth: 215, maxWidth: 1500 }"
+                [style.width]="isBeingPrinted() ? 'fit-content' : '30vw'"
+            >
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>

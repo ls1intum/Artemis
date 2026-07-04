@@ -20,7 +20,6 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DateTimeAdapter, NativeDateTimeAdapter, OWL_DATE_TIME_LOCALE, OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />', standalone: true })
 class LectureUnitLayoutStubComponent {
@@ -74,8 +73,6 @@ describe('AttachmentVideoUnitsComponent', () => {
             imports: [
                 FormsModule,
                 MockModule(NgbTooltipModule),
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
                 FaIconComponent,
                 AttachmentVideoUnitsComponent,
                 LectureUnitLayoutStubComponent,
@@ -87,8 +84,6 @@ describe('AttachmentVideoUnitsComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: OWL_DATE_TIME_LOCALE, useValue: 'en' },
-                { provide: DateTimeAdapter, useClass: NativeDateTimeAdapter },
                 {
                     provide: AttachmentVideoUnitService,
                     useClass: MockAttachmentVideoUnitsService,

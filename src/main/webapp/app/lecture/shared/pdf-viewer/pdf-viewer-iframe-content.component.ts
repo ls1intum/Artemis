@@ -190,6 +190,14 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
                 this.updateDarkMode(data?.isDarkMode);
                 this.updateLanguage(data?.languageKey);
                 break;
+            case 'setPage':
+                if (data?.page !== undefined && Number.isInteger(data.page) && data.page > 0) {
+                    const totalPages = this.totalPages();
+                    if (totalPages === 0 || data.page <= totalPages) {
+                        this.setCurrentPage(data.page);
+                    }
+                }
+                break;
             case 'viewerModeChange':
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 break;

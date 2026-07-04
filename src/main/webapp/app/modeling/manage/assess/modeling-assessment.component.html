@@ -1,4 +1,16 @@
-<div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions()">
+<div
+    #resizeContainer
+    class="modeling-assessment"
+    [class.resizable]="resizeOptions()"
+    jhiResizable
+    [resizableEdges]="resizableEdges()"
+    [resizableConstraints]="{
+        minWidth: MODELING_EDITOR_MIN_WIDTH,
+        maxWidth: MODELING_EDITOR_MAX_WIDTH,
+        minHeight: MODELING_EDITOR_MIN_HEIGHT,
+        maxHeight: MODELING_EDITOR_MAX_HEIGHT,
+    }"
+>
     @if (title() || displayPoints()) {
         <div class="card-header bg-primary text-white">
             @if (title()) {
