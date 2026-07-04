@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.hades.dto;
+package de.tum.cit.aet.artemis.programming.service.hades;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestSuiteDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesLogEntryDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesTestResultsDTO;
 
 class HadesTestResultsDTOTest {
 

@@ -13,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesTestResultsDTO;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class HadesResultServiceTest {
@@ -23,7 +23,7 @@ class HadesResultServiceTest {
     private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Mock
-    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     @Mock
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
