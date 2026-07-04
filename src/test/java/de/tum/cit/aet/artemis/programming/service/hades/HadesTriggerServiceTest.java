@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,11 +28,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 
 @ExtendWith(MockitoExtension.class)
 class HadesTriggerServiceTest {
@@ -136,6 +139,42 @@ class HadesTriggerServiceTest {
             when(hadesService.build(any())).thenThrow(new ContinuousIntegrationException("build failed"));
 
             assertThatExceptionOfType(ContinuousIntegrationException.class).isThrownBy(() -> hadesTriggerService.triggerBuild(participation, null, null));
+        }
+
+        @Test
+        void triggerBuild_withDeclaredResultPath_derivesIngestDirectoryFromIt() throws ContinuousIntegrationException {
+            var phase = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, List.of("**/target/surefire-reports/*.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/target/surefire-reports");
+        }
+
+        @Test
+        void triggerBuild_withoutResultPathButMavenProjectType_guessesSurefireDirectory() throws ContinuousIntegrationException {
+            exercise.setProjectType(ProjectType.PLAIN_MAVEN);
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/target/surefire-reports");
+        }
+
+        @Test
+        void triggerBuild_withoutResultPathOrMavenProjectType_fallsBackToGradleDefault() throws ContinuousIntegrationException {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/build/test-results/test");
         }
     }
 

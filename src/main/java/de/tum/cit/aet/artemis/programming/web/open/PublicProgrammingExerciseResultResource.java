@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -59,17 +60,20 @@ public class PublicProgrammingExerciseResultResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ProfileService profileService;
+
     private final byte[] artemisAuthenticationTokenHash;
 
     public PublicProgrammingExerciseResultResource(Optional<StatelessCIService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProfileService profileService,
             @Value("${artemis.continuous-integration.artemis-authentication-token-value}") String artemisAuthenticationTokenValue) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.profileService = profileService;
         // Validates the length of the artemisAuthenticationTokenValue on startup.
         if (artemisAuthenticationTokenValue == null || artemisAuthenticationTokenValue.length() < 12) {
             throw new IllegalArgumentException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
@@ -90,6 +94,9 @@ public class PublicProgrammingExerciseResultResource {
     public ResponseEntity<Void> processNewProgrammingExerciseResultWithParticipationID(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken,
             @RequestParam Long participationId, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Hades");
+        if (!profileService.isProfileActive(PROFILE_HADES)) {
+            throw new AccessForbiddenException();
+        }
         if (!matches(authorizationToken)) {
             log.info("Cancelling request due to invalid authorization token");
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken

@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -57,6 +60,10 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
+    private static final String HADES_WORKING_DIRECTORY = "/shared";
+
+    private static final String DEFAULT_INGEST_DIRECTORY = HADES_WORKING_DIRECTORY + "/build/test-results/test";
+
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService,
             LocalCIBuildConfigurationService localCIBuildConfigurationService) {
@@ -90,7 +97,8 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
             ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
-            String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
+            List<BuildPhaseDTO> activePhases = resolveActivePhases(buildConfig, participation, participation.getProgrammingExercise());
+            String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
 
             String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
@@ -110,6 +118,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                 additionalProperties.put("projectType", projectType.toString());
             }
 
+            additionalProperties.put("resultIngestDirectory",
+                    resolveResultIngestDirectory(activePhases, participation.getProgrammingExercise().getProgrammingLanguage(), projectType));
+
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
                     buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties);
@@ -123,20 +134,13 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         }
     }
 
-    // Matches the /shared volume mount that HadesService clones the test/assignment repositories into.
-    private static final String HADES_WORKING_DIRECTORY = "/shared";
-
-    /**
-     * Generates the build script for the given participation by resolving active build phases and rendering them
-     * with the same semantics LocalCI uses: {@code forceRun} phases still execute after an earlier phase fails
-     * (via an EXIT trap), and checkout placeholders like {@code ${studentParentWorkingDirectoryName}} are resolved.
-     *
-     * @param buildConfig         the build configuration containing build phases
-     * @param participation       the programming exercise participation
-     * @param programmingExercise the programming exercise
-     * @return the rendered shell script for all active build phases
-     */
     public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
+        List<BuildPhaseDTO> activePhases = resolveActivePhases(buildConfig, participation, programmingExercise);
+        return localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
+    }
+
+    private List<BuildPhaseDTO> resolveActivePhases(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation,
+            ProgrammingExercise programmingExercise) {
         programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
@@ -149,8 +153,30 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
                 : buildPlanPhasesDTO.phases();
 
-        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+        return buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+    }
 
-        return localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
+    private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        Optional<String> fromResultPaths = activePhases.stream().map(BuildPhaseDTO::resultPaths).filter(Objects::nonNull).flatMap(List::stream)
+                .filter(path -> path != null && !path.isBlank()).distinct().findFirst().map(HadesTriggerService::toIngestDirectory);
+        if (fromResultPaths.isPresent()) {
+            return fromResultPaths.get();
+        }
+
+        boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
+        if (programmingLanguage == ProgrammingLanguage.JAVA && isMaven) {
+            return HADES_WORKING_DIRECTORY + "/target/surefire-reports";
+        }
+        return DEFAULT_INGEST_DIRECTORY;
+    }
+
+    private static String toIngestDirectory(String resultPathGlob) {
+        String cleaned = resultPathGlob.strip();
+        if (cleaned.startsWith("**/")) {
+            cleaned = cleaned.substring("**/".length());
+        }
+        int lastSlash = cleaned.lastIndexOf('/');
+        String directory = lastSlash >= 0 ? cleaned.substring(0, lastSlash) : "";
+        return directory.isBlank() ? HADES_WORKING_DIRECTORY : HADES_WORKING_DIRECTORY + "/" + directory;
     }
 }

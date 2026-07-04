@@ -20,8 +20,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -104,20 +106,8 @@ class HadesServiceTest {
     }
 
     @Test
-    void build_withProjectType_returnsUUID() throws ContinuousIntegrationException {
-        var dto = buildTriggerRequest(Map.of("projectType", "PLAIN_MAVEN"));
-        var expectedUuid = UUID.randomUUID();
-
-        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(HadesBuildResponseDTO.class)))
-                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
-
-        assertThat(hadesService.build(dto)).isEqualTo(expectedUuid);
-    }
-
-    @Test
-    void build_withMavenProjectType_configuresSurefireIngestDir() throws ContinuousIntegrationException {
-        var dto = buildTriggerRequest(Map.of("projectType", "PLAIN_MAVEN"));
+    void build_withResultIngestDirectoryOverride_usesProvidedDirectory() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of("resultIngestDirectory", "/shared/target/surefire-reports"));
         var expectedUuid = UUID.randomUUID();
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -150,13 +140,15 @@ class HadesServiceTest {
     }
 
     @Test
-    void build_nonSuccessResponse_throwsException() {
+    void build_whenRestTemplateThrowsOnErrorStatus_wrapsWithStatusAndBody() {
         var dto = buildTriggerRequest(Map.of());
 
         when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(HadesBuildResponseDTO.class))).thenReturn(ResponseEntity.internalServerError().build());
+        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(HadesBuildResponseDTO.class)))
+                .thenThrow(HttpServerErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", null, "boom".getBytes(), null));
 
-        assertThatExceptionOfType(ContinuousIntegrationException.class).isThrownBy(() -> hadesService.build(dto));
+        assertThatExceptionOfType(ContinuousIntegrationException.class).isThrownBy(() -> hadesService.build(dto)).withCauseInstanceOf(ContinuousIntegrationException.class)
+                .satisfies(e -> assertThat(e.getCause()).hasMessageContaining("500").hasMessageContaining("boom"));
     }
 
     @Test

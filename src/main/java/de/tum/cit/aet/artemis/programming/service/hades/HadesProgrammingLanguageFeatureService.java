@@ -69,13 +69,13 @@ public class HadesProgrammingLanguageFeatureService extends ProgrammingLanguageF
         programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, false, false, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, true, false, true, false, List.of(), false));
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), false));
-        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), false));
+        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, false, List.of(), false));
         programmingLanguageFeatures.put(JAVA,
                 new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), false));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, true, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), false));
         programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), false));
-        programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), false));
+        programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, false, List.of(), false));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, true, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, true, true, false, false, List.of(), false));
         programmingLanguageFeatures.put(RUBY, new ProgrammingLanguageFeature(RUBY, false, true, false, false, false, List.of(), false));

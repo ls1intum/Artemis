@@ -19,6 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -117,10 +118,12 @@ public class HadesService implements StatelessCIService {
 
     private UUID build(HadesBuildJobDTO hadesBuildJobDTO) {
         HttpEntity<HadesBuildJobDTO> request = new HttpEntity<>(hadesBuildJobDTO, createAuthHeaders());
-        ResponseEntity<HadesBuildResponseDTO> response = restTemplate.postForEntity(hadesServerUrl + "/build", request, HadesBuildResponseDTO.class);
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new ContinuousIntegrationException("Build request failed with status: " + response.getStatusCode());
+        ResponseEntity<HadesBuildResponseDTO> response;
+        try {
+            response = restTemplate.postForEntity(hadesServerUrl + "/build", request, HadesBuildResponseDTO.class);
+        }
+        catch (HttpStatusCodeException e) {
+            throw new ContinuousIntegrationException("Build request failed with status: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
         }
 
         HadesBuildResponseDTO responseBody = response.getBody();
@@ -186,7 +189,9 @@ public class HadesService implements StatelessCIService {
         // Create Parse Result Step
         var parseResultMetadata = new HashMap<String, String>();
         parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
-        parseResultMetadata.put("INGEST_DIR", resolveIngestDirectory(buildTriggerRequestDTO));
+        // HadesTriggerService already resolves this (from the exercise's actual result paths, or a language-based
+        // guess as a fallback); this class only needs a last-resort default in case that's ever missing entirely.
+        parseResultMetadata.put("INGEST_DIR", buildTriggerRequestDTO.additionalProperties().getOrDefault("resultIngestDirectory", ingestDir));
 
         String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository().commitHash();
         if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
@@ -201,15 +206,6 @@ public class HadesService implements StatelessCIService {
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
         return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
-    }
-
-    private String resolveIngestDirectory(BuildTriggerRequestDTO buildTriggerRequestDTO) {
-        String projectType = buildTriggerRequestDTO.additionalProperties().get("projectType");
-        boolean isMaven = projectType != null && projectType.contains("MAVEN");
-        if ("JAVA".equals(buildTriggerRequestDTO.programmingLanguage()) && isMaven) {
-            return workingDir + "/target/surefire-reports";
-        }
-        return ingestDir;
     }
 
     private HttpHeaders createAuthHeaders() {
