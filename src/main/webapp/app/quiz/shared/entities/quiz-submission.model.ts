@@ -4,6 +4,7 @@ import type { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.
 export class QuizSubmission extends Submission {
     public scoreInPoints?: number;
     public submittedAnswers?: SubmittedAnswer[];
+    public quizBatch?: number;
 
     constructor() {
         super(SubmissionExerciseType.QUIZ);

@@ -11,15 +11,16 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { SubmissionResponseDTO } from 'app/exercise/shared/entities/submission/submission-response.dto';
 
 describe('Submission Service', () => {
     let service: SubmissionService;
     let httpMock: HttpTestingController;
     let expectedResult: any;
     let submission: TextSubmission;
+    let submissionResponseDTO: SubmissionResponseDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,6 +53,20 @@ describe('Submission Service', () => {
                 credits: 1,
             },
         ];
+        submissionResponseDTO = {
+            id: submission.id!,
+            submitted: submission.submitted!,
+            type: submission.type,
+            text: submission.text,
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            results: submission.results!.map((result) => ({
+                id: result.id!,
+                score: result.score,
+                rated: result.rated!,
+                hasComplaint: result.hasComplaint,
+                feedbacks: result.feedbacks,
+            })),
+        };
     });
 
     afterEach(() => {
@@ -69,32 +84,32 @@ describe('Submission Service', () => {
 
     it('should find all submissions of a given participation', () => {
         const participationId = 1;
-        const returnedFromService = [...[submission]];
-        const expected = [...[submission]];
         service
             .findAllSubmissionsOfParticipation(participationId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
+            .subscribe((resp) => {
+                expect(resp.body).toHaveLength(1);
+                expect(resp.body![0]).toBeInstanceOf(TextSubmission);
+                expect(resp.body![0].id).toBe(submission.id);
+                expect(resp.body![0].results![0].submission).toBe(resp.body![0]);
+            });
         const req = httpMock.expectOne({ url: `api/exercise/participations/${participationId}/submissions`, method: 'GET' });
-        req.flush(returnedFromService);
+        req.flush([submissionResponseDTO]);
     });
 
     it('should get test run submission for a given exercise', () => {
         const exerciseId = 1;
 
-        const returnedFromService = [submission];
-        const expected = [
-            {
-                ...submission,
-                latestResult: getLatestSubmissionResult(submission),
-            },
-        ];
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
+            .subscribe((resp) => {
+                expect(resp.body).toHaveLength(1);
+                expect(resp.body![0]).toBeInstanceOf(TextSubmission);
+                expect(resp.body![0].latestResult).toBe(resp.body![0].results![0]);
+            });
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
-        req.flush(returnedFromService);
+        req.flush([submissionResponseDTO]);
     });
 
     it('should handle feedback correction round tag', () => {
@@ -159,16 +174,12 @@ describe('Submission Service', () => {
         const submissionDateStr = '2022-02-02T12:34:56.789Z';
         const complaintSubmittedTimeStr = '2022-02-03T22:11:33.444Z';
 
-        const complaint: Complaint = {
-            submittedTime: complaintSubmittedTimeStr as any, // String should be converted to proper type by the tested service.
-        };
-        const returnedFromService: SubmissionWithComplaintDTO[] = [
+        const returnedFromService = [
             {
-                submission,
-                complaint,
+                submission: { ...submissionResponseDTO, submissionDate: submissionDateStr },
+                complaint: { id: 2, submittedTime: complaintSubmittedTimeStr, complaintIsAccepted: true },
             },
         ];
-        submission.submissionDate = submissionDateStr as any; // String should be converted to proper type by the tested service.
 
         service
             .getSubmissionsWithComplaintsForTutor(exerciseId)
@@ -178,6 +189,7 @@ describe('Submission Service', () => {
                 const submissionWithComplaint = resp.body![0];
                 expect(submissionWithComplaint.submission.submissionDate).toEqual(dayjs(submissionDateStr));
                 expect(submissionWithComplaint.complaint.submittedTime).toEqual(dayjs(complaintSubmittedTimeStr));
+                expect(submissionWithComplaint.complaint.accepted).toBe(true);
             });
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
         req.flush(returnedFromService);
