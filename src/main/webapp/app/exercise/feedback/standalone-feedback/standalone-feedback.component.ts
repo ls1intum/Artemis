@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -22,15 +22,14 @@ export class StandaloneFeedbackComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
 
-    exercise?: Exercise;
-    result?: Result;
-    participation: Participation;
+    readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly result = signal<Result | undefined>(undefined);
+    readonly participation = signal<Participation>(undefined!);
 
-    showMissingAutomaticFeedbackInformation = false;
-    messageKey?: string;
-    exerciseType?: ExerciseType;
+    readonly showMissingAutomaticFeedbackInformation = signal(false);
+    readonly messageKey = signal<string | undefined>(undefined);
 
-    latestDueDate?: dayjs.Dayjs;
+    readonly latestDueDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
@@ -39,41 +38,42 @@ export class StandaloneFeedbackComponent implements OnInit {
             const resultId = parseInt(params['resultId'], 10);
 
             this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                this.exercise = exerciseResponse.body!.exercise;
-                const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
+                const exercise = exerciseResponse.body!.exercise;
+                this.exercise.set(exercise);
+                const participation = exercise?.studentParticipations?.find((participation) => participation.id === participationId);
                 if (participation) {
-                    participation.exercise = this.exercise;
-                    this.participation = participation;
+                    participation.exercise = exercise;
+                    this.participation.set(participation);
                 }
 
                 const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);
 
-                this.result = relevantResult;
+                this.result.set(relevantResult);
 
                 // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
-                const templateStatus = evaluateTemplateStatus(this.exercise, participation, relevantResult, false);
+                const templateStatus = evaluateTemplateStatus(exercise, participation, relevantResult, false);
                 if (templateStatus == ResultTemplateStatus.MISSING) {
-                    this.messageKey = 'artemisApp.result.notLatestSubmission';
+                    this.messageKey.set('artemisApp.result.notLatestSubmission');
                 } else {
-                    this.messageKey = undefined;
+                    this.messageKey.set(undefined);
                 }
 
                 this.setup();
             });
 
             (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(exerciseId).subscribe((latestDueDate) => {
-                this.latestDueDate = latestDueDate;
+                this.latestDueDate.set(latestDueDate);
                 this.setup();
             });
         });
     }
 
     private setup() {
-        if (this.exercise && this.result) {
-            this.exerciseType = this.exercise.type!;
-
-            if (this.latestDueDate) {
-                this.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestDueDate);
+        const exercise = this.exercise();
+        if (exercise && this.result()) {
+            const latestDueDate = this.latestDueDate();
+            if (latestDueDate) {
+                this.showMissingAutomaticFeedbackInformation.set(dayjs().isBefore(latestDueDate));
             }
         }
     }

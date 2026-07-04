@@ -1,4 +1,5 @@
 import {
+    faAnglesRight,
     faArrowDown,
     faCheck,
     faChevronDown,
@@ -37,10 +38,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -66,7 +67,7 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -79,6 +80,7 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -140,6 +142,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
+        CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -148,9 +151,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
-    private readonly matDialog = inject(MatDialog);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
-    private aboutIrisMatDialogRef: MatDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -178,11 +179,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faAnglesRight = faAnglesRight;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -287,7 +289,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () =>
             this.isLoading() ||
             !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.hasActiveStage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
@@ -296,7 +298,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!this.suggestions()?.length &&
             this.isAIEnabled() &&
             this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);
@@ -345,6 +347,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /** Optional function provider that returns a list of context objects for the current message */
+    readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -523,7 +527,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         // Handle route query params (irisQuestion)
-        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: Params) => {
             if (params?.irisQuestion) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }
@@ -672,7 +676,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
         this.destroyRef.onDestroy(() => {
             this.aboutIrisDialogRef?.close();
-            this.aboutIrisMatDialogRef?.close();
         });
 
         // Placeholder cycling lifecycle
@@ -805,8 +808,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
+            const provider = this.contextProvider();
+            const context = provider ? provider() : undefined;
+
             this.chatService
-                .sendMessage(content)
+                .sendMessage(content, {}, context && context.length > 0 ? context : undefined)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {
@@ -1316,44 +1322,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (this.onboardingService.currentStep() === 3) {
             this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
         }
-        // The floating exercise chat widget lives inside a CDK MatDialog overlay and uses CSS
-        // transforms for drag/resize. In that specific case the About dialog must also use CDK
-        // to escape the widget's stacking context. Other Iris hosts with widget-like layout,
-        // such as the lecture fullscreen sidebar, should keep using PrimeNG.
-        if (this.shouldUseMaterialAboutDialog()) {
-            this.aboutIrisMatDialogRef?.close();
-            this.aboutIrisMatDialogRef = this.matDialog.open(AboutIrisModalComponent, {
-                hasBackdrop: true,
-                disableClose: true,
-                panelClass: 'about-iris-dialog',
-                backdropClass: 'about-iris-backdrop',
+        // The About dialog always uses PrimeNG's DynamicDialog. It is portaled to <body>, so it
+        // escapes the stacking context of the floating chat widget (itself a DynamicDialog) and
+        // renders above it regardless of the host layout (sidebar, lecture sidebar, or widget).
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
                 width: '40rem',
-                maxWidth: '95vw',
-            });
-        } else {
-            this.aboutIrisDialogRef?.close();
-            this.aboutIrisDialogRef =
-                this.dialogService.open(AboutIrisModalComponent, {
-                    modal: true,
-                    closable: false,
-                    showHeader: false,
-                    styleClass: 'about-iris-dialog',
-                    maskStyleClass: 'about-iris-dialog',
-                    width: '40rem',
-                    breakpoints: { '640px': '95vw' },
-                }) ?? undefined;
-        }
-    }
-
-    private shouldUseMaterialAboutDialog(): boolean {
-        const transport = this.aboutIrisDialogTransport();
-        if (transport === 'material') {
-            return true;
-        }
-        if (transport === 'dynamic') {
-            return false;
-        }
-        return this.layout() === 'widget';
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {

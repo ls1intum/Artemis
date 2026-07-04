@@ -1,4 +1,4 @@
-<jhi-lecture-unit-layout [isLoading]="isLoading">
+<jhi-lecture-unit-layout [isLoading]="isLoading()">
     <div class="col-4">
         <h2 id="page-heading">
             <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.split.unit"></span>
@@ -18,7 +18,7 @@
                 </tr>
             </thead>
             <tbody class="table-body" id="lecture-preview">
-                @for (unit of units; track unit; let i = $index) {
+                @for (unit of units(); track unit; let i = $index) {
                     <tr id="unit-row-{{ i }}">
                         <td>
                             <input
@@ -29,11 +29,11 @@
                                 placeholder="Unit Name"
                                 autocomplete="off"
                                 [defaultValue]="unit.unitName"
-                                [(ngModel)]="units[i].unitName"
+                                [(ngModel)]="units()[i].unitName"
                             />
                         </td>
                         <td>
-                            <jhi-date-time-picker [shouldDisplayTimeZoneWarning]="false" [(ngModel)]="units[i].releaseDate" name="releaseDate" id="release-date" />
+                            <jhi-date-time-picker [shouldDisplayTimeZoneWarning]="false" [(ngModel)]="units()[i].releaseDate" name="releaseDate" id="release-date" />
                         </td>
                         <td>
                             <input
@@ -52,7 +52,7 @@
                         <td>
                             <input
                                 required
-                                [max]="numberOfPages"
+                                [max]="numberOfPages()"
                                 [min]="unit.startPage"
                                 type="number"
                                 class="form-control"
@@ -65,7 +65,7 @@
                         </td>
                         <td>
                             <div class="text-center">
-                                <button [disabled]="units && units.length === 1" (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes" /></button>
+                                <button [disabled]="units().length === 1" (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes" /></button>
                             </div>
                         </td>
                     </tr>
@@ -85,7 +85,7 @@
                     <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesInfo.secondLine"></li>
                     <li>
                         {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
-                        {{ removedSlidesNumbers.length > 0 ? removedSlidesNumbers : '-' }}
+                        {{ removedSlidesNumbers().length > 0 ? removedSlidesNumbers() : '-' }}
                     </li>
                 </ul>
             </div>
@@ -99,7 +99,7 @@
             />
         </div>
     </div>
-    @if (units.length < 1) {
+    @if (units().length < 1) {
         <div class="alert alert-danger mt-3">
             <fa-icon [icon]="faExclamationTriangle" />
             {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noUnitDetected' | artemisTranslate }}
@@ -109,17 +109,17 @@
         [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processTimeInfo' | artemisTranslate"
         type="button"
         (click)="createAttachmentVideoUnits()"
-        [disabled]="units.length < 1"
+        [disabled]="units().length < 1"
         class="btn btn-primary"
     >
         <span jhiTranslate="entity.action.submit"></span>
     </button>
     <button (click)="cancelSplit()" class="btn btn-secondary"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-    @if (invalidUnitTableMessage) {
+    @if (invalidUnitTableMessage()) {
         <div class="alert alert-warning mt-3">
             <fa-icon [icon]="faExclamationTriangle" />
             <span>
-                {{ invalidUnitTableMessage }}
+                {{ invalidUnitTableMessage() }}
             </span>
         </div>
     }

@@ -1,11 +1,11 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
-    NgZone,
+    Injector,
     OnDestroy,
     ViewContainerRef,
     ViewEncapsulation,
+    afterNextRender,
     computed,
     effect,
     inject,
@@ -17,6 +17,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -46,6 +47,7 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -77,9 +79,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly fileService = inject(CodeEditorFileService);
     private readonly localStorageService = inject(LocalStorageService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
-    private readonly ngZone = inject(NgZone);
+    private readonly injector = inject(Injector);
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
@@ -153,7 +154,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     private addFeedbackKeydownListener?: Disposable;
     private renderScheduled = false;
     private renderFocusLine?: number;
-    private renderAnimationFrameId?: number;
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
     private pendingReviewRenderFile?: string;
@@ -320,9 +320,6 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.fileSyncReadySubscription?.unsubscribe();
         this.fileSyncStateReplacedSubscription?.unsubscribe();
         this.revokeImagePreview();
-        if (this.renderAnimationFrameId !== undefined) {
-            window.cancelAnimationFrame(this.renderAnimationFrameId);
-        }
         if (this.reviewRenderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.reviewRenderAnimationFrameId);
         }
@@ -350,8 +347,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     );
                 } catch (error) {
                     loadingError = true;
-                    if (error.message === ConnectionError.message) {
-                        this.onError.emit('loadingFailed' + error.message);
+                    const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+                    if (message === ConnectionError.message) {
+                        this.onError.emit('loadingFailed' + message);
                     } else {
                         this.onError.emit('loadingFailed');
                     }
@@ -402,8 +400,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.imagePreviewError.set(true);
-            if (error.message === ConnectionError.message) {
-                this.onError.emit('loadingFailed' + error.message);
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            if (message === ConnectionError.message) {
+                this.onError.emit('loadingFailed' + message);
             } else {
                 this.onError.emit('loadingFailed');
             }
@@ -503,7 +502,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     private setupAddFeedbackShortcut(): void {
         this.disposeAddFeedbackShortcut();
-        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event) => {
             const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
             const code = browserEvent?.code;
             const key = browserEvent?.key;
@@ -618,29 +617,30 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.renderScheduled = true;
-        this.renderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
+        // Run after the next render so the inline feedback nodes (driven by the feedback signals) exist in the DOM.
+        // Invariant: every caller must first write a notifying feedback signal (newFeedbackLines/feedbackInternal/
+        // feedbackSuggestionsInternal) so a render is actually pending; otherwise renderScheduled would latch.
+        afterNextRender(
+            () => {
                 this.renderScheduled = false;
-                this.ngZone.run(() => {
-                    this.changeDetectorRef.detectChanges();
-                    this.editor().disposeWidgetsByPrefix('feedback-');
-                    for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                        this.addLineWidgetWithFeedback(feedback);
-                    }
+                this.editor().disposeWidgetsByPrefix('feedback-');
+                for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                    this.addLineWidgetWithFeedback(feedback);
+                }
 
-                    // New, unsaved feedback has no associated object yet.
-                    for (const line of this.newFeedbackLines()) {
-                        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                        this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-                    }
+                // New, unsaved feedback has no associated object yet.
+                for (const line of this.newFeedbackLines()) {
+                    const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                    this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                }
 
-                    const focusLine = this.renderFocusLine;
-                    this.renderFocusLine = undefined;
-                    if (focusLine !== undefined) {
-                        this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-                    }
-                });
-            }),
+                const focusLine = this.renderFocusLine;
+                this.renderFocusLine = undefined;
+                if (focusLine !== undefined) {
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                }
+            },
+            { injector: this.injector },
         );
     }
 
@@ -652,14 +652,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
             return;
         }
         this.reviewRenderScheduled = true;
-        this.reviewRenderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
-            requestAnimationFrame(() => {
-                this.reviewRenderScheduled = false;
-                this.ngZone.run(() => {
-                    this.getReviewCommentManager().renderWidgets();
-                });
-            }),
-        );
+        this.reviewRenderAnimationFrameId = requestAnimationFrame(() => {
+            this.reviewRenderScheduled = false;
+            this.getReviewCommentManager().renderWidgets();
+        });
     }
 
     public scheduleReviewCommentRenderForSelectedFile(): void {
@@ -999,7 +995,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
+        return parseJson<{ [hash: string]: Annotation }>(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {

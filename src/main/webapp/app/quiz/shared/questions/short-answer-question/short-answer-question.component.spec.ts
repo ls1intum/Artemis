@@ -68,11 +68,11 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
 
-        expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
+        expect(component.textParts()).toStrictEqual([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion()).toStrictEqual(alternativeQuestion);
-        expect(extractSafeHtmlText(component.renderedQuestion.text)).toBe(`<p>${text}</p>`);
-        expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
-        expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().text)).toBe(`<p>${text}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().hint)).toBe(`<p>${hint}</p>`);
+        expect(extractSafeHtmlText(component.renderedQuestion().explanation)).toBe(`<p>${explanation}</p>`);
         expect(hideSampleSolutionSpy).toHaveBeenCalled();
         expect(component.showingSampleSolution()).toBeFalsy();
     });

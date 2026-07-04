@@ -1,4 +1,4 @@
-@if (isLoading || competencyLinks?.length) {
+@if (isLoading() || competencyLinks()?.length) {
     <div>
         <div class="d-flex align-items-center mb-1">
             @if (labelName()) {
@@ -11,21 +11,21 @@
                     <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
                 </fa-stack>
             }
-            @if (competencyLinks && competencyLinks.length > 0) {
+            @if (competencyLinks() && competencyLinks()!.length > 0) {
                 <jhi-button
                     [btnType]="ButtonType.WARNING"
-                    [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
+                    [disabled]="isSuggesting() || disabled() || !exerciseDescription()?.trim()"
                     (onClick)="suggestCompetencies()"
                     [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
                     [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
                     [btnSize]="ButtonSize.SMALL"
                     [icon]="faLightbulb"
-                    [isLoading]="isSuggesting"
+                    [isLoading]="isSuggesting()"
                     class="ms-2"
                 />
             }
         </div>
-        @if (isLoading) {
+        @if (isLoading()) {
             <div>
                 <div class="spinner-border" role="status">
                     <span class="visually-hidden" jhiTranslate="loading"></span>
@@ -33,16 +33,16 @@
             </div>
         } @else {
             <div class="competency-selector p-inputtext p-2" id="competency-selector">
-                @for (competencyLink of competencyLinks; track competencyLink) {
+                @for (competencyLink of competencyLinks(); track competencyLink) {
                     @if (competencyLink && competencyLink.competency && competencyLink.competency.id) {
                         <div class="mb-1">
                             <div class="d-flex align-items-center">
                                 <input
                                     id="competency-{{ competencyLink.competency.id }}"
                                     type="checkbox"
-                                    [ngModel]="checkboxStates[competencyLink.competency.id]"
+                                    [ngModel]="checkboxStates()[competencyLink.competency.id]"
                                     (ngModelChange)="toggleCompetency(competencyLink)"
-                                    [disabled]="disabled"
+                                    [disabled]="disabled()"
                                     class="me-2"
                                 />
                                 <label for="competency-{{ competencyLink.competency.id }}" class="d-flex align-items-center m-0">
@@ -53,7 +53,7 @@
                                     <fa-icon [icon]="faLightbulb" class="text-warning ms-2" [ngbTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate" />
                                 }
                             </div>
-                            @if (checkboxStates[competencyLink.competency.id]) {
+                            @if (checkboxStates()[competencyLink.competency.id]) {
                                 <select
                                     [ngModel]="
                                         competencyLink.weight < LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF

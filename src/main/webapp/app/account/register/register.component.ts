@@ -71,17 +71,17 @@ export class RegisterComponent implements AfterViewInit {
 
     readonly registerForm: FormGroup<RegisterForm>;
     /** Whether self-registration is enabled on this Artemis instance */
-    readonly isRegistrationEnabled: boolean;
+    readonly isRegistrationEnabled = signal(false);
     /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
     readonly allowedEmailPattern?: string;
     /** Human-readable description of allowed email pattern for display in UI */
-    readonly allowedEmailPatternReadable?: string;
+    readonly allowedEmailPatternReadable = signal<string | undefined>(undefined);
 
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.isRegistrationEnabled.set(profileInfo.registrationEnabled || false);
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
-        this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+        this.allowedEmailPatternReadable.set(profileInfo.allowedEmailPatternReadable);
 
         this.registerForm = new FormGroup<RegisterForm>({
             firstName: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(2)] }),

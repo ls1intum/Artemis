@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -169,6 +171,10 @@ public class DataExportCreationService {
         return true;
     }
 
+    private MailRecipientDTO adminMailRecipient() {
+        return new MailRecipientDTO(adminEmail, "en", "data-export-admin-recipient", "Administrator", null, null, null);
+    }
+
     private void handleEmailFailure(DataExport dataExport, EmailFailedException emailFailedException) {
         dataExport.setDataExportState(DataExportState.EMAIL_FAILED);
         dataExport = dataExportRepository.save(dataExport);
@@ -178,14 +184,8 @@ public class DataExportCreationService {
             return;
         }
 
-        // Create a recipient user object with the configured admin email
-        User adminRecipient = new User();
-        adminRecipient.setEmail(adminEmail);
-        adminRecipient.setLangKey("en");
-        adminRecipient.setLogin("data-export-admin-recipient");
-        adminRecipient.setFirstName("Administrator");
-
-        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, dataExport, emailFailedException);
+        MailRecipientDTO adminRecipient = adminMailRecipient();
+        mailService.sendDataExportEmailFailedEmailToAdmin(adminRecipient, DataExportEmailDTO.from(dataExport), emailFailedException);
     }
 
     /**
@@ -206,14 +206,8 @@ public class DataExportCreationService {
             return;
         }
 
-        // Create a recipient user object with the configured admin email
-        User adminRecipient = new User();
-        adminRecipient.setEmail(adminEmail);
-        adminRecipient.setLangKey("en");
-        adminRecipient.setLogin("data-export-admin-recipient");
-        adminRecipient.setFirstName("Administrator");
-
-        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, dataExport, exception);
+        MailRecipientDTO adminRecipient = adminMailRecipient();
+        mailService.sendDataExportFailedEmailToAdmin(adminRecipient, DataExportEmailDTO.from(dataExport), exception);
     }
 
     /**
@@ -228,7 +222,7 @@ public class DataExportCreationService {
         dataExport.setCreationFinishedDate(ZonedDateTime.now());
         dataExport = dataExportRepository.save(dataExport);
         try {
-            mailService.sendDataExportCreatedEmail(dataExport.getUser(), dataExport);
+            mailService.sendDataExportCreatedEmail(MailRecipientDTO.from(dataExport.getUser()), DataExportEmailDTO.from(dataExport));
         }
         catch (Exception e) {
             log.error("Failed to send data export created email to user {}", dataExport.getUser().getLogin(), e);

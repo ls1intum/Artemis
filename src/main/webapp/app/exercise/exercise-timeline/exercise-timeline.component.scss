@@ -92,11 +92,6 @@
                 .timeline-datepicker-info-icon {
                     width: 1rem;
                     color: var(--bs-danger);
-                    visibility: hidden;
-
-                    &.visible {
-                        visibility: visible;
-                    }
                 }
             }
 

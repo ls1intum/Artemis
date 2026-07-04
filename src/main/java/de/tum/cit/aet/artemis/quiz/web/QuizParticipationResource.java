@@ -168,6 +168,11 @@ public class QuizParticipationResource {
             throw new BadRequestAlertException("The participation does not belong to the specified exercise", "participation", "exerciseMismatch");
         }
 
+        // Practice participations use unrated results (rated = false); graded participations use rated results.
+        // The original code only searched for rated=true results, so practice attempts never returned a valid
+        // result, leaving the quiz question view without any correctness indicators.
+        boolean isPractice = participation.isTestRun();
+
         QuizSubmission submission;
         Result result;
         if (submissionId != null) {
@@ -176,10 +181,22 @@ public class QuizParticipationResource {
             if (!participationId.equals(submission.getParticipation().getId())) {
                 throw new BadRequestAlertException("The submission does not belong to the specified participation", "quizSubmission", "participationMismatch");
             }
-            result = submission.getResults().stream().filter(Result::isRated).max(Comparator.comparing(Result::getCompletionDate)).orElse(new Result());
+            if (isPractice) {
+                // Practice results are unrated — do not filter by isRated().
+                result = submission.getResults().stream().max(Comparator.comparing(Result::getCompletionDate)).orElse(new Result());
+            }
+            else {
+                result = submission.getResults().stream().filter(Result::isRated).max(Comparator.comparing(Result::getCompletionDate)).orElse(new Result());
+            }
         }
         else {
-            result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).orElse(new Result());
+            if (isPractice) {
+                // Practice results are unrated; find the most recent result regardless of the rated flag.
+                result = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).orElse(new Result());
+            }
+            else {
+                result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).orElse(new Result());
+            }
             if (result.getId() != null) {
                 submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
             }

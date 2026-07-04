@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -35,8 +35,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
     isLoading = false;
     course?: Course;
-    competencies: Competency[] = [];
-    prerequisites: Competency[] = [];
+    readonly competencies = signal<Competency[]>([]);
+    readonly prerequisites = signal<Competency[]>([]);
     parentParamSubscription: Subscription;
 
     isCollapsed = true;
@@ -67,15 +67,15 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     }
 
     get countCompetencies() {
-        return this.competencies.length;
+        return this.competencies().length;
     }
 
     get countMasteredCompetencies() {
-        return this.competencies.filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
+        return this.competencies().filter((competency) => getMastery(competency.userProgress?.first()) >= (competency.masteryThreshold ?? 100)).length;
     }
 
     get countPrerequisites() {
-        return this.prerequisites.length;
+        return this.prerequisites().length;
     }
 
     /**
@@ -87,13 +87,13 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         this.courseCompetencyService.getAllForCourse(this.resolvedCourseId(), false).subscribe({
             next: (courseCompetencies) => {
                 const courseCompetenciesResponse = courseCompetencies.body ?? [];
-                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY).sort(compareSoftDueDate);
-                this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
+                this.competencies.set(courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY).sort(compareSoftDueDate));
+                this.prerequisites.set(courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE));
 
                 // Also update the course, so we do not need to fetch again next time
                 if (this.course) {
-                    this.course.competencies = this.competencies;
-                    this.course.prerequisites = this.prerequisites;
+                    this.course.competencies = this.competencies();
+                    this.course.prerequisites = this.prerequisites();
                 }
                 this.isLoading = false;
             },

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,10 +22,10 @@ export class QuizConfirmImportInvalidQuestionsModalComponent implements OnInit {
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
 
-    invalidFlaggedQuestions: ValidationReason[];
+    readonly invalidFlaggedQuestions = signal<ValidationReason[]>(undefined!);
 
     ngOnInit() {
-        this.invalidFlaggedQuestions = this.dialogConfig.data.invalidFlaggedQuestions;
+        this.invalidFlaggedQuestions.set(this.dialogConfig.data.invalidFlaggedQuestions);
     }
 
     /**

@@ -25,7 +25,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
 
-    platform: LtiPlatformConfiguration;
+    readonly platform = signal<LtiPlatformConfiguration>(undefined!);
     platformConfigurationForm: FormGroup;
 
     /** Whether save is in progress */
@@ -54,7 +54,7 @@ export class EditLtiConfigurationComponent implements OnInit {
             this.isEditMode.set(true);
             this.ltiConfigurationService.getLtiPlatformById(Number(platformId)).subscribe({
                 next: (data) => {
-                    this.platform = data;
+                    this.platform.set(data);
                     this.patchFormValues();
                 },
                 error: (error) => {
@@ -76,7 +76,7 @@ export class EditLtiConfigurationComponent implements OnInit {
         }
         this.isSaving.set(true);
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
-        if (this.platform?.id) {
+        if (this.platform()?.id) {
             this.updateLtiConfiguration(platformConfiguration);
         } else {
             this.addLtiConfiguration(platformConfiguration);
@@ -86,7 +86,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Update existing platform configuration
      */
-    updateLtiConfiguration(platformConfiguration: any) {
+    updateLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -105,7 +105,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Create new platform configuration
      */
-    addLtiConfiguration(platformConfiguration: any) {
+    addLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -151,16 +151,17 @@ export class EditLtiConfigurationComponent implements OnInit {
     }
 
     private patchFormValues() {
-        if (this.platform && this.platformConfigurationForm) {
+        const platform = this.platform();
+        if (platform && this.platformConfigurationForm) {
             this.platformConfigurationForm.patchValue({
-                id: this.platform.id,
-                registrationId: this.platform.registrationId,
-                originalUrl: this.platform.originalUrl ?? '',
-                customName: this.platform.customName ?? '',
-                clientId: this.platform.clientId,
-                authorizationUri: this.platform.authorizationUri,
-                tokenUri: this.platform.tokenUri,
-                jwkSetUri: this.platform.jwkSetUri,
+                id: platform.id,
+                registrationId: platform.registrationId,
+                originalUrl: platform.originalUrl ?? '',
+                customName: platform.customName ?? '',
+                clientId: platform.clientId,
+                authorizationUri: platform.authorizationUri,
+                tokenUri: platform.tokenUri,
+                jwkSetUri: platform.jwkSetUri,
             });
         }
     }
@@ -169,6 +170,6 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['admin', 'lti-configuration']);
+        void this.router.navigate(['admin', 'lti-configuration']);
     }
 }

@@ -4,7 +4,7 @@ import { forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -16,10 +16,10 @@ import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
-import { mean, median, standardDeviation } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
 import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
@@ -189,7 +189,7 @@ export class CourseScoresComponent implements OnInit {
         this.initializeExerciseTitles();
         this.includedExercises.set(this.determineExercisesIncludedInScore(course));
         this.numberOfReleasedExercises.set(this.determineReleasedExercises(course).length);
-        this.calculateCourseStatistics(course.id!);
+        void this.calculateCourseStatistics(course.id!);
     }
 
     /**
@@ -279,7 +279,7 @@ export class CourseScoresComponent implements OnInit {
             const stats = this.studentStatistics();
             const maxPoints = this.maxNumberOfOverallPoints();
             const course = this.course();
-            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course!)));
+            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course)));
             this.highlightBar(HighlightType.AVERAGE);
         });
     }
@@ -330,7 +330,7 @@ export class CourseScoresComponent implements OnInit {
             const reachablePointsWithPresentation = (-maxOverall / (presentationsWeight - 100)) * 100;
             const reachablePresentationPoints = (reachablePointsWithPresentation * presentationsWeight) / 100.0;
             const course = this.course();
-            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course!));
+            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course));
             this.maxNumberOfOverallPoints.set(maxOverall + this.maxNumberOfPresentationPoints());
         }
     }
@@ -405,7 +405,7 @@ export class CourseScoresComponent implements OnInit {
         const course = this.course()!;
 
         if (studentStatistics.presentationScore > 0 && presentationsNumber > 0 && maxPresentationPoints > 0) {
-            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber!;
+            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber;
             const presentationPoints = (maxPresentationPoints * presentationPointAvg) / 100.0;
 
             studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, course);
@@ -486,7 +486,7 @@ export class CourseScoresComponent implements OnInit {
     setUpGradingScale(gradingScaleDTO: GradingScaleDTO) {
         this.gradingScaleExists.set(true);
         gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()!));
+        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()));
         this.isBonus.set(gradingScaleDTO.gradeSteps.gradeType === GradeType.BONUS);
         this.maxGrade.set(this.gradingService.maxGrade(gradingScaleDTO.gradeSteps.gradeSteps));
     }
@@ -529,13 +529,15 @@ export class CourseScoresComponent implements OnInit {
         if (!studentStatistics.gradeScores.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
-            return {
+            const noParticipationGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
-            } as GradeStep;
-        } else if (plagiarismMap[studentStatistics.student.id!]) {
-            return {
+            };
+            return noParticipationGradeStep as GradeStep;
+        } else if (plagiarismMap[studentStatistics.student.id]) {
+            const plagiarismGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
-            } as GradeStep;
+            };
+            return plagiarismGradeStep as GradeStep;
         } else {
             const overallPercentageForStudent = studentStatistics.overallPoints && maxOverall ? (studentStatistics.overallPoints / maxOverall) * 100 : 0;
             return this.gradingService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
@@ -618,17 +620,14 @@ export class CourseScoresComponent implements OnInit {
      */
     exportAsCsv(keys: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const course = this.course()!;
-        const generalExportOptions = {
-            showLabels: true,
-            showTitle: false,
-            filename: `${course.title} Scores`,
-            useTextFile: false,
-            useBom: true,
+        downloadCsv(rows, {
             columnHeaders: keys,
-        };
-        const csvExportConfig = mkConfig(Object.assign(generalExportOptions, customOptions));
-        const csvData = generateCsv(csvExportConfig)(rows);
-        download(csvExportConfig)(csvData);
+            fileName: `${course.title} Scores`,
+            fieldSeparator: customOptions.fieldSeparator,
+            quoteStrings: customOptions.quoteStrings,
+            quoteCharacter: customOptions.quoteCharacter,
+            decimalSeparator: customOptions.decimalSeparator,
+        });
     }
 
     /**

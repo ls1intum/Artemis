@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 import org.jspecify.annotations.Nullable;
 
@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LtiPlatformConfigurationUpdateDTO(@Nullable Long id, @Nullable String registrationId, @NotNull String clientId, @Nullable String originalUrl,
-        @Nullable String customName, @NotNull String authorizationUri, @NotNull String jwkSetUri, @NotNull String tokenUri) {
+public record LtiPlatformConfigurationUpdateDTO(@Nullable Long id, @Nullable String registrationId, @NotBlank String clientId, @Nullable String originalUrl,
+        @Nullable String customName, @NotBlank String authorizationUri, @NotBlank String jwkSetUri, @NotBlank String tokenUri) {
 
     /**
      * Creates a LtiPlatformConfigurationUpdateDTO from the given LtiPlatformConfiguration domain object.

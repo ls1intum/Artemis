@@ -13,6 +13,7 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 describe('SavedPostsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -79,8 +80,8 @@ describe('SavedPostsComponent', () => {
             fixture.detectChanges();
 
             expect(savedPostService.fetchSavedPosts).toHaveBeenCalledWith(courseId, status);
-            expect(component['posts']).toEqual(mockPostings);
-            expect(component['hiddenPosts']).toEqual([]);
+            expect(component['posts']()).toEqual(mockPostings);
+            expect(component['hiddenPosts']()).toEqual([]);
         });
 
         it('should handle empty response', () => {
@@ -92,7 +93,7 @@ describe('SavedPostsComponent', () => {
             fixture.componentRef.setInput('savedPostStatus', status);
             fixture.detectChanges();
 
-            expect(component['posts']).toEqual([]);
+            expect(component['posts']()).toEqual([]);
         });
 
         it('should handle error response', () => {
@@ -104,7 +105,7 @@ describe('SavedPostsComponent', () => {
             fixture.componentRef.setInput('savedPostStatus', status);
             fixture.detectChanges();
 
-            expect(component['posts']).toEqual([]);
+            expect(component['posts']()).toEqual([]);
         });
     });
 
@@ -116,7 +117,7 @@ describe('SavedPostsComponent', () => {
             component['changeSavedPostStatus'](mockPosting, newStatus);
 
             expect(savedPostService.changeSavedPostStatus).toHaveBeenCalledWith(mockPosting, SavedPostStatus.ARCHIVED);
-            expect(component['hiddenPosts']).toContain(mockPosting.id);
+            expect(component['hiddenPosts']()).toContain(mockPosting.id);
         });
 
         it('should handle error when changing post status', () => {
@@ -136,7 +137,7 @@ describe('SavedPostsComponent', () => {
             component['removeSavedPost'](mockPosting);
 
             expect(savedPostService.removeSavedPost).toHaveBeenCalledWith(mockPosting);
-            expect(component['hiddenPosts']).toContain(mockPosting.id);
+            expect(component['hiddenPosts']()).toContain(mockPosting.id);
         });
 
         it('should handle error when removing saved post', () => {
@@ -156,6 +157,14 @@ describe('SavedPostsComponent', () => {
 
             expect(emitSpy).toHaveBeenCalledWith(mockPosting);
         });
+
+        it('should open the sidebar when openSidebar is called', () => {
+            const openSidebarSpy = vi.spyOn(TestBed.inject(CourseSidebarService), 'openSidebar');
+
+            component['openSidebar']();
+
+            expect(openSidebarSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('Template interaction', () => {
@@ -166,7 +175,7 @@ describe('SavedPostsComponent', () => {
         });
 
         it('should show empty notice when no posts are available', () => {
-            component['posts'] = [];
+            component['posts'].set([]);
             fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.IN_PROGRESS);
             fixture.componentRef.setInput('courseId', 1);
             fixture.detectChanges();
@@ -195,7 +204,7 @@ describe('SavedPostsComponent', () => {
             fixture.detectChanges();
 
             const optionsElement = fixture.nativeElement.querySelector('.saved-posts-delete-notice');
-            expect(component['isShowDeleteNotice']).toBeTruthy();
+            expect(component['isShowDeleteNotice']()).toBeTruthy();
             expect(optionsElement).toBeTruthy();
         });
     });

@@ -93,22 +93,22 @@ describe('TutorEffortStatisticsComponent', () => {
 
     it('should check tutor effort response handler with non-empty input', () => {
         component.handleTutorEffortResponse(tutorEffortsMocked);
-        expect(component.tutorEfforts).toEqual(tutorEffortsMocked);
-        expect(component.numberOfSubmissions).toBe(3);
-        expect(component.totalTimeSpent).toBe(51);
-        expect(component.averageTimeSpent).toBe(Math.round((component.numberOfSubmissions / component.totalTimeSpent + Number.EPSILON) * 100) / 100);
-        checkNgxData();
+        expect(component.tutorEfforts()).toEqual(tutorEffortsMocked);
+        expect(component.numberOfSubmissions()).toBe(3);
+        expect(component.totalTimeSpent()).toBe(51);
+        expect(component.averageTimeSpent()).toBe(Math.round((component.numberOfSubmissions() / component.totalTimeSpent() + Number.EPSILON) * 100) / 100);
+        checkChartEntries();
     });
 
     it('should check tutor effort response handler with empty input', () => {
         component.currentExerciseId = 1;
         const expected: TutorEffort[] = [];
         component.handleTutorEffortResponse(expected);
-        expect(component.tutorEfforts).toEqual(expected);
-        expect(component.numberOfSubmissions).toBe(0);
-        expect(component.totalTimeSpent).toBe(0);
-        expect(component.averageTimeSpent).toBe(0);
-        checkNgxData();
+        expect(component.tutorEfforts()).toEqual(expected);
+        expect(component.numberOfSubmissions()).toBe(0);
+        expect(component.totalTimeSpent()).toBe(0);
+        expect(component.averageTimeSpent()).toBe(0);
+        checkChartEntries();
     });
 
     it('should call loadNumberOfTutorsInvolved', () => {
@@ -117,7 +117,7 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should call distributeEffortToSets', () => {
-        component.tutorEfforts = tutorEffortsMocked;
+        component.tutorEfforts.set(tutorEffortsMocked);
         const expected = new Array<number>(13).fill(0);
         expected[0] = 1;
         expected[2] = 1;
@@ -127,7 +127,7 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should show the table headers if tutor efforts list is not empty', () => {
-        component.tutorEfforts = tutorEffortsMocked;
+        component.tutorEfforts.set(tutorEffortsMocked);
         fixture.changeDetectorRef.detectChanges();
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
         const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
@@ -140,7 +140,7 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should show the no data message if tutor efforts list is empty', () => {
-        component.tutorEfforts = [];
+        component.tutorEfforts.set([]);
         fixture.changeDetectorRef.detectChanges();
         const noData = compiled.querySelector('[jhiTranslate$=noData]');
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
@@ -175,16 +175,16 @@ describe('TutorEffortStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.medianValue).toBe(25);
+        expect(component.medianValue()).toBe(25);
 
         const assessedSubmissionsMedian = component.getMedianAmountOfAssessedSubmissions('[30-40)');
 
         expect(assessedSubmissionsMedian).toBe(8);
     });
 
-    const checkNgxData = () => {
+    const checkChartEntries = () => {
         for (let i = 0; i < component.effortDistribution.length; i++) {
-            expect(component.ngxData[i].value).toBe(component.effortDistribution[i]);
+            expect(component.chartEntries()[i].value).toBe(component.effortDistribution[i]);
         }
     };
 });

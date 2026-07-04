@@ -66,7 +66,7 @@ describe('CompetencySearchComponent', () => {
     it('should submit with advanced search', () => {
         componentFixture.detectChanges();
         initializeSearch();
-        component.advancedSearchEnabled = true;
+        component.advancedSearchEnabled.set(true);
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
         expect(component.search()).toEqual({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
@@ -77,10 +77,10 @@ describe('CompetencySearchComponent', () => {
         const advancedSearchToggle = componentFixture.debugElement.nativeElement.querySelector('#toggleAdvancedSearch');
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeTruthy();
+        expect(component.advancedSearchEnabled()).toBeTruthy();
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeFalsy();
+        expect(component.advancedSearchEnabled()).toBeFalsy();
     });
 
     function initializeSearch(): void {

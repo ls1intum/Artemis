@@ -55,7 +55,7 @@ describe('CourseDescriptionFormComponent', () => {
         expect(courseDescriptionComponent.isSubmitPossible).toBeTruthy();
         courseDescriptionComponent.submitForm();
 
-        expect(courseDescriptionComponent.hasBeenSubmitted).toBeTruthy();
+        expect(courseDescriptionComponent.hasBeenSubmitted()).toBeTruthy();
         expect(formSubmittedEmitSpy).toHaveBeenCalledOnce();
     });
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
@@ -27,10 +27,10 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     delayedAnalysisSubject = new Subject<string>();
     analysisSubscription: Subscription;
 
-    invalidTestCases: string[] = [];
-    missingTestCases: string[] = [];
-    repeatedTestCases: string[] = [];
-    numOfTasks = 0;
+    readonly invalidTestCases = signal<string[]>([]);
+    readonly missingTestCases = signal<string[]>([]);
+    readonly repeatedTestCases = signal<string[]>([]);
+    readonly numOfTasks = signal(0);
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -70,10 +70,10 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
                         this.taskRegex()!,
                         this.exerciseTestCases()!,
                     );
-                    this.missingTestCases = missingTestCases;
-                    this.invalidTestCases = invalidTestCases;
-                    this.repeatedTestCases = repeatedTestCases;
-                    this.numOfTasks = numOfTasks;
+                    this.missingTestCases.set(missingTestCases);
+                    this.invalidTestCases.set(invalidTestCases);
+                    this.repeatedTestCases.set(repeatedTestCases);
+                    this.numOfTasks.set(numOfTasks);
                     return completeAnalysis;
                 }),
                 tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),

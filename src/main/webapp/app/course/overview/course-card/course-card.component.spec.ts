@@ -17,6 +17,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { MockComponent } from 'ng-mocks';
+import { ChartModule, UIChart } from 'primeng/chart';
 
 describe('CourseCardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -44,6 +46,9 @@ describe('CourseCardComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
+        }).overrideComponent(CourseCardComponent, {
+            remove: { imports: [ChartModule] },
+            add: { imports: [MockComponent(UIChart)] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseCardComponent);
@@ -77,5 +82,12 @@ describe('CourseCardComponent', () => {
         expect(component.totalRelativeScore()).toBe(0.2);
         expect(component.totalAbsoluteScore()).toBe(4);
         expect(component.totalReachableScore()).toBe(20);
+    });
+
+    it('should show the translated chart label as tooltip title and the value as body', () => {
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.title([{ label: 'missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(callbacks.label({ parsed: 400 })).toBe('400');
     });
 });

@@ -431,7 +431,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         if (relationGraphPreview) {
             message.relationGraphPreview = relationGraphPreview;
-            // Pre-compute graph data for stable rendering with ngx-graph
+            // Pre-compute graph data for stable rendering of the relation graph
             // Pass message.id to ensure unique edge IDs across multiple graph instances
             message.graphCompetencies = this.convertNodesToCompetencies(relationGraphPreview.nodes);
             message.graphRelations = this.convertEdgesToRelations(relationGraphPreview.edges, message.id);
@@ -595,7 +595,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     /**
      * Generates a stable positive integer hash from a string.
-     * Used to create consistent numeric IDs for ngx-graph edges.
+     * Used to create consistent numeric IDs for relation graph edges.
      */
     private hashStringToPositiveInt(str: string): number {
         let hash = 0;

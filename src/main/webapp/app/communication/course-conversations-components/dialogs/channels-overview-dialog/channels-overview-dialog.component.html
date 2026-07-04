@@ -1,4 +1,4 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
+<jhi-loading-indicator-container [isLoading]="isLoading()">
     @if (isInitialized) {
         <div class="channels-overview">
             <div class="modal-header">
@@ -9,11 +9,11 @@
             </div>
             <div class="modal-body">
                 <!-- Overview Table -->
-                @if (channels && channels.length > 0) {
+                @if (channels().length > 0) {
                     <div class="form-group mt-2">
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
-                                @for (channel of channels; track channels.indexOf(channel)) {
+                                @for (channel of channels(); track channel.id) {
                                     <li [id]="'channel-' + channel.id" class="list-group-item">
                                         <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                     </li>

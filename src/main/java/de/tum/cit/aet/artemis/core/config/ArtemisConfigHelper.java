@@ -317,7 +317,7 @@ public class ArtemisConfigHelper {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
             throw new RuntimeException(
-                    String.format("Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false", key));
+                    "Property %s not found in Artemis configuration. Make sure to add it to your application.yml-file. Allowed values: true, false".formatted(key));
         }
         return value;
     }

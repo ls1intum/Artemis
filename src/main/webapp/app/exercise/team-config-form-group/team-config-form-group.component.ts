@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, OnInit, input, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, input, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -30,7 +30,20 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
-    config: TeamAssignmentConfig;
+    // `config` is bound deep two-way in the template (`[(ngModel)]="config.minTeamSize/maxTeamSize"`),
+    // which a bare signal cannot back. We expose a getter/setter facade over a signal so the template
+    // keeps writing `config.*` while reads stay reactive; `commitConfig()` rebuilds the reference after
+    // in-place mutations so the signal actually fires under zoneless change detection.
+    private readonly _config = signal<TeamAssignmentConfig>(undefined!);
+    get config(): TeamAssignmentConfig {
+        return this._config();
+    }
+    set config(value: TeamAssignmentConfig) {
+        this._config.set(value);
+    }
+    private commitConfig(): void {
+        this._config.update((c) => Object.assign(new TeamAssignmentConfig(), c));
+    }
     readonly modePickerOptions: ModePickerOption<ExerciseMode>[] = [
         {
             value: ExerciseMode.INDIVIDUAL,
@@ -103,6 +116,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
      */
     updateMinTeamSize(minTeamSize: number) {
         this.config.maxTeamSize = Math.max(this.config.maxTeamSize!, minTeamSize);
+        this.commitConfig();
         this.applyCurrentConfig();
     }
 
@@ -112,6 +126,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
      */
     updateMaxTeamSize(maxTeamSize: number) {
         this.config.minTeamSize = Math.min(this.config.minTeamSize!, maxTeamSize);
+        this.commitConfig();
         this.applyCurrentConfig();
     }
 

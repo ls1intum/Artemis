@@ -78,16 +78,16 @@ describe('TutorialGroupsExportButtonComponent', () => {
 
     it('should select all fields when toggleSelectAll is called', () => {
         component.toggleSelectAll();
-        expect(component.selectAll).toBe(true);
-        expect(component.selectedFields).toHaveLength(component.availableFields.length);
+        expect(component.selectAll()).toBe(true);
+        expect(component.selectedFields()).toHaveLength(component.availableFields.length);
         expect(component.availableFields.every((field) => field.selected)).toBe(true);
     });
 
     it('should deselect all fields when toggleSelectAll is called twice', () => {
         component.toggleSelectAll();
         component.toggleSelectAll();
-        expect(component.selectAll).toBe(false);
-        expect(component.selectedFields).toHaveLength(0);
+        expect(component.selectAll()).toBe(false);
+        expect(component.selectedFields()).toHaveLength(0);
         expect(component.availableFields.every((field) => !field.selected)).toBe(true);
     });
 
@@ -95,7 +95,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         const field = component.availableFields[0];
         component.onFieldSelectionChange(field);
         expect(field.selected).toBe(true);
-        expect(component.selectedFields).toContain(field.value);
+        expect(component.selectedFields()).toContain(field.value);
     });
 
     it('should export CSV successfully', () => {
@@ -105,7 +105,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportCSV();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(component.dialogVisible()).toBe(false);
     });
 
@@ -115,7 +115,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportCSV();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToCSV).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedCSV');
         expect(component.dialogVisible()).toBe(false);
     });
@@ -126,7 +126,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportJSON();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(component.dialogVisible()).toBe(false);
     });
 
@@ -136,7 +136,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         component.dialogVisible.set(true);
         component.exportJSON();
 
-        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields);
+        expect(mockTutorialGroupApiService.exportTutorialGroupsToJSON).toHaveBeenCalledWith(exampleCourseId, component.selectedFields());
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.tutorialGroupExportDialog.failedJSON');
         expect(component.dialogVisible()).toBe(false);
     });

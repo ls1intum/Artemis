@@ -1,7 +1,6 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { Node } from '@swimlane/ngx-graph';
+import { CourseCompetencyGraphNode, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseCompetencyRelationNodeComponent } from 'app/atlas/manage/course-competency-relation-node/course-competency-relation-node.component';
@@ -12,10 +11,11 @@ describe('CourseCompetencyRelationNodeComponent', () => {
     let component: CourseCompetencyRelationNodeComponent;
     let fixture: ComponentFixture<CourseCompetencyRelationNodeComponent>;
 
-    const node: Node = {
+    const node: CourseCompetencyGraphNode = {
         id: '1',
         label: 'Competency 1',
         data: {
+            id: 1,
             type: CourseCompetencyType.COMPETENCY,
         },
     };

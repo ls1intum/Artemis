@@ -28,7 +28,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
-    readonly typing$ = input<Observable<any> | undefined>(undefined);
+    readonly typing$ = input<Observable<string> | undefined>(undefined);
     readonly participation = input.required<StudentParticipation>();
 
     currentUser: User;
@@ -49,7 +49,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * client sometimes and thus the list is explicitly requested once more after a short timeout to cover those cases.
      */
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.setupOnlineTeamStudentsReceiver();
             this.setupTypingIndicatorSender();

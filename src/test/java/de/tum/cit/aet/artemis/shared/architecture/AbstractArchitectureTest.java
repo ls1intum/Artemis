@@ -122,7 +122,7 @@ public abstract class AbstractArchitectureTest {
                         // This allows parameters with multiple annotations (e.g. @NonNull @Param)
                         .allMatch(annotations -> annotations.stream().anyMatch(annotationPredicate));
                 if (!satisfied) {
-                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                    events.add(violated(item, "Method %s has parameter violating %s".formatted(item.getFullName(), annotationPredicate.getDescription())));
                 }
             }
         };
@@ -135,7 +135,7 @@ public abstract class AbstractArchitectureTest {
             public void check(JavaMethod item, ConditionEvents events) {
                 boolean satisfied = item.getParameterAnnotations().stream().flatMap(Collection::stream).noneMatch(annotationPredicate);
                 if (!satisfied) {
-                    events.add(violated(item, String.format("Method %s has parameter violating %s", item.getFullName(), annotationPredicate.getDescription())));
+                    events.add(violated(item, "Method %s has parameter violating %s".formatted(item.getFullName(), annotationPredicate.getDescription())));
                 }
             }
         };

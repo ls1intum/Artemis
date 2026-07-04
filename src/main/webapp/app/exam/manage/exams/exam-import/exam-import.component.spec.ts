@@ -5,11 +5,13 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -79,6 +81,10 @@ describe('Exam Import Component', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ExerciseService,
+                    useValue: { getExistingExerciseDetailsInCourse: () => of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() }) },
+                },
             ],
         }).compileComponents();
 
@@ -100,7 +106,7 @@ describe('Exam Import Component', () => {
     it('should correctly open the exercise selection', () => {
         vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
         component.openExerciseSelection(exam1);
-        expect(component.exam).toEqual(exam1WithExercises);
+        expect(component.exam()).toEqual(exam1WithExercises);
     });
 
     it('should correctly show an error for the exercise selection, if the server throws an error', () => {
@@ -110,7 +116,7 @@ describe('Exam Import Component', () => {
         vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(throwError(() => error));
         const alertSpy = vi.spyOn(alertService, 'error');
         component.openExerciseSelection(exam1);
-        expect(component.exam).toBeUndefined();
+        expect(component.exam()).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
     });
 
@@ -121,10 +127,10 @@ describe('Exam Import Component', () => {
         component.performImportOfExerciseGroups();
 
         component.subsequentExerciseGroupSelection.set(true);
-        component.exam = undefined;
+        component.exam.set(undefined);
         component.performImportOfExerciseGroups();
 
-        component.exam = exam1WithExercises;
+        component.exam.set(exam1WithExercises);
         component.targetExamId.set(undefined);
         component.performImportOfExerciseGroups();
 
@@ -137,18 +143,12 @@ describe('Exam Import Component', () => {
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
-    it('should perform import of exercise groups successfully', () => {
-        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
-            of(
-                new HttpResponse({
-                    status: 200,
-                    body: [exerciseGroup1],
-                }),
-            ),
-        );
+    it('should perform import of exercise groups successfully', async () => {
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of(new HttpResponse({ status: 200, body: { exerciseGroups: [exerciseGroup1] } })));
         const alertSpy = vi.spyOn(alertService, 'error');
 
-        performImport(importSpy);
+        // The progress dialog resolves with the import result once the user dismisses it
+        await performImport(importSpy, { resolve: new HttpResponse({ status: 200, body: { exerciseGroups: [exerciseGroup1] } }) });
         expect(alertSpy).not.toHaveBeenCalled();
         expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).toHaveBeenCalledWith([exerciseGroup1]);
@@ -159,7 +159,7 @@ describe('Exam Import Component', () => {
             of(
                 new HttpResponse({
                     status: 200,
-                    body: [exerciseGroup1],
+                    body: { exerciseGroups: [exerciseGroup1] },
                 }),
             ),
         );
@@ -170,7 +170,7 @@ describe('Exam Import Component', () => {
         const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
-        component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
+        component.exam.set({ id: 1, exerciseGroups: [exerciseGroup2] } as Exam);
         component.targetCourseId.set(1);
         component.targetExamId.set(3);
         fixture.detectChanges();
@@ -182,7 +182,7 @@ describe('Exam Import Component', () => {
 
     it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
         'should perform import of exercise groups AND correctly process conflict from server',
-        (errorKey) => {
+        async (errorKey) => {
             const preCheckError = new HttpErrorResponse({
                 error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 0, params: { exerciseGroups: [exerciseGroup1] } },
                 status: 400,
@@ -190,7 +190,8 @@ describe('Exam Import Component', () => {
             const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
             const alertSpy = vi.spyOn(alertService, 'error');
 
-            performImport(importSpy);
+            // A validation error is returned before the progress dialog shows a summary; the dialog rejects with it
+            await performImport(importSpy, { reject: preCheckError });
             if (errorKey == 'invalidKey') {
                 expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 0 });
             } else {
@@ -200,26 +201,39 @@ describe('Exam Import Component', () => {
         },
     );
 
-    it('should perform import of exercise groups AND correctly process arbitrary exception from server', () => {
+    it('should perform import of exercise groups AND correctly process arbitrary exception from server', async () => {
         const error = new HttpErrorResponse({
             status: 400,
         });
         const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
         const alertSpy = vi.spyOn(alertService, 'error');
-        performImport(importSpy);
+        await performImport(importSpy, { reject: error });
 
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
-    function performImport(importSpy: ReturnType<typeof vi.spyOn>): void {
-        component.exam = exam1WithExercises;
+    /**
+     * Drives a group import: sets up the selection state, stubs the import id, and mocks the progress dialog's runImport
+     * to either resolve with the given response (user dismissed the success summary) or reject with the given error.
+     */
+    async function performImport(importSpy: ReturnType<typeof vi.spyOn>, outcome: { resolve?: HttpResponse<ExerciseGroupImportResultDTO>; reject?: unknown }): Promise<void> {
+        component.exam.set(exam1WithExercises);
         component.subsequentExerciseGroupSelection.set(true);
         component.targetCourseId.set(1);
         component.targetExamId.set(2);
         fixture.detectChanges();
+        vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
+        if (outcome.reject !== undefined) {
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockRejectedValue(outcome.reject);
+        } else {
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(outcome.resolve!);
+        }
         component.performImportOfExerciseGroups();
+        // flush the runImport promise's then/catch microtasks
+        await Promise.resolve();
+        await Promise.resolve();
         expect(importSpy).toHaveBeenCalledOnce();
-        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1], 'test-import-id');
     }
 });

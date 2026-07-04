@@ -44,8 +44,8 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(comp.targetAudience).toEqual(TargetAudience.INSTRUCTORS);
-                expect(comp.features.length).toBeGreaterThan(0);
+                expect(comp.targetAudience()).toEqual(TargetAudience.INSTRUCTORS);
+                expect(comp.features().length).toBeGreaterThan(0);
             });
 
             it('should ensure all features have unique IDs', () => {
@@ -53,8 +53,8 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                for (const featureA of comp.features) {
-                    for (const featureB of comp.features) {
+                for (const featureA of comp.features()) {
+                    for (const featureB of comp.features()) {
                         if (featureA !== featureB) {
                             expect(featureA.id === featureB.id).toBe(false);
                         }
@@ -70,13 +70,13 @@ describe('Feature Overview Component', () => {
                 comp.ngOnInit();
                 fixture.detectChanges();
                 await fixture.whenStable();
-                const id = '#featureOverview' + comp.features[0].id;
+                const id = '#featureOverview' + comp.features()[0].id;
                 const featureOverview = debugElement.query(By.css(id));
 
                 featureOverview.nativeElement.click();
 
                 // THEN
-                expect(navigateToFeatureSpy).toHaveBeenCalledWith(comp.features[0].id);
+                expect(navigateToFeatureSpy).toHaveBeenCalledWith(comp.features()[0].id);
             });
         });
     });

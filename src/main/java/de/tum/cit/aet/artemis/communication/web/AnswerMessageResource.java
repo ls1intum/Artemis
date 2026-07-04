@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +23,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -41,8 +46,14 @@ public class AnswerMessageResource {
 
     private final AnswerMessageService answerMessageService;
 
-    public AnswerMessageResource(AnswerMessageService answerMessageService) {
+    private final UserRepository userRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, AnswerPostRepository answerPostRepository) {
         this.answerMessageService = answerMessageService;
+        this.userRepository = userRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -123,11 +134,21 @@ public class AnswerMessageResource {
             throw new BadRequestAlertException("AnswerPost IDs cannot be null or empty", answerMessageService.getEntityName(), "invalidAnswerPostIds");
         }
 
+        if (answerPostIds.stream().anyMatch(id -> id <= 0)) {
+            throw new BadRequestAlertException("Invalid answer post ID found", answerMessageService.getEntityName(), "invalidAnswerPostId");
+        }
+
         List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
 
         if (answerPosts.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
+        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        User user = userRepository.getUser();
+        Set<Long> foundAnswerPostIds = answerPosts.stream().map(AnswerPost::getId).collect(Collectors.toSet());
+        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(foundAnswerPostIds, user.getId());
 
         if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");

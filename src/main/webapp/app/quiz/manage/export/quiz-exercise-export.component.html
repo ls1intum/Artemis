@@ -1,6 +1,6 @@
 <div>
     <h2>
-        @if (course) {
+        @if (course(); as course) {
             <span jhiTranslate="artemisApp.quizExercise.export.title" [translateValues]="{ param: course.title }"></span>
         }
     </h2>
@@ -25,7 +25,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (question of questions; track question) {
+                @for (question of questions(); track question) {
                     <tr>
                         <td width="50%">{{ question.title }}</td>
                         <td width="25%">{{ question.exercise?.title || '' }}</td>

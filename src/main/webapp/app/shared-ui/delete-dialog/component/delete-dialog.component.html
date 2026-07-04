@@ -1,11 +1,11 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
     <div class="dialog-content">
-        <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">
+        <p [jhiTranslate]="deleteQuestion()" [translateValues]="translateValues()">
             <span jhiTranslate="entity.action.deleteQuestion"></span>
         </p>
 
-        @if (entitySummaryTitle) {
-            <div class="mb-2"><span [jhiTranslate]="entitySummaryTitle"></span></div>
+        @if (entitySummaryTitle()) {
+            <div class="mb-2"><span [jhiTranslate]="entitySummaryTitle()!"></span></div>
         }
         @if (isLoadingSummary()) {
             <div class="summary-loading-container">
@@ -60,22 +60,22 @@
             </div>
         }
 
-        @if (additionalChecks) {
+        @if (additionalChecks()) {
             <div class="additional-checks">
-                @for (checkKey of objectKeys(additionalChecks); track checkKey; let i = $index) {
-                    @if (additionalChecks[checkKey]) {
+                @for (checkKey of objectKeys(additionalChecks()!); track checkKey; let i = $index) {
+                    @if (additionalChecks()![checkKey]) {
                         <div class="check-item">
                             <p-checkbox [inputId]="'additional-check-' + i" [(ngModel)]="additionalChecksValues[checkKey]" [name]="'checkbox-' + i" [binary]="true" />
                             <label [for]="'additional-check-' + i" class="check-label text-danger">
-                                {{ additionalChecks[checkKey] | artemisTranslate }}
+                                {{ additionalChecks()![checkKey] | artemisTranslate }}
                             </label>
                         </div>
                     }
                 }
             </div>
         }
-        @if (deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)) {
-            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText" [entityName]="entityTitle()" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
+        @if (deleteConfirmationText() && (!requireConfirmationOnlyForAdditionalChecks() || isAnyAdditionalCheckSelected)) {
+            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText()" [entityName]="entityTitle()" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
         }
     </div>
 
@@ -91,33 +91,33 @@
             [loading]="submitDisabled()"
             [pt]="{ root: { 'data-testid': 'delete-dialog-confirm-button' } }"
         >
-            @switch (actionType) {
+            @switch (actionType()) {
                 @case (actionTypes.Delete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.Reset) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faUndo" class="me-1" />
                     <span jhiTranslate="entity.action.reset"></span>
                 }
                 @case (actionTypes.Cleanup) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.cleanup"></span>
                 }
                 @case (actionTypes.Remove) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.remove"></span>
                 }
                 @case (actionTypes.Unlink) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.unlink"></span>
                 }
                 @case (actionTypes.NoButtonTextDelete) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTrash" class="me-1" />
                     <span jhiTranslate="entity.action.delete"></span>
                 }
                 @case (actionTypes.EndNow) {
-                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" class="me-1" />
+                    <fa-icon [icon]="useFaCheckIcon() ? faCheck : faTimes" class="me-1" />
                     <span jhiTranslate="entity.action.endNow"></span>
                 }
             }

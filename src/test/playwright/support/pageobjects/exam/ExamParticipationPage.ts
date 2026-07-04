@@ -73,7 +73,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
         if (practiceMode) {
             await this.programmingExerciseEditor.submitPractice(exerciseID);
         } else {
-            await this.programmingExerciseEditor.submit(exerciseID);
+            // During exam setup (skipBuildResultCheck) the score-producing build runs only after the due date,
+            // so don't block on a result score here — it would not appear in time and could overrun the hook.
+            await this.programmingExerciseEditor.submit(exerciseID, !skipBuildResultCheck);
         }
         if (!skipBuildResultCheck) {
             await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({

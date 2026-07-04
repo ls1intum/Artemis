@@ -8,7 +8,6 @@ import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -26,7 +25,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 import { MockModule, MockProvider } from 'ng-mocks';
-import { AfterViewInit, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, TemplateRef, signal, viewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -62,14 +61,6 @@ const exercise1: Exercise = {
     secondCorrectionEnabled: true,
 };
 
-const exercise2: Exercise = {
-    id: 6,
-    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
-    studentAssignedTeamIdComputed: false,
-    dueDate: dayjs().add(1, 'days'),
-    secondCorrectionEnabled: true,
-};
-
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
@@ -92,19 +83,6 @@ const course1: Course = {
     onlineCourse: true,
 };
 
-const course2: Course = {
-    id: 2,
-    title: 'Course2',
-    exercises: [exercise2],
-    isAtLeastInstructor: true,
-    exams: [exam2],
-    description: 'Short description of course 2',
-    shortName: 'shortName2',
-    isAtLeastEditor: true,
-    tutorialGroupsConfiguration: {},
-};
-
-const coursesDropdown: Course[] = [course1, course2];
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
 })
@@ -159,7 +137,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(MatSidenavModule), MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),
@@ -215,15 +193,6 @@ describe('CourseManagementContainerComponent', () => {
             of(
                 new HttpResponse({
                     body: course1,
-                    headers: new HttpHeaders(),
-                }),
-            ),
-        );
-
-        vi.spyOn(courseService, 'findAllForDropdown').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: coursesDropdown,
                     headers: new HttpHeaders(),
                 }),
             ),
@@ -298,11 +267,6 @@ describe('CourseManagementContainerComponent', () => {
             1,
             CourseAccessStorageService.STORAGE_KEY,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
-            1,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
     });
 
@@ -403,7 +367,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should toggle sidebar for CourseConversationsComponent', () => {
         const mockConversationsComponent = {
-            isCollapsed: false,
+            isCollapsed: signal(false),
             toggleSidebar: vi.fn(),
         } as unknown as CourseConversationsComponent;
         // we have to set this to trick the component into believing it is a CourseConversationsComponent
@@ -688,29 +652,6 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.pageTitle()).toBe('');
     });
 
-    it('should initialize courses attribute for dropdown', async () => {
-        component.courseId.set(course1.id!);
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).toEqual([course2]);
-    });
-
-    it('should filter out current course from dropdown courses', async () => {
-        component.courseId.set(course2.id!);
-
-        await component.updateRecentlyAccessedCourses();
-
-        expect(component.courses()).not.toContain(course2);
-    });
-
-    it('should switch course and navigate to the correct URL', async () => {
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
-
-        component.switchCourse(course2);
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id]);
-    });
-
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = vi.spyOn(component, 'getPageTitle');
         const tryRenderControlsSpy = vi.spyOn(component as any, 'tryRenderControls').mockImplementation(() => {});
@@ -795,75 +736,5 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
         await component.ngOnInit();
         expect(component.isSettingsPage()).toBe(true);
-    });
-    describe('determineStudentViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-        });
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exams']);
-        });
-
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
-        });
-
-        it('should set lectures link when URL includes "lectures"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'lectures']);
-        });
-
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'communication']);
-        });
-
-        it('should set learning-path link when URL includes "learning-path-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'learning-path']);
-        });
-
-        it('should set competencies link when URL includes "competency-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competency-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'competencies']);
-        });
-
-        it('should set faq link when URL includes "faqs"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faqs/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'faq']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups/configuration/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups-checklist"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups-checklist');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set statistics link when URL includes course-statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/course-statistics');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
-        });
-
-        it('should default to dashboard link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'dashboard']);
-        });
     });
 });

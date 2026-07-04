@@ -112,16 +112,16 @@ describe('ExamChecklistComponent', () => {
         examChecklistComponentFixture.componentRef.setInput('exam', { ...component.exam() });
         examChecklistComponentFixture.detectChanges();
 
-        expect(component.countMandatoryExercises).toBe(0);
-        expect(component.hasOptionalExercises).toBe(true);
+        expect(component.countMandatoryExercises()).toBe(0);
+        expect(component.hasOptionalExercises()).toBe(true);
 
         const examWithMandatory = { ...component.exam() };
         examWithMandatory.exerciseGroups = component.exam().exerciseGroups!.map((group, idx) => (idx === 0 ? { ...group, isMandatory: true } : group));
         examChecklistComponentFixture.componentRef.setInput('exam', examWithMandatory);
         examChecklistComponentFixture.detectChanges();
 
-        expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBe(false);
+        expect(component.countMandatoryExercises()).toBe(1);
+        expect(component.hasOptionalExercises()).toBe(false);
 
         const additionalExerciseGroup = {
             id: 13,
@@ -140,8 +140,8 @@ describe('ExamChecklistComponent', () => {
         examChecklistComponentFixture.componentRef.setInput('exam', examWithAdditional);
         examChecklistComponentFixture.detectChanges();
 
-        expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBe(true);
+        expect(component.countMandatoryExercises()).toBe(1);
+        expect(component.hasOptionalExercises()).toBe(true);
     });
 
     it('should set exam checklist correctly', () => {
@@ -151,7 +151,7 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist).toEqual(examChecklist);
+        expect(component.examChecklist()).toEqual(examChecklist);
     });
 
     it('should set existsUnassessedQuizzes correctly', () => {
@@ -161,7 +161,7 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
+        expect(component.examChecklist()!.existsUnassessedQuizzes).toEqual(examChecklist.existsUnassessedQuizzes);
     });
 
     it('should set existsUnsubmittedExercises correctly', () => {
@@ -171,6 +171,6 @@ describe('ExamChecklistComponent', () => {
 
         expect(getExamStatisticsStub).toHaveBeenCalled();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
-        expect(component.examChecklist.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
+        expect(component.examChecklist()!.existsUnsubmittedExercises).toEqual(examChecklist.existsUnsubmittedExercises);
     });
 });

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -27,7 +27,7 @@ export class GradingKeyOverviewComponent implements OnInit {
     plagiarismGrade: string;
     noParticipationGrade: string;
 
-    isExam = false;
+    readonly isExam = signal<boolean>(false);
 
     courseId?: number;
     examId?: number;
@@ -36,15 +36,15 @@ export class GradingKeyOverviewComponent implements OnInit {
     gradeSteps: GradeStep[] = [];
     studentGradeOrBonusPointsOrGradeBonus?: string;
     isBonus = false;
-    forBonus: boolean;
+    readonly forBonus = signal<boolean>(undefined!);
 
     ngOnInit(): void {
         const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
 
         this.courseId = courseId;
         this.examId = examId;
-        this.forBonus = forBonus;
-        this.isExam = isExam;
+        this.forBonus.set(forBonus);
+        this.isExam.set(isExam);
         this.studentGradeOrBonusPointsOrGradeBonus = studentGradeOrBonusPointsOrGradeBonus;
     }
 
@@ -53,7 +53,7 @@ export class GradingKeyOverviewComponent implements OnInit {
      */
     previousState() {
         const fallbackUrl = ['courses', this.courseId!.toString()];
-        if (this.isExam) {
+        if (this.isExam()) {
             fallbackUrl.push('exams', this.examId!.toString());
         } else {
             fallbackUrl.push('statistics');

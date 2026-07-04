@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -48,9 +48,9 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     protected readonly ButtonSize = ButtonSize;
     private dialogErrorSource = new Subject<string>();
 
-    sshPublicKeys: UserSshPublicKey[] = [];
-    keyCount = 0;
-    isLoading = true;
+    readonly sshPublicKeys = signal<UserSshPublicKey[]>([]);
+    readonly keyCount = signal(0);
+    readonly isLoading = signal(true);
 
     currentDate: dayjs.Dayjs;
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -82,19 +82,20 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
             .getSshPublicKeys()
             .pipe(
                 tap((publicKeys: UserSshPublicKey[]) => {
-                    this.sshPublicKeys = publicKeys;
                     this.sshUserSettingsService.sshKeys = publicKeys;
-                    this.sshPublicKeys = this.sshPublicKeys.map((key) => ({
-                        ...key,
-                        hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)),
-                    }));
-                    this.keyCount = publicKeys.length;
-                    this.isLoading = false;
+                    this.sshPublicKeys.set(
+                        publicKeys.map((key) => ({
+                            ...key,
+                            hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)),
+                        })),
+                    );
+                    this.keyCount.set(publicKeys.length);
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 error: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     this.alertService.error('artemisApp.userSettings.sshSettingsPage.loadKeyFailure');
                 },
             });

@@ -1,18 +1,5 @@
-// ---- Mock interactjs BEFORE importing the component ----
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
-vi.mock('interactjs', () => {
-    const mockInstance = {
-        draggable: vi.fn().mockReturnThis(),
-        unset: vi.fn(),
-    };
-    const mockInteract = vi.fn(() => mockInstance);
-    return {
-        __esModule: true,
-        default: mockInteract,
-    };
-});
 
 // ---- Mock ResizeObserver ----
 class MockResizeObserver {
@@ -122,6 +109,17 @@ describe('YouTubePlayerComponent', () => {
 
         expect((component as any).youtubePlayer).toBe(viewChildPlayer);
         expect(component['currentSegmentIndex']()).toBe(1);
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
+    });
+
+    it('tracks the active slide number from transcript segments', () => {
+        fixture.componentRef.setInput('transcriptSegments', [
+            { startTime: 0, endTime: 10, text: 'a', slideNumber: 3 },
+            { startTime: 10, endTime: 20, text: 'b', slideNumber: 4 },
+        ]);
+        (component as any).updateCurrentSegment(15);
+
+        expect(component.getCurrentSlideNumber()).toBe(4);
     });
 
     it('applies initialTimestamp on ready and updates segment immediately', () => {
@@ -221,6 +219,74 @@ describe('YouTubePlayerComponent', () => {
         expect(videoColumnEl.style.width).toBe('');
     });
 
+    it('resizes the video column by dragging the sibling divider handle', async () => {
+        await render();
+
+        // The real template renders the handle as a sibling of the video column (resizableHandleOutsideHost), so
+        // the directive delegates the pointerdown from the wrapper. This is the production wiring; drive it end to
+        // end so the percent -> flex translation is covered (not just resetSplitRatio / the constraints getter).
+        const makeRect = (width: number) => ({ left: 0, width, top: 0, right: width, bottom: 500, height: 500, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+        const videoColumnEl = component.videoColumn()!.nativeElement;
+        const wrapperEl = component.videoWrapper()!.nativeElement;
+        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue(makeRect(1000));
+        vi.spyOn(videoColumnEl, 'getBoundingClientRect').mockReturnValue(makeRect(500));
+        fixture.detectChanges();
+
+        // Drag the right edge from 500px to 600px within a 1000px wrapper (inside [300, 750]) -> 600 / 1000 = 60%.
+        const handleEl = component.resizerHandle()!.nativeElement;
+        handleEl.dispatchEvent(new MouseEvent('pointerdown', { clientX: 500, button: 0, bubbles: true }));
+        videoColumnEl.dispatchEvent(new MouseEvent('pointermove', { clientX: 600, bubbles: true }));
+        videoColumnEl.dispatchEvent(new MouseEvent('pointerup', { clientX: 600, bubbles: true }));
+
+        expect(videoColumnEl.style.flex).toBe('0 0 60%');
+        expect(videoColumnEl.style.width).toBe('');
+    });
+
+    it('toggles isResizing while the divider is dragged', async () => {
+        await render();
+
+        expect(component['isResizing']()).toBe(false);
+
+        component['onResizeStart']();
+        expect(component['isResizing']()).toBe(true);
+
+        component['onResizeEnd']();
+        expect(component['isResizing']()).toBe(false);
+    });
+
+    it('exposes width constraints derived from the live wrapper width', async () => {
+        await render();
+
+        const wrapperEl = component.videoWrapper()!.nativeElement;
+        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+            left: 0,
+            width: 1000,
+            top: 0,
+            right: 1000,
+            bottom: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+
+        // maxWidth = wrapperWidth (1000) - minTranscript (250)
+        expect((component as any).resizableConstraints).toEqual({ minWidth: 300, maxWidth: 750 });
+    });
+
+    it('disconnects the ResizeObserver and resets isResizing on destroy', async () => {
+        await render();
+
+        const observer = (component as any).resizeObserver as MockResizeObserver;
+        expect(observer).toBeDefined();
+        component['onResizeStart']();
+
+        component.ngOnDestroy();
+
+        expect(observer.disconnect).toHaveBeenCalled();
+        expect(component['isResizing']()).toBe(false);
+    });
+
     it('clears timeout on destroy', () => {
         vi.useFakeTimers();
         const emitSpy = vi.spyOn(component.playerFailed, 'emit');
@@ -230,5 +296,72 @@ describe('YouTubePlayerComponent', () => {
         vi.advanceTimersByTime(10_000);
         expect(emitSpy).not.toHaveBeenCalled();
         vi.useRealTimers();
+    });
+
+    describe('Context provider methods', () => {
+        it('getCurrentTime: returns current time from YouTube player', () => {
+            const mockPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(125.5),
+                seekTo: vi.fn(),
+            };
+            (component as any).youtubePlayer = mockPlayer;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBe(125.5);
+            expect(mockPlayer.getCurrentTime).toHaveBeenCalledTimes(1);
+        });
+
+        it('getCurrentTime: returns undefined when player is not ready', () => {
+            (component as any).youtubePlayer = null;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBeUndefined();
+        });
+
+        it('hasBeenPlayed: returns false initially', () => {
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
+        });
+
+        it('hasBeenPlayed: returns true after video has been played', () => {
+            // Simulate onPlayerReady
+            const mockPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer } as any);
+
+            // Simulate onStateChange with PLAYING state
+            component.onStateChange({ data: 1 } as any); // YT_STATE_PLAYING = 1
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(true);
+        });
+
+        it('hasBeenPlayed: resets when new video is loaded', () => {
+            // First video plays
+            const mockPlayer1 = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer1 } as any);
+            component.onStateChange({ data: 1 } as any); // PLAYING
+
+            expect(component.hasBeenPlayed()).toBe(true);
+
+            // New video loads
+            const mockPlayer2 = {
+                getCurrentTime: vi.fn().mockReturnValue(0),
+                seekTo: vi.fn(),
+            };
+            component.onPlayerReady({ target: mockPlayer2 } as any);
+
+            // Should be reset to false
+            expect(component.hasBeenPlayed()).toBe(false);
+        });
     });
 });

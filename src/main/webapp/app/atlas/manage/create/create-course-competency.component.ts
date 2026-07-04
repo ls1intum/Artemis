@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -15,7 +15,7 @@ export abstract class CreateCourseCompetencyComponent implements OnInit {
 
     readonly documentationType: DocumentationType = 'Competencies';
 
-    isLoading: boolean;
+    readonly isLoading = signal(false);
     courseId: number;
 
     ngOnInit(): void {

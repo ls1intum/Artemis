@@ -60,8 +60,8 @@ describe('DetailOverviewList', () => {
     it('should initialize and destroy', () => {
         fixture.componentRef.setInput('sections', sections);
         fixture.detectChanges();
-        expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
-        expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
+        expect(component.headlines()).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
+        expect(component.headlinesRecord()).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
     });
 

@@ -61,7 +61,7 @@ describe('Plagiarism Header Component', () => {
         comp.confirmPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.CONFIRMED);
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading()).toBe(true);
     });
 
     it('should deny a plagiarism', () => {
@@ -69,12 +69,12 @@ describe('Plagiarism Header Component', () => {
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading()).toBe(true);
     });
 
     it('should disable deny button if plagiarism status is denied or loading', () => {
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.DENIED });
-        comp.isLoading = true;
+        comp.isLoading.set(true);
 
         fixture.detectChanges();
 
@@ -95,7 +95,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
         expect(dialogSpy).toHaveBeenCalledOnce();
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading()).toBe(true);
     });
 
     it('should deny the plagiarism when the confirmation dialog is confirmed', () => {
@@ -116,7 +116,7 @@ describe('Plagiarism Header Component', () => {
         dialogClose.next(undefined);
 
         expect(updateSpy).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should update the plagiarism status', async () => {
@@ -127,7 +127,7 @@ describe('Plagiarism Header Component', () => {
 
         expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison()?.status).toEqual(PlagiarismStatus.CONFIRMED);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 
     it('should emit when expanding left split view pane', () => {
@@ -207,6 +207,6 @@ describe('Plagiarism Header Component', () => {
         expect(alertSpy).toHaveBeenCalledWith('error.courseIdUndefined');
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(updateSpy).not.toHaveBeenCalled();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading()).toBe(false);
     });
 });

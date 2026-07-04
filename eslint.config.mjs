@@ -26,6 +26,18 @@ const blockLayerImportPatterns = (layer) => [
     `../../../../../../${layer}/**`,
 ];
 
+// The client is zoneless (`provideZonelessChangeDetection()` in app.config.ts). `NgZone` must never be
+// reintroduced: under zoneless it is a `NoopNgZone`, so `run`/`runOutsideAngular`/`runGuarded` are no-ops
+// that do NOT schedule change detection — using them creates silent stale-render bugs. This restriction is
+// added to every `no-restricted-imports` block (the foundation/ and shared-ui/ blocks override the rule, so
+// it must be repeated there to stay airtight).
+const noNgZoneImport = {
+    name: '@angular/core',
+    importNames: ['NgZone'],
+    message:
+        'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
+};
+
 // Existing `ngOnChanges` migration backlog. Keep the new rule baseline-clean by excluding unchanged
 // files that still need a focused computed()/effect() migration. Remove entries as the hooks are migrated.
 const remainingNgOnChangesMigrationBacklog = [
@@ -94,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
@@ -155,7 +166,10 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
-            '@typescript-eslint/ban-ts-comment': 'warn',
+            // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
+            // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
+            // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
+            '@typescript-eslint/ban-ts-comment': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
@@ -194,12 +208,118 @@ export default tseslint.config(
                             name: 'lodash',
                             message: "Please import from 'lodash-es' instead.",
                         },
+                        noNgZoneImport,
                     ],
+                },
+            ],
+            'no-restricted-syntax': [
+                'error',
+                {
+                    // Monaco's editor.addCommand registers a command in the process-global CommandsRegistry whose handler
+                    // retains the editor; it is not released on editor.dispose(), which leaks the editor and its entire
+                    // DOM subtree (see PR #12976). Use editor.addAction, which returns a disposable that must be stored
+                    // and disposed on destroy.
+                    selector: "CallExpression[callee.property.name='addCommand']",
+                    message:
+                        'Do not use editor.addCommand (it leaks the editor via Monaco’s process-global command registry). Use editor.addAction, store the returned disposable, and dispose it on destroy.',
                 },
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
+            'localRules/no-navigation-in-effect': 'error',
+            'localRules/no-as-unknown-cast': 'error',
+            'localRules/no-as-any-cast': 'error',
+        },
+    },
+    // Force JSON.parse results to carry an explicit type. `JSON.parse` is declared to return `any`, which
+    // silently disables type checking on everything derived from it — a typo like `obj.colour` compiles and
+    // yields `undefined` at runtime. Route parsing through `parseJson<T>()` (app/foundation/util/json.util),
+    // whose generic defaults to `unknown`, so a caller cannot touch the result's properties without stating
+    // the expected shape. All production call sites route through the wrapper, so this is an `error`. The
+    // wrapper itself holds the single sanctioned `JSON.parse` (line-level disabled), and test code may parse
+    // fixtures freely (specs excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-properties': [
+                'error',
+                {
+                    object: 'JSON',
+                    property: 'parse',
+                    message:
+                        'Avoid untyped JSON.parse(): its result is `any`, so property access is unchecked. Use parseJson<T>() from app/foundation/util/json.util and pass the expected type.',
+                },
+            ],
+            // Template literals must not stringify `any`, objects, nullish, etc. (which produce "[object Object]" /
+            // "undefined"). Numbers are allowed (allowNumber default); everything else must be converted explicitly.
+            '@typescript-eslint/restrict-template-expressions': 'error',
+        },
+    },
+    // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
+    // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-explicit-any': 'error',
+        },
+    },
+    // Curb unsafe `as` casts in production code without banning `as` outright (downcasts the type system cannot
+    // infer — e.g. `event.target as HTMLInputElement` — remain the honest tool and stay allowed). Two targeted rules:
+    //   - `no-unnecessary-type-assertion`: removes redundant casts that do not change the type (noise, and they
+    //     silently hide the day the underlying type shifts). Auto-fixable.
+    //   - `consistent-type-assertions` with `objectLiteralTypeAssertions: 'never'`: forbids `{ … } as T` on object
+    //     literals, which bypasses excess-property checking. Use `satisfies T` (verifies shape, keeps the inferred
+    //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
+    // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
+    // Keep diagnostics out of the console and off `globalThis` in production code.
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
+    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
+    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
+    //     mocking (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-console': 'error',
+            'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
+        },
+    },
+    // Require every Promise to be handled in production code. A floating Promise silently swallows rejections
+    // (unhandled errors) and hides ordering bugs. Handle it: `await` it (in an async function, typically with a
+    // try/catch that routes to `onError`), attach `.then(...)/.catch(...)`, or mark it deliberately fire-and-forget
+    // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
+    // `'off'` default above for production code; specs may float promises for brevity (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
+        },
+    },
+    // Type-safety ratchet for production code (specs excluded below): catch real bug classes the compiler's
+    // `strictNullChecks`/`noImplicitAny` miss. `restrict-plus-operands` rejects `+` on mismatched/uncertain
+    // operand types (silent string/number coercion); `no-base-to-string` rejects stringifying a value whose
+    // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
+    // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/restrict-plus-operands': 'error',
+            '@typescript-eslint/no-base-to-string': 'error',
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
@@ -213,6 +333,19 @@ export default tseslint.config(
         ignores: ['**/*.spec.ts', ...remainingNgOnChangesMigrationBacklog],
         rules: {
             'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
+        },
+    },
+    // Zoneless correctness: a mutable component/directive field that the template reads must be a signal,
+    // otherwise reassigning it outside a synchronous render / event handler (subscribe, setTimeout, a helper
+    // reached from one, …) schedules no change detection and the view silently goes stale. Fields the template
+    // never reads, injected services, and constants are exempt; genuine [(ngModel)]/[(x)] two-way targets that
+    // cannot be signals use a justified line-level disable. Full rationale:
+    // documentation/docs/developer/guidelines/client-development.mdx ("Zoneless change detection & signal-based state").
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/prefer-signal-template-state': 'error',
         },
     },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
@@ -231,6 +364,7 @@ export default tseslint.config(
                     paths: [
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
                     ],
                     patterns: [
                         {
@@ -260,6 +394,7 @@ export default tseslint.config(
                     paths: [
                         { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
                         { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
                     ],
                     patterns: [
                         {

@@ -29,6 +29,7 @@ import com.icegreen.greenmail.util.ServerSetupTest;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -468,7 +469,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
 
         String content = testTemplateEngine.process("mail/course_notification/" + notificationType, context);
         String subject = mainMessageSource.getMessage("email.courseNotification." + notificationType + ".title", null, locale);
-        testMailSendingService.sendEmailSync(recipient, subject, content, false, true);
+        testMailSendingService.sendEmailSync(MailRecipientDTO.from(recipient), subject, content, false, true);
     }
 
     private String getDeliveredEmailBody() throws Exception {

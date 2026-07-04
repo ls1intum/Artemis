@@ -60,6 +60,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
@@ -84,6 +85,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
@@ -91,6 +93,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -202,7 +205,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJobPersistence() {
+    void testBuildJobPersistence() throws JsonProcessingException {
         // Stop the build agent to prevent the build job from being processed.
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
@@ -226,7 +229,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getBuildPlanPhases().orElseThrow().dockerImage());
+        assertThat(buildJob.getDockerImage())
+                .isEqualTo(BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).dockerImage());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getPriority()).isEqualTo(2);
         assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -260,7 +264,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJobTimeoutPersistence() {
+    void testBuildJobTimeoutPersistence() throws JsonProcessingException {
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)) {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             int originalTimeout = buildConfig.getTimeoutSeconds();
@@ -297,7 +301,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
             assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
             assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-            assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getBuildPlanPhases().orElseThrow().dockerImage());
+            assertThat(buildJob.getDockerImage())
+                    .isEqualTo(BuildPlanPhasesDTO.fromBuildPlanConfiguration(programmingExercise.getBuildConfig().getBuildPlanConfiguration()).dockerImage());
             assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
             assertThat(buildJob.getPriority()).isEqualTo(2);
             assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -905,6 +910,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentStatus.SELF_PAUSED);
         // Increase timeout to 5000ms to avoid flaky test failures due to slow listener processing
-        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
+        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(MailRecipientDTO.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
     }
 }

@@ -95,10 +95,10 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Verify that dropdown is shown with filtered results
-        expect(component.showDropdown).toBe(true);
-        expect(component.searchMode).toBe(component.SearchMode.CONVERSATION);
-        expect(component.filteredOptions).toHaveLength(1);
-        expect(component.filteredOptions[0].name).toBe('General Channel');
+        expect(component.showDropdown()).toBe(true);
+        expect(component.searchMode()).toBe(component.SearchMode.CONVERSATION);
+        expect(component.filteredOptions()).toHaveLength(1);
+        expect(component.filteredOptions()[0].name).toBe('General Channel');
     });
 
     it('should filter users when using "from:" prefix and search length >= 3', () => {
@@ -113,9 +113,9 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(courseManagementService.searchUsers).toHaveBeenCalledWith(1, 'john', ['students', 'tutors', 'instructors']);
 
         // Verify dropdown shows user results
-        expect(component.showDropdown).toBe(true);
-        expect(component.searchMode).toBe(component.SearchMode.USER);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.showDropdown()).toBe(true);
+        expect(component.searchMode()).toBe(component.SearchMode.USER);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
         expect(component.filteredUsers).toEqual(mockUsers);
     });
 
@@ -128,9 +128,9 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         // Verify dropdown shows current user
-        expect(component.showDropdown).toBe(true);
-        expect(component.searchMode).toBe(component.SearchMode.USER);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.showDropdown()).toBe(true);
+        expect(component.searchMode()).toBe(component.SearchMode.USER);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
         expect(component.filteredUsers).toEqual([mockCurrentUser]);
     });
 
@@ -141,15 +141,15 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        component.selectOption(component.filteredOptions[0]);
+        component.selectOption(component.filteredOptions()[0]);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         // Verify selection was added and event was emitted
-        expect(component.selectedConversations).toHaveLength(1);
+        expect(component.selectedConversations()).toHaveLength(1);
         expect(selectionChangeSpy).toHaveBeenCalledWith({
             searchTerm: '',
-            selectedConversations: component.selectedConversations,
+            selectedConversations: component.selectedConversations(),
             selectedAuthors: [],
         });
     });
@@ -157,13 +157,13 @@ describe('ConversationGlobalSearchComponent', () => {
     it('should remove selected conversation and emit selection change', () => {
         const selectionChangeSpy = vi.spyOn(component.onSelectionChange, 'emit');
         const focusSpy = vi.spyOn(component, 'focusInput');
-        component.selectedConversations = [mockConversations[0]];
+        component.selectedConversations.set([mockConversations[0]]);
 
         component.removeSelectedChannel(mockConversations[0]);
         vi.advanceTimersByTime(0);
 
         // Verify conversation was removed and event was emitted
-        expect(component.selectedConversations).toHaveLength(0);
+        expect(component.selectedConversations()).toHaveLength(0);
         expect(selectionChangeSpy).toHaveBeenCalled();
         expect(focusSpy).toHaveBeenCalled();
     });
@@ -172,22 +172,22 @@ describe('ConversationGlobalSearchComponent', () => {
         const selectionChangeSpy = vi.spyOn(component.onSelectionChange, 'emit');
         const focusSpy = vi.spyOn(component, 'focusInput');
 
-        component.selectedAuthors = mockUsers;
+        component.selectedAuthors.set(mockUsers);
         fixture.changeDetectorRef.detectChanges();
 
-        component.removeSelectedAuthor(component.selectedAuthors[0]);
+        component.removeSelectedAuthor(component.selectedAuthors()[0]);
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.selectedAuthors).toHaveLength(1);
-        expect(component.selectedAuthors[0].id).toBe(2);
+        expect(component.selectedAuthors()).toHaveLength(1);
+        expect(component.selectedAuthors()[0].id).toBe(2);
 
         expect(focusSpy).toHaveBeenCalled();
 
         expect(selectionChangeSpy).toHaveBeenCalledWith({
             searchTerm: component.fullSearchTerm,
-            selectedConversations: component.selectedConversations,
-            selectedAuthors: component.selectedAuthors,
+            selectedConversations: component.selectedConversations(),
+            selectedAuthors: component.selectedAuthors(),
         });
     });
 
@@ -195,16 +195,16 @@ describe('ConversationGlobalSearchComponent', () => {
         const selectionChangeSpy = vi.spyOn(component.onSelectionChange, 'emit');
 
         component.fullSearchTerm = 'in:general';
-        component.selectedConversations = [mockConversations[0]];
-        component.selectedAuthors = [mockUsers[0]];
+        component.selectedConversations.set([mockConversations[0]]);
+        component.selectedAuthors.set([mockUsers[0]]);
 
         component.clearSearch();
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.fullSearchTerm).toBe('');
-        expect(component.selectedConversations).toHaveLength(0);
-        expect(component.selectedAuthors).toHaveLength(0);
+        expect(component.selectedConversations()).toHaveLength(0);
+        expect(component.selectedAuthors()).toHaveLength(0);
 
         expect(selectionChangeSpy).toHaveBeenCalledWith({
             searchTerm: '',
@@ -220,16 +220,16 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.searchMode).toBe(component.SearchMode.NORMAL);
-        expect(component.showDropdown).toBe(false);
+        expect(component.searchMode()).toBe(component.SearchMode.NORMAL);
+        expect(component.showDropdown()).toBe(false);
     });
 
     it('should activate search when input is clicked', () => {
-        component.isSearchActive = false;
+        component.isSearchActive.set(false);
 
         component.onSearchInputClick();
 
-        expect(component.isSearchActive).toBe(true);
+        expect(component.isSearchActive()).toBe(true);
     });
 
     it('should navigate dropdown with keyboard and select with enter', () => {
@@ -240,11 +240,11 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.navigateDropdown(1, { preventDefault: vi.fn() } as unknown as Event);
-        expect(component.activeDropdownIndex).toBe(0);
+        expect(component.activeDropdownIndex()).toBe(0);
         // Simulate enter press
         component.selectActiveOption();
 
-        expect(selectOptionSpy).toHaveBeenCalledWith(component.filteredOptions[0]);
+        expect(selectOptionSpy).toHaveBeenCalledWith(component.filteredOptions()[0]);
     });
 
     it('should focus input and select a conversation when focusWithSelectedConversation is called', () => {
@@ -253,7 +253,7 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.selectedConversations).toEqual([mockConversations[0]]);
+        expect(component.selectedConversations()).toEqual([mockConversations[0]]);
         expect(focusSpy).toHaveBeenCalled();
     });
 
@@ -262,20 +262,20 @@ describe('ConversationGlobalSearchComponent', () => {
         const focusSpy = vi.spyOn(component, 'focusInput');
 
         component.filteredUsers = [mockUsers[0]];
-        component.filteredOptions = [
+        component.filteredOptions.set([
             {
                 id: mockUsers[0].id!,
                 name: mockUsers[0].name!,
                 type: 'user',
                 img: mockUsers[0].imageUrl,
             },
-        ];
+        ]);
 
-        component.selectOption(component.filteredOptions[0]);
+        component.selectOption(component.filteredOptions()[0]);
         vi.advanceTimersByTime(0);
 
-        expect(component.selectedAuthors).toEqual([mockUsers[0]]);
-        expect(component.showDropdown).toBe(false);
+        expect(component.selectedAuthors()).toEqual([mockUsers[0]]);
+        expect(component.showDropdown()).toBe(false);
         expect(component.fullSearchTerm).toBe('');
         expect(focusSpy).toHaveBeenCalled();
         expect(selectionChangeSpy).toHaveBeenCalledWith({
@@ -289,8 +289,8 @@ describe('ConversationGlobalSearchComponent', () => {
         const onSearchSpy = vi.spyOn(component.onSearch, 'emit');
 
         component.fullSearchTerm = 'test search';
-        component.selectedConversations = [mockConversations[0]];
-        component.selectedAuthors = [mockUsers[0]];
+        component.selectedConversations.set([mockConversations[0]]);
+        component.selectedAuthors.set([mockUsers[0]]);
 
         component.onTriggerSearch();
 
@@ -302,8 +302,8 @@ describe('ConversationGlobalSearchComponent', () => {
     });
 
     it('should close the dropdown when clicking outside the search input', () => {
-        component.showDropdown = true;
-        component.isSearchActive = true;
+        component.showDropdown.set(true);
+        component.isSearchActive.set(true);
 
         const mockEvent = {
             target: document.createElement('div'),
@@ -312,8 +312,8 @@ describe('ConversationGlobalSearchComponent', () => {
         component.onClickOutside(mockEvent);
         vi.advanceTimersByTime(0);
 
-        expect(component.showDropdown).toBe(false);
-        expect(component.isSearchActive).toBe(false);
+        expect(component.showDropdown()).toBe(false);
+        expect(component.isSearchActive()).toBe(false);
     });
 
     it('should preselect a filter when onPreselectFilter is called', () => {
@@ -324,8 +324,8 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(component.fullSearchTerm).toBe('in:');
-        expect(component.searchMode).toBe(component.SearchMode.CONVERSATION);
-        expect(component.showDropdown).toBe(true);
+        expect(component.searchMode()).toBe(component.SearchMode.CONVERSATION);
+        expect(component.showDropdown()).toBe(true);
         expect(startFilteringSpy).toHaveBeenCalled();
         expect(focusSpy).toHaveBeenCalled();
 
@@ -336,8 +336,8 @@ describe('ConversationGlobalSearchComponent', () => {
         vi.advanceTimersByTime(0);
 
         expect(component.fullSearchTerm).toBe('from:');
-        expect(component.searchMode).toBe(component.SearchMode.USER);
-        expect(component.showDropdown).toBe(true);
+        expect(component.searchMode()).toBe(component.SearchMode.USER);
+        expect(component.showDropdown()).toBe(true);
         expect(startFilteringSpy).toHaveBeenCalled();
         expect(focusSpy).toHaveBeenCalled();
     });
@@ -377,11 +377,11 @@ describe('ConversationGlobalSearchComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.filteredUsers).toEqual([]);
-        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.userSearchStatus()).toBe(component.UserSearchStatus.RESULTS);
     });
 
     it('should not select a conversation when focusWithSelectedConversation is called with undefined', () => {
         component.focusWithSelectedConversation(undefined);
-        expect(component.selectedConversations).toEqual([]);
+        expect(component.selectedConversations()).toEqual([]);
     });
 });

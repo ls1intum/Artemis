@@ -131,7 +131,7 @@ describe('CourseWideSearchComponent', () => {
 
     it('should set initial values correctly', () => {
         expect(component.course).toBe(course);
-        expect(component.posts).toStrictEqual([examplePost]);
+        expect(component.posts()).toStrictEqual([examplePost]);
         expect(component.courseWideSearchConfig()).toBe(courseWideSearchConfig);
     });
 

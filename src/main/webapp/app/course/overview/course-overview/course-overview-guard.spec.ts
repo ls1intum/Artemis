@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import dayjs from 'dayjs/esm';
@@ -67,15 +67,86 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBe(false);
         });
 
-        it('should return true if course is fetched from server', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
-            let resultValue = false;
+        it('should load the full course once and decide before activation when it is not yet loaded (first navigation into the course)', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            let resultValue = false;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            // The guard loads the course up-front so an inaccessible tab never mounts; findOneForDashboard stores it for the container to reuse
+            expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(resultValue).toBe(true);
+        });
+
+        it('should decide from the stored course without fetching when the full course is already loaded', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard');
+            let resultValue = false;
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
             expect(resultValue).toBe(true);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load the full course and decide when only the slim course from the course list is stored', () => {
+            // The course list stores slim courses (e.g. exams and lectures emptied, counters missing); deciding on them
+            // would wrongly deny e.g. the "open exam" deep link from the course overview. The guard loads the full
+            // course first so the access decision (and the redirect on denial) uses the complete data.
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXAMS } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1, exams: [] } as Course);
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(false);
+            const fetchSpy = vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            let resultValue = false;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            // mockCourse has a visible exam, so EXAMS is accessible
+            expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(resultValue).toBe(true);
+            expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should deny and redirect after loading the course when the target route is inaccessible', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: { id: 1 } as Course } as HttpResponse<Course>));
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            let resultValue = true;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
+        });
+
+        it('should allow activation when loading the course fails (the container then handles the error)', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
+            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(throwError(() => new Error('network error')));
+            let resultValue = false;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            expect(resultValue).toBe(true);
+        });
+
+        it('should deny and redirect based on the stored full course', () => {
+            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.LECTURES } } as unknown as ActivatedRouteSnapshot;
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1 } as Course);
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            let resultValue = true;
+            guard.canActivate(route).subscribe((result) => {
+                resultValue = result;
+            });
+            expect(resultValue).toBe(false);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
     });
 
@@ -255,7 +326,7 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
             vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
             const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -276,7 +347,7 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
             vi.spyOn(accountService, 'identity').mockResolvedValue({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
             const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -292,7 +363,7 @@ describe('CourseOverviewGuard', () => {
             mockCourse.irisEnabledInCourse = true;
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.DASHBOARD } } as unknown as ActivatedRouteSnapshot;
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
+            vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
             vi.spyOn(accountService, 'identity').mockRejectedValue(new Error('network error'));
             const navigateSpy = vi.spyOn(router, 'navigate');
 

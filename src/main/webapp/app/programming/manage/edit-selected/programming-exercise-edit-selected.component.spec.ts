@@ -78,7 +78,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(comp.selectedProgrammingExercises[1].dueDate).toEqual(newProgrammingExercise.dueDate);
             expect(comp.selectedProgrammingExercises[0].releaseDate).toEqual(newProgrammingExercise.releaseDate);
             expect(comp.selectedProgrammingExercises[1].releaseDate).toEqual(newProgrammingExercise.releaseDate);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving()).toBe(false);
         });
 
         it('should display error and not close modal', () => {
@@ -102,8 +102,8 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
             // THEN
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, {});
-            expect(comp.failureOccurred).toBe(true);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.failureOccurred()).toBe(true);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.closeModal).not.toHaveBeenCalled();
         });
     });

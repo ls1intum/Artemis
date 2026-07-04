@@ -9,7 +9,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,7 +19,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -100,8 +99,6 @@ describe('LectureAttachmentsComponent', () => {
                 RouterModule,
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
                 LectureAttachmentsComponent,
                 FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
@@ -127,7 +124,7 @@ describe('LectureAttachmentsComponent', () => {
     });
 
     afterEach(() => {
-        comp.attachments = [...attachments];
+        comp.attachments.set([...attachments]);
         vi.restoreAllMocks();
     });
 
@@ -170,7 +167,7 @@ describe('LectureAttachmentsComponent', () => {
         }
         comp.attachmentToBeUpdatedOrCreated.set(attachment);
         comp.attachmentBackup = backup;
-        comp.attachments = [attachment];
+        comp.attachments.set([attachment]);
 
         // Do change
         comp.form.patchValue({
@@ -182,16 +179,16 @@ describe('LectureAttachmentsComponent', () => {
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
         expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
-        expect(comp.errorMessage).toBe(errorMessage);
+        expect(comp.errorMessage()).toBe(errorMessage);
         expect(mockFileInput.nativeElement.value).toBe('');
-        expect(comp.attachments).toEqual([backup]);
+        expect(comp.attachments()).toEqual([backup]);
         expect(comp.attachmentBackup).toBeUndefined();
         expect(comp.attachmentFile()).toBeUndefined();
 
         if (withFile) {
-            expect(comp.erroredFile).toEqual(file);
+            expect(comp.erroredFile()).toEqual(file);
         } else {
-            expect(comp.erroredFile).toBeUndefined();
+            expect(comp.erroredFile()).toBeUndefined();
         }
     });
 
@@ -222,7 +219,7 @@ describe('LectureAttachmentsComponent', () => {
         );
         comp.saveAttachment();
         expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
-        expect(comp.attachments[1].version).toBe(2);
+        expect(comp.attachments()[1].version).toBe(2);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
 
@@ -252,7 +249,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(''));
         const attachmentServiceDeleteStub = vi.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
-        expect(comp.attachments).toHaveLength(1);
+        expect(comp.attachments()).toHaveLength(1);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledWith(attachmentId);
         await fixture.whenStable();
     });
@@ -273,7 +270,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(errorMessage));
         const attachmentServiceDeleteStub = vi.spyOn(attachmentService, 'delete').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.deleteAttachment(toDelete);
-        expect(comp.attachments).toHaveLength(2);
+        expect(comp.attachments()).toHaveLength(2);
         expect(attachmentServiceDeleteStub).toHaveBeenCalledWith(attachmentId);
         await fixture.whenStable();
     });
@@ -291,17 +288,17 @@ describe('LectureAttachmentsComponent', () => {
         } as Attachment;
         comp.attachmentBackup = toCancel;
         comp.cancel();
-        expect(comp.attachments[1]).toBe(toCancel);
+        expect(comp.attachments()[1]).toBe(toCancel);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
     });
 
     it('should download attachment', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        comp.isDownloadingAttachmentLink = undefined;
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
+        comp.isDownloadingAttachmentLink.set(undefined);
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
         comp.downloadAttachment('https://my/own/download/url', 'test');
-        expect(comp.isDownloadingAttachmentLink).toBeUndefined();
+        expect(comp.isDownloadingAttachmentLink()).toBeUndefined();
     });
 
     it('should set lecture attachment', async () => {

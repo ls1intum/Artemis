@@ -171,7 +171,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
             assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
 
@@ -189,7 +189,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
             assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }
@@ -317,7 +317,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(signedUsers).hasSize(1);
         for (var user : signedUsers) {
             assertThat(user.getSigningImagePath()).isNotNull();
-            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, user.getSigningImagePath());
+            String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, user.getSigningImagePath());
             assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }

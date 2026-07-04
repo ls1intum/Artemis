@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -24,23 +24,23 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     readonly embedded = input(false);
     readonly course = input<Course | undefined>(undefined);
     readonly exerciseFilter = input<ExerciseFilter | undefined>(undefined);
-    courseContext: Course;
+    readonly courseContext = signal<Course>(undefined!);
     filter: ExerciseFilter;
     readonly exerciseCount = output<number>();
     readonly filteredExerciseCount = output<number>();
-    showHeading: boolean;
-    courseId: number;
+    readonly showHeading = signal(false);
+    readonly courseId = signal<number>(undefined!);
     predicate: string = 'id';
     reverse = true;
 
-    selectedExercises: Exercise[] = [];
-    allChecked = false;
+    readonly selectedExercises = signal<Exercise[]>([]);
+    readonly allChecked = signal(false);
 
     constructor() {
         effect(() => {
             const course = this.course();
             if (course) {
-                this.courseContext = course;
+                this.courseContext.set(course);
             }
         });
         effect(() => {
@@ -64,9 +64,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         const course = this.course();
         if (course) {
-            this.courseContext = course;
+            this.courseContext.set(course);
         }
-        this.showHeading = this.embedded();
+        this.showHeading.set(this.embedded());
         this.filter = this.exerciseFilter() ?? new ExerciseFilter();
         this.load();
         this.registerChangeInExercises();
@@ -81,18 +81,18 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     protected load(): void {
-        if (!this.courseContext?.id) {
-            this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (!this.courseContext()?.id) {
+            this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
             this.loadCourse();
         } else {
-            this.courseId = this.courseContext.id;
+            this.courseId.set(this.courseContext().id!);
             this.loadExercises();
         }
     }
 
     private loadCourse(): void {
-        this.courseService.find(this.courseId).subscribe((courseResponse) => {
-            this.courseContext = courseResponse.body!;
+        this.courseService.find(this.courseId()).subscribe((courseResponse) => {
+            this.courseContext.set(courseResponse.body!);
             this.loadExercises();
         });
     }
@@ -135,24 +135,22 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     toggleExercise(exercise: Exercise) {
-        const exerciseIndex = this.selectedExercises.indexOf(exercise);
+        const selectedExercises = this.selectedExercises();
+        const exerciseIndex = selectedExercises.indexOf(exercise);
         if (exerciseIndex !== -1) {
-            this.selectedExercises.splice(exerciseIndex, 1);
+            this.selectedExercises.set(selectedExercises.filter((_, index) => index !== exerciseIndex));
         } else {
-            this.selectedExercises.push(exercise);
+            this.selectedExercises.set([...selectedExercises, exercise]);
         }
-        this.allChecked = this.selectedExercises.length === this.exercises.length;
+        this.allChecked.set(this.selectedExercises().length === this.exercises.length);
     }
 
     toggleMultipleExercises(exercises: Exercise[]) {
-        this.selectedExercises = [];
-        if (!this.allChecked) {
-            this.selectedExercises = this.selectedExercises.concat(exercises);
-        }
-        this.allChecked = this.selectedExercises.length === this.exercises.length;
+        this.selectedExercises.set(this.allChecked() ? [] : [...exercises]);
+        this.allChecked.set(this.selectedExercises().length === this.exercises.length);
     }
 
     isExerciseSelected(exercise: Exercise) {
-        return this.selectedExercises.includes(exercise);
+        return this.selectedExercises().includes(exercise);
     }
 }

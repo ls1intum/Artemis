@@ -34,41 +34,9 @@
     }
 </div>
 <div class="d-flex mt-2 justify-content-center">
-    <div #containerRef class="line-chart-container">
-        <ngx-charts-line-chart
-            [view]="[containerRef.offsetWidth, 350]"
-            [results]="ngxData"
-            [scheme]="ngxColor"
-            [yAxisLabel]="yAxisLabel"
-            [xAxisLabel]="xAxisLabel"
-            [legend]="true"
-            [legendTitle]="''"
-            [xAxis]="true"
-            [yAxis]="true"
-            [showYAxisLabel]="true"
-            [showXAxisLabel]="true"
-            [yScaleMax]="maxScale"
-            [yScaleMin]="1"
-            [maxXAxisTickLength]="15"
-            (select)="onSelect($event)"
-            [id]="'scores-line-chart'"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b> <br />
-                <span>{{ model.series }}: {{ Math.max(model.value, 0) }} %</span>
-            </ng-template>
-            <ng-template #seriesTooltipTemplate let-model="model">
-                @if (model.length) {
-                    <h6>{{ model[0].name }}</h6>
-                    @for (entry of model; track entry) {
-                        <div>{{ entry.series }}: {{ Math.max(entry.value, 0) }}%</div>
-                    }
-                    <b>
-                        {{ 'artemisApp.exercise-scores-chart.exerciseType' | artemisTranslate }}
-                        {{ 'artemisApp.exercise-scores-chart.' + model[0].exerciseType.toLowerCase().replace('-', '_') | artemisTranslate }}</b
-                    >
-                }
-            </ng-template>
-        </ngx-charts-line-chart>
+    <div class="line-chart-container" id="scores-line-chart">
+        <div class="chart-scroll-content" [style.width.px]="chartWidth()">
+            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($event)" />
+        </div>
     </div>
 </div>

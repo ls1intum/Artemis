@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -21,7 +21,7 @@ export class CourseDescriptionFormComponent implements OnInit {
     readonly formSubmitted = output<string>();
 
     form: FormGroup<{ courseDescription: FormControl<string | null> }>;
-    hasBeenSubmitted = false;
+    readonly hasBeenSubmitted = signal(false);
 
     //icons
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -47,7 +47,7 @@ export class CourseDescriptionFormComponent implements OnInit {
     submitForm() {
         this.formSubmitted.emit(this.form.value.courseDescription ?? '');
         //save that form has been submitted to change look of the submit button
-        this.hasBeenSubmitted = true;
+        this.hasBeenSubmitted.set(true);
     }
 
     /**

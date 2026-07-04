@@ -1,5 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -102,8 +108,8 @@ describe('BuildJobStatisticsComponent', () => {
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(0);
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledTimes(0);
         expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
-        expect(component.displayMissingBuilds).toBeFalsy();
-        expect(component.displaySpanSelector).toBeFalsy();
+        expect(component.displayMissingBuilds()).toBeFalsy();
+        expect(component.displaySpanSelector()).toBeFalsy();
     });
 
     it('should handle error when getting build job statistics', () => {
@@ -165,7 +171,7 @@ describe('BuildJobStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.displayMissingBuilds).toBeTruthy();
+        expect(component.displayMissingBuilds()).toBeTruthy();
         expect(component.pieChartData().length).toBe(5);
         expect(component.pieChartData()[4].name).toBe('Missing');
     });
@@ -176,7 +182,7 @@ describe('BuildJobStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.displayMissingBuilds).toBeFalsy();
+        expect(component.displayMissingBuilds()).toBeFalsy();
         expect(component.pieChartData().length).toBe(4);
     });
 
@@ -306,13 +312,11 @@ describe('BuildJobStatisticsComponent', () => {
         };
         mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(initialStats));
 
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         component.ngOnInit();
         component.incrementStatisticsByStatus('UNKNOWN_STATUS');
 
         expect(component.buildJobStatistics().totalBuilds).toBe(10);
-        expect(consoleSpy).toHaveBeenCalledWith('Unknown build job status received: UNKNOWN_STATUS');
-        consoleSpy.mockRestore();
+        expect(vi.mocked(captureException)).toHaveBeenCalledWith(new Error('Unknown build job status received: UNKNOWN_STATUS'));
     });
 
     it('should not increment statistics when status is undefined', () => {

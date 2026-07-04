@@ -13,7 +13,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -660,6 +659,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
+    /**
+     * Find all users by their logins with their organizations eagerly loaded.
+     *
+     * @param logins the logins to look up
+     * @return list of matching users with organizations initialized
+     */
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.organizations WHERE u.deleted = FALSE AND u.login IN :logins")
+    List<User> findAllByLoginsWithOrganizations(@Param("logins") Collection<String> logins);
+
     @Query("""
             SELECT DISTINCT user
             FROM User user
@@ -712,7 +720,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findDistinctUsersWithGroupsByIdIn(userIds);
@@ -731,7 +739,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return new PageImpl<>(List.of(), pageable, 0);
         }
 
         List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);

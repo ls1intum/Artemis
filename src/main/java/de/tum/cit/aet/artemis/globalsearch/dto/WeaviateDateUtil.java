@@ -3,14 +3,15 @@ package de.tum.cit.aet.artemis.globalsearch.dto;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Map;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
- * Normalizes date values read back from Weaviate to a consistent ISO 8601 format
- * ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}, always three fractional digits).
+ * Normalizes date values read back from Weaviate and formats dates written to Weaviate,
+ * using a consistent ISO 8601 format ({@code yyyy-MM-dd'T'HH:mm:ss.SSSXXX}, always three fractional digits).
  * <p>
  * Weaviate may return DATE properties as {@link OffsetDateTime}, {@link ZonedDateTime},
  * or {@link String} depending on the client version. This utility normalizes them all
@@ -24,11 +25,26 @@ public final class WeaviateDateUtil {
     /**
      * All property keys in the {@link SearchableEntitySchema} that use the Weaviate DATE type.
      */
-    private static final Set<String> DATE_PROPERTY_KEYS = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
+    public static final Set<String> DATE_PROPERTY_KEYS = Set.of(SearchableEntitySchema.Properties.RELEASE_DATE, SearchableEntitySchema.Properties.START_DATE,
             SearchableEntitySchema.Properties.END_DATE, SearchableEntitySchema.Properties.DUE_DATE, SearchableEntitySchema.Properties.VISIBLE_DATE,
             SearchableEntitySchema.Properties.EXAM_VISIBLE_DATE, SearchableEntitySchema.Properties.EXAM_START_DATE, SearchableEntitySchema.Properties.EXAM_END_DATE);
 
     private WeaviateDateUtil() {
+    }
+
+    /**
+     * Formats a date for writing to Weaviate. Weaviate requires full RFC3339 including the seconds
+     * component; formatters like {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME} (or {@code toString()})
+     * omit the seconds for exact-minute times (e.g. {@code 2026-04-23T11:00Z}), which Weaviate
+     * rejects with HTTP 422. This formatter always emits seconds and milliseconds.
+     *
+     * @param date the date to format (must not be {@code null} and must support date, time, and offset
+     *                 fields, e.g. {@link OffsetDateTime} or {@link ZonedDateTime} — an {@link java.time.Instant}
+     *                 would throw, as it has no date fields or offset)
+     * @return the RFC3339 representation accepted by Weaviate
+     */
+    public static String format(TemporalAccessor date) {
+        return FORMAT.format(date);
     }
 
     /**

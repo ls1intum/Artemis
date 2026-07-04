@@ -174,8 +174,9 @@ public class PyrisStatusUpdateService {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             String rawCode = statusUpdate.errorCode();
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
+            List<Integer> displayPageNumbers = success ? statusUpdate.displayPageNumbers() : null;
             log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
-            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode));
+            processingStateCallbackApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success, errorCode, displayPageNumbers));
             pyrisJobService.removeJob(job);
         }
         else {

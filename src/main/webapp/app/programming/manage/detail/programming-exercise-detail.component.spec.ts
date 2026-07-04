@@ -51,8 +51,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { AppliedActionType, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -67,19 +65,15 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
-import { By } from '@angular/platform-browser';
-import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     setupTestBed({ zoneless: true });
@@ -153,7 +147,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), OwlNativeDateTimeModule],
+            imports: [TranslateModule.forRoot()],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -173,7 +167,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         })
             // Mock the heavy presentational children so the eager zoneless render does not pull in
             // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
-            // OrchestrationResultDialogComponent is intentionally kept real: the dialog tests query it.
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
                     imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent],
@@ -226,7 +219,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should reload on participation change', async () => {
         const fetchRepositoryFilesSpy = vi.spyOn(comp, 'fetchRepositoryFiles');
         vi.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         // Allow the synchronous observable chain and the from(handleDiff()) promise to settle
@@ -258,13 +251,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
             // Allow the from(handleDiff()) promise chain to settle
             await new Promise((r) => setTimeout(r, 0));
             // Verify that the route exercise is preserved but participations are updated from API
-            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
-            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
-            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
-            expect(comp.isExamExercise).toBe(false);
-            expect(comp.doughnutStats.participationsInPercent).toBe(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(false);
+            expect(comp.doughnutStats().participationsInPercent).toBe(100);
+            expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         });
@@ -345,11 +338,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await new Promise((r) => setTimeout(r, 0));
 
             // Verify that the route exercise is preserved but participations are updated from API
-            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
-            expect(comp.programmingExercise.exerciseGroup).toEqual(exerciseGroup);
-            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
-            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
-            expect(comp.isExamExercise).toBe(true);
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().exerciseGroup).toEqual(exerciseGroup);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(true);
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         });
@@ -361,7 +354,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
          * This simulates what happens when route data is received.
          */
         const computeCanAccessParticipationsAndScores = () => {
-            comp.canAccessParticipationsAndScores = (comp.programmingExercise?.isAtLeastTutor && !comp.isExamExercise) || !!comp.programmingExercise?.isAtLeastInstructor;
+            comp.canAccessParticipationsAndScores.set((comp.programmingExercise()?.isAtLeastTutor && !comp.isExamExercise()) || !!comp.programmingExercise()?.isAtLeastInstructor);
         };
 
         it('should return true for course exercise when user is at least tutor', () => {
@@ -370,11 +363,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = false;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(true);
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
 
         it('should return false for course exercise when user is not at least tutor', () => {
@@ -383,11 +376,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = false;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = false;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(false);
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return false for exam exercise when user is only tutor', () => {
@@ -396,11 +389,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = true;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(false);
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return true for exam exercise when user is at least instructor', () => {
@@ -409,18 +402,18 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = true;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = true;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(true);
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
     });
 
     it('should create details', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
+        comp.programmingExercise.set(programmingExercise);
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
@@ -433,13 +426,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.ngOnInit();
 
         expect(profileInfoStub).toHaveBeenCalled();
-        expect(comp.isBuildPlanEditable).toBe(editable);
+        expect(comp.isBuildPlanEditable()).toBe(editable);
     });
 
     it('should delete programming exercise', () => {
         const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
         vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
@@ -447,8 +440,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should delete exam programming exercise', () => {
         const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
         vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.isExamExercise = true;
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.isExamExercise.set(true);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
@@ -456,132 +449,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should generate structure oracle', async () => {
         const alertSpy = vi.spyOn(alertService, 'addAlert');
         vi.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
             type: AlertType.SUCCESS,
             message: 'success',
             disableTranslation: true,
         });
-    });
-
-    /**
-     * Builds an exercise that satisfies the parent template's render path so the dialog
-     * directive query has something to find. Sets a future releaseDate to skip the doughnut
-     * statistics block (which crashes on missing course context).
-     */
-    const buildInstructorExerciseForDialog = () =>
-        ({
-            ...mockProgrammingExercise,
-            isAtLeastEditor: true,
-            isAtLeastInstructor: true,
-            releaseDate: dayjs().add(1, 'day'),
-        }) as ProgrammingExercise;
-
-    /**
-     * atlasModuleActive is read in the component's field initializer, so the profile info
-     * must be in place before the component is constructed for the dialog to render.
-     */
-    const recreateFixtureWithAtlasModule = () => {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            activeProfiles: [],
-            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM],
-        } as unknown as ProfileInfo);
-        fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
-        comp = fixture.componentInstance;
-    };
-
-    it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
-        recreateFixtureWithAtlasModule();
-
-        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
-            status: CompetencyOrchestrationStatus.Success,
-            summary: 'Assigned this exercise to Recursion.',
-            appliedActions: [
-                {
-                    type: AppliedActionType.Assign,
-                    competencyId: 42,
-                    competencyTitle: 'Recursion',
-                    exerciseId: 123,
-                    weight: 1.0,
-                    detail: 'Linked exercise to Recursion (weight 1.00).',
-                    justification: 'Exercise tests recursion patterns.',
-                },
-            ],
-        });
-        comp.programmingExercise = buildInstructorExerciseForDialog();
-        await comp.triggerAtlasOrchestrator();
-        fixture.detectChanges();
-
-        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
-        expect(dialog.visible()).toBe(true);
-        expect(dialog.summaryMessage()).toBe('Assigned this exercise to Recursion.');
-        expect(dialog.appliedActions()).toHaveLength(1);
-        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Assign);
-    });
-
-    it('should show warning toast and dialog when orchestrator returns PARTIAL', async () => {
-        recreateFixtureWithAtlasModule();
-
-        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
-            status: CompetencyOrchestrationStatus.Partial,
-            summary: 'Orchestrator failed after applying 1 action(s).',
-            appliedActions: [
-                {
-                    type: AppliedActionType.Create,
-                    competencyId: 7,
-                    competencyTitle: 'Loops',
-                    detail: 'Created competency Loops',
-                    justification: 'Exercise teaches loops',
-                },
-            ],
-        });
-        comp.programmingExercise = buildInstructorExerciseForDialog();
-        await comp.triggerAtlasOrchestrator();
-        fixture.detectChanges();
-
-        expect(addAlertSpy).toHaveBeenCalledWith({
-            type: AlertType.WARNING,
-            message: 'Orchestrator failed after applying 1 action(s).',
-            disableTranslation: true,
-        });
-        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
-        expect(dialog.visible()).toBe(true);
-        expect(dialog.appliedActions()).toHaveLength(1);
-        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Create);
-    });
-
-    it('should error when Atlas orchestrator returns FAILED', async () => {
-        recreateFixtureWithAtlasModule();
-
-        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
-            new HttpErrorResponse({
-                status: 503,
-                error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
-            }),
-        );
-        comp.programmingExercise = buildInstructorExerciseForDialog();
-        await comp.triggerAtlasOrchestrator();
-        fixture.detectChanges();
-
-        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'model not configured', disableTranslation: true });
-        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
-        expect(dialog.visible()).toBe(false);
-    });
-
-    it('should error when Atlas orchestrator request throws', async () => {
-        const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
-        comp.programmingExercise = mockProgrammingExercise;
-        await comp.triggerAtlasOrchestrator();
-        // The catch path uses onError(), which addAlerts the underlying error message.
-        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'boom', disableTranslation: true });
     });
 
     it('should error on generate structure oracle', () => {
@@ -596,7 +470,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                     }),
             ),
         );
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
             type: AlertType.DANGER,

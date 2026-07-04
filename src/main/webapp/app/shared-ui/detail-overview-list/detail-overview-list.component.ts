@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
@@ -69,7 +69,7 @@ export enum DetailType {
         ProgrammingExerciseTimelineComponent,
     ],
 })
-export class DetailOverviewListComponent implements OnInit {
+export class DetailOverviewListComponent {
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -81,21 +81,20 @@ export class DetailOverviewListComponent implements OnInit {
     sections = input.required<DetailOverviewSection[]>();
 
     // headline list for navigation bar
-    headlines: { id: string; translationKey: string }[];
-    // headline record to avoid function call in html
-    headlinesRecord: Record<string, string>;
-
-    ngOnInit() {
-        this.headlines = this.sections().map((section) => {
+    readonly headlines = computed<{ id: string; translationKey: string }[]>(() =>
+        this.sections().map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
-        });
-        this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
+        }),
+    );
+    // headline record to avoid function call in html
+    readonly headlinesRecord = computed<Record<string, string>>(() =>
+        this.headlines().reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
-        }, {});
-    }
+        }, {}),
+    );
 
     downloadApollonDiagramAsPDf(umlModel?: UMLModel, title?: string) {
         if (umlModel) {

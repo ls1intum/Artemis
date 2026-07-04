@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -115,7 +114,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseRepository.save(programmingExercise);
 
         var result = ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false,
-                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
+                List.of("test1", "test2", "test3"), List.of(), null, null, null);
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());

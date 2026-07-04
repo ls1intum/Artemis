@@ -1,5 +1,5 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, input, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -25,8 +25,8 @@ export class FeedbackNodeComponent implements OnInit {
     readonly course = input<Course>();
 
     // This is a workaround for type safety in the template
-    feedbackItem: FeedbackItem;
-    feedbackItemGroup: FeedbackGroup;
+    readonly feedbackItem = signal<FeedbackItem>(undefined!);
+    readonly feedbackItemGroup = signal<FeedbackGroup>(undefined!);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -36,9 +36,18 @@ export class FeedbackNodeComponent implements OnInit {
     ngOnInit(): void {
         const feedbackItemNode = this.feedbackItemNode();
         if (isFeedbackGroup(feedbackItemNode)) {
-            this.feedbackItemGroup = feedbackItemNode;
+            this.feedbackItemGroup.set(feedbackItemNode);
         } else {
-            this.feedbackItem = feedbackItemNode as FeedbackItem;
+            this.feedbackItem.set(feedbackItemNode as FeedbackItem);
         }
+    }
+
+    /**
+     * Toggles the open state of the feedback group. The group object is mutated in place; the click
+     * handler runs synchronously, so change detection picks up the new open state.
+     */
+    toggleFeedbackItemGroupOpen(): void {
+        const group = this.feedbackItemGroup();
+        group.open = !group.open;
     }
 }

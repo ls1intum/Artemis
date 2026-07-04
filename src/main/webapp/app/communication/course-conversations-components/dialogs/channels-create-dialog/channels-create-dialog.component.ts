@@ -15,25 +15,25 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
 
-    initialize() {
+    override initialize() {
         super.initialize(['course']);
     }
 
     channelToCreate: ChannelDTO = new ChannelDTO();
-    isPublicChannel = true;
-    isAnnouncementChannel = false;
-    isCourseWideChannel = false;
+    readonly isPublicChannel = signal<boolean>(true);
+    readonly isAnnouncementChannel = signal<boolean>(false);
+    readonly isCourseWideChannel = signal<boolean>(false);
 
     onChannelTypeChanged($event: ChannelType) {
-        this.isPublicChannel = $event === 'PUBLIC';
+        this.isPublicChannel.set($event === 'PUBLIC');
     }
 
     onIsAnnouncementChannelChanged($event: boolean) {
-        this.isAnnouncementChannel = $event;
+        this.isAnnouncementChannel.set($event);
     }
 
     onIsCourseWideChannelChanged($event: boolean) {
-        this.isCourseWideChannel = $event;
+        this.isCourseWideChannel.set($event);
     }
 
     onFormSubmitted($event: ChannelFormData) {

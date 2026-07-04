@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
@@ -6,7 +6,7 @@ import { LoadingNotificationService } from 'app/core/loading-notification/loadin
 @Component({
     selector: 'jhi-loading-notification',
     template: `
-        @if (isLoading) {
+        @if (isLoading()) {
             <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: white"></div>
         }
     `,
@@ -14,7 +14,9 @@ import { LoadingNotificationService } from 'app/core/loading-notification/loadin
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
     private loadingNotificationService = inject(LoadingNotificationService);
 
-    isLoading = false;
+    // Under zoneless change detection the (debounced) subscription callback below mutates a signal,
+    // which automatically schedules change detection so the spinner toggles.
+    readonly isLoading = signal(false);
     loadingSubscription: Subscription;
 
     ngOnInit() {
@@ -22,7 +24,7 @@ export class LoadingNotificationComponent implements OnInit, OnDestroy {
          * wait 1000 ms before updating isLoading value to ensure the loading screen will not be visible for fast HttpRequests
          * */
         this.loadingSubscription = this.loadingNotificationService.loadingStatus.pipe(debounceTime(1000)).subscribe((value) => {
-            this.isLoading = value;
+            this.isLoading.set(value);
         });
     }
 

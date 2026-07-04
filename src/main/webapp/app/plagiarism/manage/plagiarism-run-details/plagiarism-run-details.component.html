@@ -43,31 +43,10 @@
             {{ 'artemisApp.plagiarism.similarityDistribution' | artemisTranslate }}
             <jhi-help-icon placement="right auto" text="artemisApp.plagiarism.similarityDistributionExplanationTooltip" />
         </div>
-        <div #containerRef class="plagiarism-run-details-info">
-            <ngx-charts-bar-vertical
-                [roundEdges]="false"
-                [view]="[containerRef.offsetWidth, 400]"
-                [scheme]="ngxColor"
-                [results]="ngxData"
-                [xAxis]="true"
-                [yAxis]="true"
-                [yAxisTickFormatting]="yAxisTickFormatting"
-                [yScaleMax]="yScaleMax"
-                [showDataLabel]="true"
-                (select)="onSelect($event)"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <b jhiTranslate="artemisApp.plagiarism.numberIdentifiedPairs" [translateValues]="{ amount: model.value }"></b> <br />
-                    <span jhiTranslate="artemisApp.plagiarism.confirmed" [translateValues]="{ amount: getBucketDTO(model.label).confirmed }"></span> <br />
-                    <span jhiTranslate="artemisApp.plagiarism.denied" [translateValues]="{ amount: getBucketDTO(model.label).denied }"></span> <br />
-                    <span jhiTranslate="artemisApp.plagiarism.open" [translateValues]="{ amount: getBucketDTO(model.label).open }"></span> <br />
-                    <span jhiTranslate="artemisApp.plagiarism.withSimilarity" [translateValues]="{ range: model.name }"></span> <br />
-                    <b
-                        jhiTranslate="artemisApp.plagiarism.portionOfAllCases"
-                        [translateValues]="{ percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }"
-                    ></b>
-                </ng-template>
-            </ngx-charts-bar-vertical>
+        <div class="plagiarism-run-details-info">
+            <div style="height: 400px">
+                <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
+            </div>
         </div>
     </div>
 </div>

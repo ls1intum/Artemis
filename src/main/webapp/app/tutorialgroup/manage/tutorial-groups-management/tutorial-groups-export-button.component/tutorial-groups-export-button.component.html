@@ -13,7 +13,7 @@
         <p [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.description'"></p>
         <div>
             <div class="form-check mb-3">
-                <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll" />
+                <input id="selectAllId" class="form-check-input" type="checkbox" (change)="toggleSelectAll()" [checked]="selectAll()" />
                 <label class="form-check-label" for="selectAllId" [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.selectAll'"></label>
             </div>
         </div>
@@ -39,14 +39,14 @@
             type="button"
             class="btn btn-primary"
             (click)="exportJSON()"
-            [disabled]="selectedFields.length === 0"
+            [disabled]="selectedFields().length === 0"
             [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportJSON'"
         ></button>
         <button
             type="button"
             class="btn btn-primary"
             (click)="exportCSV()"
-            [disabled]="selectedFields.length === 0"
+            [disabled]="selectedFields().length === 0"
             [jhiTranslate]="'artemisApp.tutorialGroupExportDialog.exportCSV'"
         ></button>
     </ng-template>

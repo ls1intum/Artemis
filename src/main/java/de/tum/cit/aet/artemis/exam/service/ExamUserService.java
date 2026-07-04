@@ -6,7 +6,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -304,7 +303,7 @@ public class ExamUserService {
         Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), idPage.getPageable(), idPage.getTotalElements());
+            return new PageImpl<>(List.of(), idPage.getPageable(), idPage.getTotalElements());
         }
 
         List<ExamUser> examUsers = examUserRepository.findByIdsWithUser(ids);

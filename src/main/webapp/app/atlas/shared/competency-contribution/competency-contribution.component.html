@@ -1,13 +1,13 @@
-@if (this.atlasEnabled && this.competencies.length) {
+@if (atlasEnabled() && competencies().length) {
     <div class="mt-4 mb-2">
         <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
-        @if (this.competencies.length > 3) {
-            <p-carousel [value]="this.competencies" [numVisible]="3" [numScroll]="1" [circular]="true">
+        @if (competencies().length > 3) {
+            <p-carousel [value]="competencies()" [numVisible]="3" [numScroll]="1" [circular]="true">
                 <ng-template let-competency #item>
                     <div class="p-2">
                         <jhi-competency-contribution-card
                             [competencyId]="competency.competencyId"
-                            [courseId]="this.courseId()"
+                            [courseId]="courseId()"
                             [title]="competency.title"
                             [weight]="competency.weight"
                             [mastery]="competency.mastery"
@@ -17,11 +17,11 @@
             </p-carousel>
         } @else {
             <div class="row row-cols-3">
-                @for (competency of this.competencies; track competency.competencyId) {
+                @for (competency of competencies(); track competency.competencyId) {
                     <div class="col">
                         <jhi-competency-contribution-card
                             [competencyId]="competency.competencyId"
-                            [courseId]="this.courseId()"
+                            [courseId]="courseId()"
                             [title]="competency.title"
                             [weight]="competency.weight"
                             [mastery]="competency.mastery"

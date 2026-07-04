@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Subject, Subscription, debounceTime } from 'rxjs';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-filter',
     templateUrl: './standardized-competency-filter.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective],
+    imports: [FormsModule, TranslateDirective],
 })
 export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {
     competencyTitleFilter = input<string>('');

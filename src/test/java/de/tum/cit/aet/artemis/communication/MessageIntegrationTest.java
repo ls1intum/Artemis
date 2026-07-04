@@ -229,7 +229,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // 4 calls are for user authentication checks, 3 calls to update database
         // + 1 additional query from Hibernate 7 entity/collection loading changes
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
+        // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
+        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
                 .hasBeenCalledTimes(8);
     }
 
@@ -1233,6 +1234,132 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private CreatePostDTO toCreatePostDTO(Post post) {
         return new CreatePostDTO(post.getContent(), post.getTitle(), false, new CreatePostConversationDTO(post.getConversation().getId()));
+    }
+
+    // GET messages-source-posts (forwarded-message source previews must not leak posts the caller cannot access)
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourcePostsByIds_courseWideChannel_returnsPost() throws Exception {
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "source-cw");
+        Post accessiblePost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", accessiblePost.getId().toString());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+        assertThat(posts).hasSize(1);
+        assertThat(posts.getFirst().id()).isEqualTo(accessiblePost.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourcePostsByIds_notParticipantOfNonCourseWideChannel_isForbidden() throws Exception {
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "source-non-cw");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post hiddenPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", hiddenPost.getId().toString());
+
+        // student1 is not a participant of the non-course-wide channel, so they must not be able to read the post by its id
+        request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourcePostsByIds_mixedAccessibleAndInaccessible_isForbidden() throws Exception {
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "source-cw-mixed");
+        Post accessiblePost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "source-non-cw-mixed");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post hiddenPost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("postIds", accessiblePost.getId() + "," + hiddenPost.getId());
+
+        // one inaccessible id must reject the whole request
+        request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourcePostsByIds_duplicateAccessibleIds_returnsPost() throws Exception {
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "source-cw-dup");
+        Post accessiblePost = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        // duplicate ids must not trigger a false forbidden via the COUNT(DISTINCT) access check
+        params.add("postIds", accessiblePost.getId() + "," + accessiblePost.getId());
+
+        List<PostResponseDTO> posts = request.getList("/api/communication/courses/" + courseId + "/messages-source-posts", HttpStatus.OK, PostResponseDTO.class, params);
+        assertThat(posts).hasSize(1);
+    }
+
+    // F-003: the path courseId is authoritative; a conversation belonging to another course must be rejected
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-create");
+
+        CreatePostDTO postDTOToSave = new CreatePostDTO("cross-course injection", "", false, new CreatePostConversationDTO(channelInOtherCourse.getId()));
+
+        // posting via this course's path while targeting a conversation of otherCourse must be rejected
+        PostResponseDTO notCreated = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(notCreated).isNull();
+        // the rejected request must not have left a side effect: no course-wide auto-join into the other course's channel
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channelInOtherCourse.getId(), student1.getId())).isFalse();
+
+        // sanity check: the same message via the conversation's actual course path succeeds
+        PostResponseDTO created = request.postWithResponseBody("/api/communication/courses/" + otherCourse.getId() + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(created).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-update");
+        Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+
+        UpdatePostingDTO updateDTO = new UpdatePostingDTO(post.getId(), "updated content", post.getTitle(), false);
+        PostResponseDTO notUpdated = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + post.getId(), updateDTO, PostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(notUpdated).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-delete");
+        Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+
+        request.delete("/api/communication/courses/" + courseId + "/messages/" + post.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(conversationMessageRepository.findById(post.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testChangeDisplayPriority_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-pin");
+        Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
+        PostResponseDTO notUpdated = request.putWithResponseBodyAndParams("/api/communication/courses/" + courseId + "/messages/" + post.getId() + "/display-priority", null,
+                PostResponseDTO.class, HttpStatus.BAD_REQUEST, params);
+        assertThat(notUpdated).isNull();
     }
 
     private UpdatePostingDTO toUpdatePostingDTO(Post post) {

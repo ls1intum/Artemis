@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -13,8 +13,8 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
     private http = inject(HttpClient);
 
     courseId: number;
-    isRegistering = true;
-    registeredSuccessfully: boolean;
+    readonly isRegistering = signal(true);
+    readonly registeredSuccessfully = signal(false);
 
     /**
      * perform LTI 13 dynamic registration
@@ -28,8 +28,8 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
         const registrationToken = this.route.snapshot.queryParamMap.get('registration_token');
 
         if (!openIdConfiguration) {
-            this.isRegistering = false;
-            this.registeredSuccessfully = false;
+            this.isRegistering.set(false);
+            this.registeredSuccessfully.set(false);
             return;
         }
 
@@ -42,14 +42,14 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             .post(`api/lti/admin/lti13/dynamic-registration`, null, { observe: 'response', params: httpParams })
             .subscribe({
                 next: () => {
-                    this.registeredSuccessfully = true;
+                    this.registeredSuccessfully.set(true);
                 },
                 error: () => {
-                    this.registeredSuccessfully = false;
+                    this.registeredSuccessfully.set(false);
                 },
             })
             .add(() => {
-                this.isRegistering = false;
+                this.isRegistering.set(false);
                 (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*');
             });
     }

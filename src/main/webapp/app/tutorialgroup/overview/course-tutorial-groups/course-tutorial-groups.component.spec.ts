@@ -16,13 +16,15 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -90,6 +92,48 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
+    });
+
+    describe('sidebar toggle sync', () => {
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseTutorialGroupDetailContainerComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial lecture detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseLectureDetailsComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
     });
 
     it('should use cached groups and lectures if available to compute correct sidebar data', async () => {
@@ -182,6 +226,24 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.sidebarData()).toEqual(expectedSidebarData);
     });
 
+    it('should preserve the fully-loaded marker when enriching the cached course with fetched groups and lectures', async () => {
+        const cachedCourse = { id: 1, lectures: undefined, tutorialGroups: undefined };
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        // The parent course overview has fully loaded the course; enriching it here must keep the marker the
+        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
+        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
+        vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1] })));
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [tutorialLecture1] })));
+        vi.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
+    });
+
     it('should navigate to previously selected route', () => {
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [tutorialGroup1], lectures: [tutorialLecture1, tutorialLecture2] });
         vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue('tutorial-lectures/7');
@@ -204,11 +266,11 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should toggle isCollapsed', () => {
-        const initialCollapseState = component.isCollapsed;
+        const initialCollapseState = component.isCollapsed();
         vi.spyOn(courseOverviewService, 'setSidebarCollapseState');
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(!initialCollapseState);
-        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed);
+        expect(component.isCollapsed()).toBe(!initialCollapseState);
+        expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
     });
 });
 
@@ -264,9 +326,12 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
 
 @Component({ selector: 'jhi-sidebar', template: '' })
 class MockSidebarComponent {
-    itemSelected = input<any>();
-    courseId = input<any>();
-    sidebarData = input<any>();
-    collapseState = input<any>();
-    sidebarItemAlwaysShow = input<any>();
+    itemSelected = input<boolean>();
+    courseId = input<number>();
+    sidebarData = input<SidebarData>();
+    collapseState = input<CollapseState>();
+    sidebarItemAlwaysShow = input<SidebarItemShowAlways>();
+    pageTitle = input<string>();
+    showSidebarToggle = input<boolean>();
+    isSidebarCollapsed = input<boolean>();
 }

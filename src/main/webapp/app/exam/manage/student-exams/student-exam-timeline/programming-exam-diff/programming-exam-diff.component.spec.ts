@@ -417,7 +417,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
         expect(emitSpy).toHaveBeenCalled();
         expect(component.diffReady()).toBe(true);
-        expect(component.isLoadingDiffReport).toBe(false);
+        expect(component.isLoadingDiffReport()).toBe(false);
     });
 
     it('should return correct addedLineCount from computed property', () => {

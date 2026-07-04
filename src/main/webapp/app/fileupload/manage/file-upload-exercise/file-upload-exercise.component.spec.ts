@@ -139,7 +139,7 @@ describe('FileUploadExerciseComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            expect(component.fileUploadExercises()[0].course).toBe(component.courseContext);
+            expect(component.fileUploadExercises()[0].course).toBe(component.courseContext());
         });
     });
 
@@ -259,7 +259,7 @@ describe('FileUploadExerciseComponent', () => {
 
             component.toggleExercise(exercise);
 
-            expect(component.selectedExercises).toContain(exercise);
+            expect(component.selectedExercises()).toContain(exercise);
         });
 
         it('should unselect exercise when toggled again', () => {
@@ -268,17 +268,17 @@ describe('FileUploadExerciseComponent', () => {
             component.toggleExercise(exercise);
             component.toggleExercise(exercise);
 
-            expect(component.selectedExercises).not.toContain(exercise);
+            expect(component.selectedExercises()).not.toContain(exercise);
         });
 
         it('should update allChecked status', () => {
             const exercises = component.fileUploadExercises();
 
             component.toggleExercise(exercises[0]);
-            expect(component.allChecked).toBe(false);
+            expect(component.allChecked()).toBe(false);
 
             component.toggleExercise(exercises[1]);
-            expect(component.allChecked).toBe(true);
+            expect(component.allChecked()).toBe(true);
         });
     });
 

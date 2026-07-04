@@ -244,7 +244,7 @@ export class LandingNavbarComponent {
     }
 
     navigateToLogin(): void {
-        this.router.navigateByUrl('/sign-in');
+        void this.router.navigateByUrl('/sign-in');
     }
 
     scrollToTop(): void {

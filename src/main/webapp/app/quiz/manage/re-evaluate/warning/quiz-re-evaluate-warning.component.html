@@ -3,7 +3,7 @@
     <div style="padding: 10px">
         <h4><span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.problems"></span></h4>
         <ul>
-            @if (questionElementDeleted) {
+            @if (questionElementDeleted()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_deleted"></span>
                     <ul style="padding-left: 15px">
@@ -15,7 +15,7 @@
                     </ul>
                 </li>
             }
-            @if (questionElementInvalid) {
+            @if (questionElementInvalid()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_invalid"></span>
                     <ul style="padding-left: 15px">
@@ -27,7 +27,7 @@
                     </ul>
                 </li>
             }
-            @if (questionCorrectness) {
+            @if (questionCorrectness()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.element_correctness"></span>
                     <ul style="padding-left: 15px">
@@ -38,7 +38,7 @@
                     </ul>
                 </li>
             }
-            @if (questionDeleted) {
+            @if (questionDeleted()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.question_deleted"></span>
                     <ul style="padding-left: 15px">
@@ -50,7 +50,7 @@
                     </ul>
                 </li>
             }
-            @if (questionInvalid) {
+            @if (questionInvalid()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.question_invalid"></span>
                     <ul style="padding-left: 15px">
@@ -62,7 +62,7 @@
                     </ul>
                 </li>
             }
-            @if (scoringChanged) {
+            @if (scoringChanged()) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.scoring_change"></span>
                     <ul style="padding-left: 15px">
@@ -73,7 +73,7 @@
                     </ul>
                 </li>
             }
-            @if (!(questionElementInvalid || questionElementDeleted || questionCorrectness || questionInvalid || questionDeleted || scoringChanged)) {
+            @if (!(questionElementInvalid() || questionElementDeleted() || questionCorrectness() || questionInvalid() || questionDeleted() || scoringChanged())) {
                 <li style="padding-top: 5px">
                     <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.no_changes"></span>
                 </li>
@@ -82,32 +82,32 @@
     </div>
     <div class="edit-quiz-footer-content">
         <h4>
-            @if (!successful && !failed && !busy) {
+            @if (!successful() && !failed() && !busy()) {
                 <span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
             }
-            @if (successful && !busy) {
+            @if (successful() && !busy()) {
                 <span style="color: green"><fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
             }
-            @if (failed && !busy) {
+            @if (failed() && !busy()) {
                 <span style="color: red"><fa-icon [icon]="faTimes" />&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
             }
-            @if (busy) {
+            @if (busy()) {
                 <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>Please wait, conducting changes!</span></span>
             }
         </h4>
         &nbsp;
         <div class="form-group">
-            @if (!successful) {
-                <button [disabled]="busy" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+            @if (!successful()) {
+                <button [disabled]="busy()" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
             }
-            @if (!successful && !failed) {
-                <button [disabled]="busy" type="submit" (click)="confirmChange()" class="btn btn-primary">
+            @if (!successful() && !failed()) {
+                <button [disabled]="busy()" type="submit" (click)="confirmChange()" class="btn btn-primary">
                     <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
                 </button>
             }
-            @if (successful && !failed) {
+            @if (successful() && !failed()) {
                 <button type="submit" (click)="closeAndNavigate()" class="btn btn-primary">
                     <fa-icon [icon]="faCheckCircle" />&nbsp;<span jhiTranslate="entity.action.close"></span>
                 </button>

@@ -14,7 +14,6 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -29,7 +28,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
+            imports: [CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
             providers: [
                 MockProvider(CourseCompetencyService, {
@@ -141,7 +140,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);
@@ -158,7 +157,7 @@ describe('CompetencyFormComponent', () => {
 
         expect(suggestTaxonomySpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledTimes(12);
-        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies).toEqual([
+        expect(commonCourseCompetencyFormComponent.suggestedTaxonomies()).toEqual([
             'artemisApp.courseCompetency.taxonomies.REMEMBER',
             'artemisApp.courseCompetency.taxonomies.UNDERSTAND',
         ]);

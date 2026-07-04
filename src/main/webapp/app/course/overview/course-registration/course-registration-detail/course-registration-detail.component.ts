@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, map, of, throwError } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from '../course-registration-button/course-registration-button.component';
@@ -18,18 +18,18 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    loading = false;
+    readonly loading = signal(false);
     courseId: number;
-    course: Course | undefined = undefined;
-    private paramSubscription: any;
+    readonly course = signal<Course | undefined>(undefined);
+    private paramSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.loading = true;
-        this.paramSubscription = this.route!.params.subscribe((params) => {
+        this.loading.set(true);
+        this.paramSubscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
-                this.course = res.body!;
-                this.loading = false;
+                this.course.set(res.body!);
+                this.loading.set(false);
             });
             this.redirectIfCourseIsFullyAccessible();
         });
@@ -40,7 +40,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     }
 
     redirectToCoursePage(): void {
-        this.router.navigate(['courses', this.courseId]);
+        void this.router.navigate(['courses', this.courseId]);
     }
 
     /**

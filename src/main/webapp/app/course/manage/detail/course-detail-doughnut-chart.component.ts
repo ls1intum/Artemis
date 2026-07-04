@@ -3,9 +3,12 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -17,7 +20,7 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
-    imports: [RouterLink, NgClass, FaIconComponent, PieChartModule, ArtemisTranslatePipe],
+    imports: [RouterLink, NgClass, FaIconComponent, ChartModule, ArtemisTranslatePipe],
 })
 export class CourseDetailDoughnutChartComponent {
     private router = inject(Router);
@@ -31,7 +34,7 @@ export class CourseDetailDoughnutChartComponent {
 
     readonly receivedStats = signal(false);
     readonly stats = signal<number[]>([]);
-    readonly ngxData = signal<NgxChartsSingleSeriesDataEntry[]>([
+    readonly chartEntries = signal<ChartSeriesEntry[]>([
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
         { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
@@ -40,14 +43,15 @@ export class CourseDetailDoughnutChartComponent {
     // Icons
     faSpinner = faSpinner;
 
-    // ngx-charts
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
-    } as Color;
-    bindFormatting = this.valueFormatting.bind(this);
+    private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY]);
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.chartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            legend: false,
+            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
+        }),
+    );
 
     // Computed values for title and link based on contentType
     readonly doughnutChartTitle = computed(() => {
@@ -118,9 +122,9 @@ export class CourseDetailDoughnutChartComponent {
             const contentType = this.contentType();
             untracked(() => {
                 if (contentType === DoughnutChartType.AVERAGE_COURSE_SCORE) {
-                    const currentData = this.ngxData();
+                    const currentData = this.chartEntries();
                     currentData[0].name = 'Average score';
-                    this.ngxData.set([...currentData]);
+                    this.chartEntries.set([...currentData]);
                 }
             });
         });
@@ -133,18 +137,18 @@ export class CourseDetailDoughnutChartComponent {
         const course = this.course();
         const titleLink = this.titleLink();
         if (course.id && titleLink) {
-            this.router.navigate(['/course-management', course.id, titleLink]);
+            void this.router.navigate(['/course-management', course.id, titleLink]);
         }
     }
 
     /**
-     * Assigns a given array of numbers to ngxData
+     * Assigns a given array of numbers to the chart entries
      * @param values the values that should be displayed by the chart
      */
     private updatePieChartData(values: number[]): void {
-        const currentData = this.ngxData();
-        currentData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
-        this.ngxData.set([...currentData]);
+        const currentData = this.chartEntries();
+        currentData.forEach((entry: ChartSeriesEntry, index: number) => (entry.value = values[index]));
+        this.chartEntries.set([...currentData]);
     }
 
     /**
@@ -155,7 +159,7 @@ export class CourseDetailDoughnutChartComponent {
      * @param data the default tooltip content that has to be replaced
      * returns string representing custom tooltip content
      */
-    valueFormatting(data: any): string {
-        return this.currentMax() === 0 ? '0' : data.value;
+    valueFormatting(data: { value: number }): string {
+        return this.currentMax() === 0 ? '0' : `${data.value}`;
     }
 }

@@ -50,7 +50,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
@@ -428,6 +428,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
         };
 
+        it('should not generate for non-Java exercises', async () => {
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+        });
+
         it('should not generate when no exercise id', async () => {
             comp.exercise = undefined as any;
             comp.selectedRepository = RepositoryType.TEMPLATE;
@@ -586,7 +597,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBe(false);
         });
 
-        it('should debounce repository pulls across FILE_UPDATED and NEW_FILE events', async () => {
+        it('should debounce repository pulls across file activity events', async () => {
             vi.useFakeTimers();
             try {
                 comp.selectedRepository = RepositoryType.TEMPLATE;
@@ -602,6 +613,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
                 job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
+                job$.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 });
 
                 expect(pullSpy).not.toHaveBeenCalled();
 
@@ -609,6 +621,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 expect(pullSpy).toHaveBeenCalledOnce();
                 expect(comp.codeGenerationActivityLog()).toEqual([
+                    expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 }),
                     expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
                     expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
                 ]);
@@ -617,6 +630,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                         comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities,
                     ),
                 ).toEqual([
+                    {
+                        iteration: 3,
+                        activities: [expect.objectContaining({ path: 'src/main/java/Obsolete.java', iteration: 3 })],
+                    },
                     {
                         iteration: 2,
                         activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],
@@ -1628,7 +1645,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.showConsistencyIssuesToolbar()).toBe(true);
 
             const sorted = comp.sortedIssues();
-            expect(comp.selectedIssue).toEqual(sorted[0]);
+            expect(comp.selectedIssue()).toEqual(sorted[0]);
         });
 
         it('should exclude resolved consistency threads from the navigation list', () => {
@@ -1643,7 +1660,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(sorted.some((issue) => issue.threadId === threads[3].id)).toBe(false);
 
             comp.toggleConsistencyIssuesToolbar();
-            expect(comp.selectedIssue).toEqual(sorted[0]);
+            expect(comp.selectedIssue()).toEqual(sorted[0]);
         });
 
         it('should navigate global next', () => {
@@ -1651,18 +1668,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const sorted = comp.sortedIssues();
 
             // Start at first issue
-            comp.selectedIssue = sorted[0];
+            comp.selectedIssue.set(sorted[0]);
 
             const jumpSpy = vi.spyOn(internals(comp), 'jumpToLocation').mockImplementation(() => {});
 
             // Next step
             comp.navigateGlobal(1);
 
-            expect(comp.selectedIssue).toBe(sorted[1]);
+            expect(comp.selectedIssue()).toBe(sorted[1]);
             expect(jumpSpy).toHaveBeenCalledWith(sorted[1]);
 
             comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[2]);
+            expect(comp.selectedIssue()).toBe(sorted[2]);
         });
 
         it('should navigate global previous and wrap around', () => {
@@ -1670,7 +1687,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const sorted = comp.sortedIssues();
 
             // Start at first issue
-            comp.selectedIssue = sorted[0];
+            comp.selectedIssue.set(sorted[0]);
 
             const jumpSpy = vi.spyOn(internals(comp), 'jumpToLocation').mockImplementation(() => {});
 
@@ -1678,7 +1695,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             comp.navigateGlobal(-1);
 
-            expect(comp.selectedIssue).toBe(lastIssue);
+            expect(comp.selectedIssue()).toBe(lastIssue);
             expect(jumpSpy).toHaveBeenCalledWith(lastIssue);
         });
 
@@ -1897,7 +1914,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
             reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             internals(comp).showConsistencyIssuesToolbar.set(true);
-            comp.selectedIssue = comp.sortedIssues()[0];
+            comp.selectedIssue.set(comp.sortedIssues()[0]);
 
             vi.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
             vi.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
@@ -1906,7 +1923,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.checkConsistencies(comp.exercise!);
 
             expect(comp.showConsistencyIssuesToolbar()).toBe(false);
-            expect(comp.selectedIssue).toBeUndefined();
+            expect(comp.selectedIssue()).toBeUndefined();
         });
     });
 });
@@ -2096,7 +2113,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
     it('normalizes CRLF fallback content and enforces LF EOL before binding', () => {
         const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
         const { model } = makeMonacoDoubles();
-        const openFile = vi.fn(() => ({ doc: {}, text: { toString: () => '' }, awareness: {} }));
+        const openFile = vi.fn(() => ({ doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} }));
 
         internals(comp).fileSyncService = {
             isInitialized: vi.fn(() => true),
@@ -2125,7 +2142,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         const newBinding = { destroy: vi.fn() };
         let bindingCallCount = 0;
 
-        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} });
 
         const createFileBindingSpy = vi.spyOn(internals(comp), 'createFileBinding').mockImplementation(() => {
             internals(comp).currentFileBinding = [oldBinding, newBinding][bindingCallCount++];
@@ -2138,7 +2155,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         expect(createFileBindingSpy).toHaveBeenCalledOnce();
 
         // Emit a state replacement for the same file
-        const newText = { toString: () => 'replacement text' } as any;
+        const newText = { toString: () => 'replacement text', toJSON: () => 'replacement text' } as any;
         stateReplaced$.next({ filePath: 'src/Main.java', doc: {} as any, text: newText, awareness: {} as any });
 
         // Old binding must be destroyed before model mutation
@@ -2154,7 +2171,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         const { model } = makeMonacoDoubles();
         const binding = { destroy: vi.fn() };
 
-        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} });
 
         const createFileBindingSpy = vi.spyOn(internals(comp), 'createFileBinding').mockImplementation(() => {
             internals(comp).currentFileBinding = binding;
@@ -2165,7 +2182,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         internals(comp).onFileSyncLoad('src/Main.java');
 
         // Emit for a DIFFERENT file — must be ignored
-        stateReplaced$.next({ filePath: 'src/Other.java', doc: {} as any, text: { toString: () => 'other' } as any, awareness: {} as any });
+        stateReplaced$.next({ filePath: 'src/Other.java', doc: {} as any, text: { toString: () => 'other', toJSON: () => 'other' } as any, awareness: {} as any });
 
         expect(binding.destroy).not.toHaveBeenCalled();
         expect(model.setValue).not.toHaveBeenCalledWith('other');

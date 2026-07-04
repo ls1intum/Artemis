@@ -139,7 +139,7 @@ describe('QuizStatisticComponent', () => {
             comp.loadQuizSuccess(quizExercise);
 
             // check
-            expect(comp.quizExercise).toBe(quizExercise);
+            expect(comp.quizExercise()).toBe(quizExercise);
             expect(comp.maxScore).toBe(11);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
@@ -176,7 +176,7 @@ describe('QuizStatisticComponent', () => {
                 { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
                 { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
@@ -191,7 +191,7 @@ describe('QuizStatisticComponent', () => {
             // setup
             quizExercise.quizQuestions = undefined;
             quizExercise.maxPoints = 42;
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             vi.spyOn(comp, 'loadData').mockImplementation(() => {});
 
@@ -217,7 +217,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.rated = true;
@@ -241,7 +241,7 @@ describe('QuizStatisticComponent', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
             comp.rated = false;
             comp.maxScore = 1;
 
@@ -260,7 +260,7 @@ describe('QuizStatisticComponent', () => {
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.rated = true;
             comp.maxScore = 1;
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.loadData();
@@ -292,14 +292,13 @@ describe('QuizStatisticComponent', () => {
         comp.totalParticipants = 100;
         comp.participants = 100;
 
-        let result = comp.bindFormatting(30);
+        // the data label formatter is wired into the chart options
+        const formatter = (comp.chartOptions().plugins as any).datalabels.formatter;
 
-        expect(result).toBe('30 (30%)');
+        expect(formatter(30)).toBe('30 (30%)');
 
         comp.totalParticipants = 0;
 
-        result = comp.bindFormatting(0);
-
-        expect(result).toBe('0 (0%)');
+        expect(formatter(0)).toBe('0 (0%)');
     });
 });

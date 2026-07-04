@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, OnDestroy, ViewEncapsulation, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -8,6 +8,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { SliderModule } from 'primeng/slider';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,8 +18,12 @@ import { QuizAiGeneratedQuestionCardComponent } from 'app/quiz/manage/update/qui
 import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
+import { Subscription, from } from 'rxjs';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
+import { CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+
+type GenerationMode = 'free-topic' | 'competency-graph';
 
 @Component({
     selector: 'jhi-quiz-ai-generation-modal',
@@ -41,26 +46,40 @@ import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGen
         FaStackItemSizeDirective,
         ArtemisTranslatePipe,
         QuizAiGeneratedQuestionCardComponent,
+        MultiSelectModule,
     ],
 })
 export class QuizAiGenerationModalComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private quizAiGenerationService = inject(QuizAiGenerationService);
+    private courseCompetencyApiService = inject(CourseCompetencyApiService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
     visible = model.required<boolean>();
     courseId = input<number>();
     addQuestions = output<GeneratedQuestion[]>();
-    topic = signal('');
+
+    // shared
+    mode = signal<GenerationMode>('free-topic');
     optionalPrompt = signal('');
     numberOfQuestions = signal(3);
-    difficulty = signal(50);
     language = signal<GenerationLanguage>('en');
     selectedQuestionTypes = signal<GeneratedQuestionType[]>(['single-choice']);
     generatedQuestions = signal<GeneratedQuestion[]>([]);
     isGenerating = signal(false);
     loadingPhraseIndex = signal(0);
     loadingDotsCount = signal(0);
+
+    // free-topic mode
+    topic = signal('');
+    difficulty = signal(50);
+
+    // competency-graph mode
+    courseCompetencies = signal<CourseCompetency[]>([]);
+    selectedCompetencies = signal<CourseCompetency[]>([]);
+    isLoadingCompetencies = signal(false);
+    /** Tracks the courseId for which a competency load was last attempted (success or failure). */
+    private competenciesLoadedForCourseId = signal<number | null>(null);
 
     readonly questionTypes: GeneratedQuestionType[] = ['single-choice', 'multiple-choice', 'true-false'];
     readonly languages: GenerationLanguage[] = ['en', 'de'];
@@ -70,14 +89,70 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
         'artemisApp.quizExercise.aiGeneration.actions.loading.generating',
         'artemisApp.quizExercise.aiGeneration.actions.loading.refining',
     ] as const;
+
+    readonly isCompetencyMode = computed(() => this.mode() === 'competency-graph');
+    readonly hasCompetencies = computed(() => this.courseCompetencies().length > 0);
     readonly hasGeneratedQuestions = computed(() => this.generatedQuestions().length > 0);
-    readonly canGenerate = computed(() => !!this.courseId() && !!this.topic().trim() && this.selectedQuestionTypes().length > 0);
+    readonly canGenerate = computed(() => {
+        if (!this.courseId() || this.selectedQuestionTypes().length === 0) {
+            return false;
+        }
+        if (!this.isCompetencyMode()) {
+            return !!this.topic().trim();
+        }
+        return this.selectedCompetencies().length > 0;
+    });
+
     private loadingPhraseIntervalId?: ReturnType<typeof setInterval>;
     private loadingDotsIntervalId?: ReturnType<typeof setInterval>;
     private generationSubscription?: Subscription;
+    private competencySubscription?: Subscription;
+
+    constructor() {
+        // Load competencies once per open/course cycle; guards against infinite retries on empty
+        // results or request failures by keying on competenciesLoadedForCourseId, not list length.
+        effect(() => {
+            const courseId = this.courseId();
+            if (this.visible() && courseId && this.competenciesLoadedForCourseId() !== courseId && !this.isLoadingCompetencies()) {
+                this.loadCompetencies(courseId);
+            }
+        });
+        // Reset the load-guard when the modal closes so the next open cycle triggers a fresh load.
+        effect(() => {
+            if (!this.visible()) {
+                this.competenciesLoadedForCourseId.set(null);
+            }
+        });
+        // If competencies finish loading and there are none, fall back to free-topic
+        effect(() => {
+            if (!this.isLoadingCompetencies() && !this.hasCompetencies() && this.isCompetencyMode()) {
+                this.mode.set('free-topic');
+            }
+        });
+    }
+
+    private loadCompetencies(courseId: number): void {
+        this.isLoadingCompetencies.set(true);
+        this.competencySubscription = from(this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId))
+            .pipe(
+                finalize(() => {
+                    this.isLoadingCompetencies.set(false);
+                    // Mark this courseId as attempted so the effect does not retry on empty list or error.
+                    this.competenciesLoadedForCourseId.set(courseId);
+                }),
+            )
+            .subscribe({
+                next: (competencies) => this.courseCompetencies.set(competencies),
+                error: () => this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.competencyLoadFailed'),
+            });
+    }
 
     close(): void {
         this.visible.set(false);
+    }
+
+    selectMode(mode: GenerationMode): void {
+        this.mode.set(mode);
     }
 
     toggleQuestionType(type: GeneratedQuestionType): void {
@@ -108,14 +183,26 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
             return;
         }
 
-        const request: QuizQuestionGenerationRequest = {
-            topic: this.topic().trim(),
-            optionalPrompt: this.optionalPrompt().trim() || undefined,
-            language: this.language(),
-            questionTypes: this.selectedQuestionTypes(),
-            numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
-            difficulty: Math.max(0, Math.min(100, this.difficulty() ?? 50)),
-        };
+        const difficulty = Math.max(0, Math.min(100, this.difficulty()));
+        const request: QuizQuestionGenerationRequest = this.isCompetencyMode()
+            ? {
+                  competencyIds: this.selectedCompetencies()
+                      .map((c) => c.id)
+                      .filter((id): id is number => id !== undefined),
+                  optionalPrompt: this.optionalPrompt().trim() || undefined,
+                  language: this.language(),
+                  questionTypes: this.selectedQuestionTypes(),
+                  numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
+                  difficulty,
+              }
+            : {
+                  topic: this.topic().trim(),
+                  optionalPrompt: this.optionalPrompt().trim() || undefined,
+                  language: this.language(),
+                  questionTypes: this.selectedQuestionTypes(),
+                  numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
+                  difficulty,
+              };
 
         this.startLoadingAnimation();
         this.generationSubscription = this.quizAiGenerationService
@@ -168,6 +255,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.generationSubscription?.unsubscribe();
+        this.competencySubscription?.unsubscribe();
         this.stopLoadingAnimation();
     }
 

@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -44,10 +44,10 @@ public class CourseNotificationPushService extends CourseNotificationBroadcastSe
      * to ensure delivery across different device platforms. These methods are ran asynchronously.
      *
      * @param courseNotification The DTO containing the course notification details to be sent
-     * @param recipients         A list of User objects who should receive the notification
+     * @param recipients         A list of recipients who should receive the notification
      */
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         var recipientSet = new HashSet<>(recipients);
         applePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
         firebasePushNotificationService.sendCourseNotification(courseNotification, recipientSet);

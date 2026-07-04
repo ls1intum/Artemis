@@ -16,6 +16,9 @@ import { Submission, SubmissionType } from 'app/exercise/shared/entities/submiss
 import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ExampleSubmissionImportComponent', () => {
     setupTestBed({ zoneless: true });
@@ -100,12 +103,28 @@ describe('ExampleSubmissionImportComponent', () => {
         await vi.advanceTimersByTimeAsync(300);
 
         expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
-        expect(component.content.resultsOnPage[0].submissionSize).toBe(2);
+        expect(component.content().resultsOnPage[0].submissionSize).toBe(2);
     });
 
     it('should close the dialog on dismiss', () => {
         component.dismiss();
 
         expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
+
+    // The import table renders <jhi-result [result]="getLatestResult(submission)" ...>. This component is the only
+    // caller that resolves the displayed result itself (instead of passing one in), so guard that resolution: the
+    // latest rated result of the submission's participation must be returned, and undefined when there is none.
+    it('getLatestResult returns the latest rated result of the submission participation', () => {
+        const ratedResult = { id: 7, score: 90, rated: true } as Result;
+        const innerSubmission = { id: 5, results: [ratedResult] } as Submission;
+        const participation = { id: 2, type: ParticipationType.STUDENT, submissions: [innerSubmission] } as StudentParticipation;
+        const submissionWithResult = { id: 5, participation } as Submission;
+
+        expect(component.getLatestResult(submissionWithResult)).toEqual(ratedResult);
+    });
+
+    it('getLatestResult returns undefined when the submission has no participation', () => {
+        expect(component.getLatestResult({ id: 9 } as Submission)).toBeUndefined();
     });
 });

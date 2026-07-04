@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
@@ -19,14 +19,14 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
 
     course = input.required<Course>();
 
-    responsibleContacts: User[] = [];
+    readonly responsibleContacts = signal<User[]>([]);
 
     ngOnInit() {
         if (this.course().id) {
             this.conversationService.getResponsibleUsersForCodeOfConduct(this.course().id!).subscribe({
                 next: (res: HttpResponse<User[]>) => {
                     if (res.body) {
-                        this.responsibleContacts = res.body;
+                        this.responsibleContacts.set(res.body);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

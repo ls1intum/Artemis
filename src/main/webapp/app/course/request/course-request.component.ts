@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
@@ -30,8 +30,8 @@ export class CourseRequestComponent {
     protected readonly semesters = getCurrentAndFutureSemesters();
     protected readonly faPaperPlane = faPaperPlane;
 
-    isSubmitting = false;
-    dateRangeInvalid = false;
+    readonly isSubmitting = signal(false);
+    readonly dateRangeInvalid = signal(false);
 
     form = this.fb.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -44,7 +44,7 @@ export class CourseRequestComponent {
     });
 
     submit() {
-        this.dateRangeInvalid = false;
+        this.dateRangeInvalid.set(false);
         if (this.form.invalid) {
             this.form.markAllAsTouched();
             return;
@@ -52,7 +52,7 @@ export class CourseRequestComponent {
         const startDate = this.form.get('startDate')!.value ?? undefined;
         const endDate = this.form.get('endDate')!.value ?? undefined;
         if (startDate && endDate && !startDate.isBefore(endDate)) {
-            this.dateRangeInvalid = true;
+            this.dateRangeInvalid.set(true);
             return;
         }
 
@@ -66,7 +66,7 @@ export class CourseRequestComponent {
             reason: this.form.get('reason')!.value!,
         };
 
-        this.isSubmitting = true;
+        this.isSubmitting.set(true);
         this.courseRequestService.create(payload).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.courseRequest.success');
@@ -79,12 +79,12 @@ export class CourseRequestComponent {
                     testCourse: false,
                     reason: '',
                 });
-                this.dateRangeInvalid = false;
-                this.isSubmitting = false;
+                this.dateRangeInvalid.set(false);
+                this.isSubmitting.set(false);
             },
             error: (error: HttpErrorResponse) => {
                 this.handleSubmitError(error);
-                this.isSubmitting = false;
+                this.isSubmitting.set(false);
             },
         });
     }

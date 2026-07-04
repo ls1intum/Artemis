@@ -6,14 +6,15 @@
             <h4 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
         </div>
         <div class="card-body">
-            @if (isVisibleInLeaderboard !== undefined) {
+            @if (isVisibleInLeaderboard() !== undefined) {
                 <div class="d-flex align-items-center">
                     <div class="form-check form-switch">
                         <input
                             class="form-check-input"
                             type="checkbox"
                             id="leaderboardVisibilityToggle"
-                            [(ngModel)]="isVisibleInLeaderboard"
+                            [ngModel]="isVisibleInLeaderboard()"
+                            (ngModelChange)="isVisibleInLeaderboard.set($event)"
                             (change)="toggleLeaderboardVisibility()"
                         />
                         <label class="form-check-label ms-2" for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>

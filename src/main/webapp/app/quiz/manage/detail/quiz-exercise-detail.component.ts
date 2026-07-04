@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import dayjs from 'dayjs/esm';
@@ -45,13 +45,13 @@ export class QuizExerciseDetailComponent implements OnInit {
     courseId: number;
     examId: number;
     quizId: number;
-    isExamMode: boolean;
-    showStatistics: boolean;
+    readonly isExamMode = signal<boolean>(false);
+    readonly showStatistics = signal<boolean>(false);
 
-    quizExercise: QuizExercise;
-    statistics: ExerciseManagementStatisticsDto;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly statistics = signal<ExerciseManagementStatisticsDto>(undefined!);
 
-    detailOverviewSections: DetailOverviewSection[];
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     /**
      * Load the quizzes of the course for export on init.
@@ -62,31 +62,31 @@ export class QuizExerciseDetailComponent implements OnInit {
         this.quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         if (this.examId && groupId) {
-            this.isExamMode = true;
+            this.isExamMode.set(true);
         }
         this.load();
     }
 
     load() {
         this.quizExerciseService.find(this.quizId).subscribe(async (response: HttpResponse<QuizExercise>) => {
-            this.quizExercise = response.body!;
-            this.quizExercise.quizBatches = this.quizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-            this.quizExercise.isEditable = (this.quizExercise.isEditable ?? true) && isQuizEditable(this.quizExercise);
-            this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
-            this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
-            this.showStatistics = !this.quizExercise.releaseDate || dayjs(this.quizExercise.releaseDate).isBefore(dayjs());
-            if (this.showStatistics) {
-                this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
+            this.quizExercise.set(response.body!);
+            this.quizExercise().quizBatches = this.quizExercise().quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+            this.quizExercise().isEditable = (this.quizExercise().isEditable ?? true) && isQuizEditable(this.quizExercise());
+            this.quizExercise().status = this.quizExerciseService.getStatus(this.quizExercise());
+            this.quizExercise().startDate = this.quizExercise().dueDate && dayjs(this.quizExercise().dueDate).subtract(this.quizExercise().duration ?? 0, 'second');
+            this.showStatistics.set(!this.quizExercise().releaseDate || dayjs(this.quizExercise().releaseDate).isBefore(dayjs()));
+            if (this.showStatistics()) {
+                this.statistics.set(await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId)));
             }
-            this.detailOverviewSections = this.getExerciseDetailSections();
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.quizExercise;
-        const mcCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
-        const dndCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
-        const shortCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
+        const exercise = this.quizExercise();
+        const mcCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
+        const dndCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
+        const shortCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);

@@ -57,7 +57,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     cachedDiffInformationChange = output<Map<string, RepositoryDiffInformation>>();
     cachedDiffReportsChange = output<Map<string, RepositoryDiffInformation>>();
 
-    isLoadingDiffReport: boolean;
+    readonly isLoadingDiffReport = signal<boolean>(undefined!);
     isLeftTemplate: boolean;
     leftKey: string;
     rightKey: string;
@@ -88,7 +88,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             .subscribe(() => {
                 const key = this.calculateMapKey();
                 if (this.cachedDiffInformation().has(key)) {
-                    this.diffInformation.set(this.cachedDiffInformation().get(key)!);
+                    this.diffInformation.set(this.cachedDiffInformation().get(key));
                     this.diffReady.set(true);
                 } else {
                     this.fetchRepositoriesAndProcessDiff();
@@ -128,7 +128,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             if (left && right) {
                 this.cachedRepositoryFiles.set(this.leftKey, left);
                 this.cachedRepositoryFiles.set(this.rightKey, right);
-                this.processRepositoryDiff(left, right);
+                void this.processRepositoryDiff(left, right);
             } else {
                 this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
             }
@@ -185,7 +185,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         this.diffInformation.set(await processRepositoryDiff(left, right));
         this.cachedDiffInformation().set(this.calculateMapKey(), this.diffInformation()!);
         this.cachedDiffInformationChange.emit(this.cachedDiffInformation());
-        this.isLoadingDiffReport = false;
+        this.isLoadingDiffReport.set(false);
 
         // Set ready state to true when diff processing is complete
         this.diffReady.set(true);

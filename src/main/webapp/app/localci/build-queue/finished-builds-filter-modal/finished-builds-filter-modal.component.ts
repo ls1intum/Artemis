@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -124,8 +124,26 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
 
-    /** The filter configuration being edited in this modal */
-    finishedBuildJobFilter: FinishedBuildJobFilter;
+    /**
+     * The filter configuration being edited in this modal.
+     * Backed by a signal so template reads stay reactive under zoneless change detection, but exposed as a
+     * getter/setter property because the template uses deep two-way bindings ([(ngModel)]="finishedBuildJobFilter.prop")
+     * that a bare signal cannot back. After deep mutations the reference is rebuilt via commitFinishedBuildJobFilter().
+     */
+    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(undefined!);
+    get finishedBuildJobFilter(): FinishedBuildJobFilter {
+        return this.finishedBuildJobFilterSignal();
+    }
+    set finishedBuildJobFilter(value: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilterSignal.set(value);
+    }
+
+    /** Rebuilds the filter reference so signal consumers (the template) react to deep in-place mutations. */
+    private commitFinishedBuildJobFilter(): void {
+        this.finishedBuildJobFilterSignal.update((filter) =>
+            Object.assign(new FinishedBuildJobFilter(filter.buildAgentAddress), filter, { appliedFilters: filter.appliedFilters }),
+        );
+    }
 
     /** Available status values for the status filter dropdown */
     buildStatusFilterValues?: string[];
@@ -140,7 +158,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     finishedBuildJobs: FinishedBuildJob[] = [];
 
     /** Whether the build agent filter should be shown and editable */
-    buildAgentFilterable = false;
+    readonly buildAgentFilterable = signal(false);
 
     /**
      * Initializes the component, reading the inputs provided via the dialog configuration data.
@@ -156,7 +174,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
             this.finishedBuildJobFilter = new FinishedBuildJobFilter();
         }
         if (data?.buildAgentFilterable !== undefined) {
-            this.buildAgentFilterable = data.buildAgentFilterable;
+            this.buildAgentFilterable.set(data.buildAgentFilterable);
         }
         if (data?.finishedBuildJobs) {
             this.finishedBuildJobs = data.finishedBuildJobs;
@@ -204,6 +222,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
             this.finishedBuildJobFilter.status = undefined;
             this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.status);
         }
+        this.commitFinishedBuildJobFilter();
     }
 
     /**
@@ -215,6 +234,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
         } else {
             this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildAgentAddress);
         }
+        this.commitFinishedBuildJobFilter();
     }
 
     /**
@@ -238,6 +258,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
         } else {
             this.finishedBuildJobFilter.areDatesValid = true;
         }
+        this.commitFinishedBuildJobFilter();
     }
 
     /**
@@ -260,6 +281,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
         } else {
             this.finishedBuildJobFilter.areDurationFiltersValid = true;
         }
+        this.commitFinishedBuildJobFilter();
     }
 
     /**

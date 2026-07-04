@@ -40,7 +40,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     exercise = signal<Exercise>(this.dialogConfig.data.exercise);
 
     pendingTeam: Team = cloneDeep(this.team());
-    isSaving = false;
+    readonly isSaving = signal(false);
 
     searchingStudents = false;
     searchingStudentsQueryTooShort = false;
@@ -204,7 +204,7 @@ export class TeamUpdateDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(team: Observable<HttpResponse<Team>>) {
-        this.isSaving = true;
+        this.isSaving.set(true);
         team.subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: (error) => this.onSaveError(error),
@@ -217,7 +217,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      */
     onSaveSuccess(team: HttpResponse<Team>) {
         this.dialogRef.close(team.body);
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 
     /**
@@ -225,7 +225,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {HttpErrorResponse} httpErrorResponse - The occurred error
      */
     onSaveError(httpErrorResponse: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         const { errorKey, params } = httpErrorResponse.error;
 

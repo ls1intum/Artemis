@@ -21,7 +21,6 @@ import jakarta.annotation.PostConstruct;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -552,7 +551,7 @@ public class BuildJobExecutionService {
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
-        return IOUtils.toString(tarArchiveInputStream, StandardCharsets.UTF_8);
+        return new String(tarArchiveInputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
 
     /**

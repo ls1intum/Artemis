@@ -100,6 +100,7 @@
             "home": "Startseite",
             "overview": "Übersicht",
             "courses": "Kurse",
+            "student": "Student",
             "course": "Verwaltung",
             "courseRequests": "Neuen Kurs anfragen",
             "entities": {
@@ -224,7 +225,8 @@
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
-                    "dependencies": "Abhängigkeiten"
+                    "dependencies": "Abhängigkeiten",
+                    "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",
@@ -252,7 +254,7 @@
                 "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
-            "settings": "Einstellungen"
+            "settings": "Benutzereinstellungen"
         },
         "form": {
             "username": "Login oder E-Mail",
@@ -365,19 +367,12 @@
             "purge": "Löschen",
             "archive": "Archivieren",
             "submit": "Absenden",
-            "continueSubmission": "Weitermachen",
-            "viewTimeline": "Verlauf Anzeigen",
-            "hideTimeline": "Verlauf Ausblenden",
-            "submitTooltip": "Du kannst mehrmals bis zur Einreichungsfrist abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
-            "submitNoDueDateTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
-            "submitDueDateMissedTooltip": "Die Einreichungsfrist ist abgelaufen. Weitere Abgaben werden nicht gewertet!",
-            "dueDateMissedTooltip": "Die Einreichungsfrist ist abgelaufen. Du kannst keine neuen Lösungen einreichen!",
-            "submitDueDateMissed": "Absenden (Einreichungsfrist verpasst)",
             "submitSuccessfulAlert": "Deine Abgabe war erfolgreich! Du kannst deine Abgabe nun ändern oder auf Feedback warten.",
             "submitDueDateMissedAlert": "Deine Abgabe war erfolgreich! Du kannst deine Abgabe nun ändern oder auf Feedback warten. Da du die Einreichungsfrist verpasst hast, wird deine Abgabe nicht gewertet.",
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
+            "done": "Fertig",
             "finish": "Abschließen",
             "import": "Import",
             "to-import": "Importieren",

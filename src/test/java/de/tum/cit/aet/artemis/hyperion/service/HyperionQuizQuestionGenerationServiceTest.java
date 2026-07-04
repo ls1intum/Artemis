@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
@@ -36,6 +38,9 @@ class HyperionQuizQuestionGenerationServiceTest {
     @Mock
     private ChatModel chatModel;
 
+    @Mock
+    private HyperionCompetencyContextService competencyContextService;
+
     private HyperionQuizQuestionGenerationService service;
 
     private AutoCloseable mocks;
@@ -43,8 +48,11 @@ class HyperionQuizQuestionGenerationServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService());
+        service = new HyperionQuizQuestionGenerationService(chatClient, new HyperionPromptTemplateService(), competencyContextService);
     }
 
     @AfterEach
@@ -76,7 +84,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
         course.setDescription("SE basics");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
                 Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         QuizQuestionGenerationResponseDTO response = service.generateQuizQuestions(course, request);
@@ -89,13 +97,13 @@ class HyperionQuizQuestionGenerationServiceTest {
 
     @Test
     void generateQuizQuestions_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService());
+        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService);
 
         Course course = new Course();
         course.setTitle("Software Engineering");
         course.setDescription("SE basics");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
                 Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         assertThatThrownBy(() -> serviceWithNullClient.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
@@ -138,7 +146,7 @@ class HyperionQuizQuestionGenerationServiceTest {
 
     @Test
     void refineQuizQuestion_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService());
+        var serviceWithNullClient = new HyperionQuizQuestionGenerationService(null, new HyperionPromptTemplateService(), competencyContextService);
 
         Course course = new Course();
         course.setTitle("Software Engineering");
@@ -188,7 +196,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         Course course = new Course();
         course.setTitle("Software Engineering");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", null, "", QuizQuestionGenerationLanguage.EN,
                 Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         assertThatThrownBy(() -> service.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("type is invalid");

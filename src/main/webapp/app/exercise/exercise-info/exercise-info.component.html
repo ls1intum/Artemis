@@ -17,10 +17,10 @@
             @if (currentExercise.assessmentDueDate) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.assessmentDue"></div>
             }
-            @if (individualComplaintDueDate) {
+            @if (individualComplaintDueDate()) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintDue"></div>
             }
-            @if (dueDate && !individualComplaintDueDate) {
+            @if (dueDate() && !individualComplaintDueDate()) {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseDetails.complaintPossible"></div>
             }
         </div>
@@ -32,8 +32,8 @@
             @if (currentExercise.startDate) {
                 <div>{{ currentExercise.startDate | artemisDate }}</div>
             }
-            @if (dueDate) {
-                <div>{{ dueDate | artemisDate }}</div>
+            @if (dueDate()) {
+                <div>{{ dueDate() | artemisDate }}</div>
             } @else {
                 <div jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
             }
@@ -43,11 +43,11 @@
             @if (currentExercise.assessmentDueDate) {
                 <div>{{ currentExercise.assessmentDueDate | artemisDate }}</div>
             }
-            @if (individualComplaintDueDate) {
-                <div>{{ individualComplaintDueDate | artemisDate }}</div>
+            @if (individualComplaintDueDate()) {
+                <div>{{ individualComplaintDueDate() | artemisDate }}</div>
             }
-            @if (dueDate && !individualComplaintDueDate) {
-                <div>{{ (canComplainLaterOn ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
+            @if (dueDate() && !individualComplaintDueDate()) {
+                <div>{{ (canComplainLaterOn() ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</div>
             }
         </div>
     </div>

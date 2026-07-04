@@ -1,5 +1,5 @@
 <div class="d-flex flex-row flex-wrap gap-2">
-    @for (informationBoxData of examInformationBoxData; track informationBoxData) {
+    @for (informationBoxData of examInformationBoxData(); track informationBoxData) {
         <jhi-information-box [informationBoxData]="informationBoxData">
             <ng-container contentComponent>
                 @if (informationBoxData.content.type === 'dateTime') {

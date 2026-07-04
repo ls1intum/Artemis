@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
 
@@ -87,7 +88,8 @@ public class CourseNotificationService {
                 continue;
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), filteredRecipients);
+            var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
+            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);

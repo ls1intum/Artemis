@@ -55,8 +55,8 @@ describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
     it('should read the invalid flagged questions from the dialog config on init', () => {
         fixture.detectChanges();
 
-        expect(component.invalidFlaggedQuestions).toEqual(invalidQuestions);
-        expect(component.invalidFlaggedQuestions.length).toBe(2);
+        expect(component.invalidFlaggedQuestions()).toEqual(invalidQuestions);
+        expect(component.invalidFlaggedQuestions().length).toBe(2);
     });
 
     it('should close the dialog with confirmation on importQuestions', () => {

@@ -22,8 +22,14 @@
         (onHeaderCheckboxToggle)="handleRowSelectChange()"
         [lazy]="resolvedOptions().lazy"
         (onLazyLoad)="handleLazyLoad($event)"
+        (onFilter)="onFilter($event)"
         [scrollable]="resolvedOptions().scrollable"
         [scrollHeight]="resolvedOptions().scrollHeight"
+        [globalFilterFields]="resolvedOptions().globalFilterFields"
+        [customSort]="hasCustomSort()"
+        (sortFunction)="onCustomSort($event)"
+        [sortField]="resolvedOptions().initialSortField"
+        [sortOrder]="resolvedOptions().initialSortOrder"
     >
         @if (showCaption()) {
             <ng-template #caption>
@@ -49,6 +55,9 @@
                         } @else {
                             <span>{{ col?.header ?? '' }}</span>
                         }
+                        @if (col?.headerIcon || col?.headerTooltip) {
+                            <i [class]="col.headerIcon ?? 'pi pi-question-circle'"></i>
+                        }
                         @if (col?.sort && col?.field) {
                             <p-sortIcon [field]="col.field" />
                         }
@@ -71,11 +80,18 @@
                             [alignFrozen]="col?.alignFrozen ?? 'left'"
                             [pSortableColumn]="col?.sort ? col.field : undefined"
                             [style]="{ 'min-width': col?.width ?? 'auto' }"
+                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
+                            tooltipPosition="top"
                         >
                             <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
                         </th>
                     } @else {
-                        <th [pSortableColumn]="col?.sort ? col.field : undefined" [style]="{ 'min-width': col?.width ?? 'auto' }">
+                        <th
+                            [pSortableColumn]="col?.sort ? col.field : undefined"
+                            [style]="{ 'min-width': col?.width ?? 'auto' }"
+                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
+                            tooltipPosition="top"
+                        >
                             <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
                         </th>
                     }
@@ -103,7 +119,12 @@
                 }
             </ng-template>
             @let rowParams = renderedRows().get(rowData);
-            <tr [class.jhi-row-disabled]="isRowDisabled()?.(rowData)" [pTooltip]="isRowDisabled()?.(rowData) ? disabledRowTooltip() : undefined" tooltipPosition="top">
+            <tr
+                [class.jhi-row-disabled]="isRowDisabled()?.(rowData)"
+                [ngClass]="rowClass()?.(rowData)"
+                [pTooltip]="isRowDisabled()?.(rowData) ? disabledRowTooltip() : undefined"
+                tooltipPosition="top"
+            >
                 @if (resolvedOptions().selectionMode === 'multiple') {
                     <td style="width: 3rem">
                         <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />

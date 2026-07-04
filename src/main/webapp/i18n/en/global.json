@@ -100,6 +100,7 @@
             "home": "Home",
             "overview": "Overview",
             "courses": "Courses",
+            "student": "Student",
             "course": "Management",
             "courseRequests": "Request a new Course",
             "entities": {
@@ -224,7 +225,8 @@
                     "privacy": "Privacy",
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
-                    "dependencies": "Dependencies"
+                    "dependencies": "Dependencies",
+                    "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
@@ -252,7 +254,7 @@
                 "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings"
+            "settings": "User Settings"
         },
         "form": {
             "username": "Login or email",
@@ -364,20 +366,13 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
-            "continueSubmission": "Continue",
-            "viewTimeline": "View Timeline",
-            "hideTimeline": "Hide Timeline",
-            "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
-            "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
-            "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",
-            "dueDateMissedTooltip": "The due date has passed. You may no longer submit any solutions!",
-            "submitDueDateMissed": "Submit (due date missed)",
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
             "retry": "Retry",
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
+            "done": "Done",
             "finish": "Finish",
             "import": "Import",
             "to-import": "Import",

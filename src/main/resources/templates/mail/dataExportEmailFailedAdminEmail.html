@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="#{email.dataExportEmailFailedAdmin.title(${dataExport.user.login})}">Data export notification email failed</title>
+    <title th:text="#{email.dataExportEmailFailedAdmin.title(${dataExport.userLogin})}">Data export notification email failed</title>
     <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
     <th:block th:replace="~{mail/notification/fragments :: css}"/>
 </head>
@@ -9,7 +9,7 @@
 <th:block th:replace="~{mail/notification/fragments :: header}"/>
 <!-- Message Body Start -->
 <div id="message-body">
-    <span th:text="#{email.dataExportEmailFailedAdmin.message(${dataExport.user.login})}">The data export notification email for [Username] failed to send.</span>
+    <span th:text="#{email.dataExportEmailFailedAdmin.message(${dataExport.userLogin})}">The data export notification email for [Username] failed to send.</span>
 
     <p th:text="#{email.dataExportEmailFailedAdmin.reason(${reason})}">The error message </p>
     <p

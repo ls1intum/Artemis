@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +36,7 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
             JsonNode scopes = agsClaimJson.get("scope");
             List<String> scopeList = null;
             if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
-                scopeList = Collections.singletonList(Scopes.AGS_SCORE);
+                scopeList = List.of(Scopes.AGS_SCORE);
             }
 
             // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems

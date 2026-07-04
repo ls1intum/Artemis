@@ -179,7 +179,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Edit Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             const newMessage = 'Edited Text';
             await courseMessages.editMessage(message.id!, newMessage);
@@ -191,7 +191,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Delete Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible({ timeout: 20000 });

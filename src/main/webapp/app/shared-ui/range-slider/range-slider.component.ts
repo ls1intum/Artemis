@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
 const BASE_LABEL_MARGIN = 0.4;
@@ -17,7 +17,7 @@ const SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
     styleUrls: ['./range-slider.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule],
+    imports: [FormsModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RangeSliderComponent {

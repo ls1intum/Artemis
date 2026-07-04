@@ -28,9 +28,9 @@
             />
         </div>
     }
-    @if (!createAnswerPostModal.isInputOpen) {
+    @if (!createAnswerPostModal.isInputOpen()) {
         <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
-            <div class="message-content" [class.force-hover]="showDropdown">
+            <div class="message-content" [class.force-hover]="showDropdown()">
                 <jhi-posting-content
                     [content]="posting()?.content"
                     [isEdited]="!!posting()?.updatedDate"
@@ -38,7 +38,7 @@
                     [posting]="posting()"
                     [isReply]="true"
                     [isDeleted]="isDeleted"
-                    [deleteTimerInSeconds]="deleteTimerInSeconds"
+                    [deleteTimerInSeconds]="deleteTimerInSeconds()"
                     (onUndoDeleteEvent)="onDeleteEvent(false)"
                     (userReferenceClicked)="onUserReferenceClicked($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
@@ -46,7 +46,7 @@
                 <div class="post-content-padding hover-actions">
                     <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode()"
-                        [course]="course"
+                        [course]="course()"
                         [posting]="posting()"
                         [isLastAnswer]="isLastAnswer()"
                         [isThreadSidebar]="isThreadSidebar()"
@@ -84,19 +84,19 @@
 <jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting()" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef()" />
 
 <!-- Right-Click Dropdown -->
-@if (showDropdown) {
-    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
+@if (showDropdown()) {
+    <div [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition().y, 'left.px': dropdownPosition().x }" class="dropdown-menu show">
         <button class="dropdown-item d-flex" (click)="addReaction($event)">
             <fa-icon [icon]="faSmile" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
         </button>
-        @if (mayEdit) {
+        @if (mayEdit()) {
             <button class="dropdown-item d-flex" (click)="editPosting()">
                 <fa-icon [icon]="faPencilAlt" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
             </button>
         }
-        @if (mayDelete) {
+        @if (mayDelete()) {
             <button class="dropdown-item d-flex" (click)="deletePost()">
                 <fa-icon [icon]="faTrash" class="item-icon" />
                 <span jhiTranslate="artemisApp.metis.answerPost.deleteAnswer"></span>

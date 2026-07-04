@@ -8,73 +8,18 @@
         </div>
         <p>
             {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.sumOfTestWeights' | artemisTranslate }}
-            {{ totalWeight }}
+            {{ totalWeight() }}
         </p>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
     </div>
-    <div #containerRefWeight class="chart bg-light">
-        <ngx-charts-bar-horizontal-normalized
-            [results]="ngxWeightData"
-            [xAxis]="true"
-            [yAxis]="true"
-            [xAxisTickFormatting]="xAxisFormatting"
-            [scheme]="ngxColors"
-            (select)="onSelectWeight($event)"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b>
-                <br />
-                @if ([testCaseBarTitle.WEIGHT_EN, testCaseBarTitle.WEIGHT_DE].includes(model.series)) {
-                    <div>
-                        <span
-                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
-                            [translateValues]="{ percentage: model.value.toFixed(2) }"
-                        ></span>
-                        <br />
-                        <span
-                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
-                            [translateValues]="{ percentage: model.bonus.toFixed(2) }"
-                        ></span>
-                    </div>
-                }
-                @if ([testCaseBarTitle.WEIGHT_AND_BONUS_EN, testCaseBarTitle.WEIGHT_AND_BONUS_DE].includes(model.series)) {
-                    <div>
-                        <span
-                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip"
-                            [translateValues]="{ percentage: model.weight.toFixed(2) }"
-                        ></span>
-                        <br />
-                        <span
-                            jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip"
-                            [translateValues]="{ percentage: model.value.toFixed(2) }"
-                        ></span>
-                    </div>
-                }
-            </ng-template>
-        </ngx-charts-bar-horizontal-normalized>
+    <div class="chart bg-light">
+        <p-chart type="bar" [data]="weightChartData()" [options]="weightChartOptions()" (onDataSelect)="onSelectWeight($event)" />
     </div>
     <div class="mt-4">
         <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.title"></h4>
         <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.description' | artemisTranslate"></p>
     </div>
-    <div #containerRefPoints class="points-chart bg-light">
-        <ngx-charts-bar-horizontal-stacked
-            [results]="ngxPointsData"
-            [xAxis]="true"
-            [yAxis]="true"
-            [xAxisTickFormatting]="xAxisFormatting"
-            [scheme]="ngxColors"
-            [xScaleMax]="100"
-            (select)="onSelectPoints()"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b>
-                <br />
-                <span
-                    jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip"
-                    [translateValues]="{ percentage: model.value.toFixed(2) }"
-                ></span>
-            </ng-template>
-        </ngx-charts-bar-horizontal-stacked>
+    <div class="points-chart bg-light">
+        <p-chart type="bar" [data]="pointsChartData()" [options]="pointsChartOptions()" (onDataSelect)="onSelectPoints()" />
     </div>
 </div>

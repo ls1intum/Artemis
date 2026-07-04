@@ -10,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -97,8 +96,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendCourseStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), List.of("Try this"),
-                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", Collections.emptyList(), Collections.emptyList(), false, false)),
-                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", Collections.emptyList(), Collections.emptyList(), false, false))));
+                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", List.of(), List.of(), false, false)),
+                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", List.of(), List.of(), false, false))));
 
             pipelineDone.set(true);
         });
@@ -144,11 +143,11 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Send intermediate status with accessed memories only (no result yet) and non-terminal stages
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null,
-                List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", Collections.emptyList(), Collections.emptyList(), false, false)), null);
+                List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", List.of(), List.of(), false, false)), null);
 
         // Final status with assistant message and created memories and terminal stages
         sendCourseStatus(jobIdRef.get(), "Hello Again", List.of(preparingDone, executingDone), null, null,
-                List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+                List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 
@@ -206,7 +205,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Then: send only created memories (no result), which should update the existing assistant message and resend it via websocket
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null, null,
-                List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+                List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 

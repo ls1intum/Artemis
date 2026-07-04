@@ -29,18 +29,18 @@ export class ConsistencyCheckComponent implements OnInit {
 
     readonly exercisesToCheck = signal<ProgrammingExercise[]>(this.data?.exercisesToCheck ?? []);
 
-    inconsistencies: ConsistencyCheckError[] = [];
-    isLoading = true;
+    readonly inconsistencies = signal<ConsistencyCheckError[]>([]);
+    readonly isLoading = signal(true);
 
     // Icons
     faTimes = faTimes;
     faCheck = faCheck;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const exercisesToCheck = this.exercisesToCheck();
         if (exercisesToCheck.length === 0) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         let exercisesRemaining = exercisesToCheck.length;
@@ -48,15 +48,16 @@ export class ConsistencyCheckComponent implements OnInit {
             const course = getCourseId(exercise);
             this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
                 next: (inconsistencies) => {
-                    this.inconsistencies = this.inconsistencies.concat(inconsistencies);
-                    this.inconsistencies.map((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    const updatedInconsistencies = this.inconsistencies().concat(inconsistencies);
+                    updatedInconsistencies.forEach((inconsistency) => (inconsistency.programmingExerciseCourseId = course || undefined));
+                    this.inconsistencies.set(updatedInconsistencies);
                     if (--exercisesRemaining === 0) {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }
                 },
                 error: (err) => {
                     this.alertService.error(err);
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         });

@@ -137,8 +137,8 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         websocketNotificationSubject.next(mockNotification);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(componentAsAny.notifications).toHaveLength(1);
-        expect(componentAsAny.notifications[0]).toBe(mockNotification);
+        expect(componentAsAny.notifications()).toHaveLength(1);
+        expect(componentAsAny.notifications()[0]).toBe(mockNotification);
 
         vi.clearAllTimers();
     });
@@ -149,7 +149,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         websocketNotificationSubject.next(mockNotification);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(componentAsAny.notifications).toHaveLength(0);
+        expect(componentAsAny.notifications()).toHaveLength(0);
 
         vi.clearAllTimers();
     });
@@ -160,7 +160,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         websocketNotificationSubject.next(mockNotification);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(componentAsAny.notifications).toHaveLength(1);
+        expect(componentAsAny.notifications()).toHaveLength(1);
 
         vi.clearAllTimers();
     });
@@ -173,25 +173,25 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         websocketNotificationSubject.next(mockNotification);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(componentAsAny.notifications).toHaveLength(0);
+        expect(componentAsAny.notifications()).toHaveLength(0);
 
         vi.clearAllTimers();
     });
 
     it('should set isExpanded to false when removing the last notification', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
-        componentAsAny.isExpanded = true;
+        componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         component.removeNotification(1);
 
-        expect(componentAsAny.isExpanded).toBe(false);
+        expect(componentAsAny.isExpanded()).toBe(false);
     });
 
     it('should handle closeClicked correctly', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
+        componentAsAny.notifications.set([mockNotification]);
         fixture.changeDetectorRef.detectChanges();
 
         component.closeClicked(mockNotification);
@@ -205,50 +205,50 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledOnce();
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 1);
 
-        expect(componentAsAny.notifications).toHaveLength(0);
+        expect(componentAsAny.notifications()).toHaveLength(0);
     });
 
     it('should set isExpanded to true when overlayClicked and notifications.length > 1', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 102, 0);
-        componentAsAny.notifications = [mockNotification1, mockNotification2];
-        componentAsAny.isExpanded = false;
+        componentAsAny.notifications.set([mockNotification1, mockNotification2]);
+        componentAsAny.isExpanded.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         component.overlayClicked();
 
-        expect(componentAsAny.isExpanded).toBe(true);
+        expect(componentAsAny.isExpanded()).toBe(true);
     });
 
     it('should not change isExpanded when overlayClicked and notifications.length <= 1', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
-        componentAsAny.isExpanded = false;
+        componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         component.overlayClicked();
 
-        expect(componentAsAny.isExpanded).toBe(false);
+        expect(componentAsAny.isExpanded()).toBe(false);
     });
 
     it('should set isExpanded to false when collapseOverlayClicked', () => {
-        componentAsAny.isExpanded = true;
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
         vi.advanceTimersByTime(0);
 
-        expect(componentAsAny.isExpanded).toBe(false);
+        expect(componentAsAny.isExpanded()).toBe(false);
     });
 
     it('should do nothing when collapseOverlayClicked and isExpanded is false', () => {
-        componentAsAny.isExpanded = false;
+        componentAsAny.isExpanded.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
         vi.advanceTimersByTime(0);
 
-        expect(componentAsAny.isExpanded).toBe(false);
+        expect(componentAsAny.isExpanded()).toBe(false);
     });
 
     it('should unsubscribe from websocket on ngOnDestroy', () => {
@@ -261,7 +261,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should display notifications in the template', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
+        componentAsAny.notifications.set([mockNotification]);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -270,7 +270,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     });
 
     it('should add d-none class when no notifications are present', () => {
-        componentAsAny.notifications = [];
+        componentAsAny.notifications.set([]);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -280,8 +280,8 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should add is-expanded class when isExpanded is true', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
-        componentAsAny.isExpanded = true;
+        componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(true);
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -292,7 +292,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should trigger overlayClicked when clicking the overlay', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 102, 0);
-        componentAsAny.notifications = [mockNotification1, mockNotification2];
+        componentAsAny.notifications.set([mockNotification1, mockNotification2]);
         fixture.changeDetectorRef.detectChanges();
         const overlayClickedSpy = vi.spyOn(component, 'overlayClicked');
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
@@ -304,7 +304,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should trigger collapseOverlayClicked when clicking the collapse button', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
+        componentAsAny.notifications.set([mockNotification]);
         fixture.changeDetectorRef.detectChanges();
         const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
         const collapseButton = fixture.debugElement.query(By.css('.btn-outline-primary'));
@@ -317,21 +317,21 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should clear all notifications when clearAllNotifications is called', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 102, 0);
-        componentAsAny.notifications = [mockNotification1, mockNotification2];
-        componentAsAny.isExpanded = true;
+        componentAsAny.notifications.set([mockNotification1, mockNotification2]);
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
         vi.advanceTimersByTime(0); // Process the setTimeout
 
-        expect(componentAsAny.notifications).toHaveLength(0);
-        expect(componentAsAny.isExpanded).toBe(false);
+        expect(componentAsAny.notifications()).toHaveLength(0);
+        expect(componentAsAny.isExpanded()).toBe(false);
     });
 
     it('should do nothing when clearAllNotifications is called and isExpanded is false', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
-        componentAsAny.isExpanded = false;
+        componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         const setNotificationStatusSpy = vi.spyOn(courseNotificationService, 'setNotificationStatus');
@@ -343,15 +343,15 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(setNotificationStatusSpy).not.toHaveBeenCalled();
         expect(setNotificationStatusInMapSpy).not.toHaveBeenCalled();
         expect(decreaseNotificationCountBySpy).not.toHaveBeenCalled();
-        expect(componentAsAny.notifications).toHaveLength(1);
+        expect(componentAsAny.notifications()).toHaveLength(1);
     });
 
     it('should mark all notifications as seen on server when clearAllNotifications is called', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 101, 0);
         const mockNotification3 = createMockNotification(3, 102, 0);
-        componentAsAny.notifications = [mockNotification1, mockNotification2, mockNotification3];
-        componentAsAny.isExpanded = true;
+        componentAsAny.notifications.set([mockNotification1, mockNotification2, mockNotification3]);
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
@@ -368,8 +368,8 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should trigger clearAllNotifications when clicking the clear button', () => {
         const mockNotification = createMockNotification(1, 101, 0);
-        componentAsAny.notifications = [mockNotification];
-        componentAsAny.isExpanded = true;
+        componentAsAny.notifications.set([mockNotification]);
+        componentAsAny.isExpanded.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         const clearAllNotificationsSpy = vi.spyOn(component, 'clearAllNotifications');

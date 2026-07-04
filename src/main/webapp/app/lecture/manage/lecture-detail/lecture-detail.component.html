@@ -1,14 +1,14 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if (lecture) {
+        @if (lecture()) {
             <div>
-                <h2><span jhiTranslate="artemisApp.lecture.detail.title"></span> {{ lecture.id }}</h2>
+                <h2><span jhiTranslate="artemisApp.lecture.detail.title"></span> {{ lecture().id }}</h2>
                 <hr />
-                @if (detailSections) {
-                    <jhi-detail-overview-list [sections]="detailSections" />
+                @if (detailSections()) {
+                    <jhi-detail-overview-list [sections]="detailSections()" />
                 }
-                @if (lecture.course?.isAtLeastEditor) {
-                    <a [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
+                @if (lecture().course?.isAtLeastEditor) {
+                    <a [routerLink]="['/course-management', lecture().course?.id, 'lectures', lecture().id, 'edit']" class="btn btn-primary">
                         <fa-icon [icon]="faPencilAlt" />
                         <span jhiTranslate="entity.action.edit"></span>
                     </a>

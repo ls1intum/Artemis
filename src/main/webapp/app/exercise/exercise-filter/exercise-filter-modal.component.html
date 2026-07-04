@@ -8,13 +8,13 @@
     </div>
     <div class="modal-body">
         <div class="form-group">
-            @if (noFiltersAvailable) {
+            @if (noFiltersAvailable()) {
                 <div>
                     <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
                 </div>
             }
 
-            @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
+            @if (selectableCategoryOptions().length || selectedCategoryOptions().length) {
                 <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
 
                 <input
@@ -25,7 +25,7 @@
                     [(ngModel)]="model"
                     [ngbTypeahead]="search"
                     [placeholder]="
-                        (!selectableCategoryOptions.length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
+                        (!selectableCategoryOptions().length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
                     "
                     (focus)="focus$.next($any($event).target.value)"
                     (click)="click$.next($any($event).target.value)"
@@ -33,12 +33,12 @@
                     (selectItem)="onSelectItem($event)"
                     [resultFormatter]="resultFormatter"
                     (keydown.enter)="onSelectItem($event)"
-                    [disabled]="!selectableCategoryOptions.length"
+                    [disabled]="!selectableCategoryOptions().length"
                 />
 
                 <div class="row">
                     <div class="d-flex flex-row flex-wrap">
-                        @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
+                        @for (categoryFilterOption of selectedCategoryOptions(); track categoryFilterOption) {
                             <div class="p-1">
                                 <jhi-custom-exercise-category-badge
                                     [category]="categoryFilterOption.category"
@@ -53,11 +53,11 @@
             }
         </div>
 
-        @if (typeFilter?.isDisplayed) {
+        @if (typeFilter()?.isDisplayed) {
             <div class="form-group">
                 <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
                 <div id="exercise-type-filter-selection">
-                    @for (typeFilter of typeFilter!.options; track typeFilter) {
+                    @for (typeFilter of typeFilter()!.options; track typeFilter) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label class="pointer">
                                 <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" class="pointer" />
@@ -72,11 +72,11 @@
 
         <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
         as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
-        @if (difficultyFilter?.isDisplayed && difficultyFilter) {
+        @if (difficultyFilter()?.isDisplayed && difficultyFilter()) {
             <div class="form-group">
                 <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
                 <div id="difficulty-filter-selection">
-                    @for (difficultyFilterOption of difficultyFilter.options; track difficultyFilterOption) {
+                    @for (difficultyFilterOption of difficultyFilter()!.options; track difficultyFilterOption) {
                         <div class="form-check form-check-inline no-left-margin-padding">
                             <label class="pointer">
                                 <input type="checkbox" [(ngModel)]="difficultyFilterOption.checked" [name]="difficultyFilterOption.value" class="pointer" />
@@ -133,7 +133,7 @@
                 class="btn btn-primary"
                 (click)="applyFilter()"
                 jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
-                [disabled]="noFiltersAvailable"
+                [disabled]="noFiltersAvailable()"
             ></button>
         </div>
     </div>

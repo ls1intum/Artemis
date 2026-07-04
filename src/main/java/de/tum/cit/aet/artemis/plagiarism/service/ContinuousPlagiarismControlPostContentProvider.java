@@ -19,7 +19,7 @@ public class ContinuousPlagiarismControlPostContentProvider {
         var locale = Locale.forLanguageTag(plagiarismCase.getStudent().getLangKey());
         var localizedTemplate = locale == Locale.ENGLISH ? POST_CONTENT_EN : POST_CONTENT_DE;
 
-        return String.format(localizedTemplate, plagiarismCase.getStudent().getName(), plagiarismCase.getExercise().getTitle(),
+        return localizedTemplate.formatted(plagiarismCase.getStudent().getName(), plagiarismCase.getExercise().getTitle(),
                 plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle(), COC_LINK);
     }
 }

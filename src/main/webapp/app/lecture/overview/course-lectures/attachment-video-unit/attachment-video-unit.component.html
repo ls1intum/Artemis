@@ -45,6 +45,91 @@
         }
     }
 
+    <!-- Video block: rendered as the top panel (split) or inline within the main content (no split). -->
+    <ng-template #videoBlock>
+        @if (!!rawVideoSource() || !!youtubeVideoId()) {
+            @if (
+                (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
+                !isFullscreen()
+            ) {
+                <hr />
+            }
+            @if (isLoading()) {
+                <div class="d-flex justify-content-center p-3">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
+                    </div>
+                </div>
+            } @else if (playlistUrl() && hasTranscript()) {
+                <div class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
+                    <jhi-video-player
+                        [videoUrl]="playlistUrl()!"
+                        [transcriptSegments]="transcriptSegments()"
+                        [initialTimestamp]="targetTimestamp()"
+                        (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                    />
+                </div>
+            } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+                <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                    <jhi-youtube-player
+                        [videoId]="youtubeVideoId()!"
+                        [transcriptSegments]="transcriptSegments()"
+                        [initialTimestamp]="targetTimestamp()"
+                        (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        (playerFailed)="onYouTubePlayerFailed()"
+                    />
+                </div>
+            } @else {
+                <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
+                    <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'ratio ratio-16x9'">
+                        <iframe
+                            [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'"
+                            [src]="iframeFallbackUrl() | safeResourceUrl"
+                            allow="fullscreen"
+                            [title]="lectureUnit().name || ('artemisApp.attachmentVideoUnit.videoPlayer.iframeTitle' | artemisTranslate)"
+                        ></iframe>
+                    </div>
+                </div>
+            }
+        }
+    </ng-template>
+
+    <!-- PDF block: rendered as the bottom panel (split) or inline within the main content (no split). -->
+    <ng-template #pdfBlock>
+        @if (hasPdf()) {
+            @if ((lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) && !isFullscreen()) {
+                <hr />
+            }
+            @if (pdfLoadError()) {
+                <p-message severity="error" class="m-3">
+                    <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
+                </p-message>
+            } @else if (pdfUrl()) {
+                <div class="pdf-viewer-spacing">
+                    @if (showPdfSpinner()) {
+                        <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+                            </div>
+                        </div>
+                    }
+                    <jhi-pdf-viewer
+                        [class.pdf-viewer-loading]="showPdfSpinner()"
+                        [pdfUrl]="pdfUrl()!"
+                        [uploadDate]="lectureUnit().attachment?.uploadDate"
+                        [version]="lectureUnit().attachment?.version"
+                        [initialPage]="validatedPdfPage()"
+                        (currentPageChange)="onPdfCurrentPageChange($event)"
+                        (pageRendered)="onPdfPageRendered($event)"
+                        (loadError)="onPdfLoadError($event)"
+                        (downloadRequested)="handleDownload()"
+                        (isFullscreenChange)="onPdfFullscreenChange($event)"
+                    />
+                </div>
+            }
+        }
+    </ng-template>
+
     <jhi-lecture-unit-fullscreen-layout
         [isCollapsed]="isCollapsed()"
         [showSidebar]="showIrisSidebar()"
@@ -57,86 +142,43 @@
         (horizontalSplitSizesChange)="onHorizontalSplitSizesChange($event)"
         (fullscreenChange)="onFullscreenChange($event)"
     >
-        <div content-main class="main-content">
-            @if (!!rawVideoSource() || !!youtubeVideoId()) {
-                @if (
-                    (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) &&
-                    !isFullscreen()
-                ) {
-                    <hr />
-                }
-                @if (isLoading()) {
-                    <div class="d-flex justify-content-center p-3">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
-                        </div>
-                    </div>
-                } @else if (playlistUrl() && hasTranscript()) {
-                    <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
-                        <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
-                    </div>
-                } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
-                    <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
-                        <jhi-youtube-player
-                            [videoId]="youtubeVideoId()!"
-                            [transcriptSegments]="transcriptSegments()"
-                            [initialTimestamp]="targetTimestamp()"
-                            (playerFailed)="onYouTubePlayerFailed()"
-                        />
-                    </div>
-                } @else {
-                    <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
-                        <div [class]="isFullscreen() ? 'video-iframe-wrapper video-iframe-wrapper--fullscreen' : 'ratio ratio-16x9'">
-                            <iframe
-                                [class]="isFullscreen() ? 'video-iframe' : 'rounded w-100 h-100 border-0'"
-                                [src]="iframeFallbackUrl() | safeResourceUrl"
-                                allow="fullscreen"
-                                [title]="lectureUnit().name || ('artemisApp.attachmentVideoUnit.videoPlayer.iframeTitle' | artemisTranslate)"
-                            ></iframe>
-                        </div>
-                    </div>
-                }
+        <!--
+            The projection slots must be unconditional direct children: Angular's `ng-content select` does not
+            match projectable content nested inside @if/@else control flow, so wrapping these divs in @if left the
+            fullscreen-layout's content-main slot empty (nothing rendered inline). The split-vs-combined choice is
+            made inside each slot instead, so the video/pdf blocks are only instantiated in the active layout.
+        -->
+        <div content-top class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
             }
-
-            @if (hasPdf()) {
-                @if ((lectureUnit()?.description || !!rawVideoSource() || !!youtubeVideoId()) && !isFullscreen()) {
-                    <hr />
-                }
-                @if (pdfLoadError()) {
-                    <p-message severity="error" class="m-3">
-                        <span class="text-danger" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
-                    </p-message>
-                } @else if (pdfUrl()) {
-                    <div #pdfContainer class="pdf-viewer-spacing">
-                        @if (showPdfSpinner()) {
-                            <div class="d-flex justify-content-center p-3 pdf-loading-spinner">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
-                                </div>
-                            </div>
-                        }
-                        <jhi-pdf-viewer
-                            [class.pdf-viewer-loading]="showPdfSpinner()"
-                            [pdfUrl]="pdfUrl()!"
-                            [uploadDate]="lectureUnit().attachment?.uploadDate"
-                            [version]="lectureUnit().attachment?.version"
-                            [initialPage]="validatedPdfPage()"
-                            (pageRendered)="onPdfPageRendered($event)"
-                            (loadError)="onPdfLoadError($event)"
-                            (downloadRequested)="handleDownload()"
-                            (isFullscreenChange)="onPdfFullscreenChange($event)"
-                        />
-                    </div>
-                }
+        </div>
+        <div content-bottom class="main-content">
+            @if (horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
+            }
+        </div>
+        <div content-main class="main-content">
+            @if (!horizontalSplitConfig().enabled) {
+                <ng-container [ngTemplateOutlet]="videoBlock" />
+                <ng-container [ngTemplateOutlet]="pdfBlock" />
             }
         </div>
 
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
-                <jhi-lecture-chatbot [lectureId]="lectureId()" />
-                <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
-                    <fa-icon [icon]="faXmark" />
-                </button>
+                <div class="iris-sidebar__header">
+                    @if (synchronizationAvailable()) {
+                        <label class="lecture-sync-toggle" for="lecture-sync-toggle">
+                            <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle">Synchronize slides and video</span>
+                            <p-toggleswitch inputId="lecture-sync-toggle" [ngModel]="synchronizeVideoAndSlides()" (ngModelChange)="onSynchronizationToggleChange($event)" />
+                        </label>
+                    }
+                    <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                </div>
+                <jhi-lecture-chatbot [lectureId]="lectureId()" [contextsProvider]="ownContextsProvider()" />
             }
         </div>
     </jhi-lecture-unit-fullscreen-layout>

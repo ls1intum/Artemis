@@ -8,7 +8,7 @@
         </button>
     </div>
 }
-@if (allowDrop) {
+@if (allowDrop()) {
     <div class="alert alert-info">
         <fa-icon [icon]="faInfoCircle" />
         <span jhiTranslate="artemisApp.exercise.dragDropInstruction"></span>
@@ -20,7 +20,7 @@
             @for (instruction of criterion!.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
                 <div
                     class="rounded"
-                    draggable="{{ allowDrop }}"
+                    draggable="{{ allowDrop() }}"
                     (dragstart)="disableDrag()"
                     (dragstart)="drag($event, instruction)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"

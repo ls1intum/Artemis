@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, viewChildren } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AbstractQuizSubmission } from 'app/quiz/shared/entities/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -27,6 +27,8 @@ import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -67,14 +69,26 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<AbstractQuizSubmission>();
     exercise = input<QuizExercise>();
-    examTimeline = input(false);
+    override examTimeline = input(false);
     quizConfiguration = input.required<QuizConfiguration>();
 
     saveCurrentExercise = output<void>();
 
-    selectedAnswerOptions = new Map<number, AnswerOption[]>();
-    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-    shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+    readonly selectedAnswerOptions = signal(new Map<number, AnswerOption[]>());
+    readonly dragAndDropMappings = signal(new Map<number, DragAndDropMapping[]>());
+    readonly shortAnswerSubmittedTexts = signal(new Map<number, ShortAnswerSubmittedText[]>());
+
+    onSelectedAnswerOptionsChange(questionId: number, answerOptions: AnswerOption[]): void {
+        this.selectedAnswerOptions.update((map) => new Map(map).set(questionId, answerOptions));
+    }
+
+    onDragAndDropMappingsChange(questionId: number, mappings: DragAndDropMapping[]): void {
+        this.dragAndDropMappings.update((map) => new Map(map).set(questionId, mappings));
+    }
+
+    onShortAnswerSubmittedTextsChange(questionId: number, submittedTexts: ShortAnswerSubmittedText[]): void {
+        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(questionId, submittedTexts));
+    }
 
     ngOnInit(): void {
         this.initQuiz();
@@ -103,9 +117,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             this.quizService.randomizeOrder(this.quizConfiguration().quizQuestions, this.quizConfiguration().randomizeQuestionOrder);
         }
         // prepare selection arrays for each question
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
 
         const quizQuestions = this.quizConfiguration().quizQuestions;
 
@@ -114,18 +128,18 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 switch (question.type) {
                     case QuizQuestionType.MULTIPLE_CHOICE:
                         // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions.set(question.id!, []);
+                        this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
                         break;
                     case QuizQuestionType.DRAG_AND_DROP:
                         // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings.set(question.id!, []);
+                        this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
                         break;
                     case QuizQuestionType.SHORT_ANSWER:
                         // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.shortAnswerSubmittedTexts.set(question.id!, []);
+                        this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -176,9 +190,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     updateViewFromSubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
+        this.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        this.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        this.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
 
         const quizQuestions = this.quizConfiguration().quizQuestions;
         if (quizQuestions?.length) {
@@ -195,10 +209,10 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.selectedAnswerOptions.set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []);
+                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []));
                         } else {
                             // not found, set to empty array
-                            this.selectedAnswerOptions.set(question.id!, []);
+                            this.selectedAnswerOptions.update((map) => new Map(map).set(question.id!, []));
                         }
                         break;
                     case QuizQuestionType.DRAG_AND_DROP:
@@ -206,10 +220,10 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.dragAndDropMappings.set(question.id!, mappings ? cloneDeep(mappings) : []);
+                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, mappings ? cloneDeep(mappings) : []));
                         } else {
                             // not found, set to empty array
-                            this.dragAndDropMappings.set(question.id!, []);
+                            this.dragAndDropMappings.update((map) => new Map(map).set(question.id!, []));
                         }
                         break;
                     case QuizQuestionType.SHORT_ANSWER:
@@ -217,14 +231,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         if (submittedAnswer) {
                             const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
                             // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
-                            this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []);
+                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []));
                         } else {
                             // not found, set to empty array
-                            this.shortAnswerSubmittedTexts.set(question.id!, []);
+                            this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         }
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -259,7 +273,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.studentSubmission().submittedAnswers = [];
 
         // for multiple-choice questions
-        this.selectedAnswerOptions.forEach((answerOptions, questionID) => {
+        this.selectedAnswerOptions().forEach((answerOptions, questionID) => {
             // find the question object for the given question id
             const question = this.quizConfiguration().quizQuestions?.find(function (selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
@@ -276,7 +290,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         }, this);
 
         // for drag-and-drop questions
-        this.dragAndDropMappings.forEach((mappings, questionID) => {
+        this.dragAndDropMappings().forEach((mappings, questionID) => {
             // find the question object for the given question id
             const question = this.quizConfiguration().quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
@@ -292,7 +306,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             this.studentSubmission().submittedAnswers!.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
-        this.shortAnswerSubmittedTexts.forEach((submittedTexts, questionID) => {
+        this.shortAnswerSubmittedTexts().forEach((submittedTexts, questionID) => {
             // find the question object for the given question id
             const question = this.quizConfiguration().quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
@@ -310,7 +324,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmissionVersion(): void {
-        this.studentSubmission().submittedAnswers = JSON.parse(this.submissionVersion.content);
+        this.studentSubmission().submittedAnswers = parseJson<SubmittedAnswer[]>(this.submissionVersion.content);
         this.updateViewFromSubmission();
     }
 

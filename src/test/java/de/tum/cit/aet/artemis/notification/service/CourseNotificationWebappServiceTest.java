@@ -15,10 +15,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationWebappServiceTest {
@@ -40,7 +40,7 @@ class CourseNotificationWebappServiceTest {
     @Test
     void shouldSendNotificationToEachRecipientWhenMultipleRecipientsProvided() {
         CourseNotificationDTO notification = createTestNotification(123L);
-        List<User> recipients = List.of(createTestUser(1L, "user1"), createTestUser(2L, "user2"), createTestUser(3L, "user3"));
+        List<CourseNotificationRecipientDTO> recipients = List.of(createTestUser(1L, "user1"), createTestUser(2L, "user2"), createTestUser(3L, "user3"));
 
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, recipients);
 
@@ -56,7 +56,7 @@ class CourseNotificationWebappServiceTest {
     @Test
     void shouldNotSendMessagesWhenRecipientListIsEmpty() {
         CourseNotificationDTO notification = createTestNotification(123L);
-        List<User> emptyRecipients = List.of();
+        List<CourseNotificationRecipientDTO> emptyRecipients = List.of();
 
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, emptyRecipients);
 
@@ -67,7 +67,7 @@ class CourseNotificationWebappServiceTest {
     void shouldSendToCorrectTopicWhenCourseIdProvided() {
         long courseId = 456L;
         CourseNotificationDTO notification = createTestNotification(courseId);
-        User user = createTestUser(1L, "testuser");
+        var user = createTestUser(1L, "testuser");
 
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, List.of(user));
 
@@ -75,11 +75,8 @@ class CourseNotificationWebappServiceTest {
         verify(websocketMessagingService, times(1)).sendMessageToUser("testuser", LEGACY_WEBSOCKET_TOPIC_PREFIX + "456", notification);
     }
 
-    private User createTestUser(Long id, String login) {
-        User user = new User();
-        user.setId(id);
-        user.setLogin(login);
-        return user;
+    private CourseNotificationRecipientDTO createTestUser(Long id, String login) {
+        return new CourseNotificationRecipientDTO(id, login, null, null, null, null);
     }
 
     private CourseNotificationDTO createTestNotification(Long courseId) {

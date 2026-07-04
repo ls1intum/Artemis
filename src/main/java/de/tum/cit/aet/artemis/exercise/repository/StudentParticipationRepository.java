@@ -1655,21 +1655,29 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Counts all participations for an exercise that are properly initialized (INITIALIZED or FINISHED state), excluding test runs.
-     * Matches the frontend validation: participations must be in a state where students can work on the exercise.
+     * Counts the number of unique, active students who have an initialized participation
+     * for a specific exercise and are explicitly assigned this exact exercise variant
+     * in their current exam.
      *
-     * @param exerciseId the id of the exercise
-     * @return the number of participations in INITIALIZED or FINISHED state
+     * Should be used for exam dashboard to ignore test run submissions
+     *
+     * @param exerciseId the exercise id we are interested in
+     * @param examId     the exam id we are interested in
+     * @return the total number of students who currently participate in given exam and in given exercise
+     *
      */
     @Query("""
-            SELECT COUNT(p)
+            SELECT COUNT(DISTINCT p.student.id)
             FROM StudentParticipation p
-                LEFT JOIN p.exercise exercise
-            WHERE exercise.id = :exerciseId
-                AND p.testRun = FALSE
-                AND (p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
-                    OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
+            JOIN StudentExam se ON p.student.id = se.user.id
+            JOIN se.exercises e
+            WHERE p.exercise.id = :exerciseId
+            AND se.exam.id = :examId
+            AND e.id = :exerciseId
+            AND p.testRun = FALSE
+            AND(p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
+            OR p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.FINISHED)
             """)
-    Long countInitializedParticipationsByExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+    long countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("examId") long examId);
 
 }

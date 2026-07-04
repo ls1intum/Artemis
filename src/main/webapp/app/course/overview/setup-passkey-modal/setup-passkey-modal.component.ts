@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faKey, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -16,7 +16,7 @@ export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestS
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FontAwesomeModule, DialogModule],
+    imports: [FormsModule, TranslateDirective, FontAwesomeModule, DialogModule],
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent implements OnInit {

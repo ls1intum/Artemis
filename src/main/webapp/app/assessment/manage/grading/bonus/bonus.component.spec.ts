@@ -327,11 +327,11 @@ describe('BonusComponent', () => {
         expect(findGradeStepsSpy).toHaveBeenCalledTimes(1);
         expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
-        expect(component.sourceGradingScales).toHaveLength(1);
+        expect(component.sourceGradingScales()).toHaveLength(1);
 
-        const actual = component.sourceGradingScales[0];
+        const actual = component.sourceGradingScales()[0];
 
         expect(actual.id).toBe(7);
         expect(actual.gradeType).toBe(GradeType.BONUS);
@@ -373,18 +373,18 @@ describe('BonusComponent', () => {
         component.currentBonusStrategyOption = bonusStrategyOption as BonusStrategyOption;
         component.currentBonusStrategyDiscreteness = bonusStrategyDiscreteness as BonusStrategyDiscreteness;
         component.bonus = { ...bonus };
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
 
         const bonusSpy = vi.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples()).toHaveLength(0);
 
         component.onBonusStrategyInputChange();
 
         expect(component.bonus.bonusStrategy).toBe(bonusStrategy);
         expect(bonusSpy).toHaveBeenCalledTimes(1);
         expect(bonusSpy).toHaveBeenCalledWith({ ...bonus, bonusStrategy }, examGradeSteps);
-        expect(component.examples).toHaveLength(bonusExamples.length);
+        expect(component.examples()).toHaveLength(bonusExamples.length);
     });
 
     it('should check bonus strategy and weight mismatch', () => {
@@ -392,21 +392,21 @@ describe('BonusComponent', () => {
         vi.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
 
         component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
-        component.bonusToGradeStepsDTO = { gradeSteps: [] as GradeStep[] } as GradeStepsDTO;
+        component.bonusToGradeStepsDTO.set({ gradeSteps: [] as GradeStep[] } as GradeStepsDTO);
 
         component.generateExamples();
 
-        expect(component.examples).toHaveLength(0);
-        expect(component.hasBonusStrategyWeightMismatch).toBe(true);
+        expect(component.examples()).toHaveLength(0);
+        expect(component.hasBonusStrategyWeightMismatch()).toBe(true);
     });
 
     it('should remove examples when all required fields are not set', () => {
         component.bonus = { ...bonus, bonusStrategy: undefined };
-        component.examples = bonusExamples;
+        component.examples.set(bonusExamples);
 
         component.onBonusStrategyInputChange();
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples()).toHaveLength(0);
     });
 
     it('should create bonus', () => {
@@ -426,7 +426,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should update bonus', () => {
@@ -441,7 +441,7 @@ describe('BonusComponent', () => {
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus);
 
         expect(component.bonus.id).toBe(bonus.id);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should delete bonus', () => {
@@ -465,7 +465,7 @@ describe('BonusComponent', () => {
         expect(component.bonus.sourceGradingScale).toBeUndefined();
         expect(dialogError).toBe('');
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should show error on delete', () => {
@@ -486,7 +486,7 @@ describe('BonusComponent', () => {
         expect(component.bonus).toEqual(bonus);
         expect(dialogError).toBe(errorMessage);
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should not delete if id is empty', () => {
@@ -499,7 +499,7 @@ describe('BonusComponent', () => {
         expect(bonusSpy).not.toHaveBeenCalled();
 
         expect(component.bonus).toEqual(unsavedBonus);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle find bonus response with error', () => {
@@ -514,7 +514,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should handle empty find bonus response', () => {
@@ -526,7 +526,7 @@ describe('BonusComponent', () => {
         expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         expect(component.bonus).toStrictEqual(new Bonus());
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should forward grading scale title call to service', () => {
@@ -569,7 +569,7 @@ describe('BonusComponent', () => {
         const dynamicExample = new BonusExample(10, 50);
 
         component.bonus = bonus;
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
         component.dynamicExample = dynamicExample;
 
         component.calculateDynamicExample();
@@ -584,7 +584,7 @@ describe('BonusComponent', () => {
         const dynamicExample = new BonusExample(10, 50);
 
         component.bonus = bonus;
-        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO.set(examGradeSteps);
         component.dynamicExample = dynamicExample;
 
         component.onWeightChange();

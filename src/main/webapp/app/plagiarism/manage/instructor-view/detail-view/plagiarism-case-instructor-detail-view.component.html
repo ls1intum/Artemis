@@ -1,4 +1,4 @@
-@if (plagiarismCase) {
+@if (plagiarismCase(); as plagiarismCase) {
     <div class="plagiarism-case">
         <div class="case-header">
             <div class="row">
@@ -29,7 +29,7 @@
                     <div class="btn-group m-1">
                         <a
                             class="btn btn-primary d-print-none"
-                            [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
+                            [routerLink]="['/course-management', courseId(), getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
                         >
                             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise"></span>
                         </a>
@@ -38,7 +38,13 @@
                             <div class="dropdown-menu" ngbDropdownMenu>
                                 <a
                                     ngbDropdownItem
-                                    [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
+                                    [routerLink]="[
+                                        '/course-management',
+                                        courseId(),
+                                        getExerciseUrlSegment(plagiarismCase.exercise!.type),
+                                        plagiarismCase.exercise!.id,
+                                        'plagiarism',
+                                    ]"
                                 >
                                     <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
                                 </a>
@@ -51,13 +57,15 @@
         <div class="case-body">
             <section>
                 <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
-                @if (posts && posts.length > 0) {
-                    <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
+                @if (posts(); as posts) {
+                    @if (posts.length > 0) {
+                        <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
+                    }
                 }
-                @if ((!posts || posts.length === 0) && createdPost) {
+                @if ((!posts() || posts()!.length === 0) && createdPost()) {
                     <div>
                         <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"></button>
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" [createOverride]="createPlagiarismPost" (onCreate)="onStudentNotified($event)" />
+                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost()" [createOverride]="createPlagiarismPost" (onCreate)="onStudentNotified($event)" />
                     </div>
                 }
             </section>
@@ -100,7 +108,8 @@
                                         <input
                                             class="form-control"
                                             type="number"
-                                            [(ngModel)]="verdictPointDeduction"
+                                            [ngModel]="verdictPointDeduction()"
+                                            (ngModelChange)="verdictPointDeduction.set($event)"
                                             min="0"
                                             max="100"
                                             [readonly]="!!plagiarismCase.verdict"
@@ -115,7 +124,7 @@
                                         tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
                                         class="mx-1"
                                         [translateText]="true"
-                                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction < 0 || verdictPointDeduction > 100 || !isStudentNotified()"
+                                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction() < 0 || verdictPointDeduction() > 100 || !isStudentNotified()"
                                         (onConfirm)="savePointDeductionVerdict()"
                                     />
                                 </div>
@@ -132,7 +141,8 @@
                                             cols="80"
                                             maxlength="1000"
                                             class="form-control"
-                                            [(ngModel)]="verdictMessage"
+                                            [ngModel]="verdictMessage()"
+                                            (ngModelChange)="verdictMessage.set($event)"
                                             [disabled]="!!plagiarismCase.verdict"
                                             [readonly]="!!plagiarismCase.verdict"
                                         >

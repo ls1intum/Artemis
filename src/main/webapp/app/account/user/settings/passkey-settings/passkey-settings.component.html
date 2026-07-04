@@ -73,7 +73,7 @@
                                         <button
                                             jhiDeleteButton
                                             (delete)="deletePasskey(passkey)"
-                                            [disabled]="isDeletingPasskey"
+                                            [disabled]="isDeletingPasskey()"
                                             [dialogError]="dialogError$"
                                             deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
                                             [fetchEntitySummary]="getDeleteSummary(passkey)"

@@ -160,9 +160,16 @@ export class CourseManagementPage {
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
         const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
+        // Open the user-management dropdown and the add-<group> action, which navigates to the group page.
         await this.page.locator('#user-management-dropdown').click();
         await this.page.locator(selector).click();
-        await this.confirmUserIntoGroup(credentials);
+        // The group page hosts a PrimeNG autocomplete to search for and add users.
+        const searchInput = this.page.locator('p-autocomplete input');
+        await searchInput.waitFor({ state: 'visible', timeout: 30_000 });
+        await searchInput.fill(credentials.username);
+        // Pick the matching suggestion (rendered as "Name (login)"). The closing parenthesis keeps the match
+        // unambiguous, e.g. it selects artemis_test_user_1 rather than artemis_test_user_10.
+        await this.page.locator('.p-autocomplete-option', { hasText: `(${credentials.username})` }).click();
         await responsePromise;
     }
 
@@ -199,7 +206,7 @@ export class CourseManagementPage {
      * and visible before clicking.
      */
     async removeFirstUser() {
-        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        const deleteButton = this.page.locator('jhi-table-view button[jhideletebutton]').first();
         await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
         await deleteButton.click();
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -219,17 +226,6 @@ export class CourseManagementPage {
     async removeIconFromCourse() {
         await this.page.locator('#delete-course-icon').click();
         await this.checkCourseHasNoIcon();
-    }
-
-    /**
-     * Confirms the user into the group.
-     * @param credentials - The user credentials to be confirmed into the group.
-     */
-    private async confirmUserIntoGroup(credentials: UserCredentials) {
-        const typeahead = this.page.locator('#typeahead-basic');
-        await typeahead.waitFor({ state: 'visible', timeout: 30_000 });
-        await typeahead.fill(credentials.username);
-        await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 
     /**
@@ -265,7 +261,7 @@ export class CourseManagementPage {
      * @returns The locator for the registered students section.
      */
     getRegisteredStudents() {
-        return this.page.locator('#registered-students');
+        return this.page.locator('jhi-table-view tbody tr');
     }
 
     /**

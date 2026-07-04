@@ -24,6 +24,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -52,6 +54,7 @@ describe('Exam Management Service Tests', () => {
                 ExamManagementService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         });
 
@@ -101,16 +104,18 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
+        const importId = 'import-1';
 
-        // WHEN
-        service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
+        // WHEN: the response carries the full ExamImportResultDTO so the progress dialog can show the outcome
+        service.import(course.id!, mockExam, importId).subscribe((res) => expect(res.body).toEqual({ exam: mockExam }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne((request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exam-import`);
         expect(req.request.body).toEqual(expectedDto);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExam);
+        req.flush({ exam: mockExam });
         await Promise.resolve();
     });
 
@@ -118,17 +123,34 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+        const importId = 'import-2';
 
-        // WHEN
-        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup).subscribe((res) => expect(res.body).toEqual(mockExerciseGroup));
+        // WHEN: the response carries the full ExerciseGroupImportResultDTO
+        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup, importId).subscribe((res) => expect(res.body).toEqual({ exerciseGroups: mockExerciseGroup }));
 
-        // THEN
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group` });
+        // THEN (the importId is a query param, so match on the path and assert the param separately)
+        const req = httpMock.expectOne(
+            (request) => request.method === 'POST' && request.url === `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group`,
+        );
         expect(req.request.body).toEqual(mockExerciseGroup);
+        expect(req.request.params.get('importId')).toBe(importId);
 
         // CLEANUP
-        req.flush(mockExerciseGroup);
+        req.flush({ exerciseGroups: mockExerciseGroup });
         await Promise.resolve();
+    });
+
+    it('should subscribe to import progress on the user-specific websocket channel', () => {
+        // GIVEN
+        const websocketService = TestBed.inject(WebsocketService);
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const importId = 'import-3';
+
+        // WHEN
+        service.subscribeToImportProgress(importId);
+
+        // THEN
+        expect(subscribeSpy).toHaveBeenCalledWith(`/user/topic/exam-import/${importId}`);
     });
 
     it('should find an exam with exercises and without course id', async () => {

@@ -216,7 +216,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
         await component.ngOnInit();
-        expect(component.isTestRun).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     });
@@ -246,7 +246,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Call validateFeedback which updates the total score
         component.validateFeedback();
 
-        expect(component.totalScore).toBe(42);
+        expect(component.totalScore()).toBe(42);
     });
 
     it('should save the assessment with correct parameters', async () => {
@@ -282,7 +282,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = vi.spyOn(alertService, 'error');
 
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         component.submit();
 
         expect(errorStub).toHaveBeenCalledOnce();
@@ -303,7 +303,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const errorStub = vi.spyOn(alertService, 'error');
 
         // add an unreferenced feedback to make the assessment invalid
-        component.unreferencedFeedback = [new Feedback()];
+        component.unreferencedFeedback.set([new Feedback()]);
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
@@ -319,7 +319,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.detailText = 'gj';
         unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
         unreferencedFeedback.id = 1;
-        component.unreferencedFeedback = [unreferencedFeedback];
+        component.unreferencedFeedback.set([unreferencedFeedback]);
 
         const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
         const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
@@ -368,14 +368,14 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should not submit if result was not saved', () => {
         const submitSpy = vi.spyOn(textAssessmentService, 'submit');
-        component.result!.id = undefined;
+        component.result()!.id = undefined;
         component.submit();
         expect(submitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle error if saving fails', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        component.assessmentsAreValid = true;
+        component.assessmentsAreValid.set(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -385,7 +385,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.save();
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(component.saveBusy).toBe(false);
+        expect(component.saveBusy()).toBe(false);
     });
 
     it('should invoke import example submission', () => {
@@ -454,7 +454,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not allow tutors to override after the assessment due date', () => {
         component.exercise!.isAtLeastInstructor = false;
         component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
-        component.complaint = undefined;
+        component.complaint.set(undefined);
         expect(component.canOverride).toBe(false);
     });
 
@@ -515,7 +515,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
         const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
         const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
@@ -655,7 +655,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     ])('should never create overlapping blocks even with overlapping feedback suggestions', ({ input, output }: { input: number[][]; output: number[][] }) => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
 
         // Set up initial state with an existing text block that doesn't overlap
         const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
@@ -690,19 +690,19 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should validate assessments on component init', async () => {
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         await component.ngOnInit();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 
     it('should allow overriding directly after submitting', async () => {
-        component.isAssessor = true;
+        component.isAssessor.set(true);
         component.submit();
         expect(component.canOverride).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
         component.save();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 });

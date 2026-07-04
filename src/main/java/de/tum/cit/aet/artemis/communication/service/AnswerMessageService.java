@@ -113,6 +113,10 @@ public class AnswerMessageService extends PostingService {
         newAnswerMessage.setContent(answerMessage.content());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.post().id());
+        // the path courseId is authoritative: reject answers targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(post.getConversation(), courseId);
+
         var conversationId = post.getConversation().getId();
         // For group chats we need the participants to generate the conversation title
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
@@ -205,6 +209,7 @@ public class AnswerMessageService extends PostingService {
         AnswerPost updatedAnswerMessage;
 
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         parseUserMentions(course, answerMessage.content());
         // only the content of the message can be updated
@@ -262,6 +267,7 @@ public class AnswerMessageService extends PostingService {
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information

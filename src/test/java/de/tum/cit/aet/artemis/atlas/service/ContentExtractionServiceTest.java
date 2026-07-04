@@ -17,7 +17,9 @@ class ContentExtractionServiceTest {
 
     @BeforeEach
     void setUp() {
-        contentExtractionService = new ContentExtractionService();
+        // Blank flavor-strip model + null ChatClient => stripFlavorText is a no-op passthrough for
+        // non-blank text, so these extraction assertions are unaffected by the LLM strip path.
+        contentExtractionService = new ContentExtractionService(null, null, "", "low", 1.0);
     }
 
     @Test
@@ -122,14 +124,15 @@ class ContentExtractionServiceTest {
     }
 
     @Test
-    void extractContent_whitespaceProblemStatement_passesThrough() {
+    void extractContent_whitespaceProblemStatement_returnsEmptyLearningText() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("Sorting");
         exercise.setProblemStatement("   ");
 
         ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
 
-        assertThat(result.extractedLearningText()).isEqualTo("   ");
+        // Whitespace-only text is treated as blank by stripFlavorText and collapses to empty.
+        assertThat(result.extractedLearningText()).isEmpty();
     }
 
     @Test

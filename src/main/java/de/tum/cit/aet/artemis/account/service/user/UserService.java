@@ -17,7 +17,6 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -61,6 +60,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
@@ -106,6 +106,8 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
@@ -120,8 +122,9 @@ public class UserService {
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
-            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
+            RepositoryVcsAccessTokenService repositoryVcsAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
             UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
@@ -133,6 +136,7 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
         this.userSshPublicKeyService = userSshPublicKeyService;
@@ -452,6 +456,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
+            repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
@@ -482,7 +487,7 @@ public class UserService {
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
-        user.setGroups(Collections.emptySet());
+        user.setGroups(Set.of());
 
         List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
 

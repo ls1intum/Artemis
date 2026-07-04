@@ -38,10 +38,10 @@ public class TimeLogUtil {
     }
 
     private static String roundOffTo2DecPlaces(double val) {
-        return String.format("%.2f", val);
+        return "%.2f".formatted(val);
     }
 
     private static String padTo2Digits(int val) {
-        return String.format("%02d", val);
+        return "%02d".formatted(val);
     }
 }

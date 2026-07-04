@@ -81,7 +81,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(true);
+        expect(component.dateRangeInvalid()).toBe(true);
         expect(courseRequestService.create).not.toHaveBeenCalled();
     });
 
@@ -98,7 +98,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBe(false);
+        expect(component.dateRangeInvalid()).toBe(false);
         expect(courseRequestService.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 title: 'New Course',
@@ -129,7 +129,7 @@ describe('CourseRequestComponent', () => {
 
         expect(alertService.warning).toHaveBeenCalledWith('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName });
         expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should handle course request short name conflict error', () => {
@@ -187,7 +187,7 @@ describe('CourseRequestComponent', () => {
         expect(component.form.get('title')?.value).toBe('');
         expect(component.form.get('shortName')?.value).toBe('');
         expect(component.form.get('reason')?.value).toBe('');
-        expect(component.isSubmitting).toBe(false);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should not submit when form is invalid', () => {

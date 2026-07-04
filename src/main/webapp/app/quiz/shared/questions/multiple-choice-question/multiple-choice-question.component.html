@@ -10,7 +10,7 @@
     <h4 class="question-title-display">
         <span>{{ questionIndex() }})</span> {{ question().title }}
     </h4>
-    <p [innerHTML]="renderedQuestion.text"></p>
+    <p [innerHTML]="renderedQuestion().text"></p>
     @if (question().invalid) {
         <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     }
@@ -22,7 +22,7 @@
     @if (question().hint || (question().explanation && showResult())) {
         <div class="hint">
             <ng-template #renderedHint>
-                <div [innerHTML]="renderedQuestion.hint"></div>
+                <div [innerHTML]="renderedQuestion().hint"></div>
             </ng-template>
             @if (question().hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave">
@@ -32,7 +32,7 @@
             }
             <br />
             <ng-template #renderedExplanation>
-                <div [innerHTML]="renderedQuestion.explanation"></div>
+                <div [innerHTML]="renderedQuestion().explanation"></div>
             </ng-template>
             @if (question().explanation && showResult()) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
@@ -74,10 +74,10 @@
                     (click)="toggleSelection(answerOption)"
                 >
                     <div class="content">
-                        <div class="text" [innerHTML]="renderedQuestion.renderedSubElements[i]?.text ?? ''"></div>
+                        <div class="text" [innerHTML]="renderedQuestion().renderedSubElements[i]?.text ?? ''"></div>
                         <div class="hint">
                             <ng-template #renderedAnswerOptionsHint>
-                                <div [innerHTML]="renderedQuestion.renderedSubElements[i]?.hint ?? ''"></div>
+                                <div [innerHTML]="renderedQuestion().renderedSubElements[i]?.hint ?? ''"></div>
                             </ng-template>
                             @if (answerOption.hint) {
                                 <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave">
@@ -114,10 +114,10 @@
             @for (answerOption of question().answerOptions; track answerOption; let i = $index) {
                 <tr class="answer-option" id="answer-option-{{ i }}">
                     <td class="content">
-                        <div class="text" [innerHTML]="renderedQuestion.renderedSubElements![i].text"></div>
+                        <div class="text" [innerHTML]="renderedQuestion().renderedSubElements![i].text"></div>
                         <div class="hint">
                             <ng-template #renderedAnswerOptionsHint2>
-                                <div [innerHTML]="renderedQuestion.renderedSubElements![i].hint"></div>
+                                <div [innerHTML]="renderedQuestion().renderedSubElements![i].hint"></div>
                             </ng-template>
                             @if (answerOption.hint) {
                                 <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave">
@@ -126,7 +126,7 @@
                                 </span>
                             }
                             <ng-template #renderedAnswerOptionsExplanation>
-                                <div [innerHTML]="renderedQuestion.renderedSubElements![i].explanation"></div>
+                                <div [innerHTML]="renderedQuestion().renderedSubElements![i].explanation"></div>
                             </ng-template>
                             @if (answerOption.explanation) {
                                 <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave">

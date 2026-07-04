@@ -54,8 +54,8 @@ describe('FooterComponent', () => {
 
     describe('Git Information', () => {
         it('should display git information if not in production or on a test server', () => {
-            component.isProduction = false;
-            component.isTestServer = true;
+            component.isProduction.set(false);
+            component.isTestServer.set(true);
             fixture.changeDetectorRef.detectChanges();
 
             const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git');
@@ -64,8 +64,8 @@ describe('FooterComponent', () => {
     });
 
     it('should not display git information if in production and not a test server', () => {
-        component.isProduction = true;
-        component.isTestServer = false;
+        component.isProduction.set(true);
+        component.isTestServer.set(false);
         fixture.changeDetectorRef.detectChanges();
 
         const gitInfoElement = fixture.debugElement.nativeElement.querySelector('.footer-git-wrapper');
@@ -74,12 +74,12 @@ describe('FooterComponent', () => {
 
     describe('Git Information Detailed Testing', () => {
         beforeEach(() => {
-            component.gitBranch = 'main';
-            component.gitCommitId = 'abc123';
-            component.gitTimestamp = dayJs.utc('2023-04-01T12:00:00Z');
-            component.gitCommitUser = 'user123';
-            component.isProduction = false;
-            component.isTestServer = false;
+            component.gitBranch.set('main');
+            component.gitCommitId.set('abc123');
+            component.gitTimestamp.set(dayJs.utc('2023-04-01T12:00:00Z'));
+            component.gitCommitUser.set('user123');
+            component.isProduction.set(false);
+            component.isTestServer.set(false);
             fixture.changeDetectorRef.detectChanges();
         });
 

@@ -2,12 +2,12 @@
     <div class="row justify-content-between">
         <div class="col-md-8">
             <h2>
-                <span>{{ 'artemisApp.assessment.locks.title' + (showAll ? 'All' : '') | artemisTranslate }}</span>
+                <span>{{ 'artemisApp.assessment.locks.title' + (showAll() ? 'All' : '') | artemisTranslate }}</span>
             </h2>
         </div>
     </div>
 </div>
-@if (submissions.length > 0) {
+@if (submissions().length > 0) {
     <div>
         <div class="table-responsive">
             <table class="table table-striped exercise-table">
@@ -23,7 +23,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (submission of submissions; track submission; let i = $index) {
+                    @for (submission of submissions(); track submission; let i = $index) {
                         <tr>
                             <td>{{ submission.id }}</td>
                             <td>
@@ -47,7 +47,7 @@
                                         <a
                                             [routerLink]="[
                                                 '/course-management',
-                                                courseId,
+                                                courseId(),
                                                 'text-exercises',
                                                 submission.participation!.exercise!.id!,
                                                 'participations',
@@ -65,7 +65,7 @@
                                         <a
                                             [routerLink]="[
                                                 '/course-management',
-                                                courseId,
+                                                courseId(),
                                                 submission.participation!.exercise!.type + '-exercises',
                                                 submission.participation!.exercise!.id!,
                                                 'submissions',
@@ -93,7 +93,7 @@
         </div>
     </div>
 }
-@if (submissions.length === 0) {
+@if (submissions().length === 0) {
     <div style="margin-top: 10px">
         <p jhiTranslate="artemisApp.assessment.locks.empty"></p>
     </div>

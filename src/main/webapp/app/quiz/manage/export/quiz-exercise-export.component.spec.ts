@@ -68,13 +68,13 @@ describe('QuizExerciseExportComponent', () => {
         expect(courseService.find).toHaveBeenCalledWith(42);
         expect(quizService.findForCourse).toHaveBeenCalledWith(42);
         expect(quizService.find).toHaveBeenCalledWith(quiz.id);
-        expect(fixture.componentInstance.questions).toHaveLength(1);
-        expect(fixture.componentInstance.questions[0].exercise?.id).toBe(quiz.id);
+        expect(fixture.componentInstance.questions()).toHaveLength(1);
+        expect(fixture.componentInstance.questions()[0].exercise?.id).toBe(quiz.id);
     });
 
     it('should forward export call', () => {
         const fixture = TestBed.createComponent(QuizExerciseExportComponent);
-        fixture.componentInstance.questions = [{ id: 1 } as QuizQuestion];
+        fixture.componentInstance.questions.set([{ id: 1 } as QuizQuestion]);
 
         fixture.componentInstance.exportQuiz();
 

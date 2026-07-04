@@ -65,6 +65,6 @@ describe('Example Solution Component', () => {
         expect(extractExampleSolutionInfoSpy).toHaveBeenCalledOnce();
         expect(extractExampleSolutionInfoSpy).toHaveBeenCalledWith(exercise, artemisMarkdownService);
 
-        expect(comp.exampleSolutionInfo).toEqual(exampleSolutionInfo);
+        expect(comp.exampleSolutionInfo()).toEqual(exampleSolutionInfo);
     });
 });

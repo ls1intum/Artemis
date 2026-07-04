@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -608,13 +609,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.getFirst());
+        // persist the answer post and pass a matching body/path id so the 400 genuinely originates from the course-mismatch validation, not from id parsing
+        AnswerPost answerPostToUpdate = saveAnswerPost(TEST_PREFIX + "student1", existingPostsWithAnswersCourseWide.getFirst());
         Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
                 "/api/communication/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
-                // answerPostToUpdate is unsaved (id == null); the 400 stems from the course/answer mismatch, so the body id is irrelevant.
-                new UpdatePostingDTO(0L, answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+                new UpdatePostingDTO(answerPostToUpdate.getId(), answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
@@ -715,7 +716,137 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         });
     }
 
+    // GET answer-messages-source-posts (forwarded-message source previews must not leak answer posts the caller cannot access)
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_courseWideChannel_returnsAnswerPost() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", accessibleAnswer.getId().toString());
+
+        List<AnswerPostResponseDTO> answers = request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.OK,
+                AnswerPostResponseDTO.class, params);
+        assertThat(answers).hasSize(1);
+        assertThat(answers.getFirst().id()).isEqualTo(accessibleAnswer.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_notParticipantOfNonCourseWideChannel_isForbidden() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "answer-source-non-cw");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+        AnswerPost hiddenAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", hiddenAnswer.getId().toString());
+
+        // student1 is not a participant of the non-course-wide channel, so they must not be able to read the answer post by its id
+        request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.FORBIDDEN, AnswerPostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_mixedAccessibleAndInaccessible_isForbidden() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw-mixed");
+        Post accessibleParent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", accessibleParent);
+        Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "answer-source-non-cw-mixed");
+        conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+        Post hiddenParent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", nonCourseWideChannel);
+        AnswerPost hiddenAnswer = saveAnswerPost(TEST_PREFIX + "student2", hiddenParent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("answerPostIds", accessibleAnswer.getId() + "," + hiddenAnswer.getId());
+
+        // one inaccessible id must reject the whole request
+        request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.FORBIDDEN, AnswerPostResponseDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSourceAnswerPostsByIds_duplicateAccessibleIds_returnsAnswerPost() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel courseWideChannel = conversationUtilService.createCourseWideChannel(course, "answer-source-cw-dup");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student2", courseWideChannel);
+        AnswerPost accessibleAnswer = saveAnswerPost(TEST_PREFIX + "student2", parent);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        // duplicate ids must not trigger a false forbidden via the COUNT(DISTINCT) access check
+        params.add("answerPostIds", accessibleAnswer.getId() + "," + accessibleAnswer.getId());
+
+        List<AnswerPostResponseDTO> answers = request.getList("/api/communication/courses/" + courseId + "/answer-messages-source-posts", HttpStatus.OK,
+                AnswerPostResponseDTO.class, params);
+        assertThat(answers).hasSize(1);
+    }
+
+    // F-003: the path courseId is authoritative; an answer targeting a conversation of another course must be rejected
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-create");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+
+        CreateAnswerPostDTO answerDTO = new CreateAnswerPostDTO("cross-course answer", new ParentPostDTO(parent.getId()));
+
+        AnswerPostResponseDTO notCreated = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerDTO, AnswerPostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
+        assertThat(notCreated).isNull();
+
+        // sanity check: the same answer via the conversation's actual course path succeeds
+        AnswerPostResponseDTO created = request.postWithResponseBody("/api/communication/courses/" + otherCourse.getId() + "/answer-messages", answerDTO,
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-update");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+        AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
+
+        UpdatePostingDTO updateDTO = new UpdatePostingDTO(answer.getId(), "updated answer", null, false);
+        AnswerPostResponseDTO notUpdated = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answer.getId(), updateDTO,
+                AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(notUpdated).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteAnswerMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
+        Course otherCourse = courseUtilService.createCourse();
+        courseUtilService.enableMessagingForCourse(otherCourse);
+        Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-answer-delete");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
+        AnswerPost answer = saveAnswerPost(TEST_PREFIX + "student1", parent);
+
+        request.delete("/api/communication/courses/" + courseId + "/answer-messages/" + answer.getId(), HttpStatus.BAD_REQUEST);
+        assertThat(answerPostRepository.findById(answer.getId())).isPresent();
+    }
+
     // HELPER METHODS
+
+    private AnswerPost saveAnswerPost(String login, Post parent) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(userUtilService.getUserByLogin(login));
+        answerPost.setContent("answer post");
+        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setPost(parent);
+        return answerPostRepository.save(answerPost);
+    }
 
     private AnswerPost createAnswerPost(Post post) {
         AnswerPost answerPost = new AnswerPost();

@@ -130,7 +130,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Initializes current account and loads system notifications.
      */
     ngOnInit(): void {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentAccount.set(user);
             this.loadAll();
             this.registerChangeInNotifications();
@@ -249,7 +249,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Navigates to the updated route with current pagination and sorting.
      */
     transition(): void {
-        this.router.navigate(['/admin/system-notification-management'], {
+        void this.router.navigate(['/admin/system-notification-management'], {
             queryParams: {
                 page: this.page(),
                 sort: `${this.predicate()},${this.reverse() ? 'asc' : 'desc'}`,

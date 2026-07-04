@@ -70,7 +70,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             comp.ngOnInit();
 
             expect(comp.examMode).toBe(false);
-            expect(comp.correctionRoundIndices).toEqual([0]);
+            expect(comp.correctionRoundIndices()).toEqual([0]);
         });
 
         it('should set examMode to true for exam exercise', () => {
@@ -85,7 +85,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             comp.ngOnInit();
 
             expect(comp.examMode).toBe(true);
-            expect(comp.correctionRoundIndices).toEqual([0, 1]);
+            expect(comp.correctionRoundIndices()).toEqual([0, 1]);
         });
 
         it('should disable manual results for practice mode (testRun)', () => {
@@ -105,7 +105,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             comp.ngOnInit();
 
             // Practice mode (testRun) should disable manual results for non-exam mode
-            expect(comp.newManualResultAllowed).toBe(false);
+            expect(comp.newManualResultAllowed()).toBe(false);
         });
     });
 

@@ -1,17 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-
-export const MY_NATIVE_FORMATS = {
-    datePickerInput: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
-    timePickerInput: { hour: 'numeric', minute: 'numeric' },
-};
 
 export interface TutorialGroupFreePeriodFormData {
     startDate?: Date;
@@ -38,8 +32,7 @@ export enum TimeFrame {
     selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [{ provide: OWL_DATE_TIME_FORMATS, useValue: MY_NATIVE_FORMATS }],
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisDatePipe, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
 export class TutorialGroupFreePeriodFormComponent implements OnInit {
     private fb = inject(FormBuilder);
@@ -63,7 +56,13 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
 
     form: FormGroup;
     // TimeFrame to store the current time frame of the form.
-    protected timeFrame = TimeFrame.Day;
+    protected readonly timeFrame = signal(TimeFrame.Day);
+
+    // Caches the value of each tab-switchable control before a reset — including undefined, so a
+    // deliberate clear is remembered — so that a user edit (e.g. changing endDate while on the
+    // Period tab) is not lost when the user switches away and back. Restore falls back to formData()
+    // only when the control has no cache entry at all. Reset on each new edit load.
+    private preResetCache: Record<string, Date | undefined> = {};
 
     // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
@@ -75,6 +74,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
             const editMode = this.isEditMode();
             this.initializeForm();
             if (editMode && formData) {
+                this.preResetCache = {};
                 this.setFormValues(formData);
                 this.setFirstTimeFrameInEditMode(formData);
             }
@@ -86,13 +86,55 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
      * @param {TimeFrame} timeFrame - The time frame to set. This should be one of the values from the TimeFrame enum.
      */
     setTimeFrame(timeFrame: TimeFrame) {
+        // Snapshot the values of controls that are visible in the CURRENT tab before switching
+        // away. Always store the value — even undefined — so an explicit user clear is recorded
+        // in the cache and is not overwritten when the user returns to this tab.
+        const currentTimeFrame = this.timeFrame();
+        const controlsToSnapshot = currentTimeFrame === TimeFrame.Period ? ['endDate'] : currentTimeFrame === TimeFrame.PeriodWithinDay ? ['startTime', 'endTime'] : [];
+        for (const name of controlsToSnapshot) {
+            this.preResetCache[name] = this.form.get(name)?.value ?? undefined;
+        }
         const resetControls = ['endDate', 'endTime', 'startTime'];
         resetControls.forEach((control) => {
             if (timeFrame === TimeFrame.Day || (timeFrame === TimeFrame.Period && control !== 'endDate') || (timeFrame === TimeFrame.PeriodWithinDay && control === 'endDate')) {
                 this.resetDateControl(control);
             }
         });
-        this.timeFrame = timeFrame;
+        this.timeFrame.set(timeFrame);
+        // In edit mode, a prior tab switch may have cleared controls that are relevant to the
+        // newly-selected timeFrame (e.g. switching Day→Period leaves endDate empty because
+        // setTimeFrame(Day) reset it). Restore the cached/original value for any such control
+        // so the user sees the pre-existing data again when switching back.
+        if (this.isEditMode()) {
+            this.restoreVisibleControlsFromFormData(timeFrame);
+        }
+    }
+
+    /**
+     * For each control that is shown in the new timeFrame, if the control is currently empty
+     * (it was cleared by a prior tab switch), restore the best-known value:
+     * - If the cache has an entry for this control (user has previously visited the tab), use the
+     *   cached value. A cached `undefined` means the user deliberately cleared the field, so
+     *   nothing is restored — this prevents a stale cache entry from overwriting an explicit clear.
+     * - If the cache has no entry (first time switching to this tab in the current edit session),
+     *   fall back to the original formData value from the server.
+     */
+    private restoreVisibleControlsFromFormData(timeFrame: TimeFrame) {
+        const formData = this.formData();
+        const restoreIfEmpty = (controlName: string) => {
+            const control = this.form.get(controlName);
+            const valueToRestore =
+                controlName in this.preResetCache ? this.preResetCache[controlName] : (formData[controlName as keyof TutorialGroupFreePeriodFormData] as Date | undefined);
+            if (control && !control.value && valueToRestore) {
+                control.setValue(valueToRestore);
+            }
+        };
+        if (timeFrame === TimeFrame.Period) {
+            restoreIfEmpty('endDate');
+        } else if (timeFrame === TimeFrame.PeriodWithinDay) {
+            restoreIfEmpty('startTime');
+            restoreIfEmpty('endTime');
+        }
     }
 
     /**
@@ -112,11 +154,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
     get isStartBeforeEnd(): boolean {
-        if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
+        if (this.timeFrame() === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
             return this.normalizeAndCompare(this.startTimeControl.value, this.endTimeControl.value, 'minute');
         }
 
-        if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
+        if (this.timeFrame() === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
             return this.normalizeAndCompare(this.startDateControl.value, this.endDateControl.value, 'day');
         }
 
@@ -134,7 +176,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
     }
 
     get timeFrameControl(): TimeFrame {
-        return this.timeFrame;
+        return this.timeFrame();
     }
 
     get startDateControl() {
@@ -165,11 +207,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
         if (!this.startDateControl?.value || !this.startDateControl?.valid) {
             return false;
         }
-        if (this.timeFrame === TimeFrame.Day) {
+        if (this.timeFrame() === TimeFrame.Day) {
             return true;
-        } else if (this.timeFrame === TimeFrame.Period) {
+        } else if (this.timeFrame() === TimeFrame.Period) {
             return !!this.endDateControl?.value && !!this.endDateControl?.valid && this.isStartBeforeEnd;
-        } else if (this.timeFrame === TimeFrame.PeriodWithinDay) {
+        } else if (this.timeFrame() === TimeFrame.PeriodWithinDay) {
             return (
                 !!this.startTimeControl?.value &&
                 !!this.startTimeControl?.valid &&

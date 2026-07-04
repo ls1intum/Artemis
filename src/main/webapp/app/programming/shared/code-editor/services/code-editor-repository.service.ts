@@ -24,7 +24,7 @@ export interface ICodeEditorRepositoryFileService {
     getFileAsBlob: (fileName: string) => Observable<Blob>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<any>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<unknown>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;
@@ -87,7 +87,7 @@ export class CodeEditorRepositoryService extends DomainDependentEndpointService 
     }
 
     getStatus = () => {
-        return this.http.get<any>(this.restResourceUrl!).pipe(
+        return this.http.get<{ repositoryStatus: string }>(this.restResourceUrl!).pipe(
             handleErrorResponse<{ repositoryStatus: string }>(this.conflictService),
             tap(({ repositoryStatus }) => {
                 if (repositoryStatus !== CommitState.CONFLICT) {
@@ -146,7 +146,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
     /**
      * Calls ngOnDestroy of super to unsubscribe from domain/participation changes.
      */
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
     }
 
@@ -168,7 +168,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
      * Calls setDomain of super and updates fileUpdateUrl. If this service is used at the time complete usage and unsubscribe.
      * @param domain - defines new domain of super.
      */
-    setDomain(domain: DomainChange) {
+    override setDomain(domain: DomainChange) {
         super.setDomain(domain);
         if (this.fileUpdateSubject) {
             this.fileUpdateSubject.complete();

@@ -8,7 +8,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('SCA category distribution chart', () => {
     setupTestBed({ zoneless: true });
@@ -56,7 +55,7 @@ describe('SCA category distribution chart', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
@@ -91,24 +90,24 @@ describe('SCA category distribution chart', () => {
 
         const categoryNames = ['category1', 'category2', 'category3', 'category4'];
         const penalties = [0, 0, 50, 50];
-        expect(component.ngxData[0].name).toBe('artemisApp.programmingAssessment.penalty');
+        expect(component.entries()[0].name).toBe('artemisApp.programmingAssessment.penalty');
         penalties.forEach((penalty, index) => {
-            expect(component.ngxData[0].series[index].name).toBe(categoryNames[index]);
-            expect(component.ngxData[0].series[index].value).toBe(penalty);
+            expect(component.entries()[0].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[0].series[index].value).toBe(penalty);
         });
 
         const issues = [20, 0, 0, 80];
-        expect(component.ngxData[1].name).toBe('artemisApp.programmingAssessment.issues');
+        expect(component.entries()[1].name).toBe('artemisApp.programmingAssessment.issues');
         issues.forEach((penalty, index) => {
-            expect(component.ngxData[1].series[index].name).toBe(categoryNames[index]);
-            expect(component.ngxData[1].series[index].value).toBe(penalty);
+            expect(component.entries()[1].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[1].series[index].value).toBe(penalty);
         });
 
         const deductions = [0, 0, 0, 100];
-        expect(component.ngxData[2].name).toBe('artemisApp.programmingAssessment.deductions');
+        expect(component.entries()[2].name).toBe('artemisApp.programmingAssessment.deductions');
         deductions.forEach((penalty, index) => {
-            expect(component.ngxData[2].series[index].name).toBe(categoryNames[index]);
-            expect(component.ngxData[2].series[index].value).toBe(penalty);
+            expect(component.entries()[2].series[index].name).toBe(categoryNames[index]);
+            expect(component.entries()[2].series[index].value).toBe(penalty);
         });
     });
 
@@ -126,31 +125,32 @@ describe('SCA category distribution chart', () => {
 
         fixture.detectChanges();
 
-        expect(component.ngxData[0].series[0].name).toBe('negative category');
-        expect(component.ngxData[0].series[0].value).toBe(0);
+        expect(component.entries()[0].series[0].name).toBe('negative category');
+        expect(component.entries()[0].series[0].value).toBe(0);
 
-        expect(component.ngxData[1].series[0].name).toBe('negative category');
-        expect(component.ngxData[1].series[0].value).toBe(0);
+        expect(component.entries()[1].series[0].name).toBe('negative category');
+        expect(component.entries()[1].series[0].value).toBe(0);
 
-        expect(component.ngxData[2].series[0].name).toBe('negative category');
-        expect(component.ngxData[2].series[0].value).toBe(0);
+        expect(component.entries()[2].series[0].name).toBe('negative category');
+        expect(component.entries()[2].series[0].value).toBe(0);
     });
 
     it('should update the translation', () => {
         const prefix = 'artemisApp.programmingAssessment.';
         const labels = ['penalty', 'issues', 'deductions'];
-        component.ngxData = [
+        component.entries.set([
             { name: '', series: [] },
             { name: '', series: [] },
             { name: '', series: [] },
-        ];
+        ]);
+        instantSpy.mockClear();
 
         component.updateTranslations();
 
         expect(instantSpy).toHaveBeenCalledTimes(3);
         instantSpy.mock.calls.forEach((calls: unknown[], index: number) => {
             expect(calls[0]).toBe(prefix.concat(labels[index]));
-            expect(component.ngxData[index].name).toBe(prefix.concat(labels[index]));
+            expect(component.entries()[index].name).toBe(prefix.concat(labels[index]));
         });
     });
 
@@ -173,11 +173,15 @@ describe('SCA category distribution chart', () => {
         });
 
         it('should emit the correct test case id', () => {
-            event = { isPenalty: true, id: 77 };
+            fixture.componentRef.setInput('exercise', programmingExercerise);
+            fixture.componentRef.setInput('categories', [category3]);
+            fixture.detectChanges();
+            // click the first segment of the penalty bar (bar index 0)
+            event = { element: { datasetIndex: 0, index: 0 } };
 
             component.onSelect(event);
 
-            expect(emitStub).toHaveBeenCalledWith(77);
+            expect(emitStub).toHaveBeenCalledWith(category3.id);
             expect(component.tableFiltered).toBe(true);
         });
 

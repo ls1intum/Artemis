@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
@@ -14,7 +14,7 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
@@ -25,21 +25,21 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
     templateUrl: './course-faq.component.html',
     styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
+    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbDropdownModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
 
     courseId: number;
     referencedFaqId: number;
-    faqs: Faq[];
+    readonly faqs = signal<Faq[]>([]);
     faqState = FaqState.ACCEPTED;
 
-    filteredFaqs: Faq[];
-    existingCategories: FaqCategory[];
-    activeFilters = new Set<string>();
+    readonly filteredFaqs = signal<Faq[]>([]);
+    readonly existingCategories = signal<FaqCategory[]>([]);
+    readonly activeFilters = signal<Set<string>>(new Set<string>());
 
-    hasCategories = false;
+    readonly hasCategories = signal(false);
     isCollapsed = false;
 
     searchInput = new BehaviorSubject<string>('');
@@ -74,8 +74,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private loadCourseExerciseCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService, this.faqState).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
-            this.hasCategories = existingCategories.length > 0;
+            this.existingCategories.set(existingCategories);
+            this.hasCategories.set(existingCategories.length > 0);
         });
     }
 
@@ -85,7 +85,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {
-                    this.faqs = res;
+                    this.faqs.set(res);
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -97,18 +97,16 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
+        this.activeFilters.set(this.faqService.toggleFilter(category, this.activeFilters()));
         this.refreshFaqList(this.searchInput.getValue());
     }
 
     private applyFilters(): void {
-        this.filteredFaqs = this.faqService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs()));
     }
 
     private applySearch(searchTerm: string) {
-        this.filteredFaqs = this.filteredFaqs.filter((faq) => {
-            return this.faqService.hasSearchTokens(faq, searchTerm);
-        });
+        this.filteredFaqs.set(this.filteredFaqs().filter((faq) => this.faqService.hasSearchTokens(faq, searchTerm)));
     }
 
     setSearchValue(searchValue: string) {

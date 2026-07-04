@@ -47,14 +47,14 @@ describe('UserSettingsContainerComponent', () => {
 
     it('should initialize', async () => {
         component.ngOnInit();
-        expect(component.currentUser).toBeDefined();
-        expect(component.isAtLeastTutor).toBe(true);
+        expect(component.currentUser()).toBeDefined();
+        expect(component.isAtLeastTutor()).toBe(true);
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
         vi.spyOn(component['profileService'], 'isModuleFeatureActive').mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isPasskeyEnabled).toBe(false);
+        expect(component.isPasskeyEnabled()).toBe(false);
     });
 
     describe('isAiEnabled behavior', () => {

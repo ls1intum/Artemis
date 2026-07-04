@@ -1,6 +1,6 @@
 <div>
     <h5 *adminTitleBarTitle id="build-agent-title-bar" class="mb-0">
-        <span jhiTranslate="artemisApp.buildAgents.details"></span>: {{ buildAgent()?.buildAgent?.displayName || agentName }}
+        <span jhiTranslate="artemisApp.buildAgents.details"></span>: {{ buildAgent()?.buildAgent?.displayName || agentName() }}
     </h5>
     <div *adminTitleBarActions>
         @if (buildAgent(); as agent) {
@@ -90,7 +90,7 @@
     }
     @if (agentNotFound()) {
         <div class="alert alert-warning mb-4">
-            <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName }"></span>
+            <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
             <br />
             <span class="text-muted" jhiTranslate="artemisApp.buildAgents.notFoundHint"></span>
         </div>
@@ -122,11 +122,11 @@
                     <button
                         class="btn"
                         (click)="this.openFilterModal()"
-                        [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter?.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter?.numberOfAppliedFilters }"
+                        [ngClass]="{ 'btn-secondary': !finishedBuildJobFilter()?.numberOfAppliedFilters, 'btn-success': !!finishedBuildJobFilter()?.numberOfAppliedFilters }"
                     >
                         <fa-icon [icon]="faFilter" />
                         <span class="d-s-none d-md-inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter?.numberOfAppliedFilters ?? 0 }"></span>
+                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0 }"></span>
                         </span>
                     </button>
                 </div>

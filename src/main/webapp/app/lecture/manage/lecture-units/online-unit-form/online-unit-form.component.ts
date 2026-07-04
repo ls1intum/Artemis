@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnChanges, computed, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
@@ -39,7 +39,7 @@ function urlValidator(control: AbstractControl) {
     templateUrl: './online-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FormDateTimePickerComponent, CompetencySelectionComponent, FaIconComponent, ArtemisTranslatePipe],
 })
-export class OnlineUnitFormComponent implements OnChanges {
+export class OnlineUnitFormComponent {
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faTimes = faTimes;
 
@@ -69,6 +69,25 @@ export class OnlineUnitFormComponent implements OnChanges {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: OnlineUnitFormData;
+
+    constructor() {
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
+        // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
+        // write reschedules the reactive flush, which re-runs this effect, which patches again — an
+        // infinite change-detection loop that leaves the edit form stuck behind the loading spinner.
+        // Guarding on the formData reference breaks the cycle and avoids clobbering in-progress edits.
+        effect(() => {
+            const data = this.formData();
+            if (this.isEditMode() && data && data !== this.appliedFormData) {
+                this.appliedFormData = data;
+                this.setFormValues(data);
+            }
+        });
+    }
+
     get nameControl() {
         return this.form.get('name');
     }
@@ -83,12 +102,6 @@ export class OnlineUnitFormComponent implements OnChanges {
 
     get sourceControl() {
         return this.form.get('source');
-    }
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-        }
     }
 
     private setFormValues(formData: OnlineUnitFormData) {

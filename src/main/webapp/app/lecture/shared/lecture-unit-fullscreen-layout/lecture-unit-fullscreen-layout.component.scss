@@ -12,7 +12,9 @@
     background-color: var(--lecture-combined-view-surface);
     overflow: hidden;
 
-    > .main-content {
+    // The main content renders either as a direct child (no sidebar) or inside a p-splitter panel (sidebar /
+    // horizontal split); the descendant selector covers both, so it stays stretched to fill its container.
+    .main-content {
         flex: 1;
         min-width: 0;
         display: flex;
@@ -29,19 +31,19 @@
     }
 
     &.content-container--with-sidebar {
-        > .main-content {
-            flex: unset;
-            min-width: 120px;
-        }
-
-        > .iris-sidebar {
+        .iris-sidebar {
             position: relative;
             min-width: 120px;
+
+            // Fill the full height of the p-splitter panel (a flex column). Without flex/min-height the sidebar
+            // shrinks to its content, so the embedded Iris chat collapsed and its absolutely-positioned disclaimer
+            // overlapped the input. The sibling .main-content already does this; the old split.js row stretched it.
+            flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             background-color: var(--lecture-combined-view-surface);
             overflow: hidden;
-            padding-top: 2.5rem;
 
             > [content-sidebar] {
                 display: flex;
@@ -52,11 +54,16 @@
         }
     }
 
+    .iris-sidebar__header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.25rem 0.25rem 0.5rem 0.25rem;
+        flex-shrink: 0;
+    }
+
     .iris-sidebar__close-button {
-        position: absolute;
-        top: 0.0625rem;
-        right: 0.125rem;
-        z-index: 1000;
+        margin-left: auto;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -69,6 +76,7 @@
         cursor: pointer;
         transition: opacity 0.2s ease;
         border-radius: 0.25rem;
+        flex-shrink: 0;
 
         &:hover,
         &:active {
@@ -85,58 +93,96 @@
             font-size: 1.25rem;
         }
     }
+}
 
-    .split-gutter-handle {
+// PrimeNG p-splitter styling: reproduce the previous split.js look (transparent gutter
+// with two small grip bars) and let panels fill the fullscreen container.
+// NOTE: this component uses ViewEncapsulation.None, so styles are global and `:host ::ng-deep` would
+// match nothing (no _nghost/_ngcontent attributes). Target the class directly so the gutter grip,
+// panel flex layout and gutter sizing actually apply.
+.fullscreen-splitter {
+    &.p-splitter {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+
+        // Strip PrimeNG's default chrome so the splitter blends into the fullscreen surface (matches the old split.js layout).
+        border: 0 none;
+        background: transparent;
+        border-radius: 0;
+    }
+
+    .p-splitterpanel {
         display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .p-splitter-gutter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        flex-shrink: 0;
+    }
+
+    // The gutter handle renders the two grip bars via ::before / ::after (was the old .split-gutter-handle).
+    .p-splitter-gutter-handle {
+        position: relative;
+        background: transparent;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         gap: 1px;
-        pointer-events: none;
-        flex-direction: row;
 
         &::before,
         &::after {
             content: '';
             display: block;
-            width: 2px;
-            height: 12px;
             background: var(--bs-body-color);
             border-radius: 1px;
         }
     }
 
-    .gutter.gutter-horizontal {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 12px;
-        cursor: col-resize;
-        background-color: transparent;
-        flex-shrink: 0;
-    }
+    // Horizontal layout (side-by-side) => vertical divider => col-resize and vertical grip bars.
+    &.p-splitter-horizontal {
+        > .p-splitter-gutter {
+            min-width: 12px;
+            cursor: col-resize;
 
-    .gutter.gutter-horizontal::before {
-        display: none;
-    }
-
-    .gutter.gutter-vertical {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 12px;
-        cursor: row-resize;
-        background-color: transparent;
-        flex-shrink: 0;
-
-        &::before {
-            display: none;
-        }
-
-        .split-gutter-handle {
-            flex-direction: column;
-
-            &::before,
-            &::after {
+            > .p-splitter-gutter-handle {
+                flex-direction: row;
                 width: 12px;
-                height: 2px;
+                height: 12px;
+
+                &::before,
+                &::after {
+                    width: 2px;
+                    height: 12px;
+                }
+            }
+        }
+    }
+
+    // Vertical layout (stacked) => horizontal divider => row-resize and horizontal grip bars.
+    &.p-splitter-vertical {
+        > .p-splitter-gutter {
+            min-height: 12px;
+            cursor: row-resize;
+
+            > .p-splitter-gutter-handle {
+                flex-direction: column;
+                width: 12px;
+                height: 12px;
+
+                &::before,
+                &::after {
+                    width: 12px;
+                    height: 2px;
+                }
             }
         }
     }

@@ -107,6 +107,7 @@ function parseArgs() {
         baseBranch: 'origin/develop',
         clientModules: [], // Explicitly specified client modules
         serverModules: [], // Explicitly specified server modules
+        changedFiles: null, // Explicit changed-file list (bypasses the git diff when provided)
         skipTests: false,
         clientOnly: false,
         serverOnly: false,
@@ -142,6 +143,19 @@ function parseArgs() {
                 options.serverModules = validateModuleNames(
                     args[++i].split(',').map((m) => m.trim()).filter(Boolean),
                     '--server-modules'
+                );
+                break;
+            case '--changed-files':
+                // Explicit changed-file list (comma-separated). Lets a caller that already knows
+                // the PR's changed files (e.g. CI via the GitHub API) skip the git-diff detection
+                // entirely — used by pullrequest-coverage-reporter.yml so it never has to check out
+                // the (untrusted) PR tree. All entries are treated as 'modified'.
+                if (i + 1 >= args.length) {
+                    console.error('Error: --changed-files requires a comma-separated list of files');
+                    process.exit(1);
+                }
+                options.changedFiles = Object.fromEntries(
+                    args[++i].split(',').map((f) => f.trim()).filter(Boolean).map((f) => [f, 'modified'])
                 );
                 break;
             case '--skip-tests':
@@ -1115,9 +1129,12 @@ async function main() {
     const hasExplicitClientModules = options.clientModules.length > 0;
     const hasExplicitServerModules = options.serverModules.length > 0;
 
-    // Step 1: Always get changed files (needed for coverage report filtering)
-    info(`Comparing against ${options.baseBranch}...`);
-    const changedFiles = getChangedFiles(options.baseBranch, options);
+    // Step 1: Always get changed files (needed for coverage report filtering). An explicit
+    // --changed-files list (e.g. from CI) bypasses the git diff so no PR checkout is needed.
+    const changedFiles = options.changedFiles ?? (
+        info(`Comparing against ${options.baseBranch}...`),
+        getChangedFiles(options.baseBranch, options)
+    );
 
     const totalChanges = Object.keys(changedFiles).length;
     if (totalChanges === 0) {

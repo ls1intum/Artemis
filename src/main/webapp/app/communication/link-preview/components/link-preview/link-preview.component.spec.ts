@@ -140,7 +140,7 @@ describe('LinkPreviewComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.isAuthorOfOriginalPost).toBe(true);
+        expect(component.isAuthorOfOriginalPost()).toBe(true);
         expect(metisServiceSpy).toHaveBeenCalled();
     });
 

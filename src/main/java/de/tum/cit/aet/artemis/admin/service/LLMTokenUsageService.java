@@ -79,6 +79,10 @@ public class LLMTokenUsageService {
         String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
         String dashless = normalized.replace("-", "");
         ModelCost cost = costs.getOrDefault(normalized, costsByDashlessKey.getOrDefault(dashless, ModelCost.ZERO));
+        if (cost == ModelCost.ZERO && inputTokens + outputTokens > 0) {
+            log.warn("No LLM cost configured for model '{}' (normalized '{}', dashless '{}') on pipeline [{}]; recording zero cost. Known cost keys: {}", model, normalized,
+                    dashless, pipelineId, costs.keySet());
+        }
         return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
     }
 

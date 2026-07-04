@@ -1,76 +1,22 @@
-<div [id]="'exercise-' + textExercise?.id">
-    @if (displayHeader() && examMode) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
-            <span pagetitle>
-                {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
-                <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
-            </span>
-            <ng-container class="btn-group gap-1" submitbutton>
-                @if (isOwnerOfParticipation) {
-                    @if (isReadOnlyWithShowResult) {
-                        @if ((sortedHistoryResults?.length || 0) > 1) {
-                            <jhi-button
-                                id="toggleTimeline"
-                                [icon]="faTimeline"
-                                [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                                (click)="showHistory = !showHistory"
-                            />
-                        }
-                        @if (isActive || !textExercise.dueDate) {
-                            <jhi-button
-                                id="Continue"
-                                [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', participation?.id!]"
-                            />
-                        }
-                    }
-                    @if (!this.isReadOnlyWithShowResult) {
-                        <jhi-exercise-submit-button
-                            id="submit"
-                            [exercise]="textExercise"
-                            [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                            (onSubmit)="submit()"
-                            [disabled]="!isActive || !submission"
-                            [isLoading]="isSaving"
-                            [isSubmitted]="!!submission?.submitted"
-                            [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
-                            [tooltip]="submitButtonTooltip"
-                            [isGeneratingFeedback]="isGeneratingFeedback"
-                            (generatingFeedback)="isGeneratingFeedback = true"
-                        />
-                    }
-                }
-            </ng-container>
-        </jhi-header-participation-page>
-    }
-    <div class="mb-2">
-        @if (isReadOnlyWithShowResult) {
-            @if (showHistory) {
-                <div id="result-history" class="row mb-2">
-                    <jhi-result-history
-                        [results]="sortedHistoryResults"
-                        [exercise]="textExercise"
-                        [participationInput]="participation"
-                        [selectedResultId]="submission.latestResult?.id!"
-                    />
-                </div>
-            }
-        }
-    </div>
-
+<div [id]="'exercise-' + textExercise()?.id">
     <!--resizable container-->
-    @if (textExercise) {
+    @if (textExercise()) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"
-            [expandProblemStatement]="expandProblemStatement() && !isReadOnlyWithShowResult"
-            [collapsed]="isReadOnlyWithShowResult"
-            [showRightPanel]="examMode"
+            [expandProblemStatement]="expandProblemStatement() && !isReadOnlyWithShowResult()"
+            [collapsed]="isReadOnlyWithShowResult()"
+            [showRightPanel]="examMode()"
         >
             <!--region Left Panel-->
             <div left-body class="text-editor-grid ps-2 pb-2 w-100">
-                @if (textExercise?.teamMode && isActive) {
+                @if (textExercise()?.teamMode && isActive) {
                     <div class="grid-area-team-info pb-4 ps-md-2">
-                        <jhi-team-participate-info-box [exercise]="textExercise" [participation]="participation" [typing$]="textEditorInputObservable" [dockedToRightSide]="true" />
+                        <jhi-team-participate-info-box
+                            [exercise]="textExercise()"
+                            [participation]="participation()"
+                            [typing$]="textEditorInputObservable"
+                            [dockedToRightSide]="true"
+                        />
                     </div>
                 }
                 <div class="grid-area-main">
@@ -78,7 +24,7 @@
                         <span
                             class="badge bg-primary mb-2"
                             id="word-count"
-                            [hidden]="submission && !submission.submitted && isExamSummary()"
+                            [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.wordCount"
                             [translateValues]="{ count: wordCount }"
                         >
@@ -86,40 +32,41 @@
                         <span
                             class="badge bg-primary mb-2"
                             id="character-count"
-                            [hidden]="submission && !submission.submitted && isExamSummary()"
+                            [hidden]="submission() && !submission().submitted && isExamSummary()"
                             jhiTranslate="artemisApp.textExercise.characterCount"
                             [translateValues]="{ count: characterCount }"
                         >
                         </span>
                     </div>
-                    @if (!((result && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult)) {
+                    @if (!((result() && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult())) {
                         <textarea
                             id="text-editor"
                             #textEditor
                             class="text-editor-textarea"
                             [maxLength]="MAX_CHARACTER_COUNT"
-                            [(ngModel)]="answer"
-                            [readOnly]="!isActive || !submission || !isOwnerOfParticipation || isReadOnlyWithShowResult"
-                            [disabled]="!isActive || !submission || !isOwnerOfParticipation"
+                            [ngModel]="answer()"
+                            (ngModelChange)="answer.set($event)"
+                            [readOnly]="!isActive || !submission() || !isOwnerOfParticipation() || isReadOnlyWithShowResult()"
+                            [disabled]="!isActive || !submission() || !isOwnerOfParticipation()"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
-                            [hidden]="submission && !submission.submitted && isExamSummary()"
+                            [hidden]="submission() && !submission().submitted && isExamSummary()"
                         ></textarea>
-                        @if (textExercise?.teamMode) {
+                        @if (textExercise()?.teamMode) {
                             <jhi-team-submission-sync
-                                [exerciseType]="textExercise.type!"
+                                [exerciseType]="textExercise().type!"
                                 [submissionObservable]="submissionObservable"
-                                [participation]="participation"
+                                [participation]="participation()"
                                 (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                             />
                         }
                     } @else {
-                        @if (!result?.feedbacks?.length) {
+                        @if (!result()?.feedbacks?.length) {
                             <div class="row">
                                 <div class="col-md-12 col-lg-10 col-xl-8">
                                     <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
-                                    <jhi-text-result [result]="result" [course]="course" />
+                                    <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
                                     <i [jhiTranslate]="'artemisApp.textExercise.assessmentPending'">Assessment pending</i>
                                 </div>
@@ -129,16 +76,16 @@
                                 <div class="col-md-12 col-lg-10 col-xl-8">
                                     <b>
                                         {{
-                                            isOwnerOfParticipation
+                                            isOwnerOfParticipation()
                                                 ? ('artemisApp.textExercise.assessedSubmission' | artemisTranslate)
                                                 : ('artemisApp.textExercise.assessedSubmissionInstructor' | artemisTranslate)
                                         }}:
                                     </b>
-                                    @if (isAthenaAIResult(result)) {
+                                    @if (isAthenaAIResult(result())) {
                                         <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                                     }
                                     <hr />
-                                    <jhi-text-result [result]="result" [course]="course" />
+                                    <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
                                 </div>
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
@@ -148,19 +95,23 @@
                                                 [feedback]="feedback"
                                                 [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                 [points]="feedback.credits || 0"
-                                                [scoreAccuracy]="course?.accuracyOfScores"
+                                                [scoreAccuracy]="course()?.accuracyOfScores"
                                             />
                                         }
                                     </div>
                                 }
-                                @if (isOwnerOfParticipation) {
-                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result" [participation]="participation" />
+                                @if (isOwnerOfParticipation()) {
+                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
                                 }
                             </div>
                         }
                     }
-                    @if (textExercise && result && participation && !examMode && !isAutomaticResult) {
-                        <jhi-complaint-student-view [exercise]="textExercise" [result]="resultWithComplaint ? resultWithComplaint : result" [participation]="participation" />
+                    @if (textExercise() && result() && participation() && !examMode() && !isAutomaticResult) {
+                        <jhi-complaint-student-view
+                            [exercise]="textExercise()"
+                            [result]="resultWithComplaint() ? resultWithComplaint() : result()"
+                            [participation]="participation()"
+                        />
                     }
                 </div>
             </div>
@@ -169,9 +120,9 @@
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
             <ng-container right-body>
-                @if (textExercise!.problemStatement) {
+                @if (textExercise()!.problemStatement) {
                     <p class="markdown-preview mb-3">
-                        <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
+                        <span [innerHTML]="textExercise()!.problemStatement! | htmlForMarkdown"></span>
                     </p>
                 }
             </ng-container>

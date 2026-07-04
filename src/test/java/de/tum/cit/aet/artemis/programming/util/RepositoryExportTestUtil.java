@@ -25,7 +25,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -405,28 +404,19 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+        if (commitHash == null || commitHash.length() != 40) {
+            throw new IllegalArgumentException("Expected a full 40-character commit hash but got: " + commitHash);
+        }
+        ObjectId commitId = ObjectId.fromString(commitHash);
         Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            // Check directly on the file system first — JGit can cache pack files / object database
-            // state per Repository instance, so a freshly-opened Git handle may still return null
-            // from resolve(...) immediately after a push. The loose-object path is updated atomically
-            // by JGit's push, so its presence is the authoritative signal that the commit landed.
-            if (commitHash == null || commitHash.length() != 40) {
-                return false;
-            }
-            Path looseObjectPath = repo.remoteBareGitRepoFile.toPath().resolve("objects").resolve(commitHash.substring(0, 2)).resolve(commitHash.substring(2));
-            if (Files.exists(looseObjectPath)) {
-                return true;
-            }
-            // Fallback for the case where the commit has already been packed (rare for fresh pushes).
+            // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
+            // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
+            // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
+            // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
+            // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
+            // it confirms the commit landed without mapping the pack data.
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                var resolved = git.getRepository().resolve(commitHash);
-                if (resolved == null) {
-                    return false;
-                }
-                try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                    revWalk.parseCommit(resolved);
-                }
-                return true;
+                return git.getRepository().getObjectDatabase().has(commitId);
             }
             catch (Exception e) {
                 log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
@@ -445,21 +435,17 @@ public final class RepositoryExportTestUtil {
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
         Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            try {
-                // Try to open the bare repository and resolve HEAD
-                // This verifies the repo is accessible and has a valid HEAD reference
-                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    var headRef = git.getRepository().resolve("HEAD");
-                    if (headRef == null) {
-                        log.debug("Bare repository HEAD is null, waiting...");
-                        return false;
-                    }
-                    // Verify we can read the commit object
-                    try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                        revWalk.parseCommit(headRef);
-                    }
-                    return true;
+            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                // Resolve HEAD (a cheap ref read) and confirm the referenced commit object is present via
+                // ObjectDatabase.has(...). We deliberately avoid RevWalk.parseCommit here: parsing reads the commit
+                // object data and memory-maps the pack through JGit's contended process-wide WindowCache (see
+                // waitForBareRepositoryToContainCommit), which made this wait flaky under parallel CI.
+                var headRef = git.getRepository().resolve("HEAD");
+                if (headRef == null) {
+                    log.debug("Bare repository HEAD is null, waiting...");
+                    return false;
                 }
+                return git.getRepository().getObjectDatabase().has(headRef);
             }
             catch (Exception e) {
                 log.debug("Bare repository not ready yet: {}", e.getMessage());

@@ -7,13 +7,13 @@
         'question-highlight': question().isHighlighted,
     }"
 >
-    <div [hidden]="loadingState === 'success'">
-        @if (loadingState !== 'error') {
+    <div [hidden]="loadingState() === 'success'">
+        @if (loadingState() !== 'error') {
             <h2>
                 <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
             </h2>
         }
-        @if (loadingState === 'error') {
+        @if (loadingState() === 'error') {
             <div>
                 <h2>
                     <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
@@ -24,11 +24,11 @@
             </div>
         }
     </div>
-    <div [hidden]="loadingState !== 'success'">
+    <div [hidden]="loadingState() !== 'success'">
         <h4 class="question-title-display">
             <span>{{ questionIndex() }})</span> {{ dragAndDropQuestion().title }}
         </h4>
-        <p [innerHTML]="renderedQuestion.text"></p>
+        <p [innerHTML]="renderedQuestion().text"></p>
         @if (dragAndDropQuestion().invalid) {
             <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
         }
@@ -41,7 +41,7 @@
                     </span>
                 }
                 <ng-template #renderedHint>
-                    <div [innerHTML]="renderedQuestion.hint"></div>
+                    <div [innerHTML]="renderedQuestion().hint"></div>
                 </ng-template>
                 <br />
                 @if (dragAndDropQuestion().explanation && showResult()) {
@@ -51,7 +51,7 @@
                     </span>
                 }
                 <ng-template #renderedExplanation>
-                    <div [innerHTML]="renderedQuestion.explanation"></div>
+                    <div [innerHTML]="renderedQuestion().explanation"></div>
                 </ng-template>
             </div>
         }
@@ -70,9 +70,9 @@
                         [score]="score()"
                         [question]="question()"
                         [dragAndDropMapping]="mappings()"
-                        [correctlyMappedDragAndDropItems]="correctAnswer"
-                        [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings"
-                        [mappedLocations]="mappedLocations"
+                        [correctlyMappedDragAndDropItems]="correctAnswer()"
+                        [incorrectlyMappedDragAndDropItems]="incorrectLocationMappings()"
+                        [mappedLocations]="mappedLocations()"
                         [questionIndex]="questionIndex()"
                     />
                 </span>
@@ -113,7 +113,7 @@
                                 <div
                                     id="drop-location"
                                     class="drop-location"
-                                    [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                                    [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                                     [ngStyle]="{
                                         top: dropLocation.posY! / 2 + '%',
                                         left: dropLocation.posX! / 2 + '%',
@@ -286,7 +286,7 @@
                     <div
                         class="drag-items"
                         id="drag-items"
-                        [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                        [ngClass]="dropAllowed() ? 'drop-allowed' : ''"
                         (cdkDropListDropped)="onDragDrop(undefined, $event)"
                         (onDragEnter)="preventDefault($event)"
                         (onDragOver)="preventDefault($event)"

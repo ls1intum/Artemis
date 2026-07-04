@@ -24,7 +24,7 @@ class SpringAIAutoConfigurationInclusionsTest extends AbstractSpringIntegrationL
     @Test
     void testSpringAIAutoConfigurationsIncluded() {
         // When Hyperion is enabled, Spring AI autoconfigurations are NOT filtered out.
-        // The AzureOpenAiChatModel bean should be created by the autoconfiguration.
+        // The OpenAiChatModel bean should be created by the autoconfiguration.
         // We verify this by checking that at least one ChatModel bean exists in the context.
         assertThat(applicationContext.getBeanNamesForType(ChatModel.class)).isNotEmpty();
     }
