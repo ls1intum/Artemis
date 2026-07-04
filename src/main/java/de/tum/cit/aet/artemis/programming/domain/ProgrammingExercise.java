@@ -617,16 +617,22 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Check if manual results are allowed for the exercise
+     * Check if manual results are allowed for the exercise.
+     * <p>
+     * {@code isFeedbackRequest} must reflect whether the concrete participation/submission being assessed is an actual feedback
+     * request (i.e. has an individual due date before the exercise due date), not merely whether the course allows Athena
+     * formative feedback in general. Otherwise, enabling course-wide Athena formative feedback would let tutors manually
+     * assess any regular submission before the due date has passed.
      *
+     * @param isFeedbackRequest whether the participation/submission being assessed is an actual feedback request
      * @return true if manual results are allowed, false otherwise
      */
-    public boolean areManualResultsAllowed() {
+    public boolean areManualResultsAllowed(boolean isFeedbackRequest) {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
             // The relevantDueDate check below keeps us from assessing feedback requests,
             // as their relevantDueDate is before the due date
-            if (getAllowFeedbackRequests()) {
+            if (isFeedbackRequest) {
                 return true;
             }
 

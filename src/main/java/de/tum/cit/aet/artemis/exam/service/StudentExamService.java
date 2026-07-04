@@ -705,7 +705,9 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
+        boolean isFeedbackRequest = studentParticipation.getIndividualDueDate() != null && studentParticipation.getIndividualDueDate().isBefore(ZonedDateTime.now());
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise
+                && programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
             return studentParticipation.findLatestSubmission();
         }

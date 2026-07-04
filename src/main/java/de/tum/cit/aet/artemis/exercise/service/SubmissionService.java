@@ -713,7 +713,9 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowFeedbackRequests()) {
+            // this always applies regardless of whether the course allows Athena formative feedback requests: the caller
+            // (ProgrammingSubmissionResource) only reaches this check for normal (non-feedback-request) assessment attempts
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
