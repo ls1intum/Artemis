@@ -142,11 +142,16 @@ describe('ExerciseHeaderComponent', () => {
         it.each([
             { submitted: true, hasResult: false },
             { submitted: false, hasResult: true },
-            { submitted: false, hasResult: false },
         ])('should show the feedback button for a real submission: %s', ({ submitted, hasResult }) => {
             configureProgrammingExercise(false, submitted, hasResult);
 
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
+        });
+
+        it('should hide the feedback button without a submitted submission or result', () => {
+            configureProgrammingExercise(false, false, false);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
         });
 
         it.each([true, undefined])('should hide the feedback button when allowOnlineEditor is %s', (allowOnlineEditor) => {

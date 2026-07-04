@@ -133,6 +133,20 @@
                         (practiceModeStarted)="receiveNewParticipation($event)"
                     />
                 }
+                @if (
+                    exercise().type === ExerciseType.PROGRAMMING &&
+                    !examMode() &&
+                    exercise().allowFeedbackRequests &&
+                    hasProgrammingSubmission() &&
+                    programmingExercise()?.allowOnlineEditor === false
+                ) {
+                    <jhi-request-feedback-button
+                        [exercise]="exercise()"
+                        [smallButtons]="smallButtons()"
+                        [isGeneratingFeedback]="isGeneratingFeedback()"
+                        (generatingFeedback)="generatingFeedback.emit()"
+                    />
+                }
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
@@ -146,20 +160,6 @@
                             [isPractice]="participationMode() === 'practice'"
                         />
                     }
-                }
-                @if (
-                    exercise().type === ExerciseType.PROGRAMMING &&
-                    !examMode() &&
-                    exercise().allowFeedbackRequests &&
-                    activeParticipationForCode() &&
-                    programmingExercise()?.allowOnlineEditor === false
-                ) {
-                    <jhi-request-feedback-button
-                        [exercise]="exercise()"
-                        [smallButtons]="smallButtons()"
-                        [isGeneratingFeedback]="isGeneratingFeedback()"
-                        (generatingFeedback)="generatingFeedback.emit()"
-                    />
                 }
                 @if (
                     (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&

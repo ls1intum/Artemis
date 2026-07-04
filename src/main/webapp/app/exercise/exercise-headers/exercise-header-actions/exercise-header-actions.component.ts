@@ -124,7 +124,6 @@ export class ExerciseHeaderActionsComponent {
     readonly submitLabel = input<string>('entity.action.submit');
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
-    readonly athenaEnabled = input<boolean>(false);
 
     readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
