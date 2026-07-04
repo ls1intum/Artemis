@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -70,6 +70,8 @@ public class ParticipationDeletionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ProfileService profileService;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<VersionControlService> versionControlService;
@@ -80,8 +82,8 @@ public class ParticipationDeletionService {
             SubmissionRepository submissionRepository, Optional<CompetencyProgressApi> competencyProgressApi, ParticipationRepository participationRepository,
             TeamScoreRepository teamScoreRepository, ResultService resultService, StudentScoreRepository studentScoreRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, GitService gitService,
-            BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProfileService profileService, Optional<VersionControlService> versionControlService,
+            GitService gitService, BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -93,6 +95,7 @@ public class ParticipationDeletionService {
         this.studentScoreRepository = studentScoreRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.buildLogEntryService = buildLogEntryService;
@@ -151,12 +154,15 @@ public class ParticipationDeletionService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseParticipation) {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
-            String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            if (buildPlanId != null) {
-                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
+            if (profileService.isJenkinsActive()) {
+                String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+                if (buildPlanId != null) {
+                    final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+                    continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
+                }
             }
+
             if (programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
@@ -214,14 +220,15 @@ public class ParticipationDeletionService {
 
     /**
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
-     * This means the participation can be resumed in the future
+     * This means the participation can be resumed in the future.
+     * Only applicable for Jenkins (stateful); LocalCI/Hades do not maintain a build plan to clean up.
      *
      * @param participation that will be set to inactive
      */
     public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // ignore participations without build plan id
-        if (participation.getBuildPlanId() != null) {
-            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
+        // ignore participations without build plan id, and CI that don't manage build plans
+        if (profileService.isJenkinsActive() && participation.getBuildPlanId() != null) {
+            final var projectKey = participation.getProgrammingExercise().getProjectKey();
             continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
 
             // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized

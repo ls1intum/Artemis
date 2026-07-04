@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -36,6 +37,8 @@ public class ProgrammingExerciseDeletionService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ProfileService profileService;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -46,12 +49,13 @@ public class ProgrammingExerciseDeletionService {
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, ProfileService profileService, InstanceMessageSendService instanceMessageSendService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
@@ -75,7 +79,9 @@ public class ProgrammingExerciseDeletionService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            deleteBuildPlans(programmingExercise);
+            if (profileService.isJenkinsActive()) {
+                deleteBuildPlans(programmingExercise);
+            }
             programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);

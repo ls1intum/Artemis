@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web.open;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
 
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -26,7 +28,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
@@ -38,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
-@Profile(PROFILE_JENKINS)
+@Profile({ PROFILE_JENKINS, PROFILE_HADES })
 @Lazy
 @RestController
 @RequestMapping("api/programming/public/")
@@ -46,7 +49,7 @@ public class PublicProgrammingExerciseResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicProgrammingExerciseResultResource.class);
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<StatelessCIService> continuousIntegrationService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -58,9 +61,9 @@ public class PublicProgrammingExerciseResultResource {
 
     private final byte[] artemisAuthenticationTokenHash;
 
-    public PublicProgrammingExerciseResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+    public PublicProgrammingExerciseResultResource(Optional<StatelessCIService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             @Value("${artemis.continuous-integration.artemis-authentication-token-value}") String artemisAuthenticationTokenValue) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -72,6 +75,35 @@ public class PublicProgrammingExerciseResultResource {
             throw new IllegalArgumentException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
         }
         this.artemisAuthenticationTokenHash = hashSha256(artemisAuthenticationTokenValue);
+    }
+
+    /**
+     * POST /programming-exercises/new-result?participationId={participationId} : Receives a new build result from Hades identified by participation ID.
+     *
+     * @param authorizationToken the authorization token from the CI system
+     * @param participationId    the ID of the participation the result belongs to
+     * @param requestBody        the build result from the CI system
+     * @return a ResponseEntity with status 200 (OK) or 403 (Forbidden) if the token is invalid
+     */
+    @PostMapping(value = "programming-exercises/new-result", params = "participationId")
+    @EnforceNothing
+    public ResponseEntity<Void> processNewProgrammingExerciseResultWithParticipationID(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken,
+            @RequestParam Long participationId, @RequestBody Object requestBody) {
+        log.debug("Received new programming exercise result from Hades");
+        if (!matches(authorizationToken)) {
+            log.info("Cancelling request due to invalid authorization token");
+            throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
+        }
+
+        SecurityUtils.setAuthorizationObject();
+
+        ProgrammingExerciseParticipation participation = programmingExerciseParticipationService
+                .findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
+        log.debug("Successfully retrieved participation via ID: {}", participationId);
+
+        processNewResultFromBuildResult(participation, requestBody, participation.getId().toString());
+
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -91,7 +123,7 @@ public class PublicProgrammingExerciseResultResource {
     public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Jenkins");
         if (!matches(authorizationToken)) {
-            log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
+            log.info("Cancelling request due to invalid authorization token");
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 
@@ -120,12 +152,17 @@ public class PublicProgrammingExerciseResultResource {
             throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
         }
 
+        processNewResultFromBuildResult(participation, requestBody, planKey);
+
+        return ResponseEntity.ok().build();
+    }
+
+    private void processNewResultFromBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, String planKey) {
         // Process the new result from the build result.
         Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result != null) {
-
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 // If the solution participation was updated, also trigger the template participation build.
                 // This method will return without triggering the build if the submission is not of type TEST.
@@ -137,7 +174,6 @@ public class PublicProgrammingExerciseResultResource {
 
             log.info("The new result for {} was saved successfully", planKey);
         }
-        return ResponseEntity.ok().build();
     }
 
     private boolean matches(String incomingToken) {
