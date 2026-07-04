@@ -111,7 +111,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         this.channelService
             .getChannelsOfCourse(this.course()!.id!)
             .pipe(
-                map((res: HttpResponse<ChannelDTO[]>) => res.body),
+                map((res: HttpResponse<ChannelDTO[]>) => res.body ?? []),
                 finalize(() => {
                     this.isLoading.set(false);
                 }),

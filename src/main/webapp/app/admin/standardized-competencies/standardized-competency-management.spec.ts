@@ -122,7 +122,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
         const knowledgeArea2: KnowledgeAreaDTO = { id: 2 };
         const expectedCompetency: StandardizedCompetencyDTO = { knowledgeAreaId: 1 };
         const expectedCompetency2: StandardizedCompetencyDTO = { knowledgeAreaId: 2 };
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
 
         component['isEditing'].set(false);
         component.openNewCompetency(knowledgeArea.id!);
@@ -139,7 +139,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should select competency', () => {
         const expectedCompetency = createCompetencyDTO(1, 'title1', 'description1');
         const expectedCompetency2 = createCompetencyDTO(2, 'title2', 'description2');
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
 
         component['isEditing'].set(false);
         component.selectCompetency(expectedCompetency);
@@ -158,7 +158,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should close competency', () => {
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
         const expectedCompetency = createCompetencyDTO(1, 'title1', 'description1');
         component['selectedCompetency'].set(expectedCompetency);
         component['isEditing'].set(false);
@@ -277,7 +277,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should open new knowledgeArea', () => {
         const expectedKnowledgeArea1: KnowledgeAreaDTO = { parentId: 1 };
         const expectedKnowledgeArea2: KnowledgeAreaDTO = { parentId: 2 };
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
 
         component['isEditing'].set(false);
         component.openNewKnowledgeArea(expectedKnowledgeArea1.parentId);
@@ -294,7 +294,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should select knowledgeArea', () => {
         const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
         const expectedKnowledgeArea2 = createKnowledgeAreaDTO(2, 'title2', 't2');
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
 
         component['isEditing'].set(false);
         component.selectKnowledgeArea(expectedKnowledgeArea);
@@ -312,7 +312,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should close knowledgeArea', () => {
-        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((title, entityType, callback: () => void) => callback());
+        const cancelModalSpy = vi.spyOn(component as any, 'openCancelModal').mockImplementation((...args: unknown[]) => (args[2] as () => void)());
         const expectedKnowledgeArea = createKnowledgeAreaDTO(1, 'title1', 't1');
         component['selectedKnowledgeArea'].set(expectedKnowledgeArea);
         component['isEditing'].set(false);

@@ -195,7 +195,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
-    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject<GenerateParticipationStatus>('success');
 
     constructor() {
         // show only one synchronization error every 5s
@@ -282,8 +282,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadAndDisplaySummary() {
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
-            next: (studentExamWithExercises: StudentExam) => {
-                this.studentExam.set(studentExamWithExercises);
+            next: (studentExamWithExercises: StudentExam | undefined) => {
+                if (studentExamWithExercises) {
+                    this.studentExam.set(studentExamWithExercises);
+                }
                 this.showExamSummary.set(true);
                 this.loadingExam.set(false);
             },
@@ -691,19 +693,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else {
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
-                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId()).subscribe((localExam: StudentExam) => {
-                    if (localExam) {
-                        // Keep the working time from the server
-                        localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
-                        this.studentExam.set(localExam);
-                        this.loadingExam.set(false);
-                        // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
-                        this.examStarted(this.studentExam(), true);
-                        // Inform the student that their previously entered answers were restored and are being saved,
-                        // so it is clear that nothing was lost when the page was reloaded.
-                        this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
-                    }
-                });
+                this.examParticipationService
+                    .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId())
+                    .subscribe((localExam: StudentExam | undefined) => {
+                        if (localExam) {
+                            // Keep the working time from the server
+                            localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
+                            this.studentExam.set(localExam);
+                            this.loadingExam.set(false);
+                            // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
+                            this.examStarted(this.studentExam(), true);
+                            // Inform the student that their previously entered answers were restored and are being saved,
+                            // so it is clear that nothing was lost when the page was reloaded.
+                            this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
+                        }
+                    });
             } else {
                 this.loadingExam.set(false);
             }
@@ -743,28 +747,33 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.workingTimeUpdateEventsSubscription) {
             this.workingTimeUpdateEventsSubscription.unsubscribe();
         }
-        this.workingTimeUpdateEventsSubscription = this.liveEventsService
-            .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
-            .subscribe((event: WorkingTimeUpdateEvent) => {
-                // Create new object to make change detection work, otherwise the date will not update
-                this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
-                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
-                this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
-                this.liveEventsService.acknowledgeEvent(event, false);
-            });
+        // observeNewEventsAsSystem already filters by the requested event type, so the emitted events are
+        // WorkingTimeUpdateEvent at runtime; the cast keeps the callback param typed without an extra `filter`
+        // (which would incorrectly drop events lacking an explicit `eventType`, e.g. in tests).
+        this.workingTimeUpdateEventsSubscription = (
+            this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
+        ).subscribe((event: WorkingTimeUpdateEvent) => {
+            // Create new object to make change detection work, otherwise the date will not update
+            this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
+            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+            this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
+            this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
+            this.liveEventsService.acknowledgeEvent(event, false);
+        });
     }
 
     private subscribeToProblemStatementUpdates() {
         if (this.problemStatementUpdateEventsSubscription) {
             this.problemStatementUpdateEventsSubscription.unsubscribe();
         }
-        this.problemStatementUpdateEventsSubscription = this.liveEventsService
-            .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
-            .subscribe((event: ProblemStatementUpdateEvent) => {
-                this.updateProblemStatement(event);
-                this.liveEventsService.acknowledgeEvent(event, false);
-            });
+        // See subscribeToWorkingTimeUpdates: the events are already type-filtered by observeNewEventsAsSystem,
+        // so we cast rather than add a `filter` that would drop events without an explicit `eventType`.
+        this.problemStatementUpdateEventsSubscription = (
+            this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE]) as Observable<ProblemStatementUpdateEvent>
+        ).subscribe((event: ProblemStatementUpdateEvent) => {
+            this.updateProblemStatement(event);
+            this.liveEventsService.acknowledgeEvent(event, false);
+        });
     }
 
     /**

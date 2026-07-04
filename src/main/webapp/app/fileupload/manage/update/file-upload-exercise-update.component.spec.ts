@@ -180,9 +180,9 @@ describe('FileUploadExerciseUpdateComponent', () => {
     };
 
     beforeEach(async () => {
-        routeData$ = new BehaviorSubject({ fileUploadExercise: createExercise(createCourse()) });
+        routeData$ = new BehaviorSubject<Data>({ fileUploadExercise: createExercise(createCourse()) });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 123 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 123 });
 
         await TestBed.configureTestingModule({
             imports: [FileUploadExerciseUpdateComponent, TranslateModule.forRoot()],

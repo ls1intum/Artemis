@@ -98,12 +98,14 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
         return analysis
             .flat()
-            .map(([lineNumber, values, issueType]: AnalysisItem) => [
-                lineNumber,
-                values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
-                issueType,
-            ])
-            .reduce(reducer, new Map());
+            .map(
+                ([lineNumber, values, issueType]: AnalysisItem): AnalysisItem => [
+                    lineNumber,
+                    values.map((id) => this.translateService.instant(this.getTranslationByIssueType(issueType), { id })),
+                    issueType,
+                ],
+            )
+            .reduce<ProblemStatementAnalysis>(reducer, new Map());
     };
 
     /**
@@ -133,11 +135,11 @@ export class ProgrammingExerciseInstructionAnalysisService {
 
         return tasks
             .filter(([, task]) => !!task)
-            .map(([lineNumber, task]) => {
+            .map(([lineNumber, task]): [number, string | undefined] => {
                 const extractedValue = task.match(regex);
                 return extractedValue && extractedValue.length > 1 ? [lineNumber, extractedValue[1]] : [lineNumber, undefined];
             })
-            .filter(([, testCases]) => !!testCases)
+            .filter((entry): entry is [number, string] => !!entry[1])
             .map(([lineNumber, match]: [number, string]) => {
                 const cleanedMatches = cleanMatches(match.split(/,(?![^(]*?\))/).map((m: string) => m.trim()));
                 return [lineNumber, cleanedMatches];

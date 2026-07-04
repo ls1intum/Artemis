@@ -73,14 +73,14 @@ export class IrisChatService implements OnDestroy {
         this.currentSessionIdSubject.next(id);
     }
 
-    messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
-    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
+    messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
+    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
-    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
-    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
-    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject([]);
-    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
-    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject<IrisStageDTO[]>([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
+    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers

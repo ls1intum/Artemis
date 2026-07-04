@@ -24,7 +24,7 @@ import {
 } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
@@ -554,6 +554,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         submissionsObservable
             .pipe(
                 map((res) => res.body),
+                filter((body): body is Submission[] => body != undefined),
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
