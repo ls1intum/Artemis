@@ -257,7 +257,9 @@ public class CompetencyResource {
 
         Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
-        User user = userRepository.getUserWithAuthorities();
+        // Pre-load the current user's course roles so the per-item checkHasAtLeastRoleInCourseElseThrow check below
+        // resolves in memory instead of one EXISTS query per imported competency's source course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         competenciesToImport.forEach(competencyToImport -> {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), user);
             if (competencyToImport.getCourse().getId().equals(courseId)) {

@@ -233,7 +233,9 @@ public class PrerequisiteResource {
 
         Set<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
-        User user = userRepository.getUserWithAuthorities();
+        // Pre-load the current user's course roles so the per-item checkHasAtLeastRoleInCourseElseThrow check below
+        // resolves in memory instead of one EXISTS query per imported prerequisite's source course.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         prerequisitesToImport.forEach(prerequisiteToImport -> {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), user);
             if (prerequisiteToImport.getCourse().getId().equals(courseId)) {
