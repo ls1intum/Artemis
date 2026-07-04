@@ -383,7 +383,7 @@ public class ExerciseResource {
 
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
-        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, plagiarismCaseInfo));
+        return ResponseEntity.ok(ExerciseDetailsDTO.of(exercise, plagiarismCaseInfo));
     }
 
     /**
