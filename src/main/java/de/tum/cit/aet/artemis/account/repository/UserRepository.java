@@ -94,6 +94,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Set<User> findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
+    /**
+     * Batch variant of {@link #findAllWithAuthoritiesByDeletedIsFalseAndLoginIn} that also eagerly loads course
+     * roles. Used where the caller checks course membership for every returned user in a loop (e.g. validating
+     * {@code @}-mentioned users in a post) so that check resolves against the in-memory index instead of one
+     * EXISTS query per user.
+     *
+     * @param logins the logins to look up
+     * @return the matching, non-deleted users with courseRoles and authorities initialized
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Set<User> findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
+
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesByLogin(String login);
 

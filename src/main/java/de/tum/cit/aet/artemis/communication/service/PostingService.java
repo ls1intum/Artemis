@@ -334,7 +334,10 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
+        // Pre-load course roles for all mentioned users so the per-user isAtLeastStudentInCourse check below - and the
+        // isAtLeastTeachingAssistantInCourse check that SingleUserNotificationService later runs on this same set of
+        // users - resolve in memory instead of one EXISTS query per mentioned user.
+        Set<User> mentionedUsers = userRepository.findAllWithCourseRolesAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
