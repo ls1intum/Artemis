@@ -57,8 +57,8 @@ public class VariantJob implements Serializable {
 
     private Instant finishedAt;
 
-    // TODO (Sonnet): Add token/latency telemetry fields (tokens per phase via LLMTokenUsageService, wall time)
-    // needed for the thesis evaluation metrics in plan Section 7.
+    /** Accumulated LLM tokens across planning + agent rounds (budget enforcement + thesis telemetry, plan Section 7). */
+    private long totalTokensUsed;
 
     // TODO (Sonnet): Add a staleness mechanism so that after a server restart mid-job the `active` endpoint can
     // report FAILED-stale instead of a forever-running job (plan Section 6, "Server restart mid-job" row).
@@ -189,5 +189,13 @@ public class VariantJob implements Serializable {
 
     public void setFinishedAt(Instant finishedAt) {
         this.finishedAt = finishedAt;
+    }
+
+    public long getTotalTokensUsed() {
+        return totalTokensUsed;
+    }
+
+    public void setTotalTokensUsed(long totalTokensUsed) {
+        this.totalTokensUsed = totalTokensUsed;
     }
 }

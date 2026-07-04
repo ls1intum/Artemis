@@ -10,11 +10,16 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
@@ -34,13 +39,23 @@ public class VariantAgentLoopRunner {
 
     private static final Logger log = LoggerFactory.getLogger(VariantAgentLoopRunner.class);
 
+    /** Pipeline id for token-usage traces of TRANSFORMING/REPAIRING rounds (plan Section 7 telemetry). */
+    static final String TRANSFORM_PIPELINE_ID = "exercise-variant-transform";
+
     private final HyperionPromptTemplateService templateService;
+
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
 
     @Nullable
     private final ChatClient chatClient;
 
-    public VariantAgentLoopRunner(HyperionPromptTemplateService templateService, @Nullable ChatClient chatClient) {
+    public VariantAgentLoopRunner(HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
+            @Nullable ChatClient chatClient) {
         this.templateService = templateService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
         this.chatClient = chatClient;
     }
 
@@ -92,14 +107,31 @@ public class VariantAgentLoopRunner {
         // Spring AI executes the tool-call loop internally within this single call; tool implementations log
         // the per-call transcript (plan Section 2.5, point 5) and observe the cancel flag between calls.
         // tools(Object...) is the unified non-deprecated API in Spring AI 2.0 and accepts ToolCallback instances.
-        String content = chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().content();
+        ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().chatResponse();
+        String content = LLMTokenUsageService.extractResponseText(chatResponse);
         log.debug("Agent round finished for job {}: {}", job.getJobId(), content);
 
-        // TODO (Sonnet): token accounting via LLMTokenUsageService — read usage from the ChatResponse metadata
-        // (use .call().chatResponse() instead of .content()) and enforce budgets.tokenBudget across rounds by
-        // accumulating on the job (plan Sections 2.5 and 7). Until then tokensUsed is reported as 0.
+        Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, TRANSFORM_PIPELINE_ID,
+                builder -> builder.withExercise(job.getVariantExerciseId()).withUser(userId));
+
         String finishSummary = toolset.finishSummary() != null ? toolset.finishSummary() : content;
-        return new AgentResult(finishSummary, toolset.touchedTestRepo(), 0);
+        return new AgentResult(finishSummary, toolset.touchedTestRepo(), extractTotalTokens(chatResponse));
+    }
+
+    /**
+     * Reads the total token count from the response metadata; 0 when the provider reported no usage.
+     * NOTE: with the internal Spring AI tool-execution loop, the returned metadata reflects the final call of the
+     * round — a lower bound, not the exact sum over all internal tool-call iterations. Good enough for budget
+     * enforcement and the thesis telemetry (plan Section 7); exact per-iteration accounting would require
+     * disabling internal tool execution.
+     */
+    private static long extractTotalTokens(@Nullable ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            return 0;
+        }
+        Integer totalTokens = chatResponse.getMetadata().getUsage().getTotalTokens();
+        return totalTokens != null ? totalTokens : 0;
     }
 
     private String renderPlanContract(ChangePlan plan) {

@@ -11,11 +11,16 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -40,9 +45,11 @@ public class ExerciseVariantGenerationPipeline {
     /** Re-prompts for malformed planner output before FAILED (plan Section 6, row 2). */
     private static final int MAX_PLANNING_RETRIES = 2;
 
-    // TODO (Sonnet): Token budget per job, tracked via LLMTokenUsageService (plan Sections 2.5 and 7); currently
-    // only the iteration budget is enforced.
+    /** Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService (plan Sections 2.5 and 7). */
     private static final long TOKEN_BUDGET = 500_000;
+
+    /** Pipeline id for token-usage traces of the PLANNING call (plan Section 7 telemetry). */
+    private static final String PLAN_PIPELINE_ID = "exercise-variant-plan";
 
     /** Internal control-flow signal for cooperative cancellation (plan Section 5.2). */
     private static class JobCancelledException extends RuntimeException {
@@ -72,18 +79,24 @@ public class ExerciseVariantGenerationPipeline {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     @Nullable
     private final ChatClient chatClient;
 
     public ExerciseVariantGenerationPipeline(VariantTypeRegistry typeRegistry, VariantAgentLoopRunner agentLoopRunner, ExerciseVariantJobService jobService,
             HyperionPromptTemplateService templateService, ExerciseRepository exerciseRepository, ExerciseDeletionService exerciseDeletionService,
-            @Nullable ChatClient chatClient) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
         this.typeRegistry = typeRegistry;
         this.agentLoopRunner = agentLoopRunner;
         this.jobService = jobService;
         this.templateService = templateService;
         this.exerciseRepository = exerciseRepository;
         this.exerciseDeletionService = exerciseDeletionService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
         this.chatClient = chatClient;
     }
 
@@ -175,6 +188,7 @@ public class ExerciseVariantGenerationPipeline {
         String transformTemplate = transformPromptTemplate(job);
         VerificationReport report = null;
 
+        long tokensUsed = 0;
         for (int attempt = 1; attempt <= MAX_VERIFY_ATTEMPTS; attempt++) {
             checkCancelled(jobId);
             VariantJobPhase agentPhase = attempt == 1 ? VariantJobPhase.TRANSFORMING : VariantJobPhase.REPAIRING;
@@ -185,6 +199,8 @@ public class ExerciseVariantGenerationPipeline {
             // Repair rounds receive the previous round's findings as the closed-loop repair signal (plan Section 2.5).
             VerificationReport repairFeedback = report;
             VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, transformTemplate));
+            tokensUsed += agentResult.tokensUsed();
+            jobService.addTokensUsed(jobId, agentResult.tokensUsed());
             String roundSummary = "Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished" + (agentResult.touchedTestRepo() ? " (test repository changed)" : "");
             jobService.recordStepOutput(jobId, agentPhase,
                     new StepOutput(roundSummary, agentResult.finishSummary() != null ? truncate(agentResult.finishSummary()) : "(no summary)", Instant.now()));
@@ -198,6 +214,15 @@ public class ExerciseVariantGenerationPipeline {
 
             if (report.passed()) {
                 return report;
+            }
+            // Token budget for the TRANSFORMING/REPAIRING sequence (plan Sections 2.5 and 6): when exhausted with
+            // red gates, stop repairing — the job ends as DRAFT_WITH_WARNINGS with the budget noted (Section 2.6).
+            if (tokensUsed > TOKEN_BUDGET && attempt < MAX_VERIFY_ATTEMPTS) {
+                log.info("Variant generation job {} exhausted the token budget ({} > {}) after attempt {}/{}", jobId, tokensUsed, TOKEN_BUDGET, attempt, MAX_VERIFY_ATTEMPTS);
+                List<VerificationReport.VerificationFinding> findings = new ArrayList<>(report.findings());
+                findings.add(new VerificationReport.VerificationFinding("TOKEN_BUDGET",
+                        "The token budget was exhausted before all findings could be repaired (" + tokensUsed + " tokens used)."));
+                return new VerificationReport(false, List.copyOf(findings));
             }
         }
         return report;
@@ -221,7 +246,9 @@ public class ExerciseVariantGenerationPipeline {
             checkCancelled(job.getJobId());
             try {
                 String repromptSuffix = lastError == null ? "" : "\n\nYour previous output was invalid: " + lastError + "\nProduce a corrected change plan.";
-                ChangePlan plan = chatClient.prompt().system(systemPrompt).user(userMessage + repromptSuffix).call().entity(outputConverter);
+                ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage + repromptSuffix).call().chatResponse();
+                trackPlanningTokenUsage(job, chatResponse);
+                ChangePlan plan = outputConverter.convert(LLMTokenUsageService.extractResponseText(chatResponse));
                 validatePlan(plan);
                 return plan;
             }
@@ -234,6 +261,16 @@ public class ExerciseVariantGenerationPipeline {
             }
         }
         throw new PhaseFailedException("Failed in PLANNING: planner produced no valid change plan after " + (MAX_PLANNING_RETRIES + 1) + " attempts (" + lastError + ")");
+    }
+
+    private void trackPlanningTokenUsage(VariantJob job, ChatResponse chatResponse) {
+        Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, PLAN_PIPELINE_ID,
+                builder -> builder.withExercise(job.getSourceExerciseId()).withUser(userId));
+        if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null
+                && chatResponse.getMetadata().getUsage().getTotalTokens() != null) {
+            jobService.addTokensUsed(job.getJobId(), chatResponse.getMetadata().getUsage().getTotalTokens());
+        }
     }
 
     private void validatePlan(ChangePlan plan) {

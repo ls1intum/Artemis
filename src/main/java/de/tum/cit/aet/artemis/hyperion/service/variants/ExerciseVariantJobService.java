@@ -268,6 +268,19 @@ public class ExerciseVariantJobService {
     }
 
     /**
+     * Accumulates LLM token usage on the job (budget enforcement + thesis telemetry, plan Section 7).
+     * No event — token totals are read from the job record.
+     *
+     * @param jobId  the job id
+     * @param tokens tokens consumed by the completed LLM call/round
+     */
+    public void addTokensUsed(String jobId, long tokens) {
+        if (tokens > 0) {
+            mutate(jobId, mutableJob -> mutableJob.setTotalTokensUsed(mutableJob.getTotalTokensUsed() + tokens));
+        }
+    }
+
+    /**
      * Stores the provisioned variant exercise id on the job (set during PROVISIONING; used by cleanup, the
      * tray deep link, and the DONE event).
      *
