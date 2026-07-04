@@ -128,6 +128,7 @@ describe('IrisBaseChatbotComponent', () => {
                 global.window ??= window;
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
+                window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
                 // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
@@ -469,6 +470,137 @@ describe('IrisBaseChatbotComponent', () => {
         // then – the pin is released and the RAF loop is stopped
         expect(component['forcePinToBottom']).toBe(false);
         expect(component['pinScrollRafId']).toBeUndefined();
+    });
+
+    describe('live assistant draft streaming UX', () => {
+        const pushDraft = (runId: string, text: string) => {
+            chatService.liveAssistantDraft.next({ runId, text });
+            fixture.detectChanges();
+        };
+
+        const displayedDraftText = () => ((component as any).displayedLiveAssistantDraftText?.() ?? '') as string;
+
+        const finalAssistantMessage = (text: string): IrisAssistantMessage =>
+            ({
+                ...mockServerMessage,
+                id: 9876,
+                sender: IrisSender.LLM,
+                content: [new IrisTextMessageContent(text)],
+            }) as IrisAssistantMessage;
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should animate displayed draft text toward the latest partial and never shrink during the same run', () => {
+            vi.useFakeTimers();
+
+            const firstSnapshot = 'Hello streaming answer';
+            pushDraft('run-1', firstSnapshot);
+
+            expect(displayedDraftText()).toBe('');
+
+            vi.advanceTimersByTime(50);
+            const firstTickText = displayedDraftText();
+            expect(firstTickText.length).toBeGreaterThan(0);
+            expect(firstTickText.length).toBeLessThan(firstSnapshot.length);
+
+            const secondSnapshot = 'Hello streaming answer with a longer continuation';
+            pushDraft('run-1', secondSnapshot);
+            const beforeCatchUpLength = displayedDraftText().length;
+
+            vi.advanceTimersByTime(100);
+            expect(displayedDraftText().length).toBeGreaterThanOrEqual(beforeCatchUpLength);
+
+            vi.advanceTimersByTime(3000);
+            expect(displayedDraftText()).toBe(secondSnapshot);
+
+            pushDraft('run-1', 'Hello');
+            expect(displayedDraftText()).toBe(secondSnapshot);
+        });
+
+        it('should cancel draft animation and expose the final message immediately on finalization', () => {
+            vi.useFakeTimers();
+
+            pushDraft('run-1', 'This partial answer is intentionally much longer than one animation tick.');
+            vi.advanceTimersByTime(50);
+            expect(displayedDraftText().length).toBeGreaterThan(0);
+
+            const finalText = 'This final answer should be rendered in full.';
+            chatService.liveAssistantDraft.next(undefined);
+            chatService.messages.next([finalAssistantMessage(finalText)]);
+            fixture.detectChanges();
+
+            expect(displayedDraftText()).toBe('');
+            expect(component.messages().at(-1)?.content?.[0]).toMatchObject({ textContent: finalText });
+            expect(fixture.nativeElement.querySelector('.streaming-draft-wrapper')).toBeNull();
+
+            vi.advanceTimersByTime(1000);
+            expect(displayedDraftText()).toBe('');
+        });
+
+        it('should cancel the draft animation interval on destroy', () => {
+            vi.useFakeTimers();
+            const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+
+            pushDraft('run-1', 'This partial answer is long enough to keep the animation interval active.');
+
+            expect(component['liveDraftAnimationIntervalId']).toBeDefined();
+
+            fixture.destroy();
+
+            expect(clearIntervalSpy).toHaveBeenCalled();
+            expect(component['liveDraftAnimationIntervalId']).toBeUndefined();
+        });
+
+        it('should scroll the draft into view once on appearance without bottom scrolling on growth or finalization', () => {
+            vi.useFakeTimers();
+            const draftScrollSpy = vi.spyOn(component as any, 'scrollLiveAssistantDraftIntoView');
+            const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            pushDraft('run-1', 'First partial');
+            vi.advanceTimersByTime(0);
+
+            expect(draftScrollSpy).toHaveBeenCalledOnce();
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+
+            pushDraft('run-1', 'First partial with more text');
+            vi.advanceTimersByTime(0);
+
+            expect(draftScrollSpy).toHaveBeenCalledOnce();
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+
+            chatService.liveAssistantDraft.next(undefined);
+            chatService.messages.next([finalAssistantMessage('Final answer')]);
+            fixture.detectChanges();
+            vi.advanceTimersByTime(0);
+
+            expect(draftScrollSpy).toHaveBeenCalledOnce();
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not bottom-scroll when thinking status updates while a draft is visible', () => {
+            vi.useFakeTimers();
+            const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            pushDraft('run-1', 'Visible draft');
+            vi.advanceTimersByTime(0);
+            bottomScrollSpy.mockClear();
+
+            chatService.stages.next([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Still thinking...',
+                },
+            ]);
+            fixture.detectChanges();
+
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+        });
     });
 
     it('should set the appropriate message styles based on the sender', async () => {

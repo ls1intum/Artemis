@@ -62,7 +62,7 @@ import {
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService, IrisLiveAssistantDraft } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
@@ -110,6 +110,10 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 // Interval (in ms) between placeholder label cycling
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
 const PLACEHOLDER_FADE_DURATION_MS = 300;
+
+// Interval (in ms) for client-side streamed draft reveal.
+const LIVE_DRAFT_ANIMATION_TICK_MS = 50;
+const LIVE_DRAFT_CATCH_UP_MS = 400;
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -316,6 +320,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // requestAnimationFrame id and remaining-frame counter for the initial-load settle scroll.
     private settleScrollRafId: number | undefined;
     private settleScrollFrames = 0;
+    readonly displayedLiveAssistantDraftText = signal('');
+    private liveAssistantDraftTargetText = '';
+    private liveAssistantDraftRunId: string | undefined;
+    private pendingFinalizedLiveAssistantDraftRunId: string | undefined;
+    private lastScrolledLiveAssistantDraftRunId: string | undefined;
+    private liveDraftAnimationIntervalId: ReturnType<typeof setInterval> | undefined;
+    private liveDraftScrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
@@ -355,6 +366,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
+    readonly liveAssistantDraftElement = viewChild<ElementRef<HTMLElement>>('liveAssistantDraftElement');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
@@ -538,6 +550,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const sessionId = this.currentSessionId();
             if (this.previousSessionId !== sessionId) {
+                this.resetLiveAssistantDraftState();
                 this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
                 this.isScrolledToBottom.set(true);
@@ -551,11 +564,19 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
             if (rawMessages.length !== this.previousMessageCount) {
+                const isDraftFinalization =
+                    rawMessages.length > this.previousMessageCount &&
+                    !this.liveAssistantDraft() &&
+                    (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined);
                 // Initial history load (e.g. after a page refresh): the batch lands at once and
                 // its content keeps growing the scroll height for several frames, so use the
                 // settling scroll to land exactly at the bottom instead of a tiny bit short.
                 const isInitialLoad = this.previousMessageCount === 0 && rawMessages.length > 0;
-                if (this.forcePinToBottom) {
+                if (isDraftFinalization) {
+                    this.releasePinToBottom();
+                    this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+                    this.liveAssistantDraftRunId = undefined;
+                } else if (this.forcePinToBottom) {
                     // Just sent a message: instant scroll so we stay glued to the bottom as
                     // the echoed message / response grow the content (no smooth-scroll race).
                     this.scrollToBottom('auto');
@@ -597,7 +618,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // initial gap between send and the first websocket update doesn't release early.
         // A genuine upward gesture also releases it (see onMessagesUserScroll).
         effect(() => {
-            const streaming = this.hasActiveStage() || !!this.activeChatMessage() || !!this.liveAssistantDraft();
+            const streaming = this.hasActiveStage() || !!this.activeChatMessage();
             if (this.forcePinToBottom) {
                 if (streaming) {
                     this.pinSawStreaming = true;
@@ -619,16 +640,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
         effect(() => {
-            if (this.activeChatMessage() && (this.forcePinToBottom || this.isScrolledToBottom())) {
+            if (this.activeChatMessage() && !this.liveAssistantDraft() && (this.forcePinToBottom || this.isScrolledToBottom())) {
                 this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
             }
         });
 
-        // Scroll while a streamed assistant draft grows, if the user is at the bottom or just sent a message.
+        // Drive streamed assistant draft display and scroll only once when a new draft appears.
         effect(() => {
-            if (this.liveAssistantDraft() && (this.forcePinToBottom || this.isScrolledToBottom())) {
-                this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
-            }
+            this.handleLiveAssistantDraftChange(this.liveAssistantDraft());
         });
 
         // Reset clicked suggestion when new suggestions arrive and scroll to show them
@@ -658,6 +677,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }, 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
         this.destroyRef.onDestroy(() => this.releasePinToBottom());
+        this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
             if (this.settleScrollRafId !== undefined) {
                 window.cancelAnimationFrame(this.settleScrollRafId);
@@ -964,6 +984,129 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.copyResetTimeoutId = setTimeout(() => {
             this.copiedMessageKey.set(undefined);
         }, COPY_FEEDBACK_DURATION_MS);
+    }
+
+    private handleLiveAssistantDraftChange(draft: IrisLiveAssistantDraft | undefined): void {
+        if (!draft) {
+            if (this.liveAssistantDraftRunId !== undefined) {
+                this.pendingFinalizedLiveAssistantDraftRunId = this.liveAssistantDraftRunId;
+            }
+            this.clearLiveAssistantDraftAnimation();
+            this.clearLiveAssistantDraftScrollTimeout();
+            this.liveAssistantDraftRunId = undefined;
+            return;
+        }
+
+        const isNewRun = draft.runId !== this.liveAssistantDraftRunId;
+        if (isNewRun) {
+            this.liveAssistantDraftRunId = draft.runId;
+            this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+            this.liveAssistantDraftTargetText = '';
+            this.displayedLiveAssistantDraftText.set('');
+            this.releasePinToBottom();
+            this.scheduleLiveAssistantDraftScroll(draft.runId);
+        }
+
+        this.updateLiveAssistantDraftTargetText(draft.text);
+    }
+
+    private updateLiveAssistantDraftTargetText(text: string): void {
+        const displayedText = this.displayedLiveAssistantDraftText();
+        const displayedLength = Array.from(displayedText).length;
+        const targetLength = Array.from(text).length;
+
+        if (targetLength < displayedLength) {
+            this.liveAssistantDraftTargetText = displayedText;
+        } else {
+            this.liveAssistantDraftTargetText = text;
+            if (targetLength === displayedLength && text !== displayedText) {
+                this.displayedLiveAssistantDraftText.set(text);
+            }
+        }
+
+        if (Array.from(this.liveAssistantDraftTargetText).length > Array.from(this.displayedLiveAssistantDraftText()).length) {
+            this.ensureLiveAssistantDraftAnimationLoop();
+        } else {
+            this.stopLiveAssistantDraftAnimationLoop();
+        }
+    }
+
+    private ensureLiveAssistantDraftAnimationLoop(): void {
+        if (this.liveDraftAnimationIntervalId !== undefined) {
+            return;
+        }
+        this.liveDraftAnimationIntervalId = setInterval(() => this.advanceLiveAssistantDraftAnimation(), LIVE_DRAFT_ANIMATION_TICK_MS);
+    }
+
+    private advanceLiveAssistantDraftAnimation(): void {
+        const displayedCodePoints = Array.from(this.displayedLiveAssistantDraftText());
+        const targetCodePoints = Array.from(this.liveAssistantDraftTargetText);
+        const remainingCharacters = targetCodePoints.length - displayedCodePoints.length;
+        if (remainingCharacters <= 0) {
+            this.stopLiveAssistantDraftAnimationLoop();
+            return;
+        }
+
+        const ticksPerSnapshot = LIVE_DRAFT_CATCH_UP_MS / LIVE_DRAFT_ANIMATION_TICK_MS;
+        const charactersToReveal = Math.max(1, Math.ceil(remainingCharacters / ticksPerSnapshot));
+        const nextLength = Math.min(targetCodePoints.length, displayedCodePoints.length + charactersToReveal);
+        this.displayedLiveAssistantDraftText.set(targetCodePoints.slice(0, nextLength).join(''));
+
+        if (nextLength >= targetCodePoints.length) {
+            this.stopLiveAssistantDraftAnimationLoop();
+        }
+    }
+
+    private clearLiveAssistantDraftAnimation(): void {
+        this.stopLiveAssistantDraftAnimationLoop();
+        this.liveAssistantDraftTargetText = '';
+        this.displayedLiveAssistantDraftText.set('');
+    }
+
+    private stopLiveAssistantDraftAnimationLoop(): void {
+        if (this.liveDraftAnimationIntervalId !== undefined) {
+            clearInterval(this.liveDraftAnimationIntervalId);
+            this.liveDraftAnimationIntervalId = undefined;
+        }
+    }
+
+    private resetLiveAssistantDraftState(): void {
+        this.clearLiveAssistantDraftAnimation();
+        this.clearLiveAssistantDraftScrollTimeout();
+        this.liveAssistantDraftRunId = undefined;
+        this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+        this.lastScrolledLiveAssistantDraftRunId = undefined;
+    }
+
+    private scheduleLiveAssistantDraftScroll(runId: string): void {
+        if (this.lastScrolledLiveAssistantDraftRunId === runId) {
+            return;
+        }
+        this.lastScrolledLiveAssistantDraftRunId = runId;
+        this.clearLiveAssistantDraftScrollTimeout();
+        this.liveDraftScrollTimeoutId = setTimeout(() => {
+            this.liveDraftScrollTimeoutId = undefined;
+            this.scrollLiveAssistantDraftIntoView();
+        });
+    }
+
+    private clearLiveAssistantDraftScrollTimeout(): void {
+        if (this.liveDraftScrollTimeoutId !== undefined) {
+            clearTimeout(this.liveDraftScrollTimeoutId);
+            this.liveDraftScrollTimeoutId = undefined;
+        }
+    }
+
+    scrollLiveAssistantDraftIntoView(behavior: ScrollBehavior = 'smooth'): void {
+        const draftElement = this.liveAssistantDraftElement()?.nativeElement;
+        if (!draftElement) {
+            return;
+        }
+        draftElement.scrollIntoView({
+            block: 'start',
+            inline: 'nearest',
+            behavior,
+        });
     }
 
     /**

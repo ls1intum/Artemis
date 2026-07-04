@@ -332,10 +332,10 @@
                                 }
                             </div>
                         }
-                        @if (liveAssistantDraft(); as draft) {
-                            <div class="llm-message-wrapper streaming-draft-wrapper">
+                        @if (liveAssistantDraft()) {
+                            <div #liveAssistantDraftElement class="llm-message-wrapper streaming-draft-wrapper">
                                 <div class="bubble-left streaming-draft-bubble">
-                                    <jhi-iris-citation-text [text]="draft.text" [citationInfo]="citationInfo()" />
+                                    <jhi-iris-citation-text [text]="displayedLiveAssistantDraftText()" [citationInfo]="citationInfo()" />
                                     <div class="streaming-draft-meta" aria-hidden="true">
                                         <fa-icon [icon]="faCircleNotch" animation="spin" />
                                     </div>
