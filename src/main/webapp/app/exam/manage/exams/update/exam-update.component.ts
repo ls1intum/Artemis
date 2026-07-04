@@ -14,6 +14,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
@@ -70,6 +71,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly documentationType: DocumentationType = 'Exams';
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
     // exam is template-bound (directly and through many getters) and populated asynchronously from the route
     // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
