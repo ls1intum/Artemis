@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventInputDTO;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -72,7 +74,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         List<TextAssessmentEvent> events = TextExerciseFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         for (TextAssessmentEvent event : events) {
-            request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
+            request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.CREATED);
         }
     }
 
@@ -105,7 +107,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
 
-        request.post("/api/text/event-insights/text-assessment/events", event, expected);
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), expected);
     }
 
     @Test
@@ -115,7 +117,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         textSubmissionTestRepository.saveAndFlush(textSubmission);
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
-        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -128,17 +130,22 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
 
-        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
+        request.post("/api/text/event-insights/text-assessment/events", toInputDTO(event), HttpStatus.CREATED);
 
-        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events?courseId=" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
+        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events?courseId=" + course.getId(), HttpStatus.OK, TextAssessmentEventDTO.class);
         assertThat(foundEvents).hasSize(1);
-        TextAssessmentEvent foundEvent = foundEvents.getFirst();
-        assertThat(foundEvent.getId()).isNotNull();
-        assertThat(foundEvent.getCourseId()).isEqualTo(course.getId());
-        assertThat(foundEvent.getUserId()).isEqualTo(user.getId());
-        assertThat(foundEvent.getTextExerciseId()).isEqualTo(exercise.getId());
-        assertThat(foundEvent.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(foundEvent.getSubmissionId()).isEqualTo(textSubmission.getId());
+        TextAssessmentEventDTO foundEvent = foundEvents.getFirst();
+        assertThat(foundEvent.id()).isNotNull();
+        assertThat(foundEvent.courseId()).isEqualTo(course.getId());
+        assertThat(foundEvent.userId()).isEqualTo(user.getId());
+        assertThat(foundEvent.textExerciseId()).isEqualTo(exercise.getId());
+        assertThat(foundEvent.participationId()).isEqualTo(studentParticipation.getId());
+        assertThat(foundEvent.submissionId()).isEqualTo(textSubmission.getId());
+    }
+
+    private static TextAssessmentEventInputDTO toInputDTO(TextAssessmentEvent event) {
+        return new TextAssessmentEventInputDTO(event.getUserId(), event.getEventType(), event.getFeedbackType(), event.getSegmentType(), event.getCourseId(),
+                event.getTextExerciseId(), event.getParticipationId(), event.getSubmissionId());
     }
 
     /**

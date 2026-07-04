@@ -29,7 +29,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     /**
      * Completes building subject. If there are subscriptions unsubscribe form them.
      */
-    ngOnDestroy() {
+    override ngOnDestroy() {
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
@@ -40,7 +40,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
      * Calls setDomain of super and updates according to parameter.
      * @param domain - defines new domain of super and variables of current service.
      */
-    setDomain(domain: DomainChange) {
+    override setDomain(domain: DomainChange) {
         super.setDomain(domain);
         const [domainType, domainValue] = domain;
         // Release the subscription of the previous domain — this service is a root singleton, so a leftover

@@ -91,7 +91,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        pyrisPipelineService.executeAutonomousTutorPipeline("default", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null, stages -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null, stages -> {
         });
 
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);

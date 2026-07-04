@@ -32,7 +32,7 @@ export class ChannelReferenceAction extends TextEditorAction {
      * @param editor The editor to register the action in.
      * @param translateService The translate service to use for translations, e.g. the label.
      */
-    register(editor: TextEditor, translateService: TranslateService) {
+    override register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ChannelIdAndNameDTO>(
             editor,
@@ -61,7 +61,7 @@ export class ChannelReferenceAction extends TextEditorAction {
         return this.cachedChannels;
     }
 
-    dispose(): void {
+    override dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
         this.cachedChannels = undefined;

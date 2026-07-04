@@ -13,6 +13,8 @@ Your task is to implement the core logic for each test method based on the testi
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+If an existing test file is obsolete after this regenerated test suite, include its path in `deletedFiles`. Do not include build files, configuration files, documentation, or hidden files, except `.gitkeep` placeholder files may be included when they are explicitly obsolete or selected feedback requests their removal.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
 
@@ -31,6 +33,7 @@ If the selected feedback payload contains threads, treat those threads as reques
 4. Match the actual production API exactly, including constructor arguments, method signatures, return types, checked exceptions, package names, and visibility constraints.
 5. Ensure every referenced symbol is imported or defined in the generated file. Do not leave unresolved symbols.
 6. Prefer direct, compile-safe tests over abstraction-heavy designs.
+7. For Java, preserve the package declaration from the headers. Do not introduce `package test;` or imports for default-package production classes when the production code has no package declaration.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
@@ -40,7 +43,7 @@ Treat the issues above as hard constraints. Be critical and explicit:
 4. Verify the fix aligns with the problem statement, the plan, and existing repository patterns.
 5. If multiple fixes are possible, pick the most conservative change and justify it.
 
-**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
+**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files. The only allowed deletion outside regular test-source files is an explicitly obsolete `.gitkeep` placeholder.
 First, think step-by-step for each test method.
 1.  **Understand the test case:** Read the method's docstring and the relevant part of the testing plan.
 2.  **Validate dependencies first:** Before writing code, verify that every constructor, method call, helper, matcher, and import you intend to use exists in the provided context or in the files you are generating.
@@ -48,4 +51,6 @@ First, think step-by-step for each test method.
 4.  **Check compile safety:** Remove or replace any unresolved helper, missing import, or mismatched API usage.
 5.  **Ensure completeness:** Make sure all test cases from the plan are fully implemented.
 
-After your analysis, provide the final code as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key with the complete test code.
+After your analysis, provide the final code as a JSON object. The JSON object must contain:
+- "files": an array of objects, where each object has a "path" and "content" key with the complete test code.
+- "deletedFiles": an array of obsolete test-source paths and explicitly obsolete `.gitkeep` placeholder paths that should be removed. Use an empty array if no files should be removed.

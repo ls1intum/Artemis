@@ -80,8 +80,7 @@
                         <div
                             class="scrollable-item-content my-2"
                             [class]="{
-                                'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise',
-                                'channel-search-height': sidebarDataInternal()?.sidebarType === 'conversation',
+                                'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise' || sidebarDataInternal()?.sidebarType === 'conversation',
                             }"
                         >
                             @let data = sidebarDataInternal();

@@ -150,7 +150,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
      * @param event the event that is passed by p-chart
      */
-    onSelect(event: any): void {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         const dataEntry = selected?.meta as ExerciseStatisticsEntry | undefined;
 
@@ -216,15 +216,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     private setupChart(exerciseModels: CourseManagementStatisticsModel[]): void {
         this.barChartLabels = exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise) => exercise.exerciseName);
         this.chartEntries.set(
-            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map(
-                (exercise, index) =>
-                    ({
-                        name: this.barChartLabels[index],
-                        value: exercise.averageScore,
-                        exerciseType: exercise.exerciseType,
-                        exerciseId: exercise.exerciseId,
-                    }) as ExerciseStatisticsEntry,
-            ),
+            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise, index) => ({
+                name: this.barChartLabels[index],
+                value: exercise.averageScore,
+                exerciseType: exercise.exerciseType,
+                exerciseId: exercise.exerciseId,
+            })),
         );
         this.barColors.set(this.chartEntries().map((exercise) => this.determineColor(exercise.value)));
     }

@@ -165,7 +165,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Delegates the user to the assessment dashboard
      */
     onSelect() {
-        this.router.navigate(['/course-management', this.currentCourseId, 'assessment-dashboard', this.currentExerciseId]);
+        void this.router.navigate(['/course-management', this.currentCourseId, 'assessment-dashboard', this.currentExerciseId]);
     }
 
     /**

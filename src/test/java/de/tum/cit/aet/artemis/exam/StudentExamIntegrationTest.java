@@ -139,6 +139,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionRequestDTO;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
@@ -1480,7 +1481,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 var textSubmission = (TextSubmission) submission;
                 final var newText = "New Text";
                 textSubmission.setText(newText);
-                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
                 var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
                 // check that the submission was saved
                 assertThat(newText).isEqualTo(savedTextSubmission.getText());
@@ -1591,6 +1592,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
         });
         assertVersionedSubmission(quizSubmission);
+    }
+
+    private static TextSubmissionRequestDTO toRequestDTO(TextSubmission submission) {
+        return new TextSubmissionRequestDTO(submission.getId(), submission.getText(), submission.getLanguage(), submission.isSubmitted());
     }
 
     private void assertVersionedSubmission(Submission submission) {
@@ -1975,7 +1980,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     var textSubmission = (TextSubmission) submission;
                     final var newText = "New Text";
                     textSubmission.setText(newText);
-                    request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                    request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
                 }
                 case QuizExercise quizExercise -> submitQuizInExam(quizExercise, (QuizSubmission) submission);
                 case FileUploadExercise ignored -> {
@@ -2519,7 +2524,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // Simulate the student saving the text submission during the exam (the code path that was broken for test runs)
         textSubmission.setText("Updated text submission during test run");
-        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
     }
 
     @Test
@@ -3003,7 +3008,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             // Given
             final String changedAnswer = "This is a changed and submitted answer";
             textSubmission.setText(changedAnswer);
-            request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+            request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
 
             final String changedModel = "This is a changed and submitted model";
             final String changedExplanation = "This is a changed and submitted explanation";

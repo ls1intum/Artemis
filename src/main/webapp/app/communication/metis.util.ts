@@ -145,5 +145,5 @@ export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
 
 export function getUnreadPostsByLastReadDate(user: User, posts: Post[], lastReadDate: dayjs.Dayjs): Post[] {
-    return posts.filter((p) => p.author?.id !== user.id && p.creationDate?.isAfter(lastReadDate)).sort((a, b) => a.creationDate!.diff(b.creationDate!));
+    return posts.filter((p) => p.author?.id !== user.id && p.creationDate?.isAfter(lastReadDate)).sort((a, b) => a.creationDate!.diff(b.creationDate));
 }

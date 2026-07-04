@@ -8,6 +8,7 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { parseJson } from 'app/foundation/util/json.util';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -128,7 +129,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
-        this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        this.dockerFlags = parseJson<DockerFlags>(this.programmingExercise()?.buildConfig?.dockerFlags ?? '');
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
         }
@@ -155,16 +156,19 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
         this.cpuCount.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
         this.memory.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
         this.memorySwap.set(event.target.value);
         this.parseDockerFlagsToString();
@@ -196,10 +200,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
-        const newEnv = {} as { [key: string]: string } | undefined;
+        const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
-                newEnv![key] = value;
+                newEnv[key] = value;
             }
         });
         const network = this.network() === '' ? undefined : this.network();

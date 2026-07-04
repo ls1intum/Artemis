@@ -51,7 +51,7 @@ export class CreateTextUnitComponent implements OnInit {
         this.isLoading.set(true);
 
         this.textUnitService
-            .create(this.textUnitToCreate!, this.lectureId)
+            .create(this.textUnitToCreate, this.lectureId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
@@ -59,7 +59,7 @@ export class CreateTextUnitComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

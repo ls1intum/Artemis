@@ -41,7 +41,10 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
@@ -57,7 +60,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -68,13 +70,19 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.ComplaintResponseRequestDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.text.dto.TextBlockDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExampleResultDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionAssessmentDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionWithoutAssessmentDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
@@ -137,6 +145,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     protected AthenaRequestMockProvider athenaRequestMockProvider;
 
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
@@ -166,17 +177,105 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithExistingLongFeedbackPreservesFullText() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        // A long feedback (> soft max) is stored as a short preview on the feedback plus a separate LongFeedbackText holding
+        // the full text.
+        final String fullLongText = "L".repeat(1500);
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText(fullLongText);
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+        assertThat(longFeedback.getHasLongFeedbackText()).as("setup: feedback is stored as long feedback").isTrue();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("setup: full long text persisted").isEqualTo(fullLongText);
+
+        // Re-save the assessment the way the client does: the DTO carries the feedback id and hasLongFeedbackText, but only
+        // the PREVIEW detail text (the full long text is never sent to the client).
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        assertThat(feedbackDTO.hasLongFeedbackText()).isTrue();
+        assertThat(feedbackDTO.detailText()).as("read DTO carries only the preview, not the full long text").isNotEqualTo(fullLongText);
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(feedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        // The full long feedback must survive the re-save: the mapper must not downgrade it to the preview.
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("long feedback is preserved on re-save").isPresent();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("the full long text is not downgraded to the preview")
+                .isEqualTo(fullLongText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithEditedLongFeedbackUsesRequestDetailText() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText("Original long feedback ".repeat(100));
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        final String editedLongText = "Edited long feedback ".repeat(100);
+        FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("edited long feedback text is persisted").isEqualTo(editedLongText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithExistingLongFeedbackCanBeShortened() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText("Original long feedback ".repeat(100));
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("setup: long feedback exists").isPresent();
+
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        final String editedShortText = "Short edited feedback";
+        FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+                .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
+        assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
+        assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("stale long feedback text is removed").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
-        StudentParticipation participationWithoutAssessment = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
-                StudentParticipation.class);
+        TextParticipationDTO participationWithoutAssessment = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
+                TextParticipationDTO.class);
 
         assertThat(participationWithoutAssessment).as("participation with submission was found").isNotNull();
-        assertThat(participationWithoutAssessment.getSubmissions().iterator().next().getId()).as("participation with correct text submission was found")
-                .isEqualTo(textSubmission.getId());
-        assertThat(participationWithoutAssessment.getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(participationWithoutAssessment.submissions().getLast().id()).as("participation with correct text submission was found").isEqualTo(textSubmission.getId());
+        assertThat(participationWithoutAssessment.student()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -187,14 +286,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Result result = textSubmission.getLatestResult();
         result.setCompletionDate(null); // assessment is still in progress for this test
         resultRepository.save(result);
-        StudentParticipation participation = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.LOCKED, TextParticipationDTO.class);
         assertThat(participation).as("participation is locked and should not be returned").isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForNonExistingSubmission() throws Exception {
-        StudentParticipation participation = request.get("/api/text/text-submissions/345395769256365/for-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-submissions/345395769256365/for-assessment", HttpStatus.NOT_FOUND, TextParticipationDTO.class);
         assertThat(participation).as("participation should not be found").isNull();
     }
 
@@ -235,10 +334,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Result storedResult = submission.getResultForCorrectionRound(1);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        StudentParticipation participation = request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class, params);
+        TextParticipationDTO participation = request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class, params);
 
-        assertThat(participation.getSubmissions().stream().findFirst().isPresent()).isTrue();
-        assertThat(participation.getSubmissions().stream().findFirst().get().getResults()).isNotNull().contains(storedResult);
+        assertThat(participation.submissions().stream().findFirst().isPresent()).isTrue();
+        assertThat(participation.submissions().getFirst().results()).isNotNull().extracting(ResultDTO::id).contains(storedResult.getId());
     }
 
     @Test
@@ -250,7 +349,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Result storedResult = submission.getResultForCorrectionRound(0);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resultId", String.valueOf(storedResult.getId()));
-        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, TextSubmission.class, params);
+        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.FORBIDDEN, TextParticipationDTO.class, params);
     }
 
     @Test
@@ -258,10 +357,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
+                new HashSet<>());
 
         long randomId = 12354;
-        Result updatedResult = request.putWithResponseBody("/api/text/participations/" + randomId + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
-                assessmentUpdate, Result.class, HttpStatus.BAD_REQUEST);
+        ResultDTO updatedResult = request.putWithResponseBody(
+                "/api/text/participations/" + randomId + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint", textAssessmentUpdate, ResultDTO.class,
+                HttpStatus.BAD_REQUEST);
 
         assertThat(updatedResult).as("updated result found").isNull();
     }
@@ -271,13 +373,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         AssessmentUpdateDTO assessmentUpdate = complaintUtilService.createComplaintAndResponse(textSubmission.getLatestResult(), TEST_PREFIX + "tutor2");
+        TextAssessmentUpdateDTO textAssessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(assessmentUpdate.complaintResponse()), null,
+                new HashSet<>());
 
-        Result updatedResult = request.putWithResponseBody(
+        ResultDTO updatedResult = request.putWithResponseBody(
                 "/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
-                assessmentUpdate, Result.class, HttpStatus.OK);
+                textAssessmentUpdate, ResultDTO.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
-        assertThat(((StudentParticipation) updatedResult.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        // The student of the participation is hidden for non-instructors: ResultDTO.participation() (ParticipationDTO) structurally carries no student field.
+        assertThat(updatedResult.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
     }
 
     @Test
@@ -293,7 +398,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         complaintRepo.save(new Complaint().result(textAssessment).complaintText("This is not fair"));
 
         // Get Text Submission and Complaint
-        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class);
+        request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
         final ComplaintDTO complaintDto = request.get("/api/assessment/complaints?submissionId=" + textSubmission.getId(), HttpStatus.OK, ComplaintDTO.class);
         final Complaint complaint = complaintRepo.findById(complaintDto.id()).orElseThrow();
         // Accept Complaint and update Assessment
@@ -301,15 +406,41 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
 
-        final var assessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null, new HashSet<>());
-        Result updatedResult = request.putWithResponseBody(
+        final var assessmentUpdate = new TextAssessmentUpdateDTO(new ArrayList<>(), toComplaintResponseRequestDTO(complaintResponse), null, new HashSet<>());
+        ResultDTO updatedResult = request.putWithResponseBody(
                 "/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/text-assessment-after-complaint",
-                assessmentUpdate, Result.class, HttpStatus.OK);
+                assessmentUpdate, ResultDTO.class, HttpStatus.OK);
 
         assertThat(updatedResult).as("updated result found").isNotNull();
     }
 
-    private TextSubmission prepareSubmission() throws Exception {
+    private static Long participationId(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment) {
+        return submissionWithoutAssessment.participation().id();
+    }
+
+    private static ResultDTO latestResult(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment) {
+        return submissionWithoutAssessment.participation().submissions().getLast().results().getLast();
+    }
+
+    private static Long latestResultId(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment) {
+        return latestResult(submissionWithoutAssessment).id();
+    }
+
+    private static Long submissionId(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment) {
+        return submissionWithoutAssessment.id();
+    }
+
+    private static List<TextBlockDTO> blocksOf(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment) {
+        return submissionWithoutAssessment.participation().submissions().getLast().blocks();
+    }
+
+    private static ComplaintResponseRequestDTO toComplaintResponseRequestDTO(ComplaintResponse complaintResponse) {
+        Complaint complaint = complaintResponse.getComplaint();
+        return new ComplaintResponseRequestDTO(complaintResponse.getId(), complaintResponse.getResponseText(),
+                new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaint.getId(), complaint.isAccepted()));
+    }
+
+    private TextSubmissionWithoutAssessmentDTO prepareSubmission() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
@@ -317,32 +448,44 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        return request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class, params);
+        return request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     @ValueSource(booleans = { true, false })
     void saveOrSubmitTextAssessment_studentHidden(boolean submit) throws Exception {
-        TextSubmission submissionWithoutAssessment = prepareSubmission();
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        Result result = saveOrSubmitTextAssessment(submissionWithoutAssessment.getParticipation().getId(),
-                Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit, HttpStatus.OK);
+        ResultDTO result = saveOrSubmitTextAssessment(participationId(submissionWithoutAssessment), Objects.requireNonNull(latestResultId(submissionWithoutAssessment)),
+                textAssessmentDTO, submit, HttpStatus.OK);
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        // The student of the participation is hidden for non-instructors: ResultDTO.participation() (ParticipationDTO) structurally carries no student field.
+        assertThat(result.participation()).as("participation of result is present (student is structurally omitted)").isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void submitTextAssessment_withOmittedFeedbacks_doesNotFail() throws Exception {
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
+        // feedbacks omitted entirely (null), not just an empty list: this used to NPE/500 on the unguarded feedbacks.stream() path.
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(null, null, null);
+
+        ResultDTO result = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/"
+                + Objects.requireNonNull(latestResultId(submissionWithoutAssessment)) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+
+        assertThat(result).as("submitting an assessment with omitted feedbacks returns 200 (not 500)").isNotNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     @ValueSource(booleans = { true, false })
     void saveOrSubmitTextAssessment_wrongParticipationId(boolean submit) throws Exception {
-        TextSubmission submissionWithoutAssessment = prepareSubmission();
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(new ArrayList<>());
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = prepareSubmission();
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(new ArrayList<>(), null, null);
 
-        Result result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(submissionWithoutAssessment.getLatestResult()).getId(), textAssessmentDTO, submit,
+        ResultDTO result = saveOrSubmitTextAssessment(1343L, Objects.requireNonNull(latestResultId(submissionWithoutAssessment)), textAssessmentDTO, submit,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
     }
@@ -370,11 +513,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
-        final Result result = submissionWithoutAssessment.getLatestResult();
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
+        final ResultDTO result = submissionWithoutAssessment.participation().submissions().getLast().results().getLast();
         assertThat(result).as("saved result found").isNotNull();
-        assertThat(((StudentParticipation) submissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(submissionWithoutAssessment.participation().student()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -388,8 +531,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1", new ArrayList<>());
 
-        final Participation participation = request.get("/api/text/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment", HttpStatus.BAD_REQUEST,
-                Participation.class);
+        final TextSubmissionWithoutAssessmentDTO participation = request.get("/api/text/exercises/" + fileUploadExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.BAD_REQUEST, TextSubmissionWithoutAssessmentDTO.class);
 
         assertThat(participation).as("no result should be returned when exercise is not a text exercise").isNull();
     }
@@ -401,11 +544,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        Participation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst().getAssessor()).as("assessor of participation is hidden").isNull();
+        assertThat(participation.submissions().getLast().results().getFirst()).as("result found").isNotNull();
+        assertThat(participation.submissions().getLast().results().getFirst().assessor()).as("assessor of participation is hidden").isNull();
+        assertThat(participation.exercise().course()).as("course projection is present for the complaint section").isNotNull();
+        assertThat(participation.exercise().course().complaintsEnabled()).as("student complaint section reads course.complaintsEnabled").isTrue();
+        assertThat(participation.exercise().course().requestMoreFeedbackEnabled()).as("student complaint section reads course.requestMoreFeedbackEnabled").isTrue();
     }
 
     @Test
@@ -419,7 +565,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1", new ArrayList<>());
 
-        request.get("/api/text/text-editor/" + fileUploadSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, Participation.class);
+        request.get("/api/text/text-editor/" + fileUploadSubmission.getParticipation().getId(), HttpStatus.BAD_REQUEST, TextParticipationDTO.class);
     }
 
     @Test
@@ -431,11 +577,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
-        Participation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        final TextSubmission submission = (TextSubmission) participation.getSubmissions().iterator().next();
-        assertThat(submission.getBlocks()).isNotNull();
-        assertThat(submission.getBlocks()).isNotEmpty();
+        final var submission = participation.submissions().getLast();
+        assertThat(submission.blocks()).isNotNull();
+        assertThat(submission.blocks()).isNotEmpty();
     }
 
     @Test
@@ -455,20 +601,21 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         secondResult = resultRepository.save(secondResult);
 
         // Without resultId parameter - should get only the latest result (default behavior)
-        Participation actualParticipationWithoutParam = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
-        final TextSubmission actualSubmissionWithoutParam = (TextSubmission) actualParticipationWithoutParam.getSubmissions().iterator().next();
-        assertThat(actualSubmissionWithoutParam.getResults()).hasSize(1);
+        TextParticipationDTO actualParticipationWithoutParam = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK,
+                TextParticipationDTO.class);
+        final var actualSubmissionWithoutParam = actualParticipationWithoutParam.submissions().getLast();
+        assertThat(actualSubmissionWithoutParam.results()).hasSize(1);
 
         // With resultId parameter - should get only the specific result
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("resultId", firstResultId.toString());
-        Participation actualParticipationWithParam = request.get(
+        TextParticipationDTO actualParticipationWithParam = request.get(
                 "/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?"
                         + params.toSingleValueMap().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).reduce((a, b) -> a + "&" + b).orElse(""),
-                HttpStatus.OK, Participation.class);
-        final TextSubmission actualSubmissionWithParam = (TextSubmission) actualParticipationWithParam.getSubmissions().iterator().next();
-        assertThat(actualSubmissionWithParam.getResults()).hasSize(1);
-        assertThat(actualSubmissionWithParam.getResults().getFirst().getId()).isEqualTo(firstResultId);
+                HttpStatus.OK, TextParticipationDTO.class);
+        final var actualSubmissionWithParam = actualParticipationWithParam.submissions().getLast();
+        assertThat(actualSubmissionWithParam.results()).hasSize(1);
+        assertThat(actualSubmissionWithParam.results().getFirst().id()).isEqualTo(firstResultId);
     }
 
     @Test
@@ -479,7 +626,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         long nonExistentResultId = Long.MAX_VALUE;
-        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?resultId=" + nonExistentResultId, HttpStatus.NOT_FOUND, Participation.class);
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId() + "?resultId=" + nonExistentResultId, HttpStatus.NOT_FOUND, TextParticipationDTO.class);
     }
 
     @Test
@@ -498,7 +645,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Long student2ResultId = student2Submission.getResults().getFirst().getId();
 
         // Student1 requests their own participation but with student2's resultId - should be 404
-        request.get("/api/text/text-editor/" + student1Submission.getParticipation().getId() + "?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, Participation.class);
+        request.get("/api/text/text-editor/" + student1Submission.getParticipation().getId() + "?resultId=" + student2ResultId, HttpStatus.NOT_FOUND, TextParticipationDTO.class);
     }
 
     @Test
@@ -506,7 +653,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditor_asOtherStudent() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, TextParticipationDTO.class);
     }
 
     @Test
@@ -531,7 +678,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
-        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, TextParticipationDTO.class);
     }
 
     @Test
@@ -556,14 +703,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, student);
-        var participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        var participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
         assertThat(participation).isNotNull();
-        assertThat(participation.getSubmissions()).containsExactly(textSubmission);
-        exam = participation.getExercise().getExerciseGroup().getExam();
-        assertThat(exam).isNotNull(); // The client needs the exam object to check if results are published yet
-        assertThat(exam.isTestExam()).isTrue();
-        assertThat(exam.getExerciseGroups()).isNullOrEmpty();
-        assertThat(exam.getCourse()).isNull();
+        assertThat(participation.submissions()).extracting(TextSubmissionAssessmentDTO::id).containsExactly(textSubmission.getId());
+        // The client needs the exam information to check if results are published yet: TextExerciseResponseDTO flattens this to examId()/examPublishResultsDate().
+        assertThat(participation.exercise()).isNotNull();
+        assertThat(participation.exercise().examId()).as("exam id is exposed so the client can resolve the exam").isNotNull();
+        assertThat(participation.exercise().exerciseGroup()).as("the nested exam shape is exposed so the client can detect exam mode").isNotNull();
+        assertThat(participation.exercise().exerciseGroup().exam()).as("the nested exam reference is exposed").isNotNull();
+        assertThat(participation.exercise().exerciseGroup().exam().testExam()).as("test-exam flag is exposed for the text editor").isTrue();
     }
 
     @Test
@@ -589,12 +737,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // second correction round
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor2");
 
-        var participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
+        var participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(participation).isNotNull();
-        assertThat(participation.getSubmissions()).containsExactly(textSubmission);
-        var submission = participation.getSubmissions().iterator().next();
-        assertThat(submission.getResults()).hasSize(1);
+        assertThat(participation.submissions()).extracting(TextSubmissionAssessmentDTO::id).containsExactly(textSubmission.getId());
+        var submission = participation.submissions().getLast();
+        assertThat(submission.results()).hasSize(1);
     }
 
     @Test
@@ -604,11 +752,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
-        assertThat(participation.getStudent()).as("student of participation is hidden").isEmpty();
+        assertThat(participation.submissions().getLast().results().getFirst()).as("result found").isNotNull();
+        assertThat(participation.student()).as("student of participation is hidden").isNull();
     }
 
     @Test
@@ -616,7 +764,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     void getDataForTextEditor_submissionWithoutResult() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
-        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
     }
 
     @Test
@@ -627,11 +775,14 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()).isEmpty();
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
+        assertThat(
+                participation.submissions().stream().flatMap(submission -> submission.results() == null ? java.util.stream.Stream.empty() : submission.results().stream()).toList())
+                .isEmpty();
+        assertThat(participation.submissions()).hasSize(1);
+        // No results before the assessment due date: TextSubmissionAssessmentDTO.results() is null (empty lists are dropped by @JsonInclude(NON_EMPTY)).
+        assertThat(participation.submissions().getLast().results()).isNullOrEmpty();
     }
 
     @Test
@@ -642,11 +793,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()).hasSize(1);
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        assertThat(participation.submissions().stream().flatMap(submission -> submission.results().stream()).toList()).hasSize(1);
+        assertThat(participation.submissions()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(1);
     }
 
     @Test
@@ -658,11 +809,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()).hasSize(1);
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        assertThat(participation.submissions().stream().flatMap(submission -> submission.results().stream()).toList()).hasSize(1);
+        assertThat(participation.submissions()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(1);
     }
 
     @Test
@@ -674,10 +825,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        assertThat(participation.submissions()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(1);
     }
 
     @Test
@@ -689,10 +840,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
 
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        assertThat(participation.submissions()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(1);
     }
 
     @Test
@@ -704,9 +855,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
-        StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+        TextParticipationDTO participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(participation.submissions()).hasSize(1);
+        assertThat(participation.submissions().getLast().results()).hasSize(1);
     }
 
     private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
@@ -716,15 +867,17 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
 
-        Result result = request.getNullable("/api/text/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus,
-                Result.class);
+        TextExampleResultDTO result = request.getNullable("/api/text/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result",
+                expectedStatus, TextExampleResultDTO.class);
 
         if (expectedStatus == HttpStatus.OK && result != null) {
-            assertThat(result.getId() == null).isTrue();
-            for (Feedback feedback : result.getFeedbacks()) {
-                assertThat(feedback.getCredits()).isNull();
-                assertThat(feedback.getDetailText()).isNull();
-                assertThat(feedback.getReference()).isNotNull();
+            assertThat(result.id()).isNull();
+            // empty/absent feedbacks are omitted on the wire (NON_EMPTY); mirror the client which treats them as an empty list
+            List<FeedbackDTO> maskedFeedbacks = result.feedbacks() == null ? List.of() : result.feedbacks();
+            for (FeedbackDTO feedback : maskedFeedbacks) {
+                assertThat(feedback.credits()).isNull();
+                assertThat(feedback.detailText()).isNull();
+                assertThat(feedback.reference()).isNotNull();
             }
         }
 
@@ -739,7 +892,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         final var exampleSubmission = ParticipationFactory.generateExampleSubmission(textSubmission, textExercise, true);
         participationUtilService.addExampleSubmission(exampleSubmission);
         long randomId = 23454;
-        Result result = request.get("/api/text/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, Result.class);
+        ResultDTO result = request.get("/api/text/exercises/" + randomId + "/submissions/" + textSubmission.getId() + "/example-result", HttpStatus.BAD_REQUEST, ResultDTO.class);
 
         assertThat(result).as("result found").isNull();
     }
@@ -913,19 +1066,18 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 150L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 150L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 200L);
 
         Course course = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard", HttpStatus.OK,
                 Course.class);
@@ -952,17 +1104,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
     }
 
     @Test
@@ -983,17 +1134,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
     }
 
     @Test
@@ -1014,17 +1164,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // getting submission from db
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 0.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, -1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 1.0, 0L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 50L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
-        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, textAssessmentDTO, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 0.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, -1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 1.0, 0L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 50L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
+        addAssessmentFeedbackAndCheckScore(submissionWithoutAssessment, feedbacks, 5.0, 100L);
     }
 
     @Test
@@ -1038,32 +1187,31 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1")
                 .reference(TextExerciseFactory.generateTextBlock(0, 5, "test1").getId()));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2")
                 .reference(TextExerciseFactory.generateTextBlock(0, 5, "test2").getId()));
-        textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is over 100% -> 105
-        Result response = request.postWithResponseBody("/api/text/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        ResultDTO response = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null), ResultDTO.class, HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(105);
+        assertThat(response.score()).isEqualTo(105);
 
         feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3")
                 .reference(TextExerciseFactory.generateTextBlock(0, 5, "test3").getId()));
-        textAssessmentDTO.setFeedbacks(feedbacks);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
-        response = request.postWithResponseBody("/api/text/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        response = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null), ResultDTO.class, HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(110, Offset.offset(0.0001));
+        assertThat(response.score()).isEqualTo(110, Offset.offset(0.0001));
     }
 
     private void exerciseDueDatePassed() {
@@ -1083,13 +1231,13 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         params.add("submit", submit);
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
         var path = "/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + textSubmission.getLatestResult().getId() + "/text-assessment";
-        var body = new TextAssessmentDTO(feedbacks);
+        var body = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
         if (submit.equals("true")) {
             path = "/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + textSubmission.getLatestResult().getId() + "/submit-text-assessment";
-            request.postWithResponseBody(path, body, Result.class, httpStatus);
+            request.postWithResponseBody(path, body, ResultDTO.class, httpStatus);
         }
         else {
-            request.putWithResponseBodyAndParams(path, body, Result.class, httpStatus, params);
+            request.putWithResponseBodyAndParams(path, body, ResultDTO.class, httpStatus, params);
         }
     }
 
@@ -1109,22 +1257,25 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
 
-        TextSubmission submission1stRequest = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submission1stRequest = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmissionWithoutAssessmentDTO.class, params);
 
-        var blocksFrom1stRequest = submission1stRequest.getBlocks();
-        assertThat(blocksFrom1stRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
+        List<TextBlockDTO> blocksFrom1stRequest = blocksOf(submission1stRequest);
+        final Set<TextBlockDTO> expectedBlockDTOs = blocks.stream().map(TextBlockDTO::of).collect(Collectors.toSet());
+        assertThat(blocksFrom1stRequest).containsExactlyInAnyOrderElementsOf(expectedBlockDTOs);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(List.of(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().getId()).type(FeedbackType.MANUAL)));
-        textAssessmentDTO.setTextBlocks(blocksFrom1stRequest);
-        request.postWithResponseBody("/api/text/participations/" + submission1stRequest.getParticipation().getId() + "/results/" + submission1stRequest.getLatestResult().getId()
-                + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(
+                List.of(FeedbackDTO.of(new Feedback().detailText("Test").credits(1d).reference(blocksFrom1stRequest.iterator().next().id()).type(FeedbackType.MANUAL))),
+                new HashSet<>(blocksFrom1stRequest), null);
+        request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submission1stRequest) + "/results/" + latestResultId(submission1stRequest) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
-        Participation participation2ndRequest = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK, Participation.class, params);
-        TextSubmission submission2ndRequest = (TextSubmission) (participation2ndRequest).getSubmissions().iterator().next();
-        var blocksFrom2ndRequest = submission2ndRequest.getBlocks();
-        assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
+        TextParticipationDTO participation2ndRequest = request.get("/api/text/text-submissions/" + textSubmission.getId() + "/for-assessment", HttpStatus.OK,
+                TextParticipationDTO.class, params);
+        var submission2ndRequest = participation2ndRequest.submissions().getLast();
+        List<TextBlockDTO> blocksFrom2ndRequest = submission2ndRequest.blocks();
+        assertThat(blocksFrom2ndRequest).containsExactlyInAnyOrderElementsOf(expectedBlockDTOs);
     }
 
     @NonNull
@@ -1210,46 +1361,47 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         params.add("lock", "true");
         params.add("correction-round", "0");
         // Athena requests are ok
-        TextSubmission submissionWithoutFirstAssessment = request.get("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment",
-                HttpStatus.OK, TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutFirstAssessment = request.get(
+                "/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class,
+                params);
         // verify that no new submission was created
-        assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
+        assertThat(submissionId(submissionWithoutFirstAssessment)).isEqualTo(submission.getId());
         // verify that the lock has been set
-        assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(latestResult(submissionWithoutFirstAssessment)).isNotNull();
+        assertThat(latestResult(submissionWithoutFirstAssessment).assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(latestResult(submissionWithoutFirstAssessment).assessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
-                paramsGetAssessedCR1Tutor1);
+        var assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK,
+                TextSubmissionResponseDTO.class, paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutFirstAssessment));
+        // result for correction round 0 corresponds to the locked latest result of the submission
+        assertThat(assessedSubmissionList.getFirst().results()).extracting(ResultDTO::id).contains(latestResultId(submissionWithoutFirstAssessment));
 
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
                 .collect(Collectors.toCollection(ArrayList::new));
-        TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result firstSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutFirstAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
+        ResultDTO firstSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutFirstAssessment) + "/results/"
+                + latestResultId(submissionWithoutFirstAssessment) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isNotNull();
-        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutFirstAssessment));
+        assertThat(assessedSubmissionList.getFirst().results()).isNotEmpty();
+        assertThat(firstSubmittedManualResult.assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
-        assertThat(firstSubmittedManualResult.getSubmission().getParticipation()).isEqualTo(studentParticipation);
+        assertThat(firstSubmittedManualResult.participation().id()).isEqualTo(studentParticipation.getId());
 
         // verify that the relationship between student participation,
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -1257,8 +1409,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().map(Submission::getId)).contains(submissionId(submissionWithoutFirstAssessment));
+        assertThat(fetchedParticipation.findLatestResult().getId()).isEqualTo(firstSubmittedManualResult.id());
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -1268,7 +1420,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult().getId()).isEqualTo(firstSubmittedManualResult.id());
 
         // SECOND ROUND OF CORRECTION
 
@@ -1278,15 +1430,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         paramsSecondCorrection.add("correction-round", "1");
 
         final var submissionWithoutSecondAssessment = request.get("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, paramsSecondCorrection);
+                TextSubmissionWithoutAssessmentDTO.class, paramsSecondCorrection);
 
         // verify that the submission is not new
-        assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
+        assertThat(submissionId(submissionWithoutSecondAssessment)).isEqualTo(submission.getId());
         // verify that the lock has been set
-        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor2");
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks()).isNotEmpty();
+        assertThat(latestResult(submissionWithoutSecondAssessment)).isNotNull();
+        assertThat(latestResult(submissionWithoutSecondAssessment).assessor().login()).isEqualTo(TEST_PREFIX + "tutor2");
+        assertThat(latestResult(submissionWithoutSecondAssessment).assessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(latestResult(submissionWithoutSecondAssessment).feedbacks()).isNotEmpty();
 
         // verify that the relationship between student participation,
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -1294,9 +1446,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst())
-                .contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().map(Submission::getId)).contains(submissionId(submissionWithoutSecondAssessment));
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst().map(Result::getId))
+                .contains(latestResultId(submissionWithoutSecondAssessment));
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -1304,55 +1456,59 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult().getId()).isEqualTo(latestResultId(submissionWithoutSecondAssessment));
 
+        // build the updated feedback list from the locked result's feedbacks plus a new one
+        List<FeedbackDTO> secondRoundFeedbacks = new ArrayList<>(latestResult(submissionWithoutSecondAssessment).feedbacks());
         Feedback secondCorrectionFeedback = new Feedback();
         secondCorrectionFeedback.setDetailText("asfd");
         secondCorrectionFeedback.setCredits(10.0);
         secondCorrectionFeedback.setPositive(true);
-        submissionWithoutSecondAssessment.getLatestResult().getFeedbacks().add(secondCorrectionFeedback);
-        textAssessmentDTO.setFeedbacks(new ArrayList<>(submissionWithoutSecondAssessment.getLatestResult().getFeedbacks()));
+        secondRoundFeedbacks.add(FeedbackDTO.of(secondCorrectionFeedback));
+        textAssessmentDTO = new TextAssessmentDTO(secondRoundFeedbacks, null, null);
 
         // assess submission and submit
-        Result secondSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutSecondAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        ResultDTO secondSubmittedManualResult = request.postWithResponseBody("/api/text/participations/" + participationId(submissionWithoutFirstAssessment) + "/results/"
+                + latestResultId(submissionWithoutSecondAssessment) + "/submit-text-assessment", textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // check if feedback copy was set correctly
-        assertThat(secondSubmittedManualResult.getFeedbacks()).isNotEmpty();
+        assertThat(secondSubmittedManualResult.feedbacks()).isNotEmpty();
 
         // make sure that new result correctly appears after the assessment for second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
                 paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
-        assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(1)).isEqualTo(secondSubmittedManualResult);
+        assertThat(assessedSubmissionList.getFirst().id()).isEqualTo(submissionId(submissionWithoutSecondAssessment));
+        // result for correction round 1 corresponds to the just-submitted second manual result
+        assertThat(assessedSubmissionList.getFirst().results()).extracting(ResultDTO::id).contains(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmission.class,
+        assessedSubmissionList = request.getList("/api/text/exercises/" + exerciseWithParticipation.getId() + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class,
                 paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(de.tum.cit.aet.artemis.programming.dto.ResultDTO.class));
     }
 
-    private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
+    private void addAssessmentFeedbackAndCheckScore(TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
                 .reference(TextExerciseFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
-        textAssessmentDTO.setFeedbacks(feedbacks);
-        Result response = request.postWithResponseBody("/api/text/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(expectedScore);
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
+        ResultDTO response = request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
+        assertThat(response.score()).isEqualTo(expectedScore);
     }
 
     @Test
@@ -1384,22 +1540,22 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
-        TextSubmission submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, params);
+        TextSubmissionWithoutAssessmentDTO submissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, params);
 
-        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
-        textAssessmentDTO.setTextBlocks(Set.of(TextExerciseFactory.generateTextBlock(0, 15, "This is Part 1,"),
-                TextExerciseFactory.generateTextBlock(16, 35, " and this is Part 2."), TextExerciseFactory.generateTextBlock(36, 57, " There is also Part 3.")));
+        final Set<TextBlock> textBlocksToAssess = Set.of(TextExerciseFactory.generateTextBlock(0, 15, "This is Part 1,"),
+                TextExerciseFactory.generateTextBlock(16, 35, " and this is Part 2."), TextExerciseFactory.generateTextBlock(36, 57, " There is also Part 3."));
 
         List<Feedback> feedbacks = new ArrayList<>();
-        textAssessmentDTO.getTextBlocks()
-                .forEach(textBlock -> feedbacks.add(new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1").reference(textBlock.getId())));
-        textAssessmentDTO.setFeedbacks(feedbacks);
+        textBlocksToAssess.forEach(textBlock -> feedbacks.add(new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1").reference(textBlock.getId())));
+        final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(),
+                textBlocksToAssess.stream().map(TextBlockDTO::of).collect(Collectors.toSet()), null);
 
-        request.postWithResponseBody("/api/text/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
+        request.postWithResponseBody(
+                "/api/text/participations/" + participationId(submissionWithoutAssessment) + "/results/" + latestResultId(submissionWithoutAssessment) + "/submit-text-assessment",
+                textAssessmentDTO, ResultDTO.class, HttpStatus.OK);
 
-        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionWithoutAssessment.getId());
+        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId(submissionWithoutAssessment));
         assertThat(textBlocks).isNotEmpty().allMatch(textBlock -> textBlock.getId() != null);
     }
 
@@ -1412,50 +1568,46 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
+        TextSubmissionWithoutAssessmentDTO textSubmissionWithoutAssessment = request.get("/api/text/exercises/" + textExercise.getId() + "/text-submission-without-assessment",
+                HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class, parameters);
 
-        final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
-            var newBlock = new TextBlock();
-            newBlock.setText(oldBlock.getText());
-            newBlock.setStartIndex(oldBlock.getStartIndex());
-            newBlock.setEndIndex(oldBlock.getEndIndex());
-            newBlock.setId(oldBlock.getId());
-            return newBlock;
-        }).collect(Collectors.toSet());
-
-        final TextAssessmentDTO dto = new TextAssessmentDTO();
-        dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
+        final Set<TextBlockDTO> textBlockDTOs = blocksOf(textSubmissionWithoutAssessment).stream()
+                // simulate Angular (re-)serialization: keep id/text/indices, drop server-only fields
+                .map(oldBlock -> new TextBlockDTO(oldBlock.id(), oldBlock.text(), oldBlock.startIndex(), oldBlock.endIndex(), null)).collect(Collectors.toSet());
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(
                 new Feedback().credits(20.00).type(FeedbackType.MANUAL).detailText("nice submission 3").reference(TextExerciseFactory.generateTextBlock(0, 15, "test3").getId()));
-        dto.setFeedbacks(feedbacks);
+        TextAssessmentDTO dto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), textBlockDTOs, null);
 
         // These two lines ensure the call count verification near the end of this test can spot the call
         // made during the PUT /api/text/participations/:id/text-assessment request and not other places.
         int irrelevantCallCount = 1;
-        verify(textBlockService, times(irrelevantCallCount)).findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
+        verify(textBlockService, times(irrelevantCallCount)).findAllBySubmissionId(submissionId(textSubmissionWithoutAssessment));
 
-        request.putWithResponseBody("/api/text/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+        request.putWithResponseBody(
+                "/api/text/participations/" + participationId(textSubmissionWithoutAssessment) + "/results/" + latestResultId(textSubmissionWithoutAssessment) + "/text-assessment",
+                dto, ResultDTO.class, HttpStatus.OK);
 
         feedbacks.removeFirst();
+        dto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), textBlockDTOs, null);
 
-        request.putWithResponseBody("/api/text/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+        request.putWithResponseBody(
+                "/api/text/participations/" + participationId(textSubmissionWithoutAssessment) + "/results/" + latestResultId(textSubmissionWithoutAssessment) + "/text-assessment",
+                dto, ResultDTO.class, HttpStatus.OK);
 
-        var result = request.putWithResponseBody("/api/text/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
-                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+        var result = request.putWithResponseBody(
+                "/api/text/participations/" + participationId(textSubmissionWithoutAssessment) + "/results/" + latestResultId(textSubmissionWithoutAssessment) + "/text-assessment",
+                dto, ResultDTO.class, HttpStatus.OK);
 
-        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(result.getId());
+        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(result.id());
 
         // This is to ensure the fix for https://github.com/ls1intum/Artemis/issues/4962 is not removed. Please ensure that problem is not occurring
         // if you remove or change this verification. This test uses a spy because the error was caused by and EntityNotFound exception related to MySQL
         // however the intergration tests use H2 in-memory database so same code did not produce the same error.
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
-        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
+        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionId(textSubmissionWithoutAssessment));
         final String[] ignoringFields = { "submission.results", "submission.submissionDate", "submission.participation", "submission.blocks", "submission.versions" };
         assertThat(textBlocks).allSatisfy(block -> assertThat(block).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(blocksSubmission.get(block.getId())));
     }
@@ -1471,16 +1623,16 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
      * @return The response of the request in form of a result.
      * @throws Exception If the request fails.
      */
-    private Result saveOrSubmitTextAssessment(Long participationId, Long latestResultId, TextAssessmentDTO textAssessmentDTO, boolean submit, HttpStatus expectedStatus)
+    private ResultDTO saveOrSubmitTextAssessment(Long participationId, Long latestResultId, TextAssessmentDTO textAssessmentDTO, boolean submit, HttpStatus expectedStatus)
             throws Exception {
         if (submit) {
             return request.postWithResponseBody("/api/text/participations/" + participationId + "/results/" + latestResultId + "/submit-text-assessment", textAssessmentDTO,
-                    Result.class, expectedStatus);
+                    ResultDTO.class, expectedStatus);
 
         }
         else {
-            return request.putWithResponseBody("/api/text/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO, Result.class,
-                    expectedStatus);
+            return request.putWithResponseBody("/api/text/participations/" + participationId + "/results/" + latestResultId + "/text-assessment", textAssessmentDTO,
+                    ResultDTO.class, expectedStatus);
         }
     }
 }
