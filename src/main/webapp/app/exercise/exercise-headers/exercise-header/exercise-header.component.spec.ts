@@ -143,10 +143,10 @@ describe('ExerciseHeaderComponent', () => {
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
 
-        it('should hide the feedback button for an unsubmitted placeholder', () => {
+        it('should show the feedback button for an unsubmitted placeholder while the submission check is disabled', () => {
             configureProgrammingExercise(false, false, false);
 
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
 
         it.each([true, undefined])('should hide the feedback button when allowOnlineEditor is %s', (allowOnlineEditor) => {
