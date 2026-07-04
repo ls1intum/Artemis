@@ -172,6 +172,7 @@ export class CourseExerciseRowComponent implements OnInit {
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }
+        return undefined;
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

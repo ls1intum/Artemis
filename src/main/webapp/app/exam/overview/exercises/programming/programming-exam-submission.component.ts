@@ -113,7 +113,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    onActivate() {
+    override onActivate() {
         super.onActivate();
         // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
         // hidden its change detection was detached, so a render that happened in the meantime may have injected the

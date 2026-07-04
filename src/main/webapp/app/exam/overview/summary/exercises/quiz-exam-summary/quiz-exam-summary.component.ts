@@ -118,7 +118,7 @@ export class QuizExamSummaryComponent {
                         shortAnswerSubmittedTexts.set(question.id!, []);
                     }
                 } else {
-                    captureException('Unknown question type: ' + question);
+                    captureException('Unknown question type: ' + question.type);
                 }
             }, this);
         }

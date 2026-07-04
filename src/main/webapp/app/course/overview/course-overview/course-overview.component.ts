@@ -102,7 +102,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
 
-    async ngOnInit() {
+    override async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => {
                 const componentRef = this.activatedComponentReference();
@@ -453,7 +453,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         // Clear the fully-loaded marker so the next visit re-fetches fresh course data from the server
         // instead of reusing a potentially stale cached course. Within the current visit, tab switches

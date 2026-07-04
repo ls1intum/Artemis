@@ -134,7 +134,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.textExercise.error');
+                this.alertService.error('artemisApp.textExercise.error');
+                return;
             }
 
             // When participationId is provided as input (e.g. in exam summary), route params won't contain it,

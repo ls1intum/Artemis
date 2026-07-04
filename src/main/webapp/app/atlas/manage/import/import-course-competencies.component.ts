@@ -95,6 +95,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
                                 case CourseCompetencyType.PREREQUISITE:
                                     return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
                             }
+                            return undefined;
                         })
                         .filter((id): id is number => !!id),
                 );

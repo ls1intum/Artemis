@@ -476,7 +476,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.currentFileBinding = undefined;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
-            const replacedText = this.normalizeLineEndings(replacedState.text.toString());
+            const replacedText = this.normalizeLineEndings(replacedState.text.toJSON());
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createFileBinding(replacedState, model, editorInstance);
