@@ -8,6 +8,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Compact struggle signal emitted by the client engine and forwarded to the Pyris struggle-intervention
  * pipeline. camelCase to match the cross-repo wire contract (Plan 1 {@code StruggleSignal}).
  * <p>
+ * Boundary and path values are forwarded opaquely (plain strings, no enum): the edit path sends
+ * {@code primaryBoundary} in {FM, FM_PLUS, E4, N1, STATE} with {@code path} in {armed, e6}; the discrete
+ * test-stagnation path sends {@code primaryBoundary="TPS"} with {@code path="discrete"}. Pyris owns the
+ * value validation, so new client-side values must be introduced Pyris-first.
+ * <p>
  * Annotated with a bare {@code @JsonInclude()} (no value) rather than {@code @JsonInclude(NON_EMPTY)}: Pyris
  * declares {@code trajectory} and {@code dominantComponents} as required fields with no defaults, so an empty
  * list must still be serialized ({@code NON_EMPTY} would drop the key and make Pyris reject the payload with a

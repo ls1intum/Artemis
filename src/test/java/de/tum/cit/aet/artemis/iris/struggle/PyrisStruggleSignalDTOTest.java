@@ -47,4 +47,23 @@ class PyrisStruggleSignalDTOTest {
         assertThat(signal.alert().primaryBoundary()).isEqualTo("FM");
         assertThat(signal.dominantComponents().get(0).name()).isEqualTo("typing");
     }
+
+    @Test
+    void tpsDiscreteAlertPassesThroughUnchanged() throws Exception {
+        // The discrete test-stagnation path sends primaryBoundary=TPS with path=discrete. Artemis must
+        // forward these values opaquely (no enum, no branching); Pyris validates them. This pins the
+        // pass-through property the cross-repo contract relies on.
+        String json = """
+                {"alert":{"tSessionS":540,"primaryBoundary":"TPS","boundaryTypes":["TPS"],"severity":0.41,"path":"discrete","inWarmup":true,"inGrace":false},
+                 "trajectory":[{"t":530,"s":0.4}],"dominantComponents":[{"name":"typing","value":0.3}],"sessionSeconds":540}""";
+        var signal = mapper.readValue(json, PyrisStruggleSignalDTO.class);
+        assertThat(signal.alert().primaryBoundary()).isEqualTo("TPS");
+        assertThat(signal.alert().boundaryTypes()).containsExactly("TPS");
+        assertThat(signal.alert().path()).isEqualTo("discrete");
+
+        JsonNode node = mapper.valueToTree(signal);
+        assertThat(node.get("alert").get("primaryBoundary").asText()).isEqualTo("TPS");
+        assertThat(node.get("alert").get("path").asText()).isEqualTo("discrete");
+        assertThat(node.get("alert").get("inWarmup").asBoolean()).isTrue();
+    }
 }
