@@ -215,7 +215,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currAccount.set(user);
                     this.passwordResetEnabled.set(user?.internal || false);
                     this.onResize();
@@ -818,7 +818,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/sign-in']).then((res) => {
+        void this.router.navigate(['/sign-in']).then((res) => {
             if (res) {
                 this.participationWebsocketService.resetLocalCache();
                 this.loginService.logout(true);

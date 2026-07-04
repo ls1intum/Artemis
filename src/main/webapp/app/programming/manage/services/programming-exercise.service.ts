@@ -330,6 +330,7 @@ export class ProgrammingExerciseService {
         if (results && results.length > 0) {
             return results.last();
         }
+        return undefined;
     }
 
     /**

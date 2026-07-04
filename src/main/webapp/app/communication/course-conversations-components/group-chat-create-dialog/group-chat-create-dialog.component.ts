@@ -17,7 +17,7 @@ export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
     form: FormGroup;
 
-    initialize() {
+    override initialize() {
         super.initialize(['course']);
         if (this.isInitialized) {
             this.initializeForm();

@@ -120,7 +120,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.metisService.getFilteredPosts({
                     plagiarismCaseId: plagiarismCase.id,
                 });
-                this.accountService.identity().then((user) => {
+                void this.accountService.identity().then((user) => {
                     this.currentAccount = user;
                     this.createEmptyPost();
                 });

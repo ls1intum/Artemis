@@ -106,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
@@ -167,7 +166,10 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
-            '@typescript-eslint/ban-ts-comment': 'warn',
+            // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
+            // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
+            // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
+            '@typescript-eslint/ban-ts-comment': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
@@ -250,6 +252,9 @@ export default tseslint.config(
                         'Avoid untyped JSON.parse(): its result is `any`, so property access is unchecked. Use parseJson<T>() from app/foundation/util/json.util and pass the expected type.',
                 },
             ],
+            // Template literals must not stringify `any`, objects, nullish, etc. (which produce "[object Object]" /
+            // "undefined"). Numbers are allowed (allowNumber default); everything else must be converted explicitly.
+            '@typescript-eslint/restrict-template-expressions': 'error',
         },
     },
     // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
@@ -290,6 +295,31 @@ export default tseslint.config(
         rules: {
             'no-console': 'error',
             'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
+        },
+    },
+    // Require every Promise to be handled in production code. A floating Promise silently swallows rejections
+    // (unhandled errors) and hides ordering bugs. Handle it: `await` it (in an async function, typically with a
+    // try/catch that routes to `onError`), attach `.then(...)/.catch(...)`, or mark it deliberately fire-and-forget
+    // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
+    // `'off'` default above for production code; specs may float promises for brevity (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
+        },
+    },
+    // Type-safety ratchet for production code (specs excluded below): catch real bug classes the compiler's
+    // `strictNullChecks`/`noImplicitAny` miss. `restrict-plus-operands` rejects `+` on mismatched/uncertain
+    // operand types (silent string/number coercion); `no-base-to-string` rejects stringifying a value whose
+    // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
+    // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/restrict-plus-operands': 'error',
+            '@typescript-eslint/no-base-to-string': 'error',
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived

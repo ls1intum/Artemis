@@ -57,7 +57,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnDestroy {
-    metisService = inject(MetisService);
+    override metisService = inject(MetisService);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -77,7 +77,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
     static activeDropdownPost: PostComponent | undefined = undefined;
 
-    showReactionSelector = false;
+    override showReactionSelector = false;
     displayInlineInput = signal(false);
     routerLink: RouteComponents;
     queryParams = {};
@@ -105,7 +105,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
-    readonly faBookmark = faBookmark;
+    override readonly faBookmark = faBookmark;
     readonly faShare = faShare;
     readonly faEnvelopeOpenText = faEnvelopeOpenText;
 
@@ -279,7 +279,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     /**
      * on initialization: evaluates post context and page type
      */
-    ngOnInit() {
+    override ngOnInit() {
         super.ngOnInit();
         this.pageType.set(this.metisService.getPageType());
         const posting = this.posting();
@@ -392,7 +392,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
             if (this.isCommunicationPage()) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {
-                this.router.navigate(['courses', course.id, 'communication'], {
+                void this.router.navigate(['courses', course.id, 'communication'], {
                     queryParams: {
                         conversationId: channelId,
                     },

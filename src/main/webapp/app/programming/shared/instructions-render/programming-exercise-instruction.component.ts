@@ -391,7 +391,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
-            mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+            mergeMap((latestResult: Result | undefined) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 
@@ -404,8 +404,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         const currentParticipation = this.participation();
         return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
             map((res) => res && res.body),
-            map((feedbacks: Feedback[]) => {
-                result.feedbacks = feedbacks;
+            map((feedbacks: Feedback[] | null) => {
+                result.feedbacks = feedbacks ?? undefined;
                 return result;
             }),
             catchError(() => of(result)),

@@ -27,7 +27,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     private feedbackService = inject(FeedbackService);
 
     ngOnInit() {
-        this.loadLongFeedback();
+        void this.loadLongFeedback();
     }
 
     /**

@@ -42,7 +42,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     websocketTopic: string;
 
     constructor() {
-        this.accountService.identity().then((user: User) => (this.currentUser = user));
+        void this.accountService.identity().then((user: User | undefined) => (this.currentUser = user!));
     }
 
     /**

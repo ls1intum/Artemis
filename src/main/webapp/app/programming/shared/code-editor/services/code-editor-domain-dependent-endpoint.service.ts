@@ -21,7 +21,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
      * Sets resourceUrls according to the parameter.
      * @param domain - enum that defines the type of the domain.
      */
-    setDomain(domain: DomainChange) {
+    override setDomain(domain: DomainChange) {
         super.setDomain(domain);
         this.restResourceUrl = this.calculateRestResourceURL(domain);
     }

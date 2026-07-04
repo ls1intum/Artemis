@@ -128,7 +128,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
             if (left && right) {
                 this.cachedRepositoryFiles.set(this.leftKey, left);
                 this.cachedRepositoryFiles.set(this.rightKey, right);
-                this.processRepositoryDiff(left, right);
+                void this.processRepositoryDiff(left, right);
             } else {
                 this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
             }

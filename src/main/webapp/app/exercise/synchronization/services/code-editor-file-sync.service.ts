@@ -570,7 +570,7 @@ export class CodeEditorFileSyncService {
             });
         }
         this.flushQueuedFullContentRequests(entry, entry.filePath);
-        const finalContent = entry.text.toString();
+        const finalContent = entry.text.toJSON();
         const contentDivergedFromFallback = finalContent !== entry.fallbackInitialContent;
         entry.awaitingInitialSync = false;
         this.initialSyncFinalizedSubject.next({ filePath: entry.filePath, contentDivergedFromFallback, finalContent });

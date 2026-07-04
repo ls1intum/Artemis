@@ -90,7 +90,7 @@ export class PostingHeaderComponent implements OnInit {
         this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     this.setUserProperties();
                 }),
