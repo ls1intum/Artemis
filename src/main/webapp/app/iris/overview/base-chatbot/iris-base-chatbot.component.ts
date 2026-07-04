@@ -327,6 +327,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private lastScrolledLiveAssistantDraftRunId: string | undefined;
     private liveDraftAnimationIntervalId: ReturnType<typeof setInterval> | undefined;
     private liveDraftScrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private draftSwapScrollRafId: number | undefined;
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
     private readonly isSuggestionAnimating = signal(false);
@@ -576,6 +577,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     this.releasePinToBottom();
                     this.pendingFinalizedLiveAssistantDraftRunId = undefined;
                     this.liveAssistantDraftRunId = undefined;
+                    this.preserveScrollAcrossDraftSwap();
                 } else if (this.forcePinToBottom) {
                     // Just sent a message: instant scroll so we stay glued to the bottom as
                     // the echoed message / response grow the content (no smooth-scroll race).
@@ -678,6 +680,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
         this.destroyRef.onDestroy(() => this.releasePinToBottom());
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
+        this.destroyRef.onDestroy(() => {
+            if (this.draftSwapScrollRafId !== undefined) {
+                window.cancelAnimationFrame(this.draftSwapScrollRafId);
+            }
+        });
         this.destroyRef.onDestroy(() => {
             if (this.settleScrollRafId !== undefined) {
                 window.cancelAnimationFrame(this.settleScrollRafId);
@@ -984,6 +991,34 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.copyResetTimeoutId = setTimeout(() => {
             this.copiedMessageKey.set(undefined);
         }, COPY_FEEDBACK_DURATION_MS);
+    }
+
+    /**
+     * Keeps the user's reading position stable while the ephemeral draft bubble is
+     * replaced by the persisted final message. The swap spans two render frames
+     * (message added, draft removed); restoring the captured scrollTop on the frames
+     * after the swap prevents the browser from clamping/shifting the viewport.
+     */
+    private preserveScrollAcrossDraftSwap(): void {
+        const container = this.messagesElement()?.nativeElement as HTMLElement | undefined;
+        if (!container || this.forcePinToBottom) {
+            return;
+        }
+        const scrollTopBeforeSwap = container.scrollTop;
+        let remainingFrames = 3;
+        const restore = () => {
+            container.scrollTop = scrollTopBeforeSwap;
+            remainingFrames -= 1;
+            if (remainingFrames > 0) {
+                this.draftSwapScrollRafId = window.requestAnimationFrame(restore);
+            } else {
+                this.draftSwapScrollRafId = undefined;
+            }
+        };
+        if (this.draftSwapScrollRafId !== undefined) {
+            window.cancelAnimationFrame(this.draftSwapScrollRafId);
+        }
+        this.draftSwapScrollRafId = window.requestAnimationFrame(restore);
     }
 
     private handleLiveAssistantDraftChange(draft: IrisLiveAssistantDraft | undefined): void {

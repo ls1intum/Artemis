@@ -582,7 +582,6 @@ export class IrisChatService implements OnDestroy {
         }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
-                this.liveAssistantDraft.next(undefined);
                 if (payload.runId) {
                     this.finalizedRunIds.add(payload.runId);
                     this.lastSeenPartialSeqByRunId.delete(payload.runId);
@@ -593,6 +592,10 @@ export class IrisChatService implements OnDestroy {
                 if (payload.message?.id) {
                     this.replaceOrAddMessage(this.mapMessageDTO(payload.message));
                 }
+                // Clear the draft only AFTER the final message was applied: removing the
+                // draft first shrinks the scroll content for one frame, which clamps
+                // scrollTop and visually snaps the viewport to the top of the answer.
+                this.liveAssistantDraft.next(undefined);
                 if (payload.stages) {
                     this.stages.next(this.filterStages(payload.stages));
                 }
