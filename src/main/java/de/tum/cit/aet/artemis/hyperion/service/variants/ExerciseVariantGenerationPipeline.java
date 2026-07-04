@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,13 +134,20 @@ public class ExerciseVariantGenerationPipeline {
             // --- FINALIZING --------------------------------------------------------------------------------
             // Cannot be cancelled from here on (plan Section 5.2) — the last cancel window closed above.
             jobService.updatePhase(jobId, VariantJobPhase.FINALIZING);
-            Exercise finalVariant = variant;
-            runPhase(VariantJobPhase.FINALIZING, () -> {
-                adapters.finalizeVariant(finalVariant, job.getRequest());
-                return null;
-            });
-
-            List<String> warnings = report.passed() ? List.of() : report.findings().stream().map(finding -> finding.gate() + ": " + finding.message()).toList();
+            List<String> warnings = new ArrayList<>();
+            if (!report.passed()) {
+                report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + finding.message()));
+            }
+            try {
+                adapters.finalizeVariant(variant, job.getRequest());
+            }
+            catch (Exception e) {
+                // From FINALIZING on, the generated variant is never discarded (plan Sections 1 and 6: the job is
+                // not even cancellable anymore). A placement failure (e.g. the target group was deleted mid-job)
+                // downgrades the result to a flagged draft instead of deleting verified LLM work.
+                log.warn("Finalizing variant generation job {} failed; keeping the variant as a draft", jobId, e);
+                warnings.add("FINALIZING: placement failed — assign the exercise to its group manually (" + e.getMessage() + ")");
+            }
             jobService.complete(jobId, variant.getId(), warnings);
             log.info("Variant generation job {} finished with {} for exercise {} -> variant {}", jobId, warnings.isEmpty() ? "COMPLETED" : "DRAFT_WITH_WARNINGS",
                     job.getSourceExerciseId(), variant.getId());

@@ -162,6 +162,21 @@ public class ExerciseVariantGroupService {
     }
 
     /**
+     * Copies the group's shared timeline (even unset dates) onto the exercise so the variant's dates stay
+     * consistent with its siblings.
+     */
+    private void applyGroupTimeline(ExerciseVariantGroup group, Exercise exercise) {
+        exercise.setReleaseDate(group.getReleaseDate());
+        exercise.setStartDate(group.getStartDate());
+        exercise.setDueDate(group.getDueDate());
+        exercise.setAssessmentDueDate(group.getAssessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(group.getExampleSolutionPublicationDate());
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(group.getBuildAndTestStudentSubmissionsAfterDueDate());
+        }
+    }
+
+    /**
      * Validates the exercise's date combination, skipping {@link QuizExercise}: {@link QuizExercise#validateDates()}
      * also iterates {@code quizBatches}, a lazy collection that is not initialized on the exercises loaded here (no
      * open Hibernate session outside the originating repository call), which would otherwise throw

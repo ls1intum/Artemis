@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -166,7 +167,8 @@ class ProgrammingVariantTools {
 
     @Tool(description = "Apply a search-and-replace edit to an EXISTING file in one of the variant's repositories. "
             + "The search text must occur exactly once in the file; otherwise the edit is rejected and you must make the search text more specific. "
-            + "Prefer small, targeted edits over rewriting whole files — unchanged code must stay identical to the source.")
+            + "Prefer small, targeted edits over rewriting whole files — unchanged code must stay identical to the source. "
+            + "Paths are restricted to src/ (TEMPLATE, SOLUTION) or test/ (TESTS).")
     public String applyEdit(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root") String path,
             @ToolParam(description = "the exact text to search for; must match exactly one occurrence") String search,
@@ -176,11 +178,19 @@ class ProgrammingVariantTools {
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
         }
+        // Same write whitelist as writeFile (and Hyperion codegen): edits outside the source root could corrupt
+        // build/config files (pom.xml, build.gradle, CI config) the agent must not touch.
+        String normalizedPath = normalizeWritablePath(path, repositoryType);
+        if (normalizedPath == null) {
+            String prefix = repositoryType == RepositoryType.TESTS ? TEST_PATH_PREFIX : SOURCE_PATH_PREFIX;
+            return "Error: '" + path + "' is not an editable path for the " + repositoryType + " repository. Paths must be relative, must not contain '..' or hidden "
+                    + "segments, and must start with '" + prefix + "'.";
+        }
         try {
             Repository checkout = checkout(repositoryType);
             String content;
             try {
-                content = new String(repositoryService.getFile(checkout, path), StandardCharsets.UTF_8);
+                content = new String(repositoryService.getFile(checkout, normalizedPath), StandardCharsets.UTF_8);
             }
             catch (IOException e) {
                 return "Error: file '" + path + "' does not exist in the " + repositoryType + " repository. Use listFiles to see the existing file paths.";
@@ -193,9 +203,9 @@ class ProgrammingVariantTools {
                 return "Error: the search text occurs more than once in '" + path + "'. Extend the search text so it matches exactly one occurrence.";
             }
             String updated = content.substring(0, firstIndex) + replace + content.substring(firstIndex + search.length());
-            writeFileContent(checkout, path, updated);
+            writeFileContent(checkout, normalizedPath, updated);
             markTouched(repositoryType);
-            return "Edit applied to '" + path + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
+            return "Edit applied to '" + normalizedPath + "' in the " + repositoryType + " repository. Remember to run runBuild to verify your changes.";
         }
         catch (Exception e) {
             return "Error: could not edit '" + path + "' in the " + repositoryType + " repository: " + e.getMessage();
@@ -270,13 +280,17 @@ class ProgrammingVariantTools {
                 programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
                 markTouched(RepositoryType.TESTS);
             }
+            Instant triggeredAt = Instant.now();
             try {
                 buildTrigger.triggerBuild(participation, commitHash, repositoryType);
             }
             catch (ContinuousIntegrationException e) {
                 return "Error: could not trigger the CI build for the " + repositoryType + " repository: " + e.getMessage();
             }
-            BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType);
+            // Freshness bound: only accept a result produced by THIS trigger. Without it, rebuilding an unchanged
+            // solution/template commit after a test-repo edit would instantly return the stale pre-change result
+            // and mislead the agent (plan Section 3, build-dependency constraint).
+            BuildResultOutcome outcome = buildVerificationService.waitForBuildResult(exercise, commitHash, repositoryType, triggeredAt);
             String description = describeOutcome(repositoryType, outcome);
             lastBuildResults.put(repositoryType, description);
             return description;

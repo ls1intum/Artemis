@@ -90,7 +90,8 @@ public class VariantAgentLoopRunner {
         log.debug("Starting agent round for job {} with {} tools (repair: {})", job.getJobId(), tools.size(), repairFeedback != null);
         // Spring AI executes the tool-call loop internally within this single call; tool implementations log
         // the per-call transcript (plan Section 2.5, point 5) and observe the cancel flag between calls.
-        String content = chatClient.prompt().system(systemPrompt).user(userMessage).toolCallbacks(tools.toArray(ToolCallback[]::new)).call().content();
+        // tools(Object...) is the unified non-deprecated API in Spring AI 2.0 and accepts ToolCallback instances.
+        String content = chatClient.prompt().system(systemPrompt).user(userMessage).tools(tools.toArray()).call().content();
         log.debug("Agent round finished for job {}: {}", job.getJobId(), content);
 
         // TODO (Sonnet): token accounting via LLMTokenUsageService — read usage from the ChatResponse metadata
