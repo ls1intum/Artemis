@@ -529,13 +529,8 @@ export class ExamStudentsComponent implements OnDestroy {
         if (!exam.id) {
             return;
         }
-        // Delay the refresh slightly to allow the registration modal's closing animation to finish.
-        // PrimeNG dialogs can glitch and flash if a heavy change detection cycle (triggered by
-        // the HTTP requests in examData$.next) interrupts their fade-out animation.
-        setTimeout(() => {
-            this.examData$.next(exam);
-            this.tableViewRef()?.reset();
-        }, 300);
+        this.examData$.next(exam);
+        this.tableViewRef()?.reset();
     }
 
     /**
