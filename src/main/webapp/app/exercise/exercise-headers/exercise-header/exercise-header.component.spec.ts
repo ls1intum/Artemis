@@ -115,12 +115,17 @@ describe('ExerciseHeaderComponent', () => {
     });
 
     describe('programming exercise AI feedback button', () => {
-        function configureProgrammingExercise(allowOnlineEditor: boolean | undefined, submitted: boolean, hasResult: boolean): void {
+        function configureProgrammingExercise(
+            allowOnlineEditor: boolean | undefined,
+            submitted: boolean,
+            hasResult: boolean,
+            feedbackSuggestionModule = 'module_programming_llm',
+        ): void {
             const exercise = new ProgrammingExercise(undefined, undefined);
             exercise.id = 1;
             exercise.type = ExerciseType.PROGRAMMING;
             exercise.allowFeedbackRequests = true;
-            exercise.feedbackSuggestionModule = 'module_programming_llm';
+            exercise.feedbackSuggestionModule = feedbackSuggestionModule;
             exercise.allowOnlineEditor = allowOnlineEditor;
 
             const participation = new StudentParticipation();
@@ -137,14 +142,9 @@ describe('ExerciseHeaderComponent', () => {
         it.each([
             { submitted: true, hasResult: false },
             { submitted: false, hasResult: true },
+            { submitted: false, hasResult: false },
         ])('should show the feedback button for a real submission: %s', ({ submitted, hasResult }) => {
             configureProgrammingExercise(false, submitted, hasResult);
-
-            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
-        });
-
-        it('should show the feedback button for an unsubmitted placeholder while the submission check is disabled', () => {
-            configureProgrammingExercise(false, false, false);
 
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
@@ -153,6 +153,12 @@ describe('ExerciseHeaderComponent', () => {
             configureProgrammingExercise(allowOnlineEditor, true, false);
 
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+
+        it('should not require a feedback suggestion module in the header action wrapper', () => {
+            configureProgrammingExercise(false, true, false, undefined);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
     });
 

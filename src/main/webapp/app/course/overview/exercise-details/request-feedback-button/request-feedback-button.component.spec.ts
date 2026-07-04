@@ -644,7 +644,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        // Programming exercises don't have the disabled attribute based on isSubmitted
+        expect(button.nativeElement.disabled).toBe(false);
     });
 
     it('should display modeling exercise button with correct disabled logic', async () => {

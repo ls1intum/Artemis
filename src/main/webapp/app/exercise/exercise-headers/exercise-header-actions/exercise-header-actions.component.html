@@ -149,18 +149,15 @@
                 }
                 @if (
                     exercise().type === ExerciseType.PROGRAMMING &&
-                    athenaEnabled() &&
                     !examMode() &&
-                    hasUserAcceptedLLM() &&
                     exercise().allowFeedbackRequests &&
-                    exercise().feedbackSuggestionModule &&
+                    activeParticipationForCode() &&
                     programmingExercise()?.allowOnlineEditor === false
                 ) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
                         [smallButtons]="smallButtons()"
                         [isGeneratingFeedback]="isGeneratingFeedback()"
-                        [isSubmitted]="hasProgrammingSubmission()"
                         (generatingFeedback)="generatingFeedback.emit()"
                     />
                 }
