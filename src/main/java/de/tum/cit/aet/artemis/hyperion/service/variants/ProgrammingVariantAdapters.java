@@ -2,14 +2,11 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -157,13 +154,12 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public List<ToolCallback> createTools(Exercise variant, VariantJob job) {
+    public VariantToolset createTools(Exercise variant, VariantJob job) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         User user = userRepository.getUserWithGroupsAndAuthorities(job.getInitiatorLogin());
-        ProgrammingVariantTools tools = new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, buildVerificationService,
+        return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, buildVerificationService,
                 continuousIntegrationTriggerService::triggerBuild, programmingExerciseParticipationService, programmingSubmissionService, programmingExerciseRepository,
                 programmingExerciseTaskService, defaultBranch);
-        return Arrays.asList(MethodToolCallbackProvider.builder().toolObjects(tools).build().getToolCallbacks());
     }
 
     @Override

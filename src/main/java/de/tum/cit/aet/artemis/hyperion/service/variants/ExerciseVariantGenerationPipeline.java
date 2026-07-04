@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -182,12 +181,13 @@ public class ExerciseVariantGenerationPipeline {
             jobService.updatePhase(jobId, agentPhase);
             jobService.recordAttempt(jobId, attempt, MAX_VERIFY_ATTEMPTS, attempt == 1 ? "Applying the change plan" : "Repairing verification findings");
 
-            List<ToolCallback> tools = adapters.createTools(variant, job);
+            VariantToolset toolset = adapters.createTools(variant, job);
             // Repair rounds receive the previous round's findings as the closed-loop repair signal (plan Section 2.5).
             VerificationReport repairFeedback = report;
-            VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, tools, budgets, job, repairFeedback, transformTemplate));
-            jobService.recordStepOutput(jobId, agentPhase, new StepOutput("Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished",
-                    agentResult.finishSummary() != null ? truncate(agentResult.finishSummary()) : "(no summary)", Instant.now()));
+            VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase, () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, transformTemplate));
+            String roundSummary = "Agent round " + attempt + "/" + MAX_VERIFY_ATTEMPTS + " finished" + (agentResult.touchedTestRepo() ? " (test repository changed)" : "");
+            jobService.recordStepOutput(jobId, agentPhase,
+                    new StepOutput(roundSummary, agentResult.finishSummary() != null ? truncate(agentResult.finishSummary()) : "(no summary)", Instant.now()));
 
             checkCancelled(jobId);
             jobService.updatePhase(jobId, VariantJobPhase.VERIFYING);

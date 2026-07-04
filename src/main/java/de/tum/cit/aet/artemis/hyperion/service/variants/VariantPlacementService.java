@@ -72,10 +72,12 @@ public class VariantPlacementService {
             }
             case NEW_GROUP -> {
                 Course course = requireCourse(variant);
-                ExerciseVariantGroup group = new ExerciseVariantGroup();
-                group.setTitle(placement.newGroup() != null && placement.newGroup().title() != null && !placement.newGroup().title().isBlank() ? placement.newGroup().title()
-                        : variant.getTitle());
-                group = exerciseVariantGroupService.createGroup(course.getId(), group);
+                if (placement.newGroup() == null) {
+                    throw new IllegalStateException("NEW_GROUP placement without a group payload (should have been rejected at the REST boundary)");
+                }
+                // Same payload and entity mapping as the group-creation endpoint, so the wizard's new-group form
+                // (title, maxPoints, shared timeline dates) is applied in full.
+                ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(course.getId(), placement.newGroup().toEntity());
                 exerciseVariantGroupService.assignExerciseToGroup(variant, group);
                 log.debug("Placed variant exercise {} into new variant group {}", variant.getId(), group.getId());
             }

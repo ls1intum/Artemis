@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,10 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
@@ -42,9 +45,12 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * All tools operate ONLY on the variant's repositories (never the source). Diff-style edits of existing files
  * ("transform, don't regenerate") are the main consistency lever (plan Section 7). Validation errors (file not
  * found, ambiguous search text, unsafe path) are returned TO THE MODEL as the tool result (plan Section 6 row 2).
- * Every tool checks the job's cooperative cancel flag before running (plan Section 5.2).
+ *
+ * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop, so the
+ * round converges quickly without doing further work; the pipeline performs the actual abort and cleanup at the
+ * next round boundary (plan Section 5.2 — cancellation is cooperative and never interrupts a running LLM call).
  */
-class ProgrammingVariantTools {
+class ProgrammingVariantTools implements VariantToolset {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantTools.class);
 
@@ -116,17 +122,27 @@ class ProgrammingVariantTools {
         this.defaultBranch = defaultBranch;
     }
 
-    boolean hasTouchedTestRepo() {
+    @Override
+    public List<ToolCallback> toolCallbacks() {
+        return Arrays.asList(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks());
+    }
+
+    @Override
+    public boolean touchedTestRepo() {
         return touchedTestRepo;
     }
 
-    String getFinishSummary() {
+    @Override
+    public String finishSummary() {
         return finishSummary;
     }
 
     @Tool(description = "List all files in one of the variant exercise's repositories. Valid repositories: TEMPLATE, SOLUTION, TESTS.")
     public String listFiles(@ToolParam(description = "the repository to list: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -144,7 +160,10 @@ class ProgrammingVariantTools {
     @Tool(description = "Read the content of a file in one of the variant exercise's repositories (TEMPLATE, SOLUTION, or TESTS).")
     public String readFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root, e.g. src/de/tum/Sorting.java") String path) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -173,7 +192,10 @@ class ProgrammingVariantTools {
             @ToolParam(description = "the file path relative to the repository root") String path,
             @ToolParam(description = "the exact text to search for; must match exactly one occurrence") String search,
             @ToolParam(description = "the replacement text") String replace) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -218,7 +240,10 @@ class ProgrammingVariantTools {
     public String writeFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root; must start with src/ (TEMPLATE, SOLUTION) or test/ (TESTS)") String path,
             @ToolParam(description = "the full new file content") String content) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -243,7 +268,10 @@ class ProgrammingVariantTools {
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
             + "so every test referenced in the tasks actually exists in the test repository.")
     public String updateProblemStatement(@ToolParam(description = "the full new problem statement in Artemis Markdown") String problemStatement) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         if (problemStatement == null || problemStatement.isBlank()) {
             return "Error: the problem statement must not be empty.";
         }
@@ -265,7 +293,10 @@ class ProgrammingVariantTools {
             + "Build targets: SOLUTION must pass 100% of tests, TEMPLATE must compile but score 0% (tests must run and fail), TESTS must build successfully. "
             + "Changing the TESTS repository invalidates earlier SOLUTION/TEMPLATE results — re-run both afterwards.")
     public String runBuild(@ToolParam(description = "the repository to build: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -306,7 +337,10 @@ class ProgrammingVariantTools {
 
     @Tool(description = "Get the detailed result of the most recent runBuild call for a repository (compiler output and failed test names/messages).")
     public String getBuildAndTestResults(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
             return invalidRepositoryMessage(repository);
@@ -316,16 +350,22 @@ class ProgrammingVariantTools {
 
     @Tool(description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
     public String finish(@ToolParam(description = "a short summary of the changes made in this round") String summary) {
-        checkCancelled();
+        String cancelled = cancellationNotice();
+        if (cancelled != null) {
+            return cancelled;
+        }
         this.finishSummary = summary;
         return "Summary recorded. You are done with this round.";
     }
 
-    private void checkCancelled() {
+    private String cancellationNotice() {
         if (jobService.isCancelRequested(jobId)) {
-            // Aborts the agent round between tool calls (plan Section 5.2: never mid-LLM-call or mid-build).
-            throw new IllegalStateException("The variant generation job was cancelled");
+            // Short-circuit instead of throwing: Spring AI returns tool exceptions to the model as ordinary tool
+            // results anyway, so an exception cannot abort the round — an explicit stop instruction converges the
+            // round fastest. The pipeline performs the actual abort at the next round boundary (plan Section 5.2).
+            return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
         }
+        return null;
     }
 
     private Repository checkout(RepositoryType repositoryType) throws GitAPIException {

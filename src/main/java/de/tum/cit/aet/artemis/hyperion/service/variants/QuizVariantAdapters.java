@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
-import java.util.List;
-
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -51,7 +48,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public List<ToolCallback> createTools(Exercise variant, VariantJob job) {
+    public VariantToolset createTools(Exercise variant, VariantJob job) {
         // TODO (Sonnet): Quiz toolset per plan Section 2.5 table + Section 4 TRANSFORMING row:
         // - getQuestions(): current serialized questions of the VARIANT.
         // - updateQuestion(index, questionJson): validate against the GeneratedQuizQuestionDTO JSON schema before

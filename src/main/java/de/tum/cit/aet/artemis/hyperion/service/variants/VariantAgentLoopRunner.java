@@ -69,8 +69,9 @@ public class VariantAgentLoopRunner {
      * Runs ONE agent round with the type's toolset (plan Section 2.5, Spring AI implementation note).
      *
      * @param plan           the ChangePlan contract, rendered into the system prompt
-     * @param tools          the type-specific tool callbacks (from {@code VariantToolsetFactory.createTools});
-     *                           tools themselves check the job's cancel flag between invocations
+     * @param toolset        the per-round toolset (from {@code VariantToolsetFactory.createTools}); tools observe
+     *                           the job's cancel flag between invocations, and the toolset reports the round state
+     *                           (finish summary, touched-test-repo flag) back to the pipeline
      * @param budgets        iteration/token budgets
      * @param job            the running job (cancellation flag, telemetry attribution)
      * @param repairFeedback null on the first round; the previous round's VerificationReport on repair rounds —
@@ -79,11 +80,11 @@ public class VariantAgentLoopRunner {
      * @param promptTemplate resource path of the type's transform system prompt
      * @return the round result
      */
-    public AgentResult runLoop(ChangePlan plan, List<ToolCallback> tools, AgentBudgets budgets, VariantJob job, @Nullable VerificationReport repairFeedback,
-            String promptTemplate) {
+    public AgentResult runLoop(ChangePlan plan, VariantToolset toolset, AgentBudgets budgets, VariantJob job, @Nullable VerificationReport repairFeedback, String promptTemplate) {
         if (chatClient == null) {
             throw new IllegalStateException("AI chat client is not configured");
         }
+        List<ToolCallback> tools = toolset.toolCallbacks();
         String systemPrompt = templateService.render(promptTemplate, Map.of("changePlan", renderPlanContract(plan)));
         String userMessage = repairFeedback == null ? initialUserMessage(plan) : repairUserMessage(repairFeedback);
 
@@ -97,11 +98,8 @@ public class VariantAgentLoopRunner {
         // TODO (Sonnet): token accounting via LLMTokenUsageService — read usage from the ChatResponse metadata
         // (use .call().chatResponse() instead of .content()) and enforce budgets.tokenBudget across rounds by
         // accumulating on the job (plan Sections 2.5 and 7). Until then tokensUsed is reported as 0.
-        // TODO (Sonnet): touchedTestRepo must be reported by the programming toolset (it observes applyEdit/writeFile
-        // targets); surface it via a mutable tool-state object shared between the toolset factory and this runner,
-        // then re-verify BOTH builds in the verifier (plan Section 3, build-dependency constraint). Until the
-        // programming toolset exists, false is correct for quiz and a known gap for programming.
-        return new AgentResult(content, false, 0);
+        String finishSummary = toolset.finishSummary() != null ? toolset.finishSummary() : content;
+        return new AgentResult(finishSummary, toolset.touchedTestRepo(), 0);
     }
 
     private String renderPlanContract(ChangePlan plan) {
