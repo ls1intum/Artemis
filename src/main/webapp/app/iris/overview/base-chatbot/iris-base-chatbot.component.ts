@@ -1139,13 +1139,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     scrollLiveAssistantDraftIntoView(behavior: ScrollBehavior = 'smooth'): void {
-        const draftElement = this.liveAssistantDraftElement()?.nativeElement;
-        if (!draftElement) {
+        const container: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+        const draftElement: HTMLElement | undefined = this.liveAssistantDraftElement()?.nativeElement;
+        if (!container || !draftElement) {
             return;
         }
-        draftElement.scrollIntoView({
-            block: 'start',
-            inline: 'nearest',
+        // Scroll only the chat body. scrollIntoView() would also scroll every scrollable
+        // ancestor — in the full-page course chat that drags the whole page along, shoving
+        // the input bar up and leaving dead space below it.
+        const containerRect = container.getBoundingClientRect();
+        const draftRect = draftElement.getBoundingClientRect();
+        container.scrollTo({
+            top: Math.max(0, container.scrollTop + (draftRect.top - containerRect.top)),
             behavior,
         });
     }

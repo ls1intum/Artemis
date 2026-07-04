@@ -579,6 +579,30 @@ describe('IrisBaseChatbotComponent', () => {
             expect(bottomScrollSpy).not.toHaveBeenCalled();
         });
 
+        it('should scroll only the chat body when bringing the draft into view, never ancestor scroll containers', () => {
+            vi.useFakeTimers();
+            // jsdom has no scrollIntoView; install a spy so a regression to it is caught.
+            const scrollIntoViewSpy = vi.fn();
+            (Element.prototype as any).scrollIntoView = scrollIntoViewSpy;
+            const containerScrollSpy = vi.fn();
+
+            try {
+                pushDraft('run-1', 'First partial');
+                // The .messages container only renders once a draft (or message) exists;
+                // the draft scroll is deferred via setTimeout, so spy before flushing it.
+                const messagesContainer: HTMLElement = fixture.nativeElement.querySelector('.messages');
+                messagesContainer.scrollTo = containerScrollSpy;
+                vi.advanceTimersByTime(0);
+
+                // scrollIntoView() also scrolls ancestor containers (the whole page in the
+                // full-page course chat) — the draft scroll must stay inside the chat body.
+                expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+                expect(containerScrollSpy).toHaveBeenCalled();
+            } finally {
+                delete (Element.prototype as any).scrollIntoView;
+            }
+        });
+
         it('should not bottom-scroll when thinking status updates while a draft is visible', () => {
             vi.useFakeTimers();
             const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
