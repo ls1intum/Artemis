@@ -480,7 +480,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Check for endpoint: @GetMapping("exercises/{exerciseId}/details")
         ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-        assertThat(exerciseWithDetails.exercise().getStudentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+        assertThat(exerciseWithDetails.exercise().studentAssignedTeamId()).as("Assigned team id on exercise from details is correct for student.").isEqualTo(team.getId());
+        assertThat(exerciseWithDetails.exercise().studentAssignedTeamIdComputed()).as("Assigned team id on exercise details was computed.").isTrue();
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
     }
 

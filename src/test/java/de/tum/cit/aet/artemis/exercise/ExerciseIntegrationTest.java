@@ -40,7 +40,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResultDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -386,27 +389,38 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 ExerciseDetailsDTO exerciseWithDetailsWrapper = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-                Exercise exerciseWithDetails = exerciseWithDetailsWrapper.exercise();
+                ExerciseDetailsResponseDTO exerciseWithDetails = exerciseWithDetailsWrapper.exercise();
 
-                if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
-                    assertFileUploadExercise(fileUploadExercise, "png", null);
-                    assertThat(fileUploadExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
+                assertThat(exerciseWithDetails.id()).isEqualTo(exercise.getId());
+                assertThat(exerciseWithDetails.type()).isEqualTo(exercise.getType());
+                assertThat(exerciseWithDetails.course()).isNotNull();
+
+                if (exercise instanceof FileUploadExercise) {
+                    assertThat(exerciseWithDetails.filePattern()).isEqualTo("png");
+                    assertThat(exerciseWithDetails.exampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(exerciseWithDetails.studentParticipations()).as("Number of participations is correct").isEmpty();
                 }
-                else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
-                    assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
-                    assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
+                else if (exercise instanceof ModelingExercise) {
+                    assertThat(exerciseWithDetails.diagramType()).isEqualTo(DiagramType.ClassDiagram);
+                    assertThat(exerciseWithDetails.exampleSolutionModel()).as("Sample solution model was filtered out").isNull();
+                    assertThat(exerciseWithDetails.exampleSolutionExplanation()).as("Sample solution explanation was filtered out").isNull();
+                    assertThat(exerciseWithDetails.studentParticipations()).as("Number of participations is correct").hasSize(1);
                 }
-                else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
-                    assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
-                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
+                else if (exercise instanceof ProgrammingExercise programmingExercise) {
+                    assertThat(exerciseWithDetails.allowOnlineEditor()).isEqualTo(programmingExercise.isAllowOnlineEditor());
+                    assertThat(exerciseWithDetails.allowOfflineIde()).isEqualTo(programmingExercise.isAllowOfflineIde());
+                    assertThat(exerciseWithDetails.allowOnlineIde()).isEqualTo(programmingExercise.isAllowOnlineIde());
+                    assertThat(exerciseWithDetails.studentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
-                else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
-                    assertQuizExercise(quizExercise, 120, 1, null, List.of());
-                    assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
+                else if (exercise instanceof QuizExercise) {
+                    assertThat(exerciseWithDetails.duration()).isEqualTo(120);
+                    assertThat(exerciseWithDetails.allowedNumberOfAttempts()).isEqualTo(1);
+                    assertThat(exerciseWithDetails.quizBatches()).isEmpty();
+                    assertThat(exerciseWithDetails.studentParticipations()).as("Number of participations is correct").isEmpty();
                 }
-                else if (exerciseWithDetails instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(textExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
+                else if (exercise instanceof TextExercise) {
+                    assertThat(exerciseWithDetails.exampleSolution()).as("Sample solution was filtered out").isNull();
+                    assertThat(exerciseWithDetails.studentParticipations()).as("Number of participations is correct").hasSize(1);
                 }
             }
         }
@@ -473,12 +487,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 addResultToSubmissionAndParticipation(exercise);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
+            for (ExerciseDetailsParticipationDTO participation : exerciseWithDetails.exercise().studentParticipations()) {
+                List<SubmissionResultDTO> results = getResultsForParticipation(participation);
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(1);
-                    assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(results.getFirst().assessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 else {
                     // All other exercises should not display a result at all
@@ -501,12 +515,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipation);
+            for (var studentParticipation : exerciseWithDetails.exercise().studentParticipations()) {
+                List<SubmissionResultDTO> results = getResultsForParticipation(studentParticipation);
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(resultSize);
-                    assertThat(results.stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(results.stream().sorted(Comparator.comparing(SubmissionResultDTO::id).reversed()).iterator().next().assessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
@@ -515,6 +529,13 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 }
             }
         }
+    }
+
+    private List<SubmissionResultDTO> getResultsForParticipation(ExerciseDetailsParticipationDTO participation) {
+        if (participation.submissions() == null) {
+            return List.of();
+        }
+        return participation.submissions().stream().filter(submission -> submission.results() != null).flatMap(submission -> submission.results().stream()).toList();
     }
 
     private void addResultToSubmissionAndParticipation(Exercise exercise) {

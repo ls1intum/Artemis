@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -353,8 +352,9 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         ExerciseDetailsDTO returnedExerciseDetails = request.get("/api/exercise/exercises/" + finishedTextExercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-        StudentParticipation studentParticipation = returnedExerciseDetails.exercise().getStudentParticipations().iterator().next();
-        assertThat(participationUtilService.getResultsForParticipation(studentParticipation).iterator().next().getAssessor()).as("assessor is null").isNull();
+        var studentParticipation = returnedExerciseDetails.exercise().studentParticipations().getFirst();
+        var result = studentParticipation.submissions().getFirst().results().getFirst();
+        assertThat(result.assessor()).as("assessor is null").isNull();
     }
 
     @Test
