@@ -72,7 +72,7 @@ export class EditOnlineUnitComponent implements OnInit {
                 finalize(() => {
                     this.isLoading.set(false);
                     // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/online-units/:onlineUnitId/edit
-                    this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

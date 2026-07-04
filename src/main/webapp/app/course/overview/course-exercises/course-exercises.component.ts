@@ -8,6 +8,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -44,7 +45,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent {
     private courseStorageService = inject(CourseStorageService);
@@ -166,13 +167,13 @@ export class CourseExercisesComponent {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
             // A grouped upcoming exercise must open its group detail page, not a single raw variant, matching the
             // sidebar's group route. Ungrouped exercises keep navigating directly to their exercise id.
             const groupId = upcomingExercise.exerciseVariantGroup?.id;
             const target = groupId !== undefined ? ['group', groupId] : [upcomingExercise.id];
-            this.router.navigate(target, { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate(target, { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
         }

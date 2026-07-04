@@ -162,7 +162,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | undefined
     >(undefined);
 
-    async ngOnInit() {
+    override async ngOnInit() {
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -198,7 +198,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    protected handleNavigationEndActions(): void {
+    protected override handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
     }
 
@@ -247,7 +247,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.operationProgress.set(undefined);
         // Navigate to course list after closing a completed delete operation
         if (progress?.operationType === CourseOperationType.DELETE) {
-            this.router.navigate(['/course-management']);
+            void this.router.navigate(['/course-management']);
         }
     }
 
@@ -395,7 +395,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return irisItems;
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();

@@ -454,7 +454,7 @@ export class CourseUpdateComponent implements OnInit {
             this.courseStorageService.updateCourse(updatedCourse!);
         }
 
-        this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        void this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
         scrollToTopOfPage();
     }
 

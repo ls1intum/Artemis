@@ -82,10 +82,10 @@ export class UserRouteAccessService implements CanActivate {
                 }
 
                 this.sessionStorageService.store('previousUrl', url);
-                this.router.navigate(['accessdenied']).then(() => {
+                void this.router.navigate(['accessdenied']).then(() => {
                     // only show the login dialog, if the user hasn't logged in yet
                     if (!account) {
-                        this.router.navigate(['/sign-in']);
+                        void this.router.navigate(['/sign-in']);
                     }
                 });
                 return false;

@@ -355,7 +355,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             .then((response) => {
                 const importedExam = response.body?.exam;
                 if (importedExam) {
-                    this.onSaveSuccess(importedExam);
+                    void this.onSaveSuccess(importedExam);
                 } else {
                     this.isSaving.set(false);
                 }

@@ -853,7 +853,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        preUpdateModalRef.then((reference) => {
+        void preUpdateModalRef.then((reference) => {
             reference.componentInstance.confirmed.subscribe(() => onConfirmed());
             reference.componentInstance.reEvaluated.subscribe(() => onReEvaluated(reference));
         });
@@ -1041,7 +1041,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
         const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate(
+            void this.router.navigate(
                 [
                     'course-management',
                     courseId,
@@ -1058,7 +1058,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 navigationExtras,
             );
         } else {
-            this.router.navigate(
+            void this.router.navigate(
                 ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
                 navigationExtras,
             );

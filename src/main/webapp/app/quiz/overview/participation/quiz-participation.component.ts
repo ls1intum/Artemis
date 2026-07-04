@@ -595,7 +595,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -637,7 +637,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -855,7 +855,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                         break;
                     default:
-                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        captureException(new Error('Unknown question type: ' + clientQuestion.type));
                         break;
                 }
             }

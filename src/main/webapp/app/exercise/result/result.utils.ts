@@ -429,7 +429,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
         if (!result.result.feedbacks) {
-            return [];
+            return;
         }
         result.result.feedbacks.forEach((feedback) => {
             if (Feedback.isTestCaseFeedback(feedback)) {

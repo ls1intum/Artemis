@@ -190,7 +190,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faFloppyDisk = faFloppyDisk;
     faCircleNotch = faCircleNotch;
 
-    readonly QuizMode = QuizMode;
+    override readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
 
     readonly quizModeOptions = computed(() => {
@@ -237,8 +237,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         ];
     });
 
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    override readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    override readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     readonly defaultSecondLayerDialogOptions = {
         width: '40rem',
@@ -502,7 +502,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
     }
 
-    cacheValidation() {
+    override cacheValidation() {
         if (this.quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
             this.quizExercise().dueDate = undefined; // Due date is calculated on server side
             if (this.scheduleQuizStart) {
@@ -887,7 +887,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    computeInvalidReasons(): ValidationReason[] {
+    override computeInvalidReasons(): ValidationReason[] {
         const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise()) {
             return [];

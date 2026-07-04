@@ -8,7 +8,7 @@
         "email": "krusche@tum.de",
         "url": "https://aet.cit.tum.de/krusche"
     },
-    "packageManager": "pnpm@11.8.0",
+    "packageManager": "pnpm@11.9.0",
     "dependencies": {
         "@angular/cdk": "21.2.14",
         "@angular/common": "21.2.17",
@@ -116,7 +116,7 @@
         "vitest-canvas-mock": "1.1.4"
     },
     "engines": {
-        "node": ">=24.7.0",
+        "node": ">=24.18.0",
         "pnpm": ">=11.1.0"
     },
     "scripts": {

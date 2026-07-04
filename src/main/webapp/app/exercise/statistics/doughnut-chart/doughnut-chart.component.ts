@@ -108,7 +108,7 @@ export class DoughnutChartComponent implements OnInit {
     openCorrespondingPage() {
         const titleLink = this.titleLink();
         if (this.course().id && this.exerciseId() && titleLink) {
-            this.router.navigate(titleLink);
+            void this.router.navigate(titleLink);
         }
     }
 

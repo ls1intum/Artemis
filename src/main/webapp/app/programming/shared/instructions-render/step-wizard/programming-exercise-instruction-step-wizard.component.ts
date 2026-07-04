@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -72,12 +72,11 @@ export class ProgrammingExerciseInstructionStepWizardComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise: this.exercise(),
                 result: latestResult,
                 participation: this.participation(),
                 feedbackFilter: tests,
-                exerciseType: ExerciseType.PROGRAMMING,
                 taskName,
                 numberOfNotExecutedTests: notExecutedTests.length,
             },

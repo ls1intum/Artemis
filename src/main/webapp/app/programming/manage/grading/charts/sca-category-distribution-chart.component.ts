@@ -182,7 +182,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     /**
      * Auxiliary method for the reset button to reset the table view
      */
-    resetTableFilter(): void {
+    override resetTableFilter(): void {
         super.resetTableFilter();
         this.scaCategoryFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
     }

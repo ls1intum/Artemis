@@ -536,7 +536,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     // Navigate to edit page for the last created unit
                     const lectureValue = this.lecture();
                     if (lastCreatedUnit?.id && lectureValue?.course?.id) {
-                        this.router.navigate([
+                        void this.router.navigate([
                             '/course-management',
                             lectureValue.course.id,
                             'lectures',
