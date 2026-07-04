@@ -184,6 +184,41 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.visibleChange.emit(false);
     }
 
+    // ============================================================================================
+    // TODO (Opus): Rework this wizard from UI-only mock to the real backend job (plan Section 5.3, point 2):
+    //
+    // 1. startGeneration(): DELETE the setInterval mock + generateVariant(...) call below. Instead inject
+    // ExerciseVariantGenerationService (app/hyperion/services) and:
+    // a. Build the request per plan Section 5.1 — intents by FIELD PRESENCE: targetDifficulty only when the
+    // difficulty card is selected, domainText/additionalInstructions only when non-blank. Remove the
+    // changeDifficulty/changeDomain/changeCustom toggle booleans as request inputs (they remain UI-only
+    // card-selection state at most). There is NO title input — the planner names the variant (Section 2.4);
+    // remove any title field from the template if present.
+    // b. Placement mapping: placementChoice → VariantPlacementDTO (EXISTING_GROUP with sourceGroup id /
+    // NEW_GROUP with the newGroup* signals / STANDALONE). For EXAM exercises skip the placement step
+    // entirely and send SAME_EXAM_GROUP (plan Section 5.5).
+    // c. POST via the service; store the jobId; subscribe to the per-job websocket topic (service handles the
+    // hyperion-websocket.service subscribeToJob pattern).
+    // 2. Progress steps: replace GENERATION_STEPS with steps DERIVED FROM VariantJobPhase (shared enum via the
+    // OpenAPI client — single source of truth, plan Section 5.2). Type-specific sub-labels come from
+    // PROGRESS/ATTEMPT events ("Building solution repository — attempt 2/3"). REPAIRING renders as a
+    // repeat-visit on the verify step with the attempt counter, NOT as a fake linear step.
+    // 3. Expandable step panels: each finished step reveals its StepOutput (STEP_OUTPUT events live; job-detail
+    // endpoint on reopen) so instructors can inspect what the LLM planned/did (plan Sections 2.4 and 5.4).
+    // 4. DONE handling: fetch the created exercise by variantExerciseId and show the real result step; render
+    // DRAFT_WITH_WARNINGS with the warnings listed and a "flagged draft — repair in editor" hint; FAILED shows
+    // the failure phase (plan Sections 5.3 and 6).
+    // 5. Closable during generation: keep the existing onClose behavior (close ≠ cancel, job continues server-side,
+    // no confirmation needed — plan Section 5.4). Add an explicit CANCEL action while running (confirmation
+    // dialog; calls service.cancelJob) — distinct from closing (plan Section 5.4).
+    // 6. Monitor mode: add an input (e.g. `monitorJobId`) so the tray can reopen this modal for a running/finished
+    // job, initialized from GET /variant-jobs/{jobId} — skips wizard steps 1–3 and shows the step timeline
+    // (plan Section 5.4).
+    // 7. Resume: on open with a source exercise, call the `active` endpoint and re-attach when a job is running
+    // (plan Section 5.3, point 5).
+    // 8. confirmVariant(): emit variantAdded with the REAL fetched exercise (bound in
+    // exercise-actions.component.html — see TODO there); remove the mock path.
+    // ============================================================================================
     startGeneration(): void {
         const variant = generateVariant(this.sourceExercise(), {
             changeDifficulty: this.changeDifficulty(),

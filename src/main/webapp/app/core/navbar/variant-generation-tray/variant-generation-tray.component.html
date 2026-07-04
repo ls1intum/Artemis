@@ -1,0 +1,11 @@
+<!--
+TODO (Sonnet): Tray template per plan Section 5.4 (see component TODOs for the full spec):
+- @if (variantGenerationService.hasJobs()) wrapper — button hidden without jobs.
+- Icon button with spinner-ring overlay while running jobs exist + running-count badge.
+- <p-popover> with the job list: running entries (title, phase label, slim progress bar, attempt counter,
+  cancel button with confirmation) and finished entries (deep link / warning badge / failure phase / cancelled).
+- data-testid hooks on the button, list, and per-entry actions for the Vitest/Playwright selectors
+  (plan Section 10 client tests; see memory: E2E selectors use data-testid).
+- Use @if/@for control flow (never *ngIf/*ngFor), Bootstrap utility classes for layout, PrimeNG components only.
+-->
+<span data-testid="variant-generation-tray-placeholder" hidden></span>

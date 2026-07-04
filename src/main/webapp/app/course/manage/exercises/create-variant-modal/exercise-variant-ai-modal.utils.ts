@@ -1,3 +1,8 @@
+// TODO (Sonnet): DELETE the mock generation from this file once the wizard drives the real backend job
+// (plan Section 5.3, point 3): GENERATION_STEPS + STEP_INTERVAL_MS (replaced by steps derived from
+// VariantJobPhase, Section 5.2), DOMAIN_SUFFIXES, and generateVariant(...) (the server pipeline produces the
+// variant). KEEP the pure UI helpers still used by the wizard template: PlacementChoice, difficultyLabel,
+// difficultyBadgeClass, durationDays.
 import dayjs from 'dayjs/esm';
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
