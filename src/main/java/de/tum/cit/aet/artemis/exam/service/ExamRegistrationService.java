@@ -112,7 +112,7 @@ public class ExamRegistrationService {
      */
     public ExamRegistrationResultDTO registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
@@ -121,7 +121,6 @@ public class ExamRegistrationService {
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExamForLogging = new ArrayList<>();
-        List<User> studentsNewlyAddedToExam = new ArrayList<>();
 
         for (var examUserDto : examUserDTOs) {
             // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
@@ -160,7 +159,6 @@ public class ExamRegistrationService {
                 registeredExamUser = examUserRepository.save(registeredExamUser);
                 exam.addExamUser(registeredExamUser);
 
-                studentsNewlyAddedToExam.add(student);
                 usersAddedToExamForLogging.add(registeredExamUser.getUser().getLogin());
             }
             else {
@@ -182,10 +180,7 @@ public class ExamRegistrationService {
 
         if (exam.isStarted()) {
             // Generate student exams for the registered students if the exam has already started and prepare the exercises
-            Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-            for (User student : studentsNewlyAddedToExam) {
-                studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
-            }
+            studentExamService.generateMissingStudentExams(exam);
             studentExamService.startExercises(examId);
         }
 
