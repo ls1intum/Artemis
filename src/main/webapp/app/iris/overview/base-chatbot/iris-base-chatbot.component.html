@@ -233,10 +233,11 @@
         }
         <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
             @if (messages()?.length || liveAssistantDraft()) {
-                <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
+                                [attr.data-message-id]="message.id"
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
@@ -333,7 +334,7 @@
                             </div>
                         }
                         @if (liveAssistantDraft()) {
-                            <div #liveAssistantDraftElement class="llm-message-wrapper streaming-draft-wrapper">
+                            <div class="llm-message-wrapper streaming-draft-wrapper">
                                 <div class="bubble-left streaming-draft-bubble">
                                     <jhi-iris-citation-text [text]="displayedLiveAssistantDraftText()" [citationInfo]="citationInfo()" />
                                     <div class="streaming-draft-meta" aria-hidden="true">
@@ -365,6 +366,7 @@
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [stages]="stages()" />
                         }
+                        <div class="stream-exchange-spacer" aria-hidden="true" [style.height.px]="exchangeSpacerPx()"></div>
                     </div>
                 </div>
             }

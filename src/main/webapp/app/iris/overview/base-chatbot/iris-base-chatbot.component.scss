@@ -492,6 +492,11 @@ pre {
                 margin-inline: auto;
                 padding-bottom: 40px;
             }
+
+            .stream-exchange-spacer {
+                flex: 0 0 auto;
+                pointer-events: none;
+            }
         }
     }
 }

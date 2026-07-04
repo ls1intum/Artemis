@@ -307,16 +307,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);
-    // While true, the view is force-kept at the bottom as new content (the echoed user
-    // message, the thinking bubble, the streamed response) arrives asynchronously after a
-    // send. It is set on send and cleared only by a genuine upward user gesture (wheel /
-    // touch) so the scroll handler's intermediate readings cannot un-pin us mid-stream.
-    private forcePinToBottom = false;
-    // Tracks whether the response stream has actually started since the last send, so the
-    // pin is not released during the initial gap before the first websocket update arrives.
-    private pinSawStreaming = false;
-    // requestAnimationFrame id for the active post-send pin scroll loop, if any.
-    private pinScrollRafId: number | undefined;
+    readonly exchangeSpacerPx = signal(0);
+    private pendingAnchorScroll = false;
+    private anchoredMessageId: number | undefined;
+    private exchangeAnchorActive = false;
     // requestAnimationFrame id and remaining-frame counter for the initial-load settle scroll.
     private settleScrollRafId: number | undefined;
     private settleScrollFrames = 0;
@@ -324,9 +318,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private liveAssistantDraftTargetText = '';
     private liveAssistantDraftRunId: string | undefined;
     private pendingFinalizedLiveAssistantDraftRunId: string | undefined;
-    private lastScrolledLiveAssistantDraftRunId: string | undefined;
     private liveDraftAnimationIntervalId: ReturnType<typeof setInterval> | undefined;
-    private liveDraftScrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private draftSwapScrollRafId: number | undefined;
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
@@ -367,7 +359,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
-    readonly liveAssistantDraftElement = viewChild<ElementRef<HTMLElement>>('liveAssistantDraftElement');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
@@ -555,6 +546,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
                 this.isScrolledToBottom.set(true);
+                this.pendingAnchorScroll = false;
+                this.anchoredMessageId = undefined;
+                this.exchangeAnchorActive = false;
+                this.exchangeSpacerPx.set(0);
                 const timeoutId = setTimeout(() => (this.shouldAnimate = true));
                 onCleanup(() => clearTimeout(timeoutId));
             }
@@ -576,14 +571,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 // settling scroll to land exactly at the bottom instead of a tiny bit short.
                 const isInitialLoad = this.previousMessageCount === 0 && rawMessages.length > 0;
                 if (isDraftFinalization) {
-                    this.releasePinToBottom();
+                    this.exchangeAnchorActive = false;
                     this.pendingFinalizedLiveAssistantDraftRunId = undefined;
                     this.liveAssistantDraftRunId = undefined;
                     this.preserveScrollAcrossDraftSwap();
-                } else if (this.forcePinToBottom) {
-                    // Just sent a message: instant scroll so we stay glued to the bottom as
-                    // the echoed message / response grow the content (no smooth-scroll race).
-                    this.scrollToBottom('auto');
+                } else if (this.pendingAnchorScroll && rawMessages.length > this.previousMessageCount) {
+                    const lastMessage = rawMessages.at(-1);
+                    if (lastMessage?.sender === IrisSender.USER && lastMessage.id !== undefined) {
+                        this.pendingAnchorScroll = false;
+                        this.anchoredMessageId = lastMessage.id;
+                        this.exchangeAnchorActive = true;
+                        setTimeout(() => this.scrollAnchoredMessageToTop());
+                    }
                 } else if (isInitialLoad && this.isScrolledToBottom()) {
                     this.scrollToBottomSettled();
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
@@ -621,41 +620,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Release the post-send bottom pin once the response stream has settled. We only
-        // release after the exchange has actually started (a stage went active), so the
-        // initial gap between send and the first websocket update doesn't release early.
-        // A genuine upward gesture also releases it (see onMessagesUserScroll).
+        // Scroll when thinking bubble appears for flows that start without an explicit send.
         effect(() => {
-            const streaming = this.hasActiveStage() || !!this.activeChatMessage();
-            if (this.forcePinToBottom) {
-                if (streaming) {
-                    this.pinSawStreaming = true;
-                } else if (this.pinSawStreaming) {
-                    this.releasePinToBottom();
-                }
+            if (this.activeChatMessage() && !this.liveAssistantDraft() && this.isScrolledToBottom()) {
+                this.scrollToBottom('smooth');
             }
         });
 
-        // Release the pin (and stop the RAF loop) if the send fails before the stream ever
-        // starts. Without a stage going active, pinSawStreaming stays false, so the settle
-        // effect above can never release — the loop would otherwise spin forever. This path
-        // only fires on a genuine error signal, never during the normal pre-stream gap.
-        effect(() => {
-            if (this.error() && this.forcePinToBottom && !this.pinSawStreaming) {
-                this.releasePinToBottom();
-            }
-        });
-
-        // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
-        effect(() => {
-            if (this.activeChatMessage() && !this.liveAssistantDraft() && (this.forcePinToBottom || this.isScrolledToBottom())) {
-                this.scrollToBottom(this.forcePinToBottom ? 'auto' : 'smooth');
-            }
-        });
-
-        // Drive streamed assistant draft display and scroll only once when a new draft appears.
+        // Drive streamed assistant draft display.
         effect(() => {
             this.handleLiveAssistantDraftChange(this.liveAssistantDraft());
+        });
+
+        // Keep enough room below the anchored user message while streaming content changes height.
+        effect((onCleanup) => {
+            this.rawMessages();
+            this.displayedLiveAssistantDraftText();
+            this.activeChatMessage();
+            this.canShowSuggestions();
+            const rafId = window.requestAnimationFrame(() => this.updateExchangeSpacer());
+            onCleanup(() => window.cancelAnimationFrame(rafId));
         });
 
         // Reset clicked suggestion when new suggestions arrive and scroll to show them
@@ -684,7 +668,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         }, 150);
         this.destroyRef.onDestroy(() => clearTimeout(focusTimeoutId));
-        this.destroyRef.onDestroy(() => this.releasePinToBottom());
         this.destroyRef.onDestroy(() => this.resetLiveAssistantDraftState());
         this.destroyRef.onDestroy(() => {
             if (this.draftSwapScrollRafId !== undefined) {
@@ -860,28 +843,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                         this.isLoading.set(false);
                     },
                     error: () => {
-                        // Send failed before any stage started: release the bottom pin and stop
-                        // the RAF loop here, since no stream will arrive to settle it (the
-                        // pinSawStreaming release path never runs). Done only on the send error,
-                        // not during the normal pre-stream gap.
                         this.isLoading.set(false);
-                        if (!this.pinSawStreaming) {
-                            this.releasePinToBottom();
-                        }
                     },
                 });
             this.newMessageTextContent.set('');
-            // User explicitly sent a message: follow it to the bottom and keep the view
-            // pinned there while the echoed message, thinking bubble and streamed response
-            // arrive asynchronously via WebSocket. Pinning is released by a real upward
-            // gesture (see onMessagesUserScroll).
-            this.forcePinToBottom = true;
-            this.pinSawStreaming = false;
-            this.isScrolledToBottom.set(true);
-            this.scrollToBottom('auto');
-            // Keep following the bottom frame-by-frame as the message, thinking bubble and
-            // response render asynchronously, so the user is taken down as soon as they appear.
-            this.startPinScrollLoop();
+            // The echoed user message renders asynchronously; anchor it after the DOM exists.
+            this.pendingAnchorScroll = true;
         }
         this.resetChatBodyHeight();
     }
@@ -1007,7 +974,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     private preserveScrollAcrossDraftSwap(): void {
         const container = this.messagesElement()?.nativeElement as HTMLElement | undefined;
-        if (!container || this.forcePinToBottom) {
+        if (!container) {
             return;
         }
         const scrollTopBeforeSwap = container.scrollTop;
@@ -1033,7 +1000,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 this.pendingFinalizedLiveAssistantDraftRunId = this.liveAssistantDraftRunId;
             }
             this.clearLiveAssistantDraftAnimation();
-            this.clearLiveAssistantDraftScrollTimeout();
             this.liveAssistantDraftRunId = undefined;
             return;
         }
@@ -1044,8 +1010,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.pendingFinalizedLiveAssistantDraftRunId = undefined;
             this.liveAssistantDraftTargetText = '';
             this.displayedLiveAssistantDraftText.set('');
-            this.releasePinToBottom();
-            this.scheduleLiveAssistantDraftScroll(draft.runId);
         }
 
         this.updateLiveAssistantDraftTargetText(draft.text);
@@ -1113,46 +1077,54 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     private resetLiveAssistantDraftState(): void {
         this.clearLiveAssistantDraftAnimation();
-        this.clearLiveAssistantDraftScrollTimeout();
         this.liveAssistantDraftRunId = undefined;
         this.pendingFinalizedLiveAssistantDraftRunId = undefined;
-        this.lastScrolledLiveAssistantDraftRunId = undefined;
     }
 
-    private scheduleLiveAssistantDraftScroll(runId: string): void {
-        if (this.lastScrolledLiveAssistantDraftRunId === runId) {
-            return;
-        }
-        this.lastScrolledLiveAssistantDraftRunId = runId;
-        this.clearLiveAssistantDraftScrollTimeout();
-        this.liveDraftScrollTimeoutId = setTimeout(() => {
-            this.liveDraftScrollTimeoutId = undefined;
-            this.scrollLiveAssistantDraftIntoView();
-        });
-    }
-
-    private clearLiveAssistantDraftScrollTimeout(): void {
-        if (this.liveDraftScrollTimeoutId !== undefined) {
-            clearTimeout(this.liveDraftScrollTimeoutId);
-            this.liveDraftScrollTimeoutId = undefined;
-        }
-    }
-
-    scrollLiveAssistantDraftIntoView(behavior: ScrollBehavior = 'smooth'): void {
+    private scrollAnchoredMessageToTop(): void {
         const container: HTMLElement | undefined = this.messagesElement()?.nativeElement;
-        const draftElement: HTMLElement | undefined = this.liveAssistantDraftElement()?.nativeElement;
-        if (!container || !draftElement) {
+        const anchorElement = container ? this.findAnchoredMessageElement(container) : undefined;
+        if (!container || !anchorElement) {
             return;
         }
-        // Scroll only the chat body. scrollIntoView() would also scroll every scrollable
-        // ancestor — in the full-page course chat that drags the whole page along, shoving
-        // the input bar up and leaving dead space below it.
-        const containerRect = container.getBoundingClientRect();
-        const draftRect = draftElement.getBoundingClientRect();
+        this.updateExchangeSpacer();
         container.scrollTo({
-            top: Math.max(0, container.scrollTop + (draftRect.top - containerRect.top)),
-            behavior,
+            top: this.getAnchorTop(container, anchorElement),
+            behavior: 'smooth',
         });
+    }
+
+    private updateExchangeSpacer(): void {
+        const container: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+        const spacerElement = container?.querySelector<HTMLElement>('.stream-exchange-spacer');
+        const anchorElement = container ? this.findAnchoredMessageElement(container) : undefined;
+        if (!container || !spacerElement || !anchorElement) {
+            return;
+        }
+
+        const contentSansSpacer = container.scrollHeight - spacerElement.offsetHeight;
+        const needed = Math.max(0, this.getAnchorTop(container, anchorElement) + container.clientHeight - contentSansSpacer);
+        const nextHeight = this.exchangeAnchorActive ? needed : Math.min(spacerElement.offsetHeight, needed);
+        this.setExchangeSpacerHeight(spacerElement, nextHeight);
+    }
+
+    private findAnchoredMessageElement(container: HTMLElement): HTMLElement | undefined {
+        if (this.anchoredMessageId === undefined) {
+            return undefined;
+        }
+        return container.querySelector<HTMLElement>(`[data-message-id="${this.anchoredMessageId}"]`) ?? undefined;
+    }
+
+    private getAnchorTop(container: HTMLElement, anchorElement: HTMLElement): number {
+        const containerRect = container.getBoundingClientRect();
+        const anchorRect = anchorElement.getBoundingClientRect();
+        return anchorRect.top - containerRect.top + container.scrollTop;
+    }
+
+    private setExchangeSpacerHeight(spacerElement: HTMLElement, height: number): void {
+        const normalizedHeight = Math.max(0, height);
+        this.exchangeSpacerPx.set(normalizedHeight);
+        spacerElement.style.height = `${normalizedHeight}px`;
     }
 
     /**
@@ -1195,38 +1167,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         };
         this.settleScrollRafId = window.requestAnimationFrame(settle);
-    }
-
-    /**
-     * While the post-send pin is active, keep the view glued to the bottom on every animation
-     * frame. The user message, thinking bubble and streamed response all render asynchronously
-     * after onSend(); a single scroll call would run before they exist, so we follow the growing
-     * content frame-by-frame until the pin is released (gesture or stream settled).
-     */
-    private startPinScrollLoop() {
-        if (this.pinScrollRafId !== undefined) return;
-        const step = () => {
-            if (!this.forcePinToBottom) {
-                this.pinScrollRafId = undefined;
-                return;
-            }
-            const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
-            if (messagesElement) {
-                messagesElement.scrollTop = messagesElement.scrollHeight;
-            }
-            this.pinScrollRafId = window.requestAnimationFrame(step);
-        };
-        this.pinScrollRafId = window.requestAnimationFrame(step);
-    }
-
-    /** Releases the post-send bottom pin and stops the frame-by-frame scroll loop. */
-    private releasePinToBottom() {
-        this.forcePinToBottom = false;
-        this.pinSawStreaming = false;
-        if (this.pinScrollRafId !== undefined) {
-            window.cancelAnimationFrame(this.pinScrollRafId);
-            this.pinScrollRafId = undefined;
-        }
     }
 
     /**
@@ -1332,26 +1272,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     checkChatScroll() {
         const messagesElement = this.messagesElement()?.nativeElement;
         if (!messagesElement) return;
-        // While pinned (just after a send), ignore intermediate scroll readings produced by
-        // programmatic scrolling and async content growth so they cannot un-pin the view.
-        if (this.forcePinToBottom) {
-            this.isScrolledToBottom.set(true);
-            return;
-        }
         const { scrollTop, scrollHeight, clientHeight } = messagesElement;
         this.isScrolledToBottom.set(scrollTop >= scrollHeight - clientHeight - 50);
-    }
-
-    /**
-     * Handles a genuine upward scroll gesture (wheel up or touch drag) from the user.
-     * Releases the post-send bottom pin so the user can freely scroll the history.
-     */
-    onMessagesUserScroll(event: WheelEvent | TouchEvent) {
-        if (!this.forcePinToBottom) return;
-        // Wheel up (deltaY < 0) or any touch drag means the user wants to leave the bottom.
-        if (event instanceof WheelEvent && event.deltaY >= 0) return;
-        this.releasePinToBottom();
-        this.checkChatScroll();
     }
 
     onSuggestionClick(suggestion: string) {
