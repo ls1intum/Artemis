@@ -642,7 +642,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (!StringUtils.hasText(searchTerm)) {
             return Page.empty(page);
         }
-        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        String escaped = escapeSearchTerm(searchTerm);
         return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
     }
 
@@ -658,6 +658,51 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
             """)
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
+
+    /**
+     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains),
+     * excluding users who belong to any of the given staff groups (teaching assistant, editor, instructor) or have
+     * admin/super-admin authority.
+     * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
+     *
+     * @param page            Pageable controlling page index and size
+     * @param searchTerm      the search string entered by the user
+     * @param staffGroupNames the set of group names whose members should be excluded
+     * @return a page of matching non-staff users
+     */
+    default Page<User> searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, String searchTerm, Set<String> staffGroupNames) {
+        if (!StringUtils.hasText(searchTerm)) {
+            return Page.empty(page);
+        }
+        String escaped = escapeSearchTerm(searchTerm);
+        return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(page, escaped, staffGroupNames);
+    }
+
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND (
+                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM User u JOIN u.groups g
+                    WHERE u.id = user.id AND g IN :staffGroupNames
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM User u JOIN u.authorities a
+                    WHERE u.id = user.id AND a.name IN ('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')
+                )
+            """)
+    Page<User> findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm,
+            @Param("staffGroupNames") Set<String> staffGroupNames);
+
+    private static String escapeSearchTerm(final String searchTerm) {
+        return searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
 
     /**
      * Find all users by their logins with their organizations eagerly loaded.
