@@ -1,0 +1,8 @@
+.statistic-summary {
+    // Optically centre the documentation info icon with the large heading.
+    // align-items-center lines the icon up with the heading's metric box, which sits
+    // slightly above the visual centre of the lowercase text, so nudge it down a touch.
+    h2 + jhi-documentation-button {
+        transform: translateY(0.1em);
+    }
+}

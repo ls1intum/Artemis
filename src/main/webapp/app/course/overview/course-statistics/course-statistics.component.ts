@@ -104,7 +104,7 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss', './course-statistics.component.scss'],
     imports: [
         NgbDropdown,
         NgbDropdownToggle,
