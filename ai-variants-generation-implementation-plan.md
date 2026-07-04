@@ -24,6 +24,7 @@ The variant is placed standalone, in an existing `ExerciseVariantGroup`, or in a
 |---|---|
 | Programming | Compile and pass **100% of tests in the solution repository**; **fail tests in the template repository**; have a consistent problem statement (tasks reference real test names); have unique short name / project key |
 | Quiz | Pass `QuizExercise.isValid()` (every question valid: correct mappings, ≥1 correct MC option, valid SA spots/solutions); pass `validateQuizExerciseFiles` for DnD |
+| Modeling (future work) | Even though full modeling support is future work, the quality bar is fixed now: any generated solution model MUST be a **valid Apollon UML model** — schema-valid JSON for the diagram type, all element/relationship references resolvable, renderable in the Apollon editor without repair. The modeling toolset/verifier stubs (Section 8) enforce this from day one |
 | All | Be consistent with the source exercise except for the requested changes; be immediately editable by the instructor through the normal editors |
 
 A variant that fails the final gates is **kept as a clearly flagged draft** (never silently published, never silently deleted) so the instructor can repair it in the editor — this respects the "system must recover from errors" requirement without throwing away expensive LLM work.
@@ -32,7 +33,8 @@ A variant that fails the final gates is **kept as a clearly flagged draft** (nev
 
 - Modeling/text/file-upload variants beyond the thin proof-of-extensibility adapter (Section 8).
 - Regenerating drag-and-drop background/item **images** (source images are carried over unchanged).
-- Exam-mode variants.
+
+**In scope (cheap win): exam-mode variants.** Exam exercise groups already exist, so exam support is only (a) showing the "Create Variant with AI" button on exam exercise rows and (b) a placement rule: **an exam variant is always placed in the same exam exercise group as its source** (no placement step in the wizard for exam exercises). See Section 5.5.
 
 ---
 
@@ -46,7 +48,7 @@ The feature is a new Hyperion sub-module (`hyperion/service/variants/` + `hyperi
 Wizard (existing UI) ──POST /api/hyperion/exercises/{id}/generate-variant──▶ jobId
         ▲                                                                    │
         │  WebSocket progress events (phase transitions, files, attempts)    ▼
-        └──────────────  ExerciseVariantOrchestrator (async job)  ───────────┘
+        └──────────  ExerciseVariantGenerationPipeline (async job)  ─────────┘
                                        │
    ┌───────────┬─────────────┬─────────┴────────┬──────────────┬─────────────┐
    ANALYZING   PLANNING      PROVISIONING       TRANSFORMING   VERIFYING     FINALIZING
@@ -57,7 +59,9 @@ Wizard (existing UI) ──POST /api/hyperion/exercises/{id}/generate-variant─
                                                       └──REPAIRING◀──┘  (bounded loop)
 ```
 
-Design principle throughout: **the orchestrator, planner, agent loop, and job/progress infrastructure are written once and are exercise-type-agnostic; everything type-specific lives behind small capability interfaces.**
+**Naming:** the phase-driving component is `ExerciseVariantGenerationPipeline` (working title in earlier drafts was "orchestrator" — dropped because the term is strongly associated with container orchestration/Kubernetes and means something different there; "pipeline" accurately describes the phased, largely one-directional flow with a single bounded back-edge, and is established thesis vocabulary). The term "orchestrator" is not used anywhere in code, prompts, or the thesis.
+
+Design principle throughout: **the pipeline, planner, agent loop, and job/progress infrastructure are written once and are exercise-type-agnostic; everything type-specific lives behind small capability interfaces.**
 
 ### 2.2 Explicit phase state machine (not an implicit call chain)
 
@@ -66,19 +70,19 @@ A variant job advances through typed phases:
 ```java
 enum VariantJobPhase {
     ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING, FINALIZING,
-    COMPLETED, DRAFT_WITH_WARNINGS, FAILED
+    COMPLETED, DRAFT_WITH_WARNINGS, FAILED, CANCELLED
 }
 ```
 
-The job record (jobId, exerciseId, phase, attempt counter, `ChangePlan`, accumulated verifier findings, token usage) lives in a **Hazelcast map**, exactly like `HyperionCodeGenerationJobService.JobInfo` — distributed-safe, deduplicates concurrent jobs per exercise, survives the request thread.
+The job record (jobId, exerciseId, initiating user, phase, attempt counter, `ChangePlan`, **per-phase step outputs** (Section 2.4), accumulated verifier findings, token usage) lives in a **Hazelcast map**, exactly like `HyperionCodeGenerationJobService.JobInfo` — distributed-safe, deduplicates concurrent jobs per exercise, survives the request thread, and — because it outlives the wizard — is what makes background generation and the navbar job tray (Section 5.4) possible.
 
-**Why a state machine instead of one long method:** multi-minute jobs need attributable failures ("failed in VERIFYING, attempt 2/3, template build passed when it should fail"), per-phase recovery policies (Section 6), a 1:1 mapping to the wizard's existing `GENERATION_STEPS` progress UI, and per-phase telemetry for the thesis evaluation (Section 7).
+**Why a state machine instead of one long method:** multi-minute jobs need attributable failures ("failed in VERIFYING, attempt 2/3, template build passed when it should fail"), per-phase recovery policies (Section 6), a 1:1 mapping to the wizard's progress steps (which are derived from this enum — Section 5.2), and per-phase telemetry for the thesis evaluation (Section 7).
 
 ### 2.3 Ports & adapters for exercise-type variability
 
-**Rejected alternative:** one `VariantGenerationStrategy` per exercise type that owns its whole pipeline. This duplicates orchestration/repair/progress logic N times and makes every cross-cutting quality improvement N-times work.
+**Rejected alternative:** one `VariantGenerationStrategy` per exercise type that owns its whole pipeline. This duplicates phase-sequencing/repair/progress logic N times and makes every cross-cutting quality improvement N-times work.
 
-Instead, the orchestrator depends on five small capability interfaces; each exercise type contributes one adapter per capability:
+Instead, the pipeline depends on five small capability interfaces; each exercise type contributes one adapter per capability:
 
 ```java
 interface VariantContextRenderer  { String renderContext(Exercise source); }
@@ -88,7 +92,7 @@ interface VariantVerifier         { VerificationReport verify(Exercise variant, 
 interface VariantFinalizer        { void finalize(Exercise variant, VariantRequest req); }        // group assignment, publish
 ```
 
-A `VariantTypeRegistry` resolves the adapter bundle from Spring-injected lists keyed by `ExerciseType` — the standard Spring idiom (inject `List<T>`, pick by `supports(...)`), applied at the *capability* level rather than the pipeline level. Adding a new exercise type = implementing thin adapters; the orchestrator, planner, agent loop, job infra, REST API, and client are untouched.
+A `VariantTypeRegistry` resolves the adapter bundle from Spring-injected lists keyed by `ExerciseType` — the standard Spring idiom (inject `List<T>`, pick by `supports(...)`), applied at the *capability* level rather than the pipeline level. Adding a new exercise type = implementing thin adapters; the pipeline, planner, agent loop, job infra, REST API, and client are untouched.
 
 Most adapters are wrappers around existing, battle-tested services (Section 3/4) — very little new logic.
 
@@ -99,17 +103,18 @@ The PLANNING phase is a dedicated LLM call with structured output (`BeanOutputCo
 **Input:** rendered source-exercise context + wizard intent (target difficulty / domain text / custom instructions).
 
 **Output — `ChangePlan` record:**
+- the **generated variant title** — the LLM names the variant to fit the transformed exercise (essential for domain changes: "Bank Account Ledger" → "Cargo Bay Inventory"; a copied title would be wrong, and instructors shouldn't have to invent one up front). The short name is derived from it deterministically; collisions are handled by suffix retry (Section 6),
 - the rewritten problem statement,
 - an ordered list of concrete intended changes ("rename `BankAccount` → `CargoBay` across all repos", "remove task 3 and tests `testSortDescending*`"),
 - **invariants to preserve** ("grading semantics unchanged: same number of tasks and weights", "test names referenced in problem statement tasks must exist in test repo").
 
-The plan is stored on the job — inspectable in the UI, loggable, and directly evaluable for the thesis ("did the executed diff match the plan?"). It becomes the agent's contract in the TRANSFORMING phase.
+The plan is stored on the job, and so is the **output of every completed phase** (`Map<VariantJobPhase, StepOutputDTO>`: the rendered plan, provisioned exercise id, per-attempt transform summaries and diffs-of-record, verification reports). In the generation modal each finished step is an **expandable panel** that reveals its output, so instructors can inspect what the LLM planned and did — during the run and after completion (Section 5.4). This is also loggable and directly evaluable for the thesis ("did the executed diff match the plan?"). The `ChangePlan` becomes the agent's contract in the TRANSFORMING phase.
 
 **Why not encode intents as code-level step combinations** (e.g. a `DifficultyTransformation` + `DomainTransformation` class hierarchy): the intent space is open-ended (free-text custom instructions), so this variability belongs in the planner prompt, not the type system. Code-level intent branching adds classes without adding output quality.
 
 ### 2.5 Hybrid agentic core: one generic tool-calling loop for Transform + Repair
 
-The deterministic scaffold (cloning, orchestration, final gates, group assignment) is classic code. The TRANSFORMING/REPAIRING phases run a **single reusable Spring AI tool-calling agent loop**, parameterized only by:
+The deterministic scaffold (cloning, phase sequencing, final gates, group assignment) is classic code. The TRANSFORMING/REPAIRING phases run a **single reusable Spring AI tool-calling agent loop**, parameterized only by:
 
 - the type's toolset (from `VariantToolsetFactory`),
 - the `ChangePlan` (system prompt contract),
@@ -144,6 +149,207 @@ Spring AI implementation note: register tools as `ToolCallback`s on the `ChatCli
 
 Findings are returned as structured data and fed back into the agent loop as the repair signal. If the budget is exhausted with failures remaining → `DRAFT_WITH_WARNINGS` with the findings attached. **Never silent success.**
 
+### 2.7 UML diagrams (thesis-ready)
+
+Source-of-truth diagrams in Mermaid (render on GitHub; convert for the thesis with `mmdc -i plan.mmd -o fig.pdf` or re-typeset in PlantUML — the element names below are the real class names, so the figures stay valid against the implementation).
+
+#### 2.7.1 Class diagram — pipeline, job infrastructure, and capability adapters
+
+```mermaid
+classDiagram
+    direction TB
+
+    class HyperionExerciseVariantResource {
+        +generateVariant(exerciseId, VariantGenerationRequestDTO) jobId
+        +getActiveJob(exerciseId) VariantJobDTO
+        +getJobsOfCurrentUser() List~VariantJobDTO~
+        +getJobDetail(jobId) VariantJobDetailDTO
+        +cancelJob(jobId) void
+    }
+
+    class ExerciseVariantJobService {
+        -IMap~String, VariantJob~ jobs
+        +startJob(exercise, request) VariantJob
+        +getActiveJob(exerciseId) VariantJob
+        +getJobsOfUser(login) List~VariantJob~
+        +recordStepOutput(jobId, phase, output)
+        +requestCancel(jobId)
+    }
+
+    class ExerciseVariantTaskService {
+        +runJobAsync(job) void
+    }
+
+    class ExerciseVariantGenerationPipeline {
+        +run(job) void
+    }
+
+    class VariantAgentLoopRunner {
+        +runLoop(changePlan, tools, budgets) AgentResult
+    }
+
+    class VariantTypeRegistry {
+        +resolve(exerciseType) VariantTypeAdapters
+    }
+
+    class VariantJob {
+        +String jobId
+        +Long sourceExerciseId
+        +String initiatorLogin
+        +VariantJobPhase phase
+        +int attempt
+        +boolean cancelRequested
+        +ChangePlan changePlan
+        +Map~VariantJobPhase, StepOutput~ stepOutputs
+        +List~String~ warnings
+        +Long variantExerciseId
+    }
+
+    class VariantJobPhase {
+        <<enumeration>>
+        ANALYZING
+        PLANNING
+        PROVISIONING
+        TRANSFORMING
+        VERIFYING
+        REPAIRING
+        FINALIZING
+        COMPLETED
+        DRAFT_WITH_WARNINGS
+        FAILED
+        CANCELLED
+    }
+
+    class VariantContextRenderer {
+        <<interface>>
+        +renderContext(source) String
+    }
+    class ExerciseProvisioner {
+        <<interface>>
+        +provision(source, request) Exercise
+    }
+    class VariantToolsetFactory {
+        <<interface>>
+        +createTools(variant, job) List~ToolCallback~
+    }
+    class VariantVerifier {
+        <<interface>>
+        +verify(variant, changePlan) VerificationReport
+    }
+    class VariantFinalizer {
+        <<interface>>
+        +finalize(variant, request) void
+    }
+
+    class ProgrammingVariantAdapters {
+        wraps ImportService, GitService,
+        HyperionBuildVerificationService
+    }
+    class QuizVariantAdapters {
+        wraps QuizExerciseImportService,
+        isValid(), validateQuizExerciseFiles
+    }
+
+    HyperionExerciseVariantResource --> ExerciseVariantJobService : start / read jobs
+    HyperionExerciseVariantResource --> ExerciseVariantTaskService : dispatch
+    ExerciseVariantTaskService --> ExerciseVariantGenerationPipeline : drives (@Async)
+    ExerciseVariantJobService "1" o-- "*" VariantJob : Hazelcast map (TTL)
+    VariantJob --> VariantJobPhase
+    ExerciseVariantGenerationPipeline --> VariantTypeRegistry : resolve adapters
+    ExerciseVariantGenerationPipeline --> VariantAgentLoopRunner : TRANSFORMING / REPAIRING
+    ExerciseVariantGenerationPipeline ..> VariantContextRenderer
+    ExerciseVariantGenerationPipeline ..> ExerciseProvisioner
+    ExerciseVariantGenerationPipeline ..> VariantToolsetFactory
+    ExerciseVariantGenerationPipeline ..> VariantVerifier
+    ExerciseVariantGenerationPipeline ..> VariantFinalizer
+    VariantContextRenderer <|.. ProgrammingVariantAdapters
+    ExerciseProvisioner <|.. ProgrammingVariantAdapters
+    VariantToolsetFactory <|.. ProgrammingVariantAdapters
+    VariantVerifier <|.. ProgrammingVariantAdapters
+    VariantFinalizer <|.. ProgrammingVariantAdapters
+    VariantContextRenderer <|.. QuizVariantAdapters
+    ExerciseProvisioner <|.. QuizVariantAdapters
+    VariantToolsetFactory <|.. QuizVariantAdapters
+    VariantVerifier <|.. QuizVariantAdapters
+    VariantFinalizer <|.. QuizVariantAdapters
+```
+
+#### 2.7.2 State machine — `VariantJobPhase` lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> ANALYZING : POST generate-variant
+    ANALYZING --> PLANNING : source context rendered
+    PLANNING --> PROVISIONING : valid ChangePlan (title, changes, invariants)
+    PLANNING --> FAILED : malformed output after 2 re-prompts
+    PROVISIONING --> TRANSFORMING : clone created, short name unique (suffix retry)
+    PROVISIONING --> FAILED : provisioning error → cleanup half-created exercise
+    TRANSFORMING --> VERIFYING : agent finished round
+    VERIFYING --> FINALIZING : all gates green (solution passes, template fails, isValid, consistency)
+    VERIFYING --> REPAIRING : gates red ∧ attempt < budget
+    REPAIRING --> VERIFYING : fixes applied (test-repo edits re-verify both builds)
+    VERIFYING --> DRAFT_WITH_WARNINGS : budget exhausted → keep flagged draft
+    FINALIZING --> COMPLETED : group / exam-group assigned, DONE event
+    ANALYZING --> CANCELLED : cancelRequested
+    PLANNING --> CANCELLED : cancelRequested
+    PROVISIONING --> CANCELLED : cancelRequested
+    TRANSFORMING --> CANCELLED : cancelRequested → clone cleanup
+    VERIFYING --> CANCELLED : cancelRequested → clone cleanup
+    REPAIRING --> CANCELLED : cancelRequested → clone cleanup
+    COMPLETED --> [*]
+    DRAFT_WITH_WARNINGS --> [*]
+    FAILED --> [*]
+    CANCELLED --> [*]
+```
+
+*(Cancellation is cooperative: the flag is evaluated at phase transitions and between agent rounds — FINALIZING and later cannot be cancelled.)*
+
+#### 2.7.3 Sequence diagram — generation with wizard close + navbar tray
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Instructor
+    participant Wizard as Wizard modal (Angular)
+    participant Tray as Navbar job tray
+    participant API as HyperionExerciseVariantResource
+    participant Jobs as ExerciseVariantJobService (Hazelcast)
+    participant Pipeline as ExerciseVariantGenerationPipeline (@Async)
+    participant LLM as ChatClient (Spring AI)
+    participant CI as LocalCI build
+
+    Instructor->>Wizard: select intents (difficulty / domain / custom), start
+    Wizard->>API: POST /exercises/{id}/generate-variant
+    API->>Jobs: startJob (dedup per exercise)
+    API-->>Wizard: jobId
+    Wizard->>Jobs: subscribe /user/topic/hyperion/variant-generation/jobs/{jobId}
+
+    par background job
+        Pipeline->>LLM: PLANNING — structured ChangePlan (incl. generated title)
+        Pipeline->>Pipeline: PROVISIONING — import/clone via existing ImportService
+        loop bounded transform + verify budget
+            Pipeline->>LLM: TRANSFORMING — agent loop (ChangePlan contract)
+            LLM-->>Pipeline: tool calls (readFile, applyEdit, runBuild, ...)
+            Pipeline->>CI: commit + push, trigger builds
+            CI-->>Pipeline: solution result (must pass), template result (must fail)
+            Pipeline->>Jobs: update phase, record step output
+            Jobs-->>Wizard: WS: PHASE_CHANGED / ATTEMPT / STEP_OUTPUT
+            Jobs-->>Tray: WS: spinner + progress update
+        end
+        Pipeline->>Pipeline: FINALIZING — persist, assign (exam) group
+        Jobs-->>Tray: WS: DONE (variantExerciseId)
+    and instructor works elsewhere
+        Instructor->>Wizard: close modal (job unaffected)
+        Instructor->>Tray: click running job
+        Tray->>API: GET /variant-jobs/{jobId}
+        API-->>Tray: job detail incl. step outputs
+        Tray->>Wizard: reopen modal in monitor mode (expandable steps)
+    end
+
+    Instructor->>Tray: open finished job
+    Tray-->>Instructor: deep link to generated exercise editor
+```
+
 ---
 
 ## 3. Programming Exercise Pipeline (Student A focus)
@@ -160,6 +366,8 @@ All building blocks exist; the work is composition + prompts.
 | FINALIZING | Persist problem statement, assign variant group per placement choice, publish DONE with new exercise id | `ExerciseVariantGroupResource` assignment logic (reuse the service-level path behind `PUT .../variant-group`), existing group-creation endpoint |
 
 **Transformation order that minimizes iterations:** solution repo first (until green), then test repo only if the plan changes tests (then re-verify solution), then template (must fail), problem statement last (agent has final test names in context). The planner is instructed to prefer plans that keep the test surface stable when the intent allows it (domain re-theme ⇒ rename-only test changes).
+
+**Build-dependency constraint (order rationale):** both the template and solution builds compile **against the test repository** — a test-repo change invalidates every previously green build result. Therefore: (1) any TRANSFORMING round that touches the test repo must re-verify **both** solution (green) and template (red) afterwards, never reuse cached results; (2) if the test repo is edited mid-repair, prior "solution green" evidence is discarded from the agent's context and the verifier state; (3) the cheapest plans are those that never touch tests — which is exactly what the planner is biased toward.
 
 **Refactor note:** `waitForBuildResult` & friends currently live privately in `HyperionCodeGenerationExecutionService`. Day-1 task: extract them into e.g. `HyperionBuildVerificationService` used by both features — do not copy-paste the polling loop.
 
@@ -185,45 +393,82 @@ Simpler — no repos, no CI; validation is synchronous and cheap, so agent itera
 ### 5.1 REST API (one endpoint for all types)
 
 ```
-POST /api/hyperion/exercises/{exerciseId}/generate-variant   → 200 { jobId }
+POST /api/hyperion/exercises/{exerciseId}/generate-variant        → 200 { jobId }
 GET  /api/hyperion/exercises/{exerciseId}/generate-variant/active → job status (reconnect/dedup)
+GET  /api/hyperion/variant-jobs                                   → current user's jobs (running + finished) for the navbar tray (Section 5.4)
+GET  /api/hyperion/variant-jobs/{jobId}                           → full job detail incl. per-phase step outputs (modal re-open)
+DELETE /api/hyperion/variant-jobs/{jobId}                         → cancel a running job (cooperative, Section 5.2; only the initiating user)
 ```
 
-`@EnforceAtLeastEditorInCourse`, matching the wizard button's visibility condition. Request DTO mirrors the wizard state exactly:
+`@EnforceAtLeastEditorInCourse` on the exercise-scoped endpoints; the `variant-jobs` endpoints return only jobs the current user started (per-user scoping, re-checked server-side). Request DTO — intents are expressed by field **presence alone**; a `null`/blank field means "no change on this dimension" (no `changeX` booleans: they can only contradict the field they gate, and "present ⇒ requested" is the invariant-free encoding). There is **no client-supplied title** — the planner generates one to fit the transformed exercise (Section 2.4):
 
 ```java
 record VariantGenerationRequestDTO(
-    boolean changeDifficulty, DifficultyLevel targetDifficulty,
-    boolean changeDomain, String domainText,
-    boolean changeCustom, String additionalInstructions,
-    String title, PlacementDTO placement /* EXISTING_GROUP(groupId) | NEW_GROUP(fields) | STANDALONE */) {}
+    @Nullable DifficultyLevel targetDifficulty,   // null = keep difficulty
+    @Nullable String domainText,                  // null/blank = keep domain
+    @Nullable String additionalInstructions,      // null/blank = none
+    PlacementDTO placement /* EXISTING_GROUP(groupId) | NEW_GROUP(fields) | STANDALONE | SAME_EXAM_GROUP (implicit for exam exercises) */) {}
 ```
 
-The exercise type is read from the source exercise server-side; the registry resolves the adapters. Unsupported types → 400 with a translatable error key (client hides/disables the button per type anyway).
+Validation: at least one of the three intent fields must be non-empty → otherwise 400. The exercise type is read from the source exercise server-side; the registry resolves the adapters. Unsupported types → 400 with a translatable error key (client hides/disables the button per type anyway).
 
 ### 5.2 Job + progress infrastructure
 
 Clone the proven trio, generalized for variants:
 
 - `ExerciseVariantJobService` — Hazelcast map, `startJob` / `getActiveJob` dedup (mirrors `HyperionCodeGenerationJobService`).
-- `ExerciseVariantTaskService.runJobAsync(...)` — `@Async`, drives the orchestrator (mirrors `HyperionCodeGenerationTaskService`).
+- `ExerciseVariantTaskService.runJobAsync(...)` — `@Async`, drives the pipeline (mirrors `HyperionCodeGenerationTaskService`).
 - Events over `HyperionWebsocketService` on `/user/topic/hyperion/variant-generation/jobs/{jobId}`:
 
 ```java
-record VariantGenerationEventDTO(Type type /* PHASE_CHANGED, PROGRESS, ATTEMPT, DONE, FAILED */,
+record VariantGenerationEventDTO(Type type /* PHASE_CHANGED, PROGRESS, ATTEMPT, STEP_OUTPUT, DONE, FAILED, CANCELLED */,
     VariantJobPhase phase, Integer attempt, Integer maxAttempts, String detail,
     Long variantExerciseId, List<String> warnings) {}
 ```
 
-Phase transitions map 1:1 onto the wizard's existing `GENERATION_STEPS` labels ("Building solution repository", "Verifying 100% test score", …) — the fake progress UI becomes the real one with minimal template change.
+**Cancellation (cooperative):** `DELETE /variant-jobs/{jobId}` sets a `cancelRequested` flag on the Hazelcast job record — distributed-safe, so it works regardless of which node runs the job. The pipeline checks the flag at every phase transition and between agent-loop rounds/tool calls (never mid-LLM-call or mid-build — those complete and are then discarded). On cancel: any provisioned half-exercise is deleted via the existing exercise deletion service (repos + build plans cleaned up, same path as the hard-failure policy), the job transitions to `CANCELLED`, and a `CANCELLED` event is published. Cancelling a job that already reached FINALIZING is rejected (409) — at that point the variant exists and the instructor deletes it like any exercise.
+
+**Job retention for the tray:** finished jobs (`COMPLETED` / `DRAFT_WITH_WARNINGS` / `FAILED` / `CANCELLED`) are **not removed** from the Hazelcast map on completion — they stay (with `variantExerciseId` and step outputs) under a TTL (e.g. 24 h, Hazelcast per-entry TTL) so the navbar tray can list them and deep-link to the generated exercise's editor. Only the per-exercise *dedup* lock is released on completion; the job record itself remains readable.
+
+**The progress UI reflects the real pipeline, not the old mock:** the wizard's hardcoded `GENERATION_STEPS` are replaced by steps **derived from `VariantJobPhase`** (single source of truth, shared enum via the OpenAPI client) with type-specific sub-labels driven by `PROGRESS`/`ATTEMPT` events ("Building solution repository — attempt 2/3", "Validating quiz questions"). REPAIRING renders as a repeat-visit on the verify step with the attempt counter, not as a fake linear step.
 
 ### 5.3 Client changes (small — the wizard already exists)
 
-1. New `ExerciseVariantGenerationService` (Angular) calling the endpoint (via the regenerated OpenAPI client, like `hyperionCodeGenerationApi`).
-2. In `exercise-variant-ai-modal-wizard.component.ts`: replace the `setInterval` mock in `startGeneration()` with the POST + a WebSocket subscription (reuse the `hyperion-websocket.service.ts` `subscribeToJob` pattern); drive step index from `PHASE_CHANGED` events; on `DONE`, fetch the created exercise and show the real result step (incl. `DRAFT_WITH_WARNINGS` state with the warnings listed).
+1. New `ExerciseVariantGenerationService` (Angular) calling the endpoints (via the regenerated OpenAPI client, like `hyperionCodeGenerationApi`); it also holds the signal-based job-tray state (Section 5.4).
+2. In `exercise-variant-ai-modal-wizard.component.ts`: replace the `setInterval` mock in `startGeneration()` with the POST + a WebSocket subscription (reuse the `hyperion-websocket.service.ts` `subscribeToJob` pattern); progress steps derived from `VariantJobPhase` (Section 5.2); finished steps render as expandable panels showing the step output (`STEP_OUTPUT` events / job-detail endpoint); on `DONE`, fetch the created exercise and show the real result step (incl. `DRAFT_WITH_WARNINGS` state with the warnings listed). Remove the wizard's title input (the title is planner-generated, Section 5.1) and the per-dimension toggle booleans if present — intents are just the filled-in fields.
 3. Delete the mock generation from `exercise-variant-ai-modal.utils.ts`.
 4. **Bind `(variantAdded)` in `exercise-actions.component.html`** (currently unbound!) and bubble it to `course-management-exercises.component.ts` to insert the new row / refresh groups via the existing `ExerciseVariantGroupService` load path. Placement in an existing/new group happens server-side in FINALIZING; the client only refreshes.
 5. Resume support: on wizard open, call the `active` endpoint to re-attach to a running job.
+6. **The wizard is closable during generation** — closing it does not cancel the job (Section 5.4).
+
+### 5.4 Background generation & navbar job tray
+
+Generation is a multi-minute background job; the instructor must not be held hostage by a modal.
+
+**Closable wizard.** Once the job is started, the wizard's close button stays enabled. Closing only detaches the UI — the `@Async` job keeps running server-side (it never depended on the client connection; the Hazelcast job record is the source of truth). No confirmation dialog is needed because nothing is lost.
+
+**Navbar tray button.** A new standalone component (`variant-generation-tray.component.ts`, mounted in `navbar.component.html`) shows an icon button (e.g. `faWandMagicSparkles`):
+
+- Hidden when the user has no variant jobs (running or retained-finished).
+- While ≥1 job is running: the icon is overlaid with a **spinner ring** (`p-progressSpinner`-style ring or `fa-spinner fa-spin` badge) — the at-a-glance "AI is generating in the background" signal.
+- A count badge shows the number of running jobs.
+
+**Tray dropdown modal.** Clicking the button opens a PrimeNG overlay (`p-popover`) listing the user's jobs from `GET /api/hyperion/variant-jobs`, kept live via the same per-job WebSocket topics:
+
+- **Running jobs**: source exercise title, current phase label, slim progress bar (phase index / total), attempt counter during REPAIRING, and a **cancel action** (confirmation dialog — cancellation discards the LLM work done so far and deletes the provisioned clone). *Otherwise state only — no step outputs here; the tray stays scannable.* Cancel is also available in the generation modal while the job runs.
+- **Finished jobs remain listed** (server-side TTL, Section 5.2): `COMPLETED` shows the generated variant's title with a **deep link to the exercise editor** (type-aware route — programming → exercise detail/editor, quiz → quiz editor); `DRAFT_WITH_WARNINGS` shows a warning badge + the same link; `FAILED` shows the failure phase; `CANCELLED` shows a neutral cancelled state (no link — the clone was cleaned up).
+- **Clicking any job entry reopens the generation modal** for that job (wizard component in "monitor" mode, initialized from `GET /api/hyperion/variant-jobs/{jobId}`): the full step timeline with each finished step expandable to inspect its output (Section 2.4). So: tray = state at a glance, modal = full inspection.
+
+State handling: the tray service subscribes on login / job start, unsubscribes on completion + tray-dismissal, and re-syncs from the REST list on reconnect (WebSocket events are fire-and-forget; the job record is authoritative). Client tests cover: spinner appears on job start, survives wizard close, entry transitions to finished-with-link, modal re-open restores the step timeline.
+
+### 5.5 Exam-mode variants
+
+Exam exercises already live in exam **exercise groups**, which are exactly the "variant group" concept for exams — so no new grouping model is needed:
+
+- Show the "Create Variant with AI" button on exercise rows in the exam exercise-group view (same visibility condition, `@EnforceAtLeastEditorInCourse` still applies via the exam's course).
+- The wizard **skips the placement step** for exam exercises: placement is fixed to `SAME_EXAM_GROUP` — **the variant is always created in the same exam exercise group as its source** (that is what exam variants are for: alternative exercises drawn per student from one group).
+- Server-side, the finalizer adapter branches on `exercise.isExamExercise()`: instead of course-variant-group assignment, it sets the exam exercise group on the provisioned exercise — the import services already support exam-context imports.
+- Everything else (pipeline, planner, agent, verification, tray) is identical.
 
 ---
 
@@ -236,6 +481,8 @@ Phase transitions map 1:1 onto the wizard's existing `GENERATION_STEPS` labels (
 | Solution build red / template build green | VERIFYING | Structured failure report (compiler output, failing test list) into the agent's next round; ≤ 3–5 attempts |
 | Quiz `isValid()` false | VERIFYING | Per-question validation errors into agent's next round (cheap, sync) |
 | Budget exhausted, gates still red | REPAIRING | `DRAFT_WITH_WARNINGS`: variant kept, flagged in result step + exercise detail; instructor repairs in editor |
+| User closes wizard / navigates away mid-job | any | No effect on the job (server-side `@Async`, Hazelcast-backed); tray keeps tracking; modal re-attaches via job-detail endpoint (Section 5.4) |
+| User cancels the job (tray or modal) | < FINALIZING | Cooperative: `cancelRequested` flag checked at phase transitions and between agent rounds; provisioned clone deleted (same cleanup path as hard failure); job → `CANCELLED`. From FINALIZING on → 409, the variant already exists |
 | Hard failure before exercise exists (LLM unavailable, provisioning exception) | ≤ PROVISIONING | FAILED event; delete any half-created exercise via the existing exercise deletion service (repos + build plans cleaned up) |
 | Server restart mid-job | any | Hazelcast job record marks it stale; `active` endpoint reports FAILED-stale; provisioned exercise (if any) surfaces as draft. (Full resume = future work) |
 | CI timeout | VERIFYING | Counts as a failed attempt with a distinct `detail`; reuse `BuildResultState.TIMED_OUT` semantics |
@@ -261,7 +508,7 @@ Evaluation protocol (days 6–7, feeds the thesis):
 
 ## 8. Extensibility Proof: Modeling / Text / File-Upload (stretch or future work)
 
-Each needs only thin adapters — the orchestrator/planner/agent/API/client are shared:
+Each needs only thin adapters — the pipeline/planner/agent/API/client are shared:
 
 - **Provisioner:** delegate to `ModelingExerciseImportService` / `TextExerciseImportService` / `FileUploadExerciseImportService` (all extend `ExerciseImportService`; pure DB clones, no repos/CI — the simplest possible adapters).
 - **Toolset:** `getProblemStatement`/`setProblemStatement`, `getExampleSolution`/`setExampleSolution`; modeling adds `getSolutionModel`/`setSolutionModel` (Apollon JSON, schema-validated in the tool).
@@ -276,12 +523,13 @@ Estimated effort once programming + quiz exist: ~1 day per type including prompt
 
 **Days 1–2 (pair, shared skeleton):**
 - D1 AM: extract `waitForBuildResult`/`waitUntilRemoteHasCommit`/`hasReachedTargetResult` into a shared `HyperionBuildVerificationService` (pure refactor + existing tests still green).
-- D1 PM: job infra (`ExerciseVariantJobService`, `TaskService`, event DTO, WebSocket topic), REST endpoint + request DTO, `VariantTypeRegistry` + capability interfaces, phase machine in `ExerciseVariantOrchestrator`.
+- D1 PM: job infra (`ExerciseVariantJobService`, `TaskService`, event DTO, WebSocket topic, `cancelRequested` flag + phase-boundary checks), REST endpoints (generate, active, job list/detail, cancel) + request DTO, `VariantTypeRegistry` + capability interfaces, phase machine in `ExerciseVariantGenerationPipeline`.
 - D2: generic agent-loop runner (ChatClient + ToolCallbacks + budgets + transcript logging); planner phase with `ChangePlan`; client wiring (service, WebSocket subscription, bind `variantAdded`) against a stub toolset that echoes the source exercise — **end of day 2 milestone: wizard drives a real job end-to-end producing an unmodified clone.**
 
 **Days 3–5 (parallel):**
 - **Student A — programming:** provisioner adapter over `ProgrammingExerciseImportService` (+ short-name retry); repo toolset over `GitService`/`RepositoryService`; `runBuild`/`getBuildAndTestResults` tools over the extracted build-verification service; prompts (`plan_programming.st`, `transform_programming_system.st`); transformation-order policy; budget tuning. Milestone D4: "make it easier" variant of a real Java exercise goes green unattended; D5: domain change + custom instructions green.
 - **Student B — quiz:** context renderer + provisioner over `QuizExerciseImportService`; question toolset with JSON-schema validation; prompts (plan, transform, self-critique reusing refinement prompts); consistency-gate integration for both types; wizard polish (attempt display, warnings state, resume via `active` endpoint). Milestone D4: MC + SA variants valid unattended; D5: DnD (text-level) variants valid.
+- **Student B (client, D5):** navbar tray component + job-list endpoint + closable-wizard/monitor-mode rework (Section 5.4); expandable step-output panels; exam-mode button + `SAME_EXAM_GROUP` placement (Section 5.5 — small, mostly wiring).
 
 **Days 6–7 (pair):** integration + failure-path testing (collision, budget exhaustion, LLM outage); prompt tuning driven by the evaluation corpus; run the evaluation protocol (Section 7); tests + lint; screenshots + PR.
 
@@ -291,9 +539,9 @@ AI coding tools are assumed for: adapter/test scaffolding, prompt iteration, and
 
 ## 10. Testing Plan
 
-- **Server integration tests** (JUnit, Testcontainers/PostgreSQL, mocked `ChatClient` — the established Hyperion test pattern): orchestrator phase transitions incl. failure paths; provisioning collision retry; scripted agent-loop runs (mock ChatClient returns canned tool calls) asserting repo edits land and builds are triggered; quiz adapter round-trip asserting `isValid()`.
+- **Server integration tests** (JUnit, Testcontainers/PostgreSQL, mocked `ChatClient` — the established Hyperion test pattern): pipeline phase transitions incl. failure paths; cooperative cancellation (flag honored at phase boundary, clone cleaned up, 409 from FINALIZING on); provisioning collision retry; scripted agent-loop runs (mock ChatClient returns canned tool calls) asserting repo edits land and builds are triggered; quiz adapter round-trip asserting `isValid()`.
 - **Unit tests:** `VariantTypeRegistry` resolution, `ChangePlan` (de)serialization, tool input validation, budget enforcement.
-- **Client tests (Vitest):** wizard drives steps from WebSocket events; `DONE`/`DRAFT_WITH_WARNINGS`/`FAILED` rendering; `variantAdded` refresh path.
+- **Client tests (Vitest):** wizard drives steps from WebSocket events; `DONE`/`DRAFT_WITH_WARNINGS`/`FAILED` rendering; `variantAdded` refresh path; tray: spinner while a job runs, list survives wizard close, finished entry links to the editor, clicking an entry reopens the modal in monitor mode with expandable step outputs, cancel action confirms and transitions the entry to `CANCELLED`.
 - **E2E (Playwright, `./run-e2e-tests-local-fast.sh --filter "Variant"`):** full wizard flow against a mocked-LLM profile (deterministic canned plan + edits), asserting the variant appears in the course exercise list / group.
 - **Multi-node sanity:** one manual `run-e2e-tests-local-multinode-fast.sh` run before the PR — the job map is Hazelcast-backed and the WebSocket event must reach the user regardless of which node runs the job.
 
@@ -305,4 +553,4 @@ AI coding tools are assumed for: adapter/test scaffolding, prompt iteration, and
 - DnD image regeneration / image-aware re-theming.
 - Difficulty calibration using the existing checklist/Bloom analysis (`HyperionChecklistService`) as a planner input and post-hoc difficulty verifier.
 - Job resume after server restart; batch generation ("create 4 variants for group X").
-- Exam-mode variant groups.
+- Persisting finished-job history beyond the Hazelcast TTL (DB-backed job audit table).
