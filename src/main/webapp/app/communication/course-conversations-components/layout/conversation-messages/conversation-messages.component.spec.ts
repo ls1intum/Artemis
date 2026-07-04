@@ -671,10 +671,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should return true if at least one unread post is visible', () => {
-            const mockPostId = 1;
+            const mockPostId: number = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((...args: unknown[]) => args[0] === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBe(true);

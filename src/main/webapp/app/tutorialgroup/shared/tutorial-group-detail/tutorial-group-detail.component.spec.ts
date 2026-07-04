@@ -24,7 +24,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
-import { ConfirmationService } from 'primeng/api';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
@@ -823,7 +823,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });
@@ -843,7 +843,7 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.detectChanges();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });

@@ -99,7 +99,7 @@ examples.forEach((activeConversation) => {
                 breakpoints: { [Breakpoints.Handset]: false },
             });
 
-            queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
+            queryParamsSubject = new BehaviorSubject<Params>({});
 
             TestBed.configureTestingModule({
                 imports: [
@@ -223,7 +223,7 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
-            postsSubject = new BehaviorSubject([]);
+            postsSubject = new BehaviorSubject<Post[]>([]);
             vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
             vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
             setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');

@@ -143,7 +143,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
             horizontal: true,
             stacked: true,
             maxBarThickness: 25,
-            xAxis: { max: this.chartData().xScaleMax, tickFormatter: this.xAxisFormatting },
+            xAxis: { max: this.chartData().xScaleMax, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             yAxis: { display: false },
             legend: { position: 'bottom' },
             tooltip: false,

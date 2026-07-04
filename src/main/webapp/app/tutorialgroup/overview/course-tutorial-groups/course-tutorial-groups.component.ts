@@ -242,11 +242,11 @@ export class CourseTutorialGroupsComponent {
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
         return toSignal(
             this.activatedRoute.parent!.paramMap.pipe(
-                map((parameterMap) => {
+                map((parameterMap): number | undefined => {
                     const courseIdParameter = parameterMap.get('courseId');
                     return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
                 }),
-                distinctUntilChanged(),
+                distinctUntilChanged<number | undefined>(),
             ),
             { initialValue: undefined },
         );
