@@ -59,7 +59,7 @@ export class UserMentionAction extends TextEditorAction {
         this.disposableCompletionProvider?.dispose();
     }
 
-    async loadUsersForSearchTerm(searchTerm: string): Promise<UserNameAndLoginDTO[]> {
+    async loadUsersForSearchTerm(searchTerm: string = ''): Promise<UserNameAndLoginDTO[]> {
         const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm));
         return response.body ?? [];
     }

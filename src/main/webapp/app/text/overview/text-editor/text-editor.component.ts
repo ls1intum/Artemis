@@ -11,6 +11,7 @@ import { TextEditorService } from 'app/text/overview/service/text-editor.service
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -183,16 +184,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             .pipe(skip(1))
-            .subscribe((changedParticipation: StudentParticipation) => {
+            .subscribe((updatedParticipation: Participation | undefined) => {
+                if (!updatedParticipation) {
+                    return;
+                }
                 // subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject, so every
                 // text-editor instance receives every participation change (including the ones emitted by other
                 // instances when they call addParticipation()). Without this guard, multiple editors rendered
                 // together - e.g. several text exercises in the exam result summary - would all overwrite their
                 // own exercise/submission state with whichever participation was added last, making every text
                 // summary display the last exercise. Only react to changes for our own participation.
-                if (changedParticipation?.id !== this.participation()?.id) {
+                if (updatedParticipation?.id !== this.participation()?.id) {
                     return;
                 }
+                const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const lastResult = results?.last();

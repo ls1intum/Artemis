@@ -63,7 +63,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             horizontal: true,
             stacked: true,
             percentScale: true,
-            xAxis: { tickFormatter: this.xAxisFormatting },
+            xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             tooltip: {
                 title: (items) => items[0]?.dataset.label ?? '',
                 label: (item) => {
@@ -89,7 +89,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         barChartOptions({
             horizontal: true,
             stacked: true,
-            xAxis: { max: 100, tickFormatter: this.xAxisFormatting },
+            xAxis: { max: 100, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             tooltip: {
                 title: (items) => items[0]?.dataset.label ?? '',
                 label: (item) => {

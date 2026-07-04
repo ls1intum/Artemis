@@ -229,7 +229,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
 
     getFilesWithContent = (domain?: DomainChange) => {
         const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
-        return this.http.get(`${restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
+        return this.http.get<{ [fileName: string]: string }>(`${restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
     };
 
     createFile = (fileName: string) => {
