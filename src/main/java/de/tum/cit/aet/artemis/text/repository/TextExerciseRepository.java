@@ -78,6 +78,8 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
                 LEFT JOIN FETCH result.assessor
                 LEFT JOIN FETCH textExercise.teamAssignmentConfig
                 LEFT JOIN FETCH textExercise.gradingCriteria
+                LEFT JOIN FETCH textExercise.competencyLinks competencyLink
+                LEFT JOIN FETCH competencyLink.competency
             WHERE textExercise.id = :exerciseId
             """)
     Optional<TextExercise> findWithExampleSubmissionsAndResultsAndGradingCriteriaById(@Param("exerciseId") long exerciseId);
