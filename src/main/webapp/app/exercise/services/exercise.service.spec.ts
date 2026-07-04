@@ -4,13 +4,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
+import type { EntityResponseType, ExerciseDetailsDTO, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -29,6 +29,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('Exercise Service', () => {
     setupTestBed({ zoneless: true });
@@ -447,14 +449,60 @@ describe('Exercise Service', () => {
 
     it('should get exercise details', () => {
         const exerciseId = 123;
-
-        const expectedReturnedExerciseDetails = {
+        const releaseDate = currentDate.subtract(1, 'day').toISOString();
+        const submissionDate = currentDate.toISOString();
+        const exerciseDetailsDTO = {
             exercise: {
                 id: exerciseId,
-                posts: undefined,
-            } as ProgrammingExercise,
-            activatedExerciseHints: [{ id: 42, title: 'testHint' }],
-        } as ExerciseDetailsType;
+                type: ExerciseType.PROGRAMMING,
+                exerciseType: ExerciseType.PROGRAMMING,
+                title: 'DTO exercise',
+                releaseDate,
+                mode: ExerciseMode.INDIVIDUAL,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                allowComplaintsForAutomaticAssessments: true,
+                allowFeedbackRequests: true,
+                secondCorrectionEnabled: false,
+                categories: [JSON.stringify({ category: 'category1', color: '#6ae8ac' })],
+                teamMode: false,
+                studentAssignedTeamIdComputed: true,
+                course: {
+                    id: 7,
+                    title: 'Course',
+                    studentGroupName: 'students',
+                    teachingAssistantGroupName: 'tutors',
+                    editorGroupName: 'editors',
+                    instructorGroupName: 'instructors',
+                },
+                allowOnlineEditor: true,
+                allowOfflineIde: false,
+                allowOnlineIde: true,
+                submissionPolicy: {
+                    id: 8,
+                    type: SubmissionPolicyType.LOCK_REPOSITORY,
+                    submissionLimit: 5,
+                    active: true,
+                },
+                studentParticipations: [
+                    {
+                        id: 9,
+                        type: ParticipationType.PROGRAMMING,
+                        testRun: false,
+                        initializationState: InitializationState.INITIALIZED,
+                        submissions: [
+                            {
+                                id: 10,
+                                submitted: true,
+                                submissionDate,
+                                submissionExerciseType: SubmissionExerciseType.PROGRAMMING,
+                                commitHash: 'abc123',
+                                results: [{ id: 11, rated: true, score: 100 }],
+                            },
+                        ],
+                    },
+                ],
+            },
+        } satisfies ExerciseDetailsDTO;
 
         const result = service.getExerciseDetails(exerciseId);
 
@@ -466,10 +514,18 @@ describe('Exercise Service', () => {
             method: 'GET',
         });
 
-        testRequest.flush(expectedReturnedExerciseDetails);
+        testRequest.flush(exerciseDetailsDTO);
 
-        expect(actualReturnedExerciseDetails).toEqual(expectedReturnedExerciseDetails);
-        expect(expectedReturnedExerciseDetails.exercise!.posts).toEqual([]);
+        const returnedExercise = actualReturnedExerciseDetails!.exercise as ProgrammingExercise;
+        expect(returnedExercise).toBeInstanceOf(ProgrammingExercise);
+        expect(returnedExercise.releaseDate?.toISOString()).toBe(releaseDate);
+        expect(returnedExercise.categories?.[0]).toBeInstanceOf(ExerciseCategory);
+        expect(returnedExercise.course?.studentGroupName).toBe('students');
+        expect(returnedExercise.submissionPolicy).toBeInstanceOf(LockRepositoryPolicy);
+        expect(returnedExercise.studentParticipations?.[0].exercise).toBe(returnedExercise);
+        expect(returnedExercise.studentParticipations?.[0].submissions?.[0].participation).toBe(returnedExercise.studentParticipations?.[0]);
+        expect(returnedExercise.studentParticipations?.[0].submissions?.[0].results?.[0].submission).toBe(returnedExercise.studentParticipations?.[0].submissions?.[0]);
+        expect(returnedExercise.posts).toEqual([]);
     });
 
     it('should get exercise for example solution', () => {

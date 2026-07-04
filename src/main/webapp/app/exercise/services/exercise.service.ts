@@ -24,6 +24,10 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
+import {
+    ExerciseDetailsResponseDTO,
+    fromExerciseDetailsResponseDTO,
+} from 'app/exercise/shared/entities/exercise/exercise-details-response.dto';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -44,6 +48,10 @@ export type ExerciseUpdateRequestOptions = {
 };
 
 export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
+export interface ExerciseDetailsDTO {
+    exercise: ExerciseDetailsResponseDTO;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
+}
 export type ExerciseDetailsType = {
     exercise: Exercise;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
@@ -149,19 +157,19 @@ export class ExerciseService {
      * @param exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityDetailsResponseType> {
-        return this.http.get<ExerciseDetailsType>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
-            map((res: EntityDetailsResponseType) => {
+        return this.http.get<ExerciseDetailsDTO>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<ExerciseDetailsDTO>) => {
                 if (res.body) {
-                    res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise)!;
-                    ExerciseService.parseExerciseCategories(res.body.exercise);
+                    const exercise = fromExerciseDetailsResponseDTO(res.body.exercise);
                     // Make sure to set the access rights for the exercise
-                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body.exercise);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exercise.posts === undefined) {
-                        res.body.exercise.posts = [];
+                    if (exercise.posts === undefined) {
+                        exercise.posts = [];
                     }
+                    return res.clone({ body: { exercise, plagiarismCaseInfo: res.body.plagiarismCaseInfo } });
                 }
-                return res;
+                return res.clone({ body: null });
             }),
         );
     }
