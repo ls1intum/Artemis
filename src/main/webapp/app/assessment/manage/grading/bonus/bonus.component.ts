@@ -191,7 +191,7 @@ export class BonusComponent implements OnInit {
     }
 
     private navigateToExam() {
-        this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
+        void this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
     }
 
     private setSourceGradingScale() {

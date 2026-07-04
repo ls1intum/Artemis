@@ -6,22 +6,22 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     private _elRef = inject(ElementRef);
     private _render = inject(Renderer2);
 
-    jhiStickyPopover = input.required<TemplateRef<any>>();
+    jhiStickyPopover = input.required<TemplateRef<unknown>>();
 
-    popoverTitle: string;
+    override popoverTitle: string;
 
-    triggers: string;
-    container: string;
+    override triggers: string;
+    override container: string;
     canClosePopover: boolean;
 
-    private closeTimeout: any;
+    private closeTimeout: ReturnType<typeof setTimeout>;
     private clickInPopover = false;
 
-    toggle(): void {
+    override toggle(): void {
         super.toggle();
     }
 
-    isOpen(): boolean {
+    override isOpen(): boolean {
         return super.isOpen();
     }
 
@@ -32,7 +32,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
         this.container = 'body';
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
         this.ngbPopover = this.jhiStickyPopover();
 
@@ -57,11 +57,11 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
         });
     }
 
-    ngOnDestroy(): void {
+    override ngOnDestroy(): void {
         super.ngOnDestroy();
     }
 
-    open() {
+    override open() {
         super.open();
         setTimeout(() => {
             const popover = window.document.querySelector('.popover');
@@ -85,7 +85,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
         }, 0);
     }
 
-    close() {
+    override close() {
         if (this.clickInPopover) {
             this.clickInPopover = false;
         } else {

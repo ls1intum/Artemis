@@ -47,7 +47,7 @@ describe('BuildOverviewService', () => {
             time: dayjs('2024-01-02'),
             log: 'log2',
         },
-    ];
+    ] as unknown as BuildLogEntry[];
 
     const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
         expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);

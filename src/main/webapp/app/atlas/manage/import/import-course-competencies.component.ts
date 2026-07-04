@@ -95,6 +95,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
                                 case CourseCompetencyType.PREREQUISITE:
                                     return [courseCompetency.id, courseCompetency.linkedCourseCompetency?.id];
                             }
+                            return undefined;
                         })
                         .filter((id): id is number => !!id),
                 );
@@ -198,7 +199,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      * Cancels the import and navigates back
      */
     onCancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**

@@ -119,7 +119,7 @@ export class LectureSeriesCreateComponent {
         const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
         this.lectureService.createSeries(lecturesToSave, courseId).subscribe({
             next: () => {
-                this.router.navigate(['course-management', courseId, 'lectures']);
+                void this.router.navigate(['course-management', courseId, 'lectures']);
                 this.isLoading.set(false);
             },
             error: () => {

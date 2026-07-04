@@ -232,14 +232,15 @@ export class ExerciseAPIRequests {
         title = 'Text ' + generateUUID(),
         exerciseTemplate: any = textExerciseTemplate,
     ): Promise<TextExercise> {
-        const template = {
+        // The endpoint consumes UpdateTextExerciseDTO, which expects a flat courseId XOR exerciseGroupId rather than a
+        // nested course/exerciseGroup entity; other template fields are ignored by Jackson.
+        const textExercise = {
             ...exerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            ...this.toExerciseReference(body),
         };
-        const textExercise = Object.assign({}, template, body);
-        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
-        return response.json();
+        return this.postTextExercise(textExercise);
     }
 
     /**
@@ -258,16 +259,38 @@ export class ExerciseAPIRequests {
         assessmentDueDate: dayjs.Dayjs,
         title = 'Text ' + generateUUID(),
     ): Promise<TextExercise> {
-        const template = {
+        const textExercise = {
             ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
-            releaseDate: releaseDate,
-            dueDate: dueDate,
-            assessmentDueDate: assessmentDueDate,
+            releaseDate: dayjsToString(releaseDate),
+            dueDate: dayjsToString(dueDate),
+            assessmentDueDate: dayjsToString(assessmentDueDate),
+            ...this.toExerciseReference(body),
         };
-        const textExercise = Object.assign({}, template, body);
+        return this.postTextExercise(textExercise);
+    }
+
+    /**
+     * Builds the flat course/exercise-group reference expected by UpdateTextExerciseDTO (courseId XOR exerciseGroupId)
+     * from the nested body used by the test helpers.
+     */
+    private toExerciseReference(body: { course: Course } | { exerciseGroup: ExerciseGroup }): { courseId?: number; exerciseGroupId?: number } {
+        if ('course' in body) {
+            return { courseId: body.course.id };
+        }
+        return { exerciseGroupId: body.exerciseGroup.id };
+    }
+
+    /**
+     * POSTs the given UpdateTextExerciseDTO payload to the text exercise creation endpoint and asserts success so a
+     * failed setup throws loudly instead of cascading into undefined exercise ids.
+     */
+    private async postTextExercise(textExercise: Record<string, unknown>): Promise<TextExercise> {
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        if (!response.ok()) {
+            throw new Error(`Failed to create text exercise: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 

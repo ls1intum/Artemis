@@ -85,7 +85,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.runHighlightUpdate();
+            void this.runHighlightUpdate();
         });
         effect(() => {
             const incoming = this.resultFeedbacks();
@@ -96,7 +96,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
             this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            void this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
         effect(() => {
@@ -275,7 +275,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (feedbacks !== undefined) {
             this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            void this.updateApollonAssessments(this.referencedFeedbacks);
         }
     }
 
@@ -380,7 +380,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.isUpdatingFromServer = false;
     }
 
-    private calculateLabel(feedback: any) {
+    private calculateLabel(feedback: Feedback) {
         const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
         const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
         if (this.highlightDifferences()) {
@@ -389,7 +389,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return undefined;
     }
 
-    private calculateLabelColor(feedback: any) {
+    private calculateLabelColor(feedback: Feedback) {
         if (this.highlightDifferences()) {
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }

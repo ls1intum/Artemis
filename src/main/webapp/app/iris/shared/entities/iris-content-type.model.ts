@@ -59,9 +59,10 @@ export function isTextContent(content: IrisMessageContent): content is IrisTextM
 
 export function getTextContent(content: IrisMessageContent) {
     if (isTextContent(content)) {
-        const irisMessageTextContent = content as IrisTextMessageContent;
+        const irisMessageTextContent = content;
         return irisMessageTextContent.textContent;
     }
+    return undefined;
 }
 
 /**

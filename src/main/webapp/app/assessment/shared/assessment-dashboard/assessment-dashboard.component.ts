@@ -144,7 +144,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
-        this.accountService.identity().then((user) => this.tutor.set(user!));
+        void this.accountService.identity().then((user) => this.tutor.set(user!));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
     }
 
@@ -464,6 +464,6 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 }

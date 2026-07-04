@@ -1,7 +1,7 @@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -20,7 +20,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/admin/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -454,7 +454,7 @@ export class CourseUpdateComponent implements OnInit {
             this.courseStorageService.updateCourse(updatedCourse!);
         }
 
-        this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        void this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
         scrollToTopOfPage();
     }
 
@@ -654,7 +654,7 @@ export class CourseUpdateComponent implements OnInit {
             dismissableMask: true,
             data: {
                 organizations: this.courseOrganizations(),
-            } as OrganizationSelectorDialogData,
+            },
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
@@ -790,7 +790,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                 }
             } catch (err) {
-                onError(this.alertService, err as HttpErrorResponse);
+                onError(this.alertService, err);
             }
         }
 
@@ -804,7 +804,8 @@ export class CourseUpdateComponent implements OnInit {
     }
 }
 
-const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
+const CourseValidator: ValidatorFn = (control: AbstractControl) => {
+    const formGroup = control as FormGroup;
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const enrollmentEnabled = formGroup.controls['enrollmentEnabled'].value;
     // it cannot be the case that both values are true

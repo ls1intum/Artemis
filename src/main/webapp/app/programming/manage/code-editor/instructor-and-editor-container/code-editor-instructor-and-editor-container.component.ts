@@ -33,7 +33,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
 import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
@@ -246,7 +246,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
 
     readonly faTableColumns = faTableColumns;
-    readonly ButtonSize = ButtonSize;
+    override readonly ButtonSize = ButtonSize;
 
     readonly refinementPopover = viewChild<Popover>('refinementPopover');
     readonly codeGenerationSettingsPopover = viewChild<Popover>('codeGenerationSettingsPopover');
@@ -518,7 +518,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *
      * Restores a running generation only when no local generation queue is currently active.
      */
-    protected override applyDomainChange(domainType: any, domainValue: any) {
+    protected override applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
         super.applyDomainChange(domainType, domainValue);
         this.maybeAutoStartCodeGenerationFromNavigation();
         if (!this.hasCustomCodeGenerationSelection && !this.isGeneratingCode()) {
@@ -707,7 +707,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        popover.show(event, event.currentTarget as HTMLElement | undefined);
+        popover.show(event, event.currentTarget);
     }
 
     /**
@@ -1548,7 +1548,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
+        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id).subscribe({
             // This first consistency check ensures, that the exercise has all repositories set up
             // This does not yet check the actual content of the exercise
             next: (inconsistencies: ConsistencyCheckError[]) => {
@@ -1832,19 +1832,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             switch (location.targetType) {
                 case CommentThreadLocationType.TEMPLATE_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
-                        this.selectTemplateParticipation();
+                        void this.selectTemplateParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.SOLUTION_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
-                        this.selectSolutionParticipation();
+                        void this.selectSolutionParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.TEST_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
-                        this.selectTestRepository();
+                        void this.selectTestRepository();
                         return;
                     }
                     break;
@@ -1854,7 +1854,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         auxiliaryRepositoryId !== undefined &&
                         (codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
                     ) {
-                        this.selectAuxiliaryRepository(auxiliaryRepositoryId);
+                        void this.selectAuxiliaryRepository(auxiliaryRepositoryId);
                         return;
                     }
                     break;
