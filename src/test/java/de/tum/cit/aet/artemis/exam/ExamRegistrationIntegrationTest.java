@@ -4,10 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -20,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -122,7 +117,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
 
         Set<User> studentsInCourseBefore = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(student), HttpStatus.OK, null);
         Set<User> studentsInCourseAfter = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
@@ -139,7 +135,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
 
         Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsAfter).hasSize(1);
@@ -148,8 +145,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.BAD_REQUEST,
-                null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -191,9 +188,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student99 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
-        // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        var examUserDtoNonExisting = new StudentDTO("nonExistingStudent", "", "", "", "");
+        var nonExistingResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoNonExisting),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(nonExistingResult.notFoundStudents()).hasSize(1);
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
         ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
@@ -358,43 +359,14 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterPlainStudentToExam_successful() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
 
         Exam storedExam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
 
         assertThat(storedExam.getExamUsers()).contains(examUser);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterInstructorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "instructor1", "cannotRegisterStaff");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterEditorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "editor1", "cannotRegisterStaff");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterTutorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "tutor1", "cannotRegisterStaff");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterAdminToExam_forbiddenWithErrorKey() throws Exception {
-        userUtilService.addAdmin(TEST_PREFIX);
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "admin", "cannotRegisterStaff");
-    }
-
-    private void assertRegisterUserForbiddenWithErrorKey(String login, String expectedErrorKey) throws Exception {
-        mockMvc.perform(post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + login).contentType(MediaType.APPLICATION_JSON).with(csrf()))
-                .andExpect(status().isForbidden()).andExpect(jsonPath("$.errorKey").value(expectedErrorKey)).andExpect(jsonPath("$.message").value("error." + expectedErrorKey))
-                .andExpect(jsonPath("$.params").value("exam"));
     }
 
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam

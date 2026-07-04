@@ -121,6 +121,11 @@ public class ExamRegistrationService {
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
+        Exam examWithExerciseGroupsAndExercises = null;
+        if (exam.isStarted()) {
+            examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        }
+
         for (var examUserDto : examUserDTOs) {
             // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
             Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
@@ -158,6 +163,11 @@ public class ExamRegistrationService {
                 registeredExamUser = examUserRepository.save(registeredExamUser);
                 exam.addExamUser(registeredExamUser);
                 usersAddedToExam.add(registeredExamUser.getUser().getLogin());
+
+                // Generate a student exam for the registered student if the exam has already started
+                if (examWithExerciseGroupsAndExercises != null) {
+                    studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+                }
             }
             else {
                 // Update room/seat of an already registered exam user
