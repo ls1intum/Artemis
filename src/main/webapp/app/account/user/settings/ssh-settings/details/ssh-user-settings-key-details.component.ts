@@ -122,7 +122,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     goBack() {
-        this.router.navigate(['/user-settings/ssh']);
+        void this.router.navigate(['/user-settings/ssh']);
     }
 
     validateExpiryDate() {

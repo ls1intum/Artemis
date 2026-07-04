@@ -95,7 +95,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
     };
 
     goToSuspiciousSessions() {
-        this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'suspicious-behavior', 'suspicious-sessions'], {
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'suspicious-behavior', 'suspicious-sessions'], {
             state: { suspiciousSessions: this.suspiciousSessions(), ipSubnet: this.ipSubnet() },
         });
     }

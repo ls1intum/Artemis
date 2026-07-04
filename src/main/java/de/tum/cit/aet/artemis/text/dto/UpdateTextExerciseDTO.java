@@ -13,8 +13,10 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -26,8 +28,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public record UpdateTextExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled,
         Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-        ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria,
-        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId, Long exerciseGroupId, ExerciseMode mode,
+        TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates an UpdateTextExerciseDTO from the given TextExercise domain object.
@@ -40,7 +42,10 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
             throw new BadRequestAlertException("No text exercise was provided.", "textExercise", "textExercise.isNull");
         }
 
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        // Only a directly-attached course yields a courseId (isCourseExercise() checks the direct course field), so an exam
+        // exercise yields courseId == null, mirroring the client which sends only the exerciseGroupId for exam exercises and
+        // keeps the course/exerciseGroup exclusivity intact.
+        Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterionDTO> gradingCriterionDTOs;
@@ -66,6 +71,7 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
                 exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
-                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), courseId, exerciseGroupId, exercise.getMode(),
+                TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig()), gradingCriterionDTOs, competencyLinkDTOs);
     }
 }

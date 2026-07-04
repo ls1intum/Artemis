@@ -189,7 +189,7 @@ export class CourseScoresComponent implements OnInit {
         this.initializeExerciseTitles();
         this.includedExercises.set(this.determineExercisesIncludedInScore(course));
         this.numberOfReleasedExercises.set(this.determineReleasedExercises(course).length);
-        this.calculateCourseStatistics(course.id!);
+        void this.calculateCourseStatistics(course.id!);
     }
 
     /**

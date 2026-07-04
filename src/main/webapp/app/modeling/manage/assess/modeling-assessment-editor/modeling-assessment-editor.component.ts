@@ -132,7 +132,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
 
@@ -557,7 +557,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);

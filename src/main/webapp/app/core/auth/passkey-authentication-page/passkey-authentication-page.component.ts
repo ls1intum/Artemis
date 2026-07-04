@@ -30,10 +30,10 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     private routeSubscription?: Subscription;
 
     ngOnInit() {
-        this.initializeUserIdentity().then(() => {
+        void this.initializeUserIdentity().then(() => {
             const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isUserLoggedInWithApprovedPasskey() && this.returnUrl;
             if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
-                this.router.navigateByUrl(this.returnUrl!);
+                void this.router.navigateByUrl(this.returnUrl!);
             }
         });
 
@@ -77,9 +77,9 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
 
     redirectToOriginalUrlOrHome() {
         if (this.returnUrl) {
-            this.router.navigateByUrl(this.returnUrl);
+            void this.router.navigateByUrl(this.returnUrl);
         } else {
-            this.router.navigate(['/sign-in']);
+            void this.router.navigate(['/sign-in']);
         }
     }
 }

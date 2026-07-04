@@ -69,7 +69,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<AbstractQuizSubmission>();
     exercise = input<QuizExercise>();
-    examTimeline = input(false);
+    override examTimeline = input(false);
     quizConfiguration = input.required<QuizConfiguration>();
 
     saveCurrentExercise = output<void>();
@@ -139,7 +139,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -238,7 +238,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                         }
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);

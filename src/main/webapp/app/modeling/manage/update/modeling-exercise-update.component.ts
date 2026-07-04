@@ -156,7 +156,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
         }
 
-        this.calculateFormSectionStatus().then();
+        void this.calculateFormSectionStatus();
     }
 
     /**
@@ -278,7 +278,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
-        this.calculateFormSectionStatus();
+        void this.calculateFormSectionStatus();
     }
 
     onMarkdownEditorKeydown(event: KeyboardEvent): void {

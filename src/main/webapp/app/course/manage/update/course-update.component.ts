@@ -1,7 +1,7 @@
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -457,7 +457,7 @@ export class CourseUpdateComponent implements OnInit {
             this.courseStorageService.updateCourse(updatedCourse!);
         }
 
-        this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
+        void this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
         scrollToTopOfPage();
     }
 
@@ -822,7 +822,8 @@ export class CourseUpdateComponent implements OnInit {
     }
 }
 
-const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
+const CourseValidator: ValidatorFn = (control: AbstractControl) => {
+    const formGroup = control as FormGroup;
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const enrollmentEnabled = formGroup.controls['enrollmentEnabled'].value;
     // it cannot be the case that both values are true

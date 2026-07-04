@@ -10,8 +10,34 @@ export class ScaFeedbackModal {
         this.page = page;
     }
 
+    /**
+     * Verifies that the feedback modal (the FeedbackComponent / result-detail view) rendered its full result view:
+     * the loading spinner is gone, the result-detail container is shown (not the empty "no result details" fallback),
+     * and the feedback list rendered at least the expected number of feedback items.
+     */
+    async shouldRenderFeedbackDetails(minimumFeedbackItems = 1) {
+        await expect(this.page.locator('#result-detail-spinner')).toBeHidden();
+        await expect(this.page.locator('.result-detail-container')).toBeVisible();
+        // The empty-state fallback ("No result details available.") must not be shown when feedback is present.
+        await expect(this.page.getByText('No result details available.')).toBeHidden();
+        const feedbackList = this.page.locator('.feedback-list');
+        await expect(feedbackList).toBeVisible();
+        const feedbackItems = feedbackList.locator('.feedback-item');
+        await expect(feedbackItems.first()).toBeVisible();
+        expect(await feedbackItems.count()).toBeGreaterThanOrEqual(minimumFeedbackItems);
+    }
+
     async shouldShowPointChart() {
         await expect(this.page.locator('#feedback-chart')).toBeVisible();
+    }
+
+    /**
+     * Verifies the programming-specific header the FeedbackComponent renders for a programming result: the
+     * "submitted … linked to commit" line with a non-empty commit hash.
+     */
+    async shouldShowCommitHash() {
+        const commitLine = this.page.locator('.result-detail-container p', { hasText: 'linked to commit' });
+        await expect(commitLine).toBeVisible();
     }
 
     async shouldShowCodeIssue(feedbackText: string, pointReduction: string) {

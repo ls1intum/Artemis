@@ -256,11 +256,11 @@ export class ExerciseGroupsComponent implements OnInit {
             if (result) {
                 if (result.id) {
                     importBaseRoute.push('import', result.id);
-                    this.router.navigate(importBaseRoute);
+                    void this.router.navigate(importBaseRoute);
                 } else {
                     // we know it must be a programming exercise, because only programming exercises can be imported from a file
                     importBaseRoute.push('import-from-file');
-                    this.router.navigate(importBaseRoute, {
+                    void this.router.navigate(importBaseRoute, {
                         state: {
                             programmingExerciseForImportFromFile: result,
                         },

@@ -21,7 +21,7 @@ export class ColorAction extends TextEditorAction {
      * Executes the action in the current editor.
      * @param args The color to apply to the selected text. If no color is provided, the default color red is used.
      */
-    executeInCurrentEditor(args?: ColorArguments): void {
+    override executeInCurrentEditor(args?: ColorArguments): void {
         super.executeInCurrentEditor(args);
     }
 
