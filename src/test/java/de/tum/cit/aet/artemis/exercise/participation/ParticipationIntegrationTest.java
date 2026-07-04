@@ -76,6 +76,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSubmissionResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -1594,8 +1595,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var submission1 = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
         var submission2 = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text2", Language.ENGLISH, true));
-        var submissions = request.getList("/api/exercise/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
-        assertThat(submissions).contains(submission1, submission2);
+        var submissions = request.getList("/api/exercise/participations/" + participation.getId() + "/submissions", HttpStatus.OK, SubmissionResponseDTO.class);
+        assertThat(submissions).extracting(SubmissionResponseDTO::id).containsExactlyInAnyOrder(submission1.getId(), submission2.getId());
+        assertThat(submissions).allSatisfy(submission -> {
+            assertThat(submission.submissionExerciseType()).isEqualTo("text");
+            assertThat(submission.participation().submissions()).isNull();
+        });
     }
 
     @ParameterizedTest

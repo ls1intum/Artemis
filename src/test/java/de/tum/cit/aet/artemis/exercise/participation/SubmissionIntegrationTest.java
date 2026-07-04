@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -164,9 +165,14 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
 
-        var resultPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
+        var resultPage = request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
+        assertThat(resultPage.getNumberOfPages()).isEqualTo(1);
+        assertThat(resultPage.getResultsOnPage().getFirst().id()).isEqualTo(submission.getId());
+        assertThat(resultPage.getResultsOnPage().getFirst().text()).isEqualTo("submissionText");
+        assertThat(resultPage.getResultsOnPage().getFirst().participation().participantName()).isNotBlank();
+        assertThat(resultPage.getResultsOnPage().getFirst().results()).extracting(result -> result.id()).containsExactly(submission.getLatestResult().getId());
     }
 
     @Test
@@ -174,7 +180,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = UUID.nameUUIDFromBytes("test".getBytes()).getMostSignificantBits();
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercise/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, Submission.class,
+        request.getSearchResult("/api/exercise/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -187,7 +193,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureStudentParticipationSearch("");
-        request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, Submission.class,
+        request.getSearchResult("/api/exercise/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 

@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -599,19 +598,18 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), true);
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(submission -> submission.id()).toList();
 
         assertThat(dtoList).hasSize(2);
-        assertThat(complaintsFromDTO).hasSize(2);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintSameTutor, submissionWithComplaintOtherTutor));
+        assertThat(dtoList).allSatisfy(dto -> assertThat(dto.complaint()).isNotNull());
+        assertThat(submissionIdsFromDTO).containsExactly(submissionWithComplaintSameTutor.getId(), submissionWithComplaintOtherTutor.getId());
 
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithComplaintSameTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+            if (dto.submission().id().equals(submissionWithComplaintSameTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
             }
-            else if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
+            else if (dto.submission().id().equals(submissionWithComplaintOtherTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
             }
             else {
                 fail("Unreachable statement");
@@ -634,15 +632,14 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithComplaintsForExercise(examTextExercise.getId(), false);
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> complaintsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(submission -> submission.id()).toList();
 
         assertThat(dtoList).hasSize(1);
-        assertThat(complaintsFromDTO).hasSize(1);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithComplaintOtherTutor));
+        assertThat(dtoList).allSatisfy(dto -> assertThat(dto.complaint()).isNotNull());
+        assertThat(submissionIdsFromDTO).containsExactly(submissionWithComplaintOtherTutor.getId());
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithComplaintOtherTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
+            if (dto.submission().id().equals(submissionWithComplaintOtherTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student3");
             }
             else {
                 fail("Unreachable statement");
@@ -665,15 +662,14 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
         List<SubmissionWithComplaintDTO> dtoList = submissionService.getSubmissionsWithMoreFeedbackRequestsForExercise(examTextExercise.getId());
 
-        List<Submission> submissionsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).toList();
-        List<Complaint> requestsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::complaint).filter(Objects::nonNull).toList();
+        List<Long> submissionIdsFromDTO = dtoList.stream().map(SubmissionWithComplaintDTO::submission).filter(Objects::nonNull).map(submission -> submission.id()).toList();
 
         assertThat(dtoList).hasSize(1);
-        assertThat(requestsFromDTO).hasSize(1);
-        assertThat(submissionsFromDTO).isEqualTo(List.of(submissionWithRequestSameTutor));
+        assertThat(dtoList).allSatisfy(dto -> assertThat(dto.complaint()).isNotNull());
+        assertThat(submissionIdsFromDTO).containsExactly(submissionWithRequestSameTutor.getId());
         dtoList.forEach(dto -> {
-            if (dto.submission().equals(submissionWithRequestSameTutor)) {
-                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().getId()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+            if (dto.submission().id().equals(submissionWithRequestSameTutor.getId())) {
+                assertThat(complaintRepository.findByResultSubmissionId(dto.submission().id()).orElseThrow().getStudent().getLogin()).isEqualTo(TEST_PREFIX + "student2");
             }
             else {
                 fail("Unreachable statement");
