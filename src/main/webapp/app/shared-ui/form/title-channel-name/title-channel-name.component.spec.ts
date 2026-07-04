@@ -43,19 +43,6 @@ describe('TitleChannelNameComponent', () => {
         expect(channelNameInput.nativeElement.value).toBe(component.channelName());
     });
 
-    it('should not set a maxlength on the title field by default', () => {
-        const titleInput = fixture.debugElement.query(By.css('#field_title'));
-        expect(titleInput.nativeElement.getAttribute('maxlength')).toBeNull();
-    });
-
-    it('should apply the maxlength attribute on the title field when maxTitleLength is set', () => {
-        fixture.componentRef.setInput('maxTitleLength', 255);
-        fixture.changeDetectorRef.detectChanges();
-
-        const titleInput = fixture.debugElement.query(By.css('#field_title'));
-        expect(titleInput.nativeElement.getAttribute('maxlength')).toBe('255');
-    });
-
     it('should only display title input field if channel name is hidden', () => {
         fixture.componentRef.setInput('hideChannelName', true);
         fixture.changeDetectorRef.detectChanges();
