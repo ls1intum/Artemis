@@ -122,13 +122,8 @@ export class ExamAddStudentsDialogComponent {
             error: (error: HttpErrorResponse) => {
                 this.currentlyRegisteringLogins.update((currentLogins) => this.copyAndDelete(currentLogins, login));
 
-                if (error.error?.errorKey === 'cannotRegisterInstructor') {
-                    this.alertService.error('artemisApp.exam.error.cannotRegisterInstructor');
-                    return;
-                }
-
-                if (error.error?.errorKey === 'cannotRegisterEditor') {
-                    this.alertService.error('artemisApp.exam.error.cannotRegisterEditor');
+                if (error.error?.errorKey === 'cannotRegisterStaff') {
+                    this.alertService.error('artemisApp.exam.error.cannotRegisterStaff');
                     return;
                 }
 

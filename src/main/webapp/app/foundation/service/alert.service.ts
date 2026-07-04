@@ -67,7 +67,7 @@ export class AlertService {
     errorListener: Subscription;
     httpErrorListener: Subscription;
 
-    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor', 'cannotRegisterEditor'];
+    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterStaff'];
     readonly badRequestErrorKeysToSkip: string[] = ['courseShortNameExists', 'courseRequestShortNameExists'];
 
     constructor() {

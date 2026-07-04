@@ -162,7 +162,7 @@ describe('UsersImportDialogComponent', () => {
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
         const fakeResponse = {
-            body: { notFoundStudents: studentsNotFound, rejectedStaffStudents: [] },
+            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
@@ -301,7 +301,7 @@ describe('UsersImportDialogComponent', () => {
         const notImportedStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = {
-            body: { notFoundStudents: notImportedStudents, rejectedStaffStudents: [] },
+            body: { notFoundStudents: notImportedStudents, rejectedStaffUsers: [] },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
@@ -323,7 +323,7 @@ describe('UsersImportDialogComponent', () => {
         const studentsNotFound: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = {
-            body: { notFoundStudents: studentsNotFound, rejectedStaffStudents: [] },
+            body: { notFoundStudents: studentsNotFound, rejectedStaffUsers: [] },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
 
@@ -498,7 +498,7 @@ describe('UsersImportDialogComponent', () => {
             { registrationNumber: '3', firstName: 'Toni', lastName: 'Tutor', login: 'tutor1', email: '' },
         ];
         const fakeResponse = {
-            body: { notFoundStudents: [], rejectedStaffStudents: rejectedStaff },
+            body: { notFoundStudents: [], rejectedStaffUsers: rejectedStaff },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
         const alertService = TestBed.inject(AlertService);
@@ -516,7 +516,7 @@ describe('UsersImportDialogComponent', () => {
         fixture.componentRef.setInput('examUserMode', true);
         const studentsToImport: ExamUserDTO[] = [{ registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' }];
         const fakeResponse = {
-            body: { notFoundStudents: [], rejectedStaffStudents: [] },
+            body: { notFoundStudents: [], rejectedStaffUsers: [] },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
         const alertService = TestBed.inject(AlertService);

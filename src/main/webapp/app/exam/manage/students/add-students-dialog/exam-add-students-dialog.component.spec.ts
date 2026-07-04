@@ -131,29 +131,16 @@ describe('ExamAddStudentsDialogComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('registerStudent should show specific alert for cannotRegisterInstructor', async () => {
+    it('registerStudent should show specific alert for cannotRegisterStaff', async () => {
         vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
-        vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey: 'cannotRegisterInstructor' } })));
+        vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey: 'cannotRegisterStaff' } })));
 
         await openDialogAndRender();
         getRegisterButtonForLogin(studentAlice.login!).click();
 
         expect(alertErrorSpy).toHaveBeenCalledOnce();
-        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterInstructor');
-        expect(component.isAlreadyRegistered(studentAlice)).toBe(false);
-    });
-
-    it('registerStudent should show specific alert for cannotRegisterEditor', async () => {
-        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
-        const alertErrorSpy = vi.spyOn(alertService, 'error');
-        vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey: 'cannotRegisterEditor' } })));
-
-        await openDialogAndRender();
-        getRegisterButtonForLogin(studentAlice.login!).click();
-
-        expect(alertErrorSpy).toHaveBeenCalledOnce();
-        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterEditor');
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterStaff');
         expect(component.isAlreadyRegistered(studentAlice)).toBe(false);
     });
 

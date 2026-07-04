@@ -156,7 +156,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
                 next: (res) => {
                     const result = res.body;
-                    const rejectedStaff = result?.rejectedStaffStudents ?? [];
+                    const rejectedStaff = result?.rejectedStaffUsers ?? [];
                     if (rejectedStaff.length > 0) {
                         this.alertService.error('artemisApp.exam.error.cannotRegisterStaffBulk', { number: rejectedStaff.length });
                     }
