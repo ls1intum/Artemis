@@ -132,8 +132,8 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
                 ExamRegistrationResultDTO.class, OK);
-        assertThat(result.notFoundStudents()).isEmpty();
-        assertThat(result.rejectedStaffUsers()).isEmpty();
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
         Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
         assertThat(examUsers).hasSize(2);
@@ -156,8 +156,8 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         // add students to exam with respective registration numbers, same as in pdf test file
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
                 ExamRegistrationResultDTO.class, OK);
-        assertThat(result.notFoundStudents()).isEmpty();
-        assertThat(result.rejectedStaffUsers()).isEmpty();
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
 
         // upload exam user images
         var imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();

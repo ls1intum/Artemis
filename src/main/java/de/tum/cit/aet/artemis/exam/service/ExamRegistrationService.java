@@ -165,8 +165,12 @@ public class ExamRegistrationService {
             else {
                 // Update room/seat of an already registered exam user
                 ExamUser examUser = examUserOptional.get();
-                examUser.setPlannedRoom(examUserDto.room());
-                examUser.setPlannedSeat(examUserDto.seat());
+                if (StringUtils.hasText(examUserDto.room())) {
+                    examUser.setPlannedRoom(examUserDto.room());
+                }
+                if (StringUtils.hasText(examUserDto.seat())) {
+                    examUser.setPlannedSeat(examUserDto.seat());
+                }
                 examUser = examUserRepository.save(examUser);
                 exam.addExamUser(examUser);
                 usersAddedToExam.add(examUser.getUser().getLogin());
