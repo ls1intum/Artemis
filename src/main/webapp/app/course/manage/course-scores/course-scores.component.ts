@@ -1116,7 +1116,7 @@ export class CourseScoresComponent implements OnInit {
 
         // average points and score total
         const achievedPointsTotal = statistics.map((student) => {
-            const participatedExercises = allCourseExercises.filter((exercise) => student.pointsPerExercise.has(exercise.id!));
+            const participatedExercises = allCourseExercises.filter((exercise) => exercise.id !== undefined && student.pointsPerExercise.has(exercise.id));
             const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
             // Non-variant exercises: summed up exactly as before exercise variants were introduced.
             const nonVariantPoints = sum(participatedExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));

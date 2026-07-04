@@ -204,12 +204,15 @@ export class CourseExerciseGroupDetailComponent {
 
         effect(() => {
             const members = this.group()?.exercises ?? [];
-            const missing = members.filter((exercise) => exercise.id !== undefined && exercise.problemStatement === undefined && !this.problemStatementsRequested.has(exercise.id));
+            const missing = members.filter(
+                (exercise): exercise is Exercise & { id: number } =>
+                    exercise.id !== undefined && exercise.problemStatement === undefined && !this.problemStatementsRequested.has(exercise.id),
+            );
             if (missing.length === 0) {
                 return;
             }
-            missing.forEach((exercise) => this.problemStatementsRequested.add(exercise.id!));
-            forkJoin(missing.map((exercise) => this.exerciseService.getExerciseDetails(exercise.id!)))
+            missing.forEach((exercise) => this.problemStatementsRequested.add(exercise.id));
+            forkJoin(missing.map((exercise) => this.exerciseService.getExerciseDetails(exercise.id)))
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe((responses) => {
                     const next = new Map(this.problemStatements());

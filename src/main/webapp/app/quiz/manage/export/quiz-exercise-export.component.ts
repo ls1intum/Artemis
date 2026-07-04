@@ -77,13 +77,13 @@ export class QuizExerciseExportComponent implements OnInit {
             // For the given course, get the list of all quiz exercises, then load each quiz's questions in parallel.
             this.quizExerciseService.findForCourse(courseId).subscribe({
                 next: (res: HttpResponse<QuizExercise[]>) => {
-                    const quizExercises = res.body!;
+                    const quizExercises = (res.body ?? []).filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
                     if (quizExercises.length === 0) {
                         this.questions.set([]);
                         this.isLoading.set(false);
                         return;
                     }
-                    forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id!))).subscribe({
+                    forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id))).subscribe({
                         next: (responses: HttpResponse<QuizExercise>[]) => {
                             const collected: QuizQuestion[] = [];
                             responses.forEach((response, index) => {

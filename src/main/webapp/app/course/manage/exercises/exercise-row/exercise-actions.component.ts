@@ -462,6 +462,10 @@ export class ExerciseActionsComponent {
 
     protected onDelete(event: { [key: string]: boolean }): void {
         const exercise = this.exercise();
+        const exerciseId = exercise.id;
+        if (exerciseId === undefined) {
+            return;
+        }
         const finish = (obs: Observable<unknown>, evtName: string) =>
             obs.subscribe({
                 next: () => {
@@ -475,20 +479,20 @@ export class ExerciseActionsComponent {
 
         switch (exercise.type) {
             case ExerciseType.TEXT:
-                finish(this.textExerciseService.delete(exercise.id!), 'textExerciseListModification');
+                finish(this.textExerciseService.delete(exerciseId), 'textExerciseListModification');
                 break;
             case ExerciseType.FILE_UPLOAD:
-                finish(this.fileUploadExerciseService.delete(exercise.id!), 'fileUploadExerciseListModification');
+                finish(this.fileUploadExerciseService.delete(exerciseId), 'fileUploadExerciseListModification');
                 break;
             case ExerciseType.QUIZ:
-                finish(this.quizExerciseService.delete(exercise.id!), 'quizExerciseListModification');
+                finish(this.quizExerciseService.delete(exerciseId), 'quizExerciseListModification');
                 break;
             case ExerciseType.MODELING:
-                finish(this.modelingExerciseService.delete(exercise.id!), 'modelingExerciseListModification');
+                finish(this.modelingExerciseService.delete(exerciseId), 'modelingExerciseListModification');
                 break;
             case ExerciseType.PROGRAMMING:
                 finish(
-                    this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+                    this.programmingExerciseService.delete(exerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
                     'programmingExerciseListModification',
                 );
                 break;
