@@ -776,7 +776,7 @@ public class StudentExamService {
      * @param studentExam             The studentExam for which the participations and submissions should be created
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
-    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
+    private void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations, boolean failFast) {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {

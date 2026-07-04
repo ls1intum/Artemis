@@ -184,9 +184,9 @@ public class ExamRegistrationService {
             // Generate student exams for the registered students if the exam has already started and prepare the exercises
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
             for (User student : studentsNewlyAddedToExam) {
-                StudentExam studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
-                studentExamService.setUpExerciseParticipationsAndSubmissions(studentExam, new ArrayList<>(), false);
+                studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
             }
+            studentExamService.startExercises(examId);
         }
 
         try {
