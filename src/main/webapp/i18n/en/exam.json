@@ -211,7 +211,6 @@
             },
             "error": {
                 "cannotRegisterStaff": "You cannot register administrators, instructors, editors, or tutors to exams.",
-                "cannotRegisterStaffBulk": "{{ number }} user(s) were not registered because they are administrators, instructors, editors, or tutors of the course.",
                 "cannotShowExampleSolution": "Example solution could not be found",
                 "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },

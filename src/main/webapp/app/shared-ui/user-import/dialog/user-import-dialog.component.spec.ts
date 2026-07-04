@@ -102,6 +102,7 @@ describe('UsersImportDialogComponent', () => {
     it('should reset dialog when selecting csv file', async () => {
         component.usersToImport.set([{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }]);
         component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
+        component.rejectedStaffUsers = [{ registrationNumber: '3', lastName: 'lastName3', firstName: 'firstName3', login: 'login3', email: 'staff@mail' }];
         component.hasImported.set(true);
 
         const event = { target: { files: [studentCsvColumns] } };
@@ -109,6 +110,7 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.rejectedStaffUsers).toHaveLength(0);
     });
 
     it('should read no students from csv file', async () => {
@@ -501,15 +503,16 @@ describe('UsersImportDialogComponent', () => {
             body: { notFoundStudents: [], rejectedStaffUsers: rejectedStaff },
         } as unknown as HttpResponse<ExamRegistrationResultDTO>;
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
-        const alertService = TestBed.inject(AlertService);
-        const alertSpy = vi.spyOn(alertService, 'error');
 
-        component.examUsersToImport = studentsToImport;
+        component.examUsersToImport.set(studentsToImport);
         component.importUsers();
 
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterStaffBulk', { number: 2 });
         expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.rejectedStaffUsers).toHaveLength(2);
+        rejectedStaff.forEach((student) => expect(component.wasNotImported(student)).toBe(true));
+        rejectedStaff.forEach((student) => expect(component.wasImported(student)).toBe(false));
+        expect(component.numberOfUsersNotImported).toBe(2);
+        expect(component.numberOfUsersImported).toBe(1);
     });
 
     it('should not show staff rejection alert when no staff is rejected', () => {
@@ -522,9 +525,36 @@ describe('UsersImportDialogComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'error');
 
-        component.examUsersToImport = studentsToImport;
+        component.examUsersToImport.set(studentsToImport);
         component.importUsers();
 
         expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it('should count both not-found and rejected staff as not imported', () => {
+        fixture.componentRef.setInput('examUserMode', true);
+        const studentsToImport: ExamUserDTO[] = [
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' },
+            { registrationNumber: '3', firstName: 'Ghost', lastName: 'User', login: 'ghost1', email: '' },
+        ];
+        const notFoundStudents: ExamUserDTO[] = [{ registrationNumber: '3', firstName: 'Ghost', lastName: 'User', login: 'ghost1', email: '' }];
+        const rejectedStaff: ExamUserDTO[] = [{ registrationNumber: '2', firstName: 'Edith', lastName: 'Editor', login: 'editor1', email: '' }];
+        const fakeResponse = {
+            body: { notFoundStudents, rejectedStaffUsers: rejectedStaff },
+        } as unknown as HttpResponse<ExamRegistrationResultDTO>;
+        vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
+
+        component.examUsersToImport.set(studentsToImport);
+        component.importUsers();
+
+        expect(component.numberOfUsersImported).toBe(1);
+        expect(component.numberOfUsersNotImported).toBe(2);
+        expect(component.wasImported(studentsToImport[0])).toBe(true);
+        expect(component.wasNotImported(studentsToImport[0])).toBe(false);
+        expect(component.wasNotImported(studentsToImport[1])).toBe(true);
+        expect(component.wasImported(studentsToImport[1])).toBe(false);
+        expect(component.wasNotImported(studentsToImport[2])).toBe(true);
+        expect(component.wasImported(studentsToImport[2])).toBe(false);
     });
 });

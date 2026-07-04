@@ -50,6 +50,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     readonly usersToImport = signal<StudentDTO[]>([]);
     readonly examUsersToImport = signal<ExamUserDTO[]>([]);
     notFoundUsers: Partial<StudentDTO>[] = [];
+    rejectedStaffUsers: Partial<StudentDTO>[] = [];
 
     readonly isParsing = signal(false);
     readonly validationError = signal<string | undefined>(undefined);
@@ -75,6 +76,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.usersToImport.set([]);
         this.examUsersToImport.set([]);
         this.notFoundUsers = [];
+        this.rejectedStaffUsers = [];
         this.hasImported.set(false);
         this.validationError.set(undefined);
         this.noUsersFoundError.set(undefined);
@@ -156,11 +158,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
                 next: (res) => {
                     const result = res.body;
-                    const rejectedStaff = result?.rejectedStaffUsers ?? [];
-                    if (rejectedStaff.length > 0) {
-                        this.alertService.error('artemisApp.exam.error.cannotRegisterStaffBulk', { number: rejectedStaff.length });
-                    }
-                    this.onSaveSuccess(result?.notFoundStudents ?? []);
+                    this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
                 },
                 error: () => this.onSaveError(),
             });
@@ -218,7 +216,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasNotImported(user: StudentDTO): boolean {
-        if (this.hasImported() && this.notFoundUsers?.length === 0) {
+        if (this.hasImported() && this.notFoundUsers?.length === 0 && this.rejectedStaffUsers?.length === 0) {
             return false;
         }
 
@@ -227,6 +225,16 @@ export class UsersImportDialogComponent implements OnDestroy {
                 (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
                 (notFound.login?.length && notFound.login === user.login) ||
                 (notFound.email?.length && notFound.email === user.email)
+            ) {
+                return true;
+            }
+        }
+
+        for (const rejected of this.rejectedStaffUsers) {
+            if (
+                (rejected.registrationNumber?.length && rejected.registrationNumber === user.registrationNumber) ||
+                (rejected.login?.length && rejected.login === user.login) ||
+                (rejected.email?.length && rejected.email === user.email)
             ) {
                 return true;
             }
@@ -250,7 +258,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Number of users which could not be imported
      */
     get numberOfUsersNotImported(): number {
-        return !this.hasImported() ? 0 : this.notFoundUsers.length;
+        return !this.hasImported() ? 0 : this.notFoundUsers.length + this.rejectedStaffUsers.length;
     }
 
     get isSubmitDisabled(): boolean {
@@ -260,11 +268,13 @@ export class UsersImportDialogComponent implements OnDestroy {
     /**
      * Callback method that is called when the import request was successful
      * @param notFoundUsers - List of users that could NOT be imported since they were not found
+     * @param rejectedStaffUsers - List of users that could NOT be imported since they are staff
      */
-    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[]) {
+    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[], rejectedStaffUsers: Partial<StudentDTO>[] = []) {
         this.isImporting.set(false);
         this.hasImported.set(true);
         this.notFoundUsers = notFoundUsers || [];
+        this.rejectedStaffUsers = rejectedStaffUsers;
     }
 
     /**
