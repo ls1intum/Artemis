@@ -89,6 +89,16 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         return of(submission, false, false, false);
     }
 
+    /**
+     * Maps an already-filtered submission for exercise details, retaining initialized result details while omitting the participation back-reference.
+     *
+     * @param submission the authorized and filtered exercise-details submission to map
+     * @return the submission response DTO
+     */
+    public static SubmissionResponseDTO ofForExerciseDetails(Submission submission) {
+        return of(submission, false, true, false);
+    }
+
     private static SubmissionResponseDTO of(Submission submission, boolean includeParticipant, boolean includeFeedback, boolean latestResultOnly) {
         Objects.requireNonNull(submission, "The submission must be set");
 
