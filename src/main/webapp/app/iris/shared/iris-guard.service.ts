@@ -17,7 +17,7 @@ export class IrisGuard implements CanActivate {
      */
     canActivate(): boolean {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS)) {
-            this.router.navigate(['/']);
+            void this.router.navigate(['/']);
             return false;
         }
         return true;

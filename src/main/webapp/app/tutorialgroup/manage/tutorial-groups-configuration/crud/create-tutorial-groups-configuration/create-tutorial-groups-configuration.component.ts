@@ -75,7 +75,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 next: (resp) => {
                     this.course().tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
                     this.courseStorageService.updateCourse(this.course());
-                    this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
+                    void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups-checklist']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

@@ -22,16 +22,16 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
 
         if (isTestRun) {
             const exam = exercise.exerciseGroup!.exam!;
-            router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/test-assessment-dashboard/${exercise.id}`);
+            void router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/test-assessment-dashboard/${exercise.id}`);
         } else {
             if (exercise.exerciseGroup) {
                 const exam = exercise.exerciseGroup.exam!;
-                router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
+                void router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
             } else if (exercise.teamMode && submission) {
                 const teamId = (submission.participation as StudentParticipation).team?.id;
-                router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
+                void router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
             } else {
-                router.navigateByUrl(`/course-management/${course?.id}/assessment-dashboard/${exercise.id}`);
+                void router.navigateByUrl(`/course-management/${course?.id}/assessment-dashboard/${exercise.id}`);
             }
         }
     } else {

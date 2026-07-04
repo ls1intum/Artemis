@@ -400,7 +400,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     deleteAssignmentParticipation() {
         this.loadingState.set(LOADING_STATE.DELETING_ASSIGNMENT_REPO);
         if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
-            this.selectTemplateParticipation();
+            void this.selectTemplateParticipation();
         }
         const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];

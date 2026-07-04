@@ -17,7 +17,7 @@ export class LectureGuard implements CanActivate {
      */
     canActivate(): boolean {
         if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE)) {
-            this.router.navigate(['/']);
+            void this.router.navigate(['/']);
             return false;
         }
         return true;

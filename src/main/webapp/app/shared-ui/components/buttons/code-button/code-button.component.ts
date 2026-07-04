@@ -219,7 +219,7 @@ export class CodeButtonComponent implements OnInit {
         this.configureTooltips();
         this.initTheia(profileInfo);
 
-        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
+        void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }

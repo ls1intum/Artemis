@@ -27,7 +27,7 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
     exportReposByParticipantIdentifiers(exerciseId: number, participantIdentifiers: string[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${participantIdentifiers}`;
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participant-identifiers/${String(participantIdentifiers)}`;
         return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',
@@ -41,7 +41,7 @@ export class ProgrammingAssessmentRepoExportService {
      * @param {RepositoryExportOptions} repositoryExportOptions
      */
     exportReposByParticipations(exerciseId: number, participationIds: number[], repositoryExportOptions: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
-        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${participationIds}`;
+        const url = `${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${String(participationIds)}`;
         return this.http.post(url, repositoryExportOptions, {
             observe: 'response',
             responseType: 'blob',

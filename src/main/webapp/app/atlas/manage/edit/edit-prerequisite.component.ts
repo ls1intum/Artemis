@@ -80,7 +80,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
                 finalize(() => {
                     this.isLoading.set(false);
                     // currently at /course-management/{courseId}/prerequisite-management/{competencyId}/edit, going to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../../../competency-management/'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../../competency-management/'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

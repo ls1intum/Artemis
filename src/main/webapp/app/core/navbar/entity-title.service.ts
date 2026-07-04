@@ -79,7 +79,7 @@ export class EntityTitleService implements OnDestroy {
         // We want to be very defensive here, therefore we wrap everything in a try/catch and return EMPTY if an error occurs
         try {
             if (!type || !ids?.length || ids.some((id) => !id && id !== 0)) {
-                captureException(new Error(`Supplied invalid parameters to getTitle() of EntityTitleService: Type=${type}, ids=${ids}`));
+                captureException(new Error(`Supplied invalid parameters to getTitle() of EntityTitleService: Type=${type}, ids=${String(ids)}`));
                 return EMPTY;
             }
 
@@ -109,7 +109,7 @@ export class EntityTitleService implements OnDestroy {
         // We want to be very defensive here, therefore we wrap everything in a try/catch
         try {
             if (!ids?.length || ids.some((id) => !id && id !== 0) || !title) {
-                captureException(new Error(`Supplied invalid parameters to setTitle() of EntityTitleService: Type=${type}, ids=${ids}, title=${title}`));
+                captureException(new Error(`Supplied invalid parameters to setTitle() of EntityTitleService: Type=${type}, ids=${String(ids)}, title=${title}`));
                 return;
             }
 

@@ -83,7 +83,7 @@ export class WebauthnService {
         this.isRetryingConditionalMediation = false;
         this.conditionalMediationSuccessCallback = onSuccess;
         this.conditionalMediationActiveCallback = onMediationActive;
-        this.runConditionalMediation();
+        void this.runConditionalMediation();
         this.startConditionalMediationRefreshTimer();
     }
 
@@ -279,7 +279,7 @@ export class WebauthnService {
 
         if (this.isUserCancelledPasskeyError(error) && !this.isRetryingConditionalMediation) {
             this.isRetryingConditionalMediation = true;
-            this.runConditionalMediation();
+            void this.runConditionalMediation();
             return;
         }
 
@@ -315,7 +315,7 @@ export class WebauthnService {
 
         this.isRetryingConditionalMediation = false;
         this.abortPendingCredentialRequest();
-        this.runConditionalMediation();
+        void this.runConditionalMediation();
     }
 
     private startConditionalMediationRefreshTimer(): void {
