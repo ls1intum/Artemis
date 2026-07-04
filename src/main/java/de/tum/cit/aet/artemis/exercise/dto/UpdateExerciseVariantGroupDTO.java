@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import org.jspecify.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  * of this DTO; only the group's own settings can be changed.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank String title, @Nullable Double maxPoints, @Nullable ZonedDateTime releaseDate,
+public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank String title, @Nullable @PositiveOrZero Double maxPoints, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
         @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
 

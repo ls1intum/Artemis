@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, merge } from 'rxjs';
+import { Observable, Subject, catchError, forkJoin, map, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -241,7 +241,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                     }
                 });
                 this.exercises.set(exercises);
-                this.loadGroupsFromServer(courseId);
+                // The variant-group endpoints are editor-only. This page is also reachable by tutors, so only load
+                // groups for editors; tutors see the plain exercise list without groups (and avoid a 403 on load).
+                if (loadedCourse?.isAtLeastEditor) {
+                    this.loadGroupsFromServer(courseId);
+                }
                 this.buildBuckets();
                 this.loaded.set(true);
                 this.loadQuizBatches(courseId);
@@ -315,16 +319,20 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedDeleteError.next('');
             return;
         }
-        const deletionObservables = exercisesToDelete.map((exercise) => this.deleteObservableFor(exercise));
-        merge(...deletionObservables).subscribe({
-            error: (error: HttpErrorResponse) => {
-                this.selectedDeleteError.next(error.message);
-                // Some exercises may already be gone; reload so the view matches the server after a partial failure.
-                this.clearSelection();
-                this.loadCourseExercises(courseId);
-            },
-            complete: () => {
-                this.selectedDeleteError.next('');
+        // Let every delete settle instead of aborting the batch on the first failure: catchError turns a rejected
+        // delete into an emitted error value so forkJoin still waits for the rest, then we reload once and surface
+        // any error. (merge(...) would unsubscribe the remaining in-flight deletes as soon as one failed.)
+        const deletionObservables = exercisesToDelete.map((exercise) =>
+            this.deleteObservableFor(exercise).pipe(
+                map(() => undefined),
+                catchError((error: HttpErrorResponse) => of(error)),
+            ),
+        );
+        forkJoin(deletionObservables).subscribe({
+            next: (results) => {
+                const firstError = results.find((result): result is HttpErrorResponse => result !== undefined);
+                this.selectedDeleteError.next(firstError?.message ?? '');
+                // Some exercises may already be gone; reload so the view matches the server (even on a partial failure).
                 this.clearSelection();
                 this.loadCourseExercises(courseId);
             },
@@ -798,7 +806,17 @@ export class CourseManagementExercisesComponent implements OnInit {
             const refByExerciseId = new Map<number, ExerciseVariantGroupReference>();
             const groupDtoByExerciseId = new Map<number, ExerciseVariantGroupDTO>();
             for (const dto of dtos) {
-                const ref: ExerciseVariantGroupReference = { id: dto.id, title: dto.title, maxPoints: dto.maxPoints };
+                const ref: ExerciseVariantGroupReference = {
+                    id: dto.id,
+                    title: dto.title,
+                    maxPoints: dto.maxPoints,
+                    releaseDate: dto.releaseDate,
+                    startDate: dto.startDate,
+                    dueDate: dto.dueDate,
+                    assessmentDueDate: dto.assessmentDueDate,
+                    exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
+                    buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
+                };
                 for (const id of dto.exerciseIds ?? []) {
                     refByExerciseId.set(id, ref);
                     groupDtoByExerciseId.set(id, dto);
@@ -812,6 +830,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                 if (ex.id === undefined) return ex;
                 const newRef = refByExerciseId.get(ex.id);
                 if (newRef?.id === ex.exerciseVariantGroup?.id) return ex;
+                if (newRef === undefined) {
+                    // The exercise was removed from its group. The server keeps the exercise's own dates on
+                    // unassignment, so only drop the group reference here — do not blank the timeline.
+                    return { ...ex, exerciseVariantGroup: undefined };
+                }
                 const groupDto = groupDtoByExerciseId.get(ex.id);
                 const updated: Exercise = {
                     ...ex,

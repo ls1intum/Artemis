@@ -15,6 +15,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -43,6 +47,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     @Autowired
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
@@ -99,6 +106,24 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         Exercise loadedExercise = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(exercise.getId())).findFirst().orElseThrow();
         assertThat(loadedExercise.getExerciseVariantGroup()).isNotNull();
         assertThat(loadedExercise.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseVariantGroup_negativeMaxPointsBadRequest() throws Exception {
+        CreateExerciseVariantGroupDTO negativeMaxPoints = new CreateExerciseVariantGroupDTO("Loop variants", -5.0, null, null, null, null, null, null);
+        request.postWithResponseBody(groupsUrl(), negativeMaxPoints, ExerciseVariantGroupDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseVariantGroup_exampleSolutionBeforeDueDateAllowed() throws Exception {
+        // A group has no IncludedInOverallScore, so (mirroring the NOT_INCLUDED exercise rule) it must accept an example
+        // solution publication date before the due date. Each member exercise still re-validates its own timeline.
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Early solution variants", null, null, null, due, null, exampleSolutionBeforeDue, null);
+        request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -293,6 +318,21 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         // courseId in the path belongs to the group's course, but the exercise belongs to a different course.
         String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + otherExercise.getId() + "/variant-group";
         request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignExamExerciseToGroup_badRequest() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        // An exam exercise reports the exam's course, so it would otherwise pass the ownership check; it must be rejected.
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ExerciseGroup examExerciseGroup = exam.getExerciseGroups().getFirst();
+        TextExercise examExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(examExerciseGroup));
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + examExercise.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        assertThat(exerciseRepository.findByIdElseThrow(examExercise.getId()).getExerciseVariantGroup()).isNull();
     }
 
     /** Adds a quiz exercise with the given mode to the test course (separately from the released text exercise). */

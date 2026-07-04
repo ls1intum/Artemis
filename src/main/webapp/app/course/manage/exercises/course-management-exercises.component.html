@@ -10,18 +10,21 @@
     <!-- Import / Export / Create live on the title row (next to the course title) so the toolbar row below has the full
          width for the view switch and the search bar. -->
     <ng-template titleBarActions>
-        <p-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (onClick)="openImportModal()">
-            <fa-icon [icon]="faFileImport" />
-            <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
-        </p-button>
-        <p-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (onClick)="openQuizExportDialog()">
-            <fa-icon [icon]="faFileExport" />
-            <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
-        </p-button>
-        <p-button size="small" [attr.data-testid]="'create-exercise-button'" (onClick)="openCreateModal()">
-            <fa-icon [icon]="faPlus" />
-            <span class="ms-1" jhiTranslate="global.generic.create"></span>
-        </p-button>
+        <!-- Create/import/export all route to editor-only workflows; hide them from tutors (who can reach this page). -->
+        @if (course()?.isAtLeastEditor) {
+            <p-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (onClick)="openImportModal()">
+                <fa-icon [icon]="faFileImport" />
+                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
+            </p-button>
+            <p-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (onClick)="openQuizExportDialog()">
+                <fa-icon [icon]="faFileExport" />
+                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
+            </p-button>
+            <p-button size="small" [attr.data-testid]="'create-exercise-button'" (onClick)="openCreateModal()">
+                <fa-icon [icon]="faPlus" />
+                <span class="ms-1" jhiTranslate="global.generic.create"></span>
+            </p-button>
+        }
     </ng-template>
 
     <ng-template titleBarToolbar>

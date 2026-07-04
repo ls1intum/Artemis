@@ -314,6 +314,18 @@ export class ExerciseService {
             exercise.dueDate = convertDateFromServer(exercise.dueDate);
             exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
             exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
+            // The embedded variant group carries the shared group timeline. Convert its dates too so the group-timeline
+            // lock dialog opens with real dayjs values; otherwise it would save the group back with missing dates and
+            // wipe the shared timeline.
+            const group = exercise.exerciseVariantGroup;
+            if (group) {
+                group.releaseDate = convertDateFromServer(group.releaseDate);
+                group.startDate = convertDateFromServer(group.startDate);
+                group.dueDate = convertDateFromServer(group.dueDate);
+                group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
+                group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
+                group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
+            }
         }
         return exercise;
     }

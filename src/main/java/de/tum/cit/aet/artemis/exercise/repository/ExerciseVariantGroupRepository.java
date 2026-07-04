@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<ExerciseVariantGroup, Long> {
 
     @Query("""
-            SELECT evg
+            SELECT DISTINCT evg
             FROM Course c
                 JOIN c.exerciseVariantGroups evg
                 LEFT JOIN FETCH evg.exercises
@@ -37,7 +37,7 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     List<ExerciseVariantGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT evg
+            SELECT DISTINCT evg
             FROM Course c
                 JOIN c.exerciseVariantGroups evg
                 LEFT JOIN FETCH evg.exercises

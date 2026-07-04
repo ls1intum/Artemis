@@ -211,7 +211,7 @@ export class ExerciseActionsComponent {
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
-            if (q.quizEnded) {
+            if (q.quizEnded && ex.isAtLeastInstructor) {
                 items.push({
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
@@ -232,7 +232,9 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
-        if (ex.type === ExerciseType.PROGRAMMING) {
+        // Editing (in-editor and the plain edit form) requires editor rights. Tutors can reach this page but must not
+        // see edit controls for routes they cannot use.
+        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
@@ -242,39 +244,44 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
         }
-        if (ex.type !== ExerciseType.QUIZ) {
-            items.push({
-                id: 'edit',
-                labelKey: 'entity.action.edit',
-                icon: faWrench,
-                styleClass: 'btn-warning',
-                kind: 'link',
-                link: ['/course-management', cid, seg, ex.id!, 'edit'],
-            });
-        } else {
-            const q2 = ex as QuizExercise;
-            // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
-            // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
-            const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
-            const editDisabled = !editable || !!q2.quizEnded;
-            items.push({
-                id: 'edit',
-                labelKey: 'entity.action.edit',
-                icon: faWrench,
-                styleClass: 'btn-warning',
-                kind: 'link',
-                link: ['/course-management', cid, seg, ex.id!, 'edit'],
-                disabled: editDisabled || undefined,
-                disabledTooltip: q2.quizEnded
-                    ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
-                    : !editable && q2.status === QuizStatus.ACTIVE
-                      ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
-                      : !editable
-                        ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
-                        : undefined,
-            });
+        if (ex.isAtLeastEditor) {
+            if (ex.type !== ExerciseType.QUIZ) {
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faWrench,
+                    styleClass: 'btn-warning',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                });
+            } else {
+                const q2 = ex as QuizExercise;
+                // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
+                // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
+                const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
+                const editDisabled = !editable || !!q2.quizEnded;
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faWrench,
+                    styleClass: 'btn-warning',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                    disabled: editDisabled || undefined,
+                    disabledTooltip: q2.quizEnded
+                        ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
+                        : !editable && q2.status === QuizStatus.ACTIVE
+                          ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
+                          : !editable
+                            ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
+                            : undefined,
+                });
+            }
         }
-        items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
+        // Deleting an exercise is an instructor-only action.
+        if (ex.isAtLeastInstructor) {
+            items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
+        }
         return items;
     });
 
