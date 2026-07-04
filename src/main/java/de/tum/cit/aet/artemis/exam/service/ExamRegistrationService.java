@@ -141,37 +141,45 @@ public class ExamRegistrationService {
         // Batch-enroll all resolved students in the course in a single round trip instead of one existsBy query + insert per student.
         userService.addUsersToCourse(resolvedStudents.stream().map(ResolvedStudent::student).toList(), course, CourseRole.STUDENT);
 
+        // exam.getExamUsers() is already eagerly loaded (findByIdWithExamUsersElseThrow), so this avoids one findByExamIdAndUserId query per student.
+        Map<Long, ExamUser> existingExamUsersByUserId = exam.getExamUsers().stream().collect(Collectors.toMap(eu -> eu.getUser().getId(), eu -> eu));
+
+        List<ExamUser> examUsersToCreate = new ArrayList<>();
+        List<ExamUser> examUsersToUpdate = new ArrayList<>();
+
         for (var resolved : resolvedStudents) {
             var examUserDto = resolved.dto();
             User student = resolved.student();
-            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+            ExamUser existing = existingExamUsersByUserId.get(student.getId());
 
-            if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !instructorIds.contains(student.getId())
-                    && !authorizationCheckService.isAdmin(student)) {
-                ExamUser registeredExamUser = new ExamUser();
-                registeredExamUser.setUser(student);
-                registeredExamUser.setExam(exam);
+            if (existing == null) {
+                if (!instructorIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
+                    ExamUser registeredExamUser = new ExamUser();
+                    registeredExamUser.setUser(student);
+                    registeredExamUser.setExam(exam);
 
-                if (StringUtils.hasText(examUserDto.room())) {
-                    registeredExamUser.setPlannedRoom(examUserDto.room());
+                    if (StringUtils.hasText(examUserDto.room())) {
+                        registeredExamUser.setPlannedRoom(examUserDto.room());
+                    }
+                    if (StringUtils.hasText(examUserDto.seat())) {
+                        registeredExamUser.setPlannedSeat(examUserDto.seat());
+                    }
+                    examUsersToCreate.add(registeredExamUser);
+                    usersAddedToExam.add(student.getLogin());
                 }
-                if (StringUtils.hasText(examUserDto.seat())) {
-                    registeredExamUser.setPlannedSeat(examUserDto.seat());
-                }
-                registeredExamUser = examUserRepository.save(registeredExamUser);
-                exam.addExamUser(registeredExamUser);
-                usersAddedToExam.add(registeredExamUser.getUser().getLogin());
             }
-
-            if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
-                ExamUser examUser = examUserOptional.get();
-                examUser.setPlannedRoom(examUserDto.room());
-                examUser.setPlannedSeat(examUserDto.seat());
-                examUser = examUserRepository.save(examUser);
-                exam.addExamUser(examUser);
-                usersAddedToExam.add(examUser.getUser().getLogin());
+            else {
+                existing.setPlannedRoom(examUserDto.room());
+                existing.setPlannedSeat(examUserDto.seat());
+                examUsersToUpdate.add(existing);
+                usersAddedToExam.add(existing.getUser().getLogin());
             }
         }
+
+        // Batch-insert/update all exam users in two round trips instead of one INSERT/UPDATE per student.
+        examUserRepository.saveAll(examUsersToCreate).forEach(exam::addExamUser);
+        examUserRepository.saveAll(examUsersToUpdate);
+
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
@@ -382,14 +390,20 @@ public class ExamRegistrationService {
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
+        List<ExamUser> newExamUsers = new ArrayList<>();
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
             if (!registeredUserIds.contains(student.getId()) && !instructorIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
-                ExamUser registeredExamUser = createExamUser(exam, student);
-                exam.addExamUser(registeredExamUser);
+                ExamUser examUser = new ExamUser();
+                examUser.setExam(exam);
+                examUser.setUser(student);
+                newExamUsers.add(examUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }
+
+        // Batch-insert all new exam users in one round trip instead of one INSERT per student.
+        examUserRepository.saveAll(newExamUsers).forEach(exam::addExamUser);
 
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
