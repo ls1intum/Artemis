@@ -5,14 +5,15 @@ import { createRequestOption } from 'app/foundation/util/request.util';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
-import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { SubmissionResponseDTO, fromSubmissionResponseDTO } from 'app/exercise/shared/entities/submission/submission-response.dto';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -22,10 +23,15 @@ export class SubmissionWithComplaintDTO {
     public complaint: Complaint;
 }
 
+export interface SubmissionWithComplaintResponseDTO {
+    submission: SubmissionResponseDTO;
+    complaint: ComplaintDTO;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
     private http = inject(HttpClient);
-    private complaintResponseService = inject(ComplaintResponseService);
+    private complaintService = inject(ComplaintService);
     private accountService = inject(AccountService);
 
     public resourceUrl = 'api/exercise/submissions';
@@ -46,15 +52,10 @@ export class SubmissionService {
      * @param {number} participationId - The id of the participation to be searched for
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
-            map((res) => this.convertSubmissionArrayResponseDatesFromServer(res)),
+        return this.http.get<SubmissionResponseDTO[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
+            map((res) => res.clone({ body: res.body?.map(fromSubmissionResponseDTO) })),
             filter((res) => !!res.body),
-            tap((res) =>
-                res.body!.forEach((submission) => {
-                    SubmissionService.reconnectSubmissionAndResult(submission);
-                    this.setSubmissionAccessRights(submission);
-                }),
-            ),
+            tap((res) => res.body!.forEach((submission) => this.setSubmissionAccessRights(submission))),
         );
     }
 
@@ -64,7 +65,7 @@ export class SubmissionService {
      */
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
@@ -74,19 +75,19 @@ export class SubmissionService {
      */
     getSubmissionsWithMoreFeedbackRequestsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintResponseDTO[]>(`api/exercise/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
-    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
-        if (res.body) {
-            res.body.forEach((dto) => {
-                dto.submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
-                dto.complaint = this.convertComplaintDatesFromServer(dto.complaint);
-                this.setSubmissionAccessRights(dto.submission);
-            });
-        }
-        return res;
+    protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintResponseDTO[]>): HttpResponse<SubmissionWithComplaintDTO[]> {
+        const body = res.body?.map((dto) => {
+            const submission = fromSubmissionResponseDTO(dto.submission);
+            const complaint = this.complaintService.convertComplaintFromServerInList(dto.complaint);
+            complaint.result = submission.results?.find((result) => result.id === dto.complaint.result?.id) ?? complaint.result;
+            this.setSubmissionAccessRights(submission);
+            return { submission, complaint };
+        });
+        return res.clone({ body });
     }
 
     public static convertSubmissionDateFromServer(submission: Submission | undefined) {
@@ -95,14 +96,6 @@ export class SubmissionService {
             this.reconnectSubmissionAndResult(submission);
         }
         return submission;
-    }
-
-    convertComplaintDatesFromServer(complaint: Complaint) {
-        complaint.submittedTime = convertDateFromServer(complaint.submittedTime);
-        if (complaint.complaintResponse) {
-            this.complaintResponseService.convertComplaintResponseDatesFromServer(complaint.complaintResponse);
-        }
-        return complaint;
     }
 
     /**
@@ -151,10 +144,10 @@ export class SubmissionService {
 
     getTestRunSubmissionsForExercise(exerciseId: number): Observable<HttpResponse<Submission[]>> {
         return this.http
-            .get<TextSubmission[]>(`api/exercise/exercises/${exerciseId}/test-run-submissions`, {
+            .get<SubmissionResponseDTO[]>(`api/exercise/exercises/${exerciseId}/test-run-submissions`, {
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
+            .pipe(map((res) => res.clone({ body: res.body?.map(fromSubmissionResponseDTO) })));
     }
 
     public convertResponse(res: EntityResponseType): EntityResponseType {

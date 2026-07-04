@@ -12,6 +12,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('Example Submission Import Paging Service', () => {
     setupTestBed({ zoneless: true });
@@ -35,12 +36,20 @@ describe('Example Submission Import Paging Service', () => {
         const exercise = {
             id: 1,
         } as Exercise;
-        const searchResult = { resultsOnPage: [new TextSubmission()], numberOfPages: 4 };
+        const searchResult = {
+            resultsOnPage: [{ id: 10, submitted: true, submissionExerciseType: SubmissionExerciseType.TEXT, text: 'example submission' }],
+            numberOfPages: 4,
+        };
         const pageable = { pageSize: 2, page: 3, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'testSearchTerm', sortedColumn: 'testSortedColumn' };
         service
             .search(pageable, { exerciseId: exercise.id! })
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(searchResult));
+            .subscribe((resp) => {
+                expect(resp.numberOfPages).toBe(4);
+                expect(resp.resultsOnPage).toHaveLength(1);
+                expect(resp.resultsOnPage[0]).toBeInstanceOf(TextSubmission);
+                expect(resp.resultsOnPage[0]).toMatchObject({ id: 10, text: 'example submission' });
+            });
         const req = httpMock.expectOne({ method: 'GET' });
         expect(req.request.params.get('pageSize')).toBe('2');
         expect(req.request.params.get('page')).toBe('3');
