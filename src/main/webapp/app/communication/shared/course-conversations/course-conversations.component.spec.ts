@@ -279,6 +279,25 @@ examples.forEach((activeConversation) => {
             expect(component.activeConversation()).toEqual(activeConversation);
         });
 
+        it('should store the highlight observers and disconnect them in ngOnDestroy', () => {
+            // Trigger both highlight helpers for elements that do not exist yet, so each creates and stores a MutationObserver.
+            component['scrollToAndHighlightPost'](999999);
+            component['scrollToAndHighlightReply'](999998);
+
+            const postObserver = component['highlightPostObserver'];
+            const replyObserver = component['highlightReplyObserver'];
+            expect(postObserver).toBeDefined();
+            expect(replyObserver).toBeDefined();
+
+            const postDisconnectSpy = vi.spyOn(postObserver!, 'disconnect');
+            const replyDisconnectSpy = vi.spyOn(replyObserver!, 'disconnect');
+
+            component.ngOnDestroy();
+
+            expect(postDisconnectSpy).toHaveBeenCalled();
+            expect(replyDisconnectSpy).toHaveBeenCalled();
+        });
+
         describe('Dialog Opening', () => {
             setupTestBed({ zoneless: true });
 
