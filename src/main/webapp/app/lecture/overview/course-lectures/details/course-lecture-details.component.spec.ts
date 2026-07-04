@@ -163,7 +163,7 @@ describe('CourseLectureDetailsComponent', () => {
                 },
                 MockProvider(Router),
                 MockProvider(ScienceService),
-                MockProvider(IrisChatService, { pointOutNavigation$: EMPTY }),
+                MockProvider(IrisChatService, { pointOutNavigation$: EMPTY, commandRequest$: EMPTY }),
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],

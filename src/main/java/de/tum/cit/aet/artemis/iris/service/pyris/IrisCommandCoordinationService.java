@@ -78,14 +78,14 @@ public class IrisCommandCoordinationService {
         var pending = pendingCommands.get(message.correlationId());
         if (pending == null) {
             // Not awaiting on this node (or already timed out) — ignore.
-            log.info("Iris command ack {} has no pending future on this node (already timed out, or awaited elsewhere)", message.correlationId());
+            log.debug("Iris command ack {} has no pending future on this node (already timed out, or awaited elsewhere)", message.correlationId());
             return;
         }
         if (!pending.userLogin().equals(message.userLogin())) {
             log.warn("Ignoring Iris command ack for correlationId {} from unexpected user", message.correlationId());
             return;
         }
-        log.info("Completing pending Iris command {} with client ack (applied={})", message.correlationId(), message.applied());
+        log.debug("Completing pending Iris command {} with client ack (applied={})", message.correlationId(), message.applied());
         pending.future().complete(new IrisCommandAckDTO(message.correlationId(), message.applied(), message.reason()));
     }
 

@@ -166,7 +166,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         IrisMessage savedMessage;
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
-
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             for (var content : parseResultContents(statusUpdate.result())) {

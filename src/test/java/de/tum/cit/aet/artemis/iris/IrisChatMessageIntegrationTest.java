@@ -261,8 +261,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void pointOutCommand_whenClientAcknowledgesApplied_persistsCommandMarkerMessage() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        LectureUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
 
-        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"), true);
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(unit.getId(), 3, null), true);
         assertThat(result.applied()).isTrue();
 
         await().until(() -> irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.COMMAND));
@@ -273,9 +274,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisMessageContent content = commandMessages.getFirst().getContent().getFirst();
         assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
         var jsonNode = ((IrisJsonMessageContent) content).getJsonNode();
-        assertThat(jsonNode.get("lectureUnitId").asLong()).isEqualTo(42L);
+        assertThat(jsonNode.get("lectureUnitId").asLong()).isEqualTo(unit.getId());
         assertThat(jsonNode.get("page").asInt()).isEqualTo(3);
-        assertThat(jsonNode.get("lectureUnitName").asText()).isEqualTo("Sorting Algorithms");
+        // The lecture unit name is resolved authoritatively from the database, not taken from Pyris
+        assertThat(jsonNode.get("lectureUnitName").asText()).isEqualTo(unit.getName());
     }
 
     @Test
@@ -283,7 +285,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void pointOutCommand_whenClientReportsNotApplied_persistsNoCommandMarker() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
-        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"), false);
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 3, null), false);
         assertThat(result.applied()).isFalse();
 
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().noneMatch(m -> m.getSender() == IrisMessageSender.COMMAND)).isTrue();
@@ -336,7 +338,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
         // A successful point-out persists a COMMAND marker in the chat history.
-        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 1, null, "Sorting Algorithms"), true);
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 1, null), true);
         assertThat(result.applied()).isTrue();
         await().until(() -> irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.COMMAND));
 

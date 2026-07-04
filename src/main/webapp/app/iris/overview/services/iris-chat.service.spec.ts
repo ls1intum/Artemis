@@ -374,7 +374,7 @@ describe('IrisChatService', () => {
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
     });
 
-    it('should emit point-out navigation when a COMMAND message arrives', async () => {
+    it('should add an incoming COMMAND marker message without emitting point-out navigation', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         const commandPayload = {
@@ -386,12 +386,16 @@ describe('IrisChatService', () => {
             },
         } as unknown as IrisChatWebsocketDTO;
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
+        const navigationSpy = vi.fn();
+        service.pointOutNavigation$.subscribe(navigationSpy);
 
-        const navPromise = firstValueFrom(service.pointOutNavigation$);
         service.switchTo(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
 
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3, timestamp: undefined, forceOpen: false });
+        // Navigation already happened at command time; the marker is only a clickable history entry.
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages.last()).toMatchObject({ id: 99, sender: IrisSender.COMMAND });
+        expect(navigationSpy).not.toHaveBeenCalled();
     });
 
     it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {

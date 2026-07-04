@@ -99,7 +99,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
-                MockProvider(IrisChatService, { pointOutNavigation$: of() }),
+                MockProvider(IrisChatService, { pointOutNavigation$: of(), commandRequest$: of() }),
             ],
         })
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the

@@ -109,19 +109,19 @@ public class IrisCommandService {
         var request = new IrisCommandRequestWebsocketDTO(correlationId, pointOut.type(), pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp());
         irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
         long sentAt = System.currentTimeMillis();
-        log.info("Point-out command {} sent to user {} (session {}), awaiting client ack", correlationId, userLogin, session.getId());
+        log.debug("Point-out command {} sent to user {} (session {}), awaiting client ack", correlationId, userLogin, session.getId());
 
         return ackFuture.orTimeout(ACK_TIMEOUT_SECONDS, TimeUnit.SECONDS).handleAsync((ack, throwable) -> {
             long waited = System.currentTimeMillis() - sentAt;
             if (throwable != null) {
-                log.info("Point-out command {} timed out after {}ms with no client ack", correlationId, waited);
+                log.debug("Point-out command {} timed out after {}ms with no client ack", correlationId, waited);
                 return PyrisCommandResultDTO.notApplied("timeout");
             }
             if (ack == null || !ack.applied()) {
-                log.info("Point-out command {} not applied by client after {}ms (reason={})", correlationId, waited, ack != null ? ack.reason() : null);
+                log.debug("Point-out command {} not applied by client after {}ms (reason={})", correlationId, waited, ack != null ? ack.reason() : null);
                 return PyrisCommandResultDTO.notApplied(ack != null && ack.reason() != null ? ack.reason() : "notApplied");
             }
-            log.info("Point-out command {} applied by client after {}ms, persisting marker and returning success", correlationId, waited);
+            log.debug("Point-out command {} applied by client after {}ms, persisting marker and returning success", correlationId, waited);
             // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
             // history marker is best-effort: it runs in its own transaction (this continuation is off the request
             // thread, so lazy content needs an open session) and a failure here must not turn into a 500 for Pyris.
@@ -158,7 +158,7 @@ public class IrisCommandService {
         if (pointOut.timestamp() != null) {
             node.put("timestamp", pointOut.timestamp());
         }
-        var name = resolveLectureUnitName(pointOut);
+        var name = resolveLectureUnitName(pointOut.lectureUnitId());
         if (name != null && !name.isBlank()) {
             node.put("lectureUnitName", name);
         }
@@ -166,18 +166,15 @@ public class IrisCommandService {
     }
 
     /**
-     * Resolves the lecture unit's display name for the marker. Uses the name Pyris provided if present, otherwise looks it up authoritatively from the database.
+     * Resolves the lecture unit's display name for the marker from the database, or {@code null} if it cannot be resolved.
      */
-    private String resolveLectureUnitName(PyrisPointOutCommandDTO pointOut) {
-        if (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank()) {
-            return pointOut.lectureUnitName();
-        }
+    private String resolveLectureUnitName(long lectureUnitId) {
         return lectureUnitRepositoryApi.flatMap(api -> {
             try {
-                return Optional.ofNullable(api.findByIdElseThrow(pointOut.lectureUnitId()).getName());
+                return Optional.ofNullable(api.findByIdElseThrow(lectureUnitId).getName());
             }
             catch (Exception e) {
-                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", pointOut.lectureUnitId());
+                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", lectureUnitId);
                 return Optional.<String>empty();
             }
         }).orElse(null);

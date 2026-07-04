@@ -38,7 +38,7 @@ public class IrisCommandWebsocketController {
      */
     @MessageMapping("topic/iris/command-ack")
     public void acknowledgeCommand(@Payload IrisCommandAckDTO ack, Principal principal) {
-        log.info("Received client command ack {} from user {} (applied={}, reason={})", ack.correlationId(), principal != null ? principal.getName() : null, ack.applied(),
+        log.debug("Received client command ack {} from user {} (applied={}, reason={})", ack.correlationId(), principal != null ? principal.getName() : null, ack.applied(),
                 ack.reason());
         coordinationService.handleAck(ack, principal.getName());
     }
