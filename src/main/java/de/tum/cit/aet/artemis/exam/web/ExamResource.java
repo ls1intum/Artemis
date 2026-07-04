@@ -63,7 +63,6 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -932,36 +931,6 @@ public class ExamResource {
         examService.setExamProperties(returnExam);
 
         return ResponseEntity.ok(returnExam);
-    }
-
-    /**
-     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the
-     * exam
-     *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentLogin the login of the user who should get student access
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
-     */
-    @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<StudentDTO> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
-        log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
-
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-
-        if (exam.isTestExam()) {
-            throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
-        }
-
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
-                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
-
-        examRegistrationService.registerStudentToExam(course, exam, student);
-        return ResponseEntity.ok().body(new StudentDTO(student));
     }
 
     /**

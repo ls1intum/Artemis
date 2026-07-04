@@ -173,7 +173,20 @@ export class ExamStudentsComponent implements OnDestroy {
                 registrationNumber: u.registrationNumber ?? '',
                 email: u.email ?? '',
             }));
-            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(map(() => void 0));
+            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
+                tap((res) => {
+                    const { notFoundStudents, rejectedStaffUsers } = res.body!;
+                    if (notFoundStudents?.length) {
+                        const logins = notFoundStudents.map((u) => u.login).join(', ');
+                        this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
+                    }
+                    if (rejectedStaffUsers?.length) {
+                        const logins = rejectedStaffUsers.map((u) => u.login).join(', ');
+                        this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins });
+                    }
+                }),
+                map(() => undefined),
+            );
         };
     });
 

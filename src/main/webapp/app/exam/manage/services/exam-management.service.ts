@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -271,16 +270,6 @@ export class ExamManagementService {
      */
     delete(courseId: number, examId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { observe: 'response' });
-    }
-
-    /**
-     * Add a student to the registered users for an exam
-     * @param courseId The course id.
-     * @param examId The id of the exam to which to add the student
-     * @param studentLogin Login of the student
-     */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
-        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
     }
 
     /**

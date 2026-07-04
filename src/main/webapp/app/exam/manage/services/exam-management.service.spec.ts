@@ -342,23 +342,6 @@ describe('Exam Management Service Tests', () => {
         await Promise.resolve();
     });
 
-    it('should add student to exam', async () => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockStudentLogin = 'studentLogin';
-
-        // WHEN
-        service.addStudentToExam(course.id!, mockExam.id!, mockStudentLogin).subscribe((res) => expect(res.body).toBeNull());
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/students/${mockStudentLogin}`,
-        });
-        req.flush(null);
-        await Promise.resolve();
-    });
-
     it('should add students to exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
