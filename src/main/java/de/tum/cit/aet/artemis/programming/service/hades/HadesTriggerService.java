@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -60,19 +60,22 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
+    private final BuildScriptProviderService buildScriptProviderService;
+
     private static final String HADES_WORKING_DIRECTORY = "/shared";
 
     private static final String DEFAULT_INGEST_DIRECTORY = HADES_WORKING_DIRECTORY + "/build/test-results/test";
 
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, BuildScriptProviderService buildScriptProviderService) {
         this.hadesService = hadesService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.gitService = gitService;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     @Override
@@ -119,7 +122,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             }
 
             additionalProperties.put("resultIngestDirectory",
-                    resolveResultIngestDirectory(activePhases, participation.getProgrammingExercise().getProgrammingLanguage(), projectType));
+                    resolveResultIngestDirectory(activePhases, buildConfig, participation.getProgrammingExercise().getProgrammingLanguage(), projectType));
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
@@ -156,11 +159,14 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         return buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
     }
 
-    private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingLanguage programmingLanguage, ProjectType projectType) {
-        Optional<String> fromResultPaths = activePhases.stream().map(BuildPhaseDTO::resultPaths).filter(Objects::nonNull).flatMap(List::stream)
-                .filter(path -> path != null && !path.isBlank()).distinct().findFirst().map(HadesTriggerService::toIngestDirectory);
-        if (fromResultPaths.isPresent()) {
-            return fromResultPaths.get();
+    private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingExerciseBuildConfig buildConfig, ProgrammingLanguage programmingLanguage,
+            ProjectType projectType) {
+        List<String> rawResultPaths = activePhases.stream().map(BuildPhaseDTO::resultPaths).filter(Objects::nonNull).flatMap(List::stream)
+                .filter(path -> path != null && !path.isBlank()).distinct().toList();
+
+        if (!rawResultPaths.isEmpty()) {
+            List<String> resolvedResultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(rawResultPaths, buildConfig);
+            return toIngestDirectory(resolvedResultPaths.get(0));
         }
 
         boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
@@ -171,10 +177,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     }
 
     private static String toIngestDirectory(String resultPathGlob) {
-        String cleaned = resultPathGlob.strip();
-        if (cleaned.startsWith("**/")) {
-            cleaned = cleaned.substring("**/".length());
-        }
+        String cleaned = resultPathGlob.strip().replace("**/", "");
         int lastSlash = cleaned.lastIndexOf('/');
         String directory = lastSlash >= 0 ? cleaned.substring(0, lastSlash) : "";
         return directory.isBlank() ? HADES_WORKING_DIRECTORY : HADES_WORKING_DIRECTORY + "/" + directory;

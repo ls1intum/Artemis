@@ -141,6 +141,13 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertThat(phases).isNotNull();
     }
 
+    @Test
+    void testUnsupportedMethods() {
+        continuousIntegrationService.enablePlan(null, null);
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
+        assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
+    }
+
     @Nested
     class GetCheckoutDirectoriesTests {
 

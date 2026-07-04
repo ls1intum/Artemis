@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
@@ -70,8 +69,8 @@ public class ProgrammingExerciseBuildPlanService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
-        // Only create build plans for jenkins
-        if (profileService.isProfileActive(PROFILE_JENKINS)) {
+        // Jenkins needs a real project/build plan; LocalCI's implementation is a no-op.
+        if (profileService.isJenkinsActive() || profileService.isLocalCIActive()) {
             // Get URLs for repos
             var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
             var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();

@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -56,6 +57,9 @@ class HadesTriggerServiceTest {
 
     @Mock
     private LocalCIBuildConfigurationService localCIBuildConfigurationService;
+
+    @Mock
+    private BuildScriptProviderService buildScriptProviderService;
 
     @InjectMocks
     private HadesTriggerService hadesTriggerService;
@@ -146,12 +150,42 @@ class HadesTriggerServiceTest {
             var phase = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, List.of("**/target/surefire-reports/*.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
             ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
 
             hadesTriggerService.triggerBuild(participation, null, null);
 
             verify(hadesService).build(captor.capture());
             assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/target/surefire-reports");
+        }
+
+        @Test
+        void triggerBuild_withMidPathWildcard_stripsWildcardSegment() throws ContinuousIntegrationException {
+            var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("src/**/test-results/*.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/src/test-results");
+        }
+
+        @Test
+        void triggerBuild_withPlaceholderResultPath_resolvesPlaceholderBeforeDerivingDirectory() throws ContinuousIntegrationException {
+            var phase = new BuildPhaseDTO("test", "go test", BuildPhaseCondition.ALWAYS, false, List.of("${testWorkingDirectory}/test-results.xml"));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
+            when(buildScriptProviderService.replaceResultPathsPlaceholders(List.of("${testWorkingDirectory}/test-results.xml"), buildConfig))
+                    .thenReturn(List.of("tests/test-results.xml"));
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
+
+            hadesTriggerService.triggerBuild(participation, null, null);
+
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/tests");
         }
 
         @Test

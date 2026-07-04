@@ -295,7 +295,7 @@ public class ProgrammingExerciseValidationService {
      * @param programmingExercise the programming exercise to validate
      */
     public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
-        if (!profileService.isLocalCIActive()) {
+        if (profileService.isJenkinsActive()) {
             return;
         }
 
