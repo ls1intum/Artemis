@@ -694,7 +694,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM User u JOIN u.authorities a
-                    WHERE u.id = user.id AND a.name IN ('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')
+                    WHERE u.id = user.id AND a.name IN (
+                        :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY},
+                        :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY}
+                    )
                 )
             """)
     Page<User> findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm,

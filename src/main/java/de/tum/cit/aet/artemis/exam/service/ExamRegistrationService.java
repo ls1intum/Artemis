@@ -120,11 +120,8 @@ public class ExamRegistrationService {
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
-        List<String> usersAddedToExam = new ArrayList<>();
-        Exam examWithExerciseGroupsAndExercises = null;
-        if (exam.isStarted()) {
-            examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        }
+        List<String> usersAddedToExamForLogging = new ArrayList<>();
+        List<User> studentsNewlyAddedToExam = new ArrayList<>();
 
         for (var examUserDto : examUserDTOs) {
             // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
@@ -162,12 +159,9 @@ public class ExamRegistrationService {
                 }
                 registeredExamUser = examUserRepository.save(registeredExamUser);
                 exam.addExamUser(registeredExamUser);
-                usersAddedToExam.add(registeredExamUser.getUser().getLogin());
 
-                // Generate a student exam for the registered student if the exam has already started
-                if (examWithExerciseGroupsAndExercises != null) {
-                    studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
-                }
+                studentsNewlyAddedToExam.add(student);
+                usersAddedToExamForLogging.add(registeredExamUser.getUser().getLogin());
             }
             else {
                 // Update room/seat of an already registered exam user
@@ -180,11 +174,20 @@ public class ExamRegistrationService {
                 }
                 examUser = examUserRepository.save(examUser);
                 exam.addExamUser(examUser);
-                usersAddedToExam.add(examUser.getUser().getLogin());
+                usersAddedToExamForLogging.add(examUser.getUser().getLogin());
             }
         }
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
+
+        if (exam.isStarted()) {
+            // Generate student exams for the registered students if the exam has already started and prepare the exercises
+            Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            for (User student : studentsNewlyAddedToExam) {
+                StudentExam studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+                studentExamService.setUpExerciseParticipationsAndSubmissions(studentExam, new ArrayList<>(), false);
+            }
+        }
 
         try {
             User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -196,7 +199,7 @@ public class ExamRegistrationService {
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), usersAddedToExam, exam.getTitle(), exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), usersAddedToExamForLogging, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);

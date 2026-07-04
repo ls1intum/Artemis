@@ -172,7 +172,7 @@ export class ExamStudentsComponent implements OnDestroy {
         }));
         return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
             tap((res) => {
-                const { notFoundStudents, rejectedStaffUsers } = res.body!;
+                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
                 if (notFoundStudents?.length) {
                     const logins = notFoundStudents.map((u) => u.login).join(', ');
                     this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
