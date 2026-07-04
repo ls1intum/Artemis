@@ -601,6 +601,27 @@ describe('IrisBaseChatbotComponent', () => {
 
             expect(bottomScrollSpy).not.toHaveBeenCalled();
         });
+
+        it('should not give the entrance animation to the message that finalizes the streamed draft', () => {
+            component['shouldAnimate'] = true;
+            pushDraft('run-1', 'Streaming answer');
+
+            // Same order as the service's MESSAGE handler: apply the final message first, then clear the draft.
+            chatService.messages.next([finalAssistantMessage('Streaming answer, finalized.')]);
+            chatService.liveAssistantDraft.next(undefined);
+            fixture.detectChanges();
+
+            expect(component.animatingMessageIds().has(9876)).toBe(false);
+        });
+
+        it('should still give the entrance animation to a new message when no draft was streaming', () => {
+            component['shouldAnimate'] = true;
+
+            chatService.messages.next([finalAssistantMessage('A fresh answer without streaming.')]);
+            fixture.detectChanges();
+
+            expect(component.animatingMessageIds().has(9876)).toBe(true);
+        });
     });
 
     it('should set the appropriate message styles based on the sender', async () => {

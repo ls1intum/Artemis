@@ -564,11 +564,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Handle message scroll on new messages
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
+            // A count increase landing exactly as the streamed draft disappeared is the
+            // draft's own finalization: the persisted message replacing the live bubble.
+            const isDraftFinalization =
+                rawMessages.length > this.previousMessageCount &&
+                !this.liveAssistantDraft() &&
+                (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined);
             if (rawMessages.length !== this.previousMessageCount) {
-                const isDraftFinalization =
-                    rawMessages.length > this.previousMessageCount &&
-                    !this.liveAssistantDraft() &&
-                    (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined);
                 // Initial history load (e.g. after a page refresh): the batch lands at once and
                 // its content keeps growing the scroll height for several frames, so use the
                 // settling scroll to land exactly at the bottom instead of a tiny bit short.
@@ -590,8 +592,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
-            // Track new messages for animation (compare against previous IDs, not current)
-            if (this.shouldAnimate) {
+            // Track new messages for animation (compare against previous IDs, not current).
+            // A message that finalizes a streamed draft must NOT get the entrance
+            // animation: its content is already fully visible in the draft bubble, and
+            // the animation renders it at height 0 (grid-template-rows: 0fr) growing to
+            // full size — collapsing the scroll content and snapping the viewport.
+            if (this.shouldAnimate && !isDraftFinalization) {
                 // Use untracked to read current value without creating a dependency
                 // (otherwise updating animatingMessageIds would retrigger this effect infinitely)
                 const newAnimatingIds = new Set(untracked(() => this.animatingMessageIds()));
