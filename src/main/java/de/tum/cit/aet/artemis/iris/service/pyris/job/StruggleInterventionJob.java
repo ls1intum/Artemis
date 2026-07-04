@@ -19,9 +19,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param courseId      the course the run belongs to; authorizes {@link #canAccess(Course)}
  * @param exerciseId    the exercise the student is struggling on
  * @param userId        the struggling student
- * @param intent        the slot intent ({@code decide} | {@code confirm_close} | {@code stale_check}); null on legacy paths
+ * @param intent        the slot intent ({@code decide} | {@code confirm_close}); null on legacy paths
  * @param episodeId     the client-allocated episode UUID for correlation; null when no episode was sent
- * @param confirmReason the close-mode discriminator ({@code progress} | {@code stale_solved} | {@code parked_progress}); null unless intent is {@code confirm_close}
+ * @param confirmReason the close-mode discriminator ({@code progress} | {@code parked_progress}); null unless intent is {@code confirm_close}
  * @param requestToken  the client-minted scoped-cancel UUID (A10); null on legacy paths
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

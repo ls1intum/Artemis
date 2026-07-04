@@ -46,8 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Plain Mockito unit tests for {@link IrisStruggleInterventionService#handleConfirmClose} and
- * {@link IrisStruggleInterventionService#handleStaleCheck} (A11).
+ * Plain Mockito unit tests for {@link IrisStruggleInterventionService#handleConfirmClose} (A11).
  *
  * <p>
  * Matrix covered:
@@ -55,15 +54,9 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * <li>confirm_close progress resolved=true: RECOVERED written, closing persisted, event carries closingSentence/episodeLabel/messageId.</li>
  * <li>confirm_close progress resolved=true missing fields: default closing sentence and label applied.</li>
  * <li>confirm_close progress resolved=false: quiet (no persist, no outcome, no messageId in event).</li>
- * <li>confirm_close stale_solved resolved=true: RECOVERED written, closing persisted, messageId carried.</li>
- * <li>confirm_close stale_solved resolved=false: one offer persisted (rationale), messageId carried.</li>
- * <li>confirm_close stale_solved resolved=false empty rationale: default offer applied.</li>
  * <li>confirm_close parked_progress (either result): persist nothing, no outcome, bare completion event (no messageId).</li>
  * <li>confirm_close null confirmReason: fail-closed to parked_progress semantics.</li>
  * <li>confirm_close already-terminal episode: persist skipped, noop event (delivered reasons only).</li>
- * <li>stale_check ask=true: question persisted + event with question and messageId.</li>
- * <li>stale_check ask=false: noop event, nothing persisted.</li>
- * <li>stale_check ask=true already-terminal episode: persist skipped, noop event.</li>
  * </ul>
  */
 @ExtendWith(MockitoExtension.class)
@@ -111,13 +104,9 @@ class IrisStruggleInterventionConfirmCloseTest {
 
     private final StruggleInterventionJob progressJob = new StruggleInterventionJob("t1", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null);
 
-    private final StruggleInterventionJob staleSolvedJob = new StruggleInterventionJob("t2", 7L, 42L, 3L, "confirm_close", "ep-cc", "stale_solved", null);
-
     private final StruggleInterventionJob parkedJob = new StruggleInterventionJob("t3", 7L, 42L, 3L, "confirm_close", "ep-cc", "parked_progress", null);
 
     private final StruggleInterventionJob nullReasonJob = new StruggleInterventionJob("t4", 7L, 42L, 3L, "confirm_close", "ep-cc", null, null);
-
-    private final StruggleInterventionJob staleCheckJob = new StruggleInterventionJob("t5", 7L, 42L, 3L, "stale_check", "ep-sc", null, null);
 
     @BeforeEach
     void setUp() {
@@ -197,70 +186,6 @@ class IrisStruggleInterventionConfirmCloseTest {
                 argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null && Objects.equals(e.episodeId(), "ep-cc")));
     }
 
-    // --- confirm_close stale_solved ---
-
-    @Test
-    void confirmClose_staleSolved_resolved_true_persistsClosingAndWritesRecovered() {
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
-        when(irisMessageRepository.findFirstByProactiveEpisodeIdOrderByIdAsc("ep-cc")).thenReturn(java.util.Optional.of(savedMsg(203L)));
-        when(irisMessageRepository.setProactiveOutcomeIfNull(203L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(203L);
-            return m;
-        });
-        var update = closeUpdate(true, "Great job, you solved it!", "Resolved", null);
-
-        service.handleConfirmClose(staleSolvedJob, update);
-
-        verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
-        verify(irisMessageRepository).setProactiveOutcomeIfNull(203L, IrisProactiveOutcome.RECOVERED);
-        verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && Objects.equals(e.messageId(), 203L)));
-    }
-
-    @Test
-    void confirmClose_staleSolved_resolved_false_persistsOffer() {
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(204L);
-            return m;
-        });
-        var update = closeUpdateWithRationale(false, "Let us look at it together.");
-
-        service.handleConfirmClose(staleSolvedJob, update);
-
-        verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
-        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
-        // No RECOVERED write (resolved=false)
-        verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false)
-                && Objects.equals(e.messageId(), 204L) && "Let us look at it together.".equals(e.offer())));
-    }
-
-    @Test
-    void confirmClose_staleSolved_resolved_false_emptyRationale_usesDefaultOffer() {
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(205L);
-            return m;
-        });
-        // empty rationale: default offer must be used
-        var update = closeUpdateWithRationale(false, "");
-
-        service.handleConfirmClose(staleSolvedJob, update);
-
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && "Want to look at it together?".equals(e.offer())));
-    }
-
     // --- confirm_close parked_progress ---
 
     @Test
@@ -321,7 +246,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && e.messageId() == null));
     }
 
-    // --- confirm_close / stale_check persist-failure resilience (Fix 2) ---
+    // --- confirm_close persist-failure resilience (Fix 2) ---
 
     @Test
     void confirmClose_progress_resolved_true_persistFailure_stillEmitsCompletionEvent() {
@@ -339,88 +264,6 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null));
-    }
-
-    @Test
-    void confirmClose_staleSolved_resolved_false_persistFailure_stillEmitsOfferEvent() {
-        // Fix 2: the stale_solved offer persist can also fail; the offer event must still be emitted (messageId=null).
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
-        var update = closeUpdateWithRationale(false, "Want to pair on it?");
-
-        service.handleConfirmClose(staleSolvedJob, update);   // must not throw
-
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null && "Want to pair on it?".equals(e.offer())));
-    }
-
-    @Test
-    void staleCheck_askTrue_persistFailure_stillEmitsCompletionEvent() {
-        // Fix 2: a persist failure on stale_check must NOT propagate; the stale_check event is still emitted with the
-        // question and messageId=null so the client's in-flight slot clears.
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-sc")).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
-        var update = staleCheckUpdate(true, "Still stuck on the same error?");
-
-        service.handleStaleCheck(staleCheckJob, update);   // must not throw
-
-        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "stale_check".equals(e.kind()) && Objects.equals(e.ask(), true) && e.messageId() == null && "Still stuck on the same error?".equals(e.question())));
-    }
-
-    // --- stale_check ask=true ---
-
-    @Test
-    void staleCheck_askTrue_persistsQuestionAndEmitsEvent() {
-        var session = exerciseSession(42L);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-sc")).thenReturn(List.of());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(301L);
-            return m;
-        });
-        var update = staleCheckUpdate(true, "Are you still stuck on the same error?");
-
-        service.handleStaleCheck(staleCheckJob, update);
-
-        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-sc".equals(m.getProactiveEpisodeId())), eq(session),
-                eq(IrisMessageSender.LLM));
-        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "stale_check".equals(e.kind()) && Objects.equals(e.ask(), true)
-                && "Are you still stuck on the same error?".equals(e.question()) && Objects.equals(e.messageId(), 301L) && Objects.equals(e.episodeId(), "ep-sc")));
-    }
-
-    // --- stale_check ask=false ---
-
-    @Test
-    void staleCheck_askFalse_emitsNoopAndPersistsNothing() {
-        var update = staleCheckUpdate(false, null);
-
-        service.handleStaleCheck(staleCheckJob, update);
-
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "stale_check".equals(e.kind()) && Objects.equals(e.ask(), false) && e.messageId() == null));
-    }
-
-    // --- stale_check terminal gate ---
-
-    @Test
-    void staleCheck_askTrue_alreadyTerminal_skipsPersistandEmitsNoop() {
-        when(irisMessageRepository.findEpisodeOutcomes("ep-sc")).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
-        var update = staleCheckUpdate(true, "Still stuck?");
-
-        service.handleStaleCheck(staleCheckJob, update);
-
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "stale_check".equals(e.kind()) && Objects.equals(e.ask(), true) && e.messageId() == null && Objects.equals(e.episodeId(), "ep-sc")));
     }
 
     // --- helpers ---
@@ -443,15 +286,10 @@ class IrisStruggleInterventionConfirmCloseTest {
     }
 
     private PyrisStruggleInterventionStatusUpdateDTO closeUpdate(boolean resolved, String closingSentence, String episodeLabel, String rationale) {
-        return new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, rationale, List.of(), List.of(), null, null, null, resolved, closingSentence, episodeLabel, null,
-                null);
+        return new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, rationale, List.of(), List.of(), null, null, null, resolved, closingSentence, episodeLabel);
     }
 
     private PyrisStruggleInterventionStatusUpdateDTO closeUpdateWithRationale(boolean resolved, String rationale) {
         return closeUpdate(resolved, null, null, rationale);
-    }
-
-    private PyrisStruggleInterventionStatusUpdateDTO staleCheckUpdate(boolean ask, String question) {
-        return new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null, ask, question);
     }
 }

@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Per-user struggle event pushed to {@code /user/topic/iris/struggle-intervention} (spec §5.5). {@code kind} is the
- * event discriminator ({@code "decide"} | {@code "confirm_close"} | {@code "stale_check"}); A11 adds the latter two.
+ * event discriminator ({@code "decide"} | {@code "confirm_close"}); A11 added the latter.
  * {@code action} is {@code "ambient"} (lamp, {@code message} holds the hint text) or {@code "active"} (chat bubble) or
- * {@code "silent"} (noop completion frame); null for confirm_close/stale_check events. After the pull-model change
+ * {@code "silent"} (noop completion frame); null for confirm_close events. After the pull-model change
  * (spec §5, A9) ambient is event-only: it no longer persists a proactive message; the client holds the text frozen and
  * reveals it on click (A10/C2). Active still persists and pushes a chat-ws bubble. Both carry {@code sessionId} so the
  * client knows which session to target. Active carries {@code messageId} when persist succeeded (null on permanent
@@ -18,20 +18,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * {@code episodeId} is the client-allocated UUID that correlates this event back to the outstanding slot request.
  *
  * <p>
- * A11 mode payload fields:
+ * A11 confirm_close payload fields:
  * <ul>
- * <li>{@code offer}: gentle re-offer text (from {@code rationale}) for a {@code stale_solved} {@code resolved=false} close.</li>
  * <li>{@code resolved}: boolean result for confirm_close events.</li>
- * <li>{@code closingSentence}: closing praise for a {@code resolved=true} confirm_close (progress/stale_solved).</li>
- * <li>{@code episodeLabel}: episode label for a {@code resolved=true} confirm_close (progress/stale_solved).</li>
- * <li>{@code ask}: whether Pyris wants to ask a stale-check question.</li>
- * <li>{@code question}: the stale-check question text ({@code ask=true} only, carries a messageId).</li>
+ * <li>{@code closingSentence}: closing praise for a {@code resolved=true} confirm_close (progress).</li>
+ * <li>{@code episodeLabel}: episode label for a {@code resolved=true} confirm_close (progress).</li>
  * </ul>
  *
  * Every payload field beyond {@code exerciseId}/{@code kind} is {@code @Nullable} so a partial push still serializes.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullable String action, @Nullable String message, @Nullable Long sessionId, @Nullable Long messageId,
-        @Nullable String anchorFile, @Nullable Integer anchorLine, @Nullable String inlineHint, @Nullable Double confidence, @Nullable String episodeId, @Nullable String offer,
-        @Nullable Boolean resolved, @Nullable String closingSentence, @Nullable String episodeLabel, @Nullable Boolean ask, @Nullable String question) {
+        @Nullable String anchorFile, @Nullable Integer anchorLine, @Nullable String inlineHint, @Nullable Double confidence, @Nullable String episodeId, @Nullable Boolean resolved,
+        @Nullable String closingSentence, @Nullable String episodeLabel) {
 }

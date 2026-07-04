@@ -55,8 +55,6 @@ class PyrisStatusUpdateStruggleTest {
     // A11 mode jobs: intent carries the routing key; action is null on the response (deadlock guard)
     private final StruggleInterventionJob confirmCloseJob = new StruggleInterventionJob("cc", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null);
 
-    private final StruggleInterventionJob staleCheckJob = new StruggleInterventionJob("sc", 7L, 42L, 3L, "stale_check", "ep-sc", null, null);
-
     @BeforeEach
     void setUp() {
         pyrisJobService = mock(PyrisJobService.class);
@@ -69,7 +67,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void decisionCallback_removesJobThenDispatchesThenReleasesMarker() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", List.of(), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -82,7 +80,7 @@ class PyrisStatusUpdateStruggleTest {
     @Test
     void nonDecisionCallback_keepAlive_holdsMarker() {
         var inProgress = new PyrisStageDTO("Thinking", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -95,7 +93,7 @@ class PyrisStatusUpdateStruggleTest {
     @Test
     void nonDecisionTerminalCallback_releasesMarker() {
         var errorStage = new PyrisStageDTO("Error", 10, PyrisStageState.ERROR, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -108,7 +106,7 @@ class PyrisStatusUpdateStruggleTest {
     void nonDecisionCallback_emptyStages_doesNotTerminateNorReleaseMarker() {
         // An empty stages list is vacuously "all terminal"; the !isEmpty() guard must NOT let it drop the job,
         // otherwise the real decision callback would 403 and the intervention would be silently lost.
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -123,7 +121,7 @@ class PyrisStatusUpdateStruggleTest {
         // A11 deadlock fix: confirm_close responses carry action=null. The old gate (action != null) would
         // never clear the in-flight marker, deadlocking the slot. The fix routes by job.intent() first.
         // action=null is the real-world response shape for confirm_close.
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, true, "Nice work!", "Done", null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, true, "Nice work!", "Done");
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
@@ -135,26 +133,12 @@ class PyrisStatusUpdateStruggleTest {
     }
 
     @Test
-    void staleCheck_withNullAction_removesJobAndReleasesMarker() {
-        // A11 deadlock fix: stale_check responses carry action=null. Same root cause as confirm_close above.
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null, true, "Still stuck?");
-
-        service.handleStatusUpdate(staleCheckJob, update);
-
-        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
-        inOrder.verify(pyrisJobService).removeJob(staleCheckJob);
-        inOrder.verify(irisStruggleInterventionService).handleStaleCheck(eq(staleCheckJob), any());
-        inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("sc", 3L, 42L);
-        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
-    }
-
-    @Test
     void confirmClose_intermediateFrame_doesNotDispatch_holdsMarker() {
         // Terminal-frame gating fix: the confirm_close terminal frame carries resolved != null. A leading IN_PROGRESS
         // frame (resolved == null) must NOT fire the handler - dispatching early would remove the job so the REAL
         // terminal frame would 403 and the close would be silently lost. Intermediate frame -> keep-alive, marker held.
         var inProgress = new PyrisStageDTO("Thinking", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
@@ -169,7 +153,7 @@ class PyrisStatusUpdateStruggleTest {
         // A Pyris ERROR stage with no resolved field is terminal but is not a real close: release the marker (so the
         // slot does not leak) without dispatching the close handler.
         var errorStage = new PyrisStageDTO("Error", 10, PyrisStageState.ERROR, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null);
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
@@ -183,51 +167,12 @@ class PyrisStatusUpdateStruggleTest {
         // The terminal frame (resolved != null) even when accompanied by an in-progress-then-done stage list must
         // dispatch the close handler exactly once.
         var done = new PyrisStageDTO("Done", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(done), List.of(), null, null, null, false, null, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(done), List.of(), null, null, null, false, null, null);
 
         service.handleStatusUpdate(confirmCloseJob, update);
 
         verify(irisStruggleInterventionService).handleConfirmClose(eq(confirmCloseJob), any());
         verify(pyrisJobService).removeJob(confirmCloseJob);
         verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
-    }
-
-    @Test
-    void staleCheck_intermediateFrame_doesNotDispatch_holdsMarker() {
-        // Same terminal-frame gating as confirm_close: the stale_check terminal frame carries ask != null. A leading
-        // IN_PROGRESS frame (ask == null) must NOT fire the handler. Intermediate frame -> keep-alive, marker held.
-        var inProgress = new PyrisStageDTO("Thinking", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null, null, null);
-
-        service.handleStatusUpdate(staleCheckJob, update);
-
-        verify(irisStruggleInterventionService, never()).handleStaleCheck(any(), any());
-        verify(pyrisJobService, never()).removeJob(any());
-        verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());
-        verify(pyrisJobService).updateJob(staleCheckJob);
-    }
-
-    @Test
-    void staleCheck_errorFrame_releasesMarkerWithoutDispatch() {
-        var errorStage = new PyrisStageDTO("Error", 10, PyrisStageState.ERROR, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null, null, null);
-
-        service.handleStatusUpdate(staleCheckJob, update);
-
-        verify(irisStruggleInterventionService, never()).handleStaleCheck(any(), any());
-        verify(pyrisJobService).removeJob(staleCheckJob);
-        verify(pyrisJobService).releaseStruggleInFlightMarker("sc", 3L, 42L);
-    }
-
-    @Test
-    void staleCheck_terminalFrame_dispatchesExactlyOnce() {
-        var done = new PyrisStageDTO("Done", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(done), List.of(), null, null, null, null, null, null, false, null);
-
-        service.handleStatusUpdate(staleCheckJob, update);
-
-        verify(irisStruggleInterventionService).handleStaleCheck(eq(staleCheckJob), any());
-        verify(pyrisJobService).removeJob(staleCheckJob);
-        verify(pyrisJobService).releaseStruggleInFlightMarker("sc", 3L, 42L);
     }
 }

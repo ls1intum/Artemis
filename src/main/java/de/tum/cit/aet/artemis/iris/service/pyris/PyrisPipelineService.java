@@ -239,7 +239,7 @@ public class PyrisPipelineService {
      * @param courseDTO     the course DTO
      * @param chatHistory   read-only exercise-chat history (empty if no session exists yet)
      * @param exerciseId    for the single-flight release key on an ERROR stage
-     * @param intent        the slot intent ({@code decide} | {@code confirm_close} | {@code stale_check})
+     * @param intent        the slot intent ({@code decide} | {@code confirm_close})
      * @param episode       the client-allocated episode block (null when not sent)
      */
     public void executeStruggleInterventionPipeline(String variant, String supportLevel, String jobToken, User user, PyrisStruggleSignalDTO signal,

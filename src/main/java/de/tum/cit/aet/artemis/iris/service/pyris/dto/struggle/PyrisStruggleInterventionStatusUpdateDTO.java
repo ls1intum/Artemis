@@ -21,8 +21,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 public record PyrisStruggleInterventionStatusUpdateDTO(@Nullable String result, @Nullable String action, @Nullable Double confidence, @Nullable String rationale,
         @NonNull List<PyrisStageDTO> stages, @NonNull List<LLMRequest> tokens, @JsonProperty("anchor_file") @Nullable String anchorFile,
         @JsonProperty("anchor_line") @Nullable Integer anchorLine, @JsonProperty("inline_hint") @Nullable String inlineHint, @Nullable Boolean resolved,
-        @JsonProperty("closing_sentence") @Nullable String closingSentence, @JsonProperty("episode_label") @Nullable String episodeLabel, @Nullable Boolean ask,
-        @Nullable String question) {
+        @JsonProperty("closing_sentence") @Nullable String closingSentence, @JsonProperty("episode_label") @Nullable String episodeLabel) {
 
     public PyrisStruggleInterventionStatusUpdateDTO {
         stages = stages != null ? stages : List.of();

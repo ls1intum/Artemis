@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * pydantic {@code StruggleInterventionPipelineExecutionDTO}. {@code chatHistory} is empty when no exercise
  * session exists yet (deferred materialization, §11).
  * <p>
- * {@code intent} carries the slot action ({@code decide} | {@code confirm_close} | {@code stale_check}).
+ * {@code intent} carries the slot action ({@code decide} | {@code confirm_close}).
  * {@code episode} is the client-allocated episode block; the {@link StruggleEpisodeDTO} uses bare
  * {@code @JsonInclude()} (Include.ALWAYS) so an empty {@code hints:[]} is always serialized -- NON_EMPTY
  * would drop it and break the Pyris contract on the first FREE-slot decide.

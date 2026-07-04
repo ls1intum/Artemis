@@ -81,8 +81,8 @@ public class PyrisStatusUpdateService {
     /**
      * Handle a struggle-intervention callback (spec §5.4, A11). Routes by the authoritative {@code job.intent()}.
      * Each mode commits on its OWN terminal frame, structurally mirroring how the {@code decide} path gates on
-     * {@code action != null}: {@code confirm_close} commits when {@code resolved != null} and {@code stale_check}
-     * when {@code ask != null} ({@code action} stays null on both these modes). A leading IN_PROGRESS frame must NOT
+     * {@code action != null}: {@code confirm_close} commits when {@code resolved != null} ({@code action} stays
+     * null on that mode). A leading IN_PROGRESS frame must NOT
      * fire the handler early - doing so would remove the job, so the real terminal frame would then 403 and the
      * close / stale-check would be silently lost.
      *
@@ -112,23 +112,6 @@ public class PyrisStatusUpdateService {
             }
             else if (!statusUpdate.stages().isEmpty() && removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job)) {
                 // Error frame (terminal stages, no resolved field): the job left the map, so release the marker now.
-                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
-            }
-            // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.
-        }
-        else if ("stale_check".equals(intent)) {
-            // stale_check: the terminal frame carries ask != null (action stays null on this mode). Same gating as above.
-            if (statusUpdate.ask() != null) {
-                pyrisJobService.removeJob(job);   // drop FIRST so trailing duplicate 403s
-                try {
-                    irisStruggleInterventionService.handleStaleCheck(job, statusUpdate);
-                }
-                finally {
-                    pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
-                }
-            }
-            else if (!statusUpdate.stages().isEmpty() && removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job)) {
-                // Error frame (terminal stages, no ask field): the job left the map, so release the marker now.
                 pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
             }
             // else: non-terminal intermediate frame -> job kept alive (updateJob), marker held for the terminal frame.

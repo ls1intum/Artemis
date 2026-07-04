@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  * present to satisfy the iris-DTO {@code @JsonInclude} architecture rule. The nested signal keeps its own
  * {@code @JsonInclude(ALWAYS)} so its empty inner collections still serialize for Pyris.
  * <p>
- * {@code intent} values: {@code decide} (default) | {@code confirm_close} | {@code stale_check}
- * (snake-case wire values, spec §17). {@code confirmReason} values: {@code progress} | {@code stale_solved}
+ * {@code intent} values: {@code decide} (default) | {@code confirm_close}
+ * (snake-case wire values, spec §17). {@code confirmReason} values: {@code progress}
  * | {@code parked_progress} (A11 close-mode discriminator). {@code requestToken} is a client-minted UUID
  * used as the scoped-cancel identity (A10).
  */

@@ -47,11 +47,11 @@ class IrisStruggleInterventionRequestDTOTest {
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
                    "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
                  "uncommittedFiles":{},
-                 "intent":"stale_check","confirmReason":"stale_solved","requestToken":"rt-1",
+                 "intent":"confirm_close","confirmReason":"progress","requestToken":"rt-1",
                  "episode":{"episodeId":"ep-1","isNew":false,"hints":[{"level":"ambient","text":"x","atSessionS":42.0}]}}""";
         var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
-        assertThat(dto.intent()).isEqualTo("stale_check");
-        assertThat(dto.confirmReason()).isEqualTo("stale_solved");
+        assertThat(dto.intent()).isEqualTo("confirm_close");
+        assertThat(dto.confirmReason()).isEqualTo("progress");
         assertThat(dto.requestToken()).isEqualTo("rt-1");
         assertThat(dto.episode()).isNotNull();
         assertThat(dto.episode().episodeId()).isEqualTo("ep-1");
@@ -64,7 +64,7 @@ class IrisStruggleInterventionRequestDTOTest {
 
     @Test
     void confirmReasonSnakeValuesRoundTrip() throws Exception {
-        for (String reason : List.of("progress", "stale_solved", "parked_progress")) {
+        for (String reason : List.of("progress", "parked_progress")) {
             String json = """
                     {"struggleSignal":{"alert":{"tSessionS":1,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.1,"path":"armed","inWarmup":false,"inGrace":false},
                        "trajectory":[],"dominantComponents":[],"sessionSeconds":1},

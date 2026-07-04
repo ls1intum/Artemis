@@ -28,7 +28,7 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
         // Real silent-decision callback shape: result == null, action == "silent" — the record header is
         // (result, action, confidence, rationale, stages, tokens), so the "silent" literal MUST sit in the
         // action position. This is the exact shape Task 11's handleDecision keys on (action != null && result == null).
-        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null, null, null, null, null, null);
+        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null, null, null, null);
         assertThat(dto.action()).isEqualTo("silent");
         assertThat(dto.result()).isNull();
         assertThat(dto.stages()).isEmpty();
@@ -44,14 +44,6 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
         assertThat(dto.resolved()).isTrue();
         assertThat(dto.closingSentence()).isEqualTo("Nice");
         assertThat(dto.episodeLabel()).isEqualTo("Wrong index");
-    }
-
-    @Test
-    void deserializesAskField() throws Exception {
-        String json = """
-                {"ask":false,"stages":[],"tokens":[]}""";
-        var dto = mapper.readValue(json, PyrisStruggleInterventionStatusUpdateDTO.class);
-        assertThat(dto.ask()).isFalse();
     }
 
     @Test
