@@ -40,8 +40,10 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.G
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 /**
  * Top-level driver of agentic exercise generation and adaptation. Owns one generation session: create a sandbox, seed it with the exercise's components, run the agent loop, then
@@ -88,10 +90,15 @@ public class ExerciseGenerationOrchestrationService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    // Source of the authoritative pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a
+    // build-agent-only
+    // node; when absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
+    private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
+
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             AuthoritativeVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService,
-            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
+            Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
@@ -102,6 +109,7 @@ public class ExerciseGenerationOrchestrationService {
         this.specFidelityCritic = specFidelityCritic;
         this.jobService = jobService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.testCaseRepository = testCaseRepository;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -130,6 +138,9 @@ public class ExerciseGenerationOrchestrationService {
         // ADAPT re-runs against the seeded live repositories, so a feedback item may legitimately add or adjust a test; the tests-repo harness-immutability gate is relaxed for it
         // (the differential oracle remains the backstop). GENERATE keeps every gate enforced.
         boolean relaxTestsRepoImmutability = mode == GenerationMode.ADAPT;
+        // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
+        // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
+        Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
@@ -200,7 +211,7 @@ public class ExerciseGenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 verification = verifier.verify(sandbox, sessionId, exercise, testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, relaxTestsRepoImmutability);
+                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability);
                 emit(progress, verification.report());
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`.
@@ -317,6 +328,29 @@ public class ExerciseGenerationOrchestrationService {
 
     private static AgentLoopResult cancelledResult(AgentLoopResult lastResult) {
         return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, lastResult.turns(), lastResult.finalMessage());
+    }
+
+    /**
+     * The exercise's currently-persisted graded test names, the baseline for the adapt total-wipe gate. Reads the SAME repository production grading uses
+     * ({@code findByExerciseId}); returns empty (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing
+     * baseline
+     * never fabricates a rejection.
+     *
+     * @param exercise the exercise being adapted
+     * @return the normalized-later graded test names, or an empty set when no authoritative baseline is available
+     */
+    private Set<String> captureBaselineGradedTestNames(ProgrammingExercise exercise) {
+        if (testCaseRepository.isEmpty() || exercise.getId() == null) {
+            return Set.of();
+        }
+        Set<String> names = new LinkedHashSet<>();
+        for (ProgrammingExerciseTestCase testCase : testCaseRepository.get().findByExerciseId(exercise.getId())) {
+            String name = testCase.getTestName();
+            if (name != null && !name.isBlank()) {
+                names.add(name);
+            }
+        }
+        return names;
     }
 
     @Nullable

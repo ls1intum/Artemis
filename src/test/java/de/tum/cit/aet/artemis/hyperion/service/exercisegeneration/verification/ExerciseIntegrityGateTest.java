@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -147,6 +149,35 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isHarnessFile("test/test_stack.rb")).isFalse();
         // A nested *.yml data fixture is not a root build descriptor.
         assertThat(ExerciseIntegrityGate.isHarnessFile("test/fixtures/data.yml")).isFalse();
+    }
+
+    // --- Adapt total-wipe (zero-retention) gate ---
+
+    @Test
+    void adaptWipe_rejectsWhenNoBaselineGradedTestIsRetained() {
+        // The exercise had two graded tests; the adapt produced an entirely new suite that keeps none of them — a from-scratch regeneration mislabeled as an adapt.
+        var reasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru", "testCapacity"), List.of("testFooBar"));
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.getFirst()).contains("retained NONE").contains("previously-graded").contains("testCapacity");
+    }
+
+    @Test
+    void adaptWipe_acceptsWhenAtLeastOneBaselineGradedTestSurvives() {
+        // A legitimate adapt: one graded test kept, one added/renamed — coverage is refined, not wiped.
+        var reasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru", "testCapacity"), List.of("testEvictsLru", "testCapacityAndResize"));
+        assertThat(reasons).isEmpty();
+    }
+
+    @Test
+    void adaptWipe_isInertOnAnEmptyBaseline() {
+        // GENERATE, or a never-graded exercise: an empty baseline must never fabricate a rejection.
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of(), List.of("testAnything"))).isEmpty();
+    }
+
+    @Test
+    void adaptWipe_matchesRetentionModuloTrailingParentheses() {
+        // Name normalization: baseline "testEvictsLru" is retained by a produced "testEvictsLru()" (Artemis treats them as the same test), so this is not a wipe.
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).isEmpty();
     }
 
     // --- Solution-leak gate ---

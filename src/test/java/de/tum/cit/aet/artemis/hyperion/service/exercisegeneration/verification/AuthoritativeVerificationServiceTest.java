@@ -180,7 +180,7 @@ class AuthoritativeVerificationServiceTest {
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
     private static VerificationResult verifyGenerate(AuthoritativeVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
-        return verifier.verify(sandbox, "s", exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
+        return verifier.verify(sandbox, "s", exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
@@ -191,7 +191,7 @@ class AuthoritativeVerificationServiceTest {
     /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
-                seededStructural, false);
+                seededStructural, Set.of(), false);
     }
 
     /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
@@ -361,14 +361,20 @@ class AuthoritativeVerificationServiceTest {
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
-                producedTemplate, producedSolution, Set.of(), Set.of(), false);
+                producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), false);
     }
 
     /** Same as {@link #verifyWithFiles} but in ADAPT mode (the tests-repo harness-immutability gate is relaxed); every other gate still runs. */
     private static VerificationResult verifyWithFilesAdapt(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
-                producedTemplate, producedSolution, Set.of(), Set.of(), true);
+                producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), true);
+    }
+
+    /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
+    private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
+        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
+                Set.of(), baselineGradedTestNames, true);
     }
 
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
@@ -437,7 +443,7 @@ class AuthoritativeVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
+                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
         assertThat(result.accepted()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -448,7 +454,7 @@ class AuthoritativeVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), false);
+                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
         assertThat(result.accepted()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -877,7 +883,7 @@ class AuthoritativeVerificationServiceTest {
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness, harness, Map.of(), Map.of(), Set.of(), Set.of(),
-                    false);
+                    Set.of(), false);
         }
 
         @Test
@@ -910,7 +916,7 @@ class AuthoritativeVerificationServiceTest {
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness,
-                    harness, Map.of(), Map.of(), Set.of(), Set.of(), false);
+                    harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
             assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -1133,6 +1139,44 @@ class AuthoritativeVerificationServiceTest {
 
             BuildReportSpec passingTemplate = resultWithFails(0, names, List.of());
             assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).accepted()).isFalse();
+        }
+    }
+
+    // Adapt total-wipe (zero-retention) gate wired through the production verify(...): an ADAPT that keeps NONE of the pre-adapt graded test names is a from-scratch regeneration
+    // masquerading as an adapt (a destructive rewrite the internally-consistent differential cannot see). Only ever ADDS a reject; inert for GENERATE and for any partial edit.
+
+    @Nested
+    class AdaptTotalWipeGate {
+
+        @Test
+        void rejectsAnAdaptThatRetainsNoneOfThePreviouslyGradedTests() {
+            // The exercise had two graded tests; the adapt produced an entirely new suite. The differential itself is clean (solution passes, template fails, bindings resolve), so
+            // ONLY the total-wipe gate rejects — proving it is the gate under test.
+            List<String> newNames = List.of("brandNewTestA", "brandNewTestB");
+            String ps = "# Cache\n[task][A](brandNewTestA)\n[task][B](brandNewTestB)\n";
+            VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, newNames, List.of()), resultWithFails(1, newNames, newNames), ps,
+                    Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
+            assertThat(result.accepted()).as("an adapt retaining none of the pre-adapt graded tests is a masqueraded from-scratch regeneration").isFalse();
+            assertThat(result.reasons()).anyMatch(r -> r.contains("retained NONE") && r.contains("previously-graded"));
+        }
+
+        @Test
+        void acceptsAnAdaptThatKeepsAtLeastOnePreviouslyGradedTest() {
+            // A legitimate refinement: one graded test kept, one renamed/added. Retaining a single baseline name clears the total-wipe gate.
+            List<String> names = List.of("evictsLeastRecentlyUsed", "capacityAndResize");
+            String ps = "# Cache\n[task][Evict](evictsLeastRecentlyUsed)\n[task][Resize](capacityAndResize)\n";
+            VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ps,
+                    Set.of("evictsLeastRecentlyUsed", "capacityIsRespected"));
+            assertThat(result.accepted()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
+            assertThat(result.reasons()).noneMatch(r -> r.contains("retained NONE"));
+        }
+
+        @Test
+        void isInertWhenThereIsNoPreAdaptGradedBaseline() {
+            // A never-graded exercise has an empty baseline; the gate must never fabricate a rejection.
+            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+            VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK, Set.of());
+            assertThat(result.accepted()).as("an empty baseline leaves the total-wipe gate inert").isTrue();
         }
     }
 }

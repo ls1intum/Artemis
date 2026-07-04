@@ -202,15 +202,17 @@ public class AuthoritativeVerificationService {
      * @param seededStructuralTestNames    the AUTHORITATIVE structural test names the seeder injected this run (never agent-supplied); a {@code [task]} bound to one is exempt from
      *                                         binding RESOLUTION but still participates in the differential. Empty for callers without it (the from-scratch path falls back to the
      *                                         name-shape exemption)
+     * @param baselineGradedTestNames      the exercise's graded test names captured BEFORE an ADAPT ran (empty for GENERATE); drives the adapt total-wipe gate — an adapt that
+     *                                         retains none of them is a from-scratch regeneration masquerading as an adapt. Empty leaves the gate inert (fail-open)
      * @param relaxTestsRepoImmutability   whether to SKIP the tests-repo harness-immutability gate (ADAPT mode only): a feedback item may legitimately add or adjust a test, and
      *                                         for
      *                                         some build systems the manifest that registers it. The differential oracle (rebuilding pristine from the produced tree) remains the
-     *                                         real backstop, and the solution-leak, self-comparison, and extraction gates stay in force
+     *                                         real backstop, and the solution-leak, self-comparison, extraction, and adapt total-wipe gates stay in force
      * @return the verdict (accepted, solution-passed, template-failed, test count, and the rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
-            Set<String> seededStructuralTestNames, boolean relaxTestsRepoImmutability) {
+            Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, boolean relaxTestsRepoImmutability) {
         // The sandbox-dependent differential is computed by the SAME method the in-loop self-check uses, so the agent's `verify` tool and this acceptance decision can never
         // diverge.
         // This call layers the sandbox-FREE integrity gates and the final verdict on top of that shared analysis.
@@ -243,10 +245,18 @@ public class AuthoritativeVerificationService {
 
         boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound;
+        // Adapt total-wipe gate: an ADAPT that retains NONE of the pre-adapt graded test names is a from-scratch regeneration mislabeled as an adapt (a destructive rewrite the
+        // internally-consistent differential cannot see). Inert for GENERATE (empty baseline) and for any partial edit that keeps at least one graded name; only ADD a reject.
+        List<String> adaptWipeReasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(baselineGradedTestNames, solution.testNames());
+        boolean noAdaptWipe = adaptWipeReasons.isEmpty();
+        reasons.addAll(adaptWipeReasons);
+
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound && noAdaptWipe;
         if (!accepted) {
-            log.info("Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
-                    + "extractionSound={}", solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound);
+            log.info(
+                    "Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
+                            + "extractionSound={}, noAdaptWipe={}",
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound, noAdaptWipe);
         }
         return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }

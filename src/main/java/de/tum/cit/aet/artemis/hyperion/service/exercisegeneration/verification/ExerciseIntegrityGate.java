@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Pure (sandbox-free) correctness gates {@link AuthoritativeVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
@@ -233,6 +234,70 @@ public final class ExerciseIntegrityGate {
             }
         }
         return reasons;
+    }
+
+    /**
+     * The adapt total-wipe (zero-retention) gate: an ADAPT run must refine the existing exercise, not replace it wholesale. If the exercise already had at least one graded test
+     * and
+     * the produced tests retain NONE of those graded test names, the run rebuilt the graded coverage from scratch under the guise of an adapt — a destructive rewrite the
+     * differential oracle cannot see (the regenerated exercise is internally consistent: its own solution passes and its own template fails). We reject only that unambiguous total
+     * wipe; every partial edit (renaming, adding, or removing SOME tests while keeping at least one graded name) is a legitimate adapt and passes untouched.
+     * <p>
+     * Fails OPEN on an empty baseline (GENERATE, or a genuinely never-graded exercise) — it never fabricates a rejection. Names are normalized (trimmed, a trailing {@code ()}
+     * dropped) so {@code testFoo} and {@code testFoo()} match. Post-loop only: the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does
+     * not have mid-session, so this gate lives alongside the other read-back integrity gates, not the in-loop self-check.
+     *
+     * @param baselineGradedTestNames   the exercise's graded test names captured BEFORE the adapt ran (empty for GENERATE or a never-graded exercise; the gate is then inert)
+     * @param producedSolutionTestNames the test names the produced tests ran against the solution (the post-adapt graded set)
+     * @return a single rejection reason when a non-empty baseline is retained by nothing produced, otherwise an empty list
+     */
+    static List<String> adaptWipedGradedTestsReasons(Set<String> baselineGradedTestNames, List<String> producedSolutionTestNames) {
+        if (baselineGradedTestNames == null || baselineGradedTestNames.isEmpty()) {
+            return List.of();
+        }
+        Set<String> baseline = new LinkedHashSet<>();
+        for (String name : baselineGradedTestNames) {
+            if (name != null) {
+                String normalized = normalizeTestName(name);
+                if (!normalized.isEmpty()) {
+                    baseline.add(normalized);
+                }
+            }
+        }
+        if (baseline.isEmpty()) {
+            return List.of();
+        }
+        Set<String> produced = new HashSet<>();
+        if (producedSolutionTestNames != null) {
+            for (String name : producedSolutionTestNames) {
+                if (name != null) {
+                    produced.add(normalizeTestName(name));
+                }
+            }
+        }
+        for (String baselineName : baseline) {
+            if (produced.contains(baselineName)) {
+                // At least one previously-graded test survived: a real refinement, not a wipe.
+                return List.of();
+            }
+        }
+        return List.of("this adapt retained NONE of the exercise's " + baseline.size() + " previously-graded test(s) (e.g. " + sampleNames(baseline)
+                + "), so the graded coverage was wiped and rebuilt from scratch — that is a from-scratch regeneration masquerading as an adapt, not a refinement of the existing "
+                + "exercise. Keep and adjust the existing graded tests (retain at least the ones still relevant) instead of deleting them all and authoring a brand-new suite.");
+    }
+
+    /** Normalizes a test name for retention comparison: trims and drops a trailing {@code ()}, so {@code testFoo} and {@code testFoo()} compare equal (as Artemis treats them). */
+    private static String normalizeTestName(String name) {
+        String normalized = name.trim();
+        if (normalized.endsWith("()")) {
+            normalized = normalized.substring(0, normalized.length() - 2).trim();
+        }
+        return normalized;
+    }
+
+    /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */
+    private static String sampleNames(Set<String> names) {
+        return names.stream().sorted().limit(5).collect(Collectors.joining(", "));
     }
 
     /**

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +43,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.G
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 /**
  * Unit tests for the orchestrator's verifier-feedback retry loop. All collaborators are Mockito mocks, so the loop's control flow (retry on rejection, stop on acceptance, bound on
@@ -59,6 +63,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     private StructuralOracleSeedingService structuralOracleSeeder;
 
     private SpecFidelityCriticService specFidelityCritic;
+
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     private GenerationWorkspaceService workspace;
 
@@ -95,8 +101,11 @@ class ExerciseGenerationOrchestrationServiceTest {
         SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
 
+        testCaseRepository = mock(ProgrammingExerciseTestCaseRepository.class);
+        // Default: the exercise has no persisted graded tests (GENERATE and most ADAPT tests); the total-wipe baseline is then empty and the gate inert.
+        when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of());
         service = new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
-                specFidelityCritic, jobService, llmTokenUsageService, 100);
+                specFidelityCritic, jobService, llmTokenUsageService, Optional.of(testCaseRepository), 100);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);
@@ -125,8 +134,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void rejectedThenAccepted_feedsReportIntoNextPromptAndAccepts() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("template unexpectedly passed all tests"),
-                accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean()))
+                .thenReturn(rejected("template unexpectedly passed all tests"), accepted());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -145,28 +154,69 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void acceptedOnFirstAttempt_runsAgentExactlyOnce() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).isTrue();
         }
 
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(1)).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+    }
+
+    /** ADAPT captures the exercise's persisted graded test names and hands them to the verifier as the adapt total-wipe baseline. */
+    @Test
+    @SuppressWarnings("unchecked")
+    void adaptMode_passesThePersistedGradedTestNamesAsTheTotalWipeBaseline() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(testCaseRepository.findByExerciseId(42L)).thenReturn(Set.of(testCase("evictsLeastRecentlyUsed"), testCase("capacityIsRespected")));
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Tighten the eviction test.", JOB_ID, GenerationMode.ADAPT, () -> false, null, null)) {
+            assertThat(outcome.isAccepted()).isTrue();
+        }
+
+        ArgumentCaptor<Set<String>> baselineCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(verifier).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), baselineCaptor.capture(), anyBoolean());
+        assertThat(baselineCaptor.getValue()).as("ADAPT hands the persisted graded test names to the total-wipe gate").containsExactlyInAnyOrder("evictsLeastRecentlyUsed",
+                "capacityIsRespected");
+    }
+
+    /** GENERATE has no pre-adapt baseline: it passes an empty total-wipe baseline and never reads the persisted test cases. */
+    @Test
+    @SuppressWarnings("unchecked")
+    void generateMode_passesAnEmptyTotalWipeBaselineAndDoesNotQueryPersistedTests() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+        }
+
+        ArgumentCaptor<Set<String>> baselineCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(verifier).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), baselineCaptor.capture(), anyBoolean());
+        assertThat(baselineCaptor.getValue()).as("GENERATE has no pre-adapt baseline, so the total-wipe gate is inert").isEmpty();
+        verify(testCaseRepository, never()).findByExerciseId(anyLong());
+    }
+
+    private static ProgrammingExerciseTestCase testCase(String name) {
+        ProgrammingExerciseTestCase testCase = new ProgrammingExerciseTestCase();
+        testCase.setTestName(name);
+        return testCase;
     }
 
     /** All attempts rejected runs exactly {@code MAX_GENERATION_ATTEMPTS} times and returns a non-accepted outcome. */
     @Test
     void allAttemptsRejected_runsMaxAttemptsAndReturnsNotAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("still failing"));
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("still failing"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).as("an exercise rejected on every attempt is not accepted").isFalse();
         }
 
         verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
-        verify(verifier, times(MAX_GENERATION_ATTEMPTS)).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(verifier, times(MAX_GENERATION_ATTEMPTS)).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     /** A CANCELLED loop result short-circuits before verification and destroys the session. */
@@ -177,7 +227,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         GenerationOutcome outcome = generate(() -> false);
 
         assertThat(outcome.isAccepted()).isFalse();
-        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
         verify(sandbox).destroySession(SESSION_ID);
     }
 
@@ -191,7 +241,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         GenerationOutcome outcome = generate(cancelled);
 
         assertThat(outcome.isAccepted()).isFalse();
-        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
         verify(sandbox).destroySession(SESSION_ID);
     }
 
@@ -203,19 +253,19 @@ class ExerciseGenerationOrchestrationServiceTest {
         assertThatThrownBy(() -> generate(() -> false)).isInstanceOf(RuntimeException.class).hasMessageContaining("model exploded");
 
         verify(sandbox, atLeastOnce()).destroySession(SESSION_ID);
-        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(verifier, never()).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     /** The structural-oracle seeder is invoked before verification on the accepted path, confirming the seeding step is wired into the loop. */
     @Test
     void acceptedPath_seedsStructuralOracleBeforeVerification() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
 
         try (GenerationOutcome ignored = generate(() -> false)) {
             InOrder inOrder = inOrder(structuralOracleSeeder, verifier);
             inOrder.verify(structuralOracleSeeder).seedIfStructuralDiff(eq(sandbox), eq(SESSION_ID), eq(exercise));
-            inOrder.verify(verifier).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+            inOrder.verify(verifier).verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
         }
     }
 
@@ -229,7 +279,7 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void criticFindings_neverFlipAcceptedToRejected() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any())).thenReturn(reportWith("CJK characters"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -245,7 +295,7 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void rejectedWithCriticFindings_foldsAdvisoryGapsIntoRetryPrompt() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("template passed a test"), accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("template passed a test"), accepted());
         when(specFidelityCritic.critique(any(), any(), any())).thenReturn(reportWith("emoji"), SpecFidelityReport.empty());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
@@ -263,7 +313,7 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void criticThrows_runStillCompletesAndStaysAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any())).thenThrow(new RuntimeException("critic exploded"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -279,7 +329,7 @@ class ExerciseGenerationOrchestrationServiceTest {
     @Test
     void critic_isFedTaskBoundTestNamesFromProblemStatement() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Intro.\n[task][Sort](test_sort,test_empty)\n[task][Edge](test_negative)");
 
         @SuppressWarnings("unchecked")
@@ -306,7 +356,7 @@ class ExerciseGenerationOrchestrationServiceTest {
     void seededWorkspaceLayout_isPrependedToTheFirstPrompt() {
         when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
@@ -325,8 +375,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     void seededLayout_isOnTheFirstPromptOnly_andNotReplayedOnRetry() {
         when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(rejected("template unexpectedly passed all tests"),
-                accepted());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean()))
+                .thenReturn(rejected("template unexpectedly passed all tests"), accepted());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
