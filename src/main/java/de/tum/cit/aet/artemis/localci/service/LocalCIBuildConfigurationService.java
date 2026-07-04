@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 @Lazy
 @Service
-@Profile(PROFILE_LOCALCI)
+@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
 public class LocalCIBuildConfigurationService {
 
     private final BuildScriptProviderService buildScriptProviderService;
@@ -27,17 +27,18 @@ public class LocalCIBuildConfigurationService {
     /**
      * Creates a build script for a given programming exercise, using pre-evaluated active phases.
      *
-     * @param buildConfig  the programming exercise build config for which the build script should be created
-     * @param activePhases the pre-evaluated active build phases, or null to fall back to existing paths
+     * @param buildConfig      the programming exercise build config for which the build script should be created
+     * @param activePhases     the pre-evaluated active build phases, or null to fall back to existing paths
+     * @param workingDirectory the directory the generated script should `cd` into before running any phase
      * @return the build script
      */
-    public String createBuildScriptFromActivePhases(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
-        String buildScript = computeBuildScript(activePhases);
+    public String createBuildScriptFromActivePhases(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases, String workingDirectory) {
+        String buildScript = computeBuildScript(activePhases, workingDirectory);
         return buildScriptProviderService.replacePlaceholders(buildScript, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());
     }
 
-    private static String computeBuildScript(List<BuildPhaseDTO> activePhases) {
+    private static String computeBuildScript(List<BuildPhaseDTO> activePhases, String workingDirectory) {
         List<BuildPhaseDTO> nonForceRunPhases = new ArrayList<>();
         List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
 
@@ -53,7 +54,7 @@ public class LocalCIBuildConfigurationService {
         StringBuilder scriptBuilder = new StringBuilder();
         scriptBuilder.append("#!/usr/bin/env bash\n");
         scriptBuilder.append("set -e\n");
-        scriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+        scriptBuilder.append("cd ").append(workingDirectory).append("\n");
         scriptBuilder.append("export INITIAL_WORKING_DIRECTORY=${PWD}\n");
 
         for (BuildPhaseDTO phase : activePhases) {

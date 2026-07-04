@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,6 +50,9 @@ class HadesTriggerServiceTest {
 
     @Mock
     private GitService gitService;
+
+    @Mock
+    private LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
     @InjectMocks
     private HadesTriggerService hadesTriggerService;
@@ -155,38 +159,28 @@ class HadesTriggerServiceTest {
         }
 
         @Test
-        void getBuildScript_withNullBuildPlanConfig_usesDefaultPhases() {
+        void getBuildScript_withNullBuildPlanConfig_usesDefaultPhasesAndReturnsRenderedScript() {
             var phase = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
             when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(phase));
-            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(phase), participation)).thenReturn(List.of(phase));
+            when(localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, List.of(phase), "/shared")).thenReturn("rendered-script");
 
             String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            assertThat(script).startsWith("set -e && cd /shared && ");
-            assertThat(script).contains("mvn compile");
+            assertThat(script).isEqualTo("rendered-script");
         }
 
         @Test
-        void getBuildScript_withMultiplePhases_concatenatesScripts() {
+        void getBuildScript_delegatesRenderingToLocalCIBuildConfigurationService() {
             var compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
-            var test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, null);
-            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(compile, test));
-            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(compile, test));
+            // forceRun=true: HadesTriggerService no longer needs to know about this itself, it's LocalCIBuildConfigurationService's job
+            var cleanup = new BuildPhaseDTO("cleanup", "rm -rf tmp", BuildPhaseCondition.ALWAYS, true, null);
+            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(compile, cleanup));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(compile, cleanup), participation)).thenReturn(List.of(compile, cleanup));
 
-            String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
+            hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            assertThat(script).isEqualTo("set -e && cd /shared && mvn compile && mvn test");
-        }
-
-        @Test
-        void getBuildScript_withBlankScriptPhase_skipsEmptyScripts() {
-            var blank = new BuildPhaseDTO("noop", "", BuildPhaseCondition.ALWAYS, false, null);
-            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(blank));
-            when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(blank));
-
-            String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
-
-            assertThat(script).isEqualTo("set -e && cd /shared");
+            verify(localCIBuildConfigurationService).createBuildScriptFromActivePhases(buildConfig, List.of(compile, cleanup), "/shared");
         }
     }
 }

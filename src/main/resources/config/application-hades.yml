@@ -6,11 +6,10 @@
 artemis:
   continuous-integration:
     url: http://localhost:8081
-    artemis-authentication-token-value: superduperlongtestingsecrettoken
     hades:
       images:
         clone-image: ghcr.io/ls1intum/hades/hades-clone-container:latest
         result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
       adapter:
         endpoint: http://host.docker.internal:8083/adapter/test-results
-      auth-key: some-secret-key
+      auth-key: # Set this in production environment

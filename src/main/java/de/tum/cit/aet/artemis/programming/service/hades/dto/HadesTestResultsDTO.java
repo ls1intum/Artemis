@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @JsonProperty("uuid") UUID UUID,
+public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @JsonProperty("uuid") UUID uuid,
         @JsonProperty("assignmentRepoBranchName") String assignmentRepoBranchName, @JsonProperty("assignmentRepoCommitHash") String assignmentRepoCommitHash,
         @JsonProperty("testsRepoCommitHash") String testsRepoCommitHash, @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
         @JsonProperty("buildCompletionTime") ZonedDateTime buildCompletionTime, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,

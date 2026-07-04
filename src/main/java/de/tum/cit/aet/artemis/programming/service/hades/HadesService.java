@@ -107,7 +107,6 @@ public class HadesService implements StatelessCIService {
             log.info("Triggering build via Hades for exercise {} and participation {}", buildTriggerRequestDTO.exerciseId(), buildTriggerRequestDTO.participationId());
 
             HadesBuildJobDTO hadesDTO = convertToHadesBuildJobDTO(buildTriggerRequestDTO);
-            log.info("Stepping into build(HadesBuildJobDTO) with: {}", hadesDTO);
             return build(hadesDTO);
         }
         catch (Exception e) {
@@ -187,15 +186,13 @@ public class HadesService implements StatelessCIService {
         // Create Parse Result Step
         var parseResultMetadata = new HashMap<String, String>();
         parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
-        parseResultMetadata.put("INGEST_DIR", ingestDir);
-        // Forward the assignment commit hash so the result parser can stamp it on the result body.
-        // Without this, the parser falls back to inspecting the cloned working tree, which is racy
-        // and can produce the branch name instead of the SHA — breaking submission/result matching.
-        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository() != null ? buildTriggerRequestDTO.exerciseRepository().commitHash() : null;
+        parseResultMetadata.put("INGEST_DIR", resolveIngestDirectory(buildTriggerRequestDTO));
+
+        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository().commitHash();
         if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
             parseResultMetadata.put("ASSIGNMENT_REPO_COMMIT_HASH", assignmentCommitHash);
         }
-        String testCommitHash = buildTriggerRequestDTO.testRepository() != null ? buildTriggerRequestDTO.testRepository().commitHash() : null;
+        String testCommitHash = buildTriggerRequestDTO.testRepository().commitHash();
         if (testCommitHash != null && !testCommitHash.isBlank()) {
             parseResultMetadata.put("TESTS_REPO_COMMIT_HASH", testCommitHash);
         }
@@ -204,6 +201,15 @@ public class HadesService implements StatelessCIService {
         // Create Hades Job
         var timestamp = java.time.Instant.now().toString();
         return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps);
+    }
+
+    private String resolveIngestDirectory(BuildTriggerRequestDTO buildTriggerRequestDTO) {
+        String projectType = buildTriggerRequestDTO.additionalProperties().get("projectType");
+        boolean isMaven = projectType != null && projectType.contains("MAVEN");
+        if ("JAVA".equals(buildTriggerRequestDTO.programmingLanguage()) && isMaven) {
+            return workingDir + "/target/surefire-reports";
+        }
+        return ingestDir;
     }
 
     private HttpHeaders createAuthHeaders() {

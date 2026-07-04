@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.RepositoryDTO;
 
@@ -111,6 +113,40 @@ class HadesServiceTest {
                 .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
 
         assertThat(hadesService.build(dto)).isEqualTo(expectedUuid);
+    }
+
+    @Test
+    void build_withMavenProjectType_configuresSurefireIngestDir() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of("projectType", "PLAIN_MAVEN"));
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var parseResultStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Parse Result".equals(step.name())).findFirst().orElseThrow();
+        assertThat(parseResultStep.metadata()).containsEntry("INGEST_DIR", "/shared/target/surefire-reports");
+    }
+
+    @Test
+    void build_withoutProjectType_keepsDefaultGradleIngestDir() throws ContinuousIntegrationException {
+        var dto = buildTriggerRequest(Map.of());
+        var expectedUuid = UUID.randomUUID();
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<HttpEntity<HadesBuildJobDTO>> requestCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+
+        when(programmingLanguageConfiguration.getImage(any(), any())).thenReturn("java:21");
+        when(restTemplate.postForEntity(anyString(), requestCaptor.capture(), eq(HadesBuildResponseDTO.class)))
+                .thenReturn(ResponseEntity.ok(new HadesBuildResponseDTO(expectedUuid.toString(), "Build queued")));
+
+        hadesService.build(dto);
+
+        var parseResultStep = requestCaptor.getValue().getBody().steps().stream().filter(step -> "Parse Result".equals(step.name())).findFirst().orElseThrow();
+        assertThat(parseResultStep.metadata()).containsEntry("INGEST_DIR", "/shared/build/test-results/test");
     }
 
     @Test

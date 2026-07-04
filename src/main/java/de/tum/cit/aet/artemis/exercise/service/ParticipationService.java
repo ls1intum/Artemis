@@ -278,8 +278,8 @@ public class ParticipationService {
     private StudentParticipation startProgrammingParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(participation);
-        // Step 2) Jenkins (stateful) requires Artemis to manage build plans; LocalCI/ Hades trigger builds without one
-        if (profileService.isJenkinsActive()) {
+        // Step 2) Jenkins (stateful) and LocalCI (synthetic plan id) require Artemis to manage build plans; Hades triggers builds without one
+        if (profileService.isJenkinsActive() || profileService.isLocalCIActive()) {
             // Step 2a) create the build plan (based on the BASE build plan)
             participation = copyBuildPlan(participation);
             // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
@@ -433,7 +433,7 @@ public class ParticipationService {
      */
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
-        if (profileService.isJenkinsActive()) {
+        if (profileService.isJenkinsActive() || profileService.isLocalCIActive()) {
             // Step 2a) create the build plan (based on the BASE build plan)
             participation = copyBuildPlan(participation);
             // Step 2b) configure the build plan (e.g. access right, hooks, etc.)

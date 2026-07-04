@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
+import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -54,13 +55,17 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final GitService gitService;
 
+    private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
+
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService) {
         this.hadesService = hadesService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.gitService = gitService;
+        this.localCIBuildConfigurationService = localCIBuildConfigurationService;
     }
 
     @Override
@@ -118,18 +123,20 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
         }
     }
 
+    // Matches the /shared volume mount that HadesService clones the test/assignment repositories into.
+    private static final String HADES_WORKING_DIRECTORY = "/shared";
+
     /**
-     * Generates the build script for the given participation by resolving active build phases
-     * and concatenating their scripts into a single shell command.
+     * Generates the build script for the given participation by resolving active build phases and rendering them
+     * with the same semantics LocalCI uses: {@code forceRun} phases still execute after an earlier phase fails
+     * (via an EXIT trap), and checkout placeholders like {@code ${studentParentWorkingDirectoryName}} are resolved.
      *
      * @param buildConfig         the build configuration containing build phases
      * @param participation       the programming exercise participation
      * @param programmingExercise the programming exercise
-     * @return the concatenated shell script for all active build phases
+     * @return the rendered shell script for all active build phases
      */
     public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
-        programmingExercise.setBuildConfig(buildConfig);
-
         programmingExercise.setBuildConfig(buildConfig);
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
@@ -144,17 +151,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
-        StringBuilder script = new StringBuilder("set -e && cd /shared && ");
-        for (BuildPhaseDTO phase : activePhases) {
-            if (phase.script() != null && !phase.script().isBlank()) {
-                script.append(phase.script().strip()).append(" && ");
-            }
-        }
-
-        String result = script.toString();
-        if (result.endsWith(" && ")) {
-            result = result.substring(0, result.length() - 4);
-        }
-        return result;
+        return localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
     }
 }
