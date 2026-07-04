@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -181,14 +180,13 @@ public class LocalCIService implements ContinuousIntegrationService {
     /**
      * Check if the given build plan is valid and accessible on the local CI system.
      *
+     * @param projectKey  the key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if the build plan exists.
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        // TODO: we should check that the build script in the programming exercises exists, otherwise builds will fail
-        // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
-        // It is safe here to always return true.
+        // For local CI, no build plans exist. Always return true since builds are triggered via participation.
         return true;
     }
 

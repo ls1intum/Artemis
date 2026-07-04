@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService.BuildStatus;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService.BuildStatus;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -139,13 +139,6 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
         List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
         assertThat(phases).isNotNull();
-    }
-
-    @Test
-    void testUnsupportedMethods() {
-        continuousIntegrationService.enablePlan(null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
-        assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
     }
 
     @Nested
