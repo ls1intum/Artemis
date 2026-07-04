@@ -7,6 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 
 /**
@@ -30,7 +31,18 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 public record VariantJobDTO(String jobId, Long sourceExerciseId, String sourceExerciseTitle, ExerciseType exerciseType, VariantJobPhase phase, Integer attempt, Integer maxAttempts,
         Long variantExerciseId, List<String> warnings, Instant startedAt, Instant finishedAt) implements Serializable {
 
-    // TODO (Sonnet): Add a static factory `of(VariantJob job)` mapping from the Hazelcast record. FAILED entries
-    // additionally need the failure phase for the tray label ("failed in VERIFYING", plan Section 5.4) — add a
-    // `failedInPhase` component if `phase` is reused as the terminal marker.
+    /**
+     * Maps the Hazelcast job record to the tray view.
+     *
+     * @param job the job record
+     * @return the DTO
+     */
+    public static VariantJobDTO of(VariantJob job) {
+        return new VariantJobDTO(job.getJobId(), job.getSourceExerciseId(), job.getSourceExerciseTitle(), job.getExerciseType(), job.getPhase(), job.getAttempt(),
+                job.getMaxAttempts(), job.getVariantExerciseId(), job.getWarnings(), job.getStartedAt(), job.getFinishedAt());
+    }
+
+    // TODO (Sonnet): FAILED entries additionally need the phase the job failed in for the tray label
+    // ("failed in VERIFYING", plan Section 5.4) — currently only available in the FAILED event's detail; add a
+    // `failedInPhase` component + VariantJob field when implementing the tray labels.
 }

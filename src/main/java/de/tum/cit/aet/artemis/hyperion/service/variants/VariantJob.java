@@ -13,39 +13,35 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 
 /**
  * The distributed job record for one variant-generation run (plan Sections 2.2 and 2.7.1).
- * Lives in a Hazelcast map owned by {@link ExerciseVariantJobService} — exactly like
- * {@code HyperionCodeGenerationJobService.JobInfo}, but mutable-by-replacement: the pipeline reads the
- * entry, mutates a copy, and puts it back so updates are visible cluster-wide (this is what makes
- * background generation, reconnect, and the navbar job tray possible, Section 5.4).
+ * Lives in a Hazelcast map owned by {@link ExerciseVariantJobService} — mutable-by-replacement: the job
+ * service reads the entry, mutates it, and puts it back so updates are visible cluster-wide (this is what
+ * makes background generation, reconnect, and the navbar job tray possible, Section 5.4).
  *
- * NOTE: mutation MUST always go through {@link ExerciseVariantJobService} (single writer per field group)
- * so websocket events and map state stay consistent.
+ * NOTE: mutation MUST always go through {@link ExerciseVariantJobService} (single writer) so websocket
+ * events and map state stay consistent.
  */
 public class VariantJob implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    // TODO (Opus): Decide final shape — either keep this mutable class (fields below) or convert to an immutable
-    // record with wither-style copies; either way every field listed in plan Section 2.2 must be present:
-    // jobId, sourceExerciseId, initiating user, phase, attempt counter, ChangePlan, per-phase step outputs,
-    // accumulated verifier findings/warnings, token usage. Add getters/setters accordingly.
-
     private String jobId;
 
     private Long sourceExerciseId;
 
-    private String sourceExerciseTitle;   // shown in the tray list (plan Section 5.4)
+    private String sourceExerciseTitle;
 
-    private ExerciseType exerciseType;    // resolved server-side from the source exercise (plan Section 5.1)
+    private ExerciseType exerciseType;
 
-    private String initiatorLogin;        // per-user scoping of the variant-jobs endpoints (plan Section 5.1)
+    private String initiatorLogin;
 
     private VariantJobPhase phase;
 
-    private int attempt;                  // repair attempt counter, shown as "attempt 2/3" (plan Section 5.2)
+    private int attempt;
 
-    private boolean cancelRequested;      // cooperative-cancel flag, set via DELETE /variant-jobs/{jobId} (plan Section 5.2)
+    private int maxAttempts;
+
+    private boolean cancelRequested;
 
     private ChangePlan changePlan;
 
@@ -53,7 +49,7 @@ public class VariantJob implements Serializable {
 
     private List<String> warnings = new ArrayList<>();
 
-    private Long variantExerciseId;       // set in PROVISIONING; the tray deep-links to it on COMPLETED/DRAFT_WITH_WARNINGS (plan Section 5.4)
+    private Long variantExerciseId;
 
     private VariantGenerationRequestDTO request;
 
@@ -62,12 +58,136 @@ public class VariantJob implements Serializable {
     private Instant finishedAt;
 
     // TODO (Sonnet): Add token/latency telemetry fields (tokens per phase via LLMTokenUsageService, wall time)
-    // needed for the thesis evaluation metrics in plan Section 7 ("Per-job telemetry: tokens, attempts per phase,
-    // wall time").
+    // needed for the thesis evaluation metrics in plan Section 7.
 
-    // TODO (Sonnet): Add a `nodeStartupMarker`/`staleness` mechanism so that after a server restart mid-job the
-    // `active` endpoint can report FAILED-stale instead of a forever-running job (plan Section 6, "Server restart
-    // mid-job" row; full resume is explicitly future work, Section 11).
+    // TODO (Sonnet): Add a staleness mechanism so that after a server restart mid-job the `active` endpoint can
+    // report FAILED-stale instead of a forever-running job (plan Section 6, "Server restart mid-job" row).
 
-    // TODO (Sonnet): Generate getters and setters for all fields (no Lombok in this codebase).
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public Long getSourceExerciseId() {
+        return sourceExerciseId;
+    }
+
+    public void setSourceExerciseId(Long sourceExerciseId) {
+        this.sourceExerciseId = sourceExerciseId;
+    }
+
+    public String getSourceExerciseTitle() {
+        return sourceExerciseTitle;
+    }
+
+    public void setSourceExerciseTitle(String sourceExerciseTitle) {
+        this.sourceExerciseTitle = sourceExerciseTitle;
+    }
+
+    public ExerciseType getExerciseType() {
+        return exerciseType;
+    }
+
+    public void setExerciseType(ExerciseType exerciseType) {
+        this.exerciseType = exerciseType;
+    }
+
+    public String getInitiatorLogin() {
+        return initiatorLogin;
+    }
+
+    public void setInitiatorLogin(String initiatorLogin) {
+        this.initiatorLogin = initiatorLogin;
+    }
+
+    public VariantJobPhase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(VariantJobPhase phase) {
+        this.phase = phase;
+    }
+
+    public int getAttempt() {
+        return attempt;
+    }
+
+    public void setAttempt(int attempt) {
+        this.attempt = attempt;
+    }
+
+    public int getMaxAttempts() {
+        return maxAttempts;
+    }
+
+    public void setMaxAttempts(int maxAttempts) {
+        this.maxAttempts = maxAttempts;
+    }
+
+    public boolean isCancelRequested() {
+        return cancelRequested;
+    }
+
+    public void setCancelRequested(boolean cancelRequested) {
+        this.cancelRequested = cancelRequested;
+    }
+
+    public ChangePlan getChangePlan() {
+        return changePlan;
+    }
+
+    public void setChangePlan(ChangePlan changePlan) {
+        this.changePlan = changePlan;
+    }
+
+    public Map<VariantJobPhase, StepOutput> getStepOutputs() {
+        return stepOutputs;
+    }
+
+    public void setStepOutputs(Map<VariantJobPhase, StepOutput> stepOutputs) {
+        this.stepOutputs = stepOutputs;
+    }
+
+    public List<String> getWarnings() {
+        return warnings;
+    }
+
+    public void setWarnings(List<String> warnings) {
+        this.warnings = warnings;
+    }
+
+    public Long getVariantExerciseId() {
+        return variantExerciseId;
+    }
+
+    public void setVariantExerciseId(Long variantExerciseId) {
+        this.variantExerciseId = variantExerciseId;
+    }
+
+    public VariantGenerationRequestDTO getRequest() {
+        return request;
+    }
+
+    public void setRequest(VariantGenerationRequestDTO request) {
+        this.request = request;
+    }
+
+    public Instant getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(Instant startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public Instant getFinishedAt() {
+        return finishedAt;
+    }
+
+    public void setFinishedAt(Instant finishedAt) {
+        this.finishedAt = finishedAt;
+    }
 }

@@ -33,10 +33,69 @@ public record VariantGenerationEventDTO(Type type, VariantJobPhase phase, Intege
         PHASE_CHANGED, PROGRESS, ATTEMPT, STEP_OUTPUT, DONE, FAILED, CANCELLED
     }
 
-    // TODO (Sonnet): STEP_OUTPUT needs the payload — either add a StepOutputDTO component here (nullable, only set
-    // for STEP_OUTPUT) or let the client fetch the job-detail endpoint on STEP_OUTPUT; pick the inline payload
-    // (plan Section 2.4 wants live panel updates during the run) and keep it truncated server-side.
+    // TODO (Sonnet): STEP_OUTPUT currently carries only the summary in `detail`; open modals fetch the full panel
+    // body from the job-detail endpoint. If live panel bodies are wanted (plan Section 2.4), add a nullable
+    // StepOutputDTO component here and keep it truncated server-side.
 
-    // TODO (Sonnet): Static factories per type (phaseChanged(...), attempt(...), done(...), failed(...)) so the
-    // job service publishes consistently shaped events (single writer, see ExerciseVariantJobService TODOs).
+    /**
+     * @param phase the new phase
+     * @return a PHASE_CHANGED event
+     */
+    public static VariantGenerationEventDTO phaseChanged(VariantJobPhase phase) {
+        return new VariantGenerationEventDTO(Type.PHASE_CHANGED, phase, null, null, null, null, null);
+    }
+
+    /**
+     * @param phase       current phase
+     * @param attempt     current attempt (1-based)
+     * @param maxAttempts attempt budget
+     * @param detail      type-specific sub-label
+     * @return an ATTEMPT event
+     */
+    public static VariantGenerationEventDTO attempt(VariantJobPhase phase, int attempt, int maxAttempts, String detail) {
+        return new VariantGenerationEventDTO(Type.ATTEMPT, phase, attempt, maxAttempts, detail, null, null);
+    }
+
+    /**
+     * @param phase  current phase
+     * @param detail type-specific progress sub-label
+     * @return a PROGRESS event
+     */
+    public static VariantGenerationEventDTO progress(VariantJobPhase phase, String detail) {
+        return new VariantGenerationEventDTO(Type.PROGRESS, phase, null, null, detail, null, null);
+    }
+
+    /**
+     * @param phase   the phase the output belongs to
+     * @param summary the step-output summary (panel header)
+     * @return a STEP_OUTPUT event
+     */
+    public static VariantGenerationEventDTO stepOutput(VariantJobPhase phase, String summary) {
+        return new VariantGenerationEventDTO(Type.STEP_OUTPUT, phase, null, null, summary, null, null);
+    }
+
+    /**
+     * @param terminalPhase     COMPLETED or DRAFT_WITH_WARNINGS
+     * @param variantExerciseId the created exercise
+     * @param warnings          non-empty for DRAFT_WITH_WARNINGS
+     * @return a DONE event
+     */
+    public static VariantGenerationEventDTO done(VariantJobPhase terminalPhase, Long variantExerciseId, List<String> warnings) {
+        return new VariantGenerationEventDTO(Type.DONE, terminalPhase, null, null, null, variantExerciseId, warnings);
+    }
+
+    /**
+     * @param detail failure description including the phase the job failed in
+     * @return a FAILED event
+     */
+    public static VariantGenerationEventDTO failed(String detail) {
+        return new VariantGenerationEventDTO(Type.FAILED, VariantJobPhase.FAILED, null, null, detail, null, null);
+    }
+
+    /**
+     * @return a CANCELLED event
+     */
+    public static VariantGenerationEventDTO cancelled() {
+        return new VariantGenerationEventDTO(Type.CANCELLED, VariantJobPhase.CANCELLED, null, null, null, null, null);
+    }
 }

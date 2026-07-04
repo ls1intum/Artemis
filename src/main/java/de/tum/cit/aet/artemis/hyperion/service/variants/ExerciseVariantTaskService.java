@@ -31,22 +31,27 @@ public class ExerciseVariantTaskService {
     }
 
     /**
-     * Runs the pipeline for the job on an async executor.
+     * Runs the pipeline for the job on an async executor. The pipeline handles its own terminal transitions
+     * (COMPLETED / DRAFT_WITH_WARNINGS / FAILED / CANCELLED incl. clone cleanup); this method is only the
+     * last-resort safety net for unhandled errors plus the dedup-lock release.
      *
-     * TODO (Sonnet): Implement, mirroring HyperionCodeGenerationTaskService.runJobAsync:
-     * 1. try { pipeline.run(job); }
-     * 2. catch (Exception ex): log with jobId + sourceExerciseId; transition the job to FAILED via
-     * jobService.fail(jobId, "Unhandled error: " + ex.getMessage()) so a FAILED event reaches the client
-     * (plan Section 6, hard-failure row) — the pipeline is responsible for clone cleanup before rethrowing.
-     * 3. finally: run the cleanup callback (releases ONLY the per-exercise dedup lock; the job record stays for
-     * the tray, plan Section 5.2 "Job retention").
-     *
-     * @param job     the claimed job
-     * @param cleanup releases the per-exercise dedup lock after the job reached a terminal state
+     * @param job the claimed job
      */
     @Async
-    public void runJobAsync(VariantJob job, Runnable cleanup) {
-        // TODO (Sonnet): implement — see method Javadoc.
-        throw new UnsupportedOperationException("TODO (Sonnet): implement async dispatch (plan Section 5.2)");
+    public void runJobAsync(VariantJob job) {
+        try {
+            pipeline.run(job);
+        }
+        catch (Exception ex) {
+            log.error("Variant generation job {} failed for exercise {}", job.getJobId(), job.getSourceExerciseId(), ex);
+            boolean alreadyTerminal = jobService.getJob(job.getJobId(), job.getInitiatorLogin()).map(current -> current.getPhase().isTerminal()).orElse(true);
+            if (!alreadyTerminal) {
+                jobService.fail(job.getJobId(), "Unhandled error: " + ex.getMessage());
+            }
+        }
+        finally {
+            // Terminal transitions already release the lock; this covers crashes before any terminal transition.
+            jobService.releaseLock(job.getSourceExerciseId(), job.getJobId());
+        }
     }
 }

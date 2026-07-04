@@ -1,45 +1,73 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
- * Resolves the capability-adapter bundle for an exercise type (plan Section 2.3).
+ * Resolves the capability-adapter bundle for an exercise type (plan Section 2.3) — the standard Spring
+ * idiom: inject the list of all {@link VariantTypeAdapters} beans, index by supported type. Adding a new
+ * exercise type (plan Section 8) means adding one bean; nothing here changes.
  */
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class VariantTypeRegistry {
 
+    private static final String ENTITY_NAME = "exerciseVariantGeneration";
+
     private final List<VariantTypeAdapters> adapterBundles;
+
+    private final Map<ExerciseType, VariantTypeAdapters> adaptersByType = new EnumMap<>(ExerciseType.class);
 
     public VariantTypeRegistry(List<VariantTypeAdapters> adapterBundles) {
         this.adapterBundles = adapterBundles;
     }
 
     /**
+     * Indexes the injected bundles and fails fast on duplicate registrations for the same exercise type.
+     */
+    @PostConstruct
+    public void init() {
+        for (VariantTypeAdapters bundle : adapterBundles) {
+            VariantTypeAdapters previous = adaptersByType.putIfAbsent(bundle.supportedExerciseType(), bundle);
+            if (previous != null) {
+                throw new IllegalStateException("Duplicate variant adapter bundle for exercise type " + bundle.supportedExerciseType() + ": " + previous.getClass().getSimpleName()
+                        + " and " + bundle.getClass().getSimpleName());
+            }
+        }
+    }
+
+    /**
+     * @param exerciseType the source exercise's type (read server-side, never client-supplied)
+     * @return true when variant generation supports the type
+     */
+    public boolean isSupported(ExerciseType exerciseType) {
+        return adaptersByType.containsKey(exerciseType);
+    }
+
+    /**
      * Resolves the adapter bundle for the given exercise type.
      *
-     * TODO (Sonnet): Implement per plan Section 2.3 / 5.1:
-     * 1. Find the unique bundle whose supportedExerciseType() equals the given type.
-     * 2. If none matches → throw BadRequestAlertException with a translatable error key
-     * ("artemisApp.exerciseVariant.unsupportedType") so the resource returns 400 for unsupported types
-     * (the client hides/disables the button per type anyway, Section 5.1).
-     * 3. If more than one matches → fail fast at startup would be nicer: add a @PostConstruct duplicate check.
-     *
-     * TODO (Sonnet): Add `boolean isSupported(ExerciseType type)` for the resource's validation path.
-     *
-     * @param exerciseType the source exercise's type (read server-side, never client-supplied)
+     * @param exerciseType the source exercise's type
      * @return the adapter bundle
+     * @throws BadRequestAlertException for unsupported types (translatable key, plan Section 5.1)
      */
     public VariantTypeAdapters resolve(ExerciseType exerciseType) {
-        // TODO (Sonnet): implement — see method Javadoc.
-        throw new UnsupportedOperationException("TODO (Sonnet): implement adapter resolution (plan Section 2.3)");
+        VariantTypeAdapters adapters = adaptersByType.get(exerciseType);
+        if (adapters == null) {
+            throw new BadRequestAlertException("Variant generation is not supported for exercise type " + exerciseType, ENTITY_NAME, "unsupportedType");
+        }
+        return adapters;
     }
 }

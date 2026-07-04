@@ -17,16 +17,28 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDetailDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantJobStartDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
+import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantJobService;
+import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantTaskService;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistry;
 
 /**
  * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types
  * (plan Section 5.1); the exercise type is read from the source exercise server-side and the
- * {@code VariantTypeRegistry} resolves the adapters.
+ * {@link VariantTypeRegistry} resolves the adapters.
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -38,77 +50,140 @@ public class HyperionExerciseVariantResource {
 
     private static final String ENTITY_NAME = "exerciseVariantGeneration";
 
-    // TODO (Sonnet): Inject via constructor (mirror HyperionCodeGenerationResource):
-    // UserRepository, ExerciseRepository (generic — the endpoint serves all types),
-    // ExerciseVariantJobService, ExerciseVariantTaskService, VariantTypeRegistry.
+    private final UserRepository userRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseVariantJobService jobService;
+
+    private final ExerciseVariantTaskService taskService;
+
+    private final VariantTypeRegistry typeRegistry;
+
+    public HyperionExerciseVariantResource(UserRepository userRepository, ExerciseRepository exerciseRepository, ExerciseVariantJobService jobService,
+            ExerciseVariantTaskService taskService, VariantTypeRegistry typeRegistry) {
+        this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.jobService = jobService;
+        this.taskService = taskService;
+        this.typeRegistry = typeRegistry;
+    }
 
     /**
-     * POST exercises/{exerciseId}/generate-variant : start a variant-generation job.
+     * POST exercises/{exerciseId}/generate-variant : start a variant-generation job (plan Section 5.1).
      *
-     * TODO (Sonnet): Implement per plan Section 5.1:
-     * 1. Authorization: exercise-scoped @EnforceAtLeastEditorInCourse (via the exercise's course; for exam
-     * exercises the check resolves through the exam's course, Section 5.5). Check the existing
-     * enforceRoleInExercise annotations for the right variant given a plain exerciseId path variable.
-     * 2. Validate: at least one of targetDifficulty/domainText/additionalInstructions non-empty → else 400
-     * ("noIntentSelected"). Placement cross-field rules per VariantPlacementDTO TODO; exam exercises force
-     * SAME_EXAM_GROUP (Section 5.5).
-     * 3. Load the source exercise; registry.isSupported(exercise type) → else 400 with translatable key
-     * ("unsupportedType").
-     * 4. jobService.startJob(user, exercise, request) (throws 409 ConflictException when a job is already
-     * running for the exercise), then taskService.runJobAsync(job, cleanup) — cleanup releases the dedup lock.
-     * 5. Return 200 with VariantJobStartDTO(jobId).
+     * @param exerciseId the source exercise id
+     * @param request    the wizard request (intents by field presence, placement)
+     * @return 200 with the created job id; 400 on missing intent / unsupported type / invalid placement;
+     *         409 when a job is already running for the exercise
      */
     @PostMapping("exercises/{exerciseId}/generate-variant")
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<VariantJobStartDTO> generateVariant(@PathVariable long exerciseId, @Valid @RequestBody VariantGenerationRequestDTO request) {
-        throw new UnsupportedOperationException("TODO (Sonnet): implement start endpoint (plan Section 5.1)");
+        log.debug("REST request to generate a variant for exercise [{}]", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        validateRequest(exercise, request);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        VariantJob job = jobService.startJob(user, exercise, request);
+        taskService.runJobAsync(job);
+        log.info("Started variant generation job [{}] for exercise [{}]", job.getJobId(), exerciseId);
+        return ResponseEntity.ok(new VariantJobStartDTO(job.getJobId()));
     }
 
     /**
-     * GET exercises/{exerciseId}/generate-variant/active : running job for reconnect/dedup (plan Sections 5.1, 5.3
-     * point 5 — the wizard calls this on open to re-attach to a running job).
+     * GET exercises/{exerciseId}/generate-variant/active : running job for wizard reconnect
+     * (plan Sections 5.1 and 5.3, point 5).
      *
-     * TODO (Sonnet): Same authorization as the POST; jobService.getActiveJob(user, exerciseId) → 200 VariantJobDTO
-     * or 204 No Content when none (mirror the codegen checkOnly path's noContent()).
+     * @param exerciseId the source exercise id
+     * @return 200 with the running job, or 204 when none
      */
     @GetMapping("exercises/{exerciseId}/generate-variant/active")
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<VariantJobDTO> getActiveJob(@PathVariable long exerciseId) {
-        throw new UnsupportedOperationException("TODO (Sonnet): implement active-job endpoint (plan Section 5.1)");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return jobService.getActiveJob(user, exerciseId).map(job -> ResponseEntity.ok(VariantJobDTO.of(job))).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**
-     * GET variant-jobs : current user's jobs (running + retained-finished) for the navbar tray (plan Sections 5.1, 5.4).
+     * GET variant-jobs : the current user's jobs (running + retained-finished) for the navbar tray
+     * (plan Sections 5.1 and 5.4). Per-user scoping is enforced in the service.
      *
-     * TODO (Sonnet): Authorization: @EnforceAtLeastEditor (user-scoped, no exercise in the path — the service
-     * returns ONLY jobs whose initiatorLogin matches the current user, re-checked server-side, Section 5.1).
-     * Map via VariantJobDTO.of(...).
+     * @return 200 with the job list
      */
     @GetMapping("variant-jobs")
+    @EnforceAtLeastEditor
     public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
-        throw new UnsupportedOperationException("TODO (Sonnet): implement job-list endpoint (plan Section 5.4)");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(jobService.getJobsOfUser(user.getLogin()).stream().map(VariantJobDTO::of).toList());
     }
 
     /**
-     * GET variant-jobs/{jobId} : full job detail incl. per-phase step outputs for reopening the modal in monitor
-     * mode (plan Sections 5.1, 5.4).
+     * GET variant-jobs/{jobId} : full job detail incl. per-phase step outputs for reopening the modal in
+     * monitor mode (plan Sections 5.1 and 5.4). Unknown, expired, and foreign jobs are all 404 so job ids
+     * cannot be probed.
      *
-     * TODO (Sonnet): jobService.getJob(jobId, login) → 200 VariantJobDetailDTO or 404 when unknown/expired/foreign
-     * (do NOT leak whether a foreign job exists — same 404).
+     * @param jobId the job id
+     * @return 200 with the detail, or 404
      */
     @GetMapping("variant-jobs/{jobId}")
+    @EnforceAtLeastEditor
     public ResponseEntity<VariantJobDetailDTO> getJobDetail(@PathVariable String jobId) {
-        throw new UnsupportedOperationException("TODO (Sonnet): implement job-detail endpoint (plan Section 5.4)");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return jobService.getJob(jobId, user.getLogin()).map(job -> ResponseEntity.ok(VariantJobDetailDTO.of(job))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
-     * DELETE variant-jobs/{jobId} : cooperative cancel (plan Section 5.2).
+     * DELETE variant-jobs/{jobId} : cooperative cancel (plan Section 5.2) — sets the distributed flag; the
+     * pipeline observes it at the next phase/agent-round boundary and cleans up the provisioned clone.
      *
-     * TODO (Sonnet): jobService.requestCancel(jobId, login) — only the initiating user; 409 ConflictException when
-     * the job already reached FINALIZING or a terminal phase ("the variant already exists — delete it like any
-     * exercise"); 404 when unknown/foreign. Returns 204. The actual cleanup happens in the pipeline when it
-     * observes the flag at the next phase boundary / agent-round boundary.
+     * @param jobId the job id
+     * @return 204; 409 when the job already reached FINALIZING or a terminal phase
      */
     @DeleteMapping("variant-jobs/{jobId}")
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> cancelJob(@PathVariable String jobId) {
-        throw new UnsupportedOperationException("TODO (Sonnet): implement cancel endpoint (plan Section 5.2)");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        jobService.requestCancel(jobId, user.getLogin());
+        log.info("Cancellation requested for variant generation job [{}]", jobId);
+        return ResponseEntity.noContent().build();
+    }
+
+    private void validateRequest(Exercise exercise, VariantGenerationRequestDTO request) {
+        if (!request.hasAnyIntent()) {
+            throw new BadRequestAlertException("At least one variant intent must be provided", ENTITY_NAME, "noIntentSelected");
+        }
+        if (!typeRegistry.isSupported(exercise.getExerciseType())) {
+            throw new BadRequestAlertException("Variant generation is not supported for exercise type " + exercise.getExerciseType(), ENTITY_NAME, "unsupportedType");
+        }
+        validatePlacement(exercise, request.placement());
+    }
+
+    private void validatePlacement(Exercise exercise, VariantPlacementDTO placement) {
+        if (placement == null || placement.type() == null) {
+            throw new BadRequestAlertException("A placement choice is required", ENTITY_NAME, "missingPlacement");
+        }
+        if (exercise.isExamExercise()) {
+            // Exam exercises have exactly one placement: the source's exam exercise group (plan Section 5.5).
+            if (placement.type() != VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP) {
+                throw new BadRequestAlertException("Exam variants are always placed in the source's exam exercise group", ENTITY_NAME, "invalidExamPlacement");
+            }
+            return;
+        }
+        switch (placement.type()) {
+            case SAME_EXAM_GROUP -> throw new BadRequestAlertException("SAME_EXAM_GROUP is only valid for exam exercises", ENTITY_NAME, "invalidPlacement");
+            case EXISTING_GROUP -> {
+                if (placement.existingGroupId() == null) {
+                    throw new BadRequestAlertException("existingGroupId is required for EXISTING_GROUP placement", ENTITY_NAME, "missingGroupId");
+                }
+            }
+            case NEW_GROUP -> {
+                if (placement.newGroup() == null || placement.newGroup().title() == null || placement.newGroup().title().isBlank()) {
+                    throw new BadRequestAlertException("A group title is required for NEW_GROUP placement", ENTITY_NAME, "missingGroupTitle");
+                }
+            }
+            case STANDALONE -> {
+                // nothing to validate
+            }
+        }
     }
 }

@@ -14,11 +14,19 @@ public enum VariantJobPhase {
 
     ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING, FINALIZING, COMPLETED, DRAFT_WITH_WARNINGS, FAILED, CANCELLED;
 
-    // TODO (Sonnet): Add a helper `boolean isTerminal()` returning true for COMPLETED, DRAFT_WITH_WARNINGS, FAILED,
-    // CANCELLED — used by ExerciseVariantJobService to decide whether the per-exercise dedup lock can be released
-    // while the job record itself is retained under TTL for the navbar tray (plan Section 5.2 "Job retention").
+    /**
+     * @return true for the four terminal phases — used to release the per-exercise dedup lock while the job
+     *         record itself is retained under TTL for the navbar tray (plan Section 5.2 "Job retention")
+     */
+    public boolean isTerminal() {
+        return this == COMPLETED || this == DRAFT_WITH_WARNINGS || this == FAILED || this == CANCELLED;
+    }
 
-    // TODO (Sonnet): Add a helper `boolean isCancellable()` returning true only for phases strictly before FINALIZING
-    // (ANALYZING..REPAIRING). Cancelling from FINALIZING on is rejected with 409 because the variant already exists
-    // (plan Sections 5.2 "Cancellation" and 2.7.2 footnote).
+    /**
+     * @return true only for phases strictly before FINALIZING — cancelling from FINALIZING on is rejected with
+     *         409 because the variant already exists (plan Sections 5.2 and 2.7.2 footnote)
+     */
+    public boolean isCancellable() {
+        return ordinal() < FINALIZING.ordinal();
+    }
 }

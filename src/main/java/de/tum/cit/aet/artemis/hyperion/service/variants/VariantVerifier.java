@@ -14,7 +14,7 @@ public interface VariantVerifier {
      *
      * TODO (Opus, programming — plan Section 2.6 step 1 + Section 3 VERIFYING row): gate 1 = solution build must
      * pass 100% of tests AND template build must fail — reuse the waitForBuildResult / hasReachedTargetResult /
-     * BuildResultOutcome semantics per RepositoryType from the extracted HyperionBuildVerificationService (these
+     * BuildResultOutcome semantics per RepositoryType from the extracted VariantBuildVerificationService (these
      * already encode exactly this rule). CI timeout counts as a failed attempt with a distinct detail, reusing
      * BuildResultState.TIMED_OUT semantics (Section 6, last row). Respect the build-dependency constraint: if the
      * test repo changed since the last verify, discard cached results and re-verify BOTH builds (Section 3).

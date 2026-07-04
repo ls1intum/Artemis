@@ -23,8 +23,13 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 public record VariantGenerationRequestDTO(@Nullable DifficultyLevel targetDifficulty, @Nullable String domainText, @Nullable String additionalInstructions,
         VariantPlacementDTO placement) implements Serializable {
 
-    // TODO (Sonnet): Add a `boolean hasAnyIntent()` helper (any of the three intent fields non-blank) used by the
-    // resource's validation: at least one intent must be present, otherwise 400 (plan Section 5.1, "Validation").
+    /**
+     * @return true when at least one of the three intent fields is present — the resource rejects requests
+     *         without any intent with 400 (plan Section 5.1, "Validation")
+     */
+    public boolean hasAnyIntent() {
+        return targetDifficulty != null || (domainText != null && !domainText.isBlank()) || (additionalInstructions != null && !additionalInstructions.isBlank());
+    }
 
     // TODO (Sonnet): Reasonable @Size limits on the free-text fields (they go into prompts — bound the token cost).
 }

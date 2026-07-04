@@ -23,7 +23,7 @@ public interface VariantToolsetFactory {
      * validation errors (no match / ambiguous match) TO THE MODEL as the tool result (Section 6 row 2).
      * - runBuild(repoType): commit + push (GitService.commitAndPush), trigger CI
      * (ContinuousIntegrationTriggerService.triggerBuild), wait via the extracted
-     * HyperionBuildVerificationService (waitUntilRemoteHasCommit / waitForBuildResult, Section 3 refactor note).
+     * VariantBuildVerificationService (waitUntilRemoteHasCommit / waitForBuildResult, Section 3 refactor note).
      * - getBuildAndTestResults(repoType): compiler output + failed test names/messages from the latest build.
      * - finish(summary): signals the agent is done with this round; summary becomes part of the step output.
      * Enforce the build-dependency constraint: a test-repo edit invalidates ALL previously green results — the

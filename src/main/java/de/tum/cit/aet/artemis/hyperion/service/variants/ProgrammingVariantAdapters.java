@@ -25,7 +25,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     // - HyperionProgrammingExerciseContextRendererService (ANALYZING)
     // - ProgrammingExerciseImportService + ProgrammingExerciseValidationService (PROVISIONING)
     // - GitService + RepositoryService (TRANSFORMING toolset: checkout, read, edit, commit)
-    // - ContinuousIntegrationTriggerService + HyperionBuildVerificationService (runBuild / VERIFYING)
+    // - ContinuousIntegrationTriggerService + VariantBuildVerificationService (runBuild / VERIFYING)
     // - HyperionConsistencyCheckService (semantic gate, Section 2.6 step 3)
     // - the service-level variant-group assignment path behind ExerciseVariantGroupResource (FINALIZING)
     // - ProgrammingExerciseRepository (reload with template/solution participations)
@@ -56,7 +56,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     public List<ToolCallback> createTools(Exercise variant, VariantJob job) {
         // TODO (Opus): Build the programming toolset per VariantToolsetFactory Javadoc / plan Section 2.5 table:
         // listFiles, readFile, applyEdit/writeFile (search-replace edits, validation errors back to the model),
-        // runBuild (commit+push+trigger+wait via HyperionBuildVerificationService), getBuildAndTestResults
+        // runBuild (commit+push+trigger+wait via VariantBuildVerificationService), getBuildAndTestResults
         // (compiler output + failed test names/messages), finish(summary). Tools operate ONLY on the variant's
         // repos. Track test-repo edits for the build-dependency constraint (Section 3).
         throw new UnsupportedOperationException("TODO (Opus): plan Section 2.5 toolset table");
@@ -65,7 +65,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     @Override
     public VerificationReport verify(Exercise variant, ChangePlan plan) {
         // TODO (Opus): Gate 1: solution build passes 100% AND template build fails, via
-        // HyperionBuildVerificationService (hasReachedTargetResult per RepositoryType, plan Section 2.6 step 1).
+        // VariantBuildVerificationService (hasReachedTargetResult per RepositoryType, plan Section 2.6 step 1).
         // CI timeout → failed attempt with distinct detail (BuildResultState.TIMED_OUT, Section 6). Gate 3:
         // HyperionConsistencyCheckService semantic gate incl. ChangePlan invariants ("test names referenced in the
         // problem statement exist in the test repo", Sections 2.4/2.6). Return structured findings.

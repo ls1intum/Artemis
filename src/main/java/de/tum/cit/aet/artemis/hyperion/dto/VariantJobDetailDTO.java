@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.io.Serializable;
+import java.util.EnumMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 
 /**
@@ -28,8 +30,15 @@ public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOu
     public record StepOutputDTO(String summary, String detail) implements Serializable {
     }
 
-    // TODO (Sonnet): Static factory `of(VariantJob job)` mapping the Hazelcast record incl. stepOutputs; keep
-    // ordering by phase ordinal so the client renders the timeline in pipeline order (plan Section 5.4).
-    // Unused-parameter note for downstream: `List` import is for a possible per-attempt output list if
-    // TRANSFORMING outputs are kept per attempt rather than overwritten — decide and clean up.
+    /**
+     * Maps the Hazelcast job record including step outputs (EnumMap keeps pipeline/phase order).
+     *
+     * @param job the job record
+     * @return the DTO
+     */
+    public static VariantJobDetailDTO of(VariantJob job) {
+        Map<VariantJobPhase, StepOutputDTO> stepOutputs = new EnumMap<>(VariantJobPhase.class);
+        job.getStepOutputs().forEach((phase, output) -> stepOutputs.put(phase, new StepOutputDTO(output.summary(), output.detail())));
+        return new VariantJobDetailDTO(VariantJobDTO.of(job), stepOutputs);
+    }
 }
