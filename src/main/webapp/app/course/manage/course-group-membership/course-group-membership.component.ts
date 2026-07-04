@@ -82,7 +82,8 @@ export class CourseGroupMembershipComponent implements OnInit {
             this.paramSub = this.route.params.subscribe((params) => {
                 this.courseRoleSlug.set(params['courseRoleSlug']);
                 if (!courseRoleSegments.includes(this.courseRoleSlug()!)) {
-                    return this.router.navigate(['/course-management']);
+                    void this.router.navigate(['/course-management']);
+                    return;
                 }
                 this.courseService.getAllUsersInCourseRole(this.course()!.id!, this.courseRoleSlug()!).subscribe((usersResponse) => {
                     this.allCourseGroupUsers.set(usersResponse.body!);

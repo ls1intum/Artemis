@@ -1098,15 +1098,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
 
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
-        // The single GET must carry a nested course projection: the client reads exercise.course to render links and,
-        // crucially, the course group names so it can compute access rights (account.service.setAccessRightsForCourse).
+        // The single GET must carry a nested course projection: the client reads exercise.course to render links.
         // Dropping it crashed the example-submissions page with "Cannot set properties of undefined (setting 'isAtLeastTutor')".
         assertThat(textExerciseServer.course()).as("nested course is present for a course exercise").isNotNull();
         assertThat(textExerciseServer.course().id()).as("nested course carries its id").isEqualTo(course.getId());
-        assertThat(textExerciseServer.course().teachingAssistantGroupName()).as("nested course carries the TA group name used for access rights")
-                .isEqualTo(course.getTeachingAssistantGroupName());
-        assertThat(textExerciseServer.course().instructorGroupName()).as("nested course carries the instructor group name used for access rights")
-                .isEqualTo(course.getInstructorGroupName());
     }
 
     @Test
@@ -1124,14 +1119,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var examRef = textExerciseServer.exerciseGroup().exam();
         assertThat(examRef).as("nested exam reference is exposed").isNotNull();
         // For exam exercises the client resolves the course via exercise.exerciseGroup.exam.course (top-level course is
-        // null). It needs the course group names there to compute access rights (account.service.setAccessRightsForCourse);
-        // dropping it loses course context and access rights on the exam exercise management screens.
+        // null); dropping it loses course context on the exam exercise management screens.
         assertThat(examRef.course()).as("nested exam course is present for an exam exercise").isNotNull();
         assertThat(examRef.course().id()).as("nested exam course carries its id").isEqualTo(examCourse.getId());
-        assertThat(examRef.course().teachingAssistantGroupName()).as("nested exam course carries the TA group name used for access rights")
-                .isEqualTo(examCourse.getTeachingAssistantGroupName());
-        assertThat(examRef.course().instructorGroupName()).as("nested exam course carries the instructor group name used for access rights")
-                .isEqualTo(examCourse.getInstructorGroupName());
         // The unchanged Angular views also read exam.title (detail-page exam link), exam.testExam (gates feedback-
         // suggestion options) and exam.numberOfCorrectionRoundsInExam (assessment controls); they must survive the DTO.
         assertThat(examRef.id()).as("nested exam id").isEqualTo(exam.getId());

@@ -155,11 +155,12 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
     if (!dto) {
         return undefined;
     }
-    return {
+    const course: Course = {
         id: dto.id,
         title: dto.title,
         semester: dto.semester,
-    } as Course;
+    };
+    return course;
 };
 
 const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {

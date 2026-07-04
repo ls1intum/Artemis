@@ -252,7 +252,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
         }
         // Tutors must not see the student behind a submission; instructors may.
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         List<TextSubmissionResponseDTO> submissionDTOs = submissions.stream().map(submission -> TextSubmissionResponseDTO.of((TextSubmission) submission, includeStudent)).toList();

@@ -132,9 +132,9 @@ public class UserService {
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
-            UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
+            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
+            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
+            GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
