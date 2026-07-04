@@ -6,6 +6,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +43,8 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -79,14 +82,17 @@ public class ExamUserService {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final CourseRepository courseRepository;
+
     public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository,
-            ExamRoomService examRoomService, StudentExamRepository studentExamRepository) {
+            ExamRoomService examRoomService, StudentExamRepository studentExamRepository, CourseRepository courseRepository) {
         this.examUserRepository = examUserRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examRoomRepository = examRoomRepository;
         this.examRoomService = examRoomService;
         this.studentExamRepository = studentExamRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -320,17 +326,22 @@ public class ExamUserService {
 
     /**
      * Searches Artemis users by login prefix, full-name substring, email substring, or registration-number substring,
+     * excluding course staff (teaching assistants, editors, instructors) and admins,
      * and marks each result as already registered for the given exam.
      *
+     * @param courseId   the id of the course the exam belongs to (used to determine staff groups)
      * @param examId     the exam to check existing registrations against
      * @param searchTerm the text entered by the instructor
      * @param page       zero-based page index
      * @param size       number of results per page
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
-    public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
+    public Page<UserForRegistrationDTO> searchStudentsForExamRegistration(long courseId, long examId, String searchTerm, int page, int size) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Set<String> staffGroupNames = getStaffGroupNames(course);
+
         PageRequest pageable = PageRequest.of(page, size);
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
+        Page<User> users = userRepository.searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm, staffGroupNames);
 
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
         Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);
@@ -339,6 +350,23 @@ public class ExamUserService {
                 user.getRegistrationNumber(), user.getImageUrl(), registeredIds.contains(user.getId()))).toList();
 
         return new PageImpl<>(dtos, pageable, users.getTotalElements());
+    }
+
+    private static Set<String> getStaffGroupNames(final Course course) {
+        Set<String> staffGroups = new HashSet<>();
+        if (course.getTeachingAssistantGroupName() != null) {
+            staffGroups.add(course.getTeachingAssistantGroupName());
+        }
+        if (course.getEditorGroupName() != null) {
+            staffGroups.add(course.getEditorGroupName());
+        }
+        if (course.getInstructorGroupName() != null) {
+            staffGroups.add(course.getInstructorGroupName());
+        }
+        if (staffGroups.isEmpty()) {
+            staffGroups.add(""); // dummy value to prevent invalid IN () clause
+        }
+        return staffGroups;
     }
 
     private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId) {

@@ -15,7 +15,6 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
@@ -52,7 +51,7 @@ function readComponentCollapsed(componentRef: unknown): boolean | undefined {
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, TranslateDirective, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
