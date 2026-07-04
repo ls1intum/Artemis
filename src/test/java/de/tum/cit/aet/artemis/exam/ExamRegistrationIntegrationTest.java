@@ -221,7 +221,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", studentsToRegister,
                 ExamRegistrationResultDTO.class, HttpStatus.OK);
         assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder(registrationNumber4WithTypo, null);
-        assertThat(result.rejectedStaffStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
         // TODO check audit events stored properly
 
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
@@ -277,7 +277,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 List.of(dto1, dto2, dto3, dto4), ExamRegistrationResultDTO.class, HttpStatus.OK);
         assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactly(dto4.registrationNumber());
-        assertThat(result.rejectedStaffStudents()).isNullOrEmpty();
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
     }
 
     @Test
@@ -369,26 +369,26 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterInstructorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "instructor1", "cannotRegisterInstructor");
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "instructor1", "cannotRegisterStaff");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterEditorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "editor1", "cannotRegisterEditor");
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "editor1", "cannotRegisterStaff");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterTutorToExam_forbiddenWithErrorKey() throws Exception {
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "tutor1", "cannotRegisterEditor");
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "tutor1", "cannotRegisterStaff");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterAdminToExam_forbiddenWithErrorKey() throws Exception {
         userUtilService.addAdmin(TEST_PREFIX);
-        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "admin", "cannotRegisterInstructor");
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "admin", "cannotRegisterStaff");
     }
 
     private void assertRegisterUserForbiddenWithErrorKey(String login, String expectedErrorKey) throws Exception {
@@ -446,7 +446,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 List.of(studentDto, editorDto, tutorDto), ExamRegistrationResultDTO.class, HttpStatus.OK);
 
-        assertThat(result.rejectedStaffStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder("2000002", "2000003");
+        assertThat(result.rejectedStaffUsers()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder("2000002", "2000003");
         assertThat(result.notFoundStudents()).isNullOrEmpty();
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();

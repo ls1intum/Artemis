@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 @Lazy
 @Service
 public class ExamRegistrationService {
+
+    private static final String ENTITY_NAME = "exam";
 
     private static final Logger log = LoggerFactory.getLogger(ExamRegistrationService.class);
 
@@ -102,7 +105,7 @@ public class ExamRegistrationService {
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      * <p>
      * Users who hold a staff role (instructor, editor, tutor, or admin) in the course are rejected and reported back
-     * in {@link ExamRegistrationResultDTO#rejectedStaffStudents()}. Such users are NOT added to the course student group,
+     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users are NOT added to the course student group,
      * so a failed registration leaves no side effect on the user's course membership.
      *
      * @param courseId     the id of the course
@@ -123,7 +126,7 @@ public class ExamRegistrationService {
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
             // Resolve the user WITHOUT adding them to the course group yet, so that rejected staff leave no side effect
-            Optional<User> optionalStudent = userService.findUserWithoutAddingToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
+            Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
                 continue;
@@ -169,7 +172,6 @@ public class ExamRegistrationService {
                 usersAddedToExam.add(examUser.getUser().getLogin());
             }
         }
-
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
@@ -226,6 +228,11 @@ public class ExamRegistrationService {
     public void registerStudentToExam(Course course, Exam exam, User student) {
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
+        }
+
+        if (isStaffMemberOfCourse(course, student)) {
+            throw new AccessForbiddenAlertException("Teaching assistants, editors, instructors, or administrators cannot be registered to exams.", ENTITY_NAME,
+                    "cannotRegisterStaff");
         }
 
         if (!student.getGroups().contains(course.getStudentGroupName())) {
@@ -402,12 +409,10 @@ public class ExamRegistrationService {
      * and therefore must not be registered as an exam student.
      *
      * @param course the course the exam belongs to
-     * @param user   the user to check (must have groups loaded)
+     * @param user   the user to check
      * @return true if the user is course staff and may not be registered as an exam student
      */
     public boolean isStaffMemberOfCourse(Course course, User user) {
-        return user.getGroups().contains(course.getInstructorGroupName()) || user.getGroups().contains(course.getEditorGroupName())
-                || user.getGroups().contains(course.getTeachingAssistantGroupName()) || authorizationCheckService.isAdmin(user)
-                || authorizationCheckService.isEditorInCourse(course, user) || authorizationCheckService.isTeachingAssistantInCourse(course, user);
+        return authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 }
