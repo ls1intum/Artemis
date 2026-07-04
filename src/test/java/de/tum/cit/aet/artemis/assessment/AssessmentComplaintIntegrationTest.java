@@ -545,12 +545,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
-            final var participation = (StudentParticipation) dto.complaint().getResult().getSubmission().getParticipation();
-            assertThat(participation.getStudent()).as("No student information").isEmpty();
-            assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
-            assertThat(participation.getExercise()).as("No additional exercise information").isNull();
-            assertThat(((StudentParticipation) dto.submission().getParticipation()).getParticipant()).as("No student information in participation").isNull();
-            assertThat(dto.submission().getParticipation().getExercise()).as("No additional exercise information").isNull();
+            assertThat(dto.complaint().participant()).as("No student information").isNull();
+            assertThat(dto.complaint().result().submission().participation().exercise()).as("No additional exercise information").isNull();
+            assertThat(dto.submission().participation().student()).as("No student information in participation").isNull();
+            assertThat(dto.submission().participation().team()).as("No team information in participation").isNull();
+            assertThat(dto.submission().participation().exercise()).as("No additional exercise information").isNull();
 
         });
     }

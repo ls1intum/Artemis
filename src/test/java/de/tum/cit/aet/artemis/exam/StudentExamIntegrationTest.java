@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionResponseDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
@@ -675,10 +676,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        List<Submission> response = request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK,
-                Submission.class);
+        List<SubmissionResponseDTO> response = request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.OK,
+                SubmissionResponseDTO.class);
         assertThat(response).isNotEmpty();
-        assertThat((response.getFirst().getParticipation()).isTestRun()).isTrue();
+        assertThat(response.getFirst().participation().testRun()).isTrue();
+        assertThat(response.getFirst().participation().submissions()).isNull();
     }
 
     @Test
@@ -686,7 +688,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
         course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);
-        request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class);
     }
 
     @Test
@@ -701,7 +703,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         userUtilService.changeUser(TEST_PREFIX + "student2");
-        request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercise/exercises/" + testRun.getExercises().getFirst().getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, SubmissionResponseDTO.class);
     }
 
     @Test
@@ -715,7 +717,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         final var latestSubmissions = request.getList(
                 "/api/exercise/exercises/" + exam.getExerciseGroups().getFirst().getExercises().iterator().next().getId() + "/test-run-submissions", HttpStatus.OK,
-                Submission.class);
+                SubmissionResponseDTO.class);
         assertThat(latestSubmissions).isEmpty();
     }
 
