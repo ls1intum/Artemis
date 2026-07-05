@@ -18,6 +18,13 @@
             height: 100%;
         }
 
+        // Reserve enough width for all localized filter chips (German is the widest, ~29rem including
+        // the dropdown) so the trigger keeps a constant width. Without this, removing a chip shrinks the
+        // right-aligned trigger, moves its left edge, and makes the inline overlay panel jump.
+        p-multiselect {
+            min-width: 30rem;
+        }
+
         .chips-section {
             display: flex;
             gap: 0.375rem;
