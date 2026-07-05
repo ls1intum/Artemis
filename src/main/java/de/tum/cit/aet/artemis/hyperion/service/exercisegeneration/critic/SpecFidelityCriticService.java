@@ -21,11 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
- * Spec-fidelity / coverage critic — the one quality axis the differential oracle ({@link AuthoritativeVerificationService}) is structurally blind to.
+ * Spec-fidelity / coverage critic — the one quality axis the differential oracle ({@link DifferentialVerificationService}) is structurally blind to.
  * <p>
  * The oracle proves an exercise is internally <em>consistent</em> (the solution passes its own tests, the template fails them, every [task] binds) but never whether the produced
  * tests cover the requirements the <em>instructor's brief</em> actually names. Real defect classes from a GPU+sandbox hard-exercise audit slip straight through it, for example:

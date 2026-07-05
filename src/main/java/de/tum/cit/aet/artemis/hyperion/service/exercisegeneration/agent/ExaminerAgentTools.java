@@ -10,20 +10,20 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
  * same file/shell tools as {@link SandboxAgentTools} but WITHOUT the {@code verify} tool. The examiner must not have {@code verify}: {@code verify} runs the solution-aware
  * differential (it builds the reference solution), and the examiner must never observe the solution's behaviour — its only ground truth is the problem statement's stated contract.
  * <p>
- * Decorrelation is enforced primarily by ABSENCE (the tester's container is seeded without {@code solution/}), and this restricted toolset is defence in depth: there is no tool
+ * Decorrelation is enforced primarily by ABSENCE (the examiner's container is seeded without {@code solution/}), and this restricted toolset is defence in depth: there is no tool
  * wired to the solution-aware verifier, and the delegated {@code workspaceRelativePath} confines file access to {@code /workspace} (where {@code solution/} does not exist anyway).
  * The examiner iterates {@code bash sh verify.sh template} only to make its suite COMPILE against the template's public API — never to make a test pass.
  */
-public class TesterAgentTools {
+public class ExaminerAgentTools {
 
     /** The file/shell tools via the verify-free constructor; the solution-aware {@code verify} tool is not re-exposed here. */
     private final SandboxAgentTools delegate;
 
     /**
-     * @param sandbox   the tester's own sandbox session (seeded without {@code solution/})
-     * @param sessionId the tester session handle
+     * @param sandbox   the examiner's own sandbox session (seeded without {@code solution/})
+     * @param sessionId the examiner session handle
      */
-    public TesterAgentTools(InteractiveSandbox sandbox, String sessionId) {
+    public ExaminerAgentTools(InteractiveSandbox sandbox, String sessionId) {
         this.delegate = new SandboxAgentTools(sandbox, sessionId);
     }
 
@@ -77,7 +77,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Signals the examiner suite is complete (compiles against the template and pins the stated contract); ends the tester loop.
+     * Signals the examiner suite is complete (compiles against the template and pins the stated contract); ends the examiner loop.
      *
      * @param summary an optional one-line summary of the authored suite
      * @return a confirmation that the suite was submitted

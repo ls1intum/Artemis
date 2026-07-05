@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Pure (sandbox-free) correctness gates {@link AuthoritativeVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
+ * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
  * oracle alone cannot see (the sandbox build can pass while production is broken or the solution is leaked):
  * <ul>
  * <li><b>Harness tampering.</b> The seeded TESTS-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one's source layout (e.g. a

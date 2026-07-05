@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  * SCA) reports for the solution and template builds, parsed by the production parsers ({@code TestResultXmlParser}, {@code ReportParser}) exactly as against a live container. Live
  * build behaviour is covered by the gated end-to-end test.
  */
-class AuthoritativeVerificationServiceTest {
+class DifferentialVerificationServiceTest {
 
     private static SandboxBuildCommandService sandboxBuildCommandService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
@@ -54,8 +54,8 @@ class AuthoritativeVerificationServiceTest {
         return new SandboxBuildCommandService(Optional.of(phases), Optional.of(new BuildScriptProviderService()));
     }
 
-    private static AuthoritativeVerificationService newVerifier() {
-        return new AuthoritativeVerificationService(sandboxBuildCommandService());
+    private static DifferentialVerificationService newVerifier() {
+        return new DifferentialVerificationService(sandboxBuildCommandService());
     }
 
     /**
@@ -179,7 +179,7 @@ class AuthoritativeVerificationServiceTest {
     }
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
-    private static VerificationResult verifyGenerate(AuthoritativeVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
+    private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
         return verifier.verify(sandbox, "s", exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
     }
 
@@ -604,7 +604,7 @@ class AuthoritativeVerificationServiceTest {
         // The fail-open per-test gates rely on fromReports producing a complete, sound per-test view: every counted test is named and every failed test is a member of the full
         // set.
         // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the hole the emitter-soundness gate closes.
-        var summary = AuthoritativeVerificationService.BuildSummary
+        var summary = DifferentialVerificationService.BuildSummary
                 .fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
                         ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
         assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
@@ -878,7 +878,7 @@ class AuthoritativeVerificationServiceTest {
 
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(4242L)).thenReturn(categories);
-            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
+            var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             // A Java exercise always ships a harness, so the F2 fail-closed gate requires a non-empty seed snapshot; supply an unchanged (seed == produced) pom.xml with no
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
@@ -964,7 +964,7 @@ class AuthoritativeVerificationServiceTest {
             var graded = category("Security", CategoryState.GRADED, 2.0);
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(7L)).thenReturn(Set.of(graded));
-            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
+            var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
             BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
             VerificationResult result = verifyGenerate(verifier, new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), exercise);
             assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();

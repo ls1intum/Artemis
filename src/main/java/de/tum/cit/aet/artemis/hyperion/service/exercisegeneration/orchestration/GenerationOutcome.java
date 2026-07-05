@@ -7,7 +7,7 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -43,12 +43,12 @@ public final class GenerationOutcome implements AutoCloseable {
     private final SpecFidelityReport specFidelityReport;
 
     /**
-     * The DECORRELATED correctness cross-check result (an independently-authored suite run against the real solution). {@code null} when the cross-check did not run for this
+     * The DECORRELATED cross-check result (an independently-authored suite run against the real solution). {@code null} when the cross-check did not run for this
      * outcome
      * (flag off, language not allowlisted, error/cancelled path). Never consulted by {@link #isAccepted()}.
      */
     @Nullable
-    private final CorrectnessCrossCheck correctnessCrossCheck;
+    private final CrossCheckVerdict crossCheckVerdict;
 
     /**
      * Whether the cross-check's contradiction should HARD-BLOCK persistence (the {@code reject-on-contradiction} flag was on AND the cross-check found a contradiction). Layered on
@@ -58,7 +58,7 @@ public final class GenerationOutcome implements AutoCloseable {
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId,
             @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport,
-            @Nullable CorrectnessCrossCheck correctnessCrossCheck, boolean hardBlockedByCrossCheck) {
+            @Nullable CrossCheckVerdict crossCheckVerdict, boolean hardBlockedByCrossCheck) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;
@@ -66,7 +66,7 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = sandbox;
         this.errorMessage = null;
         this.specFidelityReport = specFidelityReport;
-        this.correctnessCrossCheck = correctnessCrossCheck;
+        this.crossCheckVerdict = crossCheckVerdict;
         this.hardBlockedByCrossCheck = hardBlockedByCrossCheck;
     }
 
@@ -78,7 +78,7 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = null;
         this.errorMessage = errorMessage;
         this.specFidelityReport = SpecFidelityReport.empty();
-        this.correctnessCrossCheck = null;
+        this.crossCheckVerdict = null;
         this.hardBlockedByCrossCheck = false;
     }
 
@@ -105,11 +105,11 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return the decorrelated correctness cross-check result, or {@code null} when it did not run for this outcome
+     * @return the decorrelated cross-check result, or {@code null} when it did not run for this outcome
      */
     @Nullable
-    public CorrectnessCrossCheck correctnessCrossCheck() {
-        return correctnessCrossCheck;
+    public CrossCheckVerdict crossCheckVerdict() {
+        return crossCheckVerdict;
     }
 
     /**

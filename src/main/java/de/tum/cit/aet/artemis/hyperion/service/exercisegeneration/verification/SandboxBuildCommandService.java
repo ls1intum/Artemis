@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 
 /**
- * Produces the single build recipe — {@code verify.sh} — that both the agent (to self-check) and the {@link AuthoritativeVerificationService} (to decide the verdict) run, so the
+ * Produces the single build recipe — {@code verify.sh} — that both the agent (to self-check) and the {@link DifferentialVerificationService} (to decide the verdict) run, so the
  * agent's view of "does it build?" is byte-for-byte the grader's.
  * <p>
  * The script reproduces the real Artemis CI layout: a fresh hermetic build tree with the tests checked out and the chosen assignment ({@code solution/} or {@code template/})
@@ -56,7 +56,7 @@ public class SandboxBuildCommandService {
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
     /**
-     * The workspace directory holding the DECORRELATED examiner suite for the correctness cross-check, seeded separately from (and never overwriting) the agent's own
+     * The workspace directory holding the DECORRELATED examiner suite for the cross-check, seeded separately from (and never overwriting) the agent's own
      * {@code tests}. The cross-check invokes {@code verify.sh <assignment> shadow-tests} so the shadow suite is assembled in place of the agent's tests.
      */
     static final String CROSSCHECK_TESTS_DIR = "shadow-tests";
@@ -100,7 +100,7 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * The correctness cross-check's SOLUTION build: runs the pristine {@code verify.sh} against the real solution but assembles the tests from the {@code shadow-tests} workspace
+     * The cross-check's SOLUTION build: runs the pristine {@code verify.sh} against the real solution but assembles the tests from the {@code shadow-tests} workspace
      * dir (the independently-authored examiner suite) instead of the agent's own {@code tests}. Reuses the identical build+collect path, so the shadow suite is judged with
      * parity-by-construction.
      *
@@ -165,7 +165,7 @@ public class SandboxBuildCommandService {
                     echo "usage: verify.sh <solution|template> [tests-source-dir]" >&2
                     exit 64
                 fi
-                # Second positional arg selects the tests SOURCE dir; defaults to the agent's own "tests". The correctness cross-check passes "shadow-tests" (the decorrelated
+                # Second positional arg selects the tests SOURCE dir; defaults to the agent's own "tests". The cross-check passes "shadow-tests" (the decorrelated
                 # examiner suite) so the SAME build/collect path judges an independently-authored suite against the real solution/template. The single-positional invocation
                 # (verify.sh <assignment>) is unchanged — TESTS_SRC defaults to tests.
                 TESTS_SRC="${2:-tests}"

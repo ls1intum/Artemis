@@ -260,7 +260,7 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Builds the system prompt for the DECORRELATED test-author (independent examiner) agent used by the correctness cross-check. This agent has the problem statement and the
+     * Builds the system prompt for the DECORRELATED test-author (independent examiner) agent used by the cross-check. This agent has the problem statement and the
      * student template (the public API — signatures with stub bodies) but NOT the reference solution, and it authors a test suite that pins the STATED contract, iterating only to
      * make the suite COMPILE against the template (never to make a test pass — it cannot run against a reference).
      * <p>
@@ -269,9 +269,9 @@ public class AgentSystemPromptService {
      * {@link SandboxBuildCommandService#describeBuildContext} so the examiner knows the build/report layout.
      *
      * @param exercise the exercise whose statement/template the examiner tests against
-     * @return the full tester system prompt
+     * @return the full examiner system prompt
      */
-    public String buildTesterPrompt(ProgrammingExercise exercise) {
+    public String buildExaminerPrompt(ProgrammingExercise exercise) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
         return """

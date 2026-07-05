@@ -19,21 +19,21 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * Runs an independently-authored shadow test suite against the REAL solution through the exact same production build+parse path the differential oracle uses, so the shadow suite
  * is
  * judged with parity-by-construction. Exercise-agnostic: it flags any solution-side failure that is not a build/compile gate, from ANY shadow suite, and never decides acceptance
- * itself. On doubt it fails OPEN ({@link CorrectnessCrossCheck.Status#INCONCLUSIVE}), so it can only ever ADD an advisory (or, behind a config flag, a hard block on top of an
- * already-accepted exercise). Why decorrelation matters is documented on {@link CorrectnessCrossCheck}.
+ * itself. On doubt it fails OPEN ({@link CrossCheckVerdict.Status#INCONCLUSIVE}), so it can only ever ADD an advisory (or, behind a config flag, a hard block on top of an
+ * already-accepted exercise). Why decorrelation matters is documented on {@link CrossCheckVerdict}.
  */
 @Lazy
 @Service
 @Conditional(HyperionEnabled.class)
-public class CorrectnessCrossCheckService {
+public class CrossCheckService {
 
-    private static final Logger log = LoggerFactory.getLogger(CorrectnessCrossCheckService.class);
+    private static final Logger log = LoggerFactory.getLogger(CrossCheckService.class);
 
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
-    private final AuthoritativeVerificationService verifier;
+    private final DifferentialVerificationService verifier;
 
-    public CorrectnessCrossCheckService(SandboxBuildCommandService sandboxBuildCommandService, AuthoritativeVerificationService verifier) {
+    public CrossCheckService(SandboxBuildCommandService sandboxBuildCommandService, DifferentialVerificationService verifier) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.verifier = verifier;
     }
@@ -50,20 +50,20 @@ public class CorrectnessCrossCheckService {
      * @param shadowTestFiles the independently-authored suite, repository-relative path to content (the harness manifests plus the examiner's test sources); empty skips the check
      * @return the cross-check report (never {@code null})
      */
-    public CorrectnessCrossCheck runAgainstShadowSuite(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> shadowTestFiles) {
+    public CrossCheckVerdict runAgainstShadowSuite(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> shadowTestFiles) {
         if (shadowTestFiles == null || shadowTestFiles.isEmpty()) {
-            return CorrectnessCrossCheck.skipped("No independently-authored shadow suite was produced.");
+            return CrossCheckVerdict.skipped("No independently-authored shadow suite was produced.");
         }
         try {
             seedShadowSuite(sandbox, sessionId, shadowTestFiles);
-            AuthoritativeVerificationService.BuildSummary solution = verifier.runReportedBuild(sandbox, sessionId, exercise,
+            DifferentialVerificationService.BuildSummary solution = verifier.runReportedBuild(sandbox, sessionId, exercise,
                     sandboxBuildCommandService.crosscheckSolutionBuildCommand(), GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
             return decide(solution);
         }
         catch (RuntimeException e) {
             // Fail open (never a reject): a build/copyOut error tells us nothing about the solution, and the cross-check must never perturb a run.
-            log.warn("Correctness cross-check could not run; treating as inconclusive: {}", e.getMessage());
-            return CorrectnessCrossCheck.inconclusive("The cross-check build could not run: " + e.getMessage());
+            log.warn("Cross-check could not run; treating as inconclusive: {}", e.getMessage());
+            return CrossCheckVerdict.inconclusive("The cross-check build could not run: " + e.getMessage());
         }
     }
 
@@ -80,22 +80,22 @@ public class CorrectnessCrossCheckService {
      * Decides the verdict from the parsed solution build summary. Fail-open on any doubt (never a reject); a non-build-gate solution failure is a contradiction; otherwise
      * consistent.
      */
-    private static CorrectnessCrossCheck decide(AuthoritativeVerificationService.BuildSummary solution) {
+    private static CrossCheckVerdict decide(DifferentialVerificationService.BuildSummary solution) {
         // tests() == 0 also covers a timed-out build (BuildSummary.timedOut reports zero tests).
         if (solution.tests() == 0) {
             // Fail open (never a reject): a shadow suite that did not run tells us nothing about the solution.
-            return CorrectnessCrossCheck.inconclusive("The shadow suite did not run against the reference solution (it did not compile, ran no tests, or timed out).");
+            return CrossCheckVerdict.inconclusive("The shadow suite did not run against the reference solution (it did not compile, ran no tests, or timed out).");
         }
         List<String> contradicted = gradableFailures(solution);
         if (!contradicted.isEmpty()) {
             String detail = "The reference solution fails " + contradicted.size() + " independently-authored contract test(s) of " + solution.tests() + ".";
-            return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONTRADICTION, contradicted, detail);
+            return new CrossCheckVerdict(CrossCheckVerdict.Status.CONTRADICTION, contradicted, detail);
         }
-        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONSISTENT, List.of(), "The reference solution passes every independently-authored contract test.");
+        return new CrossCheckVerdict(CrossCheckVerdict.Status.CONSISTENT, List.of(), "The reference solution passes every independently-authored contract test.");
     }
 
     /** The build's failed/errored test names EXCLUDING build/compile/configure gates, deduplicated — the same exemption the acceptance gate applies. */
-    private static List<String> gradableFailures(AuthoritativeVerificationService.BuildSummary build) {
+    private static List<String> gradableFailures(DifferentialVerificationService.BuildSummary build) {
         return build.testFailedNames().stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).distinct().toList();
     }
 }

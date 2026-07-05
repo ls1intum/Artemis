@@ -13,7 +13,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -58,7 +58,7 @@ public class SandboxAgentTools {
 
     /** The authoritative verifier, reused by the {@code verify} tool to run the SAME differential the post-loop acceptance gate runs; {@code null} disables the tool in tests. */
     @Nullable
-    private final AuthoritativeVerificationService verifier;
+    private final DifferentialVerificationService verifier;
 
     /** The exercise whose per-language {@code verify.sh} and SCA configuration the {@code verify} tool's differential uses; {@code null} disables the tool in tests. */
     @Nullable
@@ -73,7 +73,7 @@ public class SandboxAgentTools {
      * @param verifier  the authoritative verifier the {@code verify} tool reuses for the in-loop self-check
      * @param exercise  the exercise whose {@code verify.sh}/SCA config the {@code verify} tool's differential uses
      */
-    public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, AuthoritativeVerificationService verifier, ProgrammingExercise exercise) {
+    public SandboxAgentTools(InteractiveSandbox sandbox, String sessionId, DifferentialVerificationService verifier, ProgrammingExercise exercise) {
         this.sandbox = sandbox;
         this.sessionId = sessionId;
         this.verifier = verifier;
@@ -81,7 +81,7 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by the decorrelated {@link TesterAgentTools} (the examiner
+     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by the decorrelated {@link ExaminerAgentTools} (the examiner
      * must
      * not build the solution) and by unit tests of the file/shell tools.
      *

@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * The IN-LOOP self-check report the agent's {@code verify} tool returns: the SAME differential analysis (two pristine builds parsed with the production parsers, then the
  * actionable
- * acceptance gates) the post-loop {@link AuthoritativeVerificationService#verify} acceptance decision uses, rendered as compact, structured, agent-readable feedback.
+ * acceptance gates) the post-loop {@link DifferentialVerificationService#verify} acceptance decision uses, rendered as compact, structured, agent-readable feedback.
  * <p>
  * <strong>This is feedback, not a verdict.</strong> The post-loop {@code verify(...)} remains the SOLE acceptance truth; this report exists only so the agent can SEE — every time
  * it asks — exactly what that verdict will conclude (which tests pass/fail on the solution and template, the EXACT parser-form names to bind {@code [task]}s to, and which gates it

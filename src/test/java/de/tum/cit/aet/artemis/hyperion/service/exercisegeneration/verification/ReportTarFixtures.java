@@ -14,7 +14,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 /**
  * Builds the {@code copyOut} report tars the verifier reads from the sandbox's verifier-owned reports directory, so the deterministic
- * {@link AuthoritativeVerificationServiceTest} can drive the NEW copyOut+production-parser flow without Docker. The verifier copies the reports dir out and routes each collected
+ * {@link DifferentialVerificationServiceTest} can drive the NEW copyOut+production-parser flow without Docker. The verifier copies the reports dir out and routes each collected
  * file by the {@code <seq>__<canonical>} name the pristine {@code verify.sh} assigns: JUnit reports carry the {@link SandboxBuildCommandService#COLLECTED_JUNIT_TOKEN} canonical
  * token, SCA reports keep their per-tool canonical name. These fixtures pack real JUnit/SCA XML under exactly those names, prefixed with the assignment directory the way Docker
  * prefixes copied-out entries, so the validated {@link CollectedReports} reader strips it correctly.

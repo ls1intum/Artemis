@@ -23,18 +23,18 @@ import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Deterministic proof that the DECORRELATED correctness cross-check CATCHES the {@code realistic-pasted-lru} false-accept without a live model or Docker.
+ * Deterministic proof that the DECORRELATED cross-check CATCHES the {@code realistic-pasted-lru} false-accept without a live model or Docker.
  * <p>
  * The mechanism: an independently-authored shadow suite (here, the hand-authored correct LRU suite embedded below — including the decorrelating
  * {@code evictsLeastRecentlyUsedInsertionOrder}
  * test the co-authored suite omitted) is run against the real solution/template through the SAME production build+parse path the differential uses. A {@link ScriptedShadowSandbox}
  * serves the JUnit reports that running that suite would produce: against the BUGGY LRU solution the insertion-order eviction test FAILS (the solution keeps key 1 and evicts key
  * 2),
- * so the cross-check reports {@link CorrectnessCrossCheck.Status#CONTRADICTION} — the false-accept the same-author differential oracle accepted. Against a CORRECT solution the
+ * so the cross-check reports {@link CrossCheckVerdict.Status#CONTRADICTION} — the false-accept the same-author differential oracle accepted. Against a CORRECT solution the
  * same
- * suite passes ({@link CorrectnessCrossCheck.Status#CONSISTENT}), proving no false reject. The scripted reports fully determine the expected outcome, so the test is hermetic.
+ * suite passes ({@link CrossCheckVerdict.Status#CONSISTENT}), proving no false reject. The scripted reports fully determine the expected outcome, so the test is hermetic.
  */
-class CorrectnessCrossCheckServiceTest {
+class CrossCheckServiceTest {
 
     /**
      * The hand-authored CORRECT shadow suite, embedded (not read from a build artifact) so the test is committed and self-contained; its decorrelating test is discussed on the
@@ -64,15 +64,15 @@ class CorrectnessCrossCheckServiceTest {
 
     private static final List<String> SHADOW_NAMES = List.of("evictsLeastRecentlyUsedInsertionOrder", "getNonExistingReturnsMinusOne", "putThenGet");
 
-    private static CorrectnessCrossCheckService newService() {
+    private static CrossCheckService newService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);
         when(phases.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of());
         SandboxBuildCommandService buildCommandService = new SandboxBuildCommandService(Optional.of(phases), Optional.of(new BuildScriptProviderService()));
-        AuthoritativeVerificationService verifier = new AuthoritativeVerificationService(buildCommandService);
-        return new CorrectnessCrossCheckService(buildCommandService, verifier);
+        DifferentialVerificationService verifier = new DifferentialVerificationService(buildCommandService);
+        return new CrossCheckService(buildCommandService, verifier);
     }
 
-    private static CorrectnessCrossCheck run(ScriptedShadowSandbox sandbox) {
+    private static CrossCheckVerdict run(ScriptedShadowSandbox sandbox) {
         return newService().runAgainstShadowSuite(sandbox, "s", new ProgrammingExercise(), SHADOW_SUITE);
     }
 
@@ -80,8 +80,8 @@ class CorrectnessCrossCheckServiceTest {
     void buggySolution_contradicts() {
         // Against the buggy LRU solution the insertion-order eviction test FAILS while the rest pass.
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false);
-        CorrectnessCrossCheck result = run(sandbox);
-        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONTRADICTION);
+        CrossCheckVerdict result = run(sandbox);
+        assertThat(result.status()).isEqualTo(CrossCheckVerdict.Status.CONTRADICTION);
         assertThat(result.contradictedTests()).containsExactly("evictsLeastRecentlyUsedInsertionOrder");
     }
 
@@ -89,8 +89,8 @@ class CorrectnessCrossCheckServiceTest {
     void correctSolution_consistent() {
         // The SAME shadow suite passes entirely against a correct solution -> no false reject.
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of(), 0, false);
-        CorrectnessCrossCheck result = run(sandbox);
-        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
+        CrossCheckVerdict result = run(sandbox);
+        assertThat(result.status()).isEqualTo(CrossCheckVerdict.Status.CONSISTENT);
         assertThat(result.contradictedTests()).isEmpty();
     }
 
@@ -98,8 +98,8 @@ class CorrectnessCrossCheckServiceTest {
     void shadowDoesNotCompileVsSolution_inconclusive() {
         // The shadow suite did not compile/run against the solution (0 tests parsed) -> fail-open, never a reject.
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 1, false);
-        CorrectnessCrossCheck result = run(sandbox);
-        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
+        CrossCheckVerdict result = run(sandbox);
+        assertThat(result.status()).isEqualTo(CrossCheckVerdict.Status.INCONCLUSIVE);
         assertThat(result.contradictedTests()).isEmpty();
     }
 
@@ -108,7 +108,7 @@ class CorrectnessCrossCheckServiceTest {
         // Distinct fail-open branch: the solution build TIMED OUT (production runPristineBuild short-circuits to a zero-test summary before any parse) -> INCONCLUSIVE, never a
         // reject.
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 124, true);
-        assertThat(run(sandbox).status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
+        assertThat(run(sandbox).status()).isEqualTo(CrossCheckVerdict.Status.INCONCLUSIVE);
     }
 
     @Test
@@ -116,29 +116,29 @@ class CorrectnessCrossCheckServiceTest {
         // Only a build/compile gate fails on the solution (never a behavioural test) -> excluded, parity with the acceptance gate -> CONSISTENT.
         List<String> withGate = List.of("TestConfigure", "putThenGet");
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(withGate, List.of("TestConfigure"), 1, false);
-        CorrectnessCrossCheck result = run(sandbox);
-        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
+        CrossCheckVerdict result = run(sandbox);
+        assertThat(result.status()).isEqualTo(CrossCheckVerdict.Status.CONSISTENT);
         assertThat(result.contradictedTests()).isEmpty();
     }
 
     @Test
     void buildError_inconclusive() {
         // The outer fail-open net: a build/copyOut RuntimeException must fail open (never a reject), not propagate out of the cross-check.
-        CorrectnessCrossCheck result = newService().runAgainstShadowSuite(new ThrowingSandbox(), "s", new ProgrammingExercise(), SHADOW_SUITE);
-        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
+        CrossCheckVerdict result = newService().runAgainstShadowSuite(new ThrowingSandbox(), "s", new ProgrammingExercise(), SHADOW_SUITE);
+        assertThat(result.status()).isEqualTo(CrossCheckVerdict.Status.INCONCLUSIVE);
         assertThat(result.contradictedTests()).isEmpty();
     }
 
     @Test
     void emptyShadowSuite_skipped() {
         assertThat(newService().runAgainstShadowSuite(new ScriptedShadowSandbox(List.of(), List.of(), 0, false), "s", new ProgrammingExercise(), Map.of()))
-                .extracting(CorrectnessCrossCheck::status).isEqualTo(CorrectnessCrossCheck.Status.SKIPPED);
+                .extracting(CrossCheckVerdict::status).isEqualTo(CrossCheckVerdict.Status.SKIPPED);
     }
 
     @Test
     void contradiction_rendersThroughTheAdvisoryPlumbing() {
         ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false);
-        CorrectnessCrossCheck result = run(sandbox);
+        CrossCheckVerdict result = run(sandbox);
         SpecFidelityReport.Finding advisory = result.toAdvisoryFinding();
         assertThat(advisory.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
         assertThat(advisory.requirement()).contains("evictsLeastRecentlyUsedInsertionOrder");

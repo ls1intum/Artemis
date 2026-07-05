@@ -3,12 +3,12 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 
 /**
  * Advisory result of the spec-fidelity / coverage critic — the one quality axis the differential oracle is structurally blind to.
  * <p>
- * The differential oracle ({@link AuthoritativeVerificationService}) proves an exercise is internally consistent (the solution passes its own tests, the template fails them, the
+ * The differential oracle ({@link DifferentialVerificationService}) proves an exercise is internally consistent (the solution passes its own tests, the template fails them, the
  * bindings resolve) but NEVER whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
  * categories).
  * <p>
@@ -40,7 +40,7 @@ public record SpecFidelityReport(List<Finding> findings) {
         /**
          * The reference solution FAILS a test authored by an INDEPENDENT examiner (the decorrelated test-author agent) from the problem statement's own stated contract, so the
          * solution contradicts its own stated behaviour — an unambiguous correctness defect the same-author differential oracle is blind to (the co-authored tests encode the same
-         * wrong model). Produced by the correctness cross-check; advisory by default, hard-gated only behind the {@code reject-on-contradiction} flag.
+         * wrong model). Produced by the cross-check; advisory by default, hard-gated only behind the {@code reject-on-contradiction} flag.
          */
         CONTRACT_CONTRADICTION
     }
@@ -61,7 +61,7 @@ public record SpecFidelityReport(List<Finding> findings) {
     }
 
     /**
-     * Returns a new report with {@code finding} appended, leaving this one unchanged (the record is immutable). Used to fold a correctness cross-check contradiction into the
+     * Returns a new report with {@code finding} appended, leaving this one unchanged (the record is immutable). Used to fold a cross-check contradiction into the
      * advisory report that already rides the generation outcome, so it flows through every existing advisory surface (retry prompt, review comments) without new plumbing.
      *
      * @param finding the advisory finding to append

@@ -7,11 +7,11 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 
 /**
- * Result of the DECORRELATED correctness cross-check: an INDEPENDENTLY-authored test suite (written by a separate examiner agent from the problem statement's stated contract,
+ * Result of the DECORRELATED cross-check: an INDEPENDENTLY-authored test suite (written by a separate examiner agent from the problem statement's stated contract,
  * never
  * from the reference solution) run against the REAL solution through the SAME production build+parse path the differential oracle uses.
  * <p>
- * The differential oracle ({@link AuthoritativeVerificationService}) relates four artifacts the SAME agent authored (solution/template/tests/problem-statement), so a wrong model
+ * The differential oracle ({@link DifferentialVerificationService}) relates four artifacts the SAME agent authored (solution/template/tests/problem-statement), so a wrong model
  * encoded consistently across the solution AND its co-authored tests is invisible to it by construction (the checked-in {@code realistic-pasted-lru} false-accept). This report
  * breaks that correlation: a solution that FAILS a test derived only from its own stated contract is contradicting its own statement — an unambiguous correctness defect.
  * <p>
@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
  * @param contradictedTests the shadow tests the REAL solution FAILS (build/compile gates excluded), parser form; the exact behaviours the solution contradicts
  * @param detail            a short human-readable explanation (why it was skipped/inconclusive, or a summary); may be {@code null}
  */
-public record CorrectnessCrossCheck(Status status, List<String> contradictedTests, @Nullable String detail) {
+public record CrossCheckVerdict(Status status, List<String> contradictedTests, @Nullable String detail) {
 
     /** The cross-check verdict. */
     public enum Status {
@@ -43,13 +43,13 @@ public record CorrectnessCrossCheck(Status status, List<String> contradictedTest
     }
 
     /** The cross-check did not run; see {@link Status#SKIPPED}. */
-    public static CorrectnessCrossCheck skipped(String why) {
-        return new CorrectnessCrossCheck(Status.SKIPPED, List.of(), why);
+    public static CrossCheckVerdict skipped(String why) {
+        return new CrossCheckVerdict(Status.SKIPPED, List.of(), why);
     }
 
     /** Fail-open: no conclusion could be drawn, so this is never a reject. See {@link Status#INCONCLUSIVE}. */
-    public static CorrectnessCrossCheck inconclusive(String why) {
-        return new CorrectnessCrossCheck(Status.INCONCLUSIVE, List.of(), why);
+    public static CrossCheckVerdict inconclusive(String why) {
+        return new CrossCheckVerdict(Status.INCONCLUSIVE, List.of(), why);
     }
 
     /**

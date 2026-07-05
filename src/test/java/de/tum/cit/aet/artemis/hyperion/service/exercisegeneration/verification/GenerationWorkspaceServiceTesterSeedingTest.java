@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Deterministic proof of the DECORRELATION guarantee: {@link GenerationWorkspaceService#seedTesterWorkspace} never seeds the reference {@code solution/} or the worked-sample
+ * Deterministic proof of the DECORRELATION guarantee: {@link GenerationWorkspaceService#seedExaminerWorkspace} never seeds the reference {@code solution/} or the worked-sample
  * {@code reference/} into the independent examiner's container (decorrelation by absence), and {@link GenerationWorkspaceService#stripSampleTestSources} drops the co-authored
  * sample
  * test sources while keeping the harness. No Docker, no git, no model.
@@ -45,7 +45,7 @@ class GenerationWorkspaceServiceTesterSeedingTest {
     }
 
     @Test
-    void seedTesterWorkspace_seedsProducedApiNeverSolutionOrReference() {
+    void seedExaminerWorkspace_seedsProducedApiNeverSolutionOrReference() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProblemStatement("# LRU cache\nEvicts the least-recently-used entry.");
         // The PRODUCED template (the real public API) and the PRODUCED tests harness with a co-authored sample test source that must be stripped.
@@ -55,7 +55,7 @@ class GenerationWorkspaceServiceTesterSeedingTest {
         producedTests.put("test/de/test/LRUCacheTest.java", "class LRUCacheTest {}");
         CapturingSandbox sandbox = new CapturingSandbox();
 
-        newWorkspaceService().seedTesterWorkspace(sandbox, "s", exercise, producedTemplate, producedTests);
+        newWorkspaceService().seedExaminerWorkspace(sandbox, "s", exercise, producedTemplate, producedTests);
 
         // The examiner gets the statement + verify.sh + the PRODUCED public API + the tests HARNESS (manifests), so it authors against the real produced API.
         assertThat(sandbox.seededEntryNames).contains("problem-statement.md", "verify.sh", "template/src/de/test/LRUCache.java", "tests/pom.xml");

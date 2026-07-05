@@ -118,7 +118,7 @@ public class ExerciseGenerationTaskService {
                 // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                 case COMPLETED, BUDGET_EXHAUSTED -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                    // The differential accepted the exercise, UNLESS the decorrelated correctness cross-check hard-blocked it (a proven contract contradiction with the
+                    // The differential accepted the exercise, UNLESS the decorrelated cross-check hard-blocked it (a proven contract contradiction with the
                     // reject-on-contradiction flag on). A hard block routes the accepted exercise to review (with the contradiction attached as a review comment) rather than a
                     // silent persist — an honest response to a proven false-accept. With the flag OFF (default) this conjunct is always true, so behaviour is byte-identical.
                     if (outcome.isAccepted() && !outcome.isHardBlockedByCrossCheck()) {

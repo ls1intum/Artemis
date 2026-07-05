@@ -35,9 +35,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileSnap
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -76,7 +76,7 @@ public class ExerciseGenerationOrchestrationService {
 
     private final AgentLoopRunner agentLoopRunner;
 
-    private final AuthoritativeVerificationService verifier;
+    private final DifferentialVerificationService verifier;
 
     private final AgentSystemPromptService systemPromptFactory;
 
@@ -86,14 +86,14 @@ public class ExerciseGenerationOrchestrationService {
     // prompt while attempts remain and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
-    // DECORRELATED correctness cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. ADDITIVE and
+    // DECORRELATED cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. ADDITIVE and
     // advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise.
-    private final IndependentTesterAgentService independentTesterAgent;
+    private final IndependentExaminerService independentExaminer;
 
-    private final CorrectnessCrossCheckService correctnessCrossCheckService;
+    private final CrossCheckService crossCheckService;
 
     /**
-     * Whether to run the decorrelated correctness cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist). Under the advisory default an accepted
+     * Whether to run the decorrelated cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist). Under the advisory default an accepted
      * attempt
      * ends the loop, so a contradiction surfaces only as an advisory review comment on the final exercise; the retry-prompt surfacing fires solely when
      * {@link #rejectOnContradiction}
@@ -119,8 +119,8 @@ public class ExerciseGenerationOrchestrationService {
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
-            AuthoritativeVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
-            SpecFidelityCriticService specFidelityCritic, IndependentTesterAgentService independentTesterAgent, CorrectnessCrossCheckService correctnessCrossCheckService,
+            DifferentialVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
+            SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, CrossCheckService crossCheckService,
             ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
             @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
@@ -133,8 +133,8 @@ public class ExerciseGenerationOrchestrationService {
         this.systemPromptFactory = systemPromptFactory;
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.specFidelityCritic = specFidelityCritic;
-        this.independentTesterAgent = independentTesterAgent;
-        this.correctnessCrossCheckService = correctnessCrossCheckService;
+        this.independentExaminer = independentExaminer;
+        this.crossCheckService = crossCheckService;
         this.jobService = jobService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.testCaseRepository = testCaseRepository;
@@ -208,8 +208,8 @@ public class ExerciseGenerationOrchestrationService {
             VerificationResult verification = null;
             // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
-            // The decorrelated correctness cross-check result and its hard-block flag; only ever set on an already-accepted attempt, so the last set value rides the outcome.
-            CorrectnessCrossCheck crossCheck = null;
+            // The decorrelated cross-check result and its hard-block flag; only ever set on an already-accepted attempt, so the last set value rides the outcome.
+            CrossCheckVerdict crossCheck = null;
             boolean hardBlockedByCrossCheck = false;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
@@ -252,7 +252,7 @@ public class ExerciseGenerationOrchestrationService {
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
-                // DECORRELATED correctness cross-check: only on an already-ACCEPTED exercise (the differential proved solution compiles + passes its own tests, so the shadow suite
+                // DECORRELATED cross-check: only on an already-ACCEPTED exercise (the differential proved solution compiles + passes its own tests, so the shadow suite
                 // authored against the template compiles against the solution too — every contradiction is then a genuine behavioural defect, not an interpretation gap). ADDITIVE:
                 // it never touches `verification`; a contradiction only ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into
                 // review.
@@ -260,9 +260,9 @@ public class ExerciseGenerationOrchestrationService {
                     // Seed the examiner from the artifacts the agent ACTUALLY produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
                     // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real
                     // solution).
-                    Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
+                    Map<String, String> shadowSuite = independentExaminer.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
                             progress);
-                    crossCheck = correctnessCrossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
+                    crossCheck = crossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
                     emit(progress, "Independent examiner cross-check: " + crossCheck.status() + (crossCheck.detail() != null ? " — " + crossCheck.detail() : ""));
                     if (crossCheck.isContradiction()) {
                         // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under

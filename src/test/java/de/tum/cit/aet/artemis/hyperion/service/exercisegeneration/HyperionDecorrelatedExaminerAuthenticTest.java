@@ -31,11 +31,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ExaminerAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.HarmonyScrubbingChatModel;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.TesterAgentTools;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.IndependentTesterAgentService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.IndependentExaminerService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,17 +50,18 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
  * reference solution), authors a test suite that CATCHES the co-authored false-accept — its suite FAILS on the buggy LRU solution (which evicts the wrong key) and PASSES on a
  * correct one.
  * <p>
- * It seeds the sandbox containers directly with the checked-in fixture (no git/persistence), runs the real tester loop through {@link AgentLoopRunner} + {@link TesterAgentTools}
- * (which provably cannot read {@code solution/} — it is never seeded), and runs the authored suite against the real solution/template via {@link CorrectnessCrossCheckService}.
+ * It seeds the sandbox containers directly with the checked-in fixture (no git/persistence), runs the real examiner loop through {@link AgentLoopRunner} +
+ * {@link ExaminerAgentTools}
+ * (which provably cannot read {@code solution/} — it is never seeded), and runs the authored suite against the real solution/template via {@link CrossCheckService}.
  * Gated
  * on {@code HYPERION_E2E_GPU=true} and Docker — a manual/nightly run, left for a human to execute (used to measure the false-reject rate before enabling
  * {@code reject-on-contradiction}).
  */
 @EnabledIfEnvironmentVariable(named = "HYPERION_E2E_GPU", matches = "true")
 @EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isDockerAvailable")
-class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class HyperionDecorrelatedExaminerAuthenticTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionDecorrelatedTesterAuthenticTest.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionDecorrelatedExaminerAuthenticTest.class);
 
     private static final String GPU_BASE_URL = System.getenv().getOrDefault("GPU_BASE_URL", "https://staging.hephaestus.aet.cit.tum.de/logos/v1");
 
@@ -157,7 +158,7 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
             </project>
             """;
 
-    /** The produced-artifact fixtures the examiner is seeded from THROUGH the production path ({@link IndependentTesterAgentService#authorShadowSuite}). */
+    /** The produced-artifact fixtures the examiner is seeded from THROUGH the production path ({@link IndependentExaminerService#authorShadowSuite}). */
     private static final Map<String, String> FIXTURE_TEMPLATE_FILES = Map.of("src/de/test/LRUCache.java", TEMPLATE_SOURCE);
 
     /** Harness only (no sample test sources), so {@code stripSampleTestSources} is a no-op here; the examiner authors the tests itself. */
@@ -167,7 +168,7 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
     private Optional<InteractiveSandbox> interactiveSandbox;
 
     @Autowired
-    private IndependentTesterAgentService independentTesterAgent;
+    private IndependentExaminerService independentExaminer;
 
     @Autowired
     private AgentLoopRunner agentLoopRunner;
@@ -176,7 +177,7 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
     private GenerationWorkspaceService workspace;
 
     @Autowired
-    private CorrectnessCrossCheckService correctnessCrossCheckService;
+    private CrossCheckService crossCheckService;
 
     @Autowired
     private BuildPhasesTemplateService buildPhasesTemplateService;
@@ -219,21 +220,21 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         for (int attempt = 1; attempt <= MAX_EXAMINER_ATTEMPTS && !exposed; attempt++) {
             final int currentAttempt = attempt;
             // LIVE independent examiner THROUGH THE PRODUCTION PATH: authorShadowSuite owns its own solution-free session, seeds from the produced template + tests maps (never the
-            // solution), runs the real tester loop, and reads the authored suite back out — validating seedTesterWorkspace(...produced maps), not a hand-seed.
+            // solution), runs the real examiner loop, and reads the authored suite back out — validating seedExaminerWorkspace(...produced maps), not a hand-seed.
             // Decorrelation-by-absence
             // is proven deterministically by GenerationWorkspaceServiceTesterSeedingTest.
-            Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
-                    line -> log.info("[tester attempt {}] {}", currentAttempt, line));
+            Map<String, String> shadowSuite = independentExaminer.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
+                    line -> log.info("[examiner attempt {}] {}", currentAttempt, line));
             if (shadowSuite.isEmpty()) {
                 continue;
             }
-            CorrectnessCrossCheck.Status onBuggy = runCrossCheck(sandbox, exercise, BUGGY_SOLUTION, shadowSuite).status();
+            CrossCheckVerdict.Status onBuggy = runCrossCheck(sandbox, exercise, BUGGY_SOLUTION, shadowSuite).status();
             log.info("[examiner attempt {}] cross-check on the buggy solution = {}", attempt, onBuggy);
-            if (onBuggy == CorrectnessCrossCheck.Status.CONTRADICTION) {
+            if (onBuggy == CrossCheckVerdict.Status.CONTRADICTION) {
                 exposed = true;
                 // The suite that exposed the bug must NOT reject a correct solution (a catching suite that also false-rejects would be useless).
                 assertThat(runCrossCheck(sandbox, exercise, CORRECT_SOLUTION, shadowSuite).status()).as("the catching suite does not wrongly reject a correct solution")
-                        .isNotEqualTo(CorrectnessCrossCheck.Status.CONTRADICTION);
+                        .isNotEqualTo(CrossCheckVerdict.Status.CONTRADICTION);
             }
         }
         assertThat(exposed).as("the decorrelated examiner exposed the co-authored LRU false-accept (CONTRADICTION on the buggy solution) within %d attempts", MAX_EXAMINER_ATTEMPTS)
@@ -250,8 +251,8 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         InteractiveSandbox sandbox = interactiveSandbox.orElseThrow(() -> new IllegalStateException("no sandbox bean on this node"));
         ProgrammingExercise exercise = lruExercise();
 
-        Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
-                line -> log.info("[tester] {}", line));
+        Map<String, String> shadowSuite = independentExaminer.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
+                line -> log.info("[examiner] {}", line));
         assertThat(shadowSuite).as("the examiner authored a suite against the produced template map").isNotEmpty();
 
         // The gate rejects ONLY on CONTRADICTION (a correct solution failing an independent test = a real false-reject). CONSISTENT and INCONCLUSIVE both mean "not rejected":
@@ -259,18 +260,18 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         // examiner reliably produces a compiling, discriminating suite is bounded by the examiner MODEL's quality, not the harness; the harness guarantee under test is only that a
         // correct exercise is never wrongly rejected.
         assertThat(runCrossCheck(sandbox, exercise, CORRECT_SOLUTION, shadowSuite).status()).as("enabling the gate must never wrongly REJECT a correct exercise (CONTRADICTION)")
-                .isNotEqualTo(CorrectnessCrossCheck.Status.CONTRADICTION);
+                .isNotEqualTo(CrossCheckVerdict.Status.CONTRADICTION);
     }
 
     /** Runs the cross-check against a container seeded with the given solution + the template, using the live-authored shadow suite. */
-    private CorrectnessCrossCheck runCrossCheck(InteractiveSandbox sandbox, ProgrammingExercise exercise, String solutionSource, Map<String, String> shadowSuite) {
+    private CrossCheckVerdict runCrossCheck(InteractiveSandbox sandbox, ProgrammingExercise exercise, String solutionSource, Map<String, String> shadowSuite) {
         String session = sandbox.createSession(workspace.sessionSpec(exercise));
         try {
             Map<String, String> seed = new LinkedHashMap<>();
             seed.put("solution/src/de/test/LRUCache.java", solutionSource);
             seed.put("template/src/de/test/LRUCache.java", TEMPLATE_SOURCE);
             seed(sandbox, session, seed);
-            return correctnessCrossCheckService.runAgainstShadowSuite(sandbox, session, exercise, shadowSuite);
+            return crossCheckService.runAgainstShadowSuite(sandbox, session, exercise, shadowSuite);
         }
         finally {
             sandbox.destroySession(session);

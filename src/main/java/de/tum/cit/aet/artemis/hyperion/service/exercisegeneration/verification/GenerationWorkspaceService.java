@@ -130,17 +130,18 @@ public class GenerationWorkspaceService {
 
     /**
      * The base-name shapes of a SAMPLE test SOURCE file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…); see
-     * {@link #stripSampleTestSources} for why these are dropped from the tester's seed.
+     * {@link #stripSampleTestSources} for why these are dropped from the examiner's seed.
      */
     private static final Pattern SAMPLE_TEST_SOURCE = Pattern
             .compile(".*(?:Test|Tests|Spec)\\.(?:java|kt)$|.*(?:_test|_spec)\\.(?:py|rb|go|rs)$|.*\\.(?:test|spec)\\.(?:ts|js|tsx|jsx)$|.*Tests?\\.cs$", Pattern.CASE_INSENSITIVE);
 
     /**
-     * Seeds the DECORRELATED tester (independent examiner) workspace from the agent's PRODUCED artifacts: the problem statement, the {@code verify.sh} helper, the produced
+     * Seeds the DECORRELATED independent-examiner workspace from the agent's PRODUCED artifacts: the problem statement, the {@code verify.sh} helper, the produced
      * TEMPLATE
      * files (the real public API — signatures with stub bodies), and the produced TESTS harness with the sample test SOURCES stripped. It NEVER seeds the SOLUTION repository or
      * the
-     * worked-sample {@code reference/} directory — neither is even passed in — so the reference solution simply does not exist in the tester's container: decorrelation by ABSENCE,
+     * worked-sample {@code reference/} directory — neither is even passed in — so the reference solution simply does not exist in the examiner's container: decorrelation by
+     * ABSENCE,
      * strictly stronger than any path allowlist (there is nothing for the examiner to read even with a full shell).
      * <p>
      * Seeding from the PRODUCED maps (not a fresh git checkout of the pre-generation scaffold) is what makes the cross-check EFFECTIVE: the examiner writes tests against the API
@@ -152,13 +153,13 @@ public class GenerationWorkspaceService {
      * The tests harness is seeded as text (manifests/configs kept, sample {@code *Test.*} sources dropped via {@link #stripSampleTestSources}); binary harness assets (a Gradle
      * wrapper JAR) are not preserved here, so this path is validated for the {@code {JAVA}} cross-check allowlist (Maven, no wrapper).
      *
-     * @param sandbox               the tester's own (separate) sandbox session
-     * @param sessionId             the tester session handle
+     * @param sandbox               the examiner's own (separate) sandbox session
+     * @param sessionId             the examiner session handle
      * @param exercise              the exercise whose statement is seeded for the examiner
      * @param producedTemplateFiles the produced TEMPLATE files (repository-relative path to content) — the real public API the examiner writes tests against
      * @param producedTestsFiles    the produced TESTS files (repository-relative path to content); the sample test sources are stripped before seeding
      */
-    public void seedTesterWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTemplateFiles,
+    public void seedExaminerWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTemplateFiles,
             Map<String, String> producedTestsFiles) {
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
@@ -171,8 +172,7 @@ public class GenerationWorkspaceService {
             textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, Map.of()));
-        log.info("Seeded tester (independent-examiner) workspace for exercise {} from produced artifacts: template + stripped tests, NO solution and NO reference sample",
-                exercise.getId());
+        log.info("Seeded independent-examiner workspace for exercise {} from produced artifacts: template + stripped tests, NO solution and NO reference sample", exercise.getId());
     }
 
     /**

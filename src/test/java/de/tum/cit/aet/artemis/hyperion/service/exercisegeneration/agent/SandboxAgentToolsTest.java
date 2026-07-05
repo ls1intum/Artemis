@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -276,10 +276,10 @@ class SandboxAgentToolsTest {
 
     @Test
     void verify_whenWiredToTheVerifier_returnsItsStructuredObservation() {
-        // The verify tool delegates to the AuthoritativeVerificationService and returns its observation verbatim.
+        // The verify tool delegates to the DifferentialVerificationService and returns its observation verbatim.
         RecordingSandbox sandbox = new RecordingSandbox();
         ProgrammingExercise exercise = new ProgrammingExercise();
-        AuthoritativeVerificationService verifier = mock(AuthoritativeVerificationService.class);
+        DifferentialVerificationService verifier = mock(DifferentialVerificationService.class);
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a", "t_b"), List.of(), List.of(), true, List.of());
         when(verifier.selfCheck(eq(sandbox), eq("s"), eq(exercise))).thenReturn(report);
 

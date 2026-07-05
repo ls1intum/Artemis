@@ -59,9 +59,9 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
 @Lazy
 @Service
 @Conditional(HyperionEnabled.class)
-public class AuthoritativeVerificationService {
+public class DifferentialVerificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthoritativeVerificationService.class);
+    private static final Logger log = LoggerFactory.getLogger(DifferentialVerificationService.class);
 
     private static final Duration VERIFY_TIMEOUT = Duration.ofMinutes(10);
 
@@ -114,13 +114,13 @@ public class AuthoritativeVerificationService {
 
     // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring fails to instantiate the bean.
     @Autowired
-    public AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
+    public DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
             Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
     }
 
-    AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {
+    DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {
         this(sandboxBuildCommandService, Optional.empty());
     }
 
@@ -369,9 +369,9 @@ public class AuthoritativeVerificationService {
     }
 
     /**
-     * Runs ONE reported pristine build for the correctness cross-check, reusing the exact seed+build+copyOut+parse path the differential uses so the shadow suite is judged with
+     * Runs ONE reported pristine build for the cross-check, reusing the exact seed+build+copyOut+parse path the differential uses so the shadow suite is judged with
      * parity-by-construction: it re-seeds the pristine {@code verify.sh} (idempotent) and runs the given build command (a {@code verify.sh <assignment> shadow-tests} invocation),
-     * returning the production-parsed {@link BuildSummary}. Package-private so {@link CorrectnessCrossCheckService} can drive the shadow-suite build without duplicating the parse
+     * returning the production-parsed {@link BuildSummary}. Package-private so {@link CrossCheckService} can drive the shadow-suite build without duplicating the parse
      * path; {@code runPristineBuild} stays private and this delegate never touches the {@code accepted=} verdict.
      *
      * @param sandbox        the open sandbox session the build runs in
@@ -662,9 +662,9 @@ public class AuthoritativeVerificationService {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
             return List.of();
         }
-        Set<String> actual = actualTestNames.stream().map(AuthoritativeVerificationService::normalizeTestName).collect(Collectors.toSet());
+        Set<String> actual = actualTestNames.stream().map(DifferentialVerificationService::normalizeTestName).collect(Collectors.toSet());
         Set<String> seededStructural = seededStructuralTestNames == null ? Set.of()
-                : seededStructuralTestNames.stream().map(AuthoritativeVerificationService::normalizeTestName).collect(Collectors.toSet());
+                : seededStructuralTestNames.stream().map(DifferentialVerificationService::normalizeTestName).collect(Collectors.toSet());
         List<String> unresolved = new ArrayList<>();
         Matcher matcher = TASK_BINDING.matcher(problemStatement);
         while (matcher.find()) {
@@ -702,8 +702,8 @@ public class AuthoritativeVerificationService {
         if (template.testFailedNames().isEmpty()) {
             return List.of();
         }
-        Set<String> solutionPassing = solutionNames.stream().map(AuthoritativeVerificationService::normalizeTestName).collect(Collectors.toSet());
-        Set<String> templateFailed = template.testFailedNames().stream().map(AuthoritativeVerificationService::normalizeTestName).collect(Collectors.toSet());
+        Set<String> solutionPassing = solutionNames.stream().map(DifferentialVerificationService::normalizeTestName).collect(Collectors.toSet());
+        Set<String> templateFailed = template.testFailedNames().stream().map(DifferentialVerificationService::normalizeTestName).collect(Collectors.toSet());
         List<String> offending = new ArrayList<>();
         Matcher matcher = TASK_BINDING.matcher(problemStatement);
         while (matcher.find()) {
@@ -741,7 +741,7 @@ public class AuthoritativeVerificationService {
         if (template.testFailedNames().isEmpty()) {
             return List.of();
         }
-        Set<String> templateFailed = template.testFailedNames().stream().map(AuthoritativeVerificationService::normalizeTestName).collect(Collectors.toSet());
+        Set<String> templateFailed = template.testFailedNames().stream().map(DifferentialVerificationService::normalizeTestName).collect(Collectors.toSet());
         List<String> offending = new ArrayList<>();
         for (String rawName : solutionNames) {
             String normalized = normalizeTestName(rawName);
