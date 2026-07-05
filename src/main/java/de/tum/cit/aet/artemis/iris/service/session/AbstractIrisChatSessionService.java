@@ -185,7 +185,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo, job.jobId());
         }
         else {
             savedMessage = null;
@@ -237,6 +237,19 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         log.debug("Iris status update handled in {} ms (result present: {})", (System.nanoTime() - handlingStart) / 1_000_000, statusUpdate.result() != null);
 
         return updatedJob.get();
+    }
+
+    /**
+     * Handles a partial chat status update by relaying the partial response over the websocket.
+     * The partial response is ephemeral and is not persisted.
+     *
+     * @param job          The job that is currently executed
+     * @param statusUpdate The partial status update of the job
+     */
+    public void handlePartialStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        // noinspection unchecked
+        var session = (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        irisChatWebsocketService.sendPartialUpdate(session, statusUpdate.partialResult(), statusUpdate.partialSeq(), job.jobId());
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

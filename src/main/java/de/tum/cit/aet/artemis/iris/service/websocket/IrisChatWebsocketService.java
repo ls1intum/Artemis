@@ -63,11 +63,29 @@ public class IrisChatWebsocketService {
      * @param citationInfo the citation metadata to send
      */
     public void sendMessage(IrisSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo) {
+        this.sendMessage(session, irisMessage, stages, sessionTitle, citationInfo, null);
+    }
+
+    /**
+     * Sends a message and/or a status update over the websocket to the user
+     * involved in the session. At least one of the message or the stages must be
+     * non-null, otherwise there is no need to send a message.
+     * This is currently used for both the exercise and course chat sessions, but
+     * this could be split up in the future.
+     *
+     * @param session      the session to send the message to
+     * @param irisMessage  that should be sent over the websocket
+     * @param stages       that should be sent over the websocket
+     * @param sessionTitle the session title to send
+     * @param citationInfo the citation metadata to send
+     * @param runId        the id of the Pyris run that produced the message
+     */
+    public void sendMessage(IrisSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle, List<IrisCitationMetaDTO> citationInfo, String runId) {
         var messageDTO = irisMessage != null ? IrisMessageResponseDTO.of(irisMessage) : null;
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(messageDTO, rateLimitInfo, stages, sessionTitle, null, null, citationInfo);
+        var payload = new IrisChatWebsocketDTO(messageDTO, rateLimitInfo, stages, sessionTitle, null, null, citationInfo, runId, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -95,6 +113,25 @@ public class IrisChatWebsocketService {
         var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, sessionTitle, suggestions, tokens, null);
+        websocketService.send(user.getLogin(), topic, payload);
+    }
+
+    /**
+     * Sends a partial response update over the websocket to a specific user.
+     * <p>
+     * Partial updates arrive many times per streamed answer and never change the user's quota, so we deliberately omit the rate limit information here: computing it can run
+     * the (potentially expensive) LLM-response-count query, and this streaming path must stay off that hot path. The rate limit information is refreshed by the final
+     * MESSAGE / status update instead.
+     *
+     * @param session       the session to send the partial update to
+     * @param partialResult the current accumulated partial response text
+     * @param partialSeq    the monotonic sequence number of the partial response
+     * @param runId         the id of the Pyris run that produced the partial response
+     */
+    public void sendPartialUpdate(IrisSession session, String partialResult, Integer partialSeq, String runId) {
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        var topic = "" + session.getId(); // Todo: add more specific topic
+        var payload = new IrisChatWebsocketDTO(null, null, List.of(), null, null, null, null, runId, partialResult, partialSeq);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

@@ -79,6 +79,11 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        if (statusUpdate.partialResult() != null) {
+            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            return;
+        }
+
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);

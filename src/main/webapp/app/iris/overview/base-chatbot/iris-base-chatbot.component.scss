@@ -329,6 +329,20 @@ jhi-iris-mcq-question {
     gap: 8px;
 }
 
+.streaming-draft-wrapper {
+    max-width: 100%;
+    scroll-margin-top: 16px;
+}
+
+.streaming-draft-bubble {
+    opacity: 0.92;
+}
+
+.streaming-draft-meta {
+    color: var(--secondary);
+    font-size: 0.75rem;
+}
+
 .bubble-right {
     --_d: 100%;
 
@@ -477,6 +491,11 @@ pre {
                 gap: 24px;
                 margin-inline: auto;
                 padding-bottom: 40px;
+            }
+
+            .stream-exchange-spacer {
+                flex: 0 0 auto;
+                pointer-events: none;
             }
         }
     }

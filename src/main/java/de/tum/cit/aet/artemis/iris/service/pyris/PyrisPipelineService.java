@@ -75,6 +75,9 @@ public class PyrisPipelineService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
+    @Value("${artemis.iris.response-streaming-enabled:true}")
+    private boolean responseStreamingEnabled;
+
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
@@ -116,7 +119,9 @@ public class PyrisPipelineService {
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel), List.of(preparing.done()));
+        Boolean streamResponse = responseStreamingEnabled && "chat".equals(name) ? Boolean.TRUE : null;
+        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel, streamResponse),
+                List.of(preparing.done()));
         long dtoBuildStart = System.nanoTime();
         var pipelineDto = dtoMapper.apply(baseDto);
         log.debug("Pyris {} pipeline DTO built in {} ms", name, (System.nanoTime() - dtoBuildStart) / 1_000_000);

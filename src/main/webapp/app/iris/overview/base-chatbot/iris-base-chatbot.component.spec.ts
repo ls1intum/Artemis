@@ -34,7 +34,6 @@ import {
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
@@ -128,6 +127,7 @@ describe('IrisBaseChatbotComponent', () => {
                 global.window ??= window;
                 window.scroll = vi.fn();
                 window.HTMLElement.prototype.scrollTo = vi.fn();
+                window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
                 // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
@@ -314,7 +314,8 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.newMessageTextContent()).toBe('');
     });
 
-    it('should scroll to bottom and pin to bottom when sending a non-empty message', async () => {
+    it('should anchor the sent user message at the top of the chat body without using ancestor scrolling', async () => {
+        vi.useFakeTimers();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
@@ -322,153 +323,256 @@ describe('IrisBaseChatbotComponent', () => {
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
         vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+        const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        const scrollIntoViewSpy = vi.fn();
+        (Element.prototype as any).scrollIntoView = scrollIntoViewSpy;
+        (HTMLElement.prototype as any).scrollIntoView = scrollIntoViewSpy;
 
-        const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        try {
+            component.newMessageTextContent.set(content);
+            chatService.switchTo(ChatServiceMode.COURSE, 123);
+            fixture.detectChanges();
+            bottomScrollSpy.mockClear();
 
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
+            component.onSend();
+            fixture.detectChanges();
 
-        // isolate scroll triggered by onSend from scrolls caused by session switch / effects
-        component.isScrolledToBottom.set(false);
-        scrollSpy.mockClear();
+            const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
+            const anchorElement = messagesElement.querySelector(`[data-message-id="${createdMessage.id}"]`) as HTMLElement;
+            const spacerElement = messagesElement.querySelector('.stream-exchange-spacer') as HTMLElement;
+            const containerScrollSpy = vi.fn();
+            messagesElement.scrollTo = containerScrollSpy;
+            messagesElement.scrollTop = 40;
+            Object.defineProperty(messagesElement, 'clientHeight', { value: 500, configurable: true });
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 600, configurable: true });
+            Object.defineProperty(spacerElement, 'offsetHeight', { value: 0, configurable: true });
+            messagesElement.getBoundingClientRect = vi.fn(() => ({ top: 10 }) as DOMRect);
+            anchorElement.getBoundingClientRect = vi.fn(() => ({ top: 210 }) as DOMRect);
 
-        // when – assert synchronously so async session effects don't interfere
-        component.onSend();
+            vi.advanceTimersByTime(0);
 
-        // then – instant scroll (no smooth-scroll race) and view pinned to the bottom
-        expect(scrollSpy).toHaveBeenCalledWith('auto');
-        expect(component.isScrolledToBottom()).toBe(true);
-    });
-
-    it('should keep the view pinned to the bottom after sending even when intermediate scroll events fire', async () => {
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        // when – send, then simulate an intermediate (not-yet-at-bottom) scroll reading
-        component.onSend();
-        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement | null;
-        if (messagesElement) {
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, configurable: true });
-            Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
-            Object.defineProperty(messagesElement, 'clientHeight', { value: 200, configurable: true });
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+            expect(containerScrollSpy).toHaveBeenCalledWith({ top: 240, behavior: 'smooth' });
+            expect(component.exchangeSpacerPx()).toBe(140);
+            expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+        } finally {
+            delete (Element.prototype as any).scrollIntoView;
+            delete (HTMLElement.prototype as any).scrollIntoView;
+            vi.useRealTimers();
         }
-        component.checkChatScroll();
-
-        // then – the intermediate reading must not un-pin the view
-        expect(component.isScrolledToBottom()).toBe(true);
     });
 
-    it('should release the bottom pin on an upward wheel gesture', async () => {
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+    describe('live assistant draft streaming UX', () => {
+        const pushDraft = (runId: string, text: string) => {
+            chatService.liveAssistantDraft.next({ runId, text });
+            fixture.detectChanges();
+        };
 
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+        const displayedDraftText = () => ((component as any).displayedLiveAssistantDraftText?.() ?? '') as string;
 
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
+        const finalAssistantMessage = (text: string): IrisAssistantMessage =>
+            ({
+                ...mockServerMessage,
+                id: 9876,
+                sender: IrisSender.LLM,
+                content: [new IrisTextMessageContent(text)],
+            }) as IrisAssistantMessage;
 
-        component.onSend();
-
-        // when – the user scrolls up while not at the bottom
-        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement | null;
-        if (messagesElement) {
-            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, configurable: true });
-            Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
-            Object.defineProperty(messagesElement, 'clientHeight', { value: 200, configurable: true });
-        }
-        component.onMessagesUserScroll(new WheelEvent('wheel', { deltaY: -50 }));
-
-        // then – pin is released, so the scroll-to-bottom state reflects the real position
-        expect(component.isScrolledToBottom()).toBe(false);
-    });
-
-    it('should keep scrolling to the bottom frame-by-frame while pinned after a send', async () => {
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
-        Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
-        messagesElement.scrollTop = 0;
-
-        // Queue rAF callbacks instead of running them synchronously. Invoking the callback inside
-        // requestAnimationFrame re-enters the component (which schedules from within an Angular
-        // effect) and trips the zoneless scheduler on teardown. We flush the queued frames
-        // explicitly, outside the current effect execution.
-        const rafQueue: FrameRequestCallback[] = [];
-        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            rafQueue.push(cb);
-            return rafQueue.length;
+        afterEach(() => {
+            vi.useRealTimers();
         });
-        vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 
-        // when
-        component.onSend();
+        it('should animate displayed draft text toward the latest partial and never shrink during the same run', () => {
+            vi.useFakeTimers();
 
-        // flush a bounded number of frames outside Angular's effect execution
-        for (let i = 0; i < 3 && rafQueue.length > 0; i++) {
-            rafQueue.shift()!(0);
-        }
+            const firstSnapshot = 'Hello streaming answer';
+            pushDraft('run-1', firstSnapshot);
 
-        // then – the pin loop pushed scrollTop to the bottom (scrollHeight)
-        expect(messagesElement.scrollTop).toBe(1000);
+            expect(displayedDraftText()).toBe('');
 
-        rafSpy.mockRestore();
-    });
+            vi.advanceTimersByTime(50);
+            const firstTickText = displayedDraftText();
+            expect(firstTickText.length).toBeGreaterThan(0);
+            expect(firstTickText.length).toBeLessThan(firstSnapshot.length);
 
-    it('should release the bottom pin if an error arrives before the stream starts', async () => {
-        // given – the chat service surfaces an error before any stage goes active
-        const errorSubject = new Subject<IrisErrorMessageKey | undefined>();
-        vi.spyOn(chatService, 'currentError').mockReturnValue(errorSubject as any);
+            const secondSnapshot = 'Hello streaming answer with a longer continuation';
+            pushDraft('run-1', secondSnapshot);
+            const beforeCatchUpLength = displayedDraftText().length;
 
-        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-        component = fixture.componentInstance;
-        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-        fixture.detectChanges();
+            vi.advanceTimersByTime(100);
+            expect(displayedDraftText().length).toBeGreaterThanOrEqual(beforeCatchUpLength);
 
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: mockUserMessageWithContent('Hello') } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+            vi.advanceTimersByTime(3000);
+            expect(displayedDraftText()).toBe(secondSnapshot);
 
-        component.newMessageTextContent.set('Hello');
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
+            pushDraft('run-1', 'Hello');
+            expect(displayedDraftText()).toBe(secondSnapshot);
+        });
 
-        // when – send pins to the bottom, then an error arrives without any stage starting
-        component.onSend();
-        expect(component['forcePinToBottom']).toBe(true);
-        errorSubject.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
-        fixture.detectChanges();
+        it('should cancel draft animation and expose the final message immediately on finalization', () => {
+            vi.useFakeTimers();
 
-        // then – the pin is released and the RAF loop is stopped
-        expect(component['forcePinToBottom']).toBe(false);
-        expect(component['pinScrollRafId']).toBeUndefined();
+            pushDraft('run-1', 'This partial answer is intentionally much longer than one animation tick.');
+            vi.advanceTimersByTime(50);
+            expect(displayedDraftText().length).toBeGreaterThan(0);
+
+            const finalText = 'This final answer should be rendered in full.';
+            chatService.liveAssistantDraft.next(undefined);
+            chatService.messages.next([finalAssistantMessage(finalText)]);
+            fixture.detectChanges();
+
+            expect(displayedDraftText()).toBe('');
+            expect(component.messages().at(-1)?.content?.[0]).toMatchObject({ textContent: finalText });
+            expect(fixture.nativeElement.querySelector('.streaming-draft-wrapper')).toBeNull();
+
+            vi.advanceTimersByTime(1000);
+            expect(displayedDraftText()).toBe('');
+        });
+
+        it('should cancel the draft animation interval on destroy', () => {
+            vi.useFakeTimers();
+            const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval');
+
+            pushDraft('run-1', 'This partial answer is long enough to keep the animation interval active.');
+
+            expect(component['liveDraftAnimationIntervalId']).toBeDefined();
+
+            fixture.destroy();
+
+            expect(clearIntervalSpy).toHaveBeenCalled();
+            expect(component['liveDraftAnimationIntervalId']).toBeUndefined();
+        });
+
+        it('should not scroll at all when the draft appears', () => {
+            vi.useFakeTimers();
+            const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+            const scrollIntoViewSpy = vi.fn();
+            (Element.prototype as any).scrollIntoView = scrollIntoViewSpy;
+            (HTMLElement.prototype as any).scrollIntoView = scrollIntoViewSpy;
+
+            try {
+                pushDraft('run-1', 'First partial');
+                const messagesContainer: HTMLElement = fixture.nativeElement.querySelector('.messages');
+                const containerScrollSpy = vi.fn();
+                messagesContainer.scrollTo = containerScrollSpy;
+                vi.advanceTimersByTime(0);
+
+                expect(containerScrollSpy).not.toHaveBeenCalled();
+                expect(bottomScrollSpy).not.toHaveBeenCalled();
+                expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+            } finally {
+                delete (Element.prototype as any).scrollIntoView;
+                delete (HTMLElement.prototype as any).scrollIntoView;
+            }
+        });
+
+        it('should size the exchange spacer exactly while anchored and shrink only after finalization', () => {
+            const userMessage = mockUserMessageWithContent('Anchored question');
+            chatService.messages.next([userMessage]);
+            fixture.detectChanges();
+
+            const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
+            const anchorElement = messagesElement.querySelector(`[data-message-id="${userMessage.id}"]`) as HTMLElement;
+            const spacerElement = messagesElement.querySelector('.stream-exchange-spacer') as HTMLElement;
+            messagesElement.scrollTop = 40;
+            Object.defineProperty(messagesElement, 'clientHeight', { value: 500, configurable: true });
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 600, configurable: true });
+            messagesElement.getBoundingClientRect = vi.fn(() => ({ top: 10 }) as DOMRect);
+            anchorElement.getBoundingClientRect = vi.fn(() => ({ top: 210 }) as DOMRect);
+            Object.defineProperty(spacerElement, 'offsetHeight', { value: 0, configurable: true });
+            component['anchoredMessageId'] = userMessage.id;
+            component['exchangeAnchorActive'] = true;
+
+            component['updateExchangeSpacer']();
+
+            expect(component.exchangeSpacerPx()).toBe(140);
+
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 560, configurable: true });
+            Object.defineProperty(spacerElement, 'offsetHeight', { value: 140, configurable: true });
+
+            component['updateExchangeSpacer']();
+
+            expect(component.exchangeSpacerPx()).toBe(320);
+
+            component['exchangeAnchorActive'] = false;
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 760, configurable: true });
+            Object.defineProperty(spacerElement, 'offsetHeight', { value: 320, configurable: true });
+
+            component['updateExchangeSpacer']();
+
+            expect(component.exchangeSpacerPx()).toBe(300);
+
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 700, configurable: true });
+            Object.defineProperty(spacerElement, 'offsetHeight', { value: 300, configurable: true });
+
+            component['updateExchangeSpacer']();
+
+            expect(component.exchangeSpacerPx()).toBe(300);
+        });
+
+        it('should not bottom-scroll when thinking status updates while a draft is visible', () => {
+            vi.useFakeTimers();
+            const bottomScrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            pushDraft('run-1', 'Visible draft');
+            vi.advanceTimersByTime(0);
+            bottomScrollSpy.mockClear();
+
+            chatService.stages.next([
+                {
+                    name: 'Thinking',
+                    weight: 1,
+                    state: IrisStageStateDTO.IN_PROGRESS,
+                    message: 'Processing...',
+                    internal: false,
+                    chatMessage: 'Still thinking...',
+                },
+            ]);
+            fixture.detectChanges();
+
+            expect(bottomScrollSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not give the entrance animation to the message that finalizes the streamed draft', () => {
+            component['shouldAnimate'] = true;
+            pushDraft('run-1', 'Streaming answer');
+
+            // Same order as the service's MESSAGE handler: apply the final message first, then clear the draft.
+            chatService.messages.next([finalAssistantMessage('Streaming answer, finalized.')]);
+            chatService.liveAssistantDraft.next(undefined);
+            fixture.detectChanges();
+
+            expect(component.animatingMessageIds().has(9876)).toBe(false);
+        });
+
+        it('should still give the entrance animation to a new message when no draft was streaming', () => {
+            component['shouldAnimate'] = true;
+
+            chatService.messages.next([finalAssistantMessage('A fresh answer without streaming.')]);
+            fixture.detectChanges();
+
+            expect(component.animatingMessageIds().has(9876)).toBe(true);
+        });
+
+        it('should release the exchange anchor when a non-streamed answer completes without a live draft', () => {
+            vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            const userMessage = mockUserMessageWithContent('Anchored question');
+            chatService.messages.next([userMessage]);
+            fixture.detectChanges();
+
+            // Simulate the state right after the sent user message was anchored to the top of the chat body.
+            component['anchoredMessageId'] = userMessage.id;
+            component['exchangeAnchorActive'] = true;
+
+            // The final assistant message lands with no live draft ever having existed (response streaming
+            // disabled, or a legacy Pyris that only sends the final MESSAGE), so the draft-finalization path
+            // never runs. The anchor/spacer must still be released to avoid blank space below the exchange.
+            chatService.messages.next([userMessage, finalAssistantMessage('A non-streamed answer.')]);
+            fixture.detectChanges();
+
+            expect(component['exchangeAnchorActive']).toBe(false);
+        });
     });
 
     it('should set the appropriate message styles based on the sender', async () => {

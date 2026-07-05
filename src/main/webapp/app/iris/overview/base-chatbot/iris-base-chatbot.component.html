@@ -232,11 +232,12 @@
             </div>
         }
         <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
-            @if (messages()?.length) {
-                <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
+            @if (messages()?.length || liveAssistantDraft()) {
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
+                                [attr.data-message-id]="message.id"
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
@@ -332,6 +333,16 @@
                                 }
                             </div>
                         }
+                        @if (liveAssistantDraft()) {
+                            <div class="llm-message-wrapper streaming-draft-wrapper">
+                                <div class="bubble-left streaming-draft-bubble">
+                                    <jhi-iris-citation-text [text]="displayedLiveAssistantDraftText()" [citationInfo]="citationInfo()" />
+                                    <div class="streaming-draft-meta" aria-hidden="true">
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
                         @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
@@ -355,10 +366,11 @@
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [stages]="stages()" />
                         }
+                        <div class="stream-exchange-spacer" aria-hidden="true" [style.height.px]="exchangeSpacerPx()"></div>
                     </div>
                 </div>
             }
-            @if (!messages()?.length && !isEmbeddedChat()) {
+            @if (!messages()?.length && !liveAssistantDraft() && !isEmbeddedChat()) {
                 <div class="empty-chat-message">
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
