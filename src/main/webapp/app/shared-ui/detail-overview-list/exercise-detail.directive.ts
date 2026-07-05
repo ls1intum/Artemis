@@ -15,7 +15,7 @@ import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview
     selector: '[jhiExerciseDetail]',
 })
 export class ExerciseDetailDirective implements OnInit, OnDestroy {
-    private readonly viewContainerRef = inject(ViewContainerRef);
+    viewContainerRef = inject(ViewContainerRef);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly detail = input<Detail>();
