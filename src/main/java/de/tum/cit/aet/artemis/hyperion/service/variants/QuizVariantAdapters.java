@@ -2,9 +2,14 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -45,14 +51,22 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
 
     private final ObjectMapper objectMapper;
 
+    private final HyperionPromptTemplateService templateService;
+
+    @Nullable
+    private final ChatClient chatClient;
+
     public QuizVariantAdapters(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
-            VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper) {
+            VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
+            @Nullable ChatClient chatClient) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseService = quizExerciseService;
         this.variantPlacementService = variantPlacementService;
         this.jobService = jobService;
         this.objectMapper = objectMapper;
+        this.templateService = templateService;
+        this.chatClient = chatClient;
     }
 
     @Override
@@ -144,11 +158,50 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
             findings.add(new VerificationReport.VerificationFinding("QUIZ_FILES", "Drag-and-drop file validation failed: " + e.getMessage()));
         }
 
-        // TODO (Sonnet): LLM self-critique pass reusing the refine_quiz_question prompts as a critique step
-        // ("is the distractor set plausible? is exactly the requested change applied?") and the shared semantic
-        // consistency gate against the ChangePlan invariants (plan Sections 2.6 step 3 and 4, VERIFYING row).
-        // Deterministic gates above run first and are authoritative.
+        // Soft gate (plan Sections 2.6 step 3 and 4, VERIFYING row): LLM self-critique against the ChangePlan —
+        // plan faithfulness, invariants, distractor plausibility. Runs ONLY when the deterministic gates above
+        // passed (they are authoritative); critique errors never fail verification on their own.
+        if (findings.isEmpty()) {
+            findings.addAll(critique(quiz, plan));
+        }
         return new VerificationReport(findings.isEmpty(), List.copyOf(findings));
+    }
+
+    /** Structured critique output — an empty findings list means the variant passes the soft gate. */
+    record CritiqueReport(List<String> findings) {
+    }
+
+    private List<VerificationReport.VerificationFinding> critique(QuizExercise quiz, ChangePlan plan) {
+        if (chatClient == null) {
+            log.debug("Skipping quiz variant critique for exercise {}: AI chat client is not configured", quiz.getId());
+            return List.of();
+        }
+        try {
+            String systemPrompt = templateService.render("prompts/hyperion/variants/critique_quiz_system.st",
+                    Map.of("changePlan", renderPlanContract(plan), "variantContext", renderContext(quiz)));
+            var outputConverter = new BeanOutputConverter<>(CritiqueReport.class);
+            String response = chatClient.prompt().system(systemPrompt).user("Review the variant quiz." + "\n\n" + outputConverter.getFormat()).call().content();
+            CritiqueReport report = outputConverter.convert(response);
+            if (report == null || report.findings() == null) {
+                return List.of();
+            }
+            return report.findings().stream().filter(finding -> finding != null && !finding.isBlank())
+                    .map(finding -> new VerificationReport.VerificationFinding("QUIZ_CRITIQUE", finding)).toList();
+        }
+        catch (Exception e) {
+            // The soft gate must never block a structurally valid variant on infrastructure/parsing errors.
+            log.warn("Quiz variant critique failed for exercise {} — skipping the soft gate: {}", quiz.getId(), e.getMessage());
+            return List.of();
+        }
+    }
+
+    private String renderPlanContract(ChangePlan plan) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Title: ").append(plan.variantTitle()).append("\n\nIntended changes:\n");
+        plan.intendedChanges().forEach(change -> builder.append("- ").append(change).append('\n'));
+        builder.append("\nInvariants:\n");
+        plan.invariants().forEach(invariant -> builder.append("- ").append(invariant).append('\n'));
+        return builder.toString();
     }
 
     @Override

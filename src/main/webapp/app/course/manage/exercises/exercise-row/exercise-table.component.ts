@@ -83,6 +83,7 @@ export class ExerciseTableComponent {
     readonly rowsReordered = output<Exercise[]>();
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    readonly variantAdded = output<Exercise>();
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
@@ -164,7 +165,7 @@ export class ExerciseTableComponent {
         { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
         ...this.groups().map((g) => ({
             label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: g.id }),
-            value: g.id as number | undefined,
+            value: g.id,
         })),
     ]);
 
@@ -255,7 +256,7 @@ export class ExerciseTableComponent {
     }
 
     asQuiz(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 
     protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {

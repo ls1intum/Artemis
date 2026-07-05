@@ -1,12 +1,14 @@
-import { Component, OnDestroy, computed, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faArrowLeft,
     faArrowRight,
+    faBan,
     faCheck,
+    faChevronDown,
+    faChevronRight,
     faCircleCheck,
     faEarthAmericas,
     faGaugeHigh,
@@ -17,15 +19,25 @@ import {
     faTriangleExclamation,
     faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { GENERATION_STEPS, PlacementChoice, STEP_INTERVAL_MS, difficultyBadgeClass, difficultyLabel, durationDays, generateVariant } from './exercise-variant-ai-modal.utils';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
+import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
+import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
+import { VariantPlacement } from 'app/openapi/model/variantPlacement';
+import { StepOutput } from 'app/openapi/model/stepOutput';
+import { PlacementChoice, difficultyBadgeClass, difficultyLabel, durationDays } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
@@ -37,23 +49,37 @@ const WIZARD_STEPS = [
     { label: 'Result', icon: faCircleCheck },
 ];
 
+/**
+ * Running pipeline phases in execution order — the wizard's step timeline is derived from VariantJobPhase
+ * (single source of truth via the OpenAPI client, plan Section 5.2). REPAIRING is NOT a linear step: it renders
+ * as a repeat visit on the VERIFYING step with the attempt counter (plan Section 5.3, point 2).
+ */
+const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'FINALIZING'];
+
 @Component({
     selector: 'jhi-exercise-variant-ai-modal-wizard',
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
-    imports: [DialogModule, ButtonModule, RadioButtonModule, InputTextModule, TextareaModule, FormsModule, FaIconComponent, SlicePipe],
+    providers: [ConfirmationService],
+    imports: [DialogModule, ButtonModule, RadioButtonModule, InputTextModule, TextareaModule, ConfirmDialogModule, FormsModule, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
+    private readonly variantGenerationService = inject(ExerciseVariantGenerationService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly translateService = inject(TranslateService);
+
     readonly visible = input<boolean>(false);
-    readonly sourceExercise = input.required<Exercise>();
+    /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
+    readonly sourceExercise = input<Exercise | undefined>(undefined);
     readonly courseId = input<number | undefined>(undefined);
+    /** Monitor mode (plan Section 5.4): the tray reopens this modal for a running/finished job — skips steps 1–3. */
+    readonly monitorJobId = input<string | undefined>(undefined);
 
     readonly visibleChange = output<boolean>();
     readonly variantAdded = output<Exercise>();
 
     readonly wizardStep = signal<WizardStep>(1);
-    readonly generationStep = signal(0);
-    readonly generatedVariant = signal<ProgrammingExercise | null>(null);
     readonly placementChoice = signal<PlacementChoice>('existing-group');
 
     readonly newGroupTitle = signal('');
@@ -70,14 +96,32 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly changeCustom = signal(false);
     readonly additionalInstructions = signal('');
 
+    // ── Live job state (plan Section 5.3, point 2) ────────────────────────────────────────────
+    readonly jobId = signal<string | undefined>(undefined);
+    readonly jobPhase = signal<VariantJobPhase>('ANALYZING');
+    readonly attempt = signal<number | undefined>(undefined);
+    readonly maxAttempts = signal<number | undefined>(undefined);
+    /** Latest PROGRESS sub-label, e.g. "Building solution repository" — cleared on phase change. */
+    readonly progressDetail = signal<string | undefined>(undefined);
+    /** Recorded step outputs per phase — live via STEP_OUTPUT events, full detail from the job-detail endpoint. */
+    readonly stepOutputs = signal<Record<string, StepOutput>>({});
+    readonly expandedPhases = signal<Record<string, boolean>>({});
+    readonly warnings = signal<string[]>([]);
+    readonly failurePhase = signal<VariantJobPhase | undefined>(undefined);
+    readonly failureDetail = signal<string | undefined>(undefined);
+    readonly generatedVariant = signal<Exercise | undefined>(undefined);
+
     /**
      * TODO: wire this up once the backend/course context is available to this component; until then the
      * "existing group" placement option never applies and the wizard defaults to creating a new group.
      */
     readonly sourceGroup = computed<CourseExerciseGroup | undefined>(() => undefined);
 
+    /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced (plan Section 5.5). */
+    readonly isExamExercise = computed(() => !!this.sourceExercise()?.exerciseGroup);
+
     readonly availableDifficulties = computed<Array<{ value: DifficultyLevel; label: string }>>(() => {
-        const current = this.sourceExercise().difficulty;
+        const current = this.sourceExercise()?.difficulty;
         return ([DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD] as DifficultyLevel[])
             .filter((d) => d !== current)
             .map((d) => ({ value: d, label: difficultyLabel(d) }));
@@ -93,12 +137,27 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || this.newGroupTitle().trim().length > 0);
 
-    readonly generationSteps = GENERATION_STEPS;
+    /** Index of the active timeline step; REPAIRING maps back onto the VERIFYING step (repeat visit). */
+    readonly currentPhaseIndex = computed(() => {
+        const phase = this.jobPhase();
+        if (isTerminalVariantPhase(phase)) {
+            return GENERATION_PHASES.length;
+        }
+        const effective = phase === 'REPAIRING' ? 'VERIFYING' : phase;
+        return Math.max(0, GENERATION_PHASES.indexOf(effective));
+    });
+
+    readonly isRunning = computed(() => this.jobId() !== undefined && !isTerminalVariantPhase(this.jobPhase()));
+
+    readonly generationPhases = GENERATION_PHASES;
     readonly wizardSteps = WIZARD_STEPS;
 
     protected readonly faRobot = faRobot;
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly faCheck = faCheck;
+    protected readonly faBan = faBan;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faChevronRight = faChevronRight;
     protected readonly faGaugeHigh = faGaugeHigh;
     protected readonly faEarthAmericas = faEarthAmericas;
     protected readonly faPenToSquare = faPenToSquare;
@@ -111,20 +170,38 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly durationDays = durationDays;
     protected readonly difficultyBadgeClass = difficultyBadgeClass;
 
-    private generationInterval: ReturnType<typeof setInterval> | null = null;
+    private eventsSubscription?: Subscription;
+
+    constructor() {
+        // On open: monitor mode initializes from the job-detail endpoint; otherwise re-attach to a still-running
+        // job for the source exercise (resume, plan Section 5.3, point 5).
+        effect(() => {
+            if (!this.visible()) {
+                return;
+            }
+            const monitorId = this.monitorJobId();
+            untracked(() => {
+                if (monitorId) {
+                    this.openInMonitorMode(monitorId);
+                } else if (!this.jobId()) {
+                    this.resumeActiveJobIfAny();
+                }
+            });
+        });
+    }
 
     ngOnDestroy(): void {
-        this.clearTimers();
+        this.eventsSubscription?.unsubscribe();
     }
 
     /**
-     * Closing the dialog while generation is running (step 4) must not cancel it: the component instance stays alive
-     * (it is never removed from the DOM, only the p-dialog is hidden), so the interval keeps advancing in the
-     * background and the user sees the up-to-date step when they reopen the modal.
+     * Closing the dialog while generation is running must not cancel it (close ≠ cancel, plan Section 5.4): the
+     * job continues server-side, the tray keeps tracking it, and reopening the modal resumes via the `active`
+     * endpoint. Explicit cancellation is a separate action behind a confirmation.
      */
     onClose(visible: boolean): void {
         if (visible) return;
-        if (this.wizardStep() === 4) {
+        if (this.wizardStep() === 4 && this.isRunning()) {
             this.visibleChange.emit(false);
             return;
         }
@@ -151,9 +228,16 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.wizardStep.set(1);
     }
 
-    /** Advance from Configure to Placement, pre-filling the new-group fields from the source exercise. */
+    /**
+     * Advance from Configure to Placement, pre-filling the new-group fields from the source exercise.
+     * Exam exercises skip the placement step and start generating immediately (SAME_EXAM_GROUP forced).
+     */
     goToPlacement(): void {
-        const src = this.sourceExercise();
+        if (this.isExamExercise()) {
+            this.startGeneration();
+            return;
+        }
+        const src = this.sourceExercise()!;
         this.newGroupTitle.set((src.title ?? 'Exercise').split(':')[0].trim());
         this.newGroupMaxPoints.set(src.maxPoints);
         this.newGroupReleaseDate.set(this.fmtDate(src.releaseDate));
@@ -165,10 +249,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     close(): void {
-        this.clearTimers();
+        // Deliberately does NOT cancel a running job and does not detach the tray — only this modal's local
+        // event subscription is released; the service keeps its own subscription for the tray state.
+        this.eventsSubscription?.unsubscribe();
+        this.eventsSubscription = undefined;
         this.wizardStep.set(1);
-        this.generationStep.set(0);
-        this.generatedVariant.set(null);
+        this.resetJobState();
         this.placementChoice.set('existing-group');
         this.newGroupTitle.set('');
         this.newGroupMaxPoints.set(undefined);
@@ -184,66 +270,41 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.visibleChange.emit(false);
     }
 
-    // ============================================================================================
-    // TODO (Opus): Rework this wizard from UI-only mock to the real backend job (plan Section 5.3, point 2):
-    //
-    // 1. startGeneration(): DELETE the setInterval mock + generateVariant(...) call below. Instead inject
-    // ExerciseVariantGenerationService (app/hyperion/services) and:
-    // a. Build the request per plan Section 5.1 — intents by FIELD PRESENCE: targetDifficulty only when the
-    // difficulty card is selected, domainText/additionalInstructions only when non-blank. Remove the
-    // changeDifficulty/changeDomain/changeCustom toggle booleans as request inputs (they remain UI-only
-    // card-selection state at most). There is NO title input — the planner names the variant (Section 2.4);
-    // remove any title field from the template if present.
-    // b. Placement mapping: placementChoice → VariantPlacementDTO (EXISTING_GROUP with sourceGroup id /
-    // NEW_GROUP with the newGroup* signals / STANDALONE). For EXAM exercises skip the placement step
-    // entirely and send SAME_EXAM_GROUP (plan Section 5.5).
-    // c. POST via the service; store the jobId; subscribe to the per-job websocket topic (service handles the
-    // hyperion-websocket.service subscribeToJob pattern).
-    // 2. Progress steps: replace GENERATION_STEPS with steps DERIVED FROM VariantJobPhase (shared enum via the
-    // OpenAPI client — single source of truth, plan Section 5.2). Type-specific sub-labels come from
-    // PROGRESS/ATTEMPT events ("Building solution repository — attempt 2/3"). REPAIRING renders as a
-    // repeat-visit on the verify step with the attempt counter, NOT as a fake linear step.
-    // 3. Expandable step panels: each finished step reveals its StepOutput (STEP_OUTPUT events live; job-detail
-    // endpoint on reopen) so instructors can inspect what the LLM planned/did (plan Sections 2.4 and 5.4).
-    // 4. DONE handling: fetch the created exercise by variantExerciseId and show the real result step; render
-    // DRAFT_WITH_WARNINGS with the warnings listed and a "flagged draft — repair in editor" hint; FAILED shows
-    // the failure phase (plan Sections 5.3 and 6).
-    // 5. Closable during generation: keep the existing onClose behavior (close ≠ cancel, job continues server-side,
-    // no confirmation needed — plan Section 5.4). Add an explicit CANCEL action while running (confirmation
-    // dialog; calls service.cancelJob) — distinct from closing (plan Section 5.4).
-    // 6. Monitor mode: add an input (e.g. `monitorJobId`) so the tray can reopen this modal for a running/finished
-    // job, initialized from GET /variant-jobs/{jobId} — skips wizard steps 1–3 and shows the step timeline
-    // (plan Section 5.4).
-    // 7. Resume: on open with a source exercise, call the `active` endpoint and re-attach when a job is running
-    // (plan Section 5.3, point 5).
-    // 8. confirmVariant(): emit variantAdded with the REAL fetched exercise (bound in
-    // exercise-actions.component.html — see TODO there); remove the mock path.
-    // ============================================================================================
+    /** Starts the real backend job (plan Section 5.3, point 2) — intents by field presence, no title input. */
     startGeneration(): void {
-        const variant = generateVariant(this.sourceExercise(), {
-            changeDifficulty: this.changeDifficulty(),
-            targetDifficulty: this.targetDifficulty(),
-            changeDomain: this.changeDomain(),
-            domainText: this.domainText(),
-        });
-        this.generatedVariant.set(variant);
-
+        const sourceExercise = this.sourceExercise();
+        if (!sourceExercise?.id) return;
+        const request: VariantGenerationRequest = {
+            targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
+            domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,
+            additionalInstructions: this.changeCustom() && this.additionalInstructions().trim() ? this.additionalInstructions().trim() : undefined,
+            placement: this.buildPlacement(),
+        };
+        this.resetJobState();
         this.wizardStep.set(4);
-        this.generationStep.set(0);
-
-        let step = 0;
-        this.generationInterval = setInterval(() => {
-            step++;
-            if (step < GENERATION_STEPS.length) {
-                this.generationStep.set(step);
-            } else {
-                this.clearTimers();
+        this.variantGenerationService.startGeneration(sourceExercise.id, request, sourceExercise.title).subscribe({
+            next: (jobId) => this.attachToJob(jobId),
+            error: () => {
+                this.failurePhase.set('ANALYZING');
+                this.failureDetail.set(this.translateService.instant('artemisApp.exerciseVariantGeneration.wizard.startFailed'));
+                this.jobPhase.set('FAILED');
                 this.wizardStep.set(5);
-            }
-        }, STEP_INTERVAL_MS);
+            },
+        });
     }
 
-    /** TODO: not yet wired to a backend endpoint; the wizard is UI-only for now. */
+    /** Explicit cooperative cancel while running — distinct from closing the dialog (plan Section 5.4). */
+    cancelGeneration(event: Event): void {
+        const jobId = this.jobId();
+        if (!jobId) return;
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmation'),
+            accept: () => this.variantGenerationService.cancelJob(jobId).subscribe({ error: () => {} }),
+        });
+    }
+
+    /** Emits the REAL fetched exercise — bound in exercise-actions.component.html (plan Section 5.3, point 4). */
     confirmVariant(): void {
         const variant = this.generatedVariant();
         if (!variant) return;
@@ -252,14 +313,187 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.close();
     }
 
+    toggleStepOutput(phase: string): void {
+        this.expandedPhases.update((expanded) => {
+            const updated = Object.assign({}, expanded);
+            updated[phase] = !updated[phase];
+            return updated;
+        });
+    }
+
+    /** REPAIRING is a repeat visit on the VERIFYING step — swap that step's label while repairing. */
+    stepLabelKey(phase: VariantJobPhase): string {
+        const effective = phase === 'VERIFYING' && this.jobPhase() === 'REPAIRING' ? 'REPAIRING' : phase;
+        return `artemisApp.exerciseVariantGeneration.phase.${effective}`;
+    }
+
+    /** Sub-label under the active step: repair attempts win over plain progress details. */
+    activeStepDetail(): string | undefined {
+        if (this.jobPhase() === 'REPAIRING' && this.attempt() !== undefined) {
+            const attemptLabel = this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.attempt', {
+                attempt: this.attempt(),
+                max: this.maxAttempts(),
+            });
+            return this.progressDetail() ? `${this.progressDetail()} — ${attemptLabel}` : attemptLabel;
+        }
+        return this.progressDetail();
+    }
+
+    private buildPlacement(): VariantPlacement {
+        if (this.isExamExercise()) {
+            return { type: 'SAME_EXAM_GROUP' };
+        }
+        switch (this.placementChoice()) {
+            case 'existing-group':
+                return this.sourceGroup() ? { type: 'EXISTING_GROUP', existingGroupId: this.sourceGroup()!.id } : { type: 'STANDALONE' };
+            case 'new-group':
+                return {
+                    type: 'NEW_GROUP',
+                    newGroup: {
+                        title: this.newGroupTitle().trim(),
+                        maxPoints: this.newGroupMaxPoints(),
+                        releaseDate: this.toIso(this.newGroupReleaseDate()),
+                        startDate: this.toIso(this.newGroupStartDate()),
+                        dueDate: this.toIso(this.newGroupDueDate()),
+                        assessmentDueDate: this.toIso(this.newGroupAssessmentDueDate()),
+                    },
+                };
+            default:
+                return { type: 'STANDALONE' };
+        }
+    }
+
+    private attachToJob(jobId: string): void {
+        this.jobId.set(jobId);
+        this.eventsSubscription?.unsubscribe();
+        this.eventsSubscription = this.variantGenerationService.jobEvents(jobId).subscribe((event) => this.handleEvent(event));
+    }
+
+    private handleEvent(event: VariantGenerationEvent): void {
+        switch (event.type) {
+            case 'PHASE_CHANGED':
+                if (event.phase && event.phase !== this.jobPhase()) {
+                    this.jobPhase.set(event.phase);
+                    this.progressDetail.set(undefined);
+                    if (event.phase !== 'REPAIRING' && event.phase !== 'VERIFYING') {
+                        this.attempt.set(undefined);
+                        this.maxAttempts.set(undefined);
+                    }
+                }
+                break;
+            case 'ATTEMPT':
+                this.attempt.set(event.attempt);
+                this.maxAttempts.set(event.maxAttempts);
+                this.progressDetail.set(event.detail ?? this.progressDetail());
+                break;
+            case 'PROGRESS':
+                this.progressDetail.set(event.detail);
+                break;
+            case 'STEP_OUTPUT':
+                if (event.phase && event.detail) {
+                    this.recordStepOutput(event.phase, { summary: event.detail });
+                }
+                break;
+            case 'DONE':
+                this.jobPhase.set(event.phase ?? 'COMPLETED');
+                this.warnings.set(event.warnings ?? []);
+                this.showResult(event.variantExerciseId);
+                break;
+            case 'FAILED':
+                // The FAILED event's phase is FAILED itself — the phase the job died in is the last live phase.
+                this.failurePhase.set(this.jobPhase());
+                this.failureDetail.set(event.detail);
+                this.jobPhase.set('FAILED');
+                this.wizardStep.set(5);
+                break;
+            case 'CANCELLED':
+                this.jobPhase.set('CANCELLED');
+                this.wizardStep.set(5);
+                break;
+        }
+    }
+
+    private showResult(variantExerciseId: number | undefined): void {
+        this.wizardStep.set(5);
+        if (variantExerciseId) {
+            this.exerciseService.find(variantExerciseId).subscribe({
+                next: (response) => this.generatedVariant.set(response.body ?? undefined),
+                error: () => {},
+            });
+        }
+    }
+
+    /** Re-attach to a still-running job of the source exercise when the wizard opens (plan Section 5.3, point 5). */
+    private resumeActiveJobIfAny(): void {
+        const exerciseId = this.sourceExercise()?.id;
+        if (!exerciseId) return;
+        this.variantGenerationService.getActiveJob(exerciseId).subscribe({
+            next: (job) => {
+                if (job?.jobId && !isTerminalVariantPhase(job.phase)) {
+                    this.initializeFromJobId(job.jobId, job.phase, job.attempt, job.maxAttempts);
+                }
+            },
+            error: () => {},
+        });
+    }
+
+    /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3 (plan Section 5.4). */
+    private openInMonitorMode(jobId: string): void {
+        this.variantGenerationService.getJobDetail(jobId).subscribe({
+            next: (detail) => {
+                const job = detail.job;
+                this.initializeFromJobId(jobId, job?.phase, job?.attempt, job?.maxAttempts);
+                this.stepOutputs.set(detail.stepOutputs ?? {});
+                this.warnings.set(job?.warnings ?? []);
+                if (isTerminalVariantPhase(job?.phase)) {
+                    this.jobId.set(jobId);
+                    this.jobPhase.set(job!.phase!);
+                    this.failurePhase.set(job?.failedInPhase);
+                    this.showResult(job?.variantExerciseId);
+                }
+            },
+            error: () => {},
+        });
+    }
+
+    private initializeFromJobId(jobId: string, phase: VariantJobPhase | undefined, attempt: number | undefined, maxAttempts: number | undefined): void {
+        this.resetJobState();
+        this.jobPhase.set(phase ?? 'ANALYZING');
+        this.attempt.set(attempt);
+        this.maxAttempts.set(maxAttempts);
+        this.wizardStep.set(4);
+        if (!isTerminalVariantPhase(phase)) {
+            this.attachToJob(jobId);
+        }
+    }
+
+    private recordStepOutput(phase: string, output: StepOutput): void {
+        this.stepOutputs.update((outputs) => {
+            const updated = Object.assign({}, outputs);
+            updated[phase] = output;
+            return updated;
+        });
+    }
+
+    private resetJobState(): void {
+        this.jobId.set(undefined);
+        this.jobPhase.set('ANALYZING');
+        this.attempt.set(undefined);
+        this.maxAttempts.set(undefined);
+        this.progressDetail.set(undefined);
+        this.stepOutputs.set({});
+        this.expandedPhases.set({});
+        this.warnings.set([]);
+        this.failurePhase.set(undefined);
+        this.failureDetail.set(undefined);
+        this.generatedVariant.set(undefined);
+    }
+
     private fmtDate(d: dayjs.Dayjs | undefined): string {
         return d?.format('YYYY-MM-DDTHH:mm') ?? '';
     }
 
-    private clearTimers(): void {
-        if (this.generationInterval !== null) {
-            clearInterval(this.generationInterval);
-            this.generationInterval = null;
-        }
+    private toIso(value: string): string | undefined {
+        return value ? dayjs(value).toISOString() : undefined;
     }
 }

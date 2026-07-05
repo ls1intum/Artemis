@@ -159,7 +159,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         const ids = this.selectedIds();
         return new Set(
             this.exercises()
-                .filter((e) => e.id !== undefined && ids.has(e.id!))
+                .filter((e) => e.id !== undefined && ids.has(e.id))
                 .map((e) => e.type),
         );
     });
@@ -237,7 +237,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
                     exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
                     if (exercise.type === ExerciseType.QUIZ) {
-                        this.applyQuizClientState(exercise as QuizExercise);
+                        this.applyQuizClientState(exercise);
                     }
                 });
                 this.exercises.set(exercises);
@@ -476,6 +476,17 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedIds.set(remaining);
         }
         this.buildBuckets();
+    }
+
+    /**
+     * A generated AI variant was confirmed in the wizard. Placement (group assignment) happened server-side in
+     * FINALIZING, so the client simply reloads exercises and groups to reflect the true state (plan Section 5.3).
+     */
+    onVariantAdded(): void {
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            this.loadCourseExercises(courseId);
+        }
     }
 
     private hasSearch(): boolean {
@@ -767,7 +778,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             const replacements = new Map<number, Exercise>();
             const merged = this.exercises().map((exercise) => {
                 if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
-                    const quiz = { ...(exercise as QuizExercise) } as QuizExercise;
+                    const quiz = { ...(exercise as QuizExercise) };
                     const info = quizInfoById.get(exercise.id)!;
                     quiz.quizBatches = info.quizBatches;
                     quiz.isEditable = info.isEditable;

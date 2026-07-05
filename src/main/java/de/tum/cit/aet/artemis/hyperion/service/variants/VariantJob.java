@@ -29,6 +29,9 @@ public class VariantJob implements Serializable {
 
     private Long sourceExerciseId;
 
+    /** Course of the source exercise (resolved via exam group for exam exercises) — tray deep links need it. */
+    private Long courseId;
+
     private String sourceExerciseTitle;
 
     private ExerciseType exerciseType;
@@ -36,6 +39,9 @@ public class VariantJob implements Serializable {
     private String initiatorLogin;
 
     private VariantJobPhase phase;
+
+    /** The phase the job was in when it failed — tray label "failed in VERIFYING" (plan Section 5.4). */
+    private VariantJobPhase failedInPhase;
 
     private int attempt;
 
@@ -79,6 +85,14 @@ public class VariantJob implements Serializable {
         this.sourceExerciseId = sourceExerciseId;
     }
 
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+
     public String getSourceExerciseTitle() {
         return sourceExerciseTitle;
     }
@@ -109,6 +123,14 @@ public class VariantJob implements Serializable {
 
     public void setPhase(VariantJobPhase phase) {
         this.phase = phase;
+    }
+
+    public VariantJobPhase getFailedInPhase() {
+        return failedInPhase;
+    }
+
+    public void setFailedInPhase(VariantJobPhase failedInPhase) {
+        this.failedInPhase = failedInPhase;
     }
 
     public int getAttempt() {

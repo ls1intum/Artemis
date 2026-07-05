@@ -24,13 +24,15 @@
 
     <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
     @if (wizardStep() === 1) {
-        <div class="source-badge mb-4">
-            <fa-icon [icon]="getIcon(sourceExercise().type)" class="source-badge__icon" />
-            <span class="source-badge__title">{{ sourceExercise().title }}</span>
-            @if (sourceExercise().difficulty) {
-                <span class="badge {{ difficultyBadgeClass(sourceExercise().difficulty) }}">{{ sourceExercise().difficulty }}</span>
-            }
-        </div>
+        @if (sourceExercise(); as src) {
+            <div class="source-badge mb-4">
+                <fa-icon [icon]="getIcon(src.type)" class="source-badge__icon" />
+                <span class="source-badge__title">{{ src.title }}</span>
+                @if (src.difficulty) {
+                    <span class="badge {{ difficultyBadgeClass(src.difficulty) }}">{{ src.difficulty }}</span>
+                }
+            </div>
+        }
 
         <p class="text-muted small mb-3">Select one or more aspects you'd like the AI to change.</p>
 
@@ -242,76 +244,138 @@
         </div>
     }
 
-    <!-- ── Step 4: Generating ─────────────────────────────────────────────────── -->
+    <!-- ── Step 4: Generating (live job timeline, plan Section 5.3, point 2) ──── -->
     @if (wizardStep() === 4) {
-        <div class="generating-panel">
+        <div class="generating-panel" data-testid="variant-wizard-generating">
             <div class="generating-icon-wrapper">
                 <fa-icon [icon]="faRobot" class="generating-icon" />
                 <div class="generating-ring"></div>
             </div>
-            <h6 class="fw-semibold mb-1">Generating your variant…</h6>
-            <p class="text-muted small mb-1">Verifying all repositories build and tests pass</p>
-            <p class="text-muted small mb-4">You can close this window — generation continues in the background and the result will be here when you come back.</p>
+            <h6 class="fw-semibold mb-1">{{ 'artemisApp.exerciseVariantGeneration.wizard.generatingTitle' | artemisTranslate }}</h6>
+            <p class="text-muted small mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.backgroundHint' | artemisTranslate }}</p>
             <ol class="generation-steps">
-                @for (step of generationSteps; track step.label; let i = $index) {
+                @for (phase of generationPhases; track phase; let i = $index) {
                     <li
                         class="generation-step"
-                        [class.generation-step--done]="i < generationStep()"
-                        [class.generation-step--active]="i === generationStep()"
-                        [class.generation-step--pending]="i > generationStep()"
-                        [class.generation-step--loop]="step.loop"
+                        [class.generation-step--done]="i < currentPhaseIndex()"
+                        [class.generation-step--active]="i === currentPhaseIndex()"
+                        [class.generation-step--pending]="i > currentPhaseIndex()"
+                        [attr.data-testid]="'variant-wizard-step-' + phase"
                     >
                         <span class="generation-step__icon">
-                            @if (i < generationStep()) {
+                            @if (i < currentPhaseIndex()) {
                                 <fa-icon [icon]="faCheck" />
-                            } @else if (i === generationStep()) {
+                            } @else if (i === currentPhaseIndex()) {
                                 <span class="spinner-dot"></span>
                             } @else {
                                 <span class="pending-dot"></span>
                             }
                         </span>
-                        {{ step.label }}
+                        <span class="flex-grow-1">
+                            {{ stepLabelKey(phase) | artemisTranslate }}
+                            @if (i === currentPhaseIndex() && activeStepDetail(); as detail) {
+                                <span class="d-block text-muted small" data-testid="variant-wizard-step-detail">{{ detail }}</span>
+                            }
+                            @if (stepOutputs()[phase]; as stepOutput) {
+                                <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
+                                    <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
+                                    {{ stepOutput.summary }}
+                                </a>
+                                @if (expandedPhases()[phase] && stepOutput.detail) {
+                                    <pre class="step-output-detail small text-muted mt-1 mb-0" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
+                                }
+                            }
+                        </span>
                     </li>
                 }
             </ol>
+            @if (isRunning()) {
+                <div class="d-flex justify-content-end mt-3">
+                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="cancelGeneration($event)" data-testid="variant-wizard-cancel">
+                        <fa-icon [icon]="faBan" class="me-1" />
+                        {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
+                    </p-button>
+                </div>
+            }
         </div>
     }
 
-    <!-- ── Step 5: Result ─────────────────────────────────────────────────────── -->
+    <!-- ── Step 5: Result (plan Sections 5.3 and 6) ───────────────────────────── -->
     @if (wizardStep() === 5) {
-        @let variant = generatedVariant();
-        @if (variant) {
-            <div class="variant-card mb-4">
-                <div class="variant-card__header">
-                    <fa-icon [icon]="getIcon(variant.type)" class="variant-card__type-icon" />
-                    <span class="variant-card__type-label">Programming Exercise</span>
-                </div>
-                <h6 class="variant-card__title">{{ variant.title }}</h6>
-                <div class="variant-card__chips">
-                    @if (variant.maxPoints) {
-                        <span class="info-chip">{{ variant.maxPoints }} pts</span>
+        @if (jobPhase() === 'FAILED') {
+            <div class="ai-warning mb-3" data-testid="variant-wizard-failed">
+                <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
+                <div>
+                    <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.failedTitle' | artemisTranslate }}</div>
+                    @if (failurePhase(); as phase) {
+                        <div class="small">{{ 'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate }}</div>
                     }
-                    @if (variant.difficulty) {
-                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
-                    }
-                    @for (cat of variant.categories; track cat.category) {
-                        <span class="badge" [style.backgroundColor]="cat.color ?? '#6c757d'">{{ cat.category }}</span>
+                    @if (failureDetail(); as detail) {
+                        <div class="small text-muted">{{ detail }}</div>
                     }
                 </div>
-                <p class="variant-card__preview">{{ variant.problemStatement | slice: 3 : 120 }}…</p>
             </div>
+            <div class="d-flex justify-content-end">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                    'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
+                }}</p-button>
+            </div>
+        } @else if (jobPhase() === 'CANCELLED') {
+            <div class="ai-warning mb-3" data-testid="variant-wizard-cancelled">
+                <fa-icon [icon]="faBan" class="ai-warning__icon" />
+                <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
+            </div>
+            <div class="d-flex justify-content-end">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                    'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
+                }}</p-button>
+            </div>
+        } @else {
+            @if (generatedVariant(); as variant) {
+                <div class="variant-card mb-3" data-testid="variant-wizard-result">
+                    <div class="variant-card__header">
+                        <fa-icon [icon]="getIcon(variant.type)" class="variant-card__type-icon" />
+                        <span class="variant-card__type-label">{{ variant.type }}</span>
+                    </div>
+                    <h6 class="variant-card__title">{{ variant.title }}</h6>
+                    <div class="variant-card__chips">
+                        @if (variant.maxPoints) {
+                            <span class="info-chip">{{ variant.maxPoints }} pts</span>
+                        }
+                        @if (variant.difficulty) {
+                            <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
+                        }
+                    </div>
+                </div>
+            }
+            @if (jobPhase() === 'DRAFT_WITH_WARNINGS' && warnings().length > 0) {
+                <div class="ai-warning mb-3" data-testid="variant-wizard-warnings">
+                    <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
+                    <div>
+                        <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
+                        <ul class="small mb-0 ps-3">
+                            @for (warning of warnings(); track warning) {
+                                <li>{{ warning }}</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
             <div class="ai-warning mt-3">
                 <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
-                <span>AI-generated content may contain errors. Review the problem statement, test cases, and solution carefully before publishing.</span>
+                <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.aiDisclaimer' | artemisTranslate }}</span>
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Discard</p-button>
-                <button type="button" class="btn btn-sm btn-ai-generate" (click)="confirmVariant()">
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
+                    'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
+                }}</p-button>
+                <button type="button" class="btn btn-sm btn-ai-generate" [disabled]="!generatedVariant()" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
                     <fa-icon [icon]="faPenToSquare" class="me-1" />
-                    Open in Editor
+                    {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                 </button>
             </div>
         }
     }
+    <p-confirmdialog />
 </p-dialog>

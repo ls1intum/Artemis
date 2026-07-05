@@ -101,6 +101,13 @@ public class ExerciseVariantJobService {
         VariantJob job = new VariantJob();
         job.setJobId(jobId);
         job.setSourceExerciseId(exercise.getId());
+        try {
+            // Resolved via the exam's course for exam exercises; the tray deep link needs it (plan Section 5.4).
+            job.setCourseId(exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null);
+        }
+        catch (RuntimeException ignored) {
+            // Course resolution is best-effort (mirrors the codegen resource) — the tray just omits the link.
+        }
         job.setSourceExerciseTitle(exercise.getTitle());
         job.setExerciseType(exercise.getExerciseType());
         job.setInitiatorLogin(user.getLogin());
@@ -315,13 +322,14 @@ public class ExerciseVariantJobService {
 
     /**
      * Terminal transition to FAILED; publishes FAILED with the failure detail and releases the dedup lock.
-     * The phase the job failed in is preserved in the FAILED event's detail (plan Section 5.4 tray label).
+     * The phase the job failed in is preserved on the job record for the tray label (plan Section 5.4).
      *
      * @param jobId  the job id
      * @param detail failure description including the phase
      */
     public void fail(String jobId, String detail) {
         VariantJob job = mutate(jobId, mutableJob -> {
+            mutableJob.setFailedInPhase(mutableJob.getPhase());
             mutableJob.setPhase(VariantJobPhase.FAILED);
             mutableJob.setFinishedAt(Instant.now());
         });

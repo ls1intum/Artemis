@@ -16,9 +16,11 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  *
  * @param jobId               job id
  * @param sourceExerciseId    the source exercise
+ * @param courseId            course of the source exercise — base of the tray's deep-link route
  * @param sourceExerciseTitle shown as the entry label
  * @param exerciseType        drives the type-aware deep-link route (programming → exercise editor, quiz → quiz editor)
  * @param phase               current/terminal phase (spinner + progress bar derive from phase index / total)
+ * @param failedInPhase       for FAILED entries: the phase the job failed in ("failed in VERIFYING", Section 5.4)
  * @param attempt             repair attempt counter (shown during REPAIRING)
  * @param maxAttempts         attempt budget
  * @param variantExerciseId   set for COMPLETED/DRAFT_WITH_WARNINGS — target of the editor deep link; null for
@@ -28,8 +30,9 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  * @param finishedAt          terminal timestamp, null while running
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record VariantJobDTO(String jobId, Long sourceExerciseId, String sourceExerciseTitle, ExerciseType exerciseType, VariantJobPhase phase, Integer attempt, Integer maxAttempts,
-        Long variantExerciseId, List<String> warnings, Instant startedAt, Instant finishedAt) implements Serializable {
+public record VariantJobDTO(String jobId, Long sourceExerciseId, Long courseId, String sourceExerciseTitle, ExerciseType exerciseType, VariantJobPhase phase,
+        VariantJobPhase failedInPhase, Integer attempt, Integer maxAttempts, Long variantExerciseId, List<String> warnings, Instant startedAt, Instant finishedAt)
+        implements Serializable {
 
     /**
      * Maps the Hazelcast job record to the tray view.
@@ -38,11 +41,7 @@ public record VariantJobDTO(String jobId, Long sourceExerciseId, String sourceEx
      * @return the DTO
      */
     public static VariantJobDTO of(VariantJob job) {
-        return new VariantJobDTO(job.getJobId(), job.getSourceExerciseId(), job.getSourceExerciseTitle(), job.getExerciseType(), job.getPhase(), job.getAttempt(),
-                job.getMaxAttempts(), job.getVariantExerciseId(), job.getWarnings(), job.getStartedAt(), job.getFinishedAt());
+        return new VariantJobDTO(job.getJobId(), job.getSourceExerciseId(), job.getCourseId(), job.getSourceExerciseTitle(), job.getExerciseType(), job.getPhase(),
+                job.getFailedInPhase(), job.getAttempt(), job.getMaxAttempts(), job.getVariantExerciseId(), job.getWarnings(), job.getStartedAt(), job.getFinishedAt());
     }
-
-    // TODO (Sonnet): FAILED entries additionally need the phase the job failed in for the tray label
-    // ("failed in VERIFYING", plan Section 5.4) — currently only available in the FAILED event's detail; add a
-    // `failedInPhase` component + VariantJob field when implementing the tray labels.
 }

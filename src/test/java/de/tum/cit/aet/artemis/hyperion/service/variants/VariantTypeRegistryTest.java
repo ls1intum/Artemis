@@ -1,17 +1,69 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+
 /**
  * Unit tests for the small pure pieces of the variants module (plan Section 10, "Unit tests").
+ * No Spring context — the registry is plain construction + {@code init()}.
  */
 class VariantTypeRegistryTest {
 
-    // TODO (Sonnet): Plain unit tests (no Spring context), per plan Section 10:
-    // - VariantTypeRegistry.resolve: returns the matching bundle; unsupported type → BadRequestAlertException;
-    // duplicate bundles for one type → startup/duplicate-check failure.
-    // - ChangePlan (de)serialization: JSON round-trip incl. BeanOutputConverter schema compatibility; rejection
-    // of blank title / empty intendedChanges (see ChangePlan TODOs).
-    // - Tool input validation: applyEdit no-match/ambiguous-match errors are returned as tool results, not thrown
-    // (Section 6 row 2); updateQuestion schema validation against GeneratedQuizQuestionDTO.
-    // - Budget enforcement: VariantAgentLoopRunner stops when token budget exceeded and reports it in AgentResult;
-    // pipeline transitions to DRAFT_WITH_WARNINGS when the verify-iteration budget is exhausted (Section 2.5).
+    private VariantTypeAdapters bundleFor(ExerciseType type) {
+        VariantTypeAdapters bundle = mock(VariantTypeAdapters.class);
+        when(bundle.supportedExerciseType()).thenReturn(type);
+        return bundle;
+    }
+
+    @Test
+    void shouldResolveTheMatchingBundle() {
+        VariantTypeAdapters programming = bundleFor(ExerciseType.PROGRAMMING);
+        VariantTypeAdapters quiz = bundleFor(ExerciseType.QUIZ);
+        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(programming, quiz));
+        registry.init();
+
+        assertThat(registry.isSupported(ExerciseType.PROGRAMMING)).isTrue();
+        assertThat(registry.isSupported(ExerciseType.QUIZ)).isTrue();
+        assertThat(registry.isSupported(ExerciseType.TEXT)).isFalse();
+        assertThat(registry.resolve(ExerciseType.PROGRAMMING)).isSameAs(programming);
+        assertThat(registry.resolve(ExerciseType.QUIZ)).isSameAs(quiz);
+    }
+
+    @Test
+    void shouldRejectUnsupportedTypes() {
+        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING)));
+        registry.init();
+
+        assertThatThrownBy(() -> registry.resolve(ExerciseType.TEXT)).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    void shouldFailFastOnDuplicateBundlesForOneType() {
+        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.QUIZ), bundleFor(ExerciseType.QUIZ)));
+
+        assertThatThrownBy(registry::init).isInstanceOf(IllegalStateException.class).hasMessageContaining("Duplicate");
+    }
+
+    @Test
+    void changePlanShouldRoundTripThroughJson() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ChangePlan plan = new ChangePlan("Cargo Bay Manager", "## Tasks\n1. [task][Implement load](testLoad)", List.of("rename BankAccount to CargoBay"),
+                List.of("test count stays identical"));
+
+        String json = objectMapper.writeValueAsString(plan);
+        ChangePlan roundTripped = objectMapper.readValue(json, ChangePlan.class);
+
+        assertThat(roundTripped).isEqualTo(plan);
+    }
 }

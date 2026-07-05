@@ -1,9 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSpinner, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
+import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
+import { VariantJob } from 'app/openapi/model/variantJob';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
+
+/** Pipeline phases in execution order — drives the tray's slim progress bar (plan Section 5.2). */
+const RUNNING_PHASE_ORDER = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING'] as const;
 
 /**
  * Navbar job tray for background variant generation (plan Section 5.4).
@@ -13,33 +25,78 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
     selector: 'jhi-variant-generation-tray',
     templateUrl: './variant-generation-tray.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, PopoverModule, ButtonModule],
+    providers: [ConfirmationService],
+    imports: [FaIconComponent, PopoverModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
-export class VariantGenerationTrayComponent {
+export class VariantGenerationTrayComponent implements OnInit {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
+    private readonly router = inject(Router);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly translateService = inject(TranslateService);
+
+    /**
+     * Clicking a job entry opens the tray-hosted generation modal in monitor mode, initialized from the
+     * job-detail endpoint (plan Section 5.4). Finished jobs with a variant additionally deep-link to the
+     * exercise via the button rendered next to the entry.
+     */
+    readonly monitorJobId = signal<string | undefined>(undefined);
+    readonly monitorVisible = signal(false);
 
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly faSpinner = faSpinner;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
 
-    // TODO (Sonnet): Implement per plan Section 5.4:
-    // - Visibility: hidden entirely when variantGenerationService.hasJobs() is false (use @if in the navbar or here).
-    // - Icon button (faWandMagicSparkles); while runningJobs().length > 0 overlay a spinner ring
-    // (fa-spinner fa-spin badge) — the at-a-glance "AI is generating in the background" signal — plus a count
-    // badge with the number of RUNNING jobs. Use Bootstrap utility classes, no custom SCSS.
-    // - Click opens the p-popover listing variantGenerationService.jobs():
-    // * running entries: source exercise title, current phase label (derive labels from VariantJobPhase — the
-    // shared enum, plan Section 5.2), slim progress bar (phase index / total), attempt counter during
-    // REPAIRING, cancel action behind a confirmation dialog (PrimeNG ConfirmDialog/DialogService — NOT
-    // ng-bootstrap). State only — no step outputs in the tray.
-    // * finished entries stay listed (server TTL): COMPLETED → generated variant title + deep link to the
-    // type-aware editor route (programming → exercise detail/editor, quiz → quiz editor);
-    // DRAFT_WITH_WARNINGS → warning badge + same link; FAILED → failure phase label;
-    // CANCELLED → neutral state, NO link (clone was cleaned up).
-    // * clicking any entry reopens the generation modal in monitor mode, initialized from
-    // getJobDetail(jobId) — full step timeline with expandable step outputs (plan Sections 2.4 and 5.4).
-    // Emit an output / use a shared service the wizard host listens to; the wizard component gains a
-    // "monitor" input mode (see exercise-variant-ai-modal-wizard.component.ts TODOs).
-    //
-    // TODO (Sonnet): i18n — all labels via artemisTranslate with new keys under artemisApp.exerciseVariant.tray.*
-    // (add to both en/de global.json).
+    ngOnInit(): void {
+        // Initial sync; per-job websocket topics keep the list live afterwards (plan Section 5.4, "State handling").
+        this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
+    }
+
+    /** Progress through the running phases as a percentage for the slim progress bar (plan Section 5.4). */
+    phaseProgress(job: VariantJob): number {
+        const index = RUNNING_PHASE_ORDER.indexOf(job.phase as (typeof RUNNING_PHASE_ORDER)[number]);
+        if (index < 0) {
+            return 100;
+        }
+        return Math.round(((index + 1) / RUNNING_PHASE_ORDER.length) * 100);
+    }
+
+    phaseLabelKey(job: VariantJob): string {
+        return `artemisApp.exerciseVariantGeneration.phase.${job.phase}`;
+    }
+
+    /** Finished jobs with a kept variant deep-link to the type-aware editor route (plan Section 5.4). */
+    openVariant(job: VariantJob): void {
+        if (!job.courseId || !job.variantExerciseId) {
+            return;
+        }
+        const typeSegment = job.exerciseType === 'quiz' ? 'quiz-exercises' : `${job.exerciseType}-exercises`;
+        this.router.navigate(['/course-management', job.courseId, typeSegment, job.variantExerciseId]);
+    }
+
+    hasVariantLink(job: VariantJob): boolean {
+        return (job.phase === 'COMPLETED' || job.phase === 'DRAFT_WITH_WARNINGS') && !!job.variantExerciseId && !!job.courseId;
+    }
+
+    /** Cooperative cancel behind a confirmation — discards the LLM work and deletes the clone (plan Section 5.4). */
+    cancelJob(job: VariantJob, event: Event): void {
+        event.stopPropagation();
+        this.confirmationService.confirm({
+            target: event.target as EventTarget,
+            message: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmation'),
+            accept: () => {
+                if (job.jobId) {
+                    this.variantGenerationService.cancelJob(job.jobId).subscribe({ error: () => {} });
+                }
+            },
+        });
+    }
+
+    openJobEntry(job: VariantJob): void {
+        if (!job.jobId) {
+            return;
+        }
+        this.monitorJobId.set(job.jobId);
+        this.monitorVisible.set(true);
+    }
 }

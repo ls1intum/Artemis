@@ -1,96 +1,146 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, Subscription, map, tap } from 'rxjs';
+import { HyperionExerciseVariantApiService } from 'app/openapi/api/hyperionExerciseVariantApi.service';
+import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
+import { VariantJob } from 'app/openapi/model/variantJob';
+import { VariantJobDetail } from 'app/openapi/model/variantJobDetail';
+import { ExerciseVariantWebsocketService, VariantGenerationEvent, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 
 /**
  * Client service for AI exercise-variant generation (plan Section 5.3, point 1).
  * Two responsibilities:
- * 1. REST access to the variant endpoints (plan Section 5.1) — via the regenerated OpenAPI client
- *    (like `hyperionCodeGenerationApi`), NOT hand-rolled HttpClient calls.
- * 2. Signal-based job-tray state shared by the navbar tray and the wizard (plan Section 5.4).
- *
- * TODO (Sonnet): After implementing the server resource, regenerate the OpenAPI client so
- * `app/openapi/api/hyperionExerciseVariantApi.service.ts` and the models (VariantJobDTO, VariantJobDetailDTO,
- * VariantGenerationRequestDTO, VariantGenerationEventDTO, VariantJobPhase — the shared phase enum, single source
- * of truth per plan Section 5.2) exist; then replace the placeholder types below with the generated ones.
+ * 1. REST access to the variant endpoints (plan Section 5.1) via the generated OpenAPI client.
+ * 2. Signal-based job-tray state shared by the navbar tray and the wizard (plan Section 5.4): the `jobs`
+ *    signal is the client-side copy of the user's job list, kept live by the per-job websocket topics and
+ *    re-synced from REST on demand (events are fire-and-forget; the job record is authoritative).
  */
-
-// TODO (Sonnet): DELETE these placeholders once the OpenAPI client is regenerated (see above).
-export type VariantJobPhase =
-    | 'ANALYZING'
-    | 'PLANNING'
-    | 'PROVISIONING'
-    | 'TRANSFORMING'
-    | 'VERIFYING'
-    | 'REPAIRING'
-    | 'FINALIZING'
-    | 'COMPLETED'
-    | 'DRAFT_WITH_WARNINGS'
-    | 'FAILED'
-    | 'CANCELLED';
-
-export interface VariantJob {
-    jobId: string;
-    sourceExerciseId: number;
-    sourceExerciseTitle: string;
-    exerciseType: string;
-    phase: VariantJobPhase;
-    attempt?: number;
-    maxAttempts?: number;
-    variantExerciseId?: number;
-    warnings?: string[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class ExerciseVariantGenerationService {
-    // TODO (Sonnet): inject() the generated hyperionExerciseVariantApi service, HyperionWebsocketService
-    // (reuse its subscribeToJob pattern, plan Section 5.3 point 2), and AccountService (subscribe on login,
-    // plan Section 5.4 "State handling").
+    private readonly api = inject(HyperionExerciseVariantApiService);
+    private readonly websocketService = inject(ExerciseVariantWebsocketService);
+
+    private readonly jobSubscriptions = new Map<string, Subscription>();
 
     /** All jobs of the current user (running + retained-finished), authoritative copy of GET /variant-jobs. */
     readonly jobs = signal<VariantJob[]>([]);
 
     /** Running jobs drive the tray spinner ring + count badge (plan Section 5.4). */
-    readonly runningJobs = computed(() => this.jobs().filter((job) => !isTerminalPhase(job.phase)));
+    readonly runningJobs = computed(() => this.jobs().filter((job) => !isTerminalVariantPhase(job.phase)));
 
-    /** Tray button hidden when the user has no jobs at all (plan Section 5.4). */
+    /** Tray button hidden when the user has no variant jobs at all (plan Section 5.4). */
     readonly hasJobs = computed(() => this.jobs().length > 0);
 
     /**
-     * TODO (Sonnet): startGeneration(exerciseId, request): POST /exercises/{id}/generate-variant via the OpenAPI
-     * service; on success add a synthetic running entry to `jobs` and subscribe to
-     * "/user/topic/hyperion/variant-generation/jobs/{jobId}" (plan Section 5.2 topic). Return the jobId (Observable).
+     * Starts a variant-generation job and attaches to its websocket topic.
+     *
+     * @param exerciseId the source exercise id
+     * @param request    the wizard request (intents by field presence, placement)
+     * @param sourceExerciseTitle shown in the tray until the next REST re-sync delivers the server-side copy
+     * @returns the created job id
      */
+    startGeneration(exerciseId: number, request: VariantGenerationRequest, sourceExerciseTitle?: string): Observable<string> {
+        return this.api.generateVariant(exerciseId, request).pipe(
+            map((response) => response.jobId!),
+            tap((jobId) => {
+                this.upsertJob({ jobId, sourceExerciseId: exerciseId, sourceExerciseTitle, phase: 'ANALYZING' });
+                this.attachToJob(jobId);
+            }),
+        );
+    }
 
     /**
-     * TODO (Sonnet): getActiveJob(exerciseId): GET .../generate-variant/active — wizard resume support on open
-     * (plan Section 5.3, point 5); 204 → undefined.
+     * Running job for the exercise, if any — wizard resume support on open (plan Section 5.3, point 5).
+     * A 204 (no running job) is mapped to `undefined` by the generated client.
      */
+    getActiveJob(exerciseId: number): Observable<VariantJob | undefined> {
+        return this.api.getActiveJob(exerciseId).pipe(
+            tap((job) => {
+                if (job?.jobId) {
+                    this.upsertJob(job);
+                    this.attachToJob(job.jobId);
+                }
+            }),
+        );
+    }
 
     /**
-     * TODO (Sonnet): loadJobs(): GET /variant-jobs → jobs.set(...); called on login and on websocket reconnect —
-     * events are fire-and-forget, the REST list is authoritative (plan Section 5.4, "State handling").
+     * Re-syncs the tray list from REST — called on login, tray open, and websocket reconnect
+     * (plan Section 5.4, "State handling"): events are fire-and-forget, the job record is authoritative.
      */
+    loadJobs(): Observable<VariantJob[]> {
+        return this.api.getJobsOfCurrentUser().pipe(
+            tap((jobs) => {
+                this.jobs.set(jobs);
+                jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).forEach((job) => this.attachToJob(job.jobId!));
+            }),
+        );
+    }
+
+    /** Full job detail incl. per-phase step outputs — reopening the modal in monitor mode (plan Section 5.4). */
+    getJobDetail(jobId: string): Observable<VariantJobDetail> {
+        return this.api.getJobDetail(jobId);
+    }
 
     /**
-     * TODO (Sonnet): getJobDetail(jobId): GET /variant-jobs/{jobId} — full step outputs for reopening the modal in
-     * monitor mode (plan Section 5.4, "Clicking any job entry reopens the generation modal").
+     * Requests cooperative cancellation (plan Section 5.2). The entry stays listed; it transitions to
+     * CANCELLED when the CANCELLED websocket event arrives (the clone cleanup happens server-side first).
      */
+    cancelJob(jobId: string): Observable<void> {
+        return this.api.cancelJob(jobId);
+    }
 
     /**
-     * TODO (Sonnet): cancelJob(jobId): DELETE /variant-jobs/{jobId}; optimistically keep the entry, transition it to
-     * CANCELLED when the CANCELLED websocket event arrives (plan Sections 5.2 and 5.4 — cancel is offered in the
-     * tray AND in the running modal, both behind a confirmation dialog: "cancellation discards the LLM work done so
-     * far and deletes the provisioned clone").
+     * Per-job event stream for the wizard's step timeline (plan Section 5.3, point 2). Also drives this
+     * service's tray state internally — subscribing here does not create a second websocket subscription.
      */
+    jobEvents(jobId: string): Observable<VariantGenerationEvent> {
+        this.attachToJob(jobId);
+        return this.websocketService.subscribeToJob(jobId);
+    }
 
-    /**
-     * TODO (Sonnet): private handleEvent(jobId, event: VariantGenerationEventDTO): update the matching entry in
-     * `jobs` (phase, attempt, detail, variantExerciseId, warnings); unsubscribe from the job topic on terminal
-     * events (plan Section 5.4). Expose a per-job observable/signal the wizard subscribes to for its step timeline
-     * (PHASE_CHANGED / PROGRESS / ATTEMPT / STEP_OUTPUT / DONE / FAILED / CANCELLED, plan Section 5.2).
-     */
-}
+    private attachToJob(jobId: string): void {
+        if (this.jobSubscriptions.has(jobId)) {
+            return;
+        }
+        const subscription = this.websocketService.subscribeToJob(jobId).subscribe((event) => this.handleEvent(jobId, event));
+        this.jobSubscriptions.set(jobId, subscription);
+    }
 
-/** TODO (Sonnet): replace with the OpenAPI-generated enum helper once available (plan Section 5.2). */
-export function isTerminalPhase(phase: VariantJobPhase): boolean {
-    return phase === 'COMPLETED' || phase === 'DRAFT_WITH_WARNINGS' || phase === 'FAILED' || phase === 'CANCELLED';
+    private handleEvent(jobId: string, event: VariantGenerationEvent): void {
+        this.jobs.update((jobs) =>
+            jobs.map((job) => {
+                if (job.jobId !== jobId) {
+                    return job;
+                }
+                const updated: VariantJob = Object.assign({}, job);
+                updated.phase = event.phase ?? job.phase;
+                updated.attempt = event.attempt ?? job.attempt;
+                updated.maxAttempts = event.maxAttempts ?? job.maxAttempts;
+                updated.variantExerciseId = event.variantExerciseId ?? job.variantExerciseId;
+                updated.warnings = event.warnings ?? job.warnings;
+                return updated;
+            }),
+        );
+        if (event.type === 'DONE' || event.type === 'FAILED' || event.type === 'CANCELLED') {
+            this.detachFromJob(jobId);
+        }
+    }
+
+    private detachFromJob(jobId: string): void {
+        this.jobSubscriptions.get(jobId)?.unsubscribe();
+        this.jobSubscriptions.delete(jobId);
+        this.websocketService.unsubscribeFromJob(jobId);
+    }
+
+    private upsertJob(job: VariantJob): void {
+        this.jobs.update((jobs) => {
+            const existingIndex = jobs.findIndex((existing) => existing.jobId === job.jobId);
+            if (existingIndex >= 0) {
+                const updated = jobs.slice();
+                updated[existingIndex] = Object.assign({}, updated[existingIndex], job);
+                return updated;
+            }
+            return [job].concat(jobs);
+        });
+    }
 }

@@ -33,6 +33,7 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
+import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -71,6 +72,7 @@ import { Course } from 'app/course/shared/entities/course.model';
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        VariantGenerationTrayComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {

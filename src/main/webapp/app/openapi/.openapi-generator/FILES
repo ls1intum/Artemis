@@ -3,6 +3,7 @@ api.base.service.ts
 api/calendarApi.service.ts
 api/globalSearchApi.service.ts
 api/hyperionCodeGenerationApi.service.ts
+api/hyperionExerciseVariantApi.service.ts
 api/hyperionFaqApi.service.ts
 api/hyperionProblemStatementApi.service.ts
 api/hyperionQuizQuestionGenerationApi.service.ts
@@ -27,6 +28,7 @@ model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
 model/costs.ts
+model/createExerciseVariantGroup.ts
 model/createOrUpdateTutorialGroupRequest.ts
 model/createOrUpdateTutorialGroupSessionRequest.ts
 model/difficultyAssessment.ts
@@ -52,6 +54,7 @@ model/quizQuestionRefinementResponse.ts
 model/quizQuestionRefinementSuccess.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
+model/stepOutput.ts
 model/student.ts
 model/studentExport.ts
 model/timing.ts
@@ -66,6 +69,11 @@ model/tutorialGroupSchedule.ts
 model/tutorialGroupSession.ts
 model/tutorialGroupStudent.ts
 model/tutorialGroupStudentImportData.ts
+model/variantGenerationRequest.ts
+model/variantJob.ts
+model/variantJobDetail.ts
+model/variantJobStart.ts
+model/variantPlacement.ts
 param.ts
 provide-api.ts
 query.params.ts

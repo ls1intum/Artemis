@@ -1,0 +1,37 @@
+{
+    "artemisApp": {
+        "exerciseVariantGeneration": {
+            "tray": {
+                "title": "AI variant generation",
+                "ariaLabel": "AI variant generation jobs",
+                "cancel": "Cancel",
+                "cancelConfirmation": "Cancel this variant generation? The AI's work so far will be discarded and the provisioned exercise copy deleted.",
+                "attempt": "attempt {{ attempt }}/{{ max }}",
+                "openVariant": "Open variant"
+            },
+            "wizard": {
+                "generatingTitle": "Generating your variant…",
+                "backgroundHint": "You can close this window — generation continues in the background and the result will be here when you come back.",
+                "startFailed": "The generation job could not be started. Please try again.",
+                "failedTitle": "Variant generation failed",
+                "draftWithWarnings": "The variant was kept as a flagged draft — review and repair it in the editor.",
+                "aiDisclaimer": "AI-generated content may contain errors. Review the problem statement, test cases, and solution carefully before publishing.",
+                "openInEditor": "Open in Editor",
+                "close": "Close"
+            },
+            "phase": {
+                "ANALYZING": "Analyzing source exercise",
+                "PLANNING": "Planning changes",
+                "PROVISIONING": "Creating exercise copy",
+                "TRANSFORMING": "Applying changes",
+                "VERIFYING": "Verifying",
+                "REPAIRING": "Repairing",
+                "FINALIZING": "Finalizing",
+                "COMPLETED": "Completed",
+                "DRAFT_WITH_WARNINGS": "Draft with warnings",
+                "FAILED": "Failed",
+                "CANCELLED": "Cancelled"
+            }
+        }
+    }
+}

@@ -102,6 +102,8 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    /** A generated AI variant was confirmed in the wizard — the host refreshes the exercise/group view. */
+    readonly variantAdded = output<Exercise>();
     /**
      * Width (px) the actions column must reserve to keep this row's always-visible quiz lifecycle buttons plus the
      * ellipsis trigger on screen — i.e. the point at which every collapsible main button has folded into the ellipsis.
