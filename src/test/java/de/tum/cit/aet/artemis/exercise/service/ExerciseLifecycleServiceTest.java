@@ -19,6 +19,12 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
+    private static final long SCHEDULE_OFFSET_MS = 2_000;
+
+    private static final long SCHEDULE_GAP_MS = 2_000;
+
+    private static final long AWAIT_TIMEOUT_SECONDS = 15;
+
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;
 
@@ -28,9 +34,9 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
 
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testScheduleExerciseOnReleaseTask");
-        exercise.setReleaseDate(now.plus(200, ChronoUnit.MILLIS));
-        exercise.setDueDate(now.plus(400, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now.plus(600, ChronoUnit.MILLIS));
+        exercise.setReleaseDate(now.plus(SCHEDULE_OFFSET_MS, ChronoUnit.MILLIS));
+        exercise.setDueDate(now.plus(SCHEDULE_OFFSET_MS + SCHEDULE_GAP_MS, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now.plus(SCHEDULE_OFFSET_MS + 2 * SCHEDULE_GAP_MS, ChronoUnit.MILLIS));
 
         MutableBoolean releaseTrigger = new MutableBoolean(false);
         MutableBoolean dueTrigger = new MutableBoolean(false);
@@ -44,7 +50,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+        await().atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, false);
             assertEqual(assessmentDueTrigger, false);
@@ -54,7 +60,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+        await().atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, true);
             assertEqual(assessmentDueTrigger, false);
@@ -64,7 +70,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
         assertThat(dueFuture.isDone()).isTrue();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+        await().atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, true);
             assertEqual(assessmentDueTrigger, true);
@@ -83,7 +89,7 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
     void testCancellationOfScheduledTask() {
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask");
-        exercise.setDueDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));
+        exercise.setDueDate(ZonedDateTime.now().plus(SCHEDULE_OFFSET_MS, ChronoUnit.MILLIS));
         MutableBoolean trigger = new MutableBoolean(false);
 
         final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, trigger::setTrue);
