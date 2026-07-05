@@ -22,7 +22,9 @@ tasks.register("webapp_test", PnpmTask) {
 
 tasks.register("webapp", PnpmTask) {
     dependsOn pnpmInstall
+         outputs.dir("build/resources/main/static/").withPropertyName("webapp-build-dir")
     if (project.hasProperty("skipWebapp")) {
+        inputs.dir("build/webapp-temp").withPropertyName("webapp-temp-source")
         args = ["-v"]
         // move already build webapp from the directory it was temporarily moved to to the directory it belongs
         doLast {
