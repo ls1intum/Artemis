@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
  */
 public class TesterAgentTools {
 
-    /** Reuses the file/shell tool implementations (base64 write, spill-file bash) via the verify-free two-arg form; the {@code verify} tool is simply not re-exposed here. */
+    /** The file/shell tools via the verify-free constructor; the solution-aware {@code verify} tool is not re-exposed here. */
     private final SandboxAgentTools delegate;
 
     /**
@@ -28,7 +28,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Reads a workspace file (delegates to {@link SandboxAgentTools#readFile(String)}).
+     * Reads a workspace file.
      *
      * @param path the workspace-relative path to read
      * @return the file content, or an actionable error message
@@ -39,7 +39,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Creates or overwrites a workspace file (delegates to {@link SandboxAgentTools#writeFile(String, String)}).
+     * Creates or overwrites a workspace file.
      *
      * @param path    the workspace-relative path to write
      * @param content the complete new file content
@@ -52,7 +52,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Replaces a unique snippet in a workspace file (delegates to {@link SandboxAgentTools#editFile(String, String, String)}).
+     * Replaces a unique snippet in a workspace file.
      *
      * @param path    the workspace-relative path to edit
      * @param oldText the exact text to replace; must occur exactly once
@@ -66,7 +66,9 @@ public class TesterAgentTools {
     }
 
     /**
-     * Runs a shell command in the workspace (delegates to {@link SandboxAgentTools#bash(String)}); the examiner uses it to run {@code sh verify.sh template} to check compilation.
+     * Runs a shell command in the workspace; the examiner uses it to run {@code sh verify.sh template} to check its suite COMPILES against the template's public API (never to make
+     * a
+     * test pass — it has no solution to build against).
      *
      * @param command the shell command to run, as a single string
      * @return the exit status followed by the combined stdout/stderr

@@ -197,13 +197,17 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         when(azureOpenAiChatModel.call(ArgumentMatchers.any(Prompt.class))).thenAnswer((InvocationOnMock invocation) -> wrapped.call(invocation.getArgument(0, Prompt.class)));
     }
 
-    /** How many independent-examiner attempts to allow. The MECHANISM is deterministic; the examiner's per-run reliability at authoring the discriminating test is model-bounded. */
+    /**
+     * How many independent-examiner attempts to allow. The MECHANISM is deterministic; the examiner's per-run reliability at authoring the discriminating test is model-bounded.
+     */
     private static final int MAX_EXAMINER_ATTEMPTS = 4;
 
     /**
      * Proves the decorrelated mechanism can EXPOSE the co-authored false-accept through the production seeding path. Honest scope: the harness is correct by construction, but the
-     * examiner here is the SAME model as the author (gpt-oss-120b), so it (a) is unreliable at authoring the subtle put,put,put insertion-order test and (b) can inherit the author's
-     * blind spot — a single run catches the bug only sometimes. So we allow a few attempts and assert the mechanism exposes it in AT LEAST ONE (and that the catching suite does not
+     * examiner here is the SAME model as the author (gpt-oss-120b), so it (a) is unreliable at authoring the subtle put,put,put insertion-order test and (b) can inherit the
+     * author's
+     * blind spot — a single run catches the bug only sometimes. So we allow a few attempts and assert the mechanism exposes it in AT LEAST ONE (and that the catching suite does
+     * not
      * false-reject a correct solution). Improving per-run catch reliability is an LLM lever (a stronger, or genuinely model-decorrelated, examiner), not a harness one.
      */
     @Test
@@ -215,7 +219,8 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         for (int attempt = 1; attempt <= MAX_EXAMINER_ATTEMPTS && !exposed; attempt++) {
             final int currentAttempt = attempt;
             // LIVE independent examiner THROUGH THE PRODUCTION PATH: authorShadowSuite owns its own solution-free session, seeds from the produced template + tests maps (never the
-            // solution), runs the real tester loop, and reads the authored suite back out — validating seedTesterWorkspace(...produced maps), not a hand-seed. Decorrelation-by-absence
+            // solution), runs the real tester loop, and reads the authored suite back out — validating seedTesterWorkspace(...produced maps), not a hand-seed.
+            // Decorrelation-by-absence
             // is proven deterministically by GenerationWorkspaceServiceTesterSeedingTest.
             Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
                     line -> log.info("[tester attempt {}] {}", currentAttempt, line));

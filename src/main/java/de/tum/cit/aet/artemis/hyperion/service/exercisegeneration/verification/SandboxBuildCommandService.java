@@ -105,17 +105,6 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * The correctness cross-check's TEMPLATE build: the shadow suite against the template, used only as a discrimination hint (how many shadow tests the template also fails),
-     * never
-     * part of the reject decision.
-     *
-     * @return the {@code sh verify.sh template shadow-tests} invocation
-     */
-    public String crosscheckTemplateBuildCommand() {
-        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), CROSSCHECK_TESTS_DIR);
-    }
-
-    /**
      * The verifier-owned directory the pristine script collected the reports for an assignment into, which the verifier copies out and parses.
      *
      * @param assignment the assignment directory name ({@code solution} or {@code template})

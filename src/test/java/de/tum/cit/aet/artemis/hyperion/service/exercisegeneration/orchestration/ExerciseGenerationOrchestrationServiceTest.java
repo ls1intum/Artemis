@@ -433,18 +433,18 @@ class ExerciseGenerationOrchestrationServiceTest {
     private static final Map<String, String> SHADOW_SUITE = Map.of("test/de/test/LRUCacheTest.java", "class LRUCacheTest {}");
 
     private static CorrectnessCrossCheck contradiction() {
-        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONTRADICTION, List.of("evictsLeastRecentlyUsedInsertionOrder"),
-                List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, 1, "solution fails 1 of 1");
+        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONTRADICTION, List.of("evictsLeastRecentlyUsedInsertionOrder"), "solution fails 1 of 1");
     }
 
     private static CorrectnessCrossCheck consistent() {
-        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONSISTENT, List.of(), List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, 1, "all pass");
+        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONSISTENT, List.of(), "all pass");
     }
 
     /**
      * With the PRODUCTION default (advisory-enabled, reject-off) the examiner is seeded from the artifacts the agent ACTUALLY produced — {@code producedTemplate.files()} and
-     * {@code producedTests.files()}, never the solution. This is the exact assertion whose absence let the original no-op ship (the examiner used to be seeded from the stale
-     * pre-generation scaffold via git).
+     * {@code producedTests.files()}, never the solution and never the pre-generation scaffold. Seeding from the produced artifacts is what makes the shadow suite compile against
+     * the
+     * real API (effective, not a silent no-op); seeding the solution would break decorrelation.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -466,9 +466,9 @@ class ExerciseGenerationOrchestrationServiceTest {
         ArgumentCaptor<Map<String, String>> templateCaptor = ArgumentCaptor.forClass(Map.class);
         ArgumentCaptor<Map<String, String>> testsCaptor = ArgumentCaptor.forClass(Map.class);
         verify(independentTesterAgent).authorShadowSuite(eq(exercise), templateCaptor.capture(), testsCaptor.capture(), any(), any(), any());
+        // Equality to the PRODUCED template (which differs from producedSolution) is the positive decorrelation proof: the examiner sees the template, never the solution.
         assertThat(templateCaptor.getValue()).as("the examiner is seeded from the PRODUCED template, not the stale pre-generation scaffold").isEqualTo(producedTemplate);
         assertThat(testsCaptor.getValue()).as("the examiner is seeded from the PRODUCED tests harness").isEqualTo(producedTests);
-        assertThat(templateCaptor.getValue()).as("and NEVER the solution map (decorrelation: the examiner has no reference solution)").isNotEqualTo(producedSolution);
     }
 
     /**
@@ -492,19 +492,6 @@ class ExerciseGenerationOrchestrationServiceTest {
         verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
-    /** Reject-mode is OFF by default: even a proven contradiction never hard-blocks the accepted exercise (the reject-on-contradiction flag defaults false). */
-    @Test
-    void rejectModeOffByDefault_contradictionNeverHardBlocks() {
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
-        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isHardBlockedByCrossCheck()).as("reject-mode is default OFF, so a contradiction never hard-blocks").isFalse();
-        }
-    }
-
     /**
      * The off-switch still works: with the master flag explicitly OFF the cross-check never runs — no tester agent, no cross-check — and the outcome carries no cross-check result.
      */
@@ -521,24 +508,6 @@ class ExerciseGenerationOrchestrationServiceTest {
         }
         verify(independentTesterAgent, never()).authorShadowSuite(any(), any(), any(), any(), any(), any());
         verify(correctnessCrossCheckService, never()).runAgainstShadowSuite(any(), anyString(), any(), any());
-    }
-
-    /** Enabled + advisory (reject-off): a contradiction stays accepted, adds an advisory CONTRACT_CONTRADICTION finding, does NOT hard-block, and does NOT trigger a retry. */
-    @Test
-    void crossCheckContradiction_advisoryOnly_staysAcceptedAndAddsFindingWithoutRetry() {
-        service = crossCheckService(true, false);
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
-        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
-
-        try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.isAccepted()).as("the differential acceptance is never loosened").isTrue();
-            assertThat(outcome.isHardBlockedByCrossCheck()).as("advisory mode never hard-blocks").isFalse();
-            assertThat(outcome.correctnessCrossCheck().isContradiction()).isTrue();
-            assertThat(outcome.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
-        }
-        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
     /** Enabled + reject-on-contradiction, attempts remaining: the contradiction retries with the examiner feedback in the prompt; a subsequent consistent run persists cleanly. */

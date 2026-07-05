@@ -379,7 +379,7 @@ public class SpecFidelityCriticService {
                 case UNCOVERED_REQUIREMENT ->
                     builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
                 case CONTRACT_CONTRADICTION ->
-                    builder.append("\n- An independent examiner's test (derived only from your problem statement's stated contract) FAILS on your reference " + "solution: ")
+                    builder.append("\n- An independent examiner's test (derived only from your problem statement's stated contract) FAILS on your reference solution: ")
                             .append(finding.requirement()).append(". Your solution contradicts its own stated behaviour — fix the solution so it satisfies the contract you "
                                     + "wrote (or, if the stated contract is wrong, correct the problem statement AND the tests to match).");
             }

@@ -81,7 +81,9 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Test-only constructor for the bash/file tools; the verifier and exercise are absent, so {@code verify} returns its "unavailable" fallback. Production uses the four-arg form.
+     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by the decorrelated {@link TesterAgentTools} (the examiner
+     * must
+     * not build the solution) and by unit tests of the file/shell tools.
      *
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle

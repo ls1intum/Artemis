@@ -86,17 +86,18 @@ public class ExerciseGenerationOrchestrationService {
     // prompt while attempts remain and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
-    // DECORRELATED correctness cross-check (Design F): an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution.
-    // ADDITIVE
-    // and advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted
-    // exercise.
+    // DECORRELATED correctness cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. ADDITIVE and
+    // advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise.
     private final IndependentTesterAgentService independentTesterAgent;
 
     private final CorrectnessCrossCheckService correctnessCrossCheckService;
 
     /**
-     * Whether to run the decorrelated correctness cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist — it surfaces a finding and folds into the
-     * retry, never blocking acceptance; {@link #rejectOnContradiction} stays OFF until the GPU false-reject rate is measured at scale).
+     * Whether to run the decorrelated correctness cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist). Under the advisory default an accepted
+     * attempt
+     * ends the loop, so a contradiction surfaces only as an advisory review comment on the final exercise; the retry-prompt surfacing fires solely when
+     * {@link #rejectOnContradiction}
+     * is set (OFF until the GPU false-reject rate is measured at scale).
      */
     private final boolean crossCheckEnabled;
 
@@ -270,8 +271,10 @@ public class ExerciseGenerationOrchestrationService {
                             if (attempt < MAX_GENERATION_ATTEMPTS) {
                                 // Retry despite differential-acceptance: the solution contradicts its own stated contract, so ask the agent to fix it.
                                 emit(progress, "An independent examiner exposed a contract contradiction; asking the agent to fix the solution and try again.");
+                                // The contradiction was folded into specFidelityReport above, so the critic's retry rendering names the contradicted tests — no separate render
+                                // needed.
                                 currentPrompt = "Your exercise passed the differential verifier, but an INDEPENDENT examiner exposed a contract contradiction:"
-                                        + crossCheck.renderForRetryPrompt() + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                                        + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                                 continue;
                             }
                             // Attempts exhausted and still contradicted: carry the hard block on the outcome (routes to review), leaving `verification.accepted()` untouched.
@@ -393,13 +396,13 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     /**
-     * The exercise's currently-persisted graded test names, the baseline for the adapt total-wipe gate. Reads the SAME repository production grading uses
-     * ({@code findByExerciseId}); returns empty (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing
-     * baseline
-     * never fabricates a rejection.
+     * The exercise's currently-persisted test names — a conservative superset of the graded coverage the adapt total-wipe gate protects: it reads EVERY persisted case via
+     * {@code findByExerciseId} (the SAME repository production grading uses) rather than re-deriving the active/weighted subset, so it never under-reports the baseline. Returns
+     * empty
+     * (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing baseline never fabricates a rejection.
      *
      * @param exercise the exercise being adapted
-     * @return the normalized-later graded test names, or an empty set when no authoritative baseline is available
+     * @return the persisted test names, or an empty set when no authoritative baseline is available
      */
     private Set<String> captureBaselineGradedTestNames(ProgrammingExercise exercise) {
         if (testCaseRepository.isEmpty() || exercise.getId() == null) {

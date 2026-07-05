@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * statement's stated contract, using the restricted {@link TesterAgentTools} (no {@code verify} tool), and iterates only to make the suite compile against the template.
  * <p>
  * The authored suite (the tests-repo working tree, read back out of the tester container) is returned to the caller, which then runs it against the REAL solution/template via the
- * {@code CorrectnessCrossCheckService}. This is the staged (live-model) half of Design F; it is only invoked when the cross-check is enabled and the language is allowlisted.
+ * {@code CorrectnessCrossCheckService}. It is only invoked when the cross-check is enabled and the language is allowlisted.
  */
 @Lazy
 @Service

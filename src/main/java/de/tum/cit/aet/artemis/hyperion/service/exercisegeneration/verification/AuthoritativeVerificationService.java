@@ -202,8 +202,8 @@ public class AuthoritativeVerificationService {
      * @param seededStructuralTestNames    the AUTHORITATIVE structural test names the seeder injected this run (never agent-supplied); a {@code [task]} bound to one is exempt from
      *                                         binding RESOLUTION but still participates in the differential. Empty for callers without it (the from-scratch path falls back to the
      *                                         name-shape exemption)
-     * @param baselineGradedTestNames      the exercise's graded test names captured BEFORE an ADAPT ran (empty for GENERATE); drives the adapt total-wipe gate — an adapt that
-     *                                         retains none of them is a from-scratch regeneration masquerading as an adapt. Empty leaves the gate inert (fail-open)
+     * @param baselineGradedTestNames      the pre-adapt baseline for the adapt total-wipe gate (see {@link ExerciseIntegrityGate#adaptWipedGradedTestsReasons}); empty for GENERATE
+     *                                         leaves the gate inert (fail-open)
      * @param relaxTestsRepoImmutability   whether to SKIP the tests-repo harness-immutability gate (ADAPT mode only): a feedback item may legitimately add or adjust a test, and
      *                                         for
      *                                         some build systems the manifest that registers it. The differential oracle (rebuilding pristine from the produced tree) remains the

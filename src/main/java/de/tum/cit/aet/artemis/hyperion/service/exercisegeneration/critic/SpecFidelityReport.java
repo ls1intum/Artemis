@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
@@ -67,7 +68,7 @@ public record SpecFidelityReport(List<Finding> findings) {
      * @return a new report carrying this report's findings plus {@code finding}
      */
     public SpecFidelityReport withFinding(Finding finding) {
-        List<Finding> combined = new java.util.ArrayList<>(findings);
+        List<Finding> combined = new ArrayList<>(findings);
         combined.add(finding);
         return new SpecFidelityReport(List.copyOf(combined));
     }

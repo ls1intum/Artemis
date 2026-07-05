@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 /**
  * Result of the DECORRELATED correctness cross-check: an INDEPENDENTLY-authored test suite (written by a separate examiner agent from the problem statement's stated contract,
  * never
- * from the reference solution) run against the REAL solution and template through the SAME production build+parse path the differential oracle uses.
+ * from the reference solution) run against the REAL solution through the SAME production build+parse path the differential oracle uses.
  * <p>
  * The differential oracle ({@link AuthoritativeVerificationService}) relates four artifacts the SAME agent authored (solution/template/tests/problem-statement), so a wrong model
  * encoded consistently across the solution AND its co-authored tests is invisible to it by construction (the checked-in {@code realistic-pasted-lru} false-accept). This report
@@ -20,15 +20,11 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
  * discipline.
  * On any doubt the check fails OPEN ({@link Status#INCONCLUSIVE}) so it can never fabricate a false reject.
  *
- * @param status                     the cross-check verdict
- * @param contradictedTests          the shadow tests the REAL solution FAILS (build/compile gates excluded), parser form; the exact behaviours the solution contradicts
- * @param shadowTestNames            every shadow test name that ran against the solution, parser form
- * @param shadowTestsAgainstSolution the number of shadow tests that actually ran against the real solution
- * @param shadowTestsFailingTemplate how many shadow tests fail on the template (a discrimination hint only; NOT part of the reject decision)
- * @param detail                     a short human-readable explanation (why it was skipped/inconclusive, or a summary); may be {@code null}
+ * @param status            the cross-check verdict
+ * @param contradictedTests the shadow tests the REAL solution FAILS (build/compile gates excluded), parser form; the exact behaviours the solution contradicts
+ * @param detail            a short human-readable explanation (why it was skipped/inconclusive, or a summary); may be {@code null}
  */
-public record CorrectnessCrossCheck(Status status, List<String> contradictedTests, List<String> shadowTestNames, int shadowTestsAgainstSolution, int shadowTestsFailingTemplate,
-        @Nullable String detail) {
+public record CorrectnessCrossCheck(Status status, List<String> contradictedTests, @Nullable String detail) {
 
     /** The cross-check verdict. */
     public enum Status {
@@ -46,30 +42,14 @@ public record CorrectnessCrossCheck(Status status, List<String> contradictedTest
         return status == Status.CONTRADICTION;
     }
 
-    /** The cross-check did not run (flag off / language not allowlisted / no shadow suite). */
+    /** The cross-check did not run; see {@link Status#SKIPPED}. */
     public static CorrectnessCrossCheck skipped(String why) {
-        return new CorrectnessCrossCheck(Status.SKIPPED, List.of(), List.of(), 0, 0, why);
+        return new CorrectnessCrossCheck(Status.SKIPPED, List.of(), why);
     }
 
-    /** The shadow suite did not compile/run against the real solution, so no conclusion can be drawn — never a reject (fail-open). */
+    /** Fail-open: no conclusion could be drawn, so this is never a reject. See {@link Status#INCONCLUSIVE}. */
     public static CorrectnessCrossCheck inconclusive(String why) {
-        return new CorrectnessCrossCheck(Status.INCONCLUSIVE, List.of(), List.of(), 0, 0, why);
-    }
-
-    /**
-     * Folds the contradiction into the verifier-feedback retry prompt while attempts remain, mirroring {@code SpecFidelityCriticService.renderForRetryPrompt}. Empty for any
-     * non-contradiction status, so the caller can append it unconditionally.
-     *
-     * @return a retry-prompt fragment naming the contradicted behaviours, or an empty string when there is no contradiction
-     */
-    public String renderForRetryPrompt() {
-        if (!isContradiction()) {
-            return "";
-        }
-        return "\n\nAn INDEPENDENT examiner authored tests from your problem statement's stated contract alone (it never saw your reference solution) and your reference solution "
-                + "FAILS these: " + String.join(", ", contradictedTests) + ". This means your solution contradicts its own stated behaviour — a real correctness bug (not a test "
-                + "problem). Re-read the problem statement's contract and worked examples, then FIX the reference solution so it satisfies them. If instead the STATED contract is "
-                + "wrong, correct the problem statement AND your own tests to match the behaviour you actually want.";
+        return new CorrectnessCrossCheck(Status.INCONCLUSIVE, List.of(), why);
     }
 
     /**

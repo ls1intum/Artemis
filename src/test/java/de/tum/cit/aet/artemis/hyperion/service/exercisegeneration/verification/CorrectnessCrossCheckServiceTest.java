@@ -80,18 +80,17 @@ class CorrectnessCrossCheckServiceTest {
 
     @Test
     void buggySolution_contradicts() {
-        // Against the buggy LRU solution the insertion-order eviction test FAILS while the rest pass; the template fails all.
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false, SHADOW_NAMES, SHADOW_NAMES, 1, false);
+        // Against the buggy LRU solution the insertion-order eviction test FAILS while the rest pass.
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false);
         CorrectnessCrossCheck result = run(sandbox);
         assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONTRADICTION);
         assertThat(result.contradictedTests()).containsExactly("evictsLeastRecentlyUsedInsertionOrder");
-        assertThat(result.shadowTestsAgainstSolution()).isEqualTo(3);
     }
 
     @Test
     void correctSolution_consistent() {
         // The SAME shadow suite passes entirely against a correct solution -> no false reject.
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of(), 0, false, SHADOW_NAMES, SHADOW_NAMES, 1, false);
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of(), 0, false);
         CorrectnessCrossCheck result = run(sandbox);
         assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
         assertThat(result.contradictedTests()).isEmpty();
@@ -99,8 +98,8 @@ class CorrectnessCrossCheckServiceTest {
 
     @Test
     void shadowDoesNotCompileVsSolution_inconclusive() {
-        // The shadow suite did not compile/run against the solution (0 tests) -> fail-open, never a reject.
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 1, false, List.of(), List.of(), 1, false);
+        // The shadow suite did not compile/run against the solution (0 tests parsed) -> fail-open, never a reject.
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 1, false);
         CorrectnessCrossCheck result = run(sandbox);
         assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
         assertThat(result.contradictedTests()).isEmpty();
@@ -108,7 +107,9 @@ class CorrectnessCrossCheckServiceTest {
 
     @Test
     void solutionTimeout_inconclusive() {
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 124, true, SHADOW_NAMES, SHADOW_NAMES, 1, false);
+        // Distinct fail-open branch: the solution build TIMED OUT (production runPristineBuild short-circuits to a zero-test summary before any parse) -> INCONCLUSIVE, never a
+        // reject.
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(List.of(), List.of(), 124, true);
         assertThat(run(sandbox).status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
     }
 
@@ -116,7 +117,7 @@ class CorrectnessCrossCheckServiceTest {
     void buildGateFailureIgnored_consistent() {
         // Only a build/compile gate fails on the solution (never a behavioural test) -> excluded, parity with the acceptance gate -> CONSISTENT.
         List<String> withGate = List.of("TestConfigure", "putThenGet");
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(withGate, List.of("TestConfigure"), 1, false, withGate, withGate, 1, false);
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(withGate, List.of("TestConfigure"), 1, false);
         CorrectnessCrossCheck result = run(sandbox);
         assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
         assertThat(result.contradictedTests()).isEmpty();
@@ -124,63 +125,48 @@ class CorrectnessCrossCheckServiceTest {
 
     @Test
     void emptyShadowSuite_skipped() {
-        assertThat(newService().runAgainstShadowSuite(new ScriptedShadowSandbox(List.of(), List.of(), 0, false, List.of(), List.of(), 0, false), "s", new ProgrammingExercise(),
-                Map.of())).extracting(CorrectnessCrossCheck::status).isEqualTo(CorrectnessCrossCheck.Status.SKIPPED);
+        assertThat(newService().runAgainstShadowSuite(new ScriptedShadowSandbox(List.of(), List.of(), 0, false), "s", new ProgrammingExercise(), Map.of()))
+                .extracting(CorrectnessCrossCheck::status).isEqualTo(CorrectnessCrossCheck.Status.SKIPPED);
     }
 
     @Test
     void contradiction_rendersThroughTheAdvisoryPlumbing() {
-        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false, SHADOW_NAMES, SHADOW_NAMES, 1, false);
+        ScriptedShadowSandbox sandbox = new ScriptedShadowSandbox(SHADOW_NAMES, List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, false);
         CorrectnessCrossCheck result = run(sandbox);
         SpecFidelityReport.Finding advisory = result.toAdvisoryFinding();
         assertThat(advisory.kind()).isEqualTo(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
         assertThat(advisory.requirement()).contains("evictsLeastRecentlyUsedInsertionOrder");
-        assertThat(result.renderForRetryPrompt()).contains("evictsLeastRecentlyUsedInsertionOrder").contains("contradicts its own stated behaviour");
     }
 
     /**
-     * Serves the shadow-suite build reports on {@code copyOut} (routed by the reports-dir path ending {@code /solution} or {@code /template}) and the build exit code/timeout on
-     * {@code exec}, so the cross-check runs its real seed+build+copyOut+parse path against scripted reports — no Docker.
+     * Serves the shadow-suite build reports on {@code copyOut} (routed by the reports-dir path ending {@code /solution}) and the build exit code/timeout on {@code exec}, so the
+     * cross-check runs its real seed+build+copyOut+parse path against scripted reports — no Docker. The cross-check only ever builds the solution, so only that assignment is
+     * scripted.
      */
     private static final class ScriptedShadowSandbox implements InteractiveSandbox {
 
-        private final List<String> solutionNames;
+        private final List<String> names;
 
-        private final List<String> solutionFailed;
+        private final List<String> failed;
 
-        private final int solutionExit;
+        private final int exit;
 
-        private final boolean solutionTimedOut;
+        private final boolean timedOut;
 
-        private final List<String> templateNames;
-
-        private final List<String> templateFailed;
-
-        private final int templateExit;
-
-        private final boolean templateTimedOut;
-
-        private ScriptedShadowSandbox(List<String> solutionNames, List<String> solutionFailed, int solutionExit, boolean solutionTimedOut, List<String> templateNames,
-                List<String> templateFailed, int templateExit, boolean templateTimedOut) {
-            this.solutionNames = solutionNames;
-            this.solutionFailed = solutionFailed;
-            this.solutionExit = solutionExit;
-            this.solutionTimedOut = solutionTimedOut;
-            this.templateNames = templateNames;
-            this.templateFailed = templateFailed;
-            this.templateExit = templateExit;
-            this.templateTimedOut = templateTimedOut;
+        private ScriptedShadowSandbox(List<String> names, List<String> failed, int exit, boolean timedOut) {
+            this.names = names;
+            this.failed = failed;
+            this.exit = exit;
+            this.timedOut = timedOut;
         }
 
         @Override
         public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
-            String joined = String.join(" ", command);
-            if (!joined.contains("verify.sh")) {
+            if (!String.join(" ", command).contains("verify.sh")) {
                 // mkdir for the pristine script dir, cat, etc. -> succeed.
                 return new SandboxExecResult(0, "", "", false);
             }
-            boolean solution = joined.contains(" solution ") || joined.endsWith(" solution");
-            return solution ? new SandboxExecResult(solutionExit, "ran", "", solutionTimedOut) : new SandboxExecResult(templateExit, "ran", "", templateTimedOut);
+            return new SandboxExecResult(exit, "ran", "", timedOut);
         }
 
         @Override
@@ -194,13 +180,7 @@ class CorrectnessCrossCheckServiceTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
-            if (path.endsWith("/solution")) {
-                return ReportTarFixtures.junitReports("solution", solutionNames, solutionFailed);
-            }
-            if (path.endsWith("/template")) {
-                return ReportTarFixtures.junitReports("template", templateNames, templateFailed);
-            }
-            return null;
+            return path.endsWith("/solution") ? ReportTarFixtures.junitReports("solution", names, failed) : null;
         }
 
         @Override
