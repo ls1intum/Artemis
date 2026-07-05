@@ -22,6 +22,7 @@ tasks.register("webapp_test", PnpmTask) {
 
 tasks.register("webapp", PnpmTask) {
     dependsOn pnpmInstall
+    args = ["run", "webapp:prod"]
     outputs.dir("build/resources/main/static/")
         .withPropertyName("webapp-build-dir")
 
@@ -55,3 +56,4 @@ processResources {
 test.dependsOn webapp_test
 processResources.dependsOn webapp
 bootJar.dependsOn processResources
+
