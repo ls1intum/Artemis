@@ -148,7 +148,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         await this.initAfterCourseLoad();
     }
 
-    protected handleNavigationEndActions() {}
+    protected override handleNavigationEndActions(): void {}
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
