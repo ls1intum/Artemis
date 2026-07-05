@@ -153,7 +153,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     private loadAll() {
         this.faqService
             .findAllByCourseId(this.courseId())
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
             .subscribe({
                 next: (res: Faq[]) => {
                     this.faqs = res;

@@ -37,7 +37,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 export class CourseImportStandardizedPrerequisitesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private prerequisiteService = inject(PrerequisiteService);
 
-    protected importCompetencies() {
+    protected override importCompetencies() {
         super.importCompetencies(this.prerequisiteService);
     }
 }

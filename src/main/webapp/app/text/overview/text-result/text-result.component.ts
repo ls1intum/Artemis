@@ -42,7 +42,7 @@ export class TextResultComponent {
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         checkSubsequentFeedbackInAssessment(feedbacks);
-        const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
+        const [referenceBasedFeedback, blockBasedFeedback] = feedbacks.reduce<[Feedback[], Feedback[]]>(
             ([refBased, blockBased], elem) => (this.SHA1_REGEX.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],
         );

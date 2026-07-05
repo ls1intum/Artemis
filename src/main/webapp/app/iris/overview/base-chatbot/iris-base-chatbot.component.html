@@ -5,17 +5,22 @@
         <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
-                    <div
+                    <button
+                        type="button"
                         class="collapsed-icon-button"
                         (click)="setChatHistoryVisibility(true)"
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="setChatHistoryVisibility(true)"
-                        (keydown.space)="setChatHistoryVisibility(true)"
                         [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
                     >
+                        <fa-icon [icon]="faAnglesRight" />
+                    </button>
+                    <button
+                        type="button"
+                        class="collapsed-icon-button"
+                        (click)="setChatHistoryVisibility(true)"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.searchChatHistory' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faMagnifyingGlass" />
-                    </div>
+                    </button>
                     <div
                         class="new-chat-button"
                         (click)="openNewSession()"
@@ -45,8 +50,9 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3">
+                        <div class="px-2 mt-2 mb-3 d-flex align-items-center gap-2">
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
 
                         <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">

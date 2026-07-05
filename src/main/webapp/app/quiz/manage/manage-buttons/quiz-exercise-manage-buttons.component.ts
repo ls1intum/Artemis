@@ -100,7 +100,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.isDetailPage()) {
-                    this.router.navigate(['course-management', this.courseId, 'exercises']);
+                    void this.router.navigate(['course-management', this.courseId, 'exercises']);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

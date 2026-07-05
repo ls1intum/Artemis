@@ -251,11 +251,14 @@ describe('Exercise Scores Component', () => {
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
-        ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, ex: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
-            component.exercise.set(ex);
-            component.newManualResultAllowed.set(newManualResultsAllowed);
-            expect(component.relevantFilters().includes(filter)).toBe(expected);
-        });
+        ])(
+            'should determine if filter is relevant for exercise configuration',
+            (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
+                component.exercise.set(ex as Exercise);
+                component.newManualResultAllowed.set(newManualResultsAllowed);
+                expect(component.relevantFilters().includes(filter)).toBe(expected);
+            },
+        );
     });
 
     describe('getBuildPlanUrl', () => {

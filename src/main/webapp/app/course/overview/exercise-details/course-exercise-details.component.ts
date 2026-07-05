@@ -12,6 +12,16 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+
+/**
+ * Type guard mirroring the domain rule that a student participation is any participation that is neither a
+ * template nor a solution participation. Used to soundly narrow the app-wide participation stream (which is
+ * only ever fed student participations for this view) from Participation to StudentParticipation.
+ */
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
+}
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
@@ -303,7 +313,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
-        this.subscribeToTeamAssignmentUpdates();
+        void this.subscribeToTeamAssignmentUpdates();
 
         this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
         if (this.exercise?.type) {
@@ -356,9 +366,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._sortedHistoryResults.set(sorted);
         }
     }
-    private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate).valueOf();
-        const bValue = dayjs(b.completionDate).valueOf();
+    private resultSortFunction = (a: Result | undefined, b: Result | undefined) => {
+        // Missing/undefined completion dates sort last (treated as the max timestamp). This keeps the prior
+        // ordering (`dayjs(undefined)` evaluated to "now", placing undated results after real dates) but is
+        // deterministic and avoids the "now" footgun — and two undated results compare equal (0) rather than NaN.
+        const aValue = a?.completionDate ? dayjs(a.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
+        const bValue = b?.completionDate ? dayjs(b.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
         return aValue - bValue;
     };
 
@@ -390,8 +403,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribeForParticipationChanges()
             // Skip the first event, as it is the initial state. All data should already be loaded.
             .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
-            .subscribe((changedParticipation: StudentParticipation) => {
-                if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+            .subscribe((changedParticipation: Participation | undefined) => {
+                // The app-wide participation subject only ever emits (structurally plain) student participations for this view.
+                if (isStudentParticipationChange(changedParticipation) && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     const currentGraded = this.gradedStudentParticipation();
                     // Notify student about late submission result
                     if (
@@ -759,7 +773,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             return;
         }
-        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
+        void this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {

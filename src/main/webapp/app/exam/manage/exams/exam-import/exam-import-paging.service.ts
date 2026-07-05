@@ -22,7 +22,7 @@ export class ExamImportPagingService extends PagingService<Exam> {
     override search(pageable: SearchTermPageableSearch, options: { withExercises: boolean }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);
         return this.http
-            .get(`${ExamImportPagingService.RESOURCE_URL}?withExercises=${options.withExercises}`, { params, observe: 'response' })
+            .get<EntityResponseType>(`${ExamImportPagingService.RESOURCE_URL}?withExercises=${options.withExercises}`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

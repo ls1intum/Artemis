@@ -214,6 +214,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (!root) {
                 return;
             }
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- the observer is disconnected via the effect's onCleanup below, which runs on every effect re-run and on component destroy. The rule only scans ngOnDestroy, so it cannot see this teardown.
             const observer = new ResizeObserver(() => {
                 const rect = root.getBoundingClientRect();
                 root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
@@ -595,7 +596,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -637,7 +638,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -855,7 +856,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                         break;
                     default:
-                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        captureException(new Error('Unknown question type: ' + clientQuestion.type));
                         break;
                 }
             }

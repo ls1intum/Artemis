@@ -39,7 +39,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
 export class CourseImportStandardizedCompetenciesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
     private competencyService = inject(CompetencyService);
 
-    protected importCompetencies() {
+    protected override importCompetencies() {
         super.importCompetencies(this.competencyService);
     }
 }

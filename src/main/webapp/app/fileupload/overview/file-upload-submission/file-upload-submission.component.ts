@@ -192,7 +192,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         if (this.submission()?.submitted && this.result()?.completionDate) {
             const submissionId = this.submission()?.id;
             if (submissionId) {
-                firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
+                void firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
                     this.result.set(assessmentResult);
                 });
             }

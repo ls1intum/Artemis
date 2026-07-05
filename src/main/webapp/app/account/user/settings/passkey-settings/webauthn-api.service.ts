@@ -14,7 +14,7 @@ export class WebauthnApiService extends BaseApiHttpService {
     /**
      * The endpoints are provided by spring and not explicitly defined in a resource, therefore there is no "/api" prefix
      */
-    protected baseUrl = '';
+    protected override baseUrl = '';
 
     /**
      * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-register-options}

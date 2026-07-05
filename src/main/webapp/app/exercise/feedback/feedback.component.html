@@ -1,7 +1,7 @@
 @if (!isExamReviewPage() && !dialogRef) {
     <div class="modal-header feedback-header">
-        @if (taskName) {
-            <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName }"></h3>
+        @if (taskName()) {
+            <h3 class="modal-title" [innerHTML]="'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName: taskName() }"></h3>
         } @else {
             <h3 class="modal-title" jhiTranslate="artemisApp.result.detail.feedback"></h3>
         }
@@ -10,12 +10,12 @@
 
 <div class="modal-body position-relative">
     <!-- Message, if defined -->
-    @if (messageKey) {
-        <div class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
+    @if (messageKey()) {
+        <div class="mb-3"><h6 [innerHTML]="messageKey() | artemisTranslate"></h6></div>
     }
-    @if (showMissingAutomaticFeedbackInformation) {
+    @if (showMissingAutomaticFeedbackInformation()) {
         <div class="mb-3">
-            <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate }"></h6>
+            <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate() }"></h6>
         </div>
     }
 
@@ -31,21 +31,21 @@
                     <div>
                         <div class="d-flex justify-content-between align-items-start">
                             <h4>
-                                @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                                @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                                     <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                                 } @else {
-                                    @if (!exercise?.maxPoints) {
+                                    @if (!resolvedExercise()?.maxPoints) {
                                         <span
                                             jhiTranslate="artemisApp.result.score"
-                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result.score, course()) }"
+                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result().score, course()) }"
                                         ></span>
-                                    } @else {
-                                        @if (exercise && exercise.maxPoints) {
+                                    } @else if (resolvedExercise(); as exercise) {
+                                        @if (exercise.maxPoints) {
                                             <span
                                                 jhiTranslate="artemisApp.result.scoreWithPoints"
                                                 [translateValues]="{
-                                                    score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course()),
-                                                    points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course()),
+                                                    score: roundValueSpecifiedByCourseSettings(result().score ?? 0, course()),
+                                                    points: roundValueSpecifiedByCourseSettings(((result().score ?? 0) * exercise.maxPoints) / 100, course()),
                                                 }"
                                             ></span>
                                         }
@@ -61,11 +61,11 @@
                         </div>
 
                         <!-- Show and link to the commit hash in case of programming exercise results -->
-                        @if (exerciseType === ExerciseType.PROGRAMMING && result.submission) {
+                        @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
                             <p>
                                 {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
-                                <span [ngbTooltip]="result.submission.submissionDate | artemisDate">
-                                    {{ result.submission.submissionDate | artemisTimeAgo }}
+                                <span [ngbTooltip]="result().submission!.submissionDate | artemisDate">
+                                    {{ result().submission!.submissionDate | artemisTimeAgo }}
                                 </span>
                                 - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
                                 <!-- TODO Link to repository view -->
@@ -75,7 +75,7 @@
                     </div>
                 }
 
-                @if (showScoreChart && result.submission?.participation?.exercise) {
+                @if (scoreChartVisible() && result().submission?.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" class="chart-space" style="height: 80px">
                             <p-chart type="bar" [data]="scoreChartData()" [options]="scoreChartOptions()" />
@@ -94,18 +94,18 @@
                     <hr />
                 }
 
-                @if (!loadingFailed() && resultIsPreliminary(result, participation)) {
+                @if (!loadingFailed() && resultIsPreliminary(result(), participation())) {
                     <div>
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                         </div>
-                        @if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                        @if (result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                             <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
                         } @else {
-                            @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                            @if (resolvedExercise()?.assessmentType !== AssessmentType.AUTOMATIC) {
                                 <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
                             }
-                            @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
+                            @if (resolvedExercise()?.assessmentType === AssessmentType.AUTOMATIC) {
                                 <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
                             }
                         }
