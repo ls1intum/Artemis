@@ -597,6 +597,9 @@ export class IrisChatService implements OnDestroy {
         if (payload.rateLimitInfo) {
             this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
         }
+        if (!this.shouldApplyRunScopedPayload(payload)) {
+            return;
+        }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
                 this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
@@ -605,9 +608,6 @@ export class IrisChatService implements OnDestroy {
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
             const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
             this.chatSessions.next(updatedSessions);
-        }
-        if (!this.shouldApplyRunScopedPayload(payload)) {
-            return;
         }
         if (payload.citationInfo?.length) {
             const merged = this.mergeCitationInfo(this.citationInfo.getValue(), payload.citationInfo);

@@ -63,9 +63,9 @@ describe('IrisChatService', () => {
     const waitForSessionIdValue = (expectedId: number) => firstValueFrom(service.currentSessionId().pipe(filter((value): value is number => value === expectedId)));
     const waitForCurrentChatMode = () => firstValueFrom(service.currentChatMode().pipe(filter((value): value is ChatServiceMode => value !== undefined)));
     const waitForCurrentRelatedEntityId = () => firstValueFrom(service.currentRelatedEntityId().pipe(filter((value): value is number => value !== undefined)));
-    const startSessionWithWebsocket = async (websocketSubject: Subject<IrisChatWebsocketDTO>) => {
+    const startSessionWithWebsocket = async (websocketSubject: Subject<IrisChatWebsocketDTO>, chatSessions: IrisSessionDTO[] = []) => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of(chatSessions));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(websocketSubject.asObservable());
 
         service.switchTo(ChatServiceMode.COURSE, id);
@@ -577,6 +577,38 @@ describe('IrisChatService', () => {
             websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-2')], activitySeq: 1 }));
             expect(service.runInfo.getValue()).toEqual({ runId: 'run-2', state: IrisRunState.RUNNING });
             expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+
+            inFlight.next({ body: mockUserMessageWithContent('follow up') } as HttpResponse<IrisMessageResponseDTO>);
+            inFlight.complete();
+            await result;
+        });
+
+        it('guard: stale known-run STATUS cannot update the session title while a new run is pending', async () => {
+            const originalTitle = 'Current session title';
+            const staleTitle = 'Stale previous-run title';
+            const freshTitle = 'Fresh current-run title';
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject, [
+                { id, title: originalTitle, creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: id } as IrisSessionDTO,
+            ]);
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING));
+
+            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            vi.spyOn(httpService, 'createMessage').mockReturnValue(inFlight.asObservable());
+            const result = firstValueFrom(service.sendMessage('follow up'));
+
+            websocketSubject.next(
+                statusFrame('run-1', IrisRunState.FAILED, {
+                    sessionTitle: staleTitle,
+                    rateLimitInfo: { currentMessageCount: 1, rateLimit: 5 } as IrisRateLimitInformation,
+                }),
+            );
+
+            expect(statusMock.handleRateLimitInfo).toHaveBeenCalledWith({ currentMessageCount: 1, rateLimit: 5 });
+            expect((await firstValueFrom(service.availableChatSessions())).find((session) => session.id === id)?.title).toBe(originalTitle);
+
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { sessionTitle: freshTitle }));
+            expect((await firstValueFrom(service.availableChatSessions())).find((session) => session.id === id)?.title).toBe(freshTitle);
 
             inFlight.next({ body: mockUserMessageWithContent('follow up') } as HttpResponse<IrisMessageResponseDTO>);
             inFlight.complete();
