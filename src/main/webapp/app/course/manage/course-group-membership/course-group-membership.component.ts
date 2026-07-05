@@ -5,10 +5,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { UserService } from 'app/account/user/shared/user.service';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription, of } from 'rxjs';
 import { capitalize } from 'lodash-es';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-course-group-membership',
@@ -59,9 +60,23 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     userSearch = (loginOrName: string) => this.userService.search(loginOrName);
 
-    addToRole = (login: string) => this.courseService.addUserToCourseRole(this.course()!.id!, this.courseRoleSlug()!, login);
+    addToRole = (login: string): Observable<HttpResponse<void>> => {
+        const courseId = this.course()?.id;
+        const courseRoleSlug = this.courseRoleSlug();
+        if (courseId === undefined || !courseRoleSlug) {
+            return of(new HttpResponse<void>());
+        }
+        return this.courseService.addUserToCourseRole(courseId, courseRoleSlug, login);
+    };
 
-    removeFromRole = (login: string) => this.courseService.removeUserFromCourseRole(this.course()!.id!, this.courseRoleSlug()!, login);
+    removeFromRole = (login: string): Observable<HttpResponse<void>> => {
+        const courseId = this.course()?.id;
+        const courseRoleSlug = this.courseRoleSlug();
+        if (courseId === undefined || !courseRoleSlug) {
+            return of(new HttpResponse<void>());
+        }
+        return this.courseService.removeUserFromCourseRole(courseId, courseRoleSlug, login);
+    };
 
     /**
      * Update the number of filtered users
@@ -77,15 +92,20 @@ export class CourseGroupMembershipComponent implements OnInit {
     loadAll = () => {
         this.isLoading.set(true);
         this.isAdmin.set(this.accountService.isAdmin());
-        this.route.parent!.data.subscribe(({ course }) => {
+        this.route.parent!.data.subscribe(({ course }: { course?: Course }) => {
             this.course.set(course);
+            const courseId = course?.id;
             this.paramSub = this.route.params.subscribe((params) => {
-                this.courseRoleSlug.set(params['courseRoleSlug']);
-                if (!courseRoleSegments.includes(this.courseRoleSlug()!)) {
+                const slug: CourseRoleSlug = params['courseRoleSlug'];
+                if (!courseRoleSegments.includes(slug)) {
                     void this.router.navigate(['/course-management']);
                     return;
                 }
-                this.courseService.getAllUsersInCourseRole(this.course()!.id!, this.courseRoleSlug()!).subscribe((usersResponse) => {
+                this.courseRoleSlug.set(slug);
+                if (courseId === undefined) {
+                    return;
+                }
+                this.courseService.getAllUsersInCourseRole(courseId, slug).subscribe((usersResponse) => {
                     this.allCourseGroupUsers.set(usersResponse.body!);
                     this.isLoading.set(false);
                 });
