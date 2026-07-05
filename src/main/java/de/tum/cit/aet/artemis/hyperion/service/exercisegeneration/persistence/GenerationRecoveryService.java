@@ -161,6 +161,8 @@ public class GenerationRecoveryService {
                 case INVENTED_REQUIREMENT -> "Requirement not asked for by the brief (confirm or remove): \"" + finding.requirement() + "\"";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
                 case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
+                case CONTRACT_CONTRADICTION -> "The reference solution CONTRADICTS its own stated contract: an independently-authored test derived only from the problem statement "
+                        + "FAILS on the solution (" + finding.requirement() + ")";
             };
             findings.add(finding(Severity.MEDIUM, title, finding.detail()));
         }

@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxA
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
@@ -84,6 +86,23 @@ public class ExerciseGenerationOrchestrationService {
     // prompt while attempts remain and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
+    // DECORRELATED correctness cross-check (Design F): an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution.
+    // ADDITIVE
+    // and advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted
+    // exercise.
+    private final IndependentTesterAgentService independentTesterAgent;
+
+    private final CorrectnessCrossCheckService correctnessCrossCheckService;
+
+    /** Whether to run the decorrelated correctness cross-check at all (default OFF until the GPU false-reject rate is measured, matching the {JAVA}-only rollout discipline). */
+    private final boolean crossCheckEnabled;
+
+    /** The languages the cross-check is validated for (default {@code {JAVA}}); a non-allowlisted language is never cross-checked. */
+    private final Set<ProgrammingLanguage> crossCheckLanguages;
+
+    /** Whether a proven contradiction HARD-BLOCKS persistence (routes the accepted exercise to review) vs. advisory-only (default OFF: advisory-only). */
+    private final boolean rejectOnContradiction;
+
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
     // poll.
     private final ExerciseGenerationJobService jobService;
@@ -97,8 +116,11 @@ public class ExerciseGenerationOrchestrationService {
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             AuthoritativeVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
-            SpecFidelityCriticService specFidelityCritic, ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService,
-            Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
+            SpecFidelityCriticService specFidelityCritic, IndependentTesterAgentService independentTesterAgent, CorrectnessCrossCheckService correctnessCrossCheckService,
+            ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
+            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:false}") boolean crossCheckEnabled,
+            @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
+            @Value("${artemis.hyperion.crosscheck.reject-on-contradiction:false}") boolean rejectOnContradiction) {
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
@@ -107,9 +129,14 @@ public class ExerciseGenerationOrchestrationService {
         this.systemPromptFactory = systemPromptFactory;
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.specFidelityCritic = specFidelityCritic;
+        this.independentTesterAgent = independentTesterAgent;
+        this.correctnessCrossCheckService = correctnessCrossCheckService;
         this.jobService = jobService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.testCaseRepository = testCaseRepository;
+        this.crossCheckEnabled = crossCheckEnabled;
+        this.crossCheckLanguages = crossCheckLanguages;
+        this.rejectOnContradiction = rejectOnContradiction;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -177,6 +204,9 @@ public class ExerciseGenerationOrchestrationService {
             VerificationResult verification = null;
             // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
+            // The decorrelated correctness cross-check result and its hard-block flag; only ever set on an already-accepted attempt, so the last set value rides the outcome.
+            CorrectnessCrossCheck crossCheck = null;
+            boolean hardBlockedByCrossCheck = false;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
@@ -218,6 +248,31 @@ public class ExerciseGenerationOrchestrationService {
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
+                // DECORRELATED correctness cross-check: only on an already-ACCEPTED exercise (the differential proved solution compiles + passes its own tests, so the shadow suite
+                // authored against the template compiles against the solution too — every contradiction is then a genuine behavioural defect, not an interpretation gap). ADDITIVE:
+                // it never touches `verification`; a contradiction only ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into
+                // review.
+                if (crossCheckEnabled && verification.accepted() && crossCheckLanguages.contains(exercise.getProgrammingLanguage())) {
+                    Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, cancelled, usageSink, progress);
+                    crossCheck = correctnessCrossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
+                    emit(progress, "Independent examiner cross-check: " + crossCheck.status());
+                    if (crossCheck.isContradiction()) {
+                        // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (retry prompt + reviewer surface), never into `verification`.
+                        specFidelityReport = specFidelityReport.withFinding(crossCheck.toAdvisoryFinding());
+                        if (rejectOnContradiction) {
+                            if (attempt < MAX_GENERATION_ATTEMPTS) {
+                                // Retry despite differential-acceptance: the solution contradicts its own stated contract, so ask the agent to fix it.
+                                emit(progress, "An independent examiner exposed a contract contradiction; asking the agent to fix the solution and try again.");
+                                currentPrompt = "Your exercise passed the differential verifier, but an INDEPENDENT examiner exposed a contract contradiction:"
+                                        + crossCheck.renderForRetryPrompt() + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                                continue;
+                            }
+                            // Attempts exhausted and still contradicted: carry the hard block on the outcome (routes to review), leaving `verification.accepted()` untouched.
+                            hardBlockedByCrossCheck = true;
+                        }
+                    }
+                }
+
                 if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
@@ -228,7 +283,7 @@ public class ExerciseGenerationOrchestrationService {
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
-            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);
+            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport, crossCheck, hardBlockedByCrossCheck);
         }
         catch (RuntimeException e) {
             // The caller gets no usable outcome to close, so tear down here.

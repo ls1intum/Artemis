@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;
@@ -125,6 +126,68 @@ public class GenerationWorkspaceService {
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
         log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
         return testsSeedSnapshot;
+    }
+
+    /**
+     * The base-name shapes of a SAMPLE test SOURCE file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…). Used to
+     * strip the co-authored sample tests from the tester's seed so the independent examiner never sees the (possibly wrong) model the original tests encoded; build manifests, test
+     * configs, and package skeletons are kept.
+     */
+    private static final Pattern SAMPLE_TEST_SOURCE = Pattern
+            .compile(".*(?:Test|Tests|Spec)\\.(?:java|kt)$|.*(?:_test|_spec)\\.(?:py|rb|go|rs)$|.*\\.(?:test|spec)\\.(?:ts|js|tsx|jsx)$|.*Tests?\\.cs$", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Seeds the DECORRELATED tester (independent examiner) workspace: the problem statement, the {@code verify.sh} helper, the TEMPLATE working tree (the public API — signatures
+     * with stub bodies), and the TESTS harness with the sample test SOURCES stripped. It NEVER checks out or packs the SOLUTION repository or the worked-sample {@code reference/}
+     * directory, so the reference solution simply does not exist in the tester's container — decorrelation by ABSENCE, strictly stronger than any path allowlist: there is nothing
+     * for the examiner to read even with a full shell.
+     * <p>
+     * The tests harness is seeded as text (manifests/configs kept, sample {@code *Test.*} sources dropped); binary harness assets (a Gradle wrapper JAR) are not preserved here, so
+     * this path is validated for the {@code {JAVA}} cross-check allowlist (Maven, no wrapper). The template is packed from its working tree so its files survive byte-exact.
+     *
+     * @param sandbox   the tester's own (separate) sandbox session
+     * @param sessionId the tester session handle
+     * @param exercise  the exercise whose statement/template/tests are seeded for the examiner
+     */
+    public void seedTesterWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+        String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
+        Map<String, String> textFiles = new LinkedHashMap<>();
+        textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
+        textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
+        Map<String, Path> repositoryTrees = new LinkedHashMap<>();
+        // TEMPLATE only (never SOLUTION): the public API the examiner writes tests against.
+        Path templateTree = checkoutWorkingTree(exercise, RepositoryType.TEMPLATE, defaultBranch);
+        if (templateTree != null) {
+            repositoryTrees.put(directoryFor(RepositoryType.TEMPLATE), templateTree);
+        }
+        // TESTS harness with the sample test sources stripped, so the examiner does not inherit the co-authored model. Seeded as text (Java/Maven allowlist).
+        Path testsTree = checkoutWorkingTree(exercise, RepositoryType.TESTS, defaultBranch);
+        if (testsTree != null) {
+            for (Map.Entry<String, String> entry : stripSampleTestSources(readWorkingTreeTextFiles(testsTree)).entrySet()) {
+                textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue());
+            }
+        }
+        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
+        log.info("Seeded tester (independent-examiner) workspace for exercise {}: template + stripped tests, NO solution and NO reference sample", exercise.getId());
+    }
+
+    /**
+     * Drops the sample test SOURCE files (see {@link #SAMPLE_TEST_SOURCE}) from a tests-repo text map, keeping every build manifest, test config, package skeleton, and readme, so
+     * the decorrelated examiner is handed the harness but not the co-authored tests.
+     *
+     * @param testsFiles the tests-repo files keyed by repository-relative path
+     * @return the same map without the sample test source files
+     */
+    static Map<String, String> stripSampleTestSources(Map<String, String> testsFiles) {
+        Map<String, String> kept = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : testsFiles.entrySet()) {
+            String path = entry.getKey();
+            String baseName = path.substring(path.lastIndexOf('/') + 1);
+            if (!SAMPLE_TEST_SOURCE.matcher(baseName).matches()) {
+                kept.put(path, entry.getValue());
+            }
+        }
+        return kept;
     }
 
     /**

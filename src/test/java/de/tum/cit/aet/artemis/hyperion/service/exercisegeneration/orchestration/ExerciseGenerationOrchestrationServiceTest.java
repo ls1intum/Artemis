@@ -39,11 +39,14 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSys
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AuthoritativeVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
@@ -64,9 +67,19 @@ class ExerciseGenerationOrchestrationServiceTest {
 
     private SpecFidelityCriticService specFidelityCritic;
 
+    private IndependentTesterAgentService independentTesterAgent;
+
+    private CorrectnessCrossCheckService correctnessCrossCheckService;
+
     private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     private GenerationWorkspaceService workspace;
+
+    private AgentSystemPromptService systemPromptFactory;
+
+    private ExerciseGenerationJobService jobService;
+
+    private LLMTokenUsageService llmTokenUsageService;
 
     private ExerciseGenerationOrchestrationService service;
 
@@ -84,11 +97,13 @@ class ExerciseGenerationOrchestrationServiceTest {
         workspace = mock(GenerationWorkspaceService.class);
         agentLoopRunner = mock(AgentLoopRunner.class);
         verifier = mock(AuthoritativeVerificationService.class);
-        AgentSystemPromptService systemPromptFactory = mock(AgentSystemPromptService.class);
+        systemPromptFactory = mock(AgentSystemPromptService.class);
         structuralOracleSeeder = mock(StructuralOracleSeedingService.class);
         specFidelityCritic = mock(SpecFidelityCriticService.class);
-        ExerciseGenerationJobService jobService = mock(ExerciseGenerationJobService.class);
-        LLMTokenUsageService llmTokenUsageService = mock(LLMTokenUsageService.class);
+        independentTesterAgent = mock(IndependentTesterAgentService.class);
+        correctnessCrossCheckService = mock(CorrectnessCrossCheckService.class);
+        jobService = mock(ExerciseGenerationJobService.class);
+        llmTokenUsageService = mock(LLMTokenUsageService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
         when(systemPromptFactory.build(any(), any())).thenReturn("SYSTEM_PROMPT");
@@ -104,14 +119,22 @@ class ExerciseGenerationOrchestrationServiceTest {
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         // Default: the exercise has no persisted graded tests (GENERATE and most ADAPT tests); the total-wipe baseline is then empty and the gate inert.
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of());
-        service = new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
-                specFidelityCritic, jobService, llmTokenUsageService, Optional.of(testCaseRepository), 100);
+        // Cross-check default: OFF (matches production default), so the base service is byte-identical to before the cross-check landed. Specific tests rebuild it enabled.
+        service = crossCheckService(false, false);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);
         when(exercise.getCourseViaExerciseGroupOrCourseMember()).thenReturn(null);
+        when(exercise.getProgrammingLanguage()).thenReturn(ProgrammingLanguage.JAVA);
         user = mock(User.class);
         when(user.getId()).thenReturn(7L);
+    }
+
+    /** Builds the service with the correctness cross-check enabled/disabled and the reject-on-contradiction flag set, allowlisting JAVA (the exercise's language). */
+    private ExerciseGenerationOrchestrationService crossCheckService(boolean crossCheckEnabled, boolean rejectOnContradiction) {
+        return new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
+                specFidelityCritic, independentTesterAgent, correctnessCrossCheckService, jobService, llmTokenUsageService, Optional.of(testCaseRepository), 100, crossCheckEnabled,
+                Set.of(ProgrammingLanguage.JAVA), rejectOnContradiction);
     }
 
     private static AgentLoopResult completed() {
@@ -399,5 +422,91 @@ class ExerciseGenerationOrchestrationServiceTest {
 
         String prepended = ExerciseGenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
         assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
+    }
+
+    // --- Decorrelated correctness cross-check: ADDITIVE, never loosens accepted=, config-flag hard gate -------------------------------------------------------------------------
+
+    private static final Map<String, String> SHADOW_SUITE = Map.of("test/de/test/LRUCacheTest.java", "class LRUCacheTest {}");
+
+    private static CorrectnessCrossCheck contradiction() {
+        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONTRADICTION, List.of("evictsLeastRecentlyUsedInsertionOrder"),
+                List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, 1, "solution fails 1 of 1");
+    }
+
+    private static CorrectnessCrossCheck consistent() {
+        return new CorrectnessCrossCheck(CorrectnessCrossCheck.Status.CONSISTENT, List.of(), List.of("evictsLeastRecentlyUsedInsertionOrder"), 1, 1, "all pass");
+    }
+
+    /**
+     * With the master flag OFF (production default) the cross-check never runs: no tester agent, no cross-check, and the outcome carries no cross-check result — byte-identical.
+     */
+    @Test
+    void crossCheckDisabled_neverRunsAndOutcomeCarriesNoCrossCheck() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.correctnessCrossCheck()).as("the cross-check did not run with the flag off").isNull();
+            assertThat(outcome.isHardBlockedByCrossCheck()).isFalse();
+        }
+        verify(independentTesterAgent, never()).authorShadowSuite(any(), any(), any(), any());
+        verify(correctnessCrossCheckService, never()).runAgainstShadowSuite(any(), anyString(), any(), any());
+    }
+
+    /** Enabled + advisory (reject-off): a contradiction stays accepted, adds an advisory CONTRACT_CONTRADICTION finding, does NOT hard-block, and does NOT trigger a retry. */
+    @Test
+    void crossCheckContradiction_advisoryOnly_staysAcceptedAndAddsFindingWithoutRetry() {
+        service = crossCheckService(true, false);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).as("the differential acceptance is never loosened").isTrue();
+            assertThat(outcome.isHardBlockedByCrossCheck()).as("advisory mode never hard-blocks").isFalse();
+            assertThat(outcome.correctnessCrossCheck().isContradiction()).isTrue();
+            assertThat(outcome.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+        }
+        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    /** Enabled + reject-on-contradiction, attempts remaining: the contradiction retries with the examiner feedback in the prompt; a subsequent consistent run persists cleanly. */
+    @Test
+    void crossCheckContradiction_rejectMode_retriesWithExaminerFeedbackThenClears() {
+        service = crossCheckService(true, true);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction(), consistent());
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isHardBlockedByCrossCheck()).as("the second, consistent attempt clears the block").isFalse();
+        }
+        verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(promptCaptor.getAllValues().get(1)).as("the retry prompt names the contradicted behaviour").contains("contract contradiction")
+                .contains("evictsLeastRecentlyUsedInsertionOrder");
+    }
+
+    /**
+     * Enabled + reject-on-contradiction, attempts exhausted: the outcome is differential-ACCEPTED yet HARD-BLOCKED, so the task service routes it to review, not a silent persist.
+     */
+    @Test
+    void crossCheckContradiction_rejectMode_exhausted_isAcceptedButHardBlocked() {
+        service = crossCheckService(true, true);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).as("the differential remains the sole author of acceptance").isTrue();
+            assertThat(outcome.isHardBlockedByCrossCheck()).as("a proven, unresolved contradiction hard-blocks persistence").isTrue();
+            assertThat(outcome.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+        }
+        verify(agentLoopRunner, times(MAX_GENERATION_ATTEMPTS)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
     }
 }

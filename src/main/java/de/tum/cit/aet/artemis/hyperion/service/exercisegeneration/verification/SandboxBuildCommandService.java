@@ -94,6 +94,28 @@ public class SandboxBuildCommandService {
     }
 
     /**
+     * The correctness cross-check's SOLUTION build: runs the pristine {@code verify.sh} against the real solution but assembles the tests from the {@code shadow-tests} workspace
+     * dir (the independently-authored examiner suite) instead of the agent's own {@code tests}. Reuses the identical build+collect path, so the shadow suite is judged with
+     * parity-by-construction.
+     *
+     * @return the {@code sh verify.sh solution shadow-tests} invocation
+     */
+    public String crosscheckSolutionBuildCommand() {
+        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION), CROSSCHECK_TESTS_DIR);
+    }
+
+    /**
+     * The correctness cross-check's TEMPLATE build: the shadow suite against the template, used only as a discrimination hint (how many shadow tests the template also fails),
+     * never
+     * part of the reject decision.
+     *
+     * @return the {@code sh verify.sh template shadow-tests} invocation
+     */
+    public String crosscheckTemplateBuildCommand() {
+        return pristineVerifyInvocation(GenerationWorkspaceService.directoryFor(RepositoryType.TEMPLATE), CROSSCHECK_TESTS_DIR);
+    }
+
+    /**
      * The verifier-owned directory the pristine script collected the reports for an assignment into, which the verifier copies out and parses.
      *
      * @param assignment the assignment directory name ({@code solution} or {@code template})
@@ -103,8 +125,19 @@ public class SandboxBuildCommandService {
         return REPORTS_DIR + "/" + assignment;
     }
 
+    /**
+     * The workspace directory holding the DECORRELATED examiner suite for the correctness cross-check, seeded separately from (and never overwriting) the agent's own
+     * {@code tests}. The cross-check invokes {@code verify.sh <assignment> shadow-tests} so the shadow suite is assembled in place of the agent's tests.
+     */
+    static final String CROSSCHECK_TESTS_DIR = "shadow-tests";
+
     private static String pristineVerifyInvocation(String assignmentDirectory) {
         return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory;
+    }
+
+    /** As {@link #pristineVerifyInvocation(String)} but passes a second positional arg selecting the tests source directory ({@code tests} by default in the script). */
+    private static String pristineVerifyInvocation(String assignmentDirectory, String testsDirectory) {
+        return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory + " " + testsDirectory;
     }
 
     /**
@@ -140,9 +173,12 @@ public class SandboxBuildCommandService {
                 # authoritative verifier (which copies the collected reports out and parses them with the production parsers — the verdict is NOT decided in this script).
                 ASSIGNMENT="$1"
                 if [ "$ASSIGNMENT" != "solution" ] && [ "$ASSIGNMENT" != "template" ]; then
-                    echo "usage: verify.sh <solution|template>" >&2
+                    echo "usage: verify.sh <solution|template> [tests-source-dir]" >&2
                     exit 64
                 fi
+                # Second positional arg selects the tests SOURCE dir; defaults to the agent's own "tests". The correctness cross-check passes "shadow-tests" (the decorrelated
+                # examiner suite) so the SAME build/collect path judges an independently-authored suite against the real solution/template. Existing 2-arg calls are byte-identical.
+                TESTS_SRC="${2:-tests}"
                 WORKSPACE="@@WORKSPACE@@"
                 REPORTS_DIR="@@REPORTS_DIR@@/$ASSIGNMENT"
                 BUILD_DIR=$(mktemp -d /tmp/hyperion-verify.XXXXXX) || exit 70
@@ -150,7 +186,7 @@ public class SandboxBuildCommandService {
                 # Materialize the CI checkout layout: the tests at the language's test checkout path, the chosen assignment in assignment/ (-a preserves exec bits and binaries).
                 TEST_DEST="@@TEST_DEST@@"
                 mkdir -p "$TEST_DEST"
-                cp -a "$WORKSPACE/tests/." "$TEST_DEST"/ 2>/dev/null || true
+                cp -a "$WORKSPACE/$TESTS_SRC/." "$TEST_DEST"/ 2>/dev/null || true
                 mkdir -p "$BUILD_DIR/assignment"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$BUILD_DIR/assignment"/ 2>/dev/null || true
                 @@SOLUTION_COPY@@
