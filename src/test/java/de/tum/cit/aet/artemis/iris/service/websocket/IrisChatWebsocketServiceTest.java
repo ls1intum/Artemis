@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -24,7 +24,7 @@ class IrisChatWebsocketServiceTest {
 
     private IrisRateLimitService rateLimitService;
 
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private IrisChatWebsocketService irisChatWebsocketService;
 
@@ -32,7 +32,7 @@ class IrisChatWebsocketServiceTest {
     void setUp() {
         websocketService = mock(IrisWebsocketService.class);
         rateLimitService = mock(IrisRateLimitService.class);
-        userRepository = mock(UserRepository.class);
+        userRepository = mock(UserTestRepository.class);
         irisChatWebsocketService = new IrisChatWebsocketService(websocketService, rateLimitService, userRepository);
     }
 
