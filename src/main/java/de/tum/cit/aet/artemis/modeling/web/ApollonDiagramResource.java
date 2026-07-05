@@ -167,11 +167,11 @@ public class ApollonDiagramResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagramDTO> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
-        // Scoped to the path course id so a caller authorized for this course cannot read a diagram belonging to a different course.
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
-
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        // Scoped to the path course id so a caller authorized for this course cannot read a diagram belonging to a different course.
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
 
         return ResponseEntity.ok().body(ApollonDiagramDTO.of(apollonDiagram));
     }
@@ -188,11 +188,11 @@ public class ApollonDiagramResource {
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
 
-        // Scoped to the path course id so a caller authorized for this course cannot delete a diagram belonging to a different course.
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
-
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        // Scoped to the path course id so a caller authorized for this course cannot delete a diagram belonging to a different course.
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
 
         apollonDiagramRepository.delete(apollonDiagram);
         return ResponseEntity.ok().build();
