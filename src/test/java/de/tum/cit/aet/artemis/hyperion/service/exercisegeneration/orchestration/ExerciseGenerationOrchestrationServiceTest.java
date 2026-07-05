@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.S
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
  * Unit tests for the orchestrator's verifier-feedback retry loop. All collaborators are Mockito mocks, so the loop's control flow (retry on rejection, stop on acceptance, bound on
@@ -64,7 +64,7 @@ class ExerciseGenerationOrchestrationServiceTest {
 
     private SpecFidelityCriticService specFidelityCritic;
 
-    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     private GenerationWorkspaceService workspace;
 
@@ -101,7 +101,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
 
-        testCaseRepository = mock(ProgrammingExerciseTestCaseRepository.class);
+        testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         // Default: the exercise has no persisted graded tests (GENERATE and most ADAPT tests); the total-wipe baseline is then empty and the gate inert.
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of());
         service = new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
