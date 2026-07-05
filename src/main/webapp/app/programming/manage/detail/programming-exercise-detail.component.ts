@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,7 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -43,7 +43,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -61,6 +61,8 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
@@ -92,6 +94,8 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
+        ButtonComponent,
+        DeimosDateRangeModalComponent,
         AtlasOrchestrationTriggerComponent,
         TooltipModule,
     ],
@@ -101,6 +105,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
+    private deimosService = inject(DeimosService);
+
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
@@ -115,6 +121,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private sharingService = inject(ProgrammingExerciseSharingService);
 
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
+
+    protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -122,6 +132,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
     protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
@@ -762,6 +773,29 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     message: errorMessage,
                     disableTranslation: true,
                 });
+            },
+        });
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal().open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerExerciseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        const exerciseId = this.programmingExercise().id;
+        if (!exerciseId) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerExerciseBatch(exerciseId, selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
             },
         });
     }

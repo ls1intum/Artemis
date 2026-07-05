@@ -193,6 +193,11 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "Deimos": {
+                    "name": "Deimos Analysis",
+                    "description": "Enables manual malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
                 }
             }
         }
