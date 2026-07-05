@@ -114,8 +114,9 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        // Fetch the existing diagram from the database (this is the managed entity)
-        ApollonDiagram existingDiagram = apollonDiagramRepository.findByIdElseThrow(diagramUpdateDTO.id());
+        // Fetch the existing diagram from the database (this is the managed entity), scoped to the path course id so a
+        // caller authorized for this course cannot overwrite a diagram belonging to a different course.
+        ApollonDiagram existingDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(diagramUpdateDTO.id(), courseId);
 
         // Apply DTO values to the managed entity
         diagramUpdateDTO.applyTo(existingDiagram);
@@ -166,7 +167,8 @@ public class ApollonDiagramResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ApollonDiagramDTO> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
+        // Scoped to the path course id so a caller authorized for this course cannot read a diagram belonging to a different course.
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
@@ -186,7 +188,8 @@ public class ApollonDiagramResource {
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
 
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
+        // Scoped to the path course id so a caller authorized for this course cannot delete a diagram belonging to a different course.
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdAndCourseIdElseThrow(apollonDiagramId, courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);

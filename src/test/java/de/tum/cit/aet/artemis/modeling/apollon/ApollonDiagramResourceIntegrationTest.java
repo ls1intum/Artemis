@@ -99,11 +99,14 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateApollonDiagram_OK() throws Exception {
+        // The diagram must already belong to course1 in the DB before the update: the course-scoped lookup verifies
+        // this (see the cross-course tests below), so setting courseId only on the in-memory object after save() -
+        // without persisting it - would not reflect a genuine same-course diagram.
+        apollonDiagram.setCourseId(course1.getId());
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
         apollonDiagram.setJsonRepresentation(JSON_REPRESENTATION);
-        apollonDiagram.setCourseId(course1.getId());
         ApollonDiagramDTO response = request.putWithResponseBody("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagramDTO.class,
                 HttpStatus.OK);
 
@@ -125,6 +128,36 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     void testUpdateApollonDiagram_CREATED() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         request.post("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
+    }
+
+    /**
+     * Cross-course guard: an update sent via a course1 path must not overwrite a diagram that actually belongs to
+     * course2, even though the request body's course id matches the path (course1) and the caller (tutor1) is
+     * authorized for course1. Before the fix, the endpoint loaded the diagram by id alone and only ever checked the
+     * caller's authorization against the path course id, so this let a course1-authorized caller overwrite (and
+     * capture the previous contents of) a diagram belonging to course2.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testUpdateApollonDiagram_fromDifferentCourse_notFound() throws Exception {
+        apollonDiagram.setCourseId(course2.getId());
+        apollonDiagram.setJsonRepresentation(JSON_REPRESENTATION);
+        ApollonDiagram savedInCourse2 = apollonDiagramRepository.save(apollonDiagram);
+
+        ApollonDiagram updatePayload = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ClassDiagram, "attacker title");
+        updatePayload.setId(savedInCourse2.getId());
+        updatePayload.setJsonRepresentation("{\"attacker\":\"payload\"}");
+        // Body course id matches the path (course1), so the body-vs-path courseMismatch check passes; only the
+        // course-scoped lookup for the actual diagram (which lives in course2) can still catch the cross-course access.
+        updatePayload.setCourseId(course1.getId());
+
+        request.putWithResponseBody("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", updatePayload, ApollonDiagramDTO.class, HttpStatus.NOT_FOUND);
+
+        ApollonDiagram reloaded = apollonDiagramRepository.findByIdElseThrow(savedInCourse2.getId());
+        assertThat(reloaded.getTitle()).as("title must be unchanged").isEqualTo(savedInCourse2.getTitle());
+        assertThat(reloaded.getJsonRepresentation()).as("json representation must be unchanged").isEqualTo(JSON_REPRESENTATION);
+        assertThat(reloaded.getDiagramType()).as("diagram type must be unchanged").isEqualByComparingTo(savedInCourse2.getDiagramType());
+        assertThat(reloaded.getCourseId()).as("course id must be unchanged").isEqualTo(course2.getId());
     }
 
     @Test
@@ -236,6 +269,20 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
         request.get("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.FORBIDDEN, ApollonDiagramDTO.class);
     }
 
+    /**
+     * Cross-course guard: a diagram that belongs to course2 must not be readable via a course1 path, even though the
+     * caller (tutor1) is authorized for course1. Before the fix, the endpoint loaded the diagram by id alone and only
+     * ever checked the caller's authorization against the path course id, so this leaked course2's diagram content.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetApollonDiagram_fromDifferentCourse_notFound() throws Exception {
+        apollonDiagram.setCourseId(course2.getId());
+        ApollonDiagram savedInCourse2 = apollonDiagramRepository.save(apollonDiagram);
+
+        request.get("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams/" + savedInCourse2.getId(), HttpStatus.NOT_FOUND, ApollonDiagramDTO.class);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteApollonDiagram() throws Exception {
@@ -243,6 +290,22 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.OK);
         assertThat(apollonDiagramRepository.findDiagramsByCourseId(course1.getId())).as("repository is empty").isEmpty();
+    }
+
+    /**
+     * Cross-course guard: deleting via a course1 path must not delete a diagram that actually belongs to course2, even
+     * though the caller (instructor1) is authorized for course1. Before the fix, the endpoint loaded the diagram by id
+     * alone and only ever checked the caller's authorization against the path course id, so this deleted course2's diagram.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteApollonDiagram_fromDifferentCourse_notFound() throws Exception {
+        apollonDiagram.setCourseId(course2.getId());
+        ApollonDiagram savedInCourse2 = apollonDiagramRepository.save(apollonDiagram);
+
+        request.delete("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams/" + savedInCourse2.getId(), HttpStatus.NOT_FOUND);
+
+        assertThat(apollonDiagramRepository.findById(savedInCourse2.getId())).as("diagram belonging to another course must not be deleted").isPresent();
     }
 
     @Test
