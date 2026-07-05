@@ -71,6 +71,9 @@
 
 .divider {
     border-color: var(--bs-border-color);
+
+    // Override Bootstrap's default <hr> opacity (0.25), which makes the divider nearly invisible.
+    opacity: 1;
     margin: 2rem 0;
 }
 
