@@ -137,38 +137,41 @@ public class GenerationWorkspaceService {
             .compile(".*(?:Test|Tests|Spec)\\.(?:java|kt)$|.*(?:_test|_spec)\\.(?:py|rb|go|rs)$|.*\\.(?:test|spec)\\.(?:ts|js|tsx|jsx)$|.*Tests?\\.cs$", Pattern.CASE_INSENSITIVE);
 
     /**
-     * Seeds the DECORRELATED tester (independent examiner) workspace: the problem statement, the {@code verify.sh} helper, the TEMPLATE working tree (the public API — signatures
-     * with stub bodies), and the TESTS harness with the sample test SOURCES stripped. It NEVER checks out or packs the SOLUTION repository or the worked-sample {@code reference/}
-     * directory, so the reference solution simply does not exist in the tester's container — decorrelation by ABSENCE, strictly stronger than any path allowlist: there is nothing
-     * for the examiner to read even with a full shell.
+     * Seeds the DECORRELATED tester (independent examiner) workspace from the agent's PRODUCED artifacts: the problem statement, the {@code verify.sh} helper, the produced TEMPLATE
+     * files (the real public API — signatures with stub bodies), and the produced TESTS harness with the sample test SOURCES stripped. It NEVER seeds the SOLUTION repository or the
+     * worked-sample {@code reference/} directory — neither is even passed in — so the reference solution simply does not exist in the tester's container: decorrelation by ABSENCE,
+     * strictly stronger than any path allowlist (there is nothing for the examiner to read even with a full shell).
      * <p>
-     * The tests harness is seeded as text (manifests/configs kept, sample {@code *Test.*} sources dropped); binary harness assets (a Gradle wrapper JAR) are not preserved here, so
-     * this path is validated for the {@code {JAVA}} cross-check allowlist (Maven, no wrapper). The template is packed from its working tree so its files survive byte-exact.
+     * Seeding from the PRODUCED maps (not a fresh git checkout of the pre-generation scaffold) is what makes the cross-check EFFECTIVE: the examiner writes tests against the API the
+     * agent actually produced, so the shadow suite compiles against the real solution and a solution-side failure is a genuine contract contradiction rather than an
+     * against-the-wrong-API compile error that would fail the whole check OPEN (a no-op). The produced template map came from {@code extractRepository(TEMPLATE)}, which already
+     * stripped any solution residue outside the canonical roots, so no solution content can ride in on the template.
+     * <p>
+     * The tests harness is seeded as text (manifests/configs kept, sample {@code *Test.*} sources dropped via {@link #stripSampleTestSources}); binary harness assets (a Gradle
+     * wrapper JAR) are not preserved here, so this path is validated for the {@code {JAVA}} cross-check allowlist (Maven, no wrapper).
      *
-     * @param sandbox   the tester's own (separate) sandbox session
-     * @param sessionId the tester session handle
-     * @param exercise  the exercise whose statement/template/tests are seeded for the examiner
+     * @param sandbox              the tester's own (separate) sandbox session
+     * @param sessionId            the tester session handle
+     * @param exercise             the exercise whose statement is seeded for the examiner
+     * @param producedTemplateFiles the produced TEMPLATE files (repository-relative path to content) — the real public API the examiner writes tests against
+     * @param producedTestsFiles   the produced TESTS files (repository-relative path to content); the sample test sources are stripped before seeding
      */
-    public void seedTesterWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
-        String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
+    public void seedTesterWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTemplateFiles,
+            Map<String, String> producedTestsFiles) {
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
-        Map<String, Path> repositoryTrees = new LinkedHashMap<>();
-        // TEMPLATE only (never SOLUTION): the public API the examiner writes tests against.
-        Path templateTree = checkoutWorkingTree(exercise, RepositoryType.TEMPLATE, defaultBranch);
-        if (templateTree != null) {
-            repositoryTrees.put(directoryFor(RepositoryType.TEMPLATE), templateTree);
+        // TEMPLATE (never SOLUTION): the REAL produced public API the examiner writes tests against.
+        for (Map.Entry<String, String> entry : producedTemplateFiles.entrySet()) {
+            textFiles.put(directoryFor(RepositoryType.TEMPLATE) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }
-        // TESTS harness with the sample test sources stripped, so the examiner does not inherit the co-authored model. Seeded as text (Java/Maven allowlist).
-        Path testsTree = checkoutWorkingTree(exercise, RepositoryType.TESTS, defaultBranch);
-        if (testsTree != null) {
-            for (Map.Entry<String, String> entry : stripSampleTestSources(readWorkingTreeTextFiles(testsTree)).entrySet()) {
-                textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue());
-            }
+        // TESTS harness with the co-authored sample test sources stripped, so the examiner does not inherit the (possibly wrong) model those tests encoded.
+        for (Map.Entry<String, String> entry : stripSampleTestSources(producedTestsFiles).entrySet()) {
+            textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }
-        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
-        log.info("Seeded tester (independent-examiner) workspace for exercise {}: template + stripped tests, NO solution and NO reference sample", exercise.getId());
+        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, Map.of()));
+        log.info("Seeded tester (independent-examiner) workspace for exercise {} from produced artifacts: template + stripped tests, NO solution and NO reference sample",
+                exercise.getId());
     }
 
     /**

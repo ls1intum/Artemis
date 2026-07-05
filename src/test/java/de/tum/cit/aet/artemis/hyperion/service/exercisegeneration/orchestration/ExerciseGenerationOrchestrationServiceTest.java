@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.V
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
@@ -119,8 +120,11 @@ class ExerciseGenerationOrchestrationServiceTest {
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         // Default: the exercise has no persisted graded tests (GENERATE and most ADAPT tests); the total-wipe baseline is then empty and the gate inert.
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of());
-        // Cross-check default: OFF (matches production default), so the base service is byte-identical to before the cross-check landed. Specific tests rebuild it enabled.
-        service = crossCheckService(false, false);
+        // Cross-check default: ADVISORY-ENABLED, reject-off (matches the production default). The generic control-flow tests must not NPE on the now-live path, so default the
+        // examiner to no suite and the cross-check to CONSISTENT (no contradiction -> no finding, no retry). Specific tests override these.
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(Map.of());
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(consistent());
+        service = crossCheckService(true, false);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);
@@ -438,19 +442,83 @@ class ExerciseGenerationOrchestrationServiceTest {
     }
 
     /**
-     * With the master flag OFF (production default) the cross-check never runs: no tester agent, no cross-check, and the outcome carries no cross-check result — byte-identical.
+     * With the PRODUCTION default (advisory-enabled, reject-off) the examiner is seeded from the artifacts the agent ACTUALLY produced — {@code producedTemplate.files()} and
+     * {@code producedTests.files()}, never the solution. This is the exact assertion whose absence let the original no-op ship (the examiner used to be seeded from the stale
+     * pre-generation scaffold via git).
      */
     @Test
-    void crossCheckDisabled_neverRunsAndOutcomeCarriesNoCrossCheck() {
+    @SuppressWarnings("unchecked")
+    void crossCheck_authorsShadowSuiteAgainstTheProducedTemplateAndTests() {
+        Map<String, String> producedTemplate = Map.of("src/A.java", "class A{}");
+        Map<String, String> producedTests = Map.of("pom.xml", "<project/>");
+        Map<String, String> producedSolution = Map.of("src/A.java", "class A{int x;}");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TEMPLATE))).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(producedTemplate, false));
+        when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.TESTS))).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(producedTests, false));
+        when(workspace.extractRepository(any(), anyString(), eq(RepositoryType.SOLUTION))).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(producedSolution, false));
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            // settled
+        }
+
+        ArgumentCaptor<Map<String, String>> templateCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<String, String>> testsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(independentTesterAgent).authorShadowSuite(eq(exercise), templateCaptor.capture(), testsCaptor.capture(), any(), any(), any());
+        assertThat(templateCaptor.getValue()).as("the examiner is seeded from the PRODUCED template, not the stale pre-generation scaffold").isEqualTo(producedTemplate);
+        assertThat(testsCaptor.getValue()).as("the examiner is seeded from the PRODUCED tests harness").isEqualTo(producedTests);
+        assertThat(templateCaptor.getValue()).as("and NEVER the solution map (decorrelation: the examiner has no reference solution)").isNotEqualTo(producedSolution);
+    }
+
+    /**
+     * PRODUCTION default (advisory-enabled, reject-off): a contradiction stays ACCEPTED, adds an advisory CONTRACT_CONTRADICTION finding, does NOT hard-block, and does NOT trigger a
+     * retry. Uses the {@code setUp} default service to prove the default itself is advisory-enabled (only overriding the cross-check verdict to a contradiction).
+     */
+    @Test
+    void crossCheckAdvisoryByDefault_contradictionStaysAcceptedAddsFindingNoRetryNoBlock() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).as("the differential acceptance is never loosened by the advisory default").isTrue();
+            assertThat(outcome.isHardBlockedByCrossCheck()).as("the advisory default never hard-blocks").isFalse();
+            assertThat(outcome.correctnessCrossCheck().isContradiction()).isTrue();
+            assertThat(outcome.specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::kind).contains(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+        }
+        verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    /** Reject-mode is OFF by default: even a proven contradiction never hard-blocks the accepted exercise (the reject-on-contradiction flag defaults false). */
+    @Test
+    void rejectModeOffByDefault_contradictionNeverHardBlocks() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isHardBlockedByCrossCheck()).as("reject-mode is default OFF, so a contradiction never hard-blocks").isFalse();
+        }
+    }
+
+    /**
+     * The off-switch still works: with the master flag explicitly OFF the cross-check never runs — no tester agent, no cross-check — and the outcome carries no cross-check result.
+     */
+    @Test
+    void crossCheckCanBeExplicitlyDisabled() {
+        service = crossCheckService(false, false);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).isTrue();
-            assertThat(outcome.correctnessCrossCheck()).as("the cross-check did not run with the flag off").isNull();
+            assertThat(outcome.correctnessCrossCheck()).as("the cross-check did not run with the flag explicitly off").isNull();
             assertThat(outcome.isHardBlockedByCrossCheck()).isFalse();
         }
-        verify(independentTesterAgent, never()).authorShadowSuite(any(), any(), any(), any());
+        verify(independentTesterAgent, never()).authorShadowSuite(any(), any(), any(), any(), any(), any());
         verify(correctnessCrossCheckService, never()).runAgainstShadowSuite(any(), anyString(), any(), any());
     }
 
@@ -460,7 +528,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         service = crossCheckService(true, false);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
         when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
 
         try (GenerationOutcome outcome = generate(() -> false)) {
@@ -478,7 +546,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         service = crossCheckService(true, true);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
         when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction(), consistent());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
@@ -499,7 +567,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         service = crossCheckService(true, true);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(accepted());
-        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
+        when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
         when(correctnessCrossCheckService.runAgainstShadowSuite(any(), anyString(), any(), any())).thenReturn(contradiction());
 
         try (GenerationOutcome outcome = generate(() -> false)) {

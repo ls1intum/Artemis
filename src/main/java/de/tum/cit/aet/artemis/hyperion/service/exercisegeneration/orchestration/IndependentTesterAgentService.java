@@ -65,16 +65,20 @@ public class IndependentTesterAgentService {
     }
 
     /**
-     * Runs the independent examiner in a fresh, solution-free sandbox and returns the authored shadow suite (the tests-repo working tree read back out).
+     * Runs the independent examiner in a fresh, solution-free sandbox and returns the authored shadow suite (the tests-repo working tree read back out). The examiner is seeded from
+     * the caller's PRODUCED template + tests maps (not a fresh git checkout of the stale pre-generation scaffold), so it authors tests against the API the agent actually produced —
+     * the shadow suite then compiles against the real solution and a solution-side failure is a genuine contradiction rather than an against-the-wrong-API compile error.
      *
-     * @param exercise  the exercise whose statement/template the examiner tests against
-     * @param cancelled polled cooperatively between turns; a {@code true} aborts the tester loop
-     * @param usageSink receives each model call's response for token-usage tracking; may be {@code null}
-     * @param progress  short human-readable progress lines for the live transcript; may be {@code null}
+     * @param exercise              the exercise whose statement the examiner tests against
+     * @param producedTemplateFiles the produced TEMPLATE files (repository-relative path to content) — the real public API the examiner writes tests against
+     * @param producedTestsFiles    the produced TESTS files (repository-relative path to content); the sample test sources are stripped before seeding
+     * @param cancelled             polled cooperatively between turns; a {@code true} aborts the tester loop
+     * @param usageSink             receives each model call's response for token-usage tracking; may be {@code null}
+     * @param progress              short human-readable progress lines for the live transcript; may be {@code null}
      * @return the authored suite (repository-relative path to content); empty if no sandbox is available or nothing usable was produced
      */
-    public Map<String, String> authorShadowSuite(ProgrammingExercise exercise, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
-            @Nullable Consumer<String> progress) {
+    public Map<String, String> authorShadowSuite(ProgrammingExercise exercise, Map<String, String> producedTemplateFiles, Map<String, String> producedTestsFiles,
+            BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress) {
         if (interactiveSandbox.isEmpty()) {
             log.warn("No interactive sandbox available; skipping the independent-tester cross-check for exercise {}", exercise.getId());
             return Map.of();
@@ -84,8 +88,8 @@ public class IndependentTesterAgentService {
         try {
             emit(progress, "Running an independent examiner to cross-check correctness");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
-            // Decorrelation by ABSENCE: the tester's container is seeded with the statement + template + stripped tests, and NEVER the solution or the reference sample.
-            workspace.seedTesterWorkspace(sandbox, sessionId, exercise);
+            // Decorrelation by ABSENCE: the tester's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference sample.
+            workspace.seedTesterWorkspace(sandbox, sessionId, exercise, producedTemplateFiles, producedTestsFiles);
             TesterAgentTools tools = new TesterAgentTools(sandbox, sessionId);
             agentLoopRunner.run(systemPromptFactory.buildTesterPrompt(exercise), TESTER_USER_PROMPT, tools, maxTurns, cancelled, usageSink, progress);
             // Read the authored suite back out (best-effort: even a partial suite lets the cross-check run and fail-open if it does not compile).

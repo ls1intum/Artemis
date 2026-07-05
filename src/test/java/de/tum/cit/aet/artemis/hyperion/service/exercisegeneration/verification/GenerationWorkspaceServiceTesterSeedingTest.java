@@ -43,16 +43,23 @@ class GenerationWorkspaceServiceTesterSeedingTest {
     }
 
     @Test
-    void seedTesterWorkspace_neverSeedsSolutionOrReference() {
-        // A bare exercise has no repository URIs, so no repo working tree is checked out; the seeded tar must still carry the statement + verify.sh and provably NO
-        // solution/reference.
+    void seedTesterWorkspace_seedsProducedApiNeverSolutionOrReference() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProblemStatement("# LRU cache\nEvicts the least-recently-used entry.");
+        // The PRODUCED template (the real public API) and the PRODUCED tests harness with a co-authored sample test source that must be stripped.
+        Map<String, String> producedTemplate = Map.of("src/de/test/LRUCache.java", "public class LRUCache { public int get(int k){return -1;} }");
+        Map<String, String> producedTests = new java.util.LinkedHashMap<>();
+        producedTests.put("pom.xml", "<project/>");
+        producedTests.put("test/de/test/LRUCacheTest.java", "class LRUCacheTest {}");
         CapturingSandbox sandbox = new CapturingSandbox();
 
-        newWorkspaceService().seedTesterWorkspace(sandbox, "s", exercise);
+        newWorkspaceService().seedTesterWorkspace(sandbox, "s", exercise, producedTemplate, producedTests);
 
-        assertThat(sandbox.seededEntryNames).contains("problem-statement.md", "verify.sh");
+        // The examiner gets the statement + verify.sh + the PRODUCED public API + the tests HARNESS (manifests), so it authors against the real produced API.
+        assertThat(sandbox.seededEntryNames).contains("problem-statement.md", "verify.sh", "template/src/de/test/LRUCache.java", "tests/pom.xml");
+        // The co-authored sample test source is stripped so the examiner never inherits its (possibly wrong) model.
+        assertThat(sandbox.seededEntryNames).as("the co-authored sample test source is stripped").doesNotContain("tests/test/de/test/LRUCacheTest.java");
+        // DECORRELATION by absence: the solution and the worked-sample reference are never even passed in, so they cannot be seeded.
         assertThat(sandbox.seededEntryNames).as("the reference SOLUTION must never be seeded into the examiner's container").noneMatch(name -> name.startsWith("solution/"));
         assertThat(sandbox.seededEntryNames).as("the worked-sample reference must never be seeded into the examiner's container").noneMatch(name -> name.startsWith("reference/"));
     }

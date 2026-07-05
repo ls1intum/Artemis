@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,17 +28,15 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.HarmonyScrubbingChatModel;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.TesterAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.IndependentTesterAgentService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheck;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CorrectnessCrossCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -161,24 +158,23 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
             </project>
             """;
 
-    private static final String TESTER_USER_PROMPT = "Author an independent test suite in tests/ that pins the STATED contract in problem-statement.md. For each stated postcondition "
-            + "(especially eviction ORDER after inserting past capacity with no intervening access), write the minimal falsifying test and assert the exact stated result. Make the "
-            + "suite compile with `sh verify.sh template`, then submit.";
+    /** The produced-artifact fixtures the examiner is seeded from THROUGH the production path ({@link IndependentTesterAgentService#authorShadowSuite}). */
+    private static final Map<String, String> FIXTURE_TEMPLATE_FILES = Map.of("src/de/test/LRUCache.java", TEMPLATE_SOURCE);
+
+    /** Harness only (no sample test sources), so {@code stripSampleTestSources} is a no-op here; the examiner authors the tests itself. */
+    private static final Map<String, String> FIXTURE_TESTS_HARNESS = Map.of("pom.xml", TESTS_POM);
 
     @Autowired
     private Optional<InteractiveSandbox> interactiveSandbox;
 
     @Autowired
+    private IndependentTesterAgentService independentTesterAgent;
+
+    @Autowired
     private AgentLoopRunner agentLoopRunner;
 
     @Autowired
-    private AgentSystemPromptService systemPromptFactory;
-
-    @Autowired
     private GenerationWorkspaceService workspace;
-
-    @Autowired
-    private SandboxBuildCommandService sandboxBuildCommandService;
 
     @Autowired
     private CorrectnessCrossCheckService correctnessCrossCheckService;
@@ -207,30 +203,12 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         InteractiveSandbox sandbox = interactiveSandbox.orElseThrow(() -> new IllegalStateException("no sandbox bean on this node"));
         ProgrammingExercise exercise = lruExercise();
 
-        // 1. LIVE independent examiner: seeded with statement + template + tests harness, NEVER the solution. Author a suite and read it back.
-        String testerSession = sandbox.createSession(workspace.sessionSpec(exercise));
-        Map<String, String> shadowSuite;
-        try {
-            Map<String, String> testerSeed = new LinkedHashMap<>();
-            testerSeed.put("problem-statement.md", PROBLEM_STATEMENT);
-            testerSeed.put("verify.sh", sandboxBuildCommandService.verifyScriptContent(exercise));
-            testerSeed.put("template/src/de/test/LRUCache.java", TEMPLATE_SOURCE);
-            testerSeed.put("tests/pom.xml", TESTS_POM);
-            seed(sandbox, testerSession, testerSeed);
-
-            agentLoopRunner.run(systemPromptFactory.buildTesterPrompt(exercise), TESTER_USER_PROMPT, new TesterAgentTools(sandbox, testerSession), 40, () -> false, null,
-                    line -> log.info("[tester] {}", line));
-
-            // Decorrelation at runtime: the examiner's container has no solution/ to read.
-            SandboxExecResult listing = sandbox.exec(testerSession, Duration.ofSeconds(30), "sh", "-c", "ls -R /workspace");
-            assertThat(listing.combinedOutput()).as("the examiner container never contains solution/ (decorrelation by absence)").doesNotContain("solution");
-
-            shadowSuite = workspace.extractRepositoryFiles(sandbox, testerSession, RepositoryType.TESTS);
-            assertThat(shadowSuite).as("the examiner authored a test suite").isNotEmpty();
-        }
-        finally {
-            sandbox.destroySession(testerSession);
-        }
+        // 1. LIVE independent examiner THROUGH THE PRODUCTION PATH: authorShadowSuite owns its own solution-free session, seeds from the produced template + tests maps (never the
+        // solution), runs the real tester loop, and reads the authored suite back out. This validates the production seeding (seedTesterWorkspace(...produced maps)), not a bespoke
+        // hand-seed. Decorrelation-by-absence is proven deterministically by GenerationWorkspaceServiceTesterSeedingTest (strictly stronger than a live `ls`).
+        Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
+                line -> log.info("[tester] {}", line));
+        assertThat(shadowSuite).as("the examiner authored a suite against the produced template map").isNotEmpty();
 
         // 2. The authored suite FAILS on the buggy solution -> CONTRADICTION (the false-accept the same-author oracle accepted).
         assertThat(runCrossCheck(sandbox, exercise, BUGGY_SOLUTION, shadowSuite).status()).as("the independently-authored suite exposes the buggy solution's contradiction")
@@ -238,6 +216,23 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
 
         // 3. The SAME suite PASSES on a correct solution -> CONSISTENT (no false reject).
         assertThat(runCrossCheck(sandbox, exercise, CORRECT_SOLUTION, shadowSuite).status()).as("the same suite passes a correct solution (no false reject)")
+                .isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
+    }
+
+    /**
+     * FALSE-REJECT measurement: the full examiner, through the real seeding path, must NOT reject a KNOWN-GOOD exercise. This is the guard a human runs to confirm that enabling the
+     * advisory gate (and, later, {@code reject-on-contradiction}) will not wrongly reject correct exercises.
+     */
+    @Test
+    void liveExaminerDoesNotFalseRejectAKnownGoodExercise() throws Exception {
+        InteractiveSandbox sandbox = interactiveSandbox.orElseThrow(() -> new IllegalStateException("no sandbox bean on this node"));
+        ProgrammingExercise exercise = lruExercise();
+
+        Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
+                line -> log.info("[tester] {}", line));
+        assertThat(shadowSuite).as("the examiner authored a suite against the produced template map").isNotEmpty();
+
+        assertThat(runCrossCheck(sandbox, exercise, CORRECT_SOLUTION, shadowSuite).status()).as("enabling the advisory gate must not wrongly reject a correct exercise")
                 .isEqualTo(CorrectnessCrossCheck.Status.CONSISTENT);
     }
 

@@ -94,7 +94,10 @@ public class ExerciseGenerationOrchestrationService {
 
     private final CorrectnessCrossCheckService correctnessCrossCheckService;
 
-    /** Whether to run the decorrelated correctness cross-check at all (default OFF until the GPU false-reject rate is measured, matching the {JAVA}-only rollout discipline). */
+    /**
+     * Whether to run the decorrelated correctness cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist — it surfaces a finding and folds into the
+     * retry, never blocking acceptance; {@link #rejectOnContradiction} stays OFF until the GPU false-reject rate is measured at scale).
+     */
     private final boolean crossCheckEnabled;
 
     /** The languages the cross-check is validated for (default {@code {JAVA}}); a non-allowlisted language is never cross-checked. */
@@ -118,7 +121,7 @@ public class ExerciseGenerationOrchestrationService {
             AuthoritativeVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, IndependentTesterAgentService independentTesterAgent, CorrectnessCrossCheckService correctnessCrossCheckService,
             ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:false}") boolean crossCheckEnabled,
+            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
             @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
             @Value("${artemis.hyperion.crosscheck.reject-on-contradiction:false}") boolean rejectOnContradiction) {
         this.maxTurns = maxTurns;
@@ -253,7 +256,10 @@ public class ExerciseGenerationOrchestrationService {
                 // it never touches `verification`; a contradiction only ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into
                 // review.
                 if (crossCheckEnabled && verification.accepted() && crossCheckLanguages.contains(exercise.getProgrammingLanguage())) {
-                    Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, cancelled, usageSink, progress);
+                    // Seed the examiner from the artifacts the agent ACTUALLY produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
+                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real solution).
+                    Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
+                            progress);
                     crossCheck = correctnessCrossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
                     emit(progress, "Independent examiner cross-check: " + crossCheck.status());
                     if (crossCheck.isContradiction()) {

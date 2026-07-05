@@ -89,6 +89,11 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+    crosscheck:
+      # Decorrelated correctness cross-check (Design F): an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution.
+      enabled: true  # ADVISORY: on an already-accepted exercise, ADDS a CONTRACT_CONTRADICTION finding + folds into the retry; it NEVER loosens or blocks acceptance.
+      languages: JAVA  # Allowlist of languages the cross-check is validated for; a non-listed language is never cross-checked.
+      reject-on-contradiction: false  # Keep OFF until the live false-reject rate is measured at scale; ON would hard-block an accepted-but-contradicted exercise into review.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
     # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
