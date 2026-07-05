@@ -36,14 +36,14 @@ export class MockActivatedRoute extends ActivatedRoute {
         });
     }
 
-    get root(): ActivatedRoute {
+    override get root(): ActivatedRoute {
         return this;
     }
 
-    get firstChild(): ActivatedRoute {
+    override get firstChild(): ActivatedRoute {
         return this;
     }
-    get parent(): ActivatedRoute {
+    override get parent(): ActivatedRoute {
         return this;
     }
 }

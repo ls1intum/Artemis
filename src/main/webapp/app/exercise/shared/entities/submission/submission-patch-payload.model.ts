@@ -12,6 +12,6 @@ export class SubmissionPatchPayload {
  * Type guard for the SubmissionPatchPayload
  * @param arg
  */
-export function isSubmissionPatchPayload(arg: any): arg is SubmissionPatchPayload {
-    return arg.submissionPatch !== undefined && arg.sender !== undefined;
+export function isSubmissionPatchPayload(arg: unknown): arg is SubmissionPatchPayload {
+    return typeof arg === 'object' && arg !== null && (arg as SubmissionPatchPayload).submissionPatch !== undefined && (arg as SubmissionPatchPayload).sender !== undefined;
 }

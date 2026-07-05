@@ -51,8 +51,8 @@ export class ResizeableContainerComponent {
     faGripLinesVertical = faGripLinesVertical;
 
     // Make right side always expanded for smaller screens
-    onWindowResize(event: any) {
-        if (event.target.innerWidth <= 992) {
+    onWindowResize(event: UIEvent) {
+        if ((event.target as Window).innerWidth <= 992) {
             this.collapsed.set(false);
         }
     }

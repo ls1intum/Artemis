@@ -23,6 +23,7 @@ import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-con
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -72,14 +73,14 @@ export class IrisChatService implements OnDestroy {
         this.currentSessionIdSubject.next(id);
     }
 
-    messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
-    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
+    messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
+    newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
-    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
-    suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
-    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject([]);
-    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
-    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject<IrisStageDTO[]>([]);
+    suggestions: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject<IrisCitationMetaDTO[]>([]);
+    error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject<IrisErrorMessageKey | undefined>(undefined);
+    chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject<IrisSessionDTO[]>([]);
 
     // Flips to true once the first session-load attempt has produced a result (success OR
     // error). Until then, `messages` still holds its empty initial value, so subscribers
@@ -351,7 +352,7 @@ export class IrisChatService implements OnDestroy {
         if (error.status === 403) {
             this.error.next(IrisErrorMessageKey.IRIS_DISABLED);
         } else if (error.status === 429) {
-            const map = new Map<string, any>();
+            const map = new Map<string, number | undefined>();
             map.set('hours', this.rateLimitInfo?.rateLimitTimeframeHours);
             this.error.next(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
         } else {
@@ -365,7 +366,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
+        return this.irisChatHttpService.rateMessage(this.sessionId, message.id, !!helpful).pipe(
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 if (this.stateGeneration !== generation) return;
@@ -537,7 +538,7 @@ export class IrisChatService implements OnDestroy {
             return;
         }
 
-        const suggestions = JSON.parse(str);
+        const suggestions = parseJson<string[]>(str);
         this.suggestions.next(suggestions);
     }
 

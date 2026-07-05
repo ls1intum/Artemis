@@ -71,11 +71,11 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
-    isAnswerPost = true;
+    override isAnswerPost = true;
     readonly course = signal<Course>(undefined!);
 
     // Icons
-    faBookmark = faBookmark;
+    override faBookmark = faBookmark;
 
     readonly faPencilAlt = faPencilAlt;
     readonly faShare = faShare;
@@ -101,7 +101,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         });
     }
 
-    ngOnInit() {
+    override ngOnInit() {
         super.ngOnInit();
         this.assignPostingToAnswerPost();
     }
@@ -223,7 +223,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
-    ngOnDestroy(): void {
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
         if (AnswerPostComponent.activeDropdownPost === this) {
             AnswerPostComponent.cleanupActiveDropdown();
         }

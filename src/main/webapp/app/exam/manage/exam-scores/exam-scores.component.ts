@@ -183,7 +183,7 @@ export class ExamScoresComponent implements OnInit {
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
                 next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
-                    this.examScoreDTO.set(getExamScoresResponse!.body!);
+                    this.examScoreDTO.set(getExamScoresResponse.body!);
                     if (this.examScoreDTO()) {
                         this.hasSecondCorrectionAndStarted.set(this.examScoreDTO().hasSecondCorrectionAndStarted);
                         this.studentResults.set(this.examScoreDTO().studentResults);
@@ -211,7 +211,7 @@ export class ExamScoresComponent implements OnInit {
                     // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists.set(true);
-                        this.gradingScale.set(toEntity(gradingScaleResponse.body!, this.course()));
+                        this.gradingScale.set(toEntity(gradingScaleResponse.body, this.course()));
                         this.isBonus.set(this.gradingScale()!.gradeType === GradeType.BONUS);
                         this.hasBonus.set(this.studentResults()?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy);
                         this.gradingScale()!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale()!.gradeSteps);
@@ -1070,7 +1070,7 @@ export class ExamScoresComponent implements OnInit {
 
                 this.aggregatedExamResults().medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale()!.gradeSteps,
-                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection!,
+                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection,
                 )!.gradeName;
             }
         }

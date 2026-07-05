@@ -25,7 +25,7 @@ export class AttachmentService {
      * @param file the file to save as an attachment if it was changed (optional)
      * @param req optional request parameters
      */
-    update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
+    update(attachmentId: number, attachment: Attachment, file?: File, req?: Record<string, unknown>): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 

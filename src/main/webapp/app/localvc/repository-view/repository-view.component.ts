@@ -98,7 +98,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.routeCommitHistory.set(this.router.url + '/commit-history');

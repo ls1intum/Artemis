@@ -38,7 +38,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     declare userSettings: WritableSignal<UserSettingsStructure<ScienceSetting>>;
     declare settings: WritableSignal<Array<ScienceSetting>>;
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
 
         // check if settings are already loaded
