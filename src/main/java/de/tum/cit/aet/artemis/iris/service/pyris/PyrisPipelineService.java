@@ -75,7 +75,7 @@ public class PyrisPipelineService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    @Value("${artemis.iris.response-streaming-enabled:false}")
+    @Value("${artemis.iris.response-streaming-enabled:true}")
     private boolean responseStreamingEnabled;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
