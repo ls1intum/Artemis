@@ -233,8 +233,8 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
-        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, safeContext.isEmpty() ? null : safeContext);
+        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, safeContext.isEmpty() ? null : safeContext);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

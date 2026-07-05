@@ -318,6 +318,22 @@ jhi-iris-mcq-question {
     position: relative;
 }
 
+.activity-trail {
+    margin-bottom: 8px;
+    color: var(--bs-secondary-color);
+    font-size: 0.875rem;
+
+    summary {
+        cursor: pointer;
+        width: fit-content;
+    }
+
+    jhi-iris-activity-feed {
+        display: block;
+        margin-top: 8px;
+    }
+}
+
 .bubble-left {
     --_d: 0%;
 
