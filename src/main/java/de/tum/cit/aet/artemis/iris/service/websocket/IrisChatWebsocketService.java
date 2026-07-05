@@ -118,6 +118,10 @@ public class IrisChatWebsocketService {
 
     /**
      * Sends a partial response update over the websocket to a specific user.
+     * <p>
+     * Partial updates arrive many times per streamed answer and never change the user's quota, so we deliberately omit the rate limit information here: computing it can run
+     * the (potentially expensive) LLM-response-count query, and this streaming path must stay off that hot path. The rate limit information is refreshed by the final
+     * MESSAGE / status update instead.
      *
      * @param session       the session to send the partial update to
      * @param partialResult the current accumulated partial response text
@@ -126,9 +130,8 @@ public class IrisChatWebsocketService {
      */
     public void sendPartialUpdate(IrisSession session, String partialResult, Integer partialSeq, String runId) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, List.of(), null, null, null, null, runId, partialResult, partialSeq);
+        var payload = new IrisChatWebsocketDTO(null, null, List.of(), null, null, null, null, runId, partialResult, partialSeq);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

@@ -553,6 +553,26 @@ describe('IrisBaseChatbotComponent', () => {
 
             expect(component.animatingMessageIds().has(9876)).toBe(true);
         });
+
+        it('should release the exchange anchor when a non-streamed answer completes without a live draft', () => {
+            vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            const userMessage = mockUserMessageWithContent('Anchored question');
+            chatService.messages.next([userMessage]);
+            fixture.detectChanges();
+
+            // Simulate the state right after the sent user message was anchored to the top of the chat body.
+            component['anchoredMessageId'] = userMessage.id;
+            component['exchangeAnchorActive'] = true;
+
+            // The final assistant message lands with no live draft ever having existed (response streaming
+            // disabled, or a legacy Pyris that only sends the final MESSAGE), so the draft-finalization path
+            // never runs. The anchor/spacer must still be released to avoid blank space below the exchange.
+            chatService.messages.next([userMessage, finalAssistantMessage('A non-streamed answer.')]);
+            fixture.detectChanges();
+
+            expect(component['exchangeAnchorActive']).toBe(false);
+        });
     });
 
     it('should set the appropriate message styles based on the sender', async () => {

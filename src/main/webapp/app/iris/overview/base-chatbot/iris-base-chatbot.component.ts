@@ -583,6 +583,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                         this.exchangeAnchorActive = true;
                         setTimeout(() => this.scrollAnchoredMessageToTop());
                     }
+                } else if (
+                    this.exchangeAnchorActive &&
+                    rawMessages.length > this.previousMessageCount &&
+                    !this.liveAssistantDraft() &&
+                    rawMessages.at(-1)?.sender === IrisSender.LLM
+                ) {
+                    // A non-streamed answer (response streaming disabled, or an older Pyris that only
+                    // sends the final MESSAGE) completes without a live draft ever existing, so the
+                    // draft-finalization branch above never runs. Release the anchor here so the
+                    // exchange spacer collapses instead of leaving blank space below the finished exchange.
+                    this.exchangeAnchorActive = false;
                 } else if (isInitialLoad && this.isScrolledToBottom()) {
                     this.scrollToBottomSettled();
                 } else if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
