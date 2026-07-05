@@ -32,6 +32,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -1131,6 +1134,94 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
         request.put("/api/modeling/modeling-exercises/" + 123456789 + "/re-evaluate", UpdateModelingExerciseDTO.of(classExercise), HttpStatus.NOT_FOUND);
+    }
+
+    /**
+     * Persists {@link #classExercise} with one competency link and two categories, then builds the update request body the
+     * exact way the Angular client does: a JSON object whose {@code competencyLinks} and {@code categories} are explicit
+     * arrays.
+     * <p>
+     * Building the body as a JSON tree is essential: {@code UpdateModelingExerciseDTO} is annotated {@code @JsonInclude(NON_EMPTY)},
+     * so serializing the DTO directly would OMIT an empty collection and the server would see {@code null} ("leave unchanged")
+     * instead of {@code []} ("clear"). A {@code JsonNode} body serializes verbatim, so the returned {@link ObjectNode} lets a
+     * test send the collections exactly as the real client sends them (empty or populated), exercising the mutate/clear path
+     * the {@code .of(entity)} shortcut can never reach.
+     *
+     * @return the client-shaped request body, pre-populated from the persisted exercise (competencyLinks and categories non-empty)
+     */
+    private ObjectNode persistPopulatedExerciseAndBuildClientBody() {
+        classExercise.setCategories(new HashSet<>(Set.of("uml", "diagrams")));
+        classExercise.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(competency, classExercise, 1))));
+        modelingExerciseTestRepository.save(classExercise);
+        return (ObjectNode) request.getObjectMapper().valueToTree(UpdateModelingExerciseDTO.of(classExercise));
+    }
+
+    /**
+     * Reproduces the real client PUT update with EXPLICIT empty {@code competencyLinks} and {@code categories} arrays on an
+     * exercise that currently HAS a competency link and categories. This is the path that a {@code .of(entity)}-based test
+     * can never reach (NON_EMPTY masks the empty collections into {@code null}). The competency-link clear runs on the
+     * eagerly-fetched (populated) collection; the categories are replaced via the setter. Both must succeed with 200 and the
+     * collections must be empty when reloaded from a fresh session.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExercise_withExplicitEmptyClientCollections_clearsPopulatedCollections() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        body.set("competencyLinks", request.getObjectMapper().createArrayNode());
+        body.set("categories", request.getObjectMapper().createArrayNode());
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).isEmpty();
+        assertThat(reloaded.getCategories()).isEmpty();
+    }
+
+    /**
+     * Same explicit-empty-collections client body as the update case, but against the re-evaluate endpoint — the exact
+     * scenario that produced a LazyInitializationException 500 in the sibling text-exercise PR. Must return 200 and clear the
+     * populated collections.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateModelingExercise_withExplicitEmptyClientCollections_returnsOk() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        body.set("competencyLinks", request.getObjectMapper().createArrayNode());
+        body.set("categories", request.getObjectMapper().createArrayNode());
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate?deleteFeedback=false", body, ModelingExerciseResponseDTO.class,
+                HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).isEmpty();
+        assertThat(reloaded.getCategories()).isEmpty();
+    }
+
+    /**
+     * Positive counterpart: the client sends EXPLICIT non-empty {@code competencyLinks} (weight changed) and {@code categories}
+     * arrays. Proves the raw-JSON path both persists the new categories and re-applies the competency link (not just that it
+     * clears), so the empty-array assertions above are meaningful.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateModelingExercise_withExplicitNonEmptyClientCollections_persists() throws Exception {
+        ObjectNode body = persistPopulatedExerciseAndBuildClientBody();
+        // Re-send the existing competency link with a changed weight (matched by competency id → no re-lookup needed).
+        ((ObjectNode) ((ArrayNode) body.get("competencyLinks")).get(0)).put("weight", 2.0);
+        // Replace the categories with a different, explicit non-empty array.
+        ArrayNode categories = request.getObjectMapper().createArrayNode();
+        categories.add("alpha");
+        categories.add("beta");
+        body.set("categories", categories);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", body, ModelingExerciseResponseDTO.class, HttpStatus.OK);
+
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(classExercise.getId());
+        assertThat(reloaded.getCategories()).containsExactlyInAnyOrder("alpha", "beta");
+        assertThat(reloaded.getCompetencyLinks()).hasSize(1);
+        CompetencyExerciseLink persistedLink = reloaded.getCompetencyLinks().iterator().next();
+        assertThat(persistedLink.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(persistedLink.getWeight()).isEqualTo(2.0);
     }
 
     @Test
