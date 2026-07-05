@@ -660,14 +660,17 @@ export class IrisChatService implements OnDestroy {
         if (!payload.runState) {
             return;
         }
+        // Run-state frames from the shorter sendMessage(...) overloads omit runId;
+        // keep the last known run id so awaitingAnswer() does not get stuck true.
+        const runId = payload.runId ?? this.runInfo.getValue()?.runId;
         const nextRunInfo: IrisRunInfo = {
-            runId: payload.runId,
+            runId,
             state: payload.runState,
             error: payload.error,
         };
         this.runInfo.next(nextRunInfo);
-        if (payload.runId && this.isTerminalRunState(payload.runState)) {
-            this.terminalRunStateByRunId.set(payload.runId, payload.runState);
+        if (runId && this.isTerminalRunState(payload.runState)) {
+            this.terminalRunStateByRunId.set(runId, payload.runState);
         }
         if (payload.runState === IrisRunState.FAILED) {
             this.closePendingRunGeneration();
@@ -680,8 +683,11 @@ export class IrisChatService implements OnDestroy {
             this.finalizedRunIds.add(payload.runId);
             this.lastSeenPartialSeqByRunId.delete(payload.runId);
         }
+        // The backend can resend an already-persisted assistant message (same id) to
+        // attach createdMemories; only fire the unread-badge side effects for a new id.
+        const isNewMessage = payload.message?.id === undefined || !this.messages.getValue().some((existing) => existing.id === payload.message!.id);
         if (payload.message?.sender === IrisSender.LLM) {
-            if (!isIntermediateMessage) {
+            if (!isIntermediateMessage && isNewMessage) {
                 this.markAnswerArrived(payload.runId);
                 this.numNewMessages.next(this.numNewMessages.getValue() + 1);
             }
