@@ -53,7 +53,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                     (m) => m.ProgrammingRepositoryButtonsDetailComponent,
                 ),
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: () =>
-                import('app/shared-ui/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
+                import('./components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component').then(
                     (m) => m.ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
                 ),
             [DetailType.ProgrammingTestStatus]: () =>
