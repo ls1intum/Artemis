@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -220,7 +219,8 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
     }
 
     /**
-     * FALSE-REJECT measurement: the full examiner, through the real seeding path, must NOT reject a KNOWN-GOOD exercise. This is the guard a human runs to confirm that enabling the
+     * FALSE-REJECT measurement: the full examiner, through the real seeding path, must NOT reject a KNOWN-GOOD exercise. This is the guard a human runs to confirm that enabling
+     * the
      * advisory gate (and, later, {@code reject-on-contradiction}) will not wrongly reject correct exercises.
      */
     @Test

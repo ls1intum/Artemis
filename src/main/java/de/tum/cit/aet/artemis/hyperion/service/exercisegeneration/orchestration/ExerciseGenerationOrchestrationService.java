@@ -257,7 +257,8 @@ public class ExerciseGenerationOrchestrationService {
                 // review.
                 if (crossCheckEnabled && verification.accepted() && crossCheckLanguages.contains(exercise.getProgrammingLanguage())) {
                     // Seed the examiner from the artifacts the agent ACTUALLY produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
-                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real solution).
+                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real
+                    // solution).
                     Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
                             progress);
                     crossCheck = correctnessCrossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);

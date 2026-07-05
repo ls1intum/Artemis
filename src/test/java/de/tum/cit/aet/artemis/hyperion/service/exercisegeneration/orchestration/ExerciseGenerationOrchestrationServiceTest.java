@@ -472,7 +472,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     }
 
     /**
-     * PRODUCTION default (advisory-enabled, reject-off): a contradiction stays ACCEPTED, adds an advisory CONTRACT_CONTRADICTION finding, does NOT hard-block, and does NOT trigger a
+     * PRODUCTION default (advisory-enabled, reject-off): a contradiction stays ACCEPTED, adds an advisory CONTRACT_CONTRADICTION finding, does NOT hard-block, and does NOT trigger
+     * a
      * retry. Uses the {@code setUp} default service to prove the default itself is advisory-enabled (only overriding the cross-check verdict to a contradiction).
      */
     @Test

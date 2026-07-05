@@ -65,8 +65,10 @@ public class IndependentTesterAgentService {
     }
 
     /**
-     * Runs the independent examiner in a fresh, solution-free sandbox and returns the authored shadow suite (the tests-repo working tree read back out). The examiner is seeded from
-     * the caller's PRODUCED template + tests maps (not a fresh git checkout of the stale pre-generation scaffold), so it authors tests against the API the agent actually produced —
+     * Runs the independent examiner in a fresh, solution-free sandbox and returns the authored shadow suite (the tests-repo working tree read back out). The examiner is seeded
+     * from
+     * the caller's PRODUCED template + tests maps (not a fresh git checkout of the stale pre-generation scaffold), so it authors tests against the API the agent actually produced
+     * —
      * the shadow suite then compiles against the real solution and a solution-side failure is a genuine contradiction rather than an against-the-wrong-API compile error.
      *
      * @param exercise              the exercise whose statement the examiner tests against
@@ -88,7 +90,8 @@ public class IndependentTesterAgentService {
         try {
             emit(progress, "Running an independent examiner to cross-check correctness");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
-            // Decorrelation by ABSENCE: the tester's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference sample.
+            // Decorrelation by ABSENCE: the tester's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference
+            // sample.
             workspace.seedTesterWorkspace(sandbox, sessionId, exercise, producedTemplateFiles, producedTestsFiles);
             TesterAgentTools tools = new TesterAgentTools(sandbox, sessionId);
             agentLoopRunner.run(systemPromptFactory.buildTesterPrompt(exercise), TESTER_USER_PROMPT, tools, maxTurns, cancelled, usageSink, progress);
