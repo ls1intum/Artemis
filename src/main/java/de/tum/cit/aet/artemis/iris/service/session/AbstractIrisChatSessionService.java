@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,6 +41,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 public abstract class AbstractIrisChatSessionService<S extends IrisSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface<S> {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractIrisChatSessionService.class);
 
     private static final int MAX_SESSION_TITLE_LENGTH = 255;
 
@@ -160,8 +164,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      * @return the same job record or a new job record with the same job id if changes were made
      */
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        long handlingStart = System.nanoTime();
+        // Only the result branch (saving the assistant message) needs the messages and contents;
+        // the frequent intermediate stage updates get away with a plain session load. Pyris blocks
+        // its pipeline thread on each callback, so this reload is on the chat latency critical path.
         // noinspection unchecked
-        var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        var session = statusUpdate.result() != null ? (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId())
+                : (S) irisSessionRepository.findByIdElseThrow(job.sessionId());
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         IrisMessage savedMessage;
 
@@ -224,6 +233,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
+
+        log.debug("Iris status update handled in {} ms (result present: {})", (System.nanoTime() - handlingStart) / 1_000_000, statusUpdate.result() != null);
 
         return updatedJob.get();
     }

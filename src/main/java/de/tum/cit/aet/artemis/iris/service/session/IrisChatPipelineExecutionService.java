@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Service
 @Conditional(IrisEnabled.class)
 public class IrisChatPipelineExecutionService {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisChatPipelineExecutionService.class);
 
     private final IrisSessionRepository irisSessionRepository;
 
@@ -166,9 +170,12 @@ public class IrisChatPipelineExecutionService {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
         // Base data shared across all chat modes (course chat is the baseline)
+        long courseLoadStart = System.nanoTime();
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
+        long metricsStart = System.nanoTime();
         StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
+        log.debug("Iris chat DTO base data loaded: course {} ms, metrics {} ms", (metricsStart - courseLoadStart) / 1_000_000, (System.nanoTime() - metricsStart) / 1_000_000);
 
         // Mode-specific fields (additive on top of base data)
         PyrisProgrammingExerciseDTO programmingExercise = null;
