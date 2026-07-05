@@ -327,7 +327,6 @@ class ExerciseGenerationOrchestrationServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
         }
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
@@ -362,7 +361,6 @@ class ExerciseGenerationOrchestrationServiceTest {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<String>> namesCaptor = ArgumentCaptor.forClass(List.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
         }
 
         verify(specFidelityCritic).critique(anyString(), anyString(), namesCaptor.capture());
@@ -387,7 +385,6 @@ class ExerciseGenerationOrchestrationServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
         }
 
         verify(agentLoopRunner).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
@@ -407,7 +404,6 @@ class ExerciseGenerationOrchestrationServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
         }
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
@@ -460,7 +456,6 @@ class ExerciseGenerationOrchestrationServiceTest {
         when(independentTesterAgent.authorShadowSuite(any(), any(), any(), any(), any(), any())).thenReturn(SHADOW_SUITE);
 
         try (GenerationOutcome ignored = generate(() -> false)) {
-            // settled
         }
 
         ArgumentCaptor<Map<String, String>> templateCaptor = ArgumentCaptor.forClass(Map.class);

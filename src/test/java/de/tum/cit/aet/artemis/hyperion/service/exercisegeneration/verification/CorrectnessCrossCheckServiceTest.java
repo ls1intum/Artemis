@@ -37,10 +37,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 class CorrectnessCrossCheckServiceTest {
 
     /**
-     * The hand-authored CORRECT shadow suite, derived ONLY from the LRU problem statement's stated contract. Its decorrelating test — {@code evictsLeastRecentlyUsedInsertionOrder}
-     * (put,put,put with NO intervening access) — is the one the co-authored suite omitted (every co-authored eviction test does a {@code get(1)} first, rescuing key 1), so it is
-     * what
-     * exposes the buggy solution that inserts new entries at the LRU end. Embedded (not read from a build artifact) so the test is committed and self-contained.
+     * The hand-authored CORRECT shadow suite, embedded (not read from a build artifact) so the test is committed and self-contained; its decorrelating test is discussed on the
+     * class javadoc.
      */
     private static final Map<String, String> SHADOW_SUITE = Map.of("pom.xml", "<project/>", "test/de/test/LRUCacheTest.java", """
             package de.test;
@@ -124,6 +122,14 @@ class CorrectnessCrossCheckServiceTest {
     }
 
     @Test
+    void buildError_inconclusive() {
+        // The outer fail-open net: a build/copyOut RuntimeException must fail open (never a reject), not propagate out of the cross-check.
+        CorrectnessCrossCheck result = newService().runAgainstShadowSuite(new ThrowingSandbox(), "s", new ProgrammingExercise(), SHADOW_SUITE);
+        assertThat(result.status()).isEqualTo(CorrectnessCrossCheck.Status.INCONCLUSIVE);
+        assertThat(result.contradictedTests()).isEmpty();
+    }
+
+    @Test
     void emptyShadowSuite_skipped() {
         assertThat(newService().runAgainstShadowSuite(new ScriptedShadowSandbox(List.of(), List.of(), 0, false), "s", new ProgrammingExercise(), Map.of()))
                 .extracting(CorrectnessCrossCheck::status).isEqualTo(CorrectnessCrossCheck.Status.SKIPPED);
@@ -143,6 +149,34 @@ class CorrectnessCrossCheckServiceTest {
      * cross-check runs its real seed+build+copyOut+parse path against scripted reports — no Docker. The cross-check only ever builds the solution, so only that assignment is
      * scripted.
      */
+    /** A sandbox whose every operation throws, to drive the outer {@code catch (RuntimeException)} fail-open path. */
+    private static final class ThrowingSandbox implements InteractiveSandbox {
+
+        @Override
+        public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+            throw new RuntimeException("boom");
+        }
+
+        @Override
+        public String createSession(SandboxSessionSpec spec) {
+            return "s";
+        }
+
+        @Override
+        public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
+            throw new RuntimeException("boom");
+        }
+
+        @Override
+        public TarArchiveInputStream copyOut(String sessionId, String path) {
+            throw new RuntimeException("boom");
+        }
+
+        @Override
+        public void destroySession(String sessionId) {
+        }
+    }
+
     private static final class ScriptedShadowSandbox implements InteractiveSandbox {
 
         private final List<String> names;

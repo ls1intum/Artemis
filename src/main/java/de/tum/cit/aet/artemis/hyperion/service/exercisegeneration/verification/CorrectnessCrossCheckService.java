@@ -16,18 +16,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Runs a DECORRELATED correctness cross-check: takes an independently-authored shadow test suite (from a live examiner agent, or a checked-in fixture) and runs it against the REAL
- * solution through the exact same production build+parse path the differential oracle uses, so the shadow suite is judged with parity-by-construction.
- * <p>
- * It closes the {@code realistic-pasted-lru} false-accept: a solution that FAILS a test derived only from its own stated contract is contradicting its own statement — a
- * correctness
- * defect the same-author differential oracle is structurally blind to (its co-authored tests encode the same wrong model). The runner is exercise-agnostic: it flags any
- * solution-side
- * failure that is not a build/compile gate, from ANY shadow suite, and never decides acceptance itself.
- * <p>
- * It NEVER loosens the oracle's verdict: on doubt it fails OPEN ({@link CorrectnessCrossCheck.Status#INCONCLUSIVE}), so it can only ever ADD an advisory (or, behind a config flag,
- * a
- * hard block on top of an already-accepted exercise).
+ * Runs an independently-authored shadow test suite against the REAL solution through the exact same production build+parse path the differential oracle uses, so the shadow suite
+ * is
+ * judged with parity-by-construction. Exercise-agnostic: it flags any solution-side failure that is not a build/compile gate, from ANY shadow suite, and never decides acceptance
+ * itself. On doubt it fails OPEN ({@link CorrectnessCrossCheck.Status#INCONCLUSIVE}), so it can only ever ADD an advisory (or, behind a config flag, a hard block on top of an
+ * already-accepted exercise). Why decorrelation matters is documented on {@link CorrectnessCrossCheck}.
  */
 @Lazy
 @Service
@@ -68,7 +61,7 @@ public class CorrectnessCrossCheckService {
             return decide(solution);
         }
         catch (RuntimeException e) {
-            // The cross-check is advisory-by-default and must never perturb a run; a build/copyOut error is treated as INCONCLUSIVE (fail-open), never a reject.
+            // Fail open (never a reject): a build/copyOut error tells us nothing about the solution, and the cross-check must never perturb a run.
             log.warn("Correctness cross-check could not run; treating as inconclusive: {}", e.getMessage());
             return CorrectnessCrossCheck.inconclusive("The cross-check build could not run: " + e.getMessage());
         }
@@ -88,8 +81,9 @@ public class CorrectnessCrossCheckService {
      * consistent.
      */
     private static CorrectnessCrossCheck decide(AuthoritativeVerificationService.BuildSummary solution) {
-        if (solution.timedOut() || solution.tests() == 0) {
-            // The shadow suite did not compile/run against the real solution; fail OPEN, never a reject.
+        // tests() == 0 also covers a timed-out build (BuildSummary.timedOut reports zero tests).
+        if (solution.tests() == 0) {
+            // Fail open (never a reject): a shadow suite that did not run tells us nothing about the solution.
             return CorrectnessCrossCheck.inconclusive("The shadow suite did not run against the reference solution (it did not compile, ran no tests, or timed out).");
         }
         List<String> contradicted = gradableFailures(solution);

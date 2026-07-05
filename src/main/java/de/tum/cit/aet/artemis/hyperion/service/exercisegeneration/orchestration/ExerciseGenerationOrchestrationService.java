@@ -104,7 +104,7 @@ public class ExerciseGenerationOrchestrationService {
     /** The languages the cross-check is validated for (default {@code {JAVA}}); a non-allowlisted language is never cross-checked. */
     private final Set<ProgrammingLanguage> crossCheckLanguages;
 
-    /** Whether a proven contradiction HARD-BLOCKS persistence (routes the accepted exercise to review) vs. advisory-only (default OFF: advisory-only). */
+    /** Whether a proven contradiction HARD-BLOCKS persistence (routes the accepted exercise to review) vs. advisory-only (default OFF). */
     private final boolean rejectOnContradiction;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
@@ -263,9 +263,10 @@ public class ExerciseGenerationOrchestrationService {
                     Map<String, String> shadowSuite = independentTesterAgent.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
                             progress);
                     crossCheck = correctnessCrossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
-                    emit(progress, "Independent examiner cross-check: " + crossCheck.status());
+                    emit(progress, "Independent examiner cross-check: " + crossCheck.status() + (crossCheck.detail() != null ? " — " + crossCheck.detail() : ""));
                     if (crossCheck.isContradiction()) {
-                        // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (retry prompt + reviewer surface), never into `verification`.
+                        // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under
+                        // reject-on-contradiction), never into `verification`.
                         specFidelityReport = specFidelityReport.withFinding(crossCheck.toAdvisoryFinding());
                         if (rejectOnContradiction) {
                             if (attempt < MAX_GENERATION_ATTEMPTS) {
@@ -401,7 +402,6 @@ public class ExerciseGenerationOrchestrationService {
      * empty
      * (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing baseline never fabricates a rejection.
      *
-     * @param exercise the exercise being adapted
      * @return the persisted test names, or an empty set when no authoritative baseline is available
      */
     private Set<String> captureBaselineGradedTestNames(ProgrammingExercise exercise) {

@@ -129,9 +129,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * The base-name shapes of a SAMPLE test SOURCE file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…). Used to
-     * strip the co-authored sample tests from the tester's seed so the independent examiner never sees the (possibly wrong) model the original tests encoded; build manifests, test
-     * configs, and package skeletons are kept.
+     * The base-name shapes of a SAMPLE test SOURCE file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…); see
+     * {@link #stripSampleTestSources} for why these are dropped from the tester's seed.
      */
     private static final Pattern SAMPLE_TEST_SOURCE = Pattern
             .compile(".*(?:Test|Tests|Spec)\\.(?:java|kt)$|.*(?:_test|_spec)\\.(?:py|rb|go|rs)$|.*\\.(?:test|spec)\\.(?:ts|js|tsx|jsx)$|.*Tests?\\.cs$", Pattern.CASE_INSENSITIVE);
@@ -164,11 +163,10 @@ public class GenerationWorkspaceService {
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
-        // TEMPLATE (never SOLUTION): the REAL produced public API the examiner writes tests against.
         for (Map.Entry<String, String> entry : producedTemplateFiles.entrySet()) {
             textFiles.put(directoryFor(RepositoryType.TEMPLATE) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }
-        // TESTS harness with the co-authored sample test sources stripped, so the examiner does not inherit the (possibly wrong) model those tests encoded.
+        // tests harness, sample sources stripped
         for (Map.Entry<String, String> entry : stripSampleTestSources(producedTestsFiles).entrySet()) {
             textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }

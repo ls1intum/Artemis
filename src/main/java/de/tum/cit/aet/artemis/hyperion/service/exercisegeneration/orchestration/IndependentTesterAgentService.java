@@ -88,7 +88,9 @@ public class IndependentTesterAgentService {
         InteractiveSandbox sandbox = interactiveSandbox.get();
         String sessionId = null;
         try {
-            emit(progress, "Running an independent examiner to cross-check correctness");
+            if (progress != null) {
+                progress.accept("Running an independent examiner to cross-check correctness");
+            }
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
             // Decorrelation by ABSENCE: the tester's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference
             // sample.
@@ -116,12 +118,6 @@ public class IndependentTesterAgentService {
             catch (RuntimeException e) {
                 log.warn("Failed to destroy tester sandbox session {}: {}", sessionId, e.getMessage());
             }
-        }
-    }
-
-    private static void emit(@Nullable Consumer<String> progress, String message) {
-        if (progress != null) {
-            progress.accept(message);
         }
     }
 }

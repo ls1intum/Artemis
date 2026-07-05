@@ -175,6 +175,12 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void adaptWipe_isInertWhenBaselineNormalizesToBlank() {
+        // A non-empty baseline whose entries all normalize to blank must stay inert, not fabricate a "retained NONE of 0" rejection.
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("  ", "()"), List.of("testAnything"))).isEmpty();
+    }
+
+    @Test
     void adaptWipe_matchesRetentionModuloTrailingParentheses() {
         // Name normalization: baseline "testEvictsLru" is retained by a produced "testEvictsLru()" (Artemis treats them as the same test), so this is not a wipe.
         assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).isEmpty();

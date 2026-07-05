@@ -1170,13 +1170,5 @@ class AuthoritativeVerificationServiceTest {
             assertThat(result.accepted()).as("keeping at least one previously-graded test is a legitimate adapt, not a wipe").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("retained NONE"));
         }
-
-        @Test
-        void isInertWhenThereIsNoPreAdaptGradedBaseline() {
-            // A never-graded exercise has an empty baseline; the gate must never fabricate a rejection.
-            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK, Set.of());
-            assertThat(result.accepted()).as("an empty baseline leaves the total-wipe gate inert").isTrue();
-        }
     }
 }

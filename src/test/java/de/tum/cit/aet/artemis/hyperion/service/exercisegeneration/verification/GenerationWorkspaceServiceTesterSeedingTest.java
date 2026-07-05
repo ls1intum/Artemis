@@ -7,8 +7,10 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +50,7 @@ class GenerationWorkspaceServiceTesterSeedingTest {
         exercise.setProblemStatement("# LRU cache\nEvicts the least-recently-used entry.");
         // The PRODUCED template (the real public API) and the PRODUCED tests harness with a co-authored sample test source that must be stripped.
         Map<String, String> producedTemplate = Map.of("src/de/test/LRUCache.java", "public class LRUCache { public int get(int k){return -1;} }");
-        Map<String, String> producedTests = new java.util.LinkedHashMap<>();
+        Map<String, String> producedTests = new LinkedHashMap<>();
         producedTests.put("pom.xml", "<project/>");
         producedTests.put("test/de/test/LRUCacheTest.java", "class LRUCacheTest {}");
         CapturingSandbox sandbox = new CapturingSandbox();
@@ -66,7 +68,7 @@ class GenerationWorkspaceServiceTesterSeedingTest {
 
     @Test
     void stripSampleTestSources_dropsSampleTestsKeepsHarness() {
-        Map<String, String> testsFiles = new java.util.LinkedHashMap<>();
+        Map<String, String> testsFiles = new LinkedHashMap<>();
         testsFiles.put("pom.xml", "<project/>");
         testsFiles.put(".gitignore", "target/");
         testsFiles.put("readme.md", "harness instructions");
@@ -98,7 +100,7 @@ class GenerationWorkspaceServiceTesterSeedingTest {
                 }
             }
             catch (IOException e) {
-                throw new java.io.UncheckedIOException(e);
+                throw new UncheckedIOException(e);
             }
         }
 

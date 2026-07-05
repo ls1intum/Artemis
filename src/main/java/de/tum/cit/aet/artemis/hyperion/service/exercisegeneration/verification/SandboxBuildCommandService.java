@@ -55,6 +55,12 @@ public class SandboxBuildCommandService {
     /** Verifier-owned, agent-unreachable directory the script collects reports INTO and the verifier {@code copyOut}s FROM. */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
+    /**
+     * The workspace directory holding the DECORRELATED examiner suite for the correctness cross-check, seeded separately from (and never overwriting) the agent's own
+     * {@code tests}. The cross-check invokes {@code verify.sh <assignment> shadow-tests} so the shadow suite is assembled in place of the agent's tests.
+     */
+    static final String CROSSCHECK_TESTS_DIR = "shadow-tests";
+
     /** Prefix of the non-authoritative liveness line {@code verify.sh} prints; the verdict is read from the collected files, not this line. */
     static final String COLLECTED_MARKER = "HYPERION_COLLECTED";
 
@@ -114,19 +120,13 @@ public class SandboxBuildCommandService {
         return REPORTS_DIR + "/" + assignment;
     }
 
-    /**
-     * The workspace directory holding the DECORRELATED examiner suite for the correctness cross-check, seeded separately from (and never overwriting) the agent's own
-     * {@code tests}. The cross-check invokes {@code verify.sh <assignment> shadow-tests} so the shadow suite is assembled in place of the agent's tests.
-     */
-    static final String CROSSCHECK_TESTS_DIR = "shadow-tests";
-
     private static String pristineVerifyInvocation(String assignmentDirectory) {
         return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory;
     }
 
     /** As {@link #pristineVerifyInvocation(String)} but passes a second positional arg selecting the tests source directory ({@code tests} by default in the script). */
     private static String pristineVerifyInvocation(String assignmentDirectory, String testsDirectory) {
-        return "sh " + PRISTINE_VERIFY_PATH + " " + assignmentDirectory + " " + testsDirectory;
+        return pristineVerifyInvocation(assignmentDirectory) + " " + testsDirectory;
     }
 
     /**
@@ -166,7 +166,8 @@ public class SandboxBuildCommandService {
                     exit 64
                 fi
                 # Second positional arg selects the tests SOURCE dir; defaults to the agent's own "tests". The correctness cross-check passes "shadow-tests" (the decorrelated
-                # examiner suite) so the SAME build/collect path judges an independently-authored suite against the real solution/template. Existing 2-arg calls are byte-identical.
+                # examiner suite) so the SAME build/collect path judges an independently-authored suite against the real solution/template. The single-positional invocation
+                # (verify.sh <assignment>) is unchanged — TESTS_SRC defaults to tests.
                 TESTS_SRC="${2:-tests}"
                 WORKSPACE="@@WORKSPACE@@"
                 REPORTS_DIR="@@REPORTS_DIR@@/$ASSIGNMENT"

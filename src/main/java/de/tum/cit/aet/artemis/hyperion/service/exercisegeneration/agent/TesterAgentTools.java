@@ -66,9 +66,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Runs a shell command in the workspace; the examiner uses it to run {@code sh verify.sh template} to check its suite COMPILES against the template's public API (never to make
-     * a
-     * test pass — it has no solution to build against).
+     * Runs a shell command in the workspace (the examiner uses {@code sh verify.sh template} to check its suite COMPILES against the template's public API).
      *
      * @param command the shell command to run, as a single string
      * @return the exit status followed by the combined stdout/stderr
@@ -79,7 +77,7 @@ public class TesterAgentTools {
     }
 
     /**
-     * Signals the examiner suite is complete (compiles against the template and pins the stated contract); ends the tester loop. There is deliberately NO {@code verify} tool.
+     * Signals the examiner suite is complete (compiles against the template and pins the stated contract); ends the tester loop.
      *
      * @param summary an optional one-line summary of the authored suite
      * @return a confirmation that the suite was submitted

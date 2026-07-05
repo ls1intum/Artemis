@@ -255,7 +255,7 @@ public final class ExerciseIntegrityGate {
         if (baselineGradedTestNames == null || baselineGradedTestNames.isEmpty()) {
             return List.of();
         }
-        Set<String> baseline = new LinkedHashSet<>();
+        Set<String> baseline = new HashSet<>();
         for (String name : baselineGradedTestNames) {
             if (name != null) {
                 String normalized = normalizeTestName(name);
@@ -277,7 +277,6 @@ public final class ExerciseIntegrityGate {
         }
         for (String baselineName : baseline) {
             if (produced.contains(baselineName)) {
-                // At least one previously-graded test survived: a real refinement, not a wipe.
                 return List.of();
             }
         }
