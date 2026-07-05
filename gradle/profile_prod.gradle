@@ -23,6 +23,20 @@ tasks.register("webapp_test", PnpmTask) {
 tasks.register("webapp", PnpmTask) {
     dependsOn pnpmInstall
     args = ["run", "webapp:prod"]
+    outputs.dir("build/resources/main/static/")
+        .withPropertyName("webapp-build-dir")
+
+    if (project.hasProperty("skipWebapp")) {
+        args = ["-v"]
+        doLast {
+            copy {
+                from "build/webapp-dist"
+                into "build/resources/main/static/"
+            }
+        }
+    } else {
+        args = ["run", "webapp:prod"]
+    }
     environment = [APP_VERSION: project.version]
 }
 
