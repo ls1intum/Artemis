@@ -55,18 +55,22 @@
                     </dl>
                 </p-panel>
             }
-            @defer (when showComplaintView()) {
-                <jhi-complaint-student-view
-                    class="mb-2 mt-2 ms-3"
-                    [exercise]="exercise()"
-                    [participation]="gradedStudentParticipation()!"
-                    [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
-                />
+            @if (showComplaintView()) {
+                @defer (on idle) {
+                    <jhi-complaint-student-view
+                        class="mb-2 mt-2 ms-3"
+                        [exercise]="exercise()"
+                        [participation]="gradedStudentParticipation()!"
+                        [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
+                    />
+                }
             }
-            @defer (when showRating()) {
-                <div class="row">
-                    <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
-                </div>
+            @if (showRating()) {
+                @defer (on idle) {
+                    <div class="row">
+                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
+                    </div>
+                }
             }
             @if (plagiarismCaseInfo()?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                 <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()?.id]">

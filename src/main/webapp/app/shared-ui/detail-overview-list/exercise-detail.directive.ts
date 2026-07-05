@@ -20,7 +20,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     readonly detail = input<Detail>();
 
-    private componentRef: ComponentRef<any> | undefined;
+    private componentRef: ComponentRef<unknown> | undefined;
 
     async ngOnInit() {
         const detail = this.detail();
@@ -29,8 +29,15 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         }
         const shownDetail = detail as ShownDetail;
 
+        // Guard: directive may be destroyed while the dynamic import below is
+        // in flight (e.g. fast navigation away). Must be registered before the
+        // await, since DestroyRef.onDestroy() throws if called after the view
+        // has already been destroyed.
+        let destroyed = false;
+        this.destroyRef.onDestroy(() => (destroyed = true));
+
         // Light components — statically imported, negligible bundle cost.
-        const eagerMap: Partial<Record<DetailType, Type<any>>> = {
+        const eagerMap: Partial<Record<DetailType, Type<unknown>>> = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,
             [DetailType.Link]: LinkDetailComponent,
@@ -40,7 +47,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
         // Heavy programming components — dynamically imported only when this
         // specific detail type is present in the rendered list.
-        const lazyLoaders: Partial<Record<DetailType, () => Promise<Type<any>>>> = {
+        const lazyLoaders: Partial<Record<DetailType, () => Promise<Type<unknown>>>> = {
             [DetailType.ProgrammingRepositoryButtons]: () =>
                 import('app/shared-ui/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component').then(
                     (m) => m.ProgrammingRepositoryButtonsDetailComponent,
@@ -59,7 +66,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 ),
         };
 
-        let detailComponent: Type<any> | undefined = eagerMap[shownDetail.type];
+        let detailComponent: Type<unknown> | undefined = eagerMap[shownDetail.type];
 
         if (!detailComponent) {
             const loader = lazyLoaders[shownDetail.type];
@@ -68,10 +75,6 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             }
         }
 
-        // Guard: directive may have been destroyed while the dynamic import was
-        // in flight (e.g. fast navigation away). Skip creation if so.
-        let destroyed = false;
-        this.destroyRef.onDestroy(() => (destroyed = true));
         if (destroyed || !detailComponent) {
             return;
         }

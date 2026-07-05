@@ -833,9 +833,9 @@ export const examManagementRoutes: Routes = [
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         loadComponent: () =>
-            import(
-                'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component'
-            ).then((m) => m.CodeEditorTutorAssessmentContainerComponent),
+            import('app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component').then(
+                (m) => m.CodeEditorTutorAssessmentContainerComponent,
+            ),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -845,9 +845,9 @@ export const examManagementRoutes: Routes = [
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         loadComponent: () =>
-            import(
-                'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component'
-            ).then((m) => m.CodeEditorTutorAssessmentContainerComponent),
+            import('app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component').then(
+                (m) => m.CodeEditorTutorAssessmentContainerComponent,
+            ),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
