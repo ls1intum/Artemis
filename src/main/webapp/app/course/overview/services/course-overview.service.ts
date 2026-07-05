@@ -105,6 +105,7 @@ export class CourseOverviewService {
         if (lectures && lectures.length) {
             return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
@@ -118,6 +119,7 @@ export class CourseOverviewService {
         if (exercises && exercises.length) {
             return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
@@ -407,6 +409,7 @@ export class CourseOverviewService {
         if (attempts && indices) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
+        return undefined;
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {

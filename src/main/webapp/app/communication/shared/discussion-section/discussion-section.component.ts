@@ -142,7 +142,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 this.currentPost.set(this.posts().find((post) => post.id === this.currentPostId));
             }
         });
-        void this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -174,7 +174,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setChannel(courseId: number): void {
         const getChannel = () => {
             return {
-                next: (channel: ChannelDTO) => {
+                next: (channel: ChannelDTO | null) => {
                     this.channel.set(channel ?? undefined);
                     this.resetFormGroup();
                     this.setFilterAndSort();

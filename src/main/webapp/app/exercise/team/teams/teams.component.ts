@@ -101,7 +101,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     ]);
 
     constructor() {
-        void this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
         });

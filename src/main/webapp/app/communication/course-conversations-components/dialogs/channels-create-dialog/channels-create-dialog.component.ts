@@ -15,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
 
-    initialize() {
+    override initialize() {
         super.initialize(['course']);
     }
 

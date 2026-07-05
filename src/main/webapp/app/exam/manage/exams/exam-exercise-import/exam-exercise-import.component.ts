@@ -411,7 +411,7 @@ export class ExamExerciseImportComponent implements OnInit {
             if (value.size > 0) {
                 value.forEach((exercise) => {
                     if (!validConfiguration) {
-                        return false;
+                        return;
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         validConfiguration = this.validateTitleOfProgrammingExercise(exercise) && this.validateShortNameOfProgrammingExercise(exercise);

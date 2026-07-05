@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS, CourseOverviewRoutePath } from 'app/course/overview/courses.route';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, filter, map, startWith } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -92,7 +92,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | undefined
     >(undefined);
 
-    readonly showRefreshButton = toSignal(this.route.data.pipe(map((data) => !!data['showRefreshButton'])), { initialValue: false });
+    readonly showRefreshButton = toSignal(
+        this.router.events.pipe(
+            filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+            startWith(undefined),
+            map(() => this.getShowRefreshButton()),
+        ),
+        { initialValue: this.getShowRefreshButton() },
+    );
 
     // Icons
     faTimes = faTimes;
@@ -105,7 +112,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faChevronLeft = faChevronLeft;
     faSync = faSync;
 
-    async ngOnInit() {
+    override async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => {
                 const componentRef = this.activatedComponentReference();
@@ -114,7 +121,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             });
         });
 
-        this.subscription = this.route?.params.subscribe((params: { courseId: string }) => {
+        this.subscription = this.route?.params.subscribe((params: Params) => {
             const id = Number(params.courseId);
             const previousCourseId = this.courseId();
             this.courseId.set(id);
@@ -216,6 +223,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     protected getHasSidebar(): boolean {
         return !!this.route.snapshot.firstChild?.data?.hasSidebar;
+    }
+
+    private getShowRefreshButton(): boolean {
+        return !!this.route.snapshot.firstChild?.data?.['showRefreshButton'];
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
@@ -458,7 +469,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         // Clear the fully-loaded marker so the next visit re-fetches fresh course data from the server
         // instead of reusing a potentially stale cached course. Within the current visit, tab switches

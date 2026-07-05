@@ -32,7 +32,7 @@ export class EmojiUtils {
      *
      * @param emoji the emoji that is to be rendered
      */
-    public static readonly singleDarkModeEmojiUrlFn: (emoji: EmojiData | null) => string = (emoji: EmojiData) => {
+    public static readonly singleDarkModeEmojiUrlFn: (emoji: EmojiData | null) => string = (emoji: EmojiData | null) => {
         if (emoji?.unified && EMOJIS_TO_REPLACE.includes(emoji.unified)) {
             return EMOJI_URL + emoji.unified.toLowerCase() + '.png';
         }

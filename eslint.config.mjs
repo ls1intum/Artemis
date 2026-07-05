@@ -309,6 +309,19 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
         },
     },
+    // Type-safety ratchet for production code (specs excluded below): catch real bug classes the compiler's
+    // `strictNullChecks`/`noImplicitAny` miss. `restrict-plus-operands` rejects `+` on mismatched/uncertain
+    // operand types (silent string/number coercion); `no-base-to-string` rejects stringifying a value whose
+    // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
+    // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/restrict-plus-operands': 'error',
+            '@typescript-eslint/no-base-to-string': 'error',
+        },
+    },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
     // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
     // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above

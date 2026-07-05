@@ -227,6 +227,7 @@ export class GradingService {
                 if (response && response.body) {
                     return response.body;
                 }
+                return undefined;
             }),
         );
     }
