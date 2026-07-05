@@ -53,6 +53,10 @@
                     "name": "Hyperion (Aufgabenerstellung)",
                     "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
                 },
+                "deimos": {
+                    "name": "Deimos (Analyse bösartiger Teilnahmen)",
+                    "description": "Aktiviert das Deimos-Modul, mit dem Lehrende Teilnahmen an Programmieraufgaben mithilfe eines LLM auf bösartiges Verhalten prüfen können."
+                },
                 "exam": {
                     "name": "Prüfungsmodus",
                     "description": "Aktiviert den Prüfungsmodus für die Durchführung sicherer Online-Prüfungen mit Beaufsichtigungsfunktionen."
