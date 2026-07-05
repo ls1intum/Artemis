@@ -81,7 +81,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;
         exercise.packageName = 'a'.repeat(MAX_PACKAGE_NAME_LENGTH + 1);
         fixture.componentRef.setInput('programmingExercise', exercise);
-        fixture.componentRef.setInput('programmingExerciseCreationConfig', { ...programmingExerciseCreationConfigMock, packageNameRequired: true });
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
         expect(comp.isPackageNameValid()).toBe(false);
     });
@@ -91,7 +91,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;
         exercise.packageName = 'validpackage';
         fixture.componentRef.setInput('programmingExercise', exercise);
-        fixture.componentRef.setInput('programmingExerciseCreationConfig', { ...programmingExerciseCreationConfigMock, packageNameRequired: true });
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
         expect(comp.isPackageNameValid()).toBe(true);
     });
