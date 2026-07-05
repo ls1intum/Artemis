@@ -261,6 +261,7 @@ class HyperionDecorrelatedTesterAuthenticTest extends AbstractSpringIntegrationL
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.PLAIN_MAVEN);
         exercise.setProblemStatement(PROBLEM_STATEMENT);
+        exercise.setStaticCodeAnalysisEnabled(false);
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
         exercise.setBuildConfig(buildConfig);
         buildConfig.setBuildScript(null);
