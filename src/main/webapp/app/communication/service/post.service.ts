@@ -29,7 +29,7 @@ export class PostService extends PostingService<Post> {
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const postDTO = {
             content: post.content,
-            title: (post as Post).title,
+            title: post.title,
             hasForwardedMessages: post.hasForwardedMessages,
             conversation: post.conversation ? { id: post.conversation.id } : undefined,
             plagiarismCase: post.plagiarismCase ? { id: post.plagiarismCase.id } : undefined,

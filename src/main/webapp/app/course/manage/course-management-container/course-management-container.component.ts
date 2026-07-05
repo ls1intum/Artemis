@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
@@ -133,8 +133,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
-    async ngOnInit() {
-        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
+    override async ngOnInit() {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
@@ -165,11 +165,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
-            this.subscribeToCourseUpdates(this.courseId()!);
+            this.subscribeToCourseUpdates(this.courseId());
         });
     }
 
-    protected handleNavigationEndActions(): void {
+    protected override handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
     }
 
@@ -218,7 +218,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.operationProgress.set(undefined);
         // Navigate to course list after closing a completed delete operation
         if (progress?.operationType === CourseOperationType.DELETE) {
-            this.router.navigate(['/course-management']);
+            void this.router.navigate(['/course-management']);
         }
     }
 
@@ -226,14 +226,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
-                this.course.set(courseResponse.body!);
+                this.course.set(courseResponse.body);
             }
             this.sidebarItems.set(this.getSidebarItems());
         });
     }
 
     loadCourse(): Observable<void> {
-        return this.courseManagementService.findOneForDashboard(this.courseId()!).pipe(
+        return this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -246,7 +246,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         const courseView = hasSidebar(componentRef) ? componentRef : undefined;
         this.activatedComponentReference.set(courseView);
         if (courseView) {
@@ -352,7 +352,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return irisItems;
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();

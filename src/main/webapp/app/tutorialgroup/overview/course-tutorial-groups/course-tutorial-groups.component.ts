@@ -8,8 +8,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
@@ -25,7 +27,7 @@ import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent implements SidebarView {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -60,7 +62,11 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
+
+    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | CourseLectureDetailsComponent | undefined>(undefined);
+    protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     constructor() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
@@ -89,6 +95,16 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     toggleSidebar() {
         this.isCollapsed.update((collapsed) => !collapsed);
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent || componentRef instanceof CourseLectureDetailsComponent) {
+            this.activeDetail.set(componentRef);
+        }
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     private setTutorialGroupsAndTutorialLectures(courseId: number) {
@@ -125,7 +141,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         const course = this.courseStorageService.getCourse(courseId);
         if (course) {
             course.tutorialGroups = tutorialGroups;
-            this.courseStorageService.updateCourse(course);
+            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
+            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
+            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
         }
     }
 
@@ -148,7 +166,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         const existingLectures = course.lectures ?? [];
         const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
         course.lectures = [...remainingLectures, ...lecturesToUpdate];
-        this.courseStorageService.updateCourse(course);
+        // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
+        // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
+        this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(courseId));
     }
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
@@ -210,9 +230,9 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
-            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
         } else if (nothingSelected && upcomingTutorialGroup) {
-            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
     }
 
@@ -223,11 +243,11 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
         return toSignal(
             this.activatedRoute.parent!.paramMap.pipe(
-                map((parameterMap) => {
+                map((parameterMap): number | undefined => {
                     const courseIdParameter = parameterMap.get('courseId');
                     return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
                 }),
-                distinctUntilChanged(),
+                distinctUntilChanged<number | undefined>(),
             ),
             { initialValue: undefined },
         );

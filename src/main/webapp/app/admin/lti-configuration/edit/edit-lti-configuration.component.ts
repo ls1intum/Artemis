@@ -86,7 +86,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Update existing platform configuration
      */
-    updateLtiConfiguration(platformConfiguration: any) {
+    updateLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -105,7 +105,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Create new platform configuration
      */
-    addLtiConfiguration(platformConfiguration: any) {
+    addLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -170,6 +170,6 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['admin', 'lti-configuration']);
+        void this.router.navigate(['admin', 'lti-configuration']);
     }
 }

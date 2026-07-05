@@ -36,7 +36,7 @@ export class CourseIrisComponent implements SidebarView {
         return Number.isNaN(parsed) ? undefined : parsed;
     });
 
-    isCollapsed = false;
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     constructor() {
         // When the user opts out of AI from the chat's LLM selection modal while on this page,
@@ -44,13 +44,12 @@ export class CourseIrisComponent implements SidebarView {
         this.irisChatService.llmOptedOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const id = this.courseId();
             if (id !== undefined) {
-                this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
+                void this.router.navigate(['/courses', id, CourseOverviewRoutePath.EXERCISES]);
             }
         });
     }
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this.isCollapsed = !this.isCollapsed;
     }
 }

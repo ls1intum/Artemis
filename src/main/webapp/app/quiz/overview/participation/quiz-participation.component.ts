@@ -108,7 +108,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
 
     private routeAndDataSubscription: Subscription;
 
-    runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
+    runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
 
     readonly isSubmitting = signal(false);
     // isSaving = false;
@@ -217,6 +217,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             if (!root) {
                 return;
             }
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- the observer is disconnected via the effect's onCleanup below, which runs on every effect re-run and on component destroy. The rule only scans ngOnDestroy, so it cannot see this teardown.
             const observer = new ResizeObserver(() => {
                 const rect = root.getBoundingClientRect();
                 root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
@@ -233,9 +234,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.routeAndDataSubscription = combineLatest([
             this.route.data,
             this.route.params,
-            this.route.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.parent?.params ?? of({} as Params),
+            this.route.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.parent?.params ?? of<Params>({}),
         ]).subscribe(([data, params, parentParams, grandParentParams, greatGrandParentParams]) => {
             this.mode.set(this.inputMode() ?? data.mode);
             // exerciseId: own params (old componentless route) or parent params (new component-based route)
@@ -598,7 +599,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -640,7 +641,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -858,7 +859,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                         shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                         break;
                     default:
-                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        captureException(new Error('Unknown question type: ' + clientQuestion.type));
                         break;
                 }
             }
@@ -893,7 +894,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             this.questionScores.set({});
             this.submission().submittedAnswers?.forEach((submittedAnswer) => {
                 // limit decimal places
-                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
+                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, course);
             }, this);
             this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
@@ -1064,8 +1065,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);
         // make sure the additional information (explanations, correct answers) is available
-        const participation = this.submission().participation as StudentParticipation | undefined;
-        const quizExercise = participation?.exercise as QuizExercise | undefined;
+        const participation: StudentParticipation | undefined = this.submission().participation;
+        const quizExercise = participation?.exercise;
         if (quizExercise) {
             this.transferInformationToQuizExercise(quizExercise);
         }

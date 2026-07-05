@@ -146,12 +146,12 @@ export class FaqUpdateComponent implements OnInit {
                         this.faq = faqBody;
                     }
                     this.showSuccessAlert(faq, false);
-                    this.router.navigate(['course-management', this.courseId, 'faqs']);
+                    void this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
             this.showSuccessAlert(faq, true);
-            this.router.navigate(['course-management', this.courseId, 'faqs']);
+            void this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
     }
 

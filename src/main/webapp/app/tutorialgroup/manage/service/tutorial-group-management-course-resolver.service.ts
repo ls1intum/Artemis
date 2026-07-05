@@ -25,7 +25,7 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 }
                 // user has not completed all necessary configuration steps
                 if (!course.tutorialGroupsConfiguration || !course.timeZone) {
-                    this.router.navigate(['/course-management', course.id!, 'tutorial-groups-checklist']);
+                    void this.router.navigate(['/course-management', course.id!, 'tutorial-groups-checklist']);
                 }
             }),
         );

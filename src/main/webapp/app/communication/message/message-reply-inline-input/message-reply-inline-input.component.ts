@@ -41,7 +41,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         });
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
         void this.loadCurrentUser();
     }

@@ -178,7 +178,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
         const participation = submission.participation as StudentParticipation;
 
         // reconnect participation <--> submission
-        participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
+        participation.submissions = [omit(submission, 'participation')];
 
         this.submission.set(submission);
         this.result.set(tmpResult);
@@ -193,7 +193,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate, Ex
         if (this.submission()?.submitted && this.result()?.completionDate) {
             const submissionId = this.submission()?.id;
             if (submissionId) {
-                firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
+                void firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
                     this.result.set(assessmentResult);
                 });
             }

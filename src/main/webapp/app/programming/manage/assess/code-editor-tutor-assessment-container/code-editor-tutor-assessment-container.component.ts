@@ -149,7 +149,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     readonly onFeedbackLoaded = output();
     // function override, if set will be executed instead of going to the next submission page
-    readonly overrideNextSubmission = input<(submissionId: number) => any>();
+    readonly overrideNextSubmission = input<(submissionId: number) => void>();
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -175,7 +175,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     async ngOnInit(): Promise<void> {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.route.queryParamMap.subscribe((queryParams) => {
@@ -494,7 +494,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.exerciseGroupId,
                     undefined,
                 );
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingParticipation.set(false);

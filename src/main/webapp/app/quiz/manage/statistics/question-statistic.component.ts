@@ -137,14 +137,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigateByUrl('courses');
+            void this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
         if (!updatedQuestion) {
-            this.router.navigateByUrl('courses');
+            void this.router.navigateByUrl('courses');
             return undefined;
         }
         this.question = updatedQuestion;
