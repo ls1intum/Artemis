@@ -21,6 +21,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Message } from 'primeng/message';
+import { POINTS_PATTERN } from 'app/foundation/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -47,6 +48,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly AssessmentType = AssessmentType;
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly pointsPattern = POINTS_PATTERN;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 

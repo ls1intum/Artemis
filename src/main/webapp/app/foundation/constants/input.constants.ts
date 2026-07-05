@@ -51,6 +51,11 @@ export const ASSIGNMENT_REPO_NAME = 'assignment';
 export const TEST_REPO_NAME = 'tests';
 
 export const MAX_PENALTY_PATTERN = '^([0-9]|([1-9][0-9])|100)$';
+/**
+ * Points and bonus points must be a non-negative number with at most 2 decimal places.
+ * Keep in sync with MAX_POINTS_DECIMAL_PLACES in Constants.java.
+ */
+export const POINTS_PATTERN = '^\\d+(\\.\\d{1,2})?$';
 // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
 export const PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX =
     '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';

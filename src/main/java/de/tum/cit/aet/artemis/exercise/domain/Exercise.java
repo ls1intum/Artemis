@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_POINTS_DECIMAL_PLACES;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -900,6 +902,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
+        if (!hasValidDecimalPrecision(getMaxPoints())) {
+            throw new BadRequestAlertException("The max points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "maxScoreInvalid");
+        }
+
         if (getBonusPoints() == null || getBonusPoints() < 0) {
             // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
@@ -908,6 +914,20 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!getIncludedInOverallScore().validateBonusPoints(getBonusPoints())) {
             throw new BadRequestAlertException("The provided bonus points are not allowed", "Exercise", "bonusPointsInvalid");
         }
+
+        if (!hasValidDecimalPrecision(getBonusPoints())) {
+            throw new BadRequestAlertException("The bonus points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "bonusPointsInvalid");
+        }
+    }
+
+    /**
+     * Checks that a points value (if present) does not exceed {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES} decimal places.
+     *
+     * @param points the points value to check, may be {@code null}
+     * @return true if the value is null or has a valid decimal precision, false otherwise
+     */
+    private static boolean hasValidDecimalPrecision(Double points) {
+        return points == null || BigDecimal.valueOf(points).scale() <= MAX_POINTS_DECIMAL_PLACES;
     }
 
     public void validateGeneralSettings() {

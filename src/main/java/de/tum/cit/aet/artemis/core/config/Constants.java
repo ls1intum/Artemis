@@ -116,6 +116,10 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
+    // Maximum number of decimal places allowed for exercise points and bonus points.
+    // NOTE: keep this value in sync with input.constants.ts.
+    public static final int MAX_POINTS_DECIMAL_PLACES = 2;
+
     // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
     // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
     // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so

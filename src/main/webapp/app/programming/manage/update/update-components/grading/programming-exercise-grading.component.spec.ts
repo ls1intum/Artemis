@@ -24,6 +24,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { POINTS_PATTERN } from 'app/foundation/constants/input.constants';
 
 /**
  * Typed view onto the `viewChild` signals so the spec can stub them without a blanket
@@ -186,6 +187,16 @@ describe('ProgrammingExerciseGradingComponent', () => {
         lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should restrict points and bonusPoints inputs to at most 2 decimal places', () => {
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+        const bonusPointsInput = fixture.debugElement.nativeElement.querySelector('#field_bonusPoints') as HTMLInputElement;
+
+        expect(pointsInput.pattern).toBe(POINTS_PATTERN);
+        expect(bonusPointsInput.pattern).toBe(POINTS_PATTERN);
     });
 
     it('should not require points when exercise is not included in the course score', () => {

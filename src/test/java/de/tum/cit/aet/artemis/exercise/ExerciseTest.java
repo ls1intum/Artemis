@@ -214,4 +214,31 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
 
         assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
     }
+
+    @Test
+    void validateScoreSettings_maxPointsWithTooManyDecimalPlaces_throws() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(1.1111111111111112);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_bonusPointsWithTooManyDecimalPlaces_throws() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(10.0);
+        exercise.setBonusPoints(5.5555555555555555);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_pointsWithAtMostTwoDecimalPlaces_doesNotThrow() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(10.5);
+        exercise.setBonusPoints(2.25);
+
+        assertThatNoException().isThrownBy(exercise::validateScoreSettings);
+    }
 }

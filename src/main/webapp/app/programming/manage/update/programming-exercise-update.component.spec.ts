@@ -1313,6 +1313,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('should reject points with more than 2 decimal places', () => {
+            comp.programmingExercise.maxPoints = 1.111;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('should accept points with at most 2 decimal places', () => {
+            comp.programmingExercise.maxPoints = 1.11;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.pattern',
+                translateValues: {},
+            });
+        });
+
         it('should not require points when exercise is not included in the course score', () => {
             comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
             comp.programmingExercise.maxPoints = undefined;
@@ -1337,6 +1353,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.maxPoints = 10_000;
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        });
+
+        it('should reject bonus points with more than 2 decimal places', () => {
+            comp.programmingExercise.bonusPoints = 1.111;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
+                translateValues: {},
+            });
+        });
+
+        it('should accept bonus points with at most 2 decimal places', () => {
+            comp.programmingExercise.bonusPoints = 1.11;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.bonusPoints.pattern',
                 translateValues: {},
             });
         });
