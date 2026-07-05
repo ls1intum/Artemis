@@ -496,7 +496,9 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
         expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.allowComplaintsForAutomaticAssessments()).toBe(false);
+        // Switching to automatic assessment must preserve the user's complaint-on-automatic choice (issue #13070);
+        // only fields that are meaningless in automatic mode (assessment due date) reset.
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
     });
 
     it('should update form validation status when timeline status changes', () => {
@@ -560,6 +562,16 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         checkbox.click();
         fixture.detectChanges();
 
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
+    });
+
+    it('should preserve a persisted allowComplaintsForAutomaticAssessments on load for automatic assessment (issue #13070)', () => {
+        exercise.allowComplaintsForAutomaticAssessments = true;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        createTestComponent();
+
+        // The on-load effect must not reset the persisted value in AUTOMATIC mode, otherwise the setting is lost
+        // (saved as false) every time the exercise editor is opened.
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
     });
 
