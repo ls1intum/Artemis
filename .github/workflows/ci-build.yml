@@ -99,6 +99,7 @@ jobs:
         # resolution before the first compile task). If a build legitimately needs an uncached
         # artifact (e.g. a dependency was added or bumped), the offline run fails fast and we retry
         # once online to fetch it (and repopulate the cache on develop, the cache writer).
+        # change
         run: |
           if ! ./gradlew -Pprod -Pwar bootWar -x webapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }}; then
           if ! ./gradlew -Pprod -Pwar bootWar -PskipWebapp --offline ${{ inputs.is_release_build && '-Psbom' || '' }}; then
