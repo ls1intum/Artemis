@@ -631,7 +631,10 @@ public class UserService {
 
         Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
         Set<Long> alreadyEnrolledIds = userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(course.getId(), role, userIds);
-        List<User> newlyEnrolled = users.stream().filter(user -> !alreadyEnrolledIds.contains(user.getId())).toList();
+        // Deduplicate by user id: duplicate rows in the import/request body must not produce two UserCourseRole entities
+        // with the same composite key (user, course, role), which would fail the whole bulk enrollment.
+        Set<Long> seenIds = new HashSet<>();
+        List<User> newlyEnrolled = users.stream().filter(user -> !alreadyEnrolledIds.contains(user.getId())).filter(user -> seenIds.add(user.getId())).toList();
         if (newlyEnrolled.isEmpty()) {
             return;
         }

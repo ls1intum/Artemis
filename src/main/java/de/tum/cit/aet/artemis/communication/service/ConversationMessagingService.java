@@ -111,7 +111,9 @@ public class ConversationMessagingService extends PostingService {
      * @return the created message and associated data
      */
     public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
-        var author = this.userRepository.getUserWithAuthorities();
+        // Pre-load course roles: preCheckUserAndCourseForMessaging + setAuthorRoleForPosting perform several
+        // course-role checks below for the same author/course; without this, each falls back to its own query.
+        var author = this.userRepository.getUserWithCourseRolesAndAuthorities();
 
         var newMessage = message.toEntity();
         newMessage.setAuthor(author);

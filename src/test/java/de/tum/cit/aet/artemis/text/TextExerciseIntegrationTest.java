@@ -854,8 +854,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importTextExerciseOmittingModeAndScoreKeepsEntityDefaults() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
         textExerciseRepository.save(textExercise);
@@ -1107,7 +1107,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExamTextExerciseCarriesNestedExamCourse() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         TextExercise examTextExercise = textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
         var exam = exerciseGroup.getExam();
         Course examCourse = exam.getCourse();
@@ -1238,7 +1238,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchExamTextExerciseCarriesNestedExerciseGroupForImportMarker() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         examTextExercise.setTitle("searchExamMarker-" + UUID.randomUUID().toString().substring(0, 8));
         examTextExercise = textExerciseRepository.save(examTextExercise);

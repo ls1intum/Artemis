@@ -97,7 +97,10 @@ public class ConversationResource extends ConversationManagementResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
 
-        var requestingUser = userRepository.getUserWithAuthorities();
+        // Pre-load course roles: the role check below plus the per-conversation moderator/role checks inside
+        // conversationService.getConversationsOfUser reuse this user, so a single preload avoids a fallback
+        // query per check.
+        var requestingUser = userRepository.getUserWithCourseRolesAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
         var conversations = conversationService.getConversationsOfUser(course, requestingUser);
         return ResponseEntity.ok(new ArrayList<>(conversations));

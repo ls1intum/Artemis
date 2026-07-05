@@ -48,18 +48,18 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testFindAllNotEnrolledUsers() {
-        List<User> expected = userRepository.saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 1, 3));
+        List<User> expected = userRepository.saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 1, 3));
         // Should not find administrators
         List<User> unexpected = userRepository
-                .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
         // Should not find super administrators
         List<User> superAdmins = userRepository
-                .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
+                .saveAllOrUpdate(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.SUPER_ADMIN_AUTHORITY), 5, 5));
         unexpected.addAll(superAdmins);
         // Should not find deleted users
         List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(), 6, 7);
         deleted.forEach(user -> user.setDeleted(true));
-        unexpected.addAll(userRepository.saveAll(deleted));
+        unexpected.addAll(userRepository.saveAllOrUpdate(deleted));
 
         final List<String> actual = userRepository.findAllNotEnrolledUsers();
 
@@ -136,7 +136,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Create regular admin users
         List<User> admins = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), Set.of(Authority.ADMIN_AUTHORITY), 1, 2);
-        admins = userRepository.saveAll(admins);
+        admins = userRepository.saveAllOrUpdate(admins);
 
         // Create an inactive admin user (should not be included)
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");

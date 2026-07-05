@@ -142,6 +142,7 @@ class LtiServiceTest {
     void successFullAuthentication() {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         when(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(any(), any(), any())).thenReturn(false);
+        when(userRepository.findOneWithAuthoritiesByLogin(user.getLogin())).thenReturn(Optional.of(user));
         when(authorityService.buildAuthorities(user)).thenReturn(new HashSet<>());
 
         ltiService.onSuccessfulLtiAuthentication(user, exercise);

@@ -58,7 +58,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         long exerciseId = programmingExerciseRepository.findAllWithCategoriesByCourseId(course.getId()).getFirst().getId();
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(exerciseId).orElseThrow();
         // Keep the in-memory course attached so the service can resolve staff without a lazy load in the test.

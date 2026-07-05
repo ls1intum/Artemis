@@ -494,7 +494,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateExamTextSubmissionWithExistingResultForksNewSubmission() throws Exception {
-        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Exam exam = examTextExercise.getExerciseGroup().getExam();
         exam.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam.setEndDate(ZonedDateTime.now().plusMinutes(60));
