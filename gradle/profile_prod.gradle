@@ -22,7 +22,23 @@ tasks.register("webapp_test", PnpmTask) {
 
 tasks.register("webapp", PnpmTask) {
     dependsOn pnpmInstall
-    args = ["run", "webapp:prod"]
+         outputs.dir("build/resources/main/static/").withPropertyName("webapp-build-dir")
+    if (project.hasProperty("skipWebapp")) {
+        inputs.dir("build/webapp-temp").withPropertyName("webapp-temp-source")
+        args = ["-v"]
+        // Move already built webapp from the directory it was temporarily moved to to the directory it is expected.
+        // This is done because of an issue where with `-x webapp` the result of webapp would get deleted.
+        // This was the previous client build gets stored in a safe location and then put back as if it was actually
+        // at this step.
+        doLast {
+            copy {
+                from "build/webapp-temp"
+                into "build/resources/main/static/"
+            }
+        }
+    } else {
+        args = ["run", "webapp:prod"]
+    }
     environment = [APP_VERSION: project.version]
 }
 
