@@ -45,7 +45,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     private contextSubscription?: Subscription;
 
     readonly PageType = PageType;
-    readonly EditType = PostingEditType;
+    override readonly EditType = PostingEditType;
     protected readonly getAsChannel = getAsChannelDTO;
 
     // Icons
@@ -58,7 +58,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * subscribe to the form control changes of the context selector in order to show the Announcement info box on selection;
      * authorize the user by invoking the metis service
      */
-    ngOnInit(): void {
+    override ngOnInit(): void {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
         this.course = this.metisService.getCourse();

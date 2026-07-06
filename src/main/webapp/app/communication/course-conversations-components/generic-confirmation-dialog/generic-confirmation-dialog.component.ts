@@ -20,7 +20,7 @@ export class GenericConfirmationDialogComponent extends AbstractDialogComponent 
     canBeUndone = true;
     isDangerousAction = false;
 
-    initialize() {
+    override initialize() {
         super.initialize(['translationKeys']);
     }
 

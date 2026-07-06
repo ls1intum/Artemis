@@ -3,9 +3,12 @@
 }
 <div id="exam-results-title">
     <h2>
-        <ng-container>
+        <span class="d-inline-flex align-items-center gap-2">
+            @if (isSidebarCollapsed()) {
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+            }
             {{ 'artemisApp.exam.examSummary.examResults' | artemisTranslate }}
-        </ng-container>
+        </span>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint" />
             <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>

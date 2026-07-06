@@ -77,7 +77,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
 
     leaveConversation($event: MouseEvent) {
         $event.stopPropagation();
-        if (isGroupChatDTO(this.activeConversation()!)) {
+        if (isGroupChatDTO(this.activeConversation())) {
             this.groupChatService
                 .removeUsersFromGroupChat(this.course().id!, this.activeConversation().id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -85,7 +85,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
                     this.conversationLeave.emit();
                 });
             return;
-        } else if (isChannelDTO(this.activeConversation()!)) {
+        } else if (isChannelDTO(this.activeConversation())) {
             this.channelService
                 .deregisterUsersFromChannel(this.course().id!, this.activeConversation().id!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -98,7 +98,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     toggleChannelArchivalState(event: Event): void {
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -177,7 +177,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     deleteChannel() {
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }
@@ -233,7 +233,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     }
 
     toggleChannelPrivacy() {
-        const channel = getAsChannelDTO(this.activeConversation()!);
+        const channel = getAsChannelDTO(this.activeConversation());
         if (!channel) {
             return;
         }

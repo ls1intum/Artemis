@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -44,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -90,6 +91,7 @@ type StateBeforeResetting = {
         ArtemisTranslatePipe,
         TestRunRibbonComponent,
         ExamRequestAiFeedbackButtonComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {
@@ -145,6 +147,8 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly isBonusGradingKeyCollapsed = signal(true);
 
     readonly instructorView = input(false);
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
 
     readonly courseId = signal<number>(undefined!);
 
@@ -218,7 +222,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
-    get resultsArePublished(): boolean | any {
+    get resultsArePublished(): boolean {
         if (this.isTestRun() || this.isTestExam) {
             return true;
         }
@@ -456,7 +460,7 @@ export class ExamResultSummaryComponent implements OnInit {
     private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
         const canCalculatePercentage = maxScore !== undefined && achievedPoints !== undefined;
         if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(achievedPoints! / maxScore, course);
+            return roundScorePercentSpecifiedByCourseSettings(achievedPoints / maxScore, course);
         }
 
         return undefined;
@@ -510,7 +514,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     toggleCollapseExercise(exerciseInfo: ResultSummaryExerciseInfo) {
-        return () => (exerciseInfo!.isCollapsed = !exerciseInfo!.isCollapsed);
+        return () => (exerciseInfo.isCollapsed = !exerciseInfo.isCollapsed);
     }
 
     protected readonly getIcon = getIcon;

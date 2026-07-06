@@ -62,20 +62,29 @@ export class HealthModalComponent {
 
     readonly health = input<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
-    readableValue(value: any): string {
+    readableValue(value: unknown): string {
         if (this.health()?.key === 'diskSpace') {
             // Should display storage space in a human-readable unit
-            const val = value / 1073741824;
+            const bytes = value as number;
+            const val = bytes / 1073741824;
             if (val > 1) {
                 return `${val.toFixed(2)} GB`;
             }
-            return `${(value / 1048576).toFixed(2)} MB`;
+            return `${(bytes / 1048576).toFixed(2)} MB`;
         }
 
         if (typeof value === 'object') {
             return JSON.stringify(value);
         }
-        return String(value);
+        // primitives keep the exact String() output (e.g. 'NaN', 'Infinity', 'undefined'); narrowing positively
+        // avoids no-base-to-string (String() is only ever applied to number/boolean/bigint here).
+        if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+            return String(value);
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        return 'undefined';
     }
 
     /**
@@ -110,7 +119,7 @@ export class HealthModalComponent {
         if (!this.isBuildAgentsArray(value, detailKey)) {
             return [];
         }
-        const agents = value as BuildAgentDetail[];
+        const agents = value;
         return agents.map((agent) => (this.isSimplifiedBuildAgent(agent) ? this.formatSimplifiedBuildAgent(agent) : this.formatLegacyBuildAgent(agent)));
     }
 

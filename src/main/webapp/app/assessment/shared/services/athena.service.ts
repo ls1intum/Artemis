@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -57,7 +58,7 @@ export class AthenaService {
     /**
      * Find a grading instruction by id in the given exercise
      */
-    private findGradingInstruction(exercise: Exercise, id: number): any | undefined {
+    private findGradingInstruction(exercise: Exercise, id: number): GradingInstruction | undefined {
         for (const criterion of exercise.gradingCriteria ?? []) {
             for (const instruction of criterion.structuredGradingInstructions) {
                 if (instruction.id == id) {

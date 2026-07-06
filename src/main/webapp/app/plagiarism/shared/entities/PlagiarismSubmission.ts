@@ -1,5 +1,5 @@
 import { PlagiarismSubmissionElement } from './PlagiarismSubmissionElement';
-import { PlagiarismComparison } from './PlagiarismComparison';
+import { PlagiarismComparisonSummary } from './PlagiarismComparison';
 
 /**
  * Each `PlagiarismSubmission` refers to a submission that has been compared during plagiarism detection.
@@ -36,10 +36,10 @@ export class PlagiarismSubmission {
     /**
      * Result score of the related submission.
      */
-    score: number;
+    score?: number;
 
     /**
      * Comparison of the submission.
      */
-    plagiarismComparison: PlagiarismComparison;
+    plagiarismComparison?: PlagiarismComparisonSummary;
 }

@@ -60,6 +60,7 @@ describe('CreateExerciseUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                                 parent: {
@@ -69,6 +70,7 @@ describe('CreateExerciseUnitComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
+                                            return null;
                                         },
                                     }),
                                 },

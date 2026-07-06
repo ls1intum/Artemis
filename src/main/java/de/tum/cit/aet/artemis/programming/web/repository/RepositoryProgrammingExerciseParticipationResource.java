@@ -347,7 +347,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId id of participation to which the files belong
      * @param submissions     information about the file updates
      * @param commit          whether to commit after updating the files
-     * @return {Map<String, String>} file submissions or the appropriate http error
+     * @return {@code Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping({ "participations/{participationId}/repository/files", "repository/{participationId}/files" })
     @EnforceAtLeastStudent

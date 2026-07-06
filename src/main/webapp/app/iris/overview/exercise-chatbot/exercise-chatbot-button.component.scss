@@ -76,16 +76,6 @@
     color: inherit;
 }
 
-@keyframes slideUpFade {
-    0% {
-        opacity: 0;
-    }
-
-    100% {
-        opacity: 1;
-    }
-}
-
 .status-label {
     color: var(--bs-body-color);
     font-size: 14px;
@@ -95,11 +85,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: min(200px, 40vw);
-
-    &.anim-a,
-    &.anim-b {
-        animation: slideUpFade 0.4s ease-out forwards;
-    }
 }
 
 .typing-dots {
@@ -153,11 +138,6 @@
 @media (prefers-reduced-motion: reduce) {
     .typing-dots .dot,
     .status-indicator {
-        animation: none;
-    }
-
-    .status-label.anim-a,
-    .status-label.anim-b {
         animation: none;
     }
 
