@@ -36,12 +36,10 @@ export class DeleteButtonDirective implements OnInit {
     private callerProvidedAriaLabel = false;
 
     /**
-     * Styles the host button and gives it an accessible name. The Bootstrap `btn` classes and the injected
-     * `d-none`/`d-xl-inline` label span are gated behind `renderButtonStyle`, so PrimeNG-styled callers
-     * (`[renderButtonStyle]="false"`) stay Bootstrap-free. Independently, the translated action is set as the
-     * host's `aria-label` (unless the caller already set one): the icon-only variants — the PrimeNG path and the
-     * Bootstrap label below its `d-xl` breakpoint — carry no visible text, so a screen reader would otherwise
-     * announce only "button".
+     * Styles the host and gives it an accessible name. The Bootstrap `btn` classes and injected label span are
+     * gated behind `renderButtonStyle` so PrimeNG-styled callers stay Bootstrap-free; the translated action is
+     * set as the host's `aria-label` regardless (unless the caller set one), since the icon-only variants have
+     * no visible text for a screen reader to announce.
      */
     ngOnInit() {
         this.callerProvidedAriaLabel = !!this.elementRef.nativeElement.getAttribute('aria-label');
