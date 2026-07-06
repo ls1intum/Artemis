@@ -89,13 +89,6 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Enable the Hyperion service on startup. Requires Spring AI (configured below).
-    crosscheck:
-      # Independent-examiner cross-check: a second agent authors tests from the problem statement alone (never sees solution/) and runs them against the real solution, catching
-      # defects that a single author's tests would share. It costs a full extra agent pass per generation; the differential oracle stays the acceptance authority either way.
-      enabled: false  # Run the cross-check. Off by default: it is opt-in coverage that doubles the per-generation agent cost.
-      languages: JAVA  # Languages the cross-check runs for; others are never cross-checked.
-      reject-on-contradiction: false  # When true, a contradiction routes an accepted exercise to review; otherwise it only adds an advisory finding.
-      examiner-max-turns: 40  # Agent-turn budget for the examiner's shadow suite.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
     # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys

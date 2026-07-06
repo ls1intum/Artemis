@@ -368,25 +368,6 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs one reported pristine build for the cross-check, reusing the seed+build+copyOut+parse path the differential uses so the shadow suite is judged with
-     * parity-by-construction:
-     * it re-seeds the pristine {@code verify.sh} (idempotent) and runs the given build command (a {@code verify.sh <assignment> shadow-tests} invocation), returning the
-     * production-parsed {@link BuildSummary}. Package-private so {@link CrossCheckService} can drive the shadow-suite build without duplicating the parse path; this delegate never
-     * touches the {@code accepted=} verdict.
-     *
-     * @param sandbox        the open sandbox session the build runs in
-     * @param sessionId      the sandbox session id
-     * @param exercise       the exercise (drives the per-language {@code verify.sh})
-     * @param buildCommand   the build invocation (a {@code SandboxBuildCommandService.crosscheck*BuildCommand()} pointing {@code verify.sh} at {@code shadow-tests})
-     * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdir name and the copyOut prefix
-     * @return the production-parsed build summary
-     */
-    BuildSummary runReportedBuild(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, String buildCommand, String assignmentName) {
-        seedPristineVerifyScript(sandbox, sessionId, exercise);
-        return runPristineBuild(sandbox, sessionId, buildCommand, assignmentName);
-    }
-
-    /**
      * Runs one pristine build for the given assignment, then copies out the build-fresh reports from the verifier-owned reports dir (a constant path, never derived from agent
      * output) and parses them with the production parsers into a {@link BuildSummary}. The tar is validated by {@link CollectedReports} before any byte is parsed.
      *

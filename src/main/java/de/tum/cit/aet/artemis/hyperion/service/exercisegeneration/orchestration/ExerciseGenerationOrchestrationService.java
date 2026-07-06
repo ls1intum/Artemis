@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileSnap
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
@@ -81,23 +80,6 @@ public class ExerciseGenerationOrchestrationService {
     // and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
-    // Decorrelated cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. Additive and advisory by
-    // default — it never loosens acceptance; a contradiction only adds an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise. Owns both halves:
-    // authors the shadow suite and runs it against the real solution (via its own CrossCheckService).
-    private final IndependentExaminerService independentExaminer;
-
-    /**
-     * Whether to run the decorrelated cross-check at all. Under the advisory default an accepted attempt ends the loop, so a contradiction surfaces only as an advisory review
-     * comment on the final exercise; the retry-prompt surfacing fires solely when {@link #rejectOnContradiction} is set.
-     */
-    private final boolean crossCheckEnabled;
-
-    /** The languages the cross-check is validated for (default {@code {JAVA}}); a non-allowlisted language is never cross-checked. */
-    private final Set<ProgrammingLanguage> crossCheckLanguages;
-
-    /** Whether a contradiction hard-blocks persistence (routes the accepted exercise to review) vs. advisory-only. */
-    private final boolean rejectOnContradiction;
-
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
     // poll.
     private final ExerciseGenerationJobService jobService;
@@ -108,11 +90,8 @@ public class ExerciseGenerationOrchestrationService {
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
-            SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, ExerciseGenerationJobService jobService,
-            Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns,
-            @Value("${artemis.hyperion.crosscheck.enabled:false}") boolean crossCheckEnabled,
-            @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
-            @Value("${artemis.hyperion.crosscheck.reject-on-contradiction:false}") boolean rejectOnContradiction) {
+            SpecFidelityCriticService specFidelityCritic, ExerciseGenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
+            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
@@ -121,12 +100,8 @@ public class ExerciseGenerationOrchestrationService {
         this.systemPromptService = systemPromptService;
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.specFidelityCritic = specFidelityCritic;
-        this.independentExaminer = independentExaminer;
         this.jobService = jobService;
         this.testCaseRepository = testCaseRepository;
-        this.crossCheckEnabled = crossCheckEnabled;
-        this.crossCheckLanguages = crossCheckLanguages;
-        this.rejectOnContradiction = rejectOnContradiction;
     }
 
     private InteractiveSandbox requireSandbox() {
@@ -192,9 +167,6 @@ public class ExerciseGenerationOrchestrationService {
             VerificationResult verification = null;
             // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
-            // The decorrelated cross-check result and its hard-block flag; only ever set on an already-accepted attempt, so the last set value rides the outcome.
-            CrossCheckVerdict crossCheck = null;
-            boolean hardBlockedByCrossCheck = false;
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
                 loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
@@ -235,34 +207,6 @@ public class ExerciseGenerationOrchestrationService {
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
-                // Decorrelated cross-check: only on an already-accepted exercise (the differential proved solution compiles + passes its own tests, so the shadow suite authored
-                // against the template compiles against the solution too — a contradiction is then a behavioural defect, not an interpretation gap). It never touches
-                // `verification`; a contradiction only adds an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into review.
-                if (crossCheckEnabled && verification.accepted() && crossCheckLanguages.contains(exercise.getProgrammingLanguage())) {
-                    // Seed the examiner from the artifacts the agent produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
-                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and compiles against the real solution.
-                    crossCheck = independentExaminer.crossCheck(sandbox, sessionId, exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink, progress);
-                    emit(progress, "Independent examiner cross-check: " + crossCheck.status() + (crossCheck.detail() != null ? " — " + crossCheck.detail() : ""));
-                    if (crossCheck.isContradiction()) {
-                        // Always advisory: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under
-                        // reject-on-contradiction), never into `verification`.
-                        specFidelityReport = specFidelityReport.withFinding(crossCheck.toAdvisoryFinding());
-                        if (rejectOnContradiction) {
-                            if (attempt < MAX_GENERATION_ATTEMPTS) {
-                                // Retry despite differential-acceptance: the solution contradicts its own stated contract, so ask the agent to fix it.
-                                emit(progress, "An independent examiner exposed a contract contradiction; asking the agent to fix the solution and try again.");
-                                // The contradiction was folded into specFidelityReport above, so the critic's retry rendering names the contradicted tests — no separate render
-                                // needed.
-                                currentPrompt = "Your exercise passed the differential verifier, but an INDEPENDENT examiner exposed a contract contradiction:"
-                                        + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
-                                continue;
-                            }
-                            // Attempts exhausted and still contradicted: carry the hard block on the outcome (routes to review), leaving `verification.accepted()` untouched.
-                            hardBlockedByCrossCheck = true;
-                        }
-                    }
-                }
-
                 if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
@@ -273,7 +217,7 @@ public class ExerciseGenerationOrchestrationService {
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
-            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport, crossCheck, hardBlockedByCrossCheck);
+            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);
         }
         catch (RuntimeException e) {
             // The caller gets no usable outcome to close, so tear down here.

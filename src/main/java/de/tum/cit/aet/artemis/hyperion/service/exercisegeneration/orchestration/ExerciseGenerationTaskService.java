@@ -118,11 +118,7 @@ public class ExerciseGenerationTaskService {
                 // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                 case COMPLETED, BUDGET_EXHAUSTED -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                    // The differential accepted the exercise, unless the decorrelated cross-check hard-blocked it (a contract contradiction with the reject-on-contradiction flag
-                    // on). A hard block routes the accepted exercise to review (with the contradiction attached as a review comment) rather than a silent persist. With the flag
-                    // off
-                    // (default) this conjunct is always true, so behaviour is unchanged.
-                    if (outcome.isAccepted() && !outcome.isHardBlockedByCrossCheck()) {
+                    if (outcome.isAccepted()) {
                         emitter.progress("Checks passed. Saving the exercise.");
                         try {
                             // persist captures each repository's pre-persist HEAD (the pre-adaptation state, since the sandbox run never touched the live repos) and returns it

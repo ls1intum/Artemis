@@ -81,8 +81,7 @@ public class SandboxAgentTools {
     }
 
     /**
-     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by the decorrelated {@link ExaminerAgentTools} (the examiner
-     * must not build the solution) and by unit tests of the file/shell tools.
+     * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by unit tests of the file/shell tools.
      *
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle

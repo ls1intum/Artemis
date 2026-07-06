@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
@@ -35,13 +34,7 @@ public record SpecFidelityReport(List<Finding> findings) {
          * A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y" with no hint at which behaviour broke
          * (the gold-standard Artemis test pairs every check with a descriptive message). Deterministic, advisory.
          */
-        MISSING_FAILURE_MESSAGE,
-        /**
-         * The reference solution fails a test authored by an independent examiner (the decorrelated test-author agent) from the problem statement's own stated contract, so the
-         * solution contradicts its own stated behaviour — an unambiguous correctness defect the same-author differential oracle is blind to (the co-authored tests encode the same
-         * wrong model). Produced by the cross-check; advisory by default, hard-gated only behind the {@code reject-on-contradiction} flag.
-         */
-        CONTRACT_CONTRADICTION
+        MISSING_FAILURE_MESSAGE
     }
 
     /**
@@ -57,19 +50,6 @@ public record SpecFidelityReport(List<Finding> findings) {
     /** @return an empty report (no findings), used when the critic is skipped or finds nothing. */
     public static SpecFidelityReport empty() {
         return new SpecFidelityReport(List.of());
-    }
-
-    /**
-     * Returns a new report with {@code finding} appended, leaving this one unchanged (the record is immutable). Used to fold a cross-check contradiction into the
-     * advisory report that already rides the generation outcome, so it flows through every existing advisory surface (retry prompt, review comments) without new plumbing.
-     *
-     * @param finding the advisory finding to append
-     * @return a new report carrying this report's findings plus {@code finding}
-     */
-    public SpecFidelityReport withFinding(Finding finding) {
-        List<Finding> combined = new ArrayList<>(findings);
-        combined.add(finding);
-        return new SpecFidelityReport(List.copyOf(combined));
     }
 
     public boolean hasFindings() {

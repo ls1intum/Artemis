@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -42,23 +41,8 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     private final SpecFidelityReport specFidelityReport;
 
-    /**
-     * The decorrelated cross-check result (an independently-authored suite run against the real solution). {@code null} when the cross-check did not run for this outcome (flag
-     * off,
-     * language not allowlisted, error/cancelled path). Never consulted by {@link #isAccepted()}.
-     */
-    @Nullable
-    private final CrossCheckVerdict crossCheckVerdict;
-
-    /**
-     * Whether the cross-check's contradiction should hard-block persistence (the {@code reject-on-contradiction} flag was on and the cross-check found a contradiction). Layered on
-     * top of the oracle's accept decision — it can only make acceptance stricter, never looser — so a proven false-accept is routed to review instead of silently persisted.
-     */
-    private final boolean hardBlockedByCrossCheck;
-
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId,
-            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport,
-            @Nullable CrossCheckVerdict crossCheckVerdict, boolean hardBlockedByCrossCheck) {
+            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;
@@ -66,8 +50,6 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = sandbox;
         this.errorMessage = null;
         this.specFidelityReport = specFidelityReport;
-        this.crossCheckVerdict = crossCheckVerdict;
-        this.hardBlockedByCrossCheck = hardBlockedByCrossCheck;
     }
 
     private GenerationOutcome(AgentLoopResult loopResult, @Nullable String errorMessage) {
@@ -78,8 +60,6 @@ public final class GenerationOutcome implements AutoCloseable {
         this.sandbox = null;
         this.errorMessage = errorMessage;
         this.specFidelityReport = SpecFidelityReport.empty();
-        this.crossCheckVerdict = null;
-        this.hardBlockedByCrossCheck = false;
     }
 
     static GenerationOutcome cancelled(AgentLoopResult loopResult) {
@@ -98,28 +78,10 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return {@code true} only when verification accepted the exercise; not changed by the cross-check
+     * @return {@code true} only when verification accepted the exercise
      */
     public boolean isAccepted() {
         return verification != null && verification.accepted();
-    }
-
-    /**
-     * @return the decorrelated cross-check result, or {@code null} when it did not run for this outcome
-     */
-    @Nullable
-    public CrossCheckVerdict crossCheckVerdict() {
-        return crossCheckVerdict;
-    }
-
-    /**
-     * Whether persistence must be hard-blocked because the cross-check found a contract contradiction while the {@code reject-on-contradiction} flag was on. Separate from (and
-     * layered on top of) {@link #isAccepted()}: an outcome can be differential-accepted yet hard-blocked, which routes it to review instead of a silent persist.
-     *
-     * @return {@code true} when the accepted exercise must be diverted to review because of a contradiction
-     */
-    public boolean isHardBlockedByCrossCheck() {
-        return hardBlockedByCrossCheck;
     }
 
     public AgentLoopResult loopResult() {

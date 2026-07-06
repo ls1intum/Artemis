@@ -258,56 +258,6 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Builds the system prompt for the decorrelated test-author (independent examiner) agent used by the cross-check. It has the problem statement and the student template (the
-     * public API with stub bodies) but not the reference solution, and authors a test suite pinning the stated contract, iterating only to make the suite compile against the
-     * template (never to make a test pass — it cannot run against a reference).
-     * <p>
-     * The brief prioritises deriving one minimal falsifying test per stated postcondition/invariant over replaying the statement's worked examples: those examples are co-authored
-     * with the (possibly buggy) solution and may share its blind spot, so replaying them reproduces the very hole the cross-check exists to catch. It reuses
-     * {@link SandboxBuildCommandService#describeBuildContext} so the examiner knows the build/report layout.
-     *
-     * @param exercise the exercise whose statement/template the examiner tests against
-     * @return the full examiner system prompt
-     */
-    public String buildExaminerPrompt(ProgrammingExercise exercise) {
-        ProgrammingLanguage language = exercise.getProgrammingLanguage();
-        String languageName = language != null ? language.toString() : "the exercise language";
-        return """
-                You are an INDEPENDENT examiner authoring a test suite for a programming exercise inside a sandbox in /workspace. You have:
-                - problem-statement.md : the authoritative contract you must pin (postconditions, invariants, error behaviour, worked examples).
-                - template/            : the student's starting point — the PUBLIC API (exact signatures) with placeholder stub bodies. Your tests compile against THIS.
-                - tests/               : the test harness (build manifest, reporter config, package skeleton). The sample test SOURCES have been removed; you author the real ones.
-                - verify.sh            : run `sh verify.sh template` via bash to check your tests COMPILE and are discovered (the template stubs will FAIL them — that is expected and correct).
-
-                You do NOT have the reference solution, and you must not try to obtain or reconstruct it. Your ONLY ground truth is the problem statement's stated contract.
-
-                Programming language: %s%s
-
-                YOUR JOB — author a rigorous, independent test suite in tests/ that PINS THE STATED BEHAVIOUR:
-                1. For EACH stated postcondition, invariant, and error/edge contract in the problem statement, construct the MINIMAL scenario that would FALSIFY a plausible wrong \
-                implementation, and assert the exact stated result. Think like an adversary against a subtly-wrong solution: pick the boundary and the ordering that a naive or \
-                off-by-one implementation would get wrong (e.g. for an eviction/ordering contract, insert past capacity with NO intervening access so the least-recently-used element \
-                is unambiguous; for a "not found" contract, query a key never inserted; for a size invariant, update an existing key and assert the count did not grow).
-                2. Do NOT merely transcribe the statement's worked examples — they may be incomplete or share a blind spot. Treat them as ONE input among many and add the missing \
-                boundary/ordering cases the contract implies. Cover every stated postcondition with its own test and a descriptive failure message naming the behaviour that broke.
-                3. Your tests MUST COMPILE and be DISCOVERED against the template's public API. Use the EXACT class/method signatures the template declares (do not invent members the \
-                template does not expose). Iterate with `sh verify.sh template` ONLY to fix compilation and discovery — NEVER weaken a test to match a stub, and NEVER try to make a \
-                test pass (you have no reference to pass against; the template is expected to fail every test).
-                4. Keep the test harness intact: author only test SOURCE files at the path/name the build manifest expects; do NOT edit the build manifest, reporter config, or the \
-                report path.
-
-                WORKFLOW:
-                - First `ls -R template tests` and read problem-statement.md and the template's public API. Read the tests/ build manifest to see exactly where test sources go and \
-                what the test file(s) must be named.
-                - Author your tests, then run `sh verify.sh template` via bash and read the output: fix any COMPILE error (a build failure means your tests reference something the \
-                template does not expose — correct the test, not the template). A run where the template compiles and FAILS your tests is exactly what you want.
-                - Your ONLY tools are bash, read_file, write_file, edit_file, and submit. There is NO verify tool and NO reference solution. Call submit once your suite compiles \
-                against the template and covers every stated postcondition/edge case. Be concise; do not narrate routine steps.
-                """
-                .formatted(languageName, buildContextSection(exercise));
-    }
-
-    /**
      * Prepended in {@link GenerationMode#ADAPT}: the sandbox is seeded with the current working exercise, so the run is a targeted revision. It tells the agent to apply exactly
      * the
      * requested feedback and preserve everything else, so an adaptation never silently rewrites unrelated parts of a working exercise. The contract below still governs.
