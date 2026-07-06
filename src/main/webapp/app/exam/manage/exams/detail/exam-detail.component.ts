@@ -227,7 +227,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
             'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
             'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.testExam': isTestExam,
+            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
             'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
         };
     }
