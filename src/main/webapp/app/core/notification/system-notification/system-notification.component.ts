@@ -126,7 +126,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
             .flatMap((notification) => [notification.expireDate, notification.notificationDate])
             .filter((date) => date?.isAfter(now))
             .map((date) => date!)
-            .reduce((previous, current) => (previous ? dayjs.min(previous, current) : current), undefined);
+            .reduce<dayjs.Dayjs | undefined>((previous, current) => (previous ? dayjs.min(previous, current) : current), undefined);
 
         if (nextRelevantTimestamp) {
             this.nextUpdateFuture = setTimeout(() => {

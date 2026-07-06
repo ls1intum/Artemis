@@ -27,6 +27,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -135,7 +136,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
 
@@ -219,19 +220,19 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
-        this.modelingExercise.set(studentParticipation.exercise as ModelingExercise);
-        this.course.set(getCourseFromExercise(this.modelingExercise()!));
+        this.modelingExercise.set(studentParticipation.exercise);
+        this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound.set(submission.results?.findIndex((result) => result.id === this.resultId())!);
         } else {
-            this.result.set(getSubmissionResultByCorrectionRound(this.submission()!, this.correctionRound()));
+            this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
         }
         this.hasAssessmentDueDatePassed.set(!!this.modelingExercise()?.assessmentDueDate && dayjs(this.modelingExercise()!.assessmentDueDate).isBefore(dayjs()));
 
         if (this.submission()!.model) {
-            this.model.set(importDiagram(JSON.parse(this.submission()!.model!)));
+            this.model.set(importDiagram(parseJson(this.submission()!.model!)));
         } else {
             this.alertService.closeAll();
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
@@ -377,7 +378,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise()!.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor() && isBeforeAssessmentDueDate;
@@ -444,7 +445,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate!);
+            const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
@@ -560,7 +561,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);
@@ -652,7 +653,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        const maxPoints = getTotalMaxPoints(this.modelingExercise()!);
+        const maxPoints = getTotalMaxPoints(this.modelingExercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
     }

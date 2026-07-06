@@ -146,8 +146,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
-            return 'some/client/dependent/path/' + file.name;
+        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+            const fileName = obj instanceof File ? obj.name : '';
+            return 'some/client/dependent/path/' + fileName;
         });
         addFileSpy = vi.spyOn(component.addNewFile, 'emit');
         removeFileSpy = vi.spyOn(component.removeFile, 'emit');
@@ -193,7 +194,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should set background file', () => {
         const file1 = { name: 'newFile1.jpg' } as File;
         const file2 = { name: 'newFile2.png' } as File;
-        const event = { target: { files: [file1, file2] } };
+        const event = { target: { files: [file1, file2] } } as unknown as Event;
 
         component.setBackgroundFile(event);
 
@@ -389,7 +390,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const file = new File([], fileName);
         const input = { files: [file], value: fileName };
 
-        component.createImageDragItem({ target: input });
+        component.createImageDragItem({ target: input } as unknown as Event);
 
         expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
@@ -547,7 +548,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
 
-        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } });
+        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } } as unknown as Event);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question().dragItems![0]).toMatchObject({

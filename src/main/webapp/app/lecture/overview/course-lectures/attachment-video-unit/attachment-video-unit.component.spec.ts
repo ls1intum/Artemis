@@ -1,24 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-// Mock pdfjs-dist BEFORE importing the component
-vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
-    return {
-        __esModule: true,
-        GlobalWorkerOptions: {
-            workerSrc: '',
-        },
-        getDocument: vi.fn(() => ({ promise: Promise.resolve({ numPages: 0, getPage: vi.fn(), destroy: vi.fn() }) })),
-    };
-});
-
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -109,7 +99,14 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
             ],
-        }).compileComponents();
+        })
+            // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
+            // viewer purely through its public input/output contract (and override `pdfViewer` where needed).
+            .overrideComponent(AttachmentVideoUnitComponent, {
+                remove: { imports: [PdfViewerComponent] },
+                add: { imports: [MockComponent(PdfViewerComponent)] },
+            })
+            .compileComponents();
 
         scienceService = TestBed.inject(ScienceService);
         fileService = TestBed.inject(FileService);

@@ -62,25 +62,22 @@ export class CourseNotificationComponent {
                 this.faIcon.set(this.courseNotificationService.getIconFromType(notification.notificationType));
                 // For translations, we pass all parameters and the course name and id so they can automatically be used.
                 const notificationParameters: { [key: string]: unknown } = {
-                    ...Object.entries(notification.parameters!).reduce(
-                        (acc, [key, value]) => {
-                            if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
-                                acc[key] = value;
-                            } else {
-                                let sanitized = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString())) || '';
-                                // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags like <scr<script>ipt>)
-                                let previous: string;
-                                do {
-                                    previous = sanitized;
-                                    sanitized = sanitized.replace(/<[^>]*>/g, '');
-                                } while (sanitized !== previous);
-                                acc[key] = sanitized;
-                            }
+                    ...Object.entries(notification.parameters!).reduce<Record<string, unknown>>((acc, [key, value]) => {
+                        if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                            acc[key] = value;
+                        } else {
+                            let sanitized = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value.toString())) || '';
+                            // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags like <scr<script>ipt>)
+                            let previous: string;
+                            do {
+                                previous = sanitized;
+                                sanitized = sanitized.replace(/<[^>]*>/g, '');
+                            } while (sanitized !== previous);
+                            acc[key] = sanitized;
+                        }
 
-                            return acc;
-                        },
-                        {} as Record<string, any>,
-                    ),
+                        return acc;
+                    }, {}),
                     courseName: notification.courseName,
                     courseId: notification.courseId,
                 };

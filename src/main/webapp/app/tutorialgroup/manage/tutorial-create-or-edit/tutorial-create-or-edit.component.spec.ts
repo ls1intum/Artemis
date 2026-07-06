@@ -6,7 +6,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { ConfirmationService } from 'primeng/api';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -465,7 +465,7 @@ describe('TutorialCreateOrEditComponent', () => {
         await fixture.whenStable();
 
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
             confirmation.accept?.();
             return confirmationService;
         });

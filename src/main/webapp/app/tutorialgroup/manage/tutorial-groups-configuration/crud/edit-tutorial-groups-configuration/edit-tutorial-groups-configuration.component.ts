@@ -54,8 +54,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         this.formData.set({
                             period: [
-                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!).toDate(),
-                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!).toDate(),
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive).toDate(),
+                                dayjs(this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive).toDate(),
                             ],
                             useTutorialGroupChannels: this.tutorialGroupsConfiguration.useTutorialGroupChannels,
                             usePublicTutorialGroupChannels: this.tutorialGroupsConfiguration.usePublicTutorialGroupChannels,
@@ -82,7 +82,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
-                    this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
+                    void this.router.navigate(['/course-management', this.course().id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )

@@ -20,7 +20,7 @@ export class ExerciseUnitService {
 
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         if (exerciseUnit.exercise) {
-            exerciseUnit.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseUnit.exercise);
+            ExerciseService.stringifyExerciseCategories(exerciseUnit.exercise);
         }
 
         return this.httpClient

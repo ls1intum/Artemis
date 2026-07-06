@@ -3,7 +3,15 @@
 }
 @if (exam()) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
-        <jhi-exam-participation-cover [startView]="true" [exam]="exam()" [studentExam]="studentExam()" [testRunStartTime]="testStartTime()" (onExamStarted)="examStarted($event)" />
+        <jhi-exam-participation-cover
+            [startView]="true"
+            [exam]="exam()"
+            [studentExam]="studentExam()"
+            [testRunStartTime]="testStartTime()"
+            [isSidebarCollapsed]="isSidebarCollapsed()"
+            (toggleSidebar)="toggleSidebar()"
+            (onExamStarted)="examStarted($event)"
+        />
     }
     @if (studentExam()) {
         <!-- exam() participation -->
@@ -170,7 +178,12 @@
                 </div>
             } @else {
                 <!-- Display submission not in time view -->
-                <div class="d-flex justify-content-between">
+                <div class="d-flex flex-column p-3">
+                    @if (isSidebarCollapsed()) {
+                        <div>
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                        </div>
+                    }
                     <div class="col-12 text-center my-auto">
                         <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
@@ -199,28 +212,35 @@
         }
         @if (showExamSummary()) {
             <div [ngClass]="{ 'p-3 scrollable-content': !testRunId() }">
-                <jhi-exam-participation-summary [studentExam]="studentExam()" />
+                <jhi-exam-participation-summary [studentExam]="studentExam()" [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
     }
 }
 @if (!loadingExam() && !exam()) {
-    @if (isAtLeastTutor() && !testRunId()) {
-        <div class="alert alert-warning">
-            <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
-            @if (isAtLeastInstructor()) {
-                <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
-                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                </a>
-            } @else {
-                <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
-                    <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
-                </a>
-            }
-        </div>
-    } @else {
-        <div class="alert alert-danger">
-            <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
-        </div>
-    }
+    <div class="d-flex flex-column gap-2 p-3">
+        @if (isSidebarCollapsed()) {
+            <div>
+                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+            </div>
+        }
+        @if (isAtLeastTutor() && !testRunId()) {
+            <div class="alert alert-warning mb-0">
+                <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
+                @if (isAtLeastInstructor()) {
+                    <a [routerLink]="['/course-management', courseId(), 'exams', examId()]" class="btn btn-primary">
+                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                    </a>
+                } @else {
+                    <a [routerLink]="['/course-management', courseId(), 'exams']" class="btn btn-primary">
+                        <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                    </a>
+                }
+            </div>
+        } @else {
+            <div class="alert alert-danger mb-0">
+                <h6 [jhiTranslate]="'artemisApp.examParticipation.' + (testExam() ? 'noFurtherAttempts' : 'noStudentExam')"></h6>
+            </div>
+        }
+    </div>
 }
