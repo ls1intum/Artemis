@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -466,7 +466,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             // Fallback: Try to fetch the latest result from the server as the websocket connection might have failed
             switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
-            tap((result: Result) => {
+            tap((result: Result | undefined) => {
                 if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
                     // Notify all result subscribers with the latest result if it belongs to the latest submission
                     // This will also trigger the resultObservable above, which emits that the submission is no longer pending
@@ -494,7 +494,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .subscribe();
     }
 
-    private isResultOfLatestSubmission(result: Result | undefined, exerciseId: number, participationId: number): boolean {
+    private isResultOfLatestSubmission(result: Result | undefined, exerciseId: number, participationId: number): result is Result {
         if (!result || !result.submission) {
             return false;
         }
@@ -718,8 +718,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 map(this.mapParticipationIdToNumber),
                 switchMap((submissions: Array<[number, ProgrammingSubmission]>) => {
                     if (!submissions.length) {
-                        // This needs to be done as from([]) would stop the stream.
-                        return of([]);
+                        // No pending submissions: emit nothing so the downstream reduce emits its `{}` seed
+                        // (an empty ExerciseSubmissionState). EMPTY completes without a value and keeps the
+                        // switchMap's output typed as Observable<ProgrammingSubmissionStateObj>.
+                        return EMPTY;
                     }
                     return from(submissions).pipe(
                         switchMap(([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
@@ -855,8 +857,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         );
     }
 
-    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission | undefined]>) {
-        return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
+    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission]>): Array<[number, ProgrammingSubmission]> {
+        return submissions.map(([participationId, submission]): [number, ProgrammingSubmission] => [parseInt(participationId, 10), submission]);
     }
 
     private mapToExerciseBuildState(exerciseSubmissionState: ExerciseSubmissionState, programmingSubmissionState: ProgrammingSubmissionStateObj) {

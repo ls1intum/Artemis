@@ -100,7 +100,7 @@ export class FeedbackAnalysisComponent {
 
     constructor() {
         effect(() => {
-            untracked(async () => {
+            void untracked(async () => {
                 await this.loadData();
             });
         });
@@ -176,7 +176,7 @@ export class FeedbackAnalysisComponent {
 
     setPage(newPage: number): void {
         this.page.set(newPage);
-        this.loadData();
+        void this.loadData();
     }
 
     /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
@@ -202,7 +202,7 @@ export class FeedbackAnalysisComponent {
             this.sortedColumn.set(column);
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
-        this.loadData();
+        void this.loadData();
     }
 
     getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
@@ -244,7 +244,7 @@ export class FeedbackAnalysisComponent {
 
     applyFilters(filters: FilterData): void {
         this.selectedFiltersCount.set(this.countAppliedFilters(filters));
-        this.loadData();
+        void this.loadData();
     }
 
     countAppliedFilters(filters: FilterData): number {
@@ -310,6 +310,6 @@ export class FeedbackAnalysisComponent {
 
     toggleGroupFeedback(): void {
         this.groupFeedback.update((current) => !current);
-        this.loadData();
+        void this.loadData();
     }
 }

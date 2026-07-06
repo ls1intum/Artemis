@@ -72,6 +72,7 @@ export const getExercise = (participation: Participation): Exercise | undefined 
                 return (participation as TemplateProgrammingExerciseParticipation).programmingExercise ?? (participation as TemplateProgrammingExerciseParticipation).exercise;
         }
     }
+    return undefined;
 };
 
 export const getLatestSubmission = (participation: Participation): Submission | undefined => {

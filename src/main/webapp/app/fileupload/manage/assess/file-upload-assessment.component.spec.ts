@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
@@ -128,10 +128,10 @@ describe('FileUploadAssessmentComponent', () => {
     };
 
     let routeParams$: BehaviorSubject<Params>;
-    let routeQueryParams$: BehaviorSubject<Params>;
+    let routeQueryParams$: BehaviorSubject<ParamMap>;
 
     beforeEach(async () => {
-        routeParams$ = new BehaviorSubject({ exerciseId: 20, courseId: 123, submissionId: 7 });
+        routeParams$ = new BehaviorSubject<Params>({ exerciseId: 20, courseId: 123, submissionId: 7 });
         routeQueryParams$ = new BehaviorSubject(
             convertToParamMap({
                 testRun: 'false',

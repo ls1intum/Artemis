@@ -95,7 +95,7 @@ export class TestRunManagementComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             if (user) {
                 this.instructor.set(user);
             }

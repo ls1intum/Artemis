@@ -111,6 +111,7 @@ export function getFirstResult(submission: Submission | undefined): Result | und
             return submission.results[0];
         }
     }
+    return undefined;
 }
 
 export function getAllResultsOfAllSubmissions(submissions?: Submission[]): Result[] {
@@ -133,6 +134,7 @@ export function getFirstResultWithComplaintFromResults(results: Result[] | undef
             return resultsWithComplaint[0];
         }
     }
+    return undefined;
 }
 
 export function getFirstResultWithComplaint(submission: Submission | undefined): Result | undefined {
@@ -142,6 +144,7 @@ export function getFirstResultWithComplaint(submission: Submission | undefined):
             return resultsWithComplaint[0];
         }
     }
+    return undefined;
 }
 
 export function reconnectSubmissions(submissions: Submission[]): void {

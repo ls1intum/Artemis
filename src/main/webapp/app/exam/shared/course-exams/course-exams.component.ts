@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { of } from 'rxjs';
@@ -10,8 +10,8 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
@@ -40,7 +40,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent {
     private route = inject(ActivatedRoute);
@@ -72,6 +72,7 @@ export class CourseExamsComponent {
 
     readonly isCollapsed = signal(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
     readonly examSelected = signal(true);
+    readonly pageTitle = signal<string>('');
     readonly isExamStarted = toSignal(this.examParticipationService.examIsStarted$, { initialValue: false });
 
     readonly testStudentExamsLoaded = signal(false);
@@ -84,6 +85,9 @@ export class CourseExamsComponent {
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeExamDetails = signal<ExamParticipationComponent | undefined>(undefined);
+    protected readonly activeExamDetailsSidebarSync = effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -118,10 +122,10 @@ export class CourseExamsComponent {
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
             // First, try to navigate to the last selected exam
-            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
             // Second, try to navigate to the upcoming exam
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
             this.examSelected.set(!!examId);
@@ -195,6 +199,10 @@ export class CourseExamsComponent {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
     }
 
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     toggleSidebar() {
         const newState = !this.isCollapsed();
         this.isCollapsed.set(newState);
@@ -231,6 +239,12 @@ export class CourseExamsComponent {
             groupedData: accordionExamGroups,
             ungroupedData: sidebarExams,
         };
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof ExamParticipationComponent) {
+            this.activeExamDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {

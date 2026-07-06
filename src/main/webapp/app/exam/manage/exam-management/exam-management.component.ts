@@ -193,7 +193,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
             if (exam) {
                 importBaseRoute.push(exam.id);
-                this.router.navigate(importBaseRoute);
+                void this.router.navigate(importBaseRoute);
             }
         });
     }

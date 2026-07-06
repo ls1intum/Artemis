@@ -190,7 +190,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
+                void this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

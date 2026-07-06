@@ -224,7 +224,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL) {
                 this.autoSaveTimer = 0;
-                this.saveDiagram();
+                void this.saveDiagram();
             }
         }, AUTOSAVE_CHECK_INTERVAL);
     }

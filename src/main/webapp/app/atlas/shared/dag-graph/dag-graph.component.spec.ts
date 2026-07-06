@@ -1,10 +1,4 @@
 import { Component, signal } from '@angular/core';
-import { captureException } from '@sentry/angular';
-
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
-    captureException: vi.fn(),
-}));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -12,12 +6,19 @@ import { curveBundle, line } from 'd3-shape';
 import { layout as dagreLayout } from '@dagrejs/dagre';
 import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
 import { DagGraphEdge, DagGraphNode, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
+import { captureException } from '@sentry/angular';
 
 // Wrap the real dagre layout so a single test can force it to throw and exercise the empty-graph
 // fallback; by default it delegates to the real implementation, so all other tests are unaffected.
 vi.mock('@dagrejs/dagre', async (importOriginal) => {
     const actual = (await importOriginal()) as typeof import('@dagrejs/dagre');
     return { ...actual, layout: vi.fn(actual.layout) };
+});
+
+// Mock only Sentry's captureException so the layout-failure fallback can be asserted without a real capture.
+vi.mock('@sentry/angular', async (importOriginal) => {
+    const actual = (await importOriginal()) as typeof import('@sentry/angular');
+    return { ...actual, captureException: vi.fn() };
 });
 
 @Component({
@@ -76,7 +77,6 @@ describe('DagGraphComponent', () => {
     ];
 
     beforeEach(async () => {
-        vi.mocked(captureException).mockClear();
         await TestBed.configureTestingModule({
             imports: [TestHostComponent, MinimalTestHostComponent],
         }).compileComponents();
@@ -233,7 +233,8 @@ describe('DagGraphComponent', () => {
             expect(fixture.debugElement.query(By.css('.minimap'))).toBeNull();
         });
 
-        it('should fall back to an empty graph and log when the layout engine throws', () => {
+        it('should fall back to an empty graph and capture the error when the layout engine throws', () => {
+            vi.mocked(captureException).mockClear();
             vi.mocked(dagreLayout).mockImplementationOnce(() => {
                 throw new Error('layout failure');
             });
@@ -243,7 +244,7 @@ describe('DagGraphComponent', () => {
 
             // the try/catch around the dagre call must degrade gracefully instead of breaking change detection
             expect(component.layout()).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
-            expect(vi.mocked(captureException)).toHaveBeenCalled();
+            expect(captureException).toHaveBeenCalled();
         });
     });
 

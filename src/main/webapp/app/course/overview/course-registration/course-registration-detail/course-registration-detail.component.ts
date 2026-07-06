@@ -40,7 +40,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     }
 
     redirectToCoursePage(): void {
-        this.router.navigate(['courses', this.courseId]);
+        void this.router.navigate(['courses', this.courseId]);
     }
 
     /**

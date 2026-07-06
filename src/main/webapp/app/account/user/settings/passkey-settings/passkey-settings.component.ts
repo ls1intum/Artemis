@@ -82,7 +82,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.loadCurrentUser();
 
         effect(() => {
-            this.loadPasskeysWhenUserDetailsChange().then();
+            void this.loadPasskeysWhenUserDetailsChange();
         });
     }
 
@@ -111,7 +111,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     return this.currentUser;
                 }),

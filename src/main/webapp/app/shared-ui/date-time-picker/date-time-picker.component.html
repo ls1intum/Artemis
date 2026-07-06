@@ -11,7 +11,7 @@
 @if (shouldDisplayTimeZoneWarning()) {
     <jhi-time-zone-warning />
 }
-<div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()">
+<div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
     <p-datepicker
         #datePicker
         inputId="date-input-field"

@@ -213,7 +213,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.pinnedCount.emit(pinnedPosts.length);
             });
 
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
 
@@ -223,7 +223,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;

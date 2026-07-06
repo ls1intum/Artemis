@@ -35,7 +35,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
 
     form: FormGroup;
 
-    initialize() {
+    override initialize() {
         super.initialize(['propertyName', 'maxPropertyLength', 'translationKeys']);
         if (this.isInitialized) {
             this.initializeForm();
