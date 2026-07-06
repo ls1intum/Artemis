@@ -170,6 +170,14 @@ public class CourseUpdateResource {
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
                 throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
             }
+            // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
+            boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
+                    || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
+                    || !Objects.equals(existingCourse.getMaxDailyOrchestrationOverride(), courseUpdateDTO.maxDailyOrchestrationOverride());
+            if (autoOrchestrationChanged) {
+                throw new BadRequestAlertException("You are not allowed to change the auto-orchestration settings of a course", Course.ENTITY_NAME,
+                        "autoOrchestrationSettingsCannotChange", true);
+            }
         }
 
         if (courseUpdateDTO.title().length() > MAX_TITLE_LENGTH) {

@@ -371,8 +371,9 @@
                         </div>
                     </div>
                     <!-- Auto-orchestration is configured per existing course; the create DTO does not carry these
-                         fields, so only expose the controls in edit mode to avoid silently dropping them on creation. -->
-                    @if (course.id) {
+                         fields, so only expose the controls in edit mode to avoid silently dropping them on creation.
+                         Changing the settings is admin-only (server-enforced), so only admins see the controls. -->
+                    @if (course.id && isAdmin()) {
                         <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
                             <div class="form-check">
                                 <input

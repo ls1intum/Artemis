@@ -51,7 +51,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateCourse_enableAutoOrchestration_persistsConfigViaDedicatedQuery() throws Exception {
         // A fresh course has no configuration row at all.
         assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
@@ -72,7 +72,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void updateCourse_withExistingConfig_reusesManagedRowInsteadOfOrphaningIt() throws Exception {
         // Pre-persist a configuration row for the course (cascade from the owning course side).
         Course managed = courseRepository.findByIdElseThrow(course.getId());
@@ -98,5 +98,25 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         assertThat(persisted.getId()).isEqualTo(originalConfigId);
         assertThat(persisted.isEnabled()).isTrue();
         assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(300);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_asInstructor_changingAutoOrchestration_isRejected() throws Exception {
+        // A fresh course has no configuration row; an instructor attempting to enable auto-orchestration must be rejected.
+        assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
+
+        var configuration = new CourseAutoOrchestrationConfiguration();
+        configuration.setEnabled(true);
+        course.setAutoOrchestrationConfiguration(configuration);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(course).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(coursePart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+
+        // The setting is admin-only, so no configuration row may be created by the rejected instructor request.
+        assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
     }
 }
