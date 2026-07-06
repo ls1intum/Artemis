@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -10,11 +13,21 @@ public class HibernateQueryInterceptor implements StatementInspector {
 
     private final transient ThreadLocal<Long> threadQueryCount = new ThreadLocal<>();
 
+    private final transient ThreadLocal<List<String>> threadQueries = new ThreadLocal<>();
+
     /**
      * Start or reset the query count to 0 for the considered thread
      */
     public void startQueryCount() {
         threadQueryCount.set(0L);
+    }
+
+    /**
+     * Start capturing query count and SQL statements for the considered thread.
+     */
+    public void startQueryCapture() {
+        threadQueryCount.set(0L);
+        threadQueries.set(new ArrayList<>());
     }
 
     /**
@@ -24,6 +37,19 @@ public class HibernateQueryInterceptor implements StatementInspector {
      */
     public Long getQueryCount() {
         return threadQueryCount.get();
+    }
+
+    /**
+     * Stop capturing query count and SQL statements for the considered thread.
+     *
+     * @return captured query count and SQL statements
+     */
+    public CapturedQueries stopQueryCapture() {
+        Long count = threadQueryCount.get();
+        List<String> queries = threadQueries.get();
+        threadQueryCount.remove();
+        threadQueries.remove();
+        return new CapturedQueries(count != null ? count : 0L, queries != null ? List.copyOf(queries) : List.of());
     }
 
     /**
@@ -38,6 +64,13 @@ public class HibernateQueryInterceptor implements StatementInspector {
         if (count != null) {
             threadQueryCount.set(count + 1);
         }
+        List<String> queries = threadQueries.get();
+        if (queries != null) {
+            queries.add(sql);
+        }
         return sql;
+    }
+
+    public record CapturedQueries(long count, List<String> queries) {
     }
 }

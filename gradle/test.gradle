@@ -121,7 +121,7 @@ test {
     if (runAllTests) {
         // Default per-PR run: exclude long-running nightly suites. Opt in via -DincludeTags="nightly-lti".
         useJUnitPlatform() {
-            excludeTags "nightly-lti"
+            excludeTags "nightly-lti", "benchmark"
         }
         exclude "**/*IT*", "**/*IntTest*"
     } else if (includedModules.size() == 0) {
@@ -171,7 +171,7 @@ test {
         classpath = testing.suites.test.sources.runtimeClasspath
         useJUnitPlatform {
             // Match the default `test` task: nightly suites are opt-in via -DincludeTags='nightly-lti'.
-            excludeTags "nightly-lti"
+            excludeTags "nightly-lti", "benchmark"
         }
         exclude "**/*IT*", "**/*IntTest*"
         testLogging.showStandardStreams = true
