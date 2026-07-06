@@ -43,6 +43,8 @@ describe('no-bootstrap-classes', () => {
                 // [class] string concat whose literals are valid Tailwind utilities — no false positive
                 // (the identifier `extra` is an expression, not a class list).
                 { code: '<div [class]="\'flex gap-2 \' + extra"></div>' },
+                // A template-literal binding whose static chunks are valid Tailwind utilities — no false positive.
+                { code: '<div [class]="`flex gap-2 ${extra}`"></div>' },
                 // Component INPUTS that share a Bootstrap class name are not class bindings — must not be flagged.
                 { code: '<my-dialog [close]="onClose" [card]="data"></my-dialog>' },
                 { code: '<div [attr.role]="\'row\'"></div>' },
@@ -87,6 +89,9 @@ describe('no-bootstrap-classes', () => {
                 { code: '<p-tree contentStyleClass="d-flex"></p-tree>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
                 // [class] string-concat form — banned token lives in a quoted string literal segment.
                 { code: '<div [class]="\'d-flex \' + extra"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
+                // Template-literal binding — banned token lives in a static chunk, outside the ${…} interpolation.
+                { code: '<div [class]="`btn ${extra}`"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
+                { code: '<p-message [styleClass]="`d-flex ${extra}`"></p-message>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
                 // One offending token among valid Tailwind utilities is still reported exactly once.
                 { code: '<div class="flex gap-2 btn mb-3"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
             ],
