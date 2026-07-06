@@ -13,6 +13,7 @@
         "strict": false,
         "noImplicitReturns": true,
         "noImplicitOverride": true,
+        "strictFunctionTypes": true,
         "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,

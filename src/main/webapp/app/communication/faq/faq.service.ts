@@ -92,9 +92,9 @@ export class FaqService {
      * Converts the faq category json strings into FaqCategory objects (if it exists).
      * @param res the response
      */
-    static convertFaqCategoryArrayFromServer<E extends Faq, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertFaqCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((faq: E) => FaqService.parseFaqCategories(faq));
+            res.body.forEach((faq: Faq) => FaqService.parseFaqCategories(faq));
         }
         return res;
     }

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
@@ -362,12 +362,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * This is the fallback for older programming exercises without test cases in the database.
      * @param templateParticipationId
      */
-    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
+    loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<string[]> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            map((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            map((result) => {
+                if (!result?.feedbacks) {
+                    throw new Error('no result available');
+                }
+                return result;
+            }),
             // use the text (legacy case) or the name of the provided test case attribute
-            map(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
+            map(({ feedbacks }: Result) =>
+                feedbacks!
+                    .map((feedback) => feedback.text ?? feedback.testCase?.testName)
+                    .filter((name): name is string => name != undefined)
+                    .sort(),
+            ),
             catchError(() => of([])),
         );
     };

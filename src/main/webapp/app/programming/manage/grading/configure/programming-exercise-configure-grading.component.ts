@@ -363,8 +363,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.programmingExercise.id!)
             .pipe(
-                tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.testCases = testCases;
+                tap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                    this.testCases = testCases ?? [];
                 }),
                 tap(() => this.loadStatistics(this.programmingExercise.id!)),
             )
@@ -464,7 +464,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const categoriesToUpdate = _intersectionWith(
             this.backupStaticCodeAnalysisCategories,
             this.changedCategoryIds(),
-            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
+            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number | StaticCodeAnalysisCategory) => codeAnalysisCategory.id === id,
         );
         const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
 

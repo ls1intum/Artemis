@@ -152,9 +152,9 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = createModelingExercise(course);
         modelingExercise.id = 123;
 
-        routeData$ = new BehaviorSubject({ modelingExercise });
+        routeData$ = new BehaviorSubject<Data>({ modelingExercise });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
             imports: [ModelingExerciseUpdateComponent, TranslateModule.forRoot()],

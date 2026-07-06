@@ -100,8 +100,8 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
 
     ngOnInit(): void {
-        void this.accountService.identity().then((user: User) => {
-            this.user = user!;
+        void this.accountService.identity().then((user: User | undefined) => {
+            this.user = user;
         });
     }
 
