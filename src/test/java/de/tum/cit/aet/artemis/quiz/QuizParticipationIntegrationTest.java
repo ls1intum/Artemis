@@ -28,10 +28,11 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
+import de.tum.cit.aet.artemis.quiz.web.openapi.QuizParticipationResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Integration tests for {@link de.tum.cit.aet.artemis.quiz.web.QuizParticipationResource#getParticipationResult}.
+ * Integration tests for {@link QuizParticipationResource#getParticipationResult}.
  * <p>
  * These tests guard the practice-vs-graded result lookup (issue #12955, PR #12972): practice participations use
  * unrated results, so the endpoint must not filter them out by {@code rated = true}, while graded participations must
