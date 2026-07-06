@@ -176,7 +176,7 @@ jobs:
         run: |
           attempts=0
           max_attempts=30
-          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | grep -q '"status":"UP"'; do
+          until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
             attempts=$((attempts + 1))
             if [ "$attempts" -ge "$max_attempts" ]; then
               echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5 minutes) following deployment."
