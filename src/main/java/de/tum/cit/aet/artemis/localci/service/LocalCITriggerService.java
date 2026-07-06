@@ -346,8 +346,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
         final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
 
-        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases,
-                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),

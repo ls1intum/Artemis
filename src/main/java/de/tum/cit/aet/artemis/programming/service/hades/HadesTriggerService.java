@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -58,8 +57,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private final GitService gitService;
 
-    private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
-
     private final BuildScriptProviderService buildScriptProviderService;
 
     private static final String HADES_WORKING_DIRECTORY = "/shared";
@@ -67,14 +64,12 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     private static final String DEFAULT_INGEST_DIRECTORY = HADES_WORKING_DIRECTORY + "/build/test-results/test";
 
     public HadesTriggerService(HadesService hadesService, BuildPhaseEvaluationService buildPhaseEvaluationService, BuildPhasesTemplateService buildPhasesTemplateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, BuildScriptProviderService buildScriptProviderService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, GitService gitService, BuildScriptProviderService buildScriptProviderService) {
         this.hadesService = hadesService;
         this.buildPhaseEvaluationService = buildPhaseEvaluationService;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.gitService = gitService;
-        this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.buildScriptProviderService = buildScriptProviderService;
     }
 
@@ -101,7 +96,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             List<BuildPhaseDTO> activePhases = resolveActivePhases(buildConfig, participation, participation.getProgrammingExercise());
-            String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
+            String buildScript = buildScript(buildConfig, activePhases);
 
             String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
@@ -139,7 +134,24 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
         List<BuildPhaseDTO> activePhases = resolveActivePhases(buildConfig, participation, programmingExercise);
-        return localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases, HADES_WORKING_DIRECTORY);
+        return buildScript(buildConfig, activePhases);
+    }
+
+    private String buildScript(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
+        StringBuilder script = new StringBuilder("set -e && cd ").append(HADES_WORKING_DIRECTORY).append(" && ");
+        for (BuildPhaseDTO phase : activePhases) {
+            if (phase.script() != null && !phase.script().isBlank()) {
+                script.append(phase.script().strip()).append(" && ");
+            }
+        }
+
+        String result = script.toString();
+        if (result.endsWith(" && ")) {
+            result = result.substring(0, result.length() - 4);
+        }
+
+        return buildScriptProviderService.replacePlaceholders(result, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
+                buildConfig.getTestCheckoutPath());
     }
 
     private List<BuildPhaseDTO> resolveActivePhases(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation,

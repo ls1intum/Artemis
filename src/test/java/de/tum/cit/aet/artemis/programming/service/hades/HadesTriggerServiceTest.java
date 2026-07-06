@@ -22,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.localci.service.BuildPhaseEvaluationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.localci.service.LocalCIBuildConfigurationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -54,9 +53,6 @@ class HadesTriggerServiceTest {
 
     @Mock
     private GitService gitService;
-
-    @Mock
-    private LocalCIBuildConfigurationService localCIBuildConfigurationService;
 
     @Mock
     private BuildScriptProviderService buildScriptProviderService;
@@ -232,28 +228,28 @@ class HadesTriggerServiceTest {
         }
 
         @Test
-        void getBuildScript_withNullBuildPlanConfig_usesDefaultPhasesAndReturnsRenderedScript() {
+        void getBuildScript_withNullBuildPlanConfig_usesDefaultPhasesAndReturnsPlaceholderResolvedScript() {
             var phase = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
             when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(phase));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(phase), participation)).thenReturn(List.of(phase));
-            when(localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, List.of(phase), "/shared")).thenReturn("rendered-script");
+            when(buildScriptProviderService.replacePlaceholders(any(), any(), any(), any())).thenReturn("resolved-script");
 
             String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            assertThat(script).isEqualTo("rendered-script");
+            assertThat(script).isEqualTo("resolved-script");
         }
 
         @Test
-        void getBuildScript_delegatesRenderingToLocalCIBuildConfigurationService() {
+        void getBuildScript_chainsActivePhaseScriptsWithAnd() {
             var compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
-            // forceRun=true: HadesTriggerService no longer needs to know about this itself, it's LocalCIBuildConfigurationService's job
-            var cleanup = new BuildPhaseDTO("cleanup", "rm -rf tmp", BuildPhaseCondition.ALWAYS, true, null);
-            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(compile, cleanup));
-            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(compile, cleanup), participation)).thenReturn(List.of(compile, cleanup));
+            var test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, null);
+            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(compile, test));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(compile, test), participation)).thenReturn(List.of(compile, test));
+            when(buildScriptProviderService.replacePlaceholders(any(), any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-            hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
+            String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            verify(localCIBuildConfigurationService).createBuildScriptFromActivePhases(buildConfig, List.of(compile, cleanup), "/shared");
+            assertThat(script).isEqualTo("set -e && cd /shared && mvn compile && mvn test");
         }
     }
 }
