@@ -20,6 +20,8 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
+import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -112,6 +114,7 @@ export class IrisChatService implements OnDestroy {
     private chatSessionByIdSubscription?: Subscription;
     private sessionLoadingSubscription?: Subscription;
     private websocketSessionSubscription?: Subscription;
+    private websocketCommandSubscription?: Subscription;
     private authenticationStateSubscription: Subscription;
 
     /**
@@ -146,6 +149,21 @@ export class IrisChatService implements OnDestroy {
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
+
+    // Emits when Iris points the student to a position in the combined view (when a COMMAND marker is
+    // clicked in the chat history). The lecture combined view subscribes to navigate.
+    private pointOutNavigationSubject = new Subject<IrisPointOutNavigation>();
+    public pointOutNavigation$ = this.pointOutNavigationSubject.asObservable();
+
+    // Emits when the server requests a client command mid-pipeline (e.g. a point-out). The lecture combined
+    // view subscribes, tries to carry it out, and acknowledges the outcome via sendCommandAck.
+    private commandRequestSubject = new Subject<IrisCommandRequestDTO>();
+    public commandRequest$ = this.commandRequestSubject.asObservable();
+
+    // Emits when the floating Iris chat widget (exercise/lecture chatbot button popup) should close,
+    // e.g. when the lecture combined view opens in fullscreen and would otherwise overlay it.
+    private closeWidgetSubject = new Subject<void>();
+    public closeWidget$ = this.closeWidgetSubject.asObservable();
 
     private llmOptedOutSubject = new Subject<void>();
     public llmOptedOut$ = this.llmOptedOutSubject.asObservable();
@@ -201,6 +219,8 @@ export class IrisChatService implements OnDestroy {
         }
         this.websocketSessionSubscription?.unsubscribe();
         this.websocketSessionSubscription = undefined;
+        this.websocketCommandSubscription?.unsubscribe();
+        this.websocketCommandSubscription = undefined;
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionSubscription = undefined;
         this.chatSessionByIdSubscription?.unsubscribe();
@@ -280,6 +300,7 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
         this.sessionLoadingSubscription?.unsubscribe();
         this.websocketSessionSubscription?.unsubscribe();
+        this.websocketCommandSubscription?.unsubscribe();
         this.authenticationStateSubscription.unsubscribe();
     }
 
@@ -558,6 +579,10 @@ export class IrisChatService implements OnDestroy {
                 this.initialLoadCompleteSubject.next(true);
                 this.websocketSessionSubscription?.unsubscribe();
                 this.websocketSessionSubscription = this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
+                this.websocketCommandSubscription?.unsubscribe();
+                this.websocketCommandSubscription = this.irisWebsocketService
+                    .subscribeToSessionCommands(this.sessionId)
+                    .subscribe((request) => this.commandRequestSubject.next(request));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
@@ -788,6 +813,8 @@ export class IrisChatService implements OnDestroy {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
+            this.websocketCommandSubscription?.unsubscribe();
+            this.websocketCommandSubscription = undefined;
             this.sessionId = undefined;
             this.currentRelatedEntityIdSubject.next(undefined);
             this.currentChatModeSubject.next(undefined);
@@ -1052,5 +1079,31 @@ export class IrisChatService implements OnDestroy {
      */
     public setShouldReopenChat(value: boolean): void {
         this.shouldReopenChatSubject.next(value);
+    }
+
+    /**
+     * Requests that the floating Iris chat widget (chatbot button popup) close itself. No-op if it
+     * is not open. Used when the combined view opens in fullscreen so the popup does not overlay it.
+     */
+    public requestCloseWidget(): void {
+        this.closeWidgetSubject.next();
+    }
+
+    /**
+     * Triggers navigation to a point-out marker's position, (re)opening the combined view if needed.
+     * Used when the student clicks a COMMAND marker in the chat history.
+     * @param navigation the navigation target (the caller should set forceOpen to reopen a closed view)
+     */
+    public navigateToPointOut(navigation: IrisPointOutNavigation): void {
+        this.pointOutNavigationSubject.next(navigation);
+    }
+
+    /**
+     * Acknowledges a server command request, unblocking the Iris pipeline that is waiting on it.
+     * @param correlationId the correlation id of the request being answered
+     * @param applied       whether the command was carried out on the client
+     */
+    public sendCommandAck(correlationId: string, applied: boolean): void {
+        this.irisWebsocketService.sendCommandAck({ correlationId, applied });
     }
 }

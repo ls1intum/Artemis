@@ -128,6 +128,43 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
     return undefined;
 }
 
+/** Structured data describing a navigation marker that points the student to a position in the lecture combined view. */
+export interface PointOutData {
+    type: 'pointOut';
+    lectureUnitId: number;
+    page?: number;
+    timestamp?: number;
+    lectureUnitName?: string;
+}
+
+/**
+ * Type guard that checks whether the given message content is a point-out navigation marker.
+ * @param content the message content to check
+ * @returns true if the content is JSON content carrying a valid PointOutData payload
+ */
+export function isPointOutContent(content: IrisMessageContent): content is IrisJsonMessageContent & { attributes: PointOutData } {
+    if (!isJsonContent(content)) {
+        return false;
+    }
+    const attrs = content.attributes;
+    if (attrs?.['type'] !== 'pointOut' || typeof attrs['lectureUnitId'] !== 'number') {
+        return false;
+    }
+    return typeof attrs['page'] === 'number' || typeof attrs['timestamp'] === 'number';
+}
+
+/**
+ * Extracts typed PointOutData from a message content if it represents a valid navigation marker.
+ * @param content the message content to extract from
+ * @returns the PointOutData if valid, undefined otherwise
+ */
+export function getPointOutData(content: IrisMessageContent): PointOutData | undefined {
+    if (isPointOutContent(content)) {
+        return content.attributes;
+    }
+    return undefined;
+}
+
 /**
  * Validates that a plain object has the full McqQuestionData shape: a non-empty question string,
  * a non-empty explanation string, and an options array with at least 2 valid McqOption entries.

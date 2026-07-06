@@ -30,6 +30,7 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -91,6 +92,10 @@ describe('IrisChatService', () => {
         httpService = TestBed.inject(IrisChatHttpService);
         wsMock = TestBed.inject(IrisWebsocketService);
         accountService = TestBed.inject(AccountService);
+
+        // The chat service subscribes to the per-session command channel alongside the message channel;
+        // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
 
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
 
@@ -369,6 +374,36 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         const lastMessage = messages.last();
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
+    });
+
+    it('should add an incoming COMMAND marker message without emitting point-out navigation', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        const commandPayload = {
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                id: 99,
+                sender: IrisSender.COMMAND,
+                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3 } }],
+            },
+        } as unknown as IrisChatWebsocketDTO;
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
+        const navigationSpy = vi.fn();
+        service.pointOutNavigation$.subscribe(navigationSpy);
+
+        service.switchTo(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+
+        // Navigation already happened at command time; the marker is only a clickable history entry.
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages.last()).toMatchObject({ id: 99, sender: IrisSender.COMMAND });
+        expect(navigationSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {
+        const navPromise = firstValueFrom(service.pointOutNavigation$);
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+        await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {

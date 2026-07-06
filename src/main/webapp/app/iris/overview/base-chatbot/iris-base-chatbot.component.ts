@@ -9,6 +9,7 @@ import {
     faCopy,
     faExpand,
     faLink,
+    faLocationArrow,
     faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
@@ -53,8 +54,10 @@ import {
     McqData,
     McqResponseData,
     McqSetData,
+    PointOutData,
     getMcqData,
     getMcqSetData,
+    getPointOutData,
     isMcqContent,
     isMcqSetContent,
 } from 'app/iris/shared/entities/iris-content-type.model';
@@ -185,6 +188,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
+    protected readonly faLocationArrow = faLocationArrow;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
@@ -206,6 +210,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly isMcqSetContent = isMcqSetContent;
     protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
     protected readonly getMcqSetData = (content: IrisMessageContent): McqSetData | undefined => getMcqSetData(content);
+    protected readonly getPointOutData = (content: IrisMessageContent): PointOutData | undefined => getPointOutData(content);
     protected messageHasMcq(message: IrisMessage): boolean {
         return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
     }
@@ -1312,6 +1317,46 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!messagesElement) return;
         const { scrollTop, scrollHeight, clientHeight } = messagesElement;
         this.isScrolledToBottom.set(scrollTop >= scrollHeight - clientHeight - 50);
+    }
+
+    /**
+     * Handles a click on a point-out navigation marker: (re)opens the combined view at the
+     * given page / timestamp.
+     * @param data the point-out target stored on the COMMAND message
+     */
+    onPointOutMarkerClick(data: PointOutData): void {
+        this.chatService.navigateToPointOut({ lectureUnitId: data.lectureUnitId, page: data.page, timestamp: data.timestamp, forceOpen: true });
+    }
+
+    /**
+     * Builds the factual label shown on a point-out marker, e.g.
+     * "Navigated to page 3 and timestamp 02:30 in lecture unit Sorting Algorithms".
+     * @param data the point-out target
+     */
+    pointOutMarkerLabel(data: PointOutData): string {
+        const targets: string[] = [];
+        if (data.page != undefined) {
+            targets.push(this.translateService.instant('artemisApp.iris.pointOut.page', { page: data.page }));
+        }
+        if (data.timestamp != undefined) {
+            targets.push(this.translateService.instant('artemisApp.iris.pointOut.timestamp', { time: this.formatTimestamp(data.timestamp) }));
+        }
+        const target = targets.join(this.translateService.instant('artemisApp.iris.pointOut.and'));
+        if (data.lectureUnitName) {
+            return this.translateService.instant('artemisApp.iris.pointOut.label', { target, unit: data.lectureUnitName });
+        }
+        return this.translateService.instant('artemisApp.iris.pointOut.labelNoUnit', { target });
+    }
+
+    /** Formats a number of seconds as mm:ss (or h:mm:ss for long videos). */
+    private formatTimestamp(seconds: number): string {
+        const total = Math.max(0, Math.floor(seconds));
+        const hrs = Math.floor(total / 3600);
+        const mins = Math.floor((total % 3600) / 60);
+        const secs = total % 60;
+        const mm = hrs > 0 ? String(mins).padStart(2, '0') : String(mins);
+        const ss = String(secs).padStart(2, '0');
+        return hrs > 0 ? `${hrs}:${mm}:${ss}` : `${mm}:${ss}`;
     }
 
     onSuggestionClick(suggestion: string) {

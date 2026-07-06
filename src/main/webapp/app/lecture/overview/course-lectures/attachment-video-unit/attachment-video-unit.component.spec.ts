@@ -38,6 +38,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -98,6 +99,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
+                MockProvider(IrisChatService, { pointOutNavigation$: of(), commandRequest$: of() }),
             ],
         })
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
