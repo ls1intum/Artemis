@@ -20,7 +20,6 @@ export const COMPETENCY_NODE_TYPE = 'competency';
 /** Node type used to render the empty-state placeholder for a knowledge area without children/competencies. */
 export const EMPTY_NODE_TYPE = 'emptyKnowledgeArea';
 
-/** Data attached to a competency tree node. */
 export interface CompetencyNodeData {
     competency: StandardizedCompetencyForTree;
     knowledgeArea: KnowledgeAreaForTree;
@@ -67,19 +66,14 @@ export class KnowledgeAreaTreeComponent {
     /** Incremented to force {@link nodes} to recompute after in-place data mutations. */
     private readonly rebuildTrigger = signal(0);
 
-    /**
-     * Forces the tree to rebuild its nodes from the current (possibly mutated in place) data source.
-     */
     rebuild(): void {
         this.rebuildTrigger.update((value) => value + 1);
     }
 
-    /** Syncs the persisted expansion state when the user expands a node via the built-in toggler. */
     protected onNodeExpand(node: TreeNode<KnowledgeAreaForTree | CompetencyNodeData>): void {
         this.toggleFromNode(node, true);
     }
 
-    /** Syncs the persisted expansion state when the user collapses a node via the built-in toggler. */
     protected onNodeCollapse(node: TreeNode<KnowledgeAreaForTree | CompetencyNodeData>): void {
         this.toggleFromNode(node, false);
     }

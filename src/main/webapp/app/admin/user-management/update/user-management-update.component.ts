@@ -277,7 +277,6 @@ export class UserManagementUpdateComponent implements OnInit {
         this.groupSuggestions.set(query ? this.filter(query) : this.availableGroups());
     }
 
-    /** Adds the selected group from the autocomplete to the user. */
     onGroupSelect(event: AutoCompleteSelectEvent): void {
         const groupString = (event.value ?? '').toString().trim();
         this.addGroup(this.user(), groupString);
@@ -295,25 +294,16 @@ export class UserManagementUpdateComponent implements OnInit {
         input.value = '';
     }
 
-    /** Removes the unselected group from the user. */
     onGroupUnselect(event: AutoCompleteUnselectEvent): void {
         const group = (event.value ?? '').toString();
         this.removeGroup(this.user(), group);
     }
 
-    /**
-     * Removes a group from the user.
-     * @param user to remove the group from
-     * @param group to remove
-     */
     removeGroup(user: User, group: string) {
         user.groups = user.groups?.filter((userGroup) => userGroup !== group);
         this.commitUser(user);
     }
 
-    /**
-     * Groups that are available to be added (all known groups not yet assigned to the user).
-     */
     private availableGroups(): string[] {
         const assigned = this.user()?.groups ?? [];
         return (this.allGroups ?? []).filter((group) => group != undefined && !assigned.includes(group));

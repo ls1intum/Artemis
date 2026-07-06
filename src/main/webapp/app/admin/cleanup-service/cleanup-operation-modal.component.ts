@@ -79,21 +79,25 @@ export class CleanupOperationModalComponent {
             },
         };
 
-        switch (this.operation().name) {
+        const operation = this.operation();
+        // Range operations are only reachable once validateDates has confirmed both dates are set.
+        const deleteFrom = operation.deleteFrom!;
+        const deleteTo = operation.deleteTo!;
+        switch (operation.name) {
             case 'deleteOrphans':
                 this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldSubmissionVersions':
-                this.dataCleanupService.deleteOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
         }
     }
@@ -102,19 +106,23 @@ export class CleanupOperationModalComponent {
      * Fetch counts for the operation.
      */
     private fetchCounts(): Observable<HttpResponse<CleanupCount>> {
-        switch (this.operation().name) {
+        const operation = this.operation();
+        // Range operations are only reachable once validateDates has confirmed both dates are set.
+        const deleteFrom = operation.deleteFrom!;
+        const deleteTo = operation.deleteTo!;
+        switch (operation.name) {
             case 'deleteOrphans':
                 return this.dataCleanupService.countOrphans();
             case 'deletePlagiarismComparisons':
-                return this.dataCleanupService.countPlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countPlagiarismComparisons(deleteFrom, deleteTo);
             case 'deleteNonRatedResults':
-                return this.dataCleanupService.countNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countNonRatedResults(deleteFrom, deleteTo);
             case 'deleteOldRatedResults':
-                return this.dataCleanupService.countOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countOldRatedResults(deleteFrom, deleteTo);
             case 'deleteOldSubmissionVersions':
-                return this.dataCleanupService.countOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countOldSubmissionVersions(deleteFrom, deleteTo);
             default:
-                throw new Error(`Unsupported operation: ${this.operation().name}`);
+                throw new Error(`Unsupported operation: ${operation.name}`);
         }
     }
 

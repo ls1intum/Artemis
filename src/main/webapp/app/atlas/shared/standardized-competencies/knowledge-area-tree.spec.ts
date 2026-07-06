@@ -61,7 +61,6 @@ describe('KnowledgeAreaTreeComponent', () => {
 
     it('should render knowledge areas and project the knowledge area template', () => {
         host.dataSource = { data: [ka({ id: 1, title: 'Algorithms' }), ka({ id: 2, title: 'Databases' })] };
-        host.tree().rebuild();
         hostFixture.detectChanges();
 
         const knowledgeAreaNodes = hostFixture.debugElement.queryAll(By.css('[data-testid="knowledge-area-node"]'));
@@ -72,7 +71,6 @@ describe('KnowledgeAreaTreeComponent', () => {
 
     it('should filter out hidden knowledge areas', () => {
         host.dataSource = { data: [ka({ id: 1 }), ka({ id: 2, isVisible: false })] };
-        host.tree().rebuild();
         hostFixture.detectChanges();
 
         const knowledgeAreaNodes = hostFixture.debugElement.queryAll(By.css('[data-testid="knowledge-area-node"]'));
@@ -128,7 +126,6 @@ describe('KnowledgeAreaTreeComponent', () => {
     describe('programmatic expansion control', () => {
         beforeEach(() => {
             host.dataSource = { data: [ka({ id: 1, children: [ka({ id: 11, level: 1 })] }), ka({ id: 2 })] };
-            host.tree().rebuild();
             hostFixture.detectChanges();
         });
 

@@ -11,8 +11,8 @@ export type OperationName =
 
 export class CleanupOperation {
     name: OperationName;
-    deleteFrom: dayjs.Dayjs;
-    deleteTo: dayjs.Dayjs;
+    deleteFrom: dayjs.Dayjs | undefined;
+    deleteTo: dayjs.Dayjs | undefined;
     lastExecuted: dayjs.Dayjs | undefined;
     datesValid: WritableSignal<boolean>;
 }
