@@ -31,20 +31,22 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, ExerciseVariantGroupReference, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { ExerciseVariantGroupService, toCourseExerciseGroup, toCreateGroupPayload, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { CourseExerciseCard, ExerciseManagementView, buildCourseExerciseCards } from 'app/course/manage/exercises/course-exercise-cards';
+import { ExerciseGroupSyncService } from 'app/course/manage/exercises/exercise-group-sync.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/course/manage/exercises/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
@@ -62,28 +64,8 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
-type View = 'type' | 'week' | 'group' | 'list';
-
 /** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
 const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
-
-interface Bucket {
-    id: string;
-    title: string;
-    icon?: IconProp;
-    group?: CourseExerciseGroup;
-    exerciseType?: ExerciseType;
-    exercises: Exercise[];
-}
-
-const TYPE_ORDER: ExerciseType[] = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
-const TYPE_TITLE_KEYS: Record<string, string> = {
-    [ExerciseType.PROGRAMMING]: 'artemisApp.exerciseManagement.type.PROGRAMMING',
-    [ExerciseType.QUIZ]: 'artemisApp.exerciseManagement.type.QUIZ',
-    [ExerciseType.MODELING]: 'artemisApp.exerciseManagement.type.MODELING',
-    [ExerciseType.TEXT]: 'artemisApp.exerciseManagement.type.TEXT',
-    [ExerciseType.FILE_UPLOAD]: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
-};
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -121,20 +103,20 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly ExerciseType = ExerciseType;
 
-    readonly viewOptions: { labelKey: string; value: View; icon: IconProp }[] = [
+    readonly viewOptions: { labelKey: string; value: ExerciseManagementView; icon: IconProp }[] = [
         { labelKey: 'artemisApp.exerciseManagement.view.list', value: 'list', icon: faList },
         { labelKey: 'artemisApp.exerciseManagement.view.type', value: 'type', icon: faCode },
         { labelKey: 'artemisApp.exerciseManagement.view.week', value: 'week', icon: faCalendarDays },
         { labelKey: 'artemisApp.exerciseManagement.view.group', value: 'group', icon: faLayerGroup },
     ];
 
-    readonly view = signal<View>('type');
+    readonly view = signal<ExerciseManagementView>('type');
     readonly search = signal('');
 
     readonly course = signal<Course | undefined>(undefined);
     readonly exercises = signal<Exercise[]>([]);
     readonly groups = signal<CourseExerciseGroup[]>([]);
-    readonly buckets = signal<Bucket[]>([]);
+    readonly cards = signal<CourseExerciseCard[]>([]);
     /**
      * Whether the initial exercise load has finished. Gates the "no exercises match" empty state so it is not shown
      * during the brief window before the exercises arrive on first (direct) access — switching views afterwards keeps
@@ -149,8 +131,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly isGroup = computed(() => this.view() === 'group');
     /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
     readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
-    /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
-    readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
+    /** Ids of all rendered cards, so each group's exercise table is a connected CDK drop target for the others. */
+    readonly dropListIds = computed(() => this.cards().map((card) => card.id));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly courseId = computed(() => this.course()?.id);
     readonly selectedCount = computed(() => this.selectedIds().size);
@@ -187,6 +169,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly modalService = inject(NgbModal);
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
+    private readonly groupSync = inject(ExerciseGroupSyncService);
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly alertService = inject(AlertService);
     private readonly localStorageService = inject(LocalStorageService);
@@ -201,17 +184,17 @@ export class CourseManagementExercisesComponent implements OnInit {
         // Restore the last-selected view so editing an exercise (which navigates away and re-instantiates this
         // component on return) keeps the chosen view instead of falling back to the 'type' default. The stored value
         // is validated against the known views so a stale or corrupt entry simply falls back to the default.
-        const storedView = this.localStorageService.retrieve<View>(VIEW_STORAGE_KEY);
+        const storedView = this.localStorageService.retrieve<ExerciseManagementView>(VIEW_STORAGE_KEY);
         if (storedView && this.viewOptions.some((option) => option.value === storedView)) {
             this.view.set(storedView);
         }
     }
 
     ngOnInit(): void {
-        // Bucket titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
+        // CourseExerciseCard titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
         // this zoneless app they must be rebuilt when the language changes — otherwise they keep the previous language
-        // until the next user interaction rebuilds the buckets.
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildBuckets());
+        // until the next user interaction rebuilds the cards.
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.rebuildCards());
 
         this.route.parent!.data.subscribe(({ course }) => {
             if (course) {
@@ -220,13 +203,13 @@ export class CourseManagementExercisesComponent implements OnInit {
             if (course?.id) {
                 this.loadCourseExercises(course.id);
             } else {
-                this.buildBuckets();
+                this.rebuildCards();
                 this.loaded.set(true);
             }
         });
     }
 
-    /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the buckets. */
+    /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the cards. */
     private loadCourseExercises(courseId: number): void {
         this.courseManagementService.findWithExercises(courseId).subscribe({
             next: (response) => {
@@ -237,7 +220,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
                     exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
                     if (exercise.type === ExerciseType.QUIZ) {
-                        this.applyQuizClientState(exercise);
+                        this.groupSync.applyQuizClientState(exercise);
                     }
                 });
                 this.exercises.set(exercises);
@@ -246,27 +229,23 @@ export class CourseManagementExercisesComponent implements OnInit {
                 if (loadedCourse?.isAtLeastEditor) {
                     this.loadGroupsFromServer(courseId);
                 }
-                this.buildBuckets();
+                this.rebuildCards();
                 this.loaded.set(true);
                 this.loadQuizBatches(courseId);
             },
         });
     }
 
-    onViewChange(view: View): void {
+    onViewChange(view: ExerciseManagementView): void {
         this.view.set(view);
         // Remember the selection so it is restored when the component is re-instantiated (e.g. after closing an editor).
         this.localStorageService.store(VIEW_STORAGE_KEY, view);
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     onSearchChange(term: string): void {
         this.search.set(term);
-        this.buildBuckets();
-    }
-
-    owningGroup(exercise: Exercise): CourseExerciseGroup | undefined {
-        return this.groups().find((group) => group.exercises?.some((member) => member.id === exercise.id));
+        this.rebuildCards();
     }
 
     /** Only individual-mode quizzes support per-student dates, so only they can join a group's shared timeline. */
@@ -361,7 +340,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     /**
      * Opens the shared "edit selected" modal to apply a common timeline (release/due/assessment dates, etc.) to all
      * selected programming exercises at once. On close the exercises are reloaded so the updated dates are reflected
-     * in the table and the week/group buckets. Mirrors the develop programming-exercise list behaviour.
+     * in the table and the week/group cards. Mirrors the develop programming-exercise list behaviour.
      */
     editSelectedExercises(): void {
         const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
@@ -438,9 +417,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.changeExerciseGroup(event.exercise, event.group);
     }
 
-    onTableSelectionAllChange(bucket: Bucket, selectAll: boolean): void {
+    onTableSelectionAllChange(card: CourseExerciseCard, selectAll: boolean): void {
         const current = new Set(this.selectedIds());
-        for (const exercise of bucket.exercises) {
+        for (const exercise of card.exercises) {
             if (exercise.id !== undefined) {
                 if (selectAll) {
                     current.add(exercise.id);
@@ -452,9 +431,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.selectedIds.set(current);
     }
 
-    onTableRowsReordered(bucket: Bucket, reorderedExercises: Exercise[]): void {
-        bucket.exercises = reorderedExercises;
-        this.buckets.set([...this.buckets()]);
+    onTableRowsReordered(card: CourseExerciseCard, reorderedExercises: Exercise[]): void {
+        card.exercises = reorderedExercises;
+        this.cards.set([...this.cards()]);
     }
 
     onExerciseUpdated(updated: Exercise): void {
@@ -465,11 +444,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                 exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)),
             })),
         );
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     onExerciseDeleted(deleted: Exercise): void {
-        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the buckets
+        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the cards
         // so it disappears from the view without requiring a page refresh.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
         this.groups.set(
@@ -483,124 +462,19 @@ export class CourseManagementExercisesComponent implements OnInit {
             remaining.delete(deleted.id);
             this.selectedIds.set(remaining);
         }
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
-    private hasSearch(): boolean {
-        return this.search().trim().length > 0;
-    }
-
-    private matches(exercise: Exercise): boolean {
-        const term = this.search().trim().toLowerCase();
-        return !term || (exercise.title ?? '').toLowerCase().includes(term);
-    }
-
-    private visibleExercises(): Exercise[] {
-        return this.exercises().filter((exercise) => this.matches(exercise));
-    }
-
-    private sortExercises(exercises: Exercise[]): Exercise[] {
-        return [...exercises].sort((a, b) => {
-            const da = effectiveDate(a, this.owningGroup(a), 'dueDate');
-            const db = effectiveDate(b, this.owningGroup(b), 'dueDate');
-            return (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
-        });
-    }
-
-    private buildBuckets(): void {
-        switch (this.view()) {
-            case 'group':
-                this.buckets.set(this.buildGroupBuckets());
-                break;
-            case 'type':
-                this.buckets.set(this.buildTypeBuckets());
-                break;
-            case 'week':
-                this.buckets.set(this.buildWeekBuckets());
-                break;
-            case 'list':
-                this.buckets.set(this.buildListBuckets());
-                break;
-        }
-    }
-
-    private buildListBuckets(): Bucket[] {
-        const exercises = this.sortExercises(this.visibleExercises());
-        if (exercises.length === 0) return [];
-        return [{ id: 'all', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.all'), exercises }];
-    }
-
-    private buildGroupBuckets(): Bucket[] {
-        const groupedIds = new Set<number>();
-        const searching = this.hasSearch();
-        const buckets: Bucket[] = this.groups()
-            .slice()
-            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((group) => {
-                const members = group.exercises ?? [];
-                members.forEach((exercise) => exercise.id !== undefined && groupedIds.add(exercise.id));
-                return {
-                    id: `group-${group.id}`,
-                    title: group.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: group.id }),
-                    group,
-                    exercises: this.sortExercises(members.filter((exercise) => this.matches(exercise))),
-                };
-            })
-            .filter((bucket) => !searching || bucket.exercises.length > 0);
-
-        const ungrouped = this.sortExercises(this.visibleExercises().filter((exercise) => exercise.id === undefined || !groupedIds.has(exercise.id)));
-        if (ungrouped.length > 0) {
-            buckets.push({ id: 'ungrouped', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.ungrouped'), exercises: ungrouped });
-        }
-        return buckets;
-    }
-
-    private buildTypeBuckets(): Bucket[] {
-        return TYPE_ORDER.map((type) => ({
-            id: `type-${type}`,
-            title: TYPE_TITLE_KEYS[type] ? this.translateService.instant(TYPE_TITLE_KEYS[type]) : type,
-            icon: getIcon(type),
-            exerciseType: type,
-            exercises: this.sortExercises(this.visibleExercises().filter((exercise) => exercise.type === type)),
-        })).filter((bucket) => bucket.exercises.length > 0);
-    }
-
-    private buildWeekBuckets(): Bucket[] {
-        const startOf = (exercise: Exercise): dayjs.Dayjs | undefined =>
-            effectiveDate(exercise, this.owningGroup(exercise), 'startDate') ?? effectiveDate(exercise, this.owningGroup(exercise), 'releaseDate');
-
-        const visible = this.visibleExercises();
-        const dated = visible.filter((exercise) => startOf(exercise));
-        const undated = visible.filter((exercise) => !startOf(exercise));
-
-        const base = dated.reduce<dayjs.Dayjs | undefined>((min, exercise) => {
-            const date = startOf(exercise)!;
-            return !min || date.isBefore(min) ? date : min;
-        }, undefined);
-
-        const byWeek = new Map<number, Exercise[]>();
-        for (const exercise of dated) {
-            const weekIndex = base ? startOf(exercise)!.diff(base, 'week') : 0;
-            let list = byWeek.get(weekIndex);
-            if (!list) {
-                list = [];
-                byWeek.set(weekIndex, list);
-            }
-            list.push(exercise);
-        }
-
-        const buckets: Bucket[] = [...byWeek.keys()]
-            .sort((a, b) => a - b)
-            .map((weekIndex) => ({
-                id: `week-${weekIndex}`,
-                title: this.translateService.instant('artemisApp.exerciseManagement.bucket.week', { number: weekIndex + 1 }),
-                exercises: this.sortExercises(byWeek.get(weekIndex)!),
-            }));
-
-        if (undated.length > 0) {
-            buckets.push({ id: 'unscheduled', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.unscheduled'), exercises: this.sortExercises(undated) });
-        }
-        return buckets;
+    /** Rebuilds the view's panels for the current view mode, exercises, groups and search term. */
+    private rebuildCards(): void {
+        this.cards.set(
+            buildCourseExerciseCards(this.view(), {
+                exercises: this.exercises(),
+                groups: this.groups(),
+                searchTerm: this.search(),
+                translate: (key, interpolateParams) => this.translateService.instant(key, interpolateParams),
+            }),
+        );
     }
 
     openGroupEditModal(id: number): void {
@@ -648,7 +522,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         });
     }
 
-    /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" bucket. */
+    /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" card. */
     private deleteGroup(group: CourseExerciseGroup): void {
         const courseId = this.course()?.id;
         if (courseId !== undefined && group.id !== undefined) {
@@ -669,22 +543,13 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
         if (isNew) {
             this.exerciseVariantGroupService
-                .createGroup(courseId, {
-                    // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
-                    title: updated.title!,
-                    maxPoints: updated.maxPoints,
-                    releaseDate: updated.releaseDate,
-                    startDate: updated.startDate,
-                    dueDate: updated.dueDate,
-                    assessmentDueDate: updated.assessmentDueDate,
-                    exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
-                    buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
-                })
+                // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
+                .createGroup(courseId, toCreateGroupPayload(updated))
                 .subscribe({
                     next: (dto) => {
                         const created = toCourseExerciseGroup(dto, this.exercisesById());
                         this.groups.set([...this.groups(), created]);
-                        this.buildBuckets();
+                        this.rebuildCards();
                     },
                     error: (errorRes: HttpErrorResponse) =>
                         this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
@@ -693,175 +558,51 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
 
         if (updated.id !== undefined) {
-            this.exerciseVariantGroupService
-                .updateGroup(courseId, {
-                    id: updated.id,
-                    title: updated.title!,
-                    maxPoints: updated.maxPoints,
-                    releaseDate: updated.releaseDate,
-                    startDate: updated.startDate,
-                    dueDate: updated.dueDate,
-                    assessmentDueDate: updated.assessmentDueDate,
-                    exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
-                    buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
-                })
-                .subscribe({
-                    next: (dto) => {
-                        // The group timeline may have changed. Re-sync each member exercise's own date fields and quiz
-                        // client state (mirroring the server-side re-sync) so member dates and quiz badges / lifecycle
-                        // buttons reflect the new dates immediately, without waiting for a full reload.
-                        const memberIds = new Set(dto.exerciseIds ?? []);
-                        const now = dayjs();
-                        const refreshedExercises = this.exercises().map((ex) => (ex.id !== undefined && memberIds.has(ex.id) ? this.applyGroupTimelineToMember(ex, dto, now) : ex));
-                        this.exercises.set(refreshedExercises);
-                        const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
-                        const mapped = toCourseExerciseGroup(dto, refreshedById);
-                        this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
-                        this.buildBuckets();
-                    },
-                    error: (errorRes: HttpErrorResponse) =>
-                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
-                });
+            this.exerciseVariantGroupService.updateGroup(courseId, toUpdateGroupPayload(updated)).subscribe({
+                next: (dto) => {
+                    // The group timeline may have changed. Re-sync each member exercise's own date fields and quiz
+                    // client state (mirroring the server-side re-sync) so member dates and quiz badges / lifecycle
+                    // buttons reflect the new dates immediately, without waiting for a full reload.
+                    const memberIds = new Set(dto.exerciseIds ?? []);
+                    const now = dayjs();
+                    const refreshedExercises = this.exercises().map((ex) =>
+                        ex.id !== undefined && memberIds.has(ex.id) ? this.groupSync.applyGroupTimelineToMember(ex, dto, now) : ex,
+                    );
+                    this.exercises.set(refreshedExercises);
+                    const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
+                    const mapped = toCourseExerciseGroup(dto, refreshedById);
+                    this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
+                    this.rebuildCards();
+                },
+                error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
+            });
         }
-    }
-
-    /**
-     * Applies a group's shared timeline to one member exercise (returning a fresh copy so signal inputs react) and
-     * recomputes quiz client state, mirroring the server-side re-sync in `applyGroupTimelineToExercises`. Used after a
-     * group edit so member dates and quiz badges / lifecycle buttons update without a full page reload.
-     */
-    private applyGroupTimelineToMember(exercise: Exercise, groupDto: ExerciseVariantGroupDTO, now: dayjs.Dayjs): Exercise {
-        const updated: Exercise = {
-            ...exercise,
-            releaseDate: groupDto.releaseDate,
-            startDate: groupDto.startDate,
-            dueDate: groupDto.dueDate,
-            assessmentDueDate: groupDto.assessmentDueDate,
-            exampleSolutionPublicationDate: groupDto.exampleSolutionPublicationDate,
-        };
-        if (updated.type === ExerciseType.QUIZ) {
-            const quiz = updated as QuizExercise;
-            const startDate = quiz.startDate ?? quiz.releaseDate;
-            if (startDate !== undefined) {
-                quiz.visibleToStudents = startDate.isBefore(now);
-            }
-            if (quiz.dueDate !== undefined) {
-                quiz.quizEnded = quiz.dueDate.isBefore(now);
-            }
-            this.applyQuizClientState(quiz);
-        }
-        return updated;
-    }
-
-    /** Recomputes the client-derived quiz `status` / `quizStarted` flags (the server does not serialize them). */
-    private applyQuizClientState(quiz: QuizExercise): void {
-        quiz.status = this.quizExerciseService.getStatus(quiz);
-        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
     }
 
     /**
      * The /with-exercises response does not load the quizBatches association, so batches would be missing after a
-     * refresh. Fetch them from the dedicated quiz endpoint and merge them into the loaded quiz exercises, then
-     * recompute the batch-dependent status. Replaced quizzes get a fresh object reference so the row's signal input
-     * reacts (an in-place mutation would not re-render until a view rebuild); both the flat list and the groups are
-     * pointed at the new objects, mirroring {@link onExerciseUpdated}.
+     * refresh. Fetch them from the dedicated quiz endpoint and merge them into the loaded quiz exercises (see
+     * {@link ExerciseGroupSyncService#mergeQuizInfo}).
      */
     private loadQuizBatches(courseId: number): void {
         this.quizExerciseService.findForCourse(courseId).subscribe((response) => {
-            // quizInfoById carries both quizBatches (for status computation) and isEditable (from the server,
-            // which uses the authoritative DB check — client-side status alone can miss cases like INDIVIDUAL
-            // mode quizzes where student batches are started but the quiz is not visibleToStudents yet).
-            const quizInfoById = new Map((response.body ?? []).map((quiz) => [quiz.id, { quizBatches: quiz.quizBatches, isEditable: quiz.isEditable }]));
-            const replacements = new Map<number, Exercise>();
-            const merged = this.exercises().map((exercise) => {
-                if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
-                    const quiz = { ...(exercise as QuizExercise) };
-                    const info = quizInfoById.get(exercise.id)!;
-                    quiz.quizBatches = info.quizBatches;
-                    quiz.isEditable = info.isEditable;
-                    this.applyQuizClientState(quiz);
-                    replacements.set(exercise.id, quiz);
-                    return quiz;
-                }
-                return exercise;
-            });
-            if (replacements.size === 0) {
+            const merged = this.groupSync.mergeQuizInfo(this.exercises(), this.groups(), response.body ?? []);
+            if (!merged) {
                 return;
             }
-            this.exercises.set(merged);
-            this.groups.set(
-                this.groups().map((group) => ({
-                    ...group,
-                    exercises: (group.exercises ?? []).map((exercise) => (exercise.id !== undefined && replacements.has(exercise.id) ? replacements.get(exercise.id)! : exercise)),
-                })),
-            );
-            this.buildBuckets();
+            this.exercises.set(merged.exercises);
+            this.groups.set(merged.groups);
+            this.rebuildCards();
         });
     }
 
-    /** Loads the course's variant groups from the server and maps them to the view model. */
+    /** Loads the course's variant groups from the server and merges them into the exercise list and view model. */
     private loadGroupsFromServer(courseId: number): void {
         this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe((dtos) => {
-            // Build a map from exercise id to its new group reference so we can update exerciseVariantGroup.
-            const refByExerciseId = new Map<number, ExerciseVariantGroupReference>();
-            const groupDtoByExerciseId = new Map<number, ExerciseVariantGroupDTO>();
-            for (const dto of dtos) {
-                const ref: ExerciseVariantGroupReference = {
-                    id: dto.id,
-                    title: dto.title,
-                    maxPoints: dto.maxPoints,
-                    releaseDate: dto.releaseDate,
-                    startDate: dto.startDate,
-                    dueDate: dto.dueDate,
-                    assessmentDueDate: dto.assessmentDueDate,
-                    exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
-                    buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
-                };
-                for (const id of dto.exerciseIds ?? []) {
-                    refByExerciseId.set(id, ref);
-                    groupDtoByExerciseId.set(id, dto);
-                }
-            }
-            const now = dayjs();
-            // Spread exercises whose group membership changed so dependent signal computeds see new references.
-            // Also apply the group's shared timeline and recompute quiz client state so lifecycle buttons reflect
-            // the new group's dates immediately (without a page reload).
-            const updatedExercises = this.exercises().map((ex) => {
-                if (ex.id === undefined) return ex;
-                const newRef = refByExerciseId.get(ex.id);
-                if (newRef?.id === ex.exerciseVariantGroup?.id) return ex;
-                if (newRef === undefined) {
-                    // The exercise was removed from its group. The server keeps the exercise's own dates on
-                    // unassignment, so only drop the group reference here — do not blank the timeline.
-                    return { ...ex, exerciseVariantGroup: undefined };
-                }
-                const groupDto = groupDtoByExerciseId.get(ex.id);
-                const updated: Exercise = {
-                    ...ex,
-                    exerciseVariantGroup: newRef,
-                    releaseDate: groupDto?.releaseDate,
-                    startDate: groupDto?.startDate,
-                    dueDate: groupDto?.dueDate,
-                    assessmentDueDate: groupDto?.assessmentDueDate,
-                    exampleSolutionPublicationDate: groupDto?.exampleSolutionPublicationDate,
-                };
-                if (updated.type === ExerciseType.QUIZ) {
-                    const quiz = updated as QuizExercise;
-                    const startDate = quiz.startDate ?? quiz.releaseDate;
-                    if (startDate !== undefined) {
-                        quiz.visibleToStudents = startDate.isBefore(now);
-                    }
-                    if (quiz.dueDate !== undefined) {
-                        quiz.quizEnded = quiz.dueDate.isBefore(now);
-                    }
-                    this.applyQuizClientState(quiz);
-                }
-                return updated;
-            });
-            this.exercises.set(updatedExercises);
-            const exercisesById = new Map(updatedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
-            this.groups.set(dtos.map((dto) => toCourseExerciseGroup(dto, exercisesById)));
-            this.buildBuckets();
+            const merged = this.groupSync.mergeGroupsIntoExercises(this.exercises(), dtos);
+            this.exercises.set(merged.exercises);
+            this.groups.set(merged.groups);
+            this.rebuildCards();
         });
     }
 

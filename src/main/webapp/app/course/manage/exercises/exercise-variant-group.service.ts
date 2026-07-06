@@ -101,6 +101,28 @@ export class ExerciseVariantGroupService {
 }
 
 /**
+ * Maps the edit dialog's view model to the create payload. The caller guarantees a non-empty title (the dialog's Save
+ * button enforces this).
+ */
+export function toCreateGroupPayload(group: CourseExerciseGroup): CreateExerciseVariantGroupDTO {
+    return {
+        title: group.title!,
+        maxPoints: group.maxPoints,
+        releaseDate: group.releaseDate,
+        startDate: group.startDate,
+        dueDate: group.dueDate,
+        assessmentDueDate: group.assessmentDueDate,
+        exampleSolutionPublicationDate: group.exampleSolutionPublicationDate,
+        buildAndTestStudentSubmissionsAfterDueDate: group.buildAndTestStudentSubmissionsAfterDueDate,
+    };
+}
+
+/** Maps the edit dialog's view model to the update payload; the caller guarantees id and title are set. */
+export function toUpdateGroupPayload(group: CourseExerciseGroup): ExerciseVariantGroupDTO {
+    return { id: group.id!, ...toCreateGroupPayload(group) };
+}
+
+/**
  * Maps a server DTO to the client {@link CourseExerciseGroup} model used by the management view. Members are resolved
  * from {@code exercisesById} since the DTO only carries exercise ids. The client-only {@code order} field (not part of
  * the DTO) stays undefined.

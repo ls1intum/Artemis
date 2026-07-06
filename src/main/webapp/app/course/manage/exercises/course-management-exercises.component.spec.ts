@@ -69,23 +69,23 @@ describe('Course Management Exercises Component', () => {
         expect(comp.course()).toBe(course);
     });
 
-    it('should populate buckets on init', () => {
+    it('should populate cards on init', () => {
         comp.ngOnInit();
-        expect(comp.buckets().length).toBeGreaterThan(0);
+        expect(comp.cards().length).toBeGreaterThan(0);
     });
 
     it('should filter exercises on search', () => {
         comp.ngOnInit();
-        const initialCount = comp.buckets().reduce((sum, b) => sum + b.exercises.length, 0);
+        const initialCount = comp.cards().reduce((sum, b) => sum + b.exercises.length, 0);
         comp.onSearchChange('zzz_nomatch_zzz');
-        const filteredCount = comp.buckets().reduce((sum, b) => sum + b.exercises.length, 0);
+        const filteredCount = comp.cards().reduce((sum, b) => sum + b.exercises.length, 0);
         expect(filteredCount).toBeLessThan(initialCount);
     });
 
     it('should only mark itself loaded after the initial load (gating the empty state)', () => {
-        // Before init nothing is loaded, so the "no matches" empty state must stay hidden even though buckets are empty.
+        // Before init nothing is loaded, so the "no matches" empty state must stay hidden even though cards are empty.
         expect(comp.loaded()).toBe(false);
-        expect(comp.buckets().length).toBe(0);
+        expect(comp.cards().length).toBe(0);
         comp.ngOnInit();
         expect(comp.loaded()).toBe(true);
     });
