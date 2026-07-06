@@ -5,48 +5,45 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationOrchestrationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * Deterministic, committed end-to-end test of agentic exercise GENERATION. It replaces the live-GPU {@code HyperionExerciseGenerationEndToEndTest} for CI: instead of an external
- * LLM, a mocked {@code azureOpenAiChatModel} returns a FIXED sequence of tool-calling turns that drive the REAL agent loop, the REAL Docker sandbox, and the REAL differential
- * oracle. Only the model is faked; the container build and the acceptance verdict are authentic. Docker-gated (not GPU-gated), so it runs wherever the LocalCI integration tests
- * do.
+ * Deterministic, committed end-to-end test of agentic exercise generation. It replaces the live-GPU {@code HyperionExerciseGenerationEndToEndTest} for CI: instead of an external
+ * LLM, a mocked {@code azureOpenAiChatModel} returns a fixed sequence of tool-calling turns that drive the real agent loop, the real Docker sandbox, and the real differential
+ * oracle. Only the model is faked; the container build and the acceptance verdict are authentic. Docker-gated (not GPU-gated).
  * <p>
  * The fixture is a minimal-but-real Java {@code Calculator}: the solution passes its one JUnit test, the template compiles but fails it (a {@code return 0} stub), and the problem
  * statement binds the test with a {@code [task]}. Two scenarios:
  * <ul>
- * <li>a VALID exercise the oracle must ACCEPT (solution passes, template fails, at least one test);</li>
- * <li>a BAD exercise whose reference solution fails its OWN test, which the oracle must REJECT — proving the differential acceptance gate is real, not rubber-stamped.</li>
+ * <li>a valid exercise the oracle must accept (solution passes, template fails, at least one test);</li>
+ * <li>a bad exercise whose reference solution fails its own test, which the oracle must reject — proving the differential acceptance gate is real, not rubber-stamped.</li>
  * </ul>
  */
 @EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isDockerAvailable")
-class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
+@Isolated
+class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndTest {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionExerciseGenerationMockedEndToEndTest.class);
 
@@ -73,7 +70,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
             }
             """;
 
-    /** The template keeps the SAME signature but a wrong placeholder body, so the test fails on it while it still compiles. */
+    /** The template keeps the same signature but a wrong placeholder body, so the test fails on it while it still compiles. */
     private static final String TEMPLATE_CALCULATOR = """
             package de.test;
 
@@ -86,7 +83,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
             """;
 
     /**
-     * A reference solution that FAILS its own test ({@code a - b} instead of {@code a + b}): {@code add(2, 3) == -1 != 5}. Compiles, but the differential oracle must reject the
+     * A reference solution that fails its own test ({@code a - b} instead of {@code a + b}): {@code add(2, 3) == -1 != 5}. Compiles, but the differential oracle must reject the
      * exercise because the solution does not pass.
      */
     private static final String BROKEN_SOLUTION_CALCULATOR = """
@@ -133,32 +130,9 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
 
     private static final String PROBLEM_STATEMENT_PATH = "problem-statement.md";
 
-    @Autowired
-    private ExerciseGenerationOrchestrationService orchestrator;
-
-    @Autowired
-    private ProgrammingExerciseCreationUpdateService creationService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
-    private Map<ProgrammingLanguage, String> replacedBuildImages;
-
-    @BeforeEach
-    void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        // The shared test application.yml points every build image at a placeholder so the mocked-build buckets never pull one; override Java back to its real execution image so
-        // the sandbox build and the differential oracle run on the real Maven/Ares toolchain. The mocked model needs no context-window override (it ignores prompt options).
-        // Capture the prior entry so @AfterEach can restore it — the Spring context is cached and shared, so the override must not leak into later tests.
-        replacedBuildImages = HyperionMockedLlmE2eSupport.useProductionBuildImages(programmingLanguageConfiguration, ProgrammingLanguage.JAVA);
-    }
-
-    @AfterEach
-    void tearDown() {
-        HyperionMockedLlmE2eSupport.restoreBuildImages(programmingLanguageConfiguration, replacedBuildImages);
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @Test
@@ -190,13 +164,10 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractSpringIntegra
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void rejectsExerciseWhoseSolutionFailsItsOwnTest_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMBAD");
-        // Same fixture but the reference solution returns a - b, so it fails its own addsTwoNumbers test. The oracle must reject (fail-closed). On rejection the orchestrator
-        // retries
-        // up to its bound; the mock only ever replays the final submit turn, so each retry runs the authoritative verifier's two pristine Maven builds again and rejects again. The
-        // assertion is robust to the per-attempt sandbox lifecycle: whether a retry re-verifies the same bad-solution workspace or a freshly-seeded (empty) one, the differential
-        // fails either way, so this proves the fail-closed gate deterministically. Cost note: this drives the full retry budget, so the reject proof pays for several real
-        // container
-        // builds (deterministic, but the slowest leg of this Docker-gated suite).
+        // Same fixture but the reference solution returns a - b, so it fails its own addsTwoNumbers test and the oracle must reject (fail-closed). On rejection the orchestrator
+        // retries up to its bound; the mock replays only the final submit turn, so each retry re-runs the verifier's two pristine Maven builds and rejects again. The assertion
+        // holds regardless of the per-attempt sandbox lifecycle: whether a retry re-verifies the bad-solution workspace or a freshly-seeded empty one, the differential fails
+        // either way. This drives the full retry budget, so it is the slowest leg of the Docker-gated suite.
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
                 HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_CALCULATOR), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_CALCULATOR),
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, CALCULATOR_TEST), HyperionMockedLlmE2eSupport.submit("Add two integers"));

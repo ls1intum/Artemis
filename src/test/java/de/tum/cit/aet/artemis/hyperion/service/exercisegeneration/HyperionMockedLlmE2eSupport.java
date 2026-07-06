@@ -27,17 +27,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
 /**
- * Shared, COMMITTED support for the deterministic mocked-LLM Hyperion end-to-end tests. It replaces the live-GPU-only helper {@code HyperionGpuTestEnvironment} for the committed
- * tests so that a fresh CI checkout (which does not have the gitignored live-GPU files) still compiles.
+ * Shared, committed support for the deterministic mocked-LLM Hyperion end-to-end tests. It replaces the live-GPU-only helper {@code HyperionGpuTestEnvironment} so that a fresh CI
+ * checkout (which does not have the gitignored live-GPU files) still compiles.
  * <p>
  * It carries three things the mocked E2E tests need and nothing GPU-specific:
  * <ul>
- * <li>{@link #isDockerAvailable()} — the exact Docker gate the LocalCI integration tests use, so these tests self-skip when no Docker daemon is reachable rather than failing;</li>
+ * <li>{@link #isDockerAvailable()} — the same Docker gate the LocalCI integration tests use, so these tests self-skip when no Docker daemon is reachable rather than failing;</li>
  * <li>{@link #useProductionBuildImages(ProgrammingLanguageConfiguration, ProgrammingLanguage...)} — points a language's build image at its real production execution image (the
- * shared test {@code application.yml} points every image at a placeholder so the mocked-build buckets never pull one), copied verbatim from the live-GPU helper;</li>
- * <li>a tiny scripted-{@link ChatModel} DSL ({@link #writeFile}/{@link #bash}/{@link #submit}/{@link #text}) that builds the exact {@link ChatResponse} tool-call turns the real
- * agent loop consumes, so a mocked {@code azureOpenAiChatModel} can drive the REAL loop + REAL sandbox + REAL differential oracle deterministically (the proven pattern from
- * {@code AgentLoopRunnerTest}).</li>
+ * shared test {@code application.yml} points every image at a placeholder so the mocked-build buckets never pull one);</li>
+ * <li>a tiny scripted-{@link ChatModel} DSL ({@link #writeFile}/{@link #bash}/{@link #submit}/{@link #text}) that builds the {@link ChatResponse} tool-call turns the real agent
+ * loop consumes, so a mocked {@code azureOpenAiChatModel} can drive the real loop, sandbox, and differential oracle deterministically.</li>
  * </ul>
  */
 final class HyperionMockedLlmE2eSupport {
@@ -67,7 +66,11 @@ final class HyperionMockedLlmE2eSupport {
         }
     }
 
-    private static TransportConfig discoverDockerTransportConfig() {
+    /**
+     * @return the Testcontainers-discovered Docker transport config, or {@code null} when no Docker daemon is reachable; shared with the mocked E2E tests so they can re-point the
+     *         build agent at the real Docker host without duplicating the discovery logic
+     */
+    static TransportConfig discoverDockerTransportConfig() {
         DockerClientFactory dockerClientFactory = DockerClientFactory.instance();
         if (!dockerClientFactory.isDockerAvailable()) {
             return null;
