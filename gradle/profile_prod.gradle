@@ -37,10 +37,14 @@ def prebuiltWebappDir = file("${projectDir}/build/webapp-dist")
 def webappBuildDir = file("${projectDir}/build/resources/main/static")
 if (prebuiltWebappDir.exists()) {
     tasks.register("webapp") {
-        dependsOn pnpmInstall
+        // Copy-only: no pnpm command runs here, so node_modules is not needed and this must
+        // not depend on pnpmInstall (that would just add avoidable time to the fast path this
+        // branch exists for).
         inputs.dir(prebuiltWebappDir).withPropertyName("prebuilt-webapp-dir")
         outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
         doLast {
+            logger.lifecycle("Reusing prebuilt Angular client from ${prebuiltWebappDir} instead of rebuilding. " +
+                "Delete that directory first if you changed the frontend and are reproducing this build locally.")
             delete(webappBuildDir)
             copy {
                 from prebuiltWebappDir
