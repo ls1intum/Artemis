@@ -42,8 +42,7 @@ class SystemNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        systemNotificationService = new SystemNotificationService(websocketMessagingService, systemNotificationRepository, maintenanceEmailRecipientRepository,
-                mailSendingService);
+        systemNotificationService = new SystemNotificationService(websocketMessagingService, systemNotificationRepository, maintenanceEmailRecipientRepository, mailSendingService);
     }
 
     @AfterEach
