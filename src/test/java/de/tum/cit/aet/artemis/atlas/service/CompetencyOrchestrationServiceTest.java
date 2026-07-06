@@ -34,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -414,7 +415,7 @@ class CompetencyOrchestrationServiceTest {
         when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(doomedQuiz, healthy));
         stubRunMap();
         when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
-        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor Title", "Survivor problem body", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         // Fail at render so we stop after preparation without driving the LLM.
         when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
@@ -427,7 +428,35 @@ class CompetencyOrchestrationServiceTest {
         // the prompt (index fetched, render reached) — proving one bad exercise no longer poisons the whole batch.
         verify(contentExtractionService).extractContent(healthy);
         verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
-        verify(templateService).render(anyString(), anyMap());
+        // The survivor's extracted content must actually reach the rendered batch, and the skipped quiz (id 12) must not —
+        // a "batch proceeds" assertion alone would still pass if the survivor's change were silently dropped.
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateService).render(anyString(), modelCaptor.capture());
+        String renderedChanges = modelCaptor.getValue().get("exerciseChanges");
+        assertThat(renderedChanges).contains("[UPDATE id=10]").contains("Survivor Title").contains("Survivor problem body").doesNotContain("[UPDATE id=12]");
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_allExercisesExtractionThrow_returnsInternalErrorWithoutDrivingLlm() {
+        // When every exercise in the batch fails extraction, the run must short-circuit to INTERNAL_ERROR
+        // before fetching the competency index or rendering the prompt — never touching the LLM — so an
+        // all-broken batch does not waste the course's daily-run slot on a guaranteed-empty prompt.
+        QuizExercise firstDoomed = quizExercise(12L);
+        TextExercise secondDoomed = textExercise(13L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(firstDoomed, secondDoomed));
+        stubRunMap();
+        when(contentExtractionService.extractContent(firstDoomed)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(contentExtractionService.extractContent(secondDoomed)).thenThrow(new RuntimeException("text deleted mid-run"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(12L, 13L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        // No extractable content -> no course index, no prompt render, no LLM call; the lock is still released.
+        verify(orchestratorToolsService, never()).listCompetencyIndex(anyLong());
+        verify(templateService, never()).render(anyString(), anyMap());
         verify(runMap).remove(COURSE_ID);
     }
 

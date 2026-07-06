@@ -243,7 +243,7 @@ public class OrchestratorToolsService {
     @Tool(description = "Extract the learning-relevant content for an exercise that belongs to the current course. Returns a title, the learning text, and metadata. "
             + "For programming, text, modeling and file-upload exercises the learning text is the problem statement (plus example solution where available); for quizzes "
             + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
-            + "(plus type-specific keys such as questionCount for quizzes).")
+            + "(plus type-specific keys such as questionCount for quizzes). The content is extracted fresh on every call, so don't call this tool repeatedly for the same exercise id.")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
@@ -263,7 +263,10 @@ public class OrchestratorToolsService {
             return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
         }
         try {
-            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+            // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call and this tool is
+            // uncapped, so a repeated lookup would burn tokens unbounded. The raw problem statement is complete enough
+            // for the orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
+            ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
             return toJson(extracted);
         }
         catch (RuntimeException ex) {

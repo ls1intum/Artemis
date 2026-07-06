@@ -669,7 +669,7 @@ class OrchestratorToolsServiceTest {
         Course course = courseWithId(COURSE_ID);
         ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
-        when(contentExtractionService.extractContent(exercise))
+        when(contentExtractionService.extractContent(exercise, false))
                 .thenReturn(new ExtractedContentDTO("Implement Quicksort", "Sort an array in O(n log n).", Map.of("exerciseType", "programming")));
 
         String result = service.getExerciseContent(20L, toolContext);
@@ -685,14 +685,15 @@ class OrchestratorToolsServiceTest {
         quiz.setTitle("Data structures quiz");
         quiz.setCourse(course);
         when(exerciseRepository.findByIdElseThrow(21L)).thenReturn(quiz);
-        when(contentExtractionService.extractContent(quiz))
+        when(contentExtractionService.extractContent(quiz, false))
                 .thenReturn(new ExtractedContentDTO("Data structures quiz", "Question 1: ...", Map.of("exerciseType", "quiz", "questionCount", "3")));
 
         String result = service.getExerciseContent(21L, toolContext);
 
         // Non-programming exercises are now text-extracted (previously a title-only "only programming" stub).
         assertThat(result).contains("Data structures quiz").contains("questionCount").doesNotContain("only available for programming");
-        verify(contentExtractionService).extractContent(quiz);
+        // The read tool skips the costly flavor-strip (passes false) since it is uncapped and re-extracts on every call.
+        verify(contentExtractionService).extractContent(quiz, false);
     }
 
     @Test

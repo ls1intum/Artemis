@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 
 /**
@@ -34,7 +35,7 @@ class ContentExtractionServiceIntegrationTest extends AbstractAtlasIntegrationTe
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     @Test
     void extractContent_persistedQuiz_eagerlyLoadsQuestionsAndAssemblesContent() {
@@ -51,5 +52,8 @@ class ContentExtractionServiceIntegrationTest extends AbstractAtlasIntegrationTe
         // the MC correctness markers, the text drag items and the short-answer solutions must all survive
         // the eager re-fetch from the unfiltered entity.
         assertThat(extracted.extractedLearningText()).contains("Q1").contains("[correct]").contains("D1").contains("Spot 0: is").contains("Spot 2: long");
+        // The drag-and-drop correct mapping must also survive persistence: the mapping FK references and the
+        // @OrderColumn drop-location positions are restored on reload, so the solution renders deterministically.
+        assertThat(extracted.extractedLearningText()).contains("Correct drop mapping:").contains("D1 -> drop zone 1").contains("D3 -> drop zone 3");
     }
 }

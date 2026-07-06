@@ -29,8 +29,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -50,10 +48,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private artemisMarkdownService = inject(ArtemisMarkdownService);
     private textExerciseService = inject(TextExerciseService);
     private statisticsService = inject(StatisticsService);
-    private profileService = inject(ProfileService);
 
     readonly documentationType: DocumentationType = 'Text';
-    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;

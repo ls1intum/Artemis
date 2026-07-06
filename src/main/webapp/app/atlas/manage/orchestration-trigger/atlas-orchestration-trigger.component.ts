@@ -11,6 +11,8 @@ import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/featur
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
@@ -34,10 +36,18 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
 export class AtlasOrchestrationTriggerComponent {
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
     readonly exercise = input.required<Exercise>();
     /** Button CSS classes, so each host page can match its own action-bar styling (solid vs outline). */
     readonly buttonClass = input<string>('btn btn-primary btn-sm');
+
+    /**
+     * Whether the Atlas module is enabled on this instance. Owned here so host pages stay free of Atlas
+     * knowledge: a host only decides instructor / non-exam visibility, and this component self-hides when
+     * the module is off (the {@code AtlasAgent} feature toggle is a separate, finer runtime gate on the button).
+     */
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly orchestrationDialogVisible = signal(false);
     protected readonly orchestrationDialogMessage = signal('');

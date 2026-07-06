@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,8 +31,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -431,7 +434,10 @@ public class ContentExtractionService {
     }
 
     private static void renderDragAndDrop(StringBuilder sb, DragAndDropQuestion question) {
-        // Drop locations carry only geometry (no text), so only the text drag items are extractable content.
+        // Drop locations carry only geometry (no text), so they are referenced by a stable 1-based zone number
+        // (their order in the question). The drag items list the available pieces; the correct-mapping block below
+        // gives the solution (which piece belongs in which zone) so the LLM can judge the competency fit, not just
+        // the presence of labels.
         List<DragItem> dragItems = question.getDragItems();
         if (dragItems == null || dragItems.isEmpty()) {
             return;
@@ -446,6 +452,41 @@ public class ContentExtractionService {
                 headerWritten = true;
             }
             sb.append("- ").append(item.getText().strip()).append('\n');
+        }
+        renderDragAndDropSolution(sb, question);
+    }
+
+    /** Appends the correct drag-item-to-drop-zone pairings, referencing each geometry-only drop location by its 1-based position. */
+    private static void renderDragAndDropSolution(StringBuilder sb, DragAndDropQuestion question) {
+        Set<DragAndDropMapping> mappings = question.getCorrectMappings();
+        List<DropLocation> dropLocations = question.getDropLocations();
+        if (mappings == null || mappings.isEmpty() || dropLocations == null || dropLocations.isEmpty()) {
+            return;
+        }
+        record ZonePairing(int zone, String itemText) {
+        }
+        List<ZonePairing> pairings = new ArrayList<>();
+        for (DragAndDropMapping mapping : mappings) {
+            DragItem item = mapping.getDragItem();
+            DropLocation location = mapping.getDropLocation();
+            if (item == null || item.getText() == null || item.getText().isBlank() || location == null) {
+                continue;
+            }
+            // indexOf matches by identity for transient locations (null id) and by id once persisted — both resolve
+            // to the same instances held in the eagerly-loaded dropLocations list.
+            int position = dropLocations.indexOf(location);
+            if (position < 0) {
+                continue;
+            }
+            pairings.add(new ZonePairing(position + 1, item.getText().strip()));
+        }
+        if (pairings.isEmpty()) {
+            return;
+        }
+        pairings.sort(Comparator.comparingInt(ZonePairing::zone).thenComparing(ZonePairing::itemText));
+        sb.append("Correct drop mapping:\n");
+        for (ZonePairing pairing : pairings) {
+            sb.append("- ").append(pairing.itemText()).append(" -> drop zone ").append(pairing.zone()).append('\n');
         }
     }
 

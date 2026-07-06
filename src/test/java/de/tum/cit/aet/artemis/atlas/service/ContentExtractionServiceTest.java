@@ -10,6 +10,9 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -23,7 +26,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -31,7 +34,7 @@ class ContentExtractionServiceTest {
 
     private ContentExtractionService contentExtractionService;
 
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @BeforeEach
     void setUp() {
@@ -39,7 +42,7 @@ class ContentExtractionServiceTest {
         // non-blank text, so these extraction assertions are unaffected by the LLM strip path. The
         // quiz repository is only consulted for persisted quizzes (id != null); the in-memory quizzes
         // built here keep their questions, so it is never called.
-        quizExerciseRepository = mock(QuizExerciseRepository.class);
+        quizExerciseRepository = mock(QuizExerciseTestRepository.class);
         contentExtractionService = new ContentExtractionService(null, null, quizExerciseRepository, "", "low", 1.0);
     }
 
@@ -241,8 +244,10 @@ class ContentExtractionServiceTest {
         String text = result.extractedLearningText();
         // Multiple choice: prompt + each option with its correctness marker and explanation.
         assertThat(text).contains("Q1").contains("A [correct]").contains("B [incorrect]").contains("E1");
-        // Drag and drop: prompt + the text drag items (picture-only items carry no text and are skipped).
+        // Drag and drop: prompt + the text drag items (picture-only items carry no text and are skipped) + the
+        // correct drag-item-to-drop-zone solution, referencing each geometry-only drop location by its 1-based position.
         assertThat(text).contains("Q2").contains("D1").contains("D3").doesNotContain("dragItemImage");
+        assertThat(text).contains("Correct drop mapping:").contains("D1 -> drop zone 1").contains("D3 -> drop zone 3");
         // Short answer: prompt + the correct spot -> solution mappings.
         assertThat(text).contains("This is a long answer text").contains("Spot 0: is").contains("Spot 2: long");
         assertThat(result.metadata()).containsEntry("exerciseType", "quiz").containsEntry("questionCount", "3");
@@ -304,16 +309,18 @@ class ContentExtractionServiceTest {
         assertThat(result.extractedLearningText()).doesNotContain("Correct answers by spot:").contains("Accepted answers:").contains("- answer beta");
     }
 
-    @Test
-    void extractContent_textExercise_blankStatementWithSolution_returnsLabeledSolutionOnly() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "   " })
+    void extractContent_textExercise_absentStatementWithSolution_returnsLabeledSolutionOnly(String problemStatement) {
         TextExercise exercise = new TextExercise();
         exercise.setTitle("Essay");
-        exercise.setProblemStatement("   ");
+        exercise.setProblemStatement(problemStatement);
         exercise.setExampleSolution("Recursion is when a function calls itself.");
 
         ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
 
-        // Blank statement collapses away; the output is exactly the labeled solution with no leading separators.
+        // A null, empty or blank statement collapses away; the output is exactly the labeled solution with no leading separators.
         assertThat(result.extractedLearningText()).isEqualTo("Example solution:\nRecursion is when a function calls itself.");
     }
 
@@ -329,12 +336,14 @@ class ContentExtractionServiceTest {
         assertThat(result.metadata()).containsEntry("exerciseType", "modeling").doesNotContainKey("diagramType");
     }
 
-    @Test
-    void extractContent_fileUploadExercise_blankFilePattern_omitsFromMetadata() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "  " })
+    void extractContent_fileUploadExercise_absentFilePattern_omitsFromMetadata(String filePattern) {
         FileUploadExercise exercise = new FileUploadExercise();
         exercise.setTitle("Upload report");
         exercise.setProblemStatement("Upload your report.");
-        exercise.setFilePattern("  ");
+        exercise.setFilePattern(filePattern);
 
         ExtractedContentDTO result = contentExtractionService.extractContent(exercise);
 

@@ -23,7 +23,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
 /**
  * Flavor-strip-specific coverage for {@link ContentExtractionService#stripFlavorText(String)}
@@ -40,7 +40,7 @@ class ContentExtractionServiceFlavorStripTest {
     private AtlasPromptTemplateService templateService;
 
     @Mock
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     private ContentExtractionService service;
 
