@@ -1,6 +1,6 @@
 import { Component, Injector, OnChanges, OnInit, SimpleChanges, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';

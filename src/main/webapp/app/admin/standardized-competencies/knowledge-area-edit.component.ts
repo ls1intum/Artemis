@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
