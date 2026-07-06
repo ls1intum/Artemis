@@ -26,7 +26,10 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 142
+      # 143 (was 142): the build-agent interactive-sandbox relay adds two beans that must start eagerly under the buildagent profile —
+      # InteractiveSandboxRelayHandler (registers its distributed-topic listener in @PostConstruct so agents receive sandbox requests)
+      # and InteractiveSandboxReaperService (starts orphaned-container cleanup at boot). Both are @Lazy(false) by necessity.
+      MAX_INSTANTIATED_BEANS: 143
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
