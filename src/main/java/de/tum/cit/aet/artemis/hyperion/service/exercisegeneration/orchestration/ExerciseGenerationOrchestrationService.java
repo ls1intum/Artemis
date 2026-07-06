@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StructuralOracleSeedingService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -199,8 +200,8 @@ public class ExerciseGenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
-                verification = verifier.verify(sandbox, sessionId, exercise, testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability);
+                verification = verifier.verify(sandbox, sessionId, exercise, new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(),
+                        producedSolution.files(), extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability));
                 emit(progress, verification.report());
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`.

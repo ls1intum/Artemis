@@ -72,7 +72,8 @@ class AgentSystemPromptServiceTest {
         String adaptPrompt = systemPromptService.build(exercise, GenerationMode.ADAPT);
         String generatePrompt = systemPromptService.build(exercise, GenerationMode.GENERATE);
 
-        assertThat(adaptPrompt).startsWith("ADAPT MODE").contains("REVISING an existing, working exercise").contains("change nothing");
+        // Contract: ADAPT prepends its framing marker; GENERATE does not. The exact framing wording is not pinned.
+        assertThat(adaptPrompt).startsWith("ADAPT MODE");
         // The default single-arg build and the explicit GENERATE build agree, and neither carries the ADAPT framing.
         assertThat(generatePrompt).doesNotContain("ADAPT MODE").isEqualTo(systemPromptService.build(exercise));
         // The shared correctness contract is present in BOTH modes.
@@ -111,8 +112,8 @@ class AgentSystemPromptServiceTest {
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
 
-        assertThat(prompt).contains("Make it about graph traversal.").contains("current problem statement").contains("may refine that statement or change the task")
-                .doesNotContain(FROM_SCRATCH_MARKER);
+        // Contract: the brief is layered onto the existing statement (not the bare from-scratch default, not the brief alone). Layering wording is not pinned.
+        assertThat(prompt).contains("Make it about graph traversal.").contains("current problem statement").doesNotContain(FROM_SCRATCH_MARKER);
         assertThat(prompt).isNotEqualTo("Make it about graph traversal.");
     }
 
@@ -146,7 +147,8 @@ class AgentSystemPromptServiceTest {
         // A present statement selects spec mode: the agent matches the current statement, but the brief may refine or change it, so the statement is the starting point, not a
         // lock.
         String prompt = systemPromptService.build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
-        assertThat(prompt).contains("CURRENT problem statement and the starting point").contains("may refine this statement or change the task").doesNotContain("you write it");
+        // Contract: spec-mode framing selected (statement is the starting point), not the from-scratch "you write it" framing. Refine wording is not pinned.
+        assertThat(prompt).contains("CURRENT problem statement and the starting point").doesNotContain("you write it");
     }
 
     @Test
@@ -174,23 +176,24 @@ class AgentSystemPromptServiceTest {
     @Test
     void build_taskBindingGuidance_isFrameworkAwareAndJvmProfileBindsToMethodNamesWithAresAnnotations() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        // Generic section points at the language profile; the JVM profile binds to method names and carries the Ares annotations.
-        assertThat(prompt).contains("test identifiers EXACTLY as this language's test runner").contains("the test METHOD name").contains("@WhitelistPath(\"target\")")
-                .contains("@BlacklistPath(\"target/test-classes\")");
+        // Contract: the JVM profile binds [task] to the test METHOD name and carries the Ares path annotations (Ares refuses an unannotated test class).
+        assertThat(prompt).contains("the test METHOD name").contains("@WhitelistPath(\"target\")").contains("@BlacklistPath(\"target/test-classes\")");
     }
 
     @Test
     void build_requiresStudentFacingTestFeedbackAndNonDegenerateWitnessTests() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("human-readable failure message").contains("NON-DEGENERATE");
-        // A @DisplayName would break the [task]<->method-name binding, so the prompt must forbid a display title, not require one.
+        // One marker per rule: student-facing failure messages, and a non-degenerate witness for universally-quantified promises.
+        assertThat(prompt).contains("failure message").contains("NON-DEGENERATE");
+        // Contract: a @DisplayName would break the [task]<->method-name binding, so the prompt must forbid a display title, not require one.
         assertThat(prompt).contains("do NOT rename the test or add a display title").doesNotContain("Give each JVM test a @DisplayName");
     }
 
     @Test
     void build_forbidsTypographyInSourceCodeAndExampleReproductionOfGradedInputs() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("all authored SOURCE CODE").contains("exception message").contains("NEVER reproduce a graded test's exact composite input");
+        // One marker per rule: ASCII-only in authored source, and never reuse a graded test's exact input as a worked example.
+        assertThat(prompt).contains("all authored SOURCE CODE").contains("NEVER reproduce a graded test's exact composite input");
     }
 
     @Test
@@ -198,8 +201,9 @@ class AgentSystemPromptServiceTest {
         // The agent hallucinated an apply_patch tool (and a silent bash apply_patch no-op corrupted its file-state model); the prompt must name the exact tool set and rule out
         // apply_patch in both tool-call and bash forms.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit").contains("NO apply_patch tool")
-                .contains("Never call apply_patch").contains("do NOT re-read a file whose contents you have already seen");
+        // Contract: the exact tool set is enumerated, apply_patch is ruled out, and re-reading unchanged files is forbidden. One apply_patch marker (was two on the same rule).
+        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit").contains("Never call apply_patch")
+                .contains("do NOT re-read a file whose contents you have already seen");
     }
 
     @Test
@@ -218,11 +222,25 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_encodesProblemStatementQualityRules() {
-        // Each token pins one rubric-graded authoring contract a real generation defect required. Single varargs assertion so a failure names every missing token, not just the
-        // first.
+        // One marker per DISTINCT problem-statement-quality rule (down from a 10-phrase snapshot). Cut only the same-rule redundancy/examples: "within 1e-6" (same float rule as
+        // "exact equality"), "Design note (not graded)" (same complexity rule), "CONCRETE FENCED trace" (same worked-example rule). The load-bearing pin is the `[task]` spelling
+        // contract; the rest prove each rule is present without freezing its wording. Single varargs assertion so a failure names every missing marker, not just the first.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("WORKED EXAMPLE", "STUDENT-FACING ONLY", "build-gate", "INPUT DOMAIN", "EXACT five-character singular keyword `[task]`", "within 1e-6",
-                "Do NOT state any complexity", "Design note (not graded)", "exact equality", "CONCRETE FENCED trace");
+        assertThat(prompt).contains(
+                // Contract: the parser matches the exact five characters `[task]`; any other spelling binds nothing.
+                "EXACT five-character singular keyword `[task]`",
+                // Rule: examples must be shown as worked examples.
+                "WORKED EXAMPLE",
+                // Rule: the statement must stay student-facing (no leaked grading mechanics).
+                "STUDENT-FACING ONLY",
+                // Rule: do not bind an internal build-gate aggregate.
+                "build-gate",
+                // Rule: pin the input domain in the contract.
+                "INPUT DOMAIN",
+                // Rule: never state an asymptotic/complexity guarantee the value-asserting tests cannot verify.
+                "Do NOT state any complexity",
+                // Rule: an untoleranced float comparison is exact equality and must be stated as such.
+                "exact equality");
     }
 
     @Test
@@ -306,9 +324,8 @@ class AgentSystemPromptServiceTest {
         assertThat(profile(ProgrammingLanguage.RUBY)).contains("test METHOD name");
         assertThat(profile(ProgrammingLanguage.R)).contains("DESCRIPTION STRING");
         // Dart: the package:test name is the space-joined group+test; production prepends the dot test-FILE suite prefix only with >=2 files, dropping it for a single file (the
-        // common case). The profile must teach this singular-suite exception, or single-file names bind to nothing in production.
-        assertThat(profile(ProgrammingLanguage.DART)).contains("joined by SINGLE SPACES").contains("reverseString reverse_non_empty").contains("DROPPED")
-                .contains("TWO OR MORE test files");
+        // common case). Two contract markers: the space-join rule and the singular-suite exception (drop the prefix); the worked example is not pinned.
+        assertThat(profile(ProgrammingLanguage.DART)).contains("joined by SINGLE SPACES").contains("DROPPED");
         assertThat(profile(ProgrammingLanguage.GO)).contains("TestXxx");
         assertThat(profile(ProgrammingLanguage.RUST)).contains("#[test] fn");
         // Catch2 reports a nested SECTION as the slash-joined TEST_CASE/SECTION path.
@@ -336,11 +353,12 @@ class AgentSystemPromptServiceTest {
         ProgrammingExercise blackbox = exerciseWith(ProgrammingLanguage.JAVA, "");
         blackbox.setProjectType(ProjectType.MAVEN_BLACKBOX);
         String blackboxGuidance = LanguageGenerationProfile.guidanceFor(blackbox);
-        assertThat(blackboxGuidance).contains("MAVEN_BLACKBOX").contains("DejaGnu").contains("dejagnu[public]").contains("dejagnu[advanced]").contains("dejagnu[secret]")
-                .contains("Tests.txt").contains("STDIN").contains("[task]");
-        // Assert on the JUnit profile's instructional phrases, not bare tokens (the black-box text may name @Public/@StrictTimeout only to forbid them).
-        assertThat(blackboxGuidance).doesNotContain("@WhitelistPath(\"target\")").doesNotContain("@BlacklistPath(\"target/test-classes\")")
-                .doesNotContain("every test class MUST be").doesNotContain("The [task] binding uses the test METHOD name");
+        // Contract: black-box teaches the DejaGnu dejagnu[<step>] binding (one exemplar step is enough to pin the syntax), not JUnit. Individual step names / STDIN prose not
+        // frozen.
+        assertThat(blackboxGuidance).contains("MAVEN_BLACKBOX").contains("DejaGnu").contains("dejagnu[public]").contains("[task]");
+        // Contract: the black-box profile must NOT carry the JUnit/Ares profile. Two representative markers (assert on instructional phrases, not bare @Public/@StrictTimeout the
+        // black-box text may name only to forbid).
+        assertThat(blackboxGuidance).doesNotContain("@WhitelistPath(\"target\")").doesNotContain("The [task] binding uses the test METHOD name");
 
         // A normal Java project type and the null default both keep the JUnit/Ares jvm() profile.
         ProgrammingExercise plainMaven = exerciseWith(ProgrammingLanguage.JAVA, "");

@@ -192,32 +192,16 @@ public class DifferentialVerificationService {
      * non-empty
      * extracts empty at verify time (via {@code extractionFailedRepositories}), so a flaky read-back cannot silently disable a gate.
      *
-     * @param sandbox                      the open sandbox session the pristine builds run in
-     * @param sessionId                    the sandbox session id
-     * @param exercise                     the exercise being verified (drives the per-language build recipe)
-     * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability gate
-     * @param producedTestsFiles           tests-repo files read back after generation; compared against the seed snapshot for the harness-immutability gate
-     * @param producedTemplateFiles        template-repo files read back after generation; enables the solution-leak gate
-     * @param producedSolutionFiles        solution-repo files read back after generation; the leak gate flags solution bodies that surfaced in the template
-     * @param extractionFailedRepositories repository directory names whose read-back failed (seeded non-empty but extracted empty); fail-closed signal distinct from a genuinely
-     *                                         empty repo
-     * @param seededStructuralTestNames    the authoritative structural test names the seeder injected this run (never agent-supplied); a {@code [task]} bound to one is exempt from
-     *                                         binding resolution but still participates in the differential. Empty for callers without it (the from-scratch path falls back to the
-     *                                         name-shape exemption)
-     * @param baselineGradedTestNames      the pre-adapt baseline for the adapt total-wipe gate (see {@link ExerciseIntegrityGate#adaptWipedGradedTestsReasons}); empty for generate
-     *                                         leaves the gate inert (fail-open)
-     * @param relaxTestsRepoImmutability   whether to skip the tests-repo harness-immutability gate (adapt mode only): a feedback item may legitimately add or adjust a test, and
-     *                                         for
-     *                                         some build systems the manifest that registers it. The differential oracle (rebuilding pristine from the produced tree) remains the
-     *                                         backstop, and the solution-leak, self-comparison, extraction, and adapt total-wipe gates stay in force
+     * @param sandbox   the open sandbox session the pristine builds run in
+     * @param sessionId the sandbox session id
+     * @param exercise  the exercise being verified (drives the per-language build recipe)
+     * @param request   the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
      * @return the verdict (accepted, solution-passed, template-failed, test count, and the rejection reasons)
      */
-    public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
-            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
-            Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames, boolean relaxTestsRepoImmutability) {
+    public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request) {
         // The sandbox-dependent differential is computed by the same method the in-loop self-check uses, so the agent's `verify` tool and this acceptance decision cannot diverge.
         // This call layers the sandbox-free integrity gates and the final verdict on top of that shared analysis.
-        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, seededStructuralTestNames);
+        DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTestNames());
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
@@ -226,29 +210,29 @@ public class DifferentialVerificationService {
         // Adapt relaxes only the tests-repo harness-immutability gate (a feedback item may legitimately add or adjust a test, or the manifest registering it); the differential
         // oracle, which rebuilds pristine from the produced tree, stays the backstop and the solution-leak/self-comparison/extraction gates below remain enforced.
         boolean harnessIntact;
-        if (relaxTestsRepoImmutability) {
+        if (request.relaxTestsRepoImmutability()) {
             harnessIntact = true;
         }
         else {
             // Java always ships a build harness (pom.xml/build.gradle), so an empty seed snapshot is a failed capture, not a harness-free exercise — fail closed there.
             boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-            List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles, harnessSnapshotRequired);
+            List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired);
             harnessIntact = harnessTamperingReasons.isEmpty();
             reasons.addAll(harnessTamperingReasons);
         }
-        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
+        List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
         // A self-comparison harness passes the differential invariant (template still errors) yet grades any submission 100%, so the oracle is blind to it; gated here.
-        List<String> selfComparisonReasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(producedTestsFiles);
+        List<String> selfComparisonReasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(request.producedTestsFiles());
         boolean noSelfComparison = selfComparisonReasons.isEmpty();
         reasons.addAll(selfComparisonReasons);
 
-        boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
+        boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
         // Adapt total-wipe gate: an adapt that retains none of the pre-adapt graded test names is a from-scratch regeneration mislabeled as an adapt (a destructive rewrite the
         // internally-consistent differential cannot see). Inert for generate (empty baseline) and for any partial edit that keeps at least one graded name; only adds a reject.
-        List<String> adaptWipeReasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(baselineGradedTestNames, solution.testNames());
+        List<String> adaptWipeReasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(request.baselineGradedTestNames(), solution.testNames());
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 

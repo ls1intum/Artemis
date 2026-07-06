@@ -180,7 +180,7 @@ class DifferentialVerificationServiceTest {
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
     private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
-        return verifier.verify(sandbox, "s", exercise, Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
+        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
@@ -190,8 +190,8 @@ class DifferentialVerificationServiceTest {
 
     /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
-                seededStructural, Set.of(), false);
+        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of(), false));
     }
 
     /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
@@ -360,21 +360,21 @@ class DifferentialVerificationServiceTest {
     /** Runs verify with integrity-gate inputs in GENERATE mode, so the harness-immutability and solution-leak gates run alongside the differential. */
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
-                producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), false);
+        return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), false));
     }
 
     /** Same as {@link #verifyWithFiles} but in ADAPT mode (the tests-repo harness-immutability gate is relaxed); every other gate still runs. */
     private static VerificationResult verifyWithFilesAdapt(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(), seedTests, producedTests,
-                producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), true);
+        return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), true));
     }
 
     /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
     private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(),
-                Set.of(), baselineGradedTestNames, true);
+        return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames, true));
     }
 
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
@@ -442,8 +442,8 @@ class DifferentialVerificationServiceTest {
         // harness-immutability gate must fail CLOSED there rather than silently disabling itself and letting a tampered harness through.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
         assertThat(result.accepted()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -453,8 +453,8 @@ class DifferentialVerificationServiceTest {
         // A language that may legitimately ship no text harness snapshot keeps the fail-OPEN behaviour, so an empty snapshot does not spuriously reject.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, Map.of(),
-                Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
         assertThat(result.accepted()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -898,8 +898,8 @@ class DifferentialVerificationServiceTest {
             // A Java exercise always ships a harness, so the F2 fail-closed gate requires a non-empty seed snapshot; supply an unchanged (seed == produced) pom.xml with no
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
-            return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness, harness, Map.of(), Map.of(), Set.of(), Set.of(),
-                    Set.of(), false);
+            return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
         }
 
         @Test
@@ -931,8 +931,8 @@ class DifferentialVerificationServiceTest {
             // newVerifier() has no SCA repository (the build-agent-only configuration). Supply an unchanged Java harness so the F2 fail-closed snapshot gate passes.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             VerificationResult result = newVerifier().verify(
-                    new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise, harness,
-                    harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false);
+                    new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
             assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
