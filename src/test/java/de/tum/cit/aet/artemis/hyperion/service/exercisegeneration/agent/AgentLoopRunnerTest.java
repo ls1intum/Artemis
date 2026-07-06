@@ -25,6 +25,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import com.openai.core.http.Headers;
+import com.openai.errors.BadRequestException;
+import com.openai.errors.OpenAIIoException;
+
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -106,11 +110,11 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_backsOffAndRetriesTransientModelFailures_thenRecovers() {
         ChatModel chatModel = mock(ChatModel.class);
-        // The endpoint fails transiently on the first two calls (observed against the gpt-oss endpoint: bursts of 401 "session expired" and "can't start new thread"), then
-        // succeeds.
-        // The loop must retry WITHIN the turn rather than aborting the whole generation.
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 401: session expired"))
-                .thenThrow(new RuntimeException("GPU endpoint returned HTTP 400: can't start new thread")).thenReturn(textResponse("DONE"));
+        // Transient transport failures the loop must re-sample WITHIN the turn rather than aborting the whole generation: first a read timeout (typed openai-java IO error), then
+        // an
+        // HTTP 503 (server-side 5xx surfaced as an untyped message), then success.
+        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read timed out"))
+                .thenThrow(new RuntimeException("GPU endpoint returned HTTP 503: service unavailable")).thenReturn(textResponse("DONE"));
 
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
         runner.setModelCallRetryTimingForTests(0L, 0L); // no real backoff waits in the test
@@ -122,7 +126,78 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
         verify(chatModel, times(3)).call(any(Prompt.class)); // 2 transient failures + 1 success
-        assertThat(steps).contains("Model call failed (GPU endpoint returned HTTP 401: session expired); retrying.");
+        assertThat(steps).contains("Model call failed (read timed out); retrying.");
+    }
+
+    @Test
+    void agentLoop_nonTransient4xx_failsFastWithoutRetrying() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // A deterministic 400 (typed openai-java BadRequestException) cannot be fixed by re-sending the identical request: the loop must fail fast, calling the model exactly once
+        // rather than burning the whole retry ladder re-sampling a permanent failure.
+        BadRequestException badRequest = BadRequestException.builder().headers(Headers.builder().build()).build();
+        when(chatModel.call(any(Prompt.class))).thenThrow(badRequest);
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class)); // fail fast: a deterministic 4xx is never retried
+        assertThat(steps).anyMatch(s -> s.startsWith("Model call failed and will not be retried"));
+    }
+
+    @Test
+    void agentLoop_untyped401Message_failsFastWithoutRetrying() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // Even when the provider surfaces the rejection as an untyped runtime exception, the HTTP-status fallback recognises the deterministic 401 and fails fast (no retries).
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 401: unauthorized"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void isRetryable_classifiesTransientAndDeterministicFailures() {
+        // Transient: typed transport IO error, and 429/5xx whether typed or parsed from an untyped message; an unrecognisable transport error defaults to transient.
+        assertThat(AgentLoopRunner.isRetryable(new OpenAIIoException("read timed out"))).isTrue();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("GPU endpoint returned HTTP 429: too many requests"))).isTrue();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("GPU endpoint returned HTTP 500"))).isTrue();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("connection reset by peer"))).isTrue();
+        // A transient cause wrapped in a generic runtime exception is still detected through the cause chain.
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("wrapped", new OpenAIIoException("timeout")))).isTrue();
+        // Deterministic 4xx: typed rejection and an HTTP status parsed from the message both fail fast.
+        assertThat(AgentLoopRunner.isRetryable(BadRequestException.builder().headers(Headers.builder().build()).build())).isFalse();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("GPU endpoint returned HTTP 401: unauthorized"))).isFalse();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("HTTP 422 unprocessable entity"))).isFalse();
+    }
+
+    @Test
+    void agentLoop_emptyResponse_isReSampled() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // A blank response (no tool calls, no text) is a flaky empty sample, not a completion: the loop must re-sample it within the turn, then proceed on the next usable
+        // response.
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse(""), textResponse("DONE"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+        verify(chatModel, times(2)).call(any(Prompt.class)); // empty sample re-drawn once, second is usable
+        assertThat(steps).contains("Model returned an empty response; retrying.");
     }
 
     @Test
@@ -138,7 +213,7 @@ class AgentLoopRunnerTest {
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(6)).call(any(Prompt.class)); // MODEL_CALL_ATTEMPTS, all exhausted
+        verify(chatModel, times(6)).call(any(Prompt.class)); // transient 5xx retried up to MODEL_CALL_ATTEMPTS, all exhausted
         assertThat(steps).anyMatch(s -> s.startsWith("Model call failed after 6 attempts"));
     }
 

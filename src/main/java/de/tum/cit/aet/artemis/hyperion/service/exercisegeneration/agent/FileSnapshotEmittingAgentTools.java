@@ -30,6 +30,11 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
     /** A successful {@code write_file}/{@code edit_file} result starts with this marker (see {@link SandboxAgentTools#writeFile}); an error starts with {@code ERROR}. */
     private static final String WRITE_SUCCESS_PREFIX = "Wrote ";
 
+    /**
+     * A failed delegate read is reported as an {@code "ERROR: ..."} sentinel (see {@link SandboxAgentTools#readFile}); such a string must never be cached or streamed as content.
+     */
+    private static final String READ_ERROR_PREFIX = "ERROR";
+
     private final SandboxAgentTools delegate;
 
     private final Consumer<HyperionFileSnapshotDTO> snapshotSink;
@@ -94,7 +99,11 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
         if (isSuccess(result)) {
             String safe = SandboxAgentTools.workspaceRelativePath(path);
             if (safe != null) {
-                emit(safe, HyperionFileSnapshotDTO.ACTION_EDIT, reconstructEditedContent(path, safe, oldText, newText));
+                String content = reconstructEditedContent(path, safe, oldText, newText);
+                // Skip the snapshot when the fallback read failed: a delegate read can return an "ERROR: ..." sentinel, which must never be cached or streamed as file content.
+                if (content != null) {
+                    emit(safe, HyperionFileSnapshotDTO.ACTION_EDIT, content);
+                }
             }
         }
         return result;
@@ -121,6 +130,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
      * file
      * with {@code bash}) does it fall back to reading the file back through the delegate.
      */
+    @Nullable
     private String reconstructEditedContent(String path, String safe, String oldText, String newText) {
         String previous = latestContentByPath.get(safe);
         if (previous != null) {
@@ -130,7 +140,13 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
             }
         }
         // Cache miss or an unexpected mismatch: read the authoritative post-edit content back once so the streamed snapshot still reflects the sandbox truth.
-        return delegate.readFile(path);
+        String readBack = delegate.readFile(path);
+        // delegate.readFile returns an "ERROR: ..." sentinel (see SandboxAgentTools#readFile) on failure; that is not file content, so surface null and let the caller skip the
+        // snapshot.
+        if (readBack == null || readBack.startsWith(READ_ERROR_PREFIX)) {
+            return null;
+        }
+        return readBack;
     }
 
     /**

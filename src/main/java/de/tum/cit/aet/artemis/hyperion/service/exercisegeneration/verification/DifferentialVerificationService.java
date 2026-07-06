@@ -45,9 +45,10 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
 /**
  * Decides whether a generated exercise is correct, independently of what the agent reports, by running the {@code verify.sh} recipe in the sandbox once against the solution and
  * once
- * against the template and applying the differential oracle: the solution must compile and pass all tests; the template must compile, run the same tests, and fail them; at least
+ * against the template and applying the differential oracle: the solution must compile and pass all tests; the template must compile, run the same tests, and fail every gradable
  * one
- * test must exist.
+ * (build/compile/configure gate tests are exempt — they only check that the code compiles, which the same-signature placeholder template does by design, so they legitimately pass
+ * on both); at least one test must exist.
  * <p>
  * The verdict is parsed with production code, not in the shell: the pristine {@code verify.sh} collects build-fresh reports into a fixed, verifier-owned directory that this
  * service
@@ -413,15 +414,27 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The template gate: the template must compile and run the same tests as the solution but fail at least half of them (a near-complete template is not a real starting point;
-     * {@code tests()==0} means it did not compile). Appends a rejection reason to {@code reasons} otherwise.
+     * The template gate: the template must compile and run the same tests as the solution but fail at least half of the GRADABLE ones (a near-complete template is not a real
+     * starting point; {@code tests()==0} means it did not compile). Appends a rejection reason to {@code reasons} otherwise.
+     * <p>
+     * The threshold and the actual-failure count both exclude the build/compile/configure gate tests ({@link BuildGateTestNames}) — they legitimately pass on both the solution and
+     * the template, so counting them in the denominator would false-reject a compile-heavy exercise (e.g. the C/C++ FACT harness with 4 gate tests + 2 behaviour tests: half of 6
+     * is
+     * 3, but the template can only ever fail the 2 behaviour tests). This "not nearly-complete" heuristic is a strict subset of {@link #checkNoGradableTestPassesTemplate}, which
+     * requires EVERY gradable test to fail on the template; it is kept as a cheaper, human-readable early signal computed over the same gradable population, and can never
+     * contradict
+     * that stronger gate.
      *
      * @param solution the solution build summary (its test count is the reference)
      */
     private static boolean checkTemplateFails(BuildSummary solution, BuildSummary template, List<String> reasons) {
         int testCount = solution.tests();
         int templateFailing = template.failures();
-        int requiredTemplateFailures = Math.max(1, testCount / 2);
+        // Build/compile/configure gate tests pass on both builds by design, so the template can never fail them; count the "must fail at least half" threshold and the actual
+        // template failures over the gradable (non-gate) tests only — the same population checkNoGradableTestPassesTemplate requires to fail in full.
+        int gradableTestCount = testCount - (int) solution.testNames().stream().filter(name -> isBuildGateTest(normalizeTestName(name))).count();
+        int gradableTemplateFailures = (int) template.testFailedNames().stream().filter(name -> !isBuildGateTest(normalizeTestName(name))).count();
+        int requiredTemplateFailures = Math.max(1, gradableTestCount / 2);
         if (template.timedOut()) {
             reasons.add("The template build timed out; it must compile and fail the tests quickly.");
         }
@@ -438,9 +451,11 @@ public class DifferentialVerificationService {
             reasons.add("The template passes the tests, but it must fail them (a student starting from the template has not implemented the solution yet). Make the tests assert "
                     + "behaviour the template's placeholder implementations cannot satisfy.");
         }
-        else if (templateFailing < requiredTemplateFailures) {
-            reasons.add("The template fails only " + templateFailing + " of " + testCount + " tests, so it is nearly complete. A meaningful starting template should fail at least "
-                    + requiredTemplateFailures + " — strip its implementations to placeholders and make sure the tests check the behaviour the student must implement.");
+        else if (gradableTemplateFailures < requiredTemplateFailures) {
+            reasons.add("The template fails only " + gradableTemplateFailures + " of " + gradableTestCount
+                    + " gradable tests, so it is nearly complete. A meaningful starting template should fail at least " + requiredTemplateFailures
+                    + " of them — strip its implementations to placeholders and make sure the tests check the behaviour the student must implement. (Build/compile/configure gate "
+                    + "tests are ignored here: they only check that the code compiles, which the template does by design, so they pass on both builds.)");
         }
         else {
             // Correctly-failing template. Trust the JUnit failure/error counts, not the exit code: some report converters (Go's go-junit-report, Dart's tojunit) exit 0 even on

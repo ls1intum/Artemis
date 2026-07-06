@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
@@ -151,15 +152,31 @@ public class ExerciseGenerationJobService {
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
         String jobId = UUID.randomUUID().toString();
+        String key = key(exercise.getId());
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), Instant.now());
-        JobInfo existing = jobMap.putIfAbsent(key(exercise.getId()), newJob);
+        JobInfo existing = jobMap.putIfAbsent(key, newJob);
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
         // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise).
-        transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false));
-        snapshotMap.put(key(exercise.getId()), new JobFileSnapshots(jobId, user.getLogin(), new LinkedHashMap<>()));
-        eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
+        JobTranscript transcript = new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false);
+        JobFileSnapshots snapshots = new JobFileSnapshots(jobId, user.getLogin(), new LinkedHashMap<>());
+        transcriptMap.put(key, transcript);
+        snapshotMap.put(key, snapshots);
+        try {
+            eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
+        }
+        catch (RejectedExecutionException e) {
+            // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained
+            // state (value-guarded, so a later run for this exercise is never clobbered) instead of leaving the exercise wedged as "running" for the full TTL, and surface a busy
+            // error the instructor can act on. Note: TaskRejectedException (thrown by ThreadPoolTaskExecutor) is a RejectedExecutionException subclass, so it is caught here too.
+            jobMap.remove(key, newJob);
+            transcriptMap.remove(key, transcript);
+            snapshotMap.remove(key, snapshots);
+            log.warn("Exercise generation executor rejected job {} for exercise {}; released the slot", jobId, exercise.getId());
+            throw new ConflictException("The system is currently busy with too many exercise generations. Please try again in a few minutes.", ENTITY_NAME,
+                    "exerciseGenerationCapacityExceeded");
+        }
         return jobId;
     }
 

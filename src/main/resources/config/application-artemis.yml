@@ -195,16 +195,9 @@ spring:
       # chat:
       #   model: openai/gpt-oss-20b    # or whatever name your local server expects
       #   temperature: 0.7
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    # NOTE: no spring.ai.retry.* here. Spring AI 2.0's OpenAiChatModel carries no RetryTemplate (retry moved into the
+    # openai-java SDK client), so that block was inert for chat calls. The agent loop does its own bounded, failure-aware
+    # retry (AgentLoopRunner.callModelWithRetries / isRetryable), and no Spring AI embedding model is enabled here either.
   # data:
     # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
     # redis:

@@ -14,7 +14,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.HarmonyS
  * Wraps the Spring AI OpenAI-starter {@link OpenAiChatModel} in the {@link HarmonyScrubbingChatModel} decorator so the Hyperion agent loop and every other Spring AI consumer see
  * assistant content with gpt-oss "harmony" control tokens stripped. The transport is the stock OpenAI starter, auto-configured from {@code spring.ai.openai.*}. A
  * {@link BeanPostProcessor} (rather than a second {@code @Primary} bean) replaces the raw model in the context, leaving exactly one {@code ChatModel} for
- * {@code Collection<ChatModel>} injection points.
+ * {@code Collection<ChatModel>} injection points. Gated by {@link HyperionEnabled}. ({@code @Lazy} is inert on a {@code BeanPostProcessor} — it is instantiated eagerly regardless
+ * — but kept for consistency with the repo-wide convention enforced by {@code ArchitectureTest.ensureSpringComponentsAreLazyAnnotated}.)
  */
 @Lazy
 @Component

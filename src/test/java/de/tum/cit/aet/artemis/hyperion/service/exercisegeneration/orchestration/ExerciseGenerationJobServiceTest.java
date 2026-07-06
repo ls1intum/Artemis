@@ -5,11 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.task.TaskRejectedException;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
@@ -156,5 +159,43 @@ class ExerciseGenerationJobServiceTest {
     @Test
     void getStatus_emptyWhenNothingRetained() {
         assertThat(jobService.getStatus(user("owner"), exercise(123L))).isEmpty();
+    }
+
+    @Test
+    void startJob_whenExecutorRejectsPublish_releasesSlotAndReportsBusy_notWedged() {
+        // The generation executor uses AbortPolicy, so on saturation publishEvent throws TaskRejectedException (a RejectedExecutionException) synchronously back through startJob.
+        // Reproduce that with a publisher that rejects while `reject` is set, then reuse the same exercise to prove the single-flight slot was rolled back (not wedged for the
+        // TTL).
+        AtomicBoolean reject = new AtomicBoolean(true);
+        AtomicInteger publishAttempts = new AtomicInteger(0);
+        ApplicationEventPublisher rejectingPublisher = event -> {
+            publishAttempts.incrementAndGet();
+            if (reject.get()) {
+                throw new TaskRejectedException("hyperionGenerationExecutor is saturated");
+            }
+        };
+        ExerciseGenerationJobService service = new ExerciseGenerationJobService(hazelcastInstance, rejectingPublisher, mock(LLMTokenUsageService.class));
+        service.init();
+
+        ProgrammingExercise exercise = exercise(77L);
+        User owner = user("owner");
+
+        // (a) The rejection surfaces as a distinct busy/capacity error (not the single-flight "already running" conflict), so the REST layer returns a clear failure.
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> service.startJob(owner, exercise, "go", GenerationMode.GENERATE))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("exerciseGenerationCapacityExceeded")).withMessageContaining("busy");
+        assertThat(publishAttempts.get()).isEqualTo(1);
+
+        // (c) No stale transcript/snapshot leaked from the failed claim — the owner sees nothing retained.
+        assertThat(service.getStatus(owner, exercise)).isEmpty();
+
+        // (b) The slot was released: a subsequent start for the SAME exercise succeeds instead of hitting the single-flight guard (which is what a wedged, un-rolled-back slot
+        // would do).
+        reject.set(false);
+        String jobId = service.startJob(owner, exercise, "retry", GenerationMode.GENERATE);
+        assertThat(jobId).isNotBlank();
+        assertThat(service.getStatus(owner, exercise)).hasValueSatisfying(status -> {
+            assertThat(status.jobId()).isEqualTo(jobId);
+            assertThat(status.running()).isTrue();
+        });
     }
 }

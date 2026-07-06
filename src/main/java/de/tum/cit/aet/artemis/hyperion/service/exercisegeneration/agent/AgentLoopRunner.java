@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -24,9 +26,15 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+
+import com.knuddels.jtokkit.api.EncodingType;
+import com.openai.errors.OpenAIIoException;
+import com.openai.errors.OpenAIRetryableException;
+import com.openai.errors.OpenAIServiceException;
 
 /**
  * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
@@ -51,8 +59,12 @@ public class AgentLoopRunner {
     /** Target size of the verbatim recent tail kept across a compaction (everything older is summarized). */
     private static final int KEEP_RECENT_TOKENS = 20_000;
 
-    /** Chars-per-token divisor for the fallback estimate; dense code/JSON tokenizes to ~3 chars/token. */
-    private static final int CHARS_PER_TOKEN = 3;
+    /**
+     * Exact tokenizer for text spans. gpt-5-mini and the gpt-oss family use the {@code o200k_base} encoding, so we pin it here rather than take the library default
+     * ({@code cl100k_base}). It only counts message text; the per-message structural overheads below (envelope, tool-call framing) are added on top because the framework
+     * estimator does not see them.
+     */
+    private static final JTokkitTokenCountEstimator TEXT_TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
 
     private static final int MESSAGE_OVERHEAD_TOKENS = 4;
 
@@ -95,8 +107,16 @@ public class AgentLoopRunner {
 
             The workspace files on disk are the source of truth — the agent can always re-read any file. Keep the whole summary under ~400 words.""";
 
-    /** Model-call attempts before giving up: LLM endpoints have transient errors and a fresh sample usually succeeds, so one blip should not abort a generation. */
+    /**
+     * Bounded attempts for a single model call before giving up. Only <em>transient</em> failures (see {@link #isRetryable}) and empty responses consume attempts: a fresh sample
+     * of
+     * a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. This is the loop's own
+     * bound; Spring AI 2.0's {@code OpenAiChatModel} carries no {@code RetryTemplate}, so {@code spring.ai.retry.*} is inert for chat and does not layer on top of this ladder.
+     */
     private static final int MODEL_CALL_ATTEMPTS = 6;
+
+    /** HTTP status extracted from an untyped error message when no typed openai-java exception is available; used only by the {@link #isRetryable} fallback. */
+    private static final Pattern HTTP_STATUS_IN_MESSAGE = Pattern.compile("(?i)(?:http|status|code|error)\\D{0,6}([1-5]\\d{2})\\b");
 
     /** Exponential-backoff base/cap (ms) between model-call retries; instance fields so a test can shrink them to assert retry behaviour without real waits. */
     private long modelCallRetryBaseMillis = 1_500L;
@@ -378,41 +398,136 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Calls the model, retrying a transient failure a few times (with exponential backoff) before giving up. Returns {@code null} only when every attempt failed, which the caller
-     * turns into an ERROR outcome.
+     * Calls the model, re-sampling only the failures where a fresh attempt can plausibly succeed: a transient transport error (HTTP 429, any 5xx, connection/read timeouts, IO —
+     * see
+     * {@link #isRetryable}) or an empty/no-usable-content response. A deterministic 4xx rejection (400/401/403/404/422) fails fast without retrying, because an identical re-send
+     * will
+     * be rejected the same way. Returns {@code null} when a call fails permanently or every attempt is exhausted on errors; returns the last (empty) response when attempts are
+     * exhausted only on empty responses, so the loop can complete instead of falsely erroring. The caller turns a {@code null} into an ERROR outcome.
      */
     @Nullable
     private ChatResponse callModelWithRetries(Prompt prompt, int turn, @Nullable Consumer<String> stepListener) {
         RuntimeException lastError = null;
+        ChatResponse lastEmptyResponse = null;
         for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
             try {
-                return chatModel.call(prompt);
+                ChatResponse response = chatModel.call(prompt);
+                if (!isEmptyResponse(response)) {
+                    return response;
+                }
+                // No tool calls and no text: a genuinely-flaky empty sample. Re-sample rather than treat it as a silent completion.
+                lastEmptyResponse = response;
+                lastError = null;
+                log.warn("Agent loop model call returned an empty response on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS);
+                if (attempt < MODEL_CALL_ATTEMPTS) {
+                    emit(stepListener, "Model returned an empty response; retrying.");
+                    if (!backOffBeforeRetry(attempt, turn)) {
+                        return lastEmptyResponse;
+                    }
+                }
             }
             catch (RuntimeException e) {
+                if (!isRetryable(e)) {
+                    // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
+                    log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
+                    emit(stepListener, "Model call failed and will not be retried (" + e.getMessage() + ").");
+                    return null;
+                }
                 lastError = e;
+                lastEmptyResponse = null;
                 log.warn("Agent loop model call failed on turn {} (attempt {}/{}): {}", turn, attempt, MODEL_CALL_ATTEMPTS, e.getMessage());
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "Model call failed (" + e.getMessage() + "); retrying.");
-                    // Exponential backoff with jitter so retries spread across time instead of re-hitting the same failure burst.
-                    long backoff = Math.min(modelCallRetryCapMillis, modelCallRetryBaseMillis * (1L << (attempt - 1)));
-                    if (backoff > 0) {
-                        backoff += ThreadLocalRandom.current().nextLong(modelCallRetryBaseMillis + 1);
-                        try {
-                            Thread.sleep(backoff);
-                        }
-                        catch (InterruptedException ie) {
-                            // Honour the interrupt instead of swallowing it: stop retrying and let the caller turn the null into an ERROR outcome.
-                            Thread.currentThread().interrupt();
-                            log.warn("Interrupted while backing off before a model-call retry on turn {}", turn);
-                            return null;
-                        }
+                    if (!backOffBeforeRetry(attempt, turn)) {
+                        return null;
                     }
                 }
             }
         }
+        if (lastError == null && lastEmptyResponse != null) {
+            // Every attempt produced an empty response: return it so the loop finishes rather than turning a benign empty completion into an ERROR.
+            log.warn("Agent loop model call returned an empty response on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS);
+            return lastEmptyResponse;
+        }
         log.error("Agent loop model call failed on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS, lastError);
         emit(stepListener, "Model call failed after " + MODEL_CALL_ATTEMPTS + " attempts: " + (lastError == null ? "unknown error" : lastError.getMessage()));
         return null;
+    }
+
+    /**
+     * Sleeps the exponential backoff (with jitter) before the next model-call retry.
+     *
+     * @return {@code true} to continue retrying, {@code false} if the thread was interrupted (the caller must stop and let the null become an ERROR outcome)
+     */
+    private boolean backOffBeforeRetry(int attempt, int turn) {
+        // Exponential backoff with jitter so retries spread across time instead of re-hitting the same failure burst.
+        long backoff = Math.min(modelCallRetryCapMillis, modelCallRetryBaseMillis * (1L << (attempt - 1)));
+        if (backoff <= 0) {
+            return true;
+        }
+        backoff += ThreadLocalRandom.current().nextLong(modelCallRetryBaseMillis + 1);
+        try {
+            Thread.sleep(backoff);
+            return true;
+        }
+        catch (InterruptedException ie) {
+            // Honour the interrupt instead of swallowing it: stop retrying.
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while backing off before a model-call retry on turn {}", turn);
+            return false;
+        }
+    }
+
+    /** A response carrying neither a tool call nor any assistant text — no usable content, so re-sampling can help. */
+    private static boolean isEmptyResponse(@Nullable ChatResponse response) {
+        if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+            return true;
+        }
+        AssistantMessage output = response.getResult().getOutput();
+        boolean hasToolCalls = output.getToolCalls() != null && !output.getToolCalls().isEmpty();
+        String text = output.getText();
+        return !hasToolCalls && (text == null || text.isBlank());
+    }
+
+    /**
+     * Whether a failed model call is worth re-sending. Transient failures — HTTP 429, any 5xx, connection/read timeouts and other IO errors — plus any error whose nature we cannot
+     * determine are retryable, because an identical re-send can succeed. Deterministic 4xx rejections (400/401/403/404/422) are not: the same request fails the same way, so the
+     * loop
+     * fails fast. Prefers the typed openai-java exceptions (authoritative) and falls back to an HTTP status parsed from the message only when no typed signal is present.
+     */
+    static boolean isRetryable(Throwable error) {
+        Throwable cause = error;
+        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
+            if (cause instanceof OpenAIServiceException serviceException) {
+                // Every HTTP-status exception (BadRequest/Unauthorized/PermissionDenied/RateLimit/InternalServer/...) extends this and exposes the status.
+                return isTransientStatus(serviceException.statusCode());
+            }
+            if (cause instanceof OpenAIIoException || cause instanceof OpenAIRetryableException || cause instanceof IOException) {
+                // Connection reset / read timeout / socket error: transport-level, transient.
+                return true;
+            }
+        }
+        Integer status = firstHttpStatusInMessage(error);
+        // No typed signal: a discernible deterministic 4xx is not worth retrying; anything else (429, 5xx, or no status at all) is treated as transient.
+        return status == null || isTransientStatus(status);
+    }
+
+    private static boolean isTransientStatus(int status) {
+        return status == 429 || status >= 500;
+    }
+
+    /** Extracts the first HTTP status embedded in the throwable's (and its causes') messages, or {@code null} when none is discernible. */
+    @Nullable
+    private static Integer firstHttpStatusInMessage(Throwable error) {
+        StringBuilder messages = new StringBuilder();
+        Throwable cause = error;
+        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
+            if (cause.getMessage() != null) {
+                messages.append(cause.getMessage()).append('\n');
+            }
+        }
+        Matcher matcher = HTTP_STATUS_IN_MESSAGE.matcher(messages.toString().toLowerCase(Locale.ROOT));
+        return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
     }
 
     /**
@@ -438,7 +553,7 @@ public class AgentLoopRunner {
 
     /**
      * Estimates the prompt's token count: anchors on the provider's real {@code promptTokens} from the previous call (which also captures out-of-band tool-schema tokens) and adds
-     * a {@code chars/CHARS_PER_TOKEN} estimate of only the messages appended since. Before the first call the whole conversation is estimated.
+     * a jtokkit estimate of only the messages appended since. Before the first call the whole conversation is estimated.
      */
     static long estimateContextTokens(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall) {
         if (lastPromptTokens <= 0 || messagesAtLastCall < 0 || messagesAtLastCall > conversation.size()) {
@@ -459,26 +574,27 @@ public class AgentLoopRunner {
         long tokens = MESSAGE_OVERHEAD_TOKENS;
         if (message instanceof ToolResponseMessage toolResponse) {
             for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                tokens += TOOLCALL_OVERHEAD_TOKENS + tokensForChars(length(response.responseData()));
+                tokens += TOOLCALL_OVERHEAD_TOKENS + estimateTextTokens(response.responseData());
             }
             return tokens;
         }
         if (message instanceof AssistantMessage assistant) {
-            tokens += tokensForChars(length(assistant.getText()));
+            tokens += estimateTextTokens(assistant.getText());
             for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                tokens += TOOLCALL_OVERHEAD_TOKENS + tokensForChars(length(toolCall.name()) + length(toolCall.arguments()));
+                // Tokenize name and arguments separately, then add the structural framing overhead the text estimator does not account for.
+                tokens += TOOLCALL_OVERHEAD_TOKENS + estimateTextTokens(toolCall.name()) + estimateTextTokens(toolCall.arguments());
             }
             return tokens;
         }
-        return tokens + tokensForChars(length(message.getText()));
+        return tokens + estimateTextTokens(message.getText());
     }
 
-    private static long tokensForChars(int chars) {
-        return (chars + CHARS_PER_TOKEN - 1) / CHARS_PER_TOKEN;
-    }
-
-    private static int length(@Nullable String value) {
-        return value == null ? 0 : value.length();
+    /** Exact token count of a text span via jtokkit (0 for null/empty); callers add the structural per-message/per-tool-call overheads the estimator does not see. */
+    private static long estimateTextTokens(@Nullable String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        return TEXT_TOKEN_ESTIMATOR.estimate(text);
     }
 
     /** The real prompt-token count the response reports, or 0 if the provider did not supply usage. */

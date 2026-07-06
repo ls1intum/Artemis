@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -117,8 +118,10 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             CountDownLatch latch = new CountDownLatch(1);
             AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-            // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command completed.
-            dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
+            // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command completed. The callback owns the HTTP stream to the
+            // daemon from the SHARED docker client pool; it must be closed on every exit path (especially the timeout branch, where onComplete never fires) or the connection
+            // leaks.
+            ResultCallback.Adapter<Frame> callback = dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                 @Override
                 public void onNext(Frame item) {
@@ -143,36 +146,41 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     latch.countDown();
                 }
             });
-
-            boolean completed;
             try {
-                completed = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new LocalCIException("Interrupted while executing sandbox command: " + String.join(" ", command), e);
-            }
+                boolean completed;
+                try {
+                    completed = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new LocalCIException("Interrupted while executing sandbox command: " + String.join(" ", command), e);
+                }
 
-            if (!completed) {
-                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is not killed here
-                // and
-                // keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the trusted-instructor
-                // model.
-                return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
-            }
+                if (!completed) {
+                    // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is not killed
+                    // here
+                    // and keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the
+                    // trusted-instructor model. Only the client-side stream is released, by the finally below closing the callback.
+                    return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
+                }
 
-            Throwable execError = errorRef.get();
-            if (execError != null) {
-                throw new LocalCIException("Sandbox command failed: " + String.join(" ", command), execError);
-            }
+                Throwable execError = errorRef.get();
+                if (execError != null) {
+                    throw new LocalCIException("Sandbox command failed: " + String.join(" ", command), execError);
+                }
 
-            int exitCode;
-            try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
-                InspectExecResponse inspectResponse = inspectCommand.exec();
-                Long exitCodeLong = inspectResponse.getExitCodeLong();
-                exitCode = exitCodeLong != null ? exitCodeLong.intValue() : -1;
+                int exitCode;
+                try (final var inspectCommand = dockerClient.inspectExecCmd(execId)) {
+                    InspectExecResponse inspectResponse = inspectCommand.exec();
+                    Long exitCodeLong = inspectResponse.getExitCodeLong();
+                    exitCode = exitCodeLong != null ? exitCodeLong.intValue() : -1;
+                }
+                return new SandboxExecResult(exitCode, truncateTail(stdout.toString()), truncateTail(stderr.toString()), false);
             }
-            return new SandboxExecResult(exitCode, truncateTail(stdout.toString()), truncateTail(stderr.toString()), false);
+            finally {
+                // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.
+                closeQuietly(callback);
+            }
         }
     }
 
@@ -223,12 +231,12 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    private static void closeQuietly(InputStream stream) {
+    private static void closeQuietly(Closeable closeable) {
         try {
-            stream.close();
+            closeable.close();
         }
         catch (IOException e) {
-            log.debug("Failed to close sandbox archive stream: {}", e.getMessage());
+            log.debug("Failed to close sandbox stream: {}", e.getMessage());
         }
     }
 

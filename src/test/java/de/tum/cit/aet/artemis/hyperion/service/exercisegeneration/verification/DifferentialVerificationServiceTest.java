@@ -674,6 +674,22 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void shouldAcceptBuildGateHeavyExerciseWhereTemplateFailsEveryBehaviourTestButFewerThanHalfOfAllTests() {
+        // Regression for the compile-heavy false-reject (C/C++ FACT harness): 4 build/compile/configure gate tests + 2 behaviour tests. The gates legitimately pass on BOTH builds,
+        // so the template can only ever fail the 2 behaviour tests. The old "must fail at least half of ALL tests" heuristic required max(1, 6/2) = 3 failures and rejected this
+        // valid exercise as "nearly complete"; computing the threshold over the GRADABLE (non-gate) tests only (max(1, 2/2) = 1) accepts it.
+        List<String> all = List.of("TestConfigure", "CompileSort", "ConfigureDebug", "BuildTests", "sorts_ascending", "sorts_with_duplicates");
+        List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates");
+        String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n";
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
+        assertThat(result.accepted()).as("the half-fail threshold must be computed over gradable tests only, so a build-gate-heavy exercise is not rejected as nearly complete")
+                .isTrue();
+        assertThat(result.reasons()).noneMatch(r -> r.contains("nearly complete"));
+        assertThat(result.templateFailed()).isTrue();
+        assertThat(result.testCount()).isEqualTo(6);
+    }
+
+    @Test
     void shouldAcceptWhenFrameworkPrefixedBuildGatePassesOnTemplate() {
         // Build gates carry the framework suite prefix (production composes "<suite>.<testcase>" from multiple top-level suites); exemption keys on the final dot-segment, and
         // prefixed behaviour tests must still fail on the template.
