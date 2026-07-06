@@ -173,17 +173,17 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
 
     private String resolveResultIngestDirectory(List<BuildPhaseDTO> activePhases, ProgrammingExerciseBuildConfig buildConfig, ProgrammingLanguage programmingLanguage,
             ProjectType projectType) {
+        boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return isMaven ? HADES_WORKING_DIRECTORY + "/target/surefire-reports" : DEFAULT_INGEST_DIRECTORY;
+        }
+
         List<String> rawResultPaths = activePhases.stream().map(BuildPhaseDTO::resultPaths).filter(Objects::nonNull).flatMap(List::stream)
                 .filter(path -> path != null && !path.isBlank()).distinct().toList();
 
         if (!rawResultPaths.isEmpty()) {
             List<String> resolvedResultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(rawResultPaths, buildConfig);
             return toIngestDirectory(resolvedResultPaths.get(0));
-        }
-
-        boolean isMaven = projectType != null && projectType.toString().contains("MAVEN");
-        if (programmingLanguage == ProgrammingLanguage.JAVA && isMaven) {
-            return HADES_WORKING_DIRECTORY + "/target/surefire-reports";
         }
         return DEFAULT_INGEST_DIRECTORY;
     }

@@ -143,7 +143,8 @@ class HadesTriggerServiceTest {
 
         @Test
         void triggerBuild_withDeclaredResultPath_derivesIngestDirectoryFromIt() throws ContinuousIntegrationException {
-            var phase = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, List.of("**/target/surefire-reports/*.xml"));
+            exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+            var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("**/custom-reports/*.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
             when(buildScriptProviderService.replaceResultPathsPlaceholders(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -152,11 +153,12 @@ class HadesTriggerServiceTest {
             hadesTriggerService.triggerBuild(participation, null, null);
 
             verify(hadesService).build(captor.capture());
-            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/target/surefire-reports");
+            assertThat(captor.getValue().additionalProperties()).containsEntry("resultIngestDirectory", "/shared/custom-reports");
         }
 
         @Test
         void triggerBuild_withMidPathWildcard_stripsWildcardSegment() throws ContinuousIntegrationException {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
             var phase = new BuildPhaseDTO("test", "pytest", BuildPhaseCondition.ALWAYS, false, List.of("src/**/test-results/*.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
@@ -171,6 +173,7 @@ class HadesTriggerServiceTest {
 
         @Test
         void triggerBuild_withPlaceholderResultPath_resolvesPlaceholderBeforeDerivingDirectory() throws ContinuousIntegrationException {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.GO);
             var phase = new BuildPhaseDTO("test", "go test", BuildPhaseCondition.ALWAYS, false, List.of("${testWorkingDirectory}/test-results.xml"));
             when(buildPhaseEvaluationService.determineActiveBuildPhases(any(), any())).thenReturn(List.of(phase));
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("some-hash");
