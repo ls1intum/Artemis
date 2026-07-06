@@ -154,11 +154,11 @@ describe('ProgrammingExerciseTaskComponent', () => {
         fixture.componentRef.setInput('index', 0);
 
         comp.ngOnInit();
-        comp.open = true;
+        comp.open.set(true);
         fixture.detectChanges();
 
         const taskFieldEls = fixture.nativeElement.querySelectorAll('.task__field');
-        const fieldTexts = Array.from(taskFieldEls).map((el: any) => el.textContent.trim());
+        const fieldTexts = Array.from(taskFieldEls).map((el: Element) => el.textContent?.trim() ?? '');
         expect(fieldTexts).toContain('testBubbleSort()');
         expect(fieldTexts).toContain('testSelectionSort()');
     });
