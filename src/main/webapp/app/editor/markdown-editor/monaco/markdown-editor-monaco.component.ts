@@ -78,6 +78,7 @@ import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from '
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Cached selection with Monaco-compatible data used by scroll re-positioning. */
 type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
@@ -380,7 +381,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
-        this.uniqueMarkdownEditorId.set('markdown-editor-' + window.crypto.randomUUID().toString());
+        this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
 
         // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
         // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards
