@@ -158,7 +158,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
         fixture.detectChanges();
 
         const taskFieldEls = fixture.nativeElement.querySelectorAll('.task__field');
-        const fieldTexts = Array.from(taskFieldEls).map((el: Element) => el.textContent?.trim() ?? '');
+        const fieldTexts = (Array.from(taskFieldEls) as Element[]).map((el) => el.textContent?.trim() ?? '');
         expect(fieldTexts).toContain('testBubbleSort()');
         expect(fieldTexts).toContain('testSelectionSort()');
     });
