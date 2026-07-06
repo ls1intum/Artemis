@@ -1601,6 +1601,22 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(debounceControl?.valid).toBe(true);
     });
 
+    it('should keep the form savable when auto-orchestration is enabled with empty overrides', async () => {
+        // Enabling the kill switch and leaving both overrides empty resolves to the global defaults;
+        // this must not block Save. Build an otherwise-valid course so the overrides are the only variable.
+        const course = buildCourse(true);
+        course.maxComplaints = 3;
+        course.maxTeamComplaints = 3;
+        course.onlineCourse = false;
+        course.enrollmentEnabled = false;
+        await setupWithCourse(course);
+
+        expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(true);
+        expect(comp.courseForm.get(['debounceWindowSecondsOverride'])?.valid).toBe(true);
+        expect(comp.courseForm.get(['maxDailyOrchestrationOverride'])?.valid).toBe(true);
+        expect(comp.courseForm.valid).toBe(true);
+    });
+
     it('should map the auto-orchestration fields into the update DTO', async () => {
         await setupWithCourse(buildCourse(true, 900, 3));
         const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);

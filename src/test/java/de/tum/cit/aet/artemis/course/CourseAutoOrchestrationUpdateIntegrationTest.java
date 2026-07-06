@@ -112,8 +112,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
 
         ObjectMapper mapper = request.getObjectMapper();
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(course).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(coursePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
         // The setting is admin-only, so no configuration row may be created by the rejected instructor request.
