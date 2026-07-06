@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
+import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -43,9 +43,29 @@ export function generateUUID() {
  * Allows to enter date into the UI
  */
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
-    const dateInputField = page.locator(selector).locator('#date-input-field');
+    await fillDateTimePicker(page.locator(selector).locator('#date-input-field'), date);
+}
+
+/**
+ * Types a date into a PrimeNG p-datepicker input (the `jhi-date-time-picker` wrapper).
+ *
+ * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
+ * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
+ * sets the value without keyboard events — is silently dropped. We clear the field and type the value
+ * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
+ */
+export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.fill(dayjsToString(date), { force: true });
+    await dateInputField.click();
+    // Wait until the input is actually focused before typing; otherwise the first character(s) can be
+    // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
+    await expect(dateInputField).toBeFocused();
+    await dateInputField.press('ControlOrMeta+a');
+    await dateInputField.press('Delete');
+    // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
+    // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
+    await dateInputField.pressSequentially(date.format(format), { delay: 30 });
+    await dateInputField.press('Tab');
 }
 
 /**
@@ -99,13 +119,15 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
 
 /**
  * This function is necessary to make the server and the client date comparable.
- * The server sometimes has 3 digit on the milliseconds and sometimes only 1 digit.
- * With this function we always cut the date string after the first digit.
+ * Dates are entered through the PrimeNG p-datepicker, which is minute-precision (it has no seconds
+ * field), so the persisted value is always truncated to the minute. We therefore compare only down
+ * to the minute (YYYY-MM-DDTHH:mm) and ignore seconds/milliseconds, which also avoids the server's
+ * varying millisecond digit count.
  * @param date the date as a string
- * @returns a date string with only one digit for the milliseconds
+ * @returns a date string trimmed to minute precision
  */
 export function trimDate(date: string) {
-    return date.slice(0, 19);
+    return date.slice(0, 16);
 }
 
 /**

@@ -25,15 +25,18 @@ import { Directive, EmbeddedViewRef, TemplateRef, ViewContainerRef, effect, inje
  * ```
  * produces a child component looking exactly like the parent component but with the marked element overridden
  */
+/** The template context supplied to an extension point: an object with arbitrary, dynamically-keyed values. */
+type ExtensionPointContext = Record<string, unknown>;
+
 @Directive({ selector: '[jhiExtensionPoint]' })
 export class ExtensionPointDirective {
     private viewContainerRef = inject(ViewContainerRef);
-    private templateRef = inject<TemplateRef<any>>(TemplateRef);
+    private templateRef = inject<TemplateRef<ExtensionPointContext>>(TemplateRef);
 
-    private viewRef: EmbeddedViewRef<any> | undefined = undefined;
+    private viewRef: EmbeddedViewRef<ExtensionPointContext> | undefined = undefined;
 
-    readonly jhiExtensionPoint = input<TemplateRef<any> | undefined>(undefined);
-    readonly jhiExtensionPointContext = input<any>(undefined);
+    readonly jhiExtensionPoint = input<TemplateRef<ExtensionPointContext> | undefined>(undefined);
+    readonly jhiExtensionPointContext = input<ExtensionPointContext | undefined>(undefined);
 
     constructor() {
         // (Re)create the embedded view whenever the template ref changes. The context is read untracked so a

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/foundation/util/download.util';
 import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
@@ -22,13 +22,13 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
+    update(modelingExercise: ModelingExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
@@ -56,7 +56,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     import(adaptedSourceModelingExercise: ModelingExercise) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceModelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -74,7 +74,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param modelingExercise that should be updated of type {ModelingExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http

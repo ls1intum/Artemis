@@ -9,7 +9,6 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('LectureWizardPeriodComponent', () => {
     setupTestBed({ zoneless: true });
@@ -19,14 +18,7 @@ describe('LectureWizardPeriodComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                LectureUpdatePeriodComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
-                FontAwesomeModule,
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
-            ],
+            imports: [LectureUpdatePeriodComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

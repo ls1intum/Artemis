@@ -5,6 +5,7 @@ import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
+import { NgModel } from '@angular/forms';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -32,6 +33,7 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 type GradingInternals = ProgrammingExerciseGradingComponent & {
     submissionPolicyUpdateComponent: Signal<SubmissionPolicyUpdateComponent | undefined>;
     lifecycleComponent: Signal<ProgrammingExerciseUpdateTimelineComponent | undefined>;
+    maxScoreField: Signal<NgModel | undefined>;
 };
 const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
 
@@ -187,6 +189,87 @@ describe('ProgrammingExerciseGradingComponent', () => {
         lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not require points when exercise is not included in the course score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        exercise.maxPoints = undefined;
+        exercise.staticCodeAnalysisEnabled = false;
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.detectChanges(false);
+
+        const pointsInput = fixture.debugElement.nativeElement.querySelector('#field_points') as HTMLInputElement;
+        expect(pointsInput.required).toBe(false);
+        expect(pointsInput.min).toBe('0');
+        const pointsFormGroup = pointsInput.closest('.form-group') as HTMLElement | null;
+        expect(pointsFormGroup).not.toBeNull();
+        expect(pointsFormGroup?.hidden).toBe(false);
+
+        vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
+        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+
+        comp.calculateFormStatus();
+
+        expect(comp.formValid).toBe(true);
+    });
+
+    it('should keep invalid points invalid when exercise is not included in the course score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        exercise.maxPoints = -1;
+        exercise.staticCodeAnalysisEnabled = false;
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.detectChanges(false);
+
+        vi.spyOn(internals(comp), 'maxScoreField').mockReturnValue({ valid: false } as NgModel);
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
+        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+
+        comp.calculateFormStatus();
+
+        expect(comp.formValid).toBe(false);
+    });
+
+    it('should set points to zero when exercise is not included in the course score', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        exercise.maxPoints = 1;
+        exercise.bonusPoints = 5;
+        const programmingExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges(false);
+
+        comp.onIncludedInOverallScoreChange(IncludedInOverallScore.NOT_INCLUDED);
+
+        expect(programmingExercise.includedInOverallScore).toBe(IncludedInOverallScore.NOT_INCLUDED);
+        expect(programmingExercise.maxPoints).toBe(0);
+        expect(programmingExercise.bonusPoints).toBe(0);
+    });
+
+    it('should set bonus points to zero when exercise is included as bonus', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        exercise.maxPoints = 1;
+        exercise.bonusPoints = 5;
+        const programmingExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges(false);
+
+        comp.onIncludedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
+
+        expect(programmingExercise.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_AS_BONUS);
+        expect(programmingExercise.bonusPoints).toBe(0);
+    });
+
+    it('should restore the minimum valid points when exercise is included again', () => {
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        exercise.maxPoints = 0;
+        const programmingExercise = Object.assign(new ProgrammingExercise(undefined, undefined), exercise);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges(false);
+
+        comp.onIncludedInOverallScoreChange(IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        expect(programmingExercise.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        expect(programmingExercise.maxPoints).toBe(1);
     });
 
     const generateFieldVisibilityTests = (

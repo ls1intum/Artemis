@@ -71,6 +71,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly vcsAccessLogRoute = signal<string>(undefined!);
     readonly repositoryUri = signal<string>(undefined!);
     readonly repositoryType = signal<RepositoryType>(undefined!);
+    readonly auxiliaryRepositoryId = signal<number | undefined>(undefined);
     readonly enableVcsAccessLog = signal(false);
     readonly allowVcsAccessLog = signal(false);
     readonly result = signal<Result>(undefined!);
@@ -97,13 +98,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.routeCommitHistory.set(this.router.url + '/commit-history');
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
+            this.resetRepositoryRouteState();
             const exerciseId = Number(params['exerciseId']);
             const repositoryId = Number(params['repositoryId']);
             const repositoryType = params['repositoryType'] ?? RepositoryType.USER;
@@ -113,6 +115,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             if (repositoryType === RepositoryType.USER) {
                 this.loadStudentParticipation(repositoryId);
             } else if (repositoryType === RepositoryType.AUXILIARY) {
+                this.auxiliaryRepositoryId.set(repositoryId);
                 this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(repositoryType, exerciseId);
@@ -234,5 +237,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     this.participationCouldNotBeFetched.set(true);
                 },
             });
+    }
+
+    private resetRepositoryRouteState() {
+        this.participation.set(undefined!);
+        this.repositoryUri.set(undefined!);
+        this.auxiliaryRepositoryId.set(undefined);
+        this.result.set(undefined!);
+        this.resultHasInlineFeedback.set(false);
+        this.showInlineFeedback.set(false);
     }
 }

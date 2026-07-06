@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -44,7 +45,7 @@ export class AdminPasskeyManagementComponent implements OnInit {
     ]);
 
     ngOnInit(): void {
-        this.loadPasskeys().then();
+        void this.loadPasskeys();
     }
 
     /**
@@ -74,7 +75,7 @@ export class AdminPasskeyManagementComponent implements OnInit {
             this.passkeys.update((passkeys) => [...passkeys]);
         } catch (error) {
             if (!isErrorAlert(error)) {
-                if (error.status === 404) {
+                if (error instanceof HttpErrorResponse && error.status === 404) {
                     this.alertService.error('artemisApp.adminPasskeyManagement.errors.passkeyNotFound');
                     return;
                 }

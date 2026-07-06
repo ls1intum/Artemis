@@ -112,6 +112,7 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -1655,8 +1656,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1677,8 +1678,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1690,8 +1691,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
         assertThat(participations).hasSize(1);
@@ -1707,8 +1708,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
         assertThat(participations).hasSize(1);
@@ -1724,8 +1725,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
         assertThat(dbParticipation).isNotNull();
@@ -1741,8 +1742,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
         assertThat(participations).isPresent();
@@ -1758,8 +1759,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         participationDeletionService.deleteAllByTeamId(team.getId());
 

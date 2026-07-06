@@ -25,7 +25,6 @@
             },
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
-                "saved": "Alles gespeichert",
                 "unsaved": "Ungespeicherte Änderungen",
                 "enabled": "Aktiviert",
                 "disabled": "Deaktiviert",
@@ -57,6 +56,50 @@
                 "hours": "Stunden",
                 "unlimited": "unbegrenzt",
                 "unlimitedTime": "∞",
+                "generalTab": "Allgemein",
+                "adminTab": "Admin",
+                "irisEnabled": "Iris ist aktiviert",
+                "irisDisabled": "Iris ist deaktiviert",
+                "enableSubtext": "Alle Studierenden dieses Kurses können Iris nutzen, wenn es aktiviert ist",
+                "disabledSubtext": "Iris ist für diesen Kurs inaktiv.",
+                "supportLevel": {
+                    "title": "Unterstützungsniveau",
+                    "help": "Niedrig fördert selbstständiges Problemlösen. Hoch bietet ausführliche Erklärungen, Analogien und Beispiele.",
+                    "low": "Niedrig",
+                    "moderate": "Mittel",
+                    "high": "Hoch",
+                    "bestSuitedFor": "Am besten geeignet für",
+                    "description": {
+                        "low": {
+                            "title": "Unterstützungsniveau: Niedrig",
+                            "text": "Iris antwortet ausschließlich mit übergeordneten Gegenfragen, die Studierende auf ihre eigene Denkweise zurückführen.",
+                            "bestSuitedFor": "Fortgeschrittene Kurse, in denen selbstständiges Problemlösen ein zentrales Lernziel ist.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Welchen Sortieralgorithmus implementierst du? Was gibt dein Code aus, wenn du ihn mit einer kleinen Eingabe wie [3, 1, 2] durchgehst?"
+                        },
+                        "moderate": {
+                            "title": "Unterstützungsniveau: Mittel",
+                            "text": "Iris stellt leitende Fragen und gibt gezielte Hinweise, um Studierende durch Probleme zu führen.",
+                            "bestSuitedFor": "Kurse, in denen Studierende bereits etwas Erfahrung haben, aber von konkreten Hinweisen und kontextuellen Impulsen profitieren.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Lass uns das Schritt für Schritt angehen. Kannst du beschreiben, was dein Algorithmus mit der Eingabe [3, 1, 4, 1, 5] tun soll? Erkläre mir den ersten Durchlauf."
+                        },
+                        "high": {
+                            "title": "Unterstützungsniveau: Hoch",
+                            "text": "Iris bietet schrittweise Erklärungen mit Analogien und kleinen Codebeispielen, um Konzepte zu veranschaulichen.",
+                            "bestSuitedFor": "Einführungskurse, in denen Studierende neu im Programmieren sind und klare, leicht verständliche Erklärungen benötigen.",
+                            "exampleUser": "Mein Sortieralgorithmus funktioniert nicht. Kannst du helfen?",
+                            "exampleIris": "Das Problem liegt in der Bedingung deiner inneren Schleife <code>j &lt;= arr.length</code>. Arrays sind nullbasiert indiziert, das letzte Element liegt also bei <code>arr.length - 1</code>. Ändere sie zu <code>j &lt; arr.length</code> und prüfe, ob das die IndexOutOfBoundsException behebt."
+                        }
+                    }
+                },
+                "exampleConversationLabel": "Beispielgespräch auf diesem Niveau",
+                "additionalGuidelines": "Zusätzliche Richtlinien",
+                "additionalGuidelinesHelp": "Lege zusätzliche Erwartungen fest, wie Iris mit deinen Studierenden interagiert.",
+                "additionalGuidelinesPlaceholder": "Verwende immer Python 3.12-Syntax.",
+                "globalRestriction": "Iris ist global eingeschränkt und stellt keine vollständigen Lösungen oder vollständigen Code-Blöcke bereit, unabhängig von deinen Einstellungen.",
+                "saveChanges": "Änderungen speichern",
+                "resetToDefault": "Auf Standard zurücksetzen",
                 "error": {
                     "save": "Fehler beim Speichern der Iris Einstellungen",
                     "load": "Fehler beim Laden der Iris Einstellungen",
@@ -151,12 +194,7 @@
                 "title": "Iris Einstellungen"
             },
             "error": {
-                "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
-                "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "noVariantAvailable": "Die Variante {{ variant }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
-                "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
-                "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
+                "internal": "Ein interner Fehler ist aufgetreten"
             },
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?",
@@ -210,14 +248,27 @@
                 "loading": "Lade Vorschläge...",
                 "noIris": "Iris ist derzeit nicht verfügbar."
             },
-            "stages": {
-                "thinking": "Denke nach",
-                "analyzing": "Analysiere Kontext",
-                "processing": "Bearbeite deine Anfrage",
-                "formulating": "Formuliere eine Antwort",
-                "error": {
-                    "internal": "Ein interner Fehler ist aufgetreten"
-                }
+            "thinking": "Denke nach…",
+            "activities": {
+                "liveLabel": "Aktuelle Iris-Aktivität",
+                "trailLabel": "Iris-Aktivitätsverlauf",
+                "trailSummary": "Verwendete Tools: {{ count }} · {{ duration }}s",
+                "lecture_content_retrieval": "Lese Vorlesung",
+                "faq_content_retrieval": "Lese FAQs",
+                "get_course_details": "Suche Kursinformationen",
+                "get_exercise_list": "Suche Übungen",
+                "get_exercise_problem_statement": "Lese Aufgabenstellung",
+                "get_student_exercise_metrics": "Prüfe deinen Fortschritt",
+                "get_competency_list": "Suche Kompetenzen",
+                "get_submission_details": "Lese deine Abgabe",
+                "get_additional_exercise_details": "Suche Übungsdetails",
+                "get_build_logs_analysis_tool": "Prüfe Build-Logs",
+                "get_feedbacks": "Lese Feedback",
+                "repository_files": "Durchsuche deinen Code",
+                "file_lookup": "Lese Datei",
+                "memiris_search_for_memories": "Rufe Erinnerungen ab",
+                "memiris_find_similar_memories": "Suche ähnliche Erinnerungen",
+                "generate_mcq_questions": "Erstelle Quizfragen"
             },
             "chatBubble": {
                 "seeFull": "Vollständige Nachricht sehen"
@@ -251,6 +302,7 @@
                 "title": "Chats",
                 "newChat": "Neuer Chat",
                 "openChatHistory": "Chatverlauf öffnen",
+                "searchChatHistory": "Chatverlauf durchsuchen",
                 "aboutIris": "Über Iris",
                 "today": "Heute",
                 "yesterday": "Gestern",

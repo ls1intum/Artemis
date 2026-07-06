@@ -358,6 +358,6 @@ export class LandingFooterComponent {
     currentYear: number = new Date().getFullYear();
 
     navigateToLogin(): void {
-        this.router.navigateByUrl('/sign-in');
+        void this.router.navigateByUrl('/sign-in');
     }
 }

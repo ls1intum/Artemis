@@ -77,7 +77,7 @@ describe('ModelingSubmission Service', () => {
     it('should get submissions without correction round', () => {
         const { exerciseId, returnedFromService, requestOption } = getDefaultValues();
         service
-            .getSubmissions(exerciseId, requestOption)
+            .getSubmissions(exerciseId, requestOption as { submittedOnly?: boolean; assessedByTutor?: boolean })
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
@@ -88,7 +88,7 @@ describe('ModelingSubmission Service', () => {
     it('should get submissions with correction round', () => {
         const { exerciseId, returnedFromService, requestOption, correctionRound } = getDefaultValues();
         service
-            .getSubmissions(5, requestOption, correctionRound)
+            .getSubmissions(5, requestOption as { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test&correction-round=${correctionRound}` });

@@ -130,14 +130,14 @@ export class CourseOnboardingComponent implements OnInit {
         if (!current.onboardingDone) {
             current.onboardingDone = true;
             this.courseManagementService.update(current.id, current).subscribe({
-                next: () => this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
+                next: () => void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
                 error: (error: HttpErrorResponse) => {
                     current.onboardingDone = false;
                     onError(this.alertService, error);
                 },
             });
         } else {
-            this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+            void this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
         }
     }
 
@@ -259,6 +259,6 @@ export class CourseOnboardingComponent implements OnInit {
     }
 
     private updateStepUrl(step: number) {
-        this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 }

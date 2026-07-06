@@ -33,7 +33,7 @@ export class ArtemisQuizService {
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                         // nothing to do here
                     } else {
-                        captureException(new Error('Unknown question type: ' + question));
+                        captureException(new Error('Unknown question type: ' + question.type));
                     }
                 }
             }, this);

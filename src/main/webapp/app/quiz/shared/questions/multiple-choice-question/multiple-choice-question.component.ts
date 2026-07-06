@@ -30,7 +30,7 @@ export class MultipleChoiceQuestionComponent {
     questionIndex = input<number>(0);
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
-    fnOnSelection = input<any>();
+    fnOnSelection = input<() => void>();
     submittedResult = input<Result>();
     quizQuestions = input<QuizQuestion[] | undefined>();
 

@@ -37,7 +37,7 @@
                 }
                 <div class="form-group position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
-                    <jhi-category-selector [categories]="faqCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
+                    <jhi-category-selector-primeng [categories]="faqCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
                 </div>
                 @if (faq.course) {
                     <div class="form-group">

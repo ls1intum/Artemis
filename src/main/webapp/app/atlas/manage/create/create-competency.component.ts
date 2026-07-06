@@ -38,7 +38,7 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.isLoading.set(true);
 
         this.competencyService
-            .create(this.competencyToCreate!, this.courseId)
+            .create(this.competencyToCreate, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
@@ -47,7 +47,7 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
             .subscribe({
                 next: () => {
                     // currently at /course-management/{courseId}/competency-management/create, going back to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

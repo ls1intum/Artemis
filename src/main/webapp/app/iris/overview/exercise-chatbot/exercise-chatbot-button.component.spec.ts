@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { Overlay } from '@angular/cdk/overlay';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,9 +12,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -25,6 +24,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
+import { IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('ExerciseChatbotButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -34,11 +34,10 @@ describe('ExerciseChatbotButtonComponent', () => {
     let chatService: IrisChatService;
     let chatHttpServiceMock: IrisChatHttpService;
     let wsServiceMock: IrisWebsocketService;
-    let mockDialog: MatDialog;
-    let mockOverlay: Overlay;
+    let mockDialogService: DialogService;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: ReturnType<typeof vi.fn>;
-    let mockDialogAfterClosed: Subject<void>;
+    let mockDialogOnClose: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
     let accountService: AccountService;
@@ -62,21 +61,14 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
-        mockDialogAfterClosed = new Subject<void>();
+        mockDialogOnClose = new Subject<void>();
 
-        mockDialog = {
+        mockDialogService = {
             open: vi.fn().mockReturnValue({
-                afterClosed: vi.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
+                onClose: mockDialogOnClose.asObservable(),
                 close: mockDialogClose,
             }),
-            closeAll: vi.fn(),
-        } as unknown as MatDialog;
-
-        mockOverlay = {
-            scrollStrategies: {
-                noop: vi.fn().mockReturnValue({}),
-            },
-        } as unknown as Overlay;
+        } as unknown as DialogService;
 
         await TestBed.configureTestingModule({
             imports: [FontAwesomeModule, MockPipe(HtmlForMarkdownPipe), IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
@@ -86,8 +78,6 @@ describe('ExerciseChatbotButtonComponent', () => {
                 IrisChatService,
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
-                { provide: MatDialog, useValue: mockDialog },
-                { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
@@ -96,7 +86,15 @@ describe('ExerciseChatbotButtonComponent', () => {
                     provide: TranslateService,
                     useValue: {
                         get: vi.fn().mockReturnValue(of('')),
-                        instant: vi.fn((key: string) => key),
+                        instant: vi.fn((key: string) => {
+                            if (key === 'artemisApp.iris.activities.lecture_content_retrieval') {
+                                return 'Lecture search';
+                            }
+                            if (key === 'artemisApp.iris.thinking') {
+                                return 'Thinking...';
+                            }
+                            return key;
+                        }),
                         getCurrentLang: vi.fn().mockReturnValue('en'),
                         onTranslationChange: new Subject(),
                         onLangChange: new Subject(),
@@ -104,7 +102,13 @@ describe('ExerciseChatbotButtonComponent', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            // DialogService is provided at the component level (providers: [DialogService]), so it must
+            // be overridden on the component, not the module, for the mock to take effect.
+            .overrideComponent(IrisExerciseChatbotButtonComponent, {
+                set: { providers: [{ provide: DialogService, useValue: mockDialogService }] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
         component = fixture.componentInstance;
@@ -242,8 +246,8 @@ describe('ExerciseChatbotButtonComponent', () => {
             component.handleButtonClick();
 
             expect(mockDialogClose).toHaveBeenCalled();
-            // chatOpen is reset via afterClosed subscription
-            mockDialogAfterClosed.next();
+            // chatOpen is reset via the onClose subscription
+            mockDialogOnClose.next();
             await fixture.whenStable();
             expect(component.chatOpen()).toBe(false);
         });
@@ -254,7 +258,22 @@ describe('ExerciseChatbotButtonComponent', () => {
             component.handleButtonClick();
 
             expect(component.chatOpen()).toBe(true);
-            expect(mockDialog.open).toHaveBeenCalled();
+            expect(mockDialogService.open).toHaveBeenCalled();
+        });
+
+        it('should open the chat widget dialog with the correct floating, non-modal config', () => {
+            component.openChat();
+
+            expect(mockDialogService.open).toHaveBeenCalledWith(
+                IrisChatbotWidgetComponent,
+                expect.objectContaining({
+                    modal: false,
+                    closable: false,
+                    dismissableMask: false,
+                    showHeader: false,
+                    styleClass: 'iris-chat-widget-dialog',
+                }),
+            );
         });
     });
 
@@ -265,7 +284,7 @@ describe('ExerciseChatbotButtonComponent', () => {
             expect(component.chatOpen()).toBe(true);
 
             // Simulate dialog closing
-            mockDialogAfterClosed.next();
+            mockDialogOnClose.next();
             await fixture.whenStable();
 
             expect(component.chatOpen()).toBe(false);
@@ -273,25 +292,28 @@ describe('ExerciseChatbotButtonComponent', () => {
         });
     });
 
-    describe('stage display name', () => {
-        it('should show rotation label when stage message is empty', async () => {
-            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
+    describe('processing display name', () => {
+        it('should show the current running activity label', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.RUNNING });
+            chatService.activities.next([{ id: 'act-1', kind: IrisActivityKind.TOOL, name: 'lecture_content_retrieval', state: IrisActivityState.RUNNING }]);
             await fixture.whenStable();
 
-            expect(component.displayName()).toBe('artemisApp.iris.stages.thinking');
+            expect(component.displayName()).toBe('Lecture search');
             expect(component.isProcessing()).toBe(true);
         });
 
-        it('should show stage message when provided', async () => {
-            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: 'Checking info', internal: false }]);
+        it('should show thinking when awaiting an answer without a running activity', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.RUNNING });
+            chatService.activities.next([]);
             await fixture.whenStable();
 
-            expect(component.displayName()).toBe('Checking info');
+            expect(component.displayName()).toBe('Thinking...');
             expect(component.isProcessing()).toBe(true);
         });
 
-        it('should return empty string when no active stage', async () => {
-            chatService.stages.next([{ name: 'Done Stage', state: IrisStageStateDTO.DONE, weight: 10, message: '', internal: false }]);
+        it('should return empty string when no answer is pending', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
+            chatService.activities.next([]);
             await fixture.whenStable();
 
             expect(component.displayName()).toBe('');

@@ -38,6 +38,14 @@ export interface ParticipationDueDateUpdateDTO {
     individualDueDate?: string;
 }
 
+/**
+ * Request options that are appended as query parameters when deleting a participation.
+ */
+export interface ParticipationDeleteOptions {
+    deleteBuildPlan?: boolean;
+    deleteRepository?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
     private http = inject(HttpClient);
@@ -162,7 +170,7 @@ export class ParticipationService {
         return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
     }
 
-    delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(participationId: number, req?: ParticipationDeleteOptions): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
@@ -255,11 +263,11 @@ export class ParticipationService {
                 }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
                 if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
                     mergedParticipations.push(combinedParticipation);
                 }
                 if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             }

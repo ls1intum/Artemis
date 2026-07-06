@@ -14,7 +14,7 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
@@ -25,7 +25,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
     templateUrl: './course-faq.component.html',
     styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
+    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbDropdownModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
@@ -82,7 +82,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadFaqs() {
         this.faqService
             .findAllByCourseIdAndState(this.courseId, this.faqState)
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
             .subscribe({
                 next: (res: Faq[]) => {
                     this.faqs.set(res);

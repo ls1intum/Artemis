@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import {
     faChevronRight,
     faDownLeftAndUpRightToCenter,
@@ -75,13 +75,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private standardizedCompetencyService = inject(StandardizedCompetencyService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-
-    /** Reference to the knowledge area tree component for tree control */
-    private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
-
-    protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
-        return this.knowledgeAreaTree();
-    }
 
     /** Loading state */
     protected readonly isLoading = signal(false);
@@ -413,6 +406,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         knowledgeArea.competencies = knowledgeArea.competencies?.filter((c) => c.id !== competency.id);
+        this.refreshTree();
     }
 
     /**
@@ -430,6 +424,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         knowledgeArea.competencies = (knowledgeArea.competencies ?? []).concat(competencyForTree);
+        this.refreshTree();
     }
 
     /**
@@ -470,6 +465,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             }
             previousKnowledgeArea.competencies.splice(index, 1, competencyForTree);
         }
+        this.refreshTree();
     }
 
     // utility functions
