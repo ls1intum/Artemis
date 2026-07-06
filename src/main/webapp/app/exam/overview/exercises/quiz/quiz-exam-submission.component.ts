@@ -7,7 +7,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import type { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
