@@ -6,9 +6,8 @@ import { Locator, Page, expect } from '@playwright/test';
  * The floating FAB is `jhi-exercise-chatbot-button .chatbot-button jhi-iris-logo`; clicking it
  * opens the widget overlay `.chat-widget`. The widget header `.chat-header` exposes
  * `button.header-control` controls whose fa icons are `circle-info` (info), `expand`/`compress`
- * (maximize/restore), and `xmark` (close). The widget is rendered in a PrimeNG DynamicDialog, whose
- * mask wrapper `.p-dialog-mask` covers the viewport; maximizing resizes `.chat-widget` to ~93% of
- * that mask's width via an inline pixel `style.width`.
+ * (maximize/restore), and `xmark` (close). Maximizing resizes `.chat-widget` to ~93% of the
+ * the positioning context width (PrimeNG dialog mask / viewport) via an inline pixel `style.width`.
  */
 export class IrisChatbotWidget {
     private readonly page: Page;
@@ -106,11 +105,20 @@ export class IrisChatbotWidget {
         await expect(messageInput).toBeVisible();
     }
 
-    /** Returns the width of the PrimeNG dialog mask (the widget's positioning context). */
+    /**
+     * Returns the width of the widget's positioning context. The widget is a PrimeNG
+     * DynamicDialog, so this mirrors the component's own measurement: the dialog mask
+     * (`.p-dialog-mask`) when present, else the viewport (chatbot-widget.component.ts).
+     */
     async getOverlayWidth(): Promise<number> {
-        const box = await this.page.locator('.p-dialog-mask').boundingBox();
-        expect(box, { message: 'p-dialog-mask should have a bounding box' }).not.toBeNull();
-        return box!.width;
+        const mask = this.page.locator('.p-dialog-mask').first();
+        if (await mask.count()) {
+            const box = await mask.boundingBox();
+            if (box) {
+                return box.width;
+            }
+        }
+        return this.page.evaluate(() => window.innerWidth);
     }
 
     async getWidgetWidth(): Promise<number> {

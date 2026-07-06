@@ -45,7 +45,6 @@ import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-con
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import {
     IrisMessageContent,
@@ -85,6 +84,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
+import { IrisActivityFeedComponent } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
@@ -92,6 +92,7 @@ import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -143,6 +144,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
         IrisThinkingBubbleComponent,
+        IrisActivityFeedComponent,
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
@@ -216,7 +218,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
-    readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
+    readonly runInfo = toSignal(this.chatService.currentRunInfo(), { initialValue: undefined });
+    readonly activities = toSignal(this.chatService.currentActivities(), { initialValue: [] as IrisActivityItem[] });
     readonly suggestions = toSignal(this.chatService.currentSuggestions(), { initialValue: [] as string[] });
     readonly error = toSignal(this.chatService.currentError(), { initialValue: undefined });
     readonly numNewMessages = toSignal(this.chatService.currentNumNewMessages(), { initialValue: 0 });
@@ -234,18 +237,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly initialLoadComplete = toSignal(this.chatService.initialLoadComplete$, { initialValue: false });
 
     // Computed state
-    readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
-    readonly shouldShowStatusBar = computed(
-        () => this.stages()?.some((stage) => !stage.internal && ![IrisStageStateDTO.DONE, IrisStageStateDTO.SKIPPED].includes(stage.state)) ?? false,
+    readonly runningActivity = computed(() => this.activities().find((activity) => activity.state === IrisActivityState.RUNNING));
+    readonly awaitingAnswer = this.chatService.awaitingAnswer;
+    readonly thinkingMessage = computed(() => this.translateService.instant('artemisApp.iris.thinking'));
+    readonly shouldShowThinkingBubble = computed(() => this.awaitingAnswer() && !this.runningActivity() && !this.liveAssistantDraft());
+    readonly shouldShowStatusBar = computed(() => this.runInfo()?.state === IrisRunState.FAILED);
+    readonly isEmptyState = computed(
+        () => !this.messages()?.length && !this.liveAssistantDraft() && !this.shouldShowThinkingBubble() && !this.activities().length && !this.isEmbeddedChat(),
     );
-    readonly activeChatMessage = computed(() => {
-        const stages = this.stages();
-        if (!stages) return undefined;
-        const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
-        return active?.chatMessage;
-    });
-    readonly isEmptyState = computed(() => !this.messages()?.length && !this.liveAssistantDraft() && !this.isEmbeddedChat());
-    readonly hasCurrentSessionContent = computed(() => (this.messages()?.length ?? 0) > 0 || !!this.liveAssistantDraft());
+    readonly hasCurrentSessionContent = computed(
+        () => (this.messages()?.length ?? 0) > 0 || !!this.liveAssistantDraft() || this.shouldShowThinkingBubble() || this.activities().length > 0,
+    );
     readonly hasSessionSwitcher = computed(
         () => (this.layout() === 'widget' || this.layout() === 'embedded') && this.showWidgetHeader() && (this.hasCurrentSessionContent() || this.hasPastSessions()),
     );
@@ -295,7 +297,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.isLoading() ||
             !this.active() ||
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
-            this.hasActiveStage(),
+            this.awaitingAnswer(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
     readonly canShowSuggestions = computed(
@@ -304,7 +306,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.isAIEnabled() &&
             this.active() &&
             (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
-            !this.hasActiveStage(),
+            !this.awaitingAnswer(),
     );
     readonly isScrolledToBottom = signal(true);
     readonly exchangeSpacerPx = signal(0);
@@ -482,6 +484,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
     }
 
+    protected getActivities(message: IrisMessage): IrisActivityItem[] {
+        return message.sender === IrisSender.LLM ? (message.activities ?? []) : [];
+    }
+
+    protected activityTrailSummary(activities: IrisActivityItem[]): string {
+        const totalDurationMillis = activities.reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
+        return this.translateService.instant('artemisApp.iris.activities.trailSummary', {
+            count: activities.length,
+            duration: (totalDurationMillis / 1000).toFixed(1),
+        });
+    }
+
     private startCycling(): void {
         if (this.cycleIntervalId) return;
         this.cycleIntervalId = setInterval(() => {
@@ -564,7 +578,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             const isDraftFinalization =
                 rawMessages.length > this.previousMessageCount &&
                 !this.liveAssistantDraft() &&
-                (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined);
+                (this.liveAssistantDraftRunId !== undefined || this.pendingFinalizedLiveAssistantDraftRunId !== undefined) &&
+                !this.isIntermediateAssistantMessage(rawMessages.at(-1));
             if (rawMessages.length !== this.previousMessageCount) {
                 // Initial history load (e.g. after a page refresh): the batch lands at once and
                 // its content keeps growing the scroll height for several frames, so use the
@@ -575,6 +590,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                     this.pendingFinalizedLiveAssistantDraftRunId = undefined;
                     this.liveAssistantDraftRunId = undefined;
                     this.preserveScrollAcrossDraftSwap();
+                } else if (this.isIntermediateAssistantMessage(rawMessages.at(-1))) {
+                    this.pendingFinalizedLiveAssistantDraftRunId = undefined;
+                    this.liveAssistantDraftRunId = undefined;
                 } else if (this.pendingAnchorScroll && rawMessages.length > this.previousMessageCount) {
                     const lastMessage = rawMessages.at(-1);
                     if (lastMessage?.sender === IrisSender.USER && lastMessage.id !== undefined) {
@@ -631,9 +649,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Scroll when thinking bubble appears for flows that start without an explicit send.
+        // Scroll when the idle thinking bubble appears for flows that start without an explicit send.
         effect(() => {
-            if (this.activeChatMessage() && !this.liveAssistantDraft() && this.isScrolledToBottom()) {
+            if (this.shouldShowThinkingBubble() && !this.pendingAnchorScroll && !this.exchangeAnchorActive && this.isScrolledToBottom()) {
                 this.scrollToBottom('smooth');
             }
         });
@@ -647,7 +665,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             this.rawMessages();
             this.displayedLiveAssistantDraftText();
-            this.activeChatMessage();
+            this.shouldShowThinkingBubble();
+            this.activities();
             this.canShowSuggestions();
             const rafId = window.requestAnimationFrame(() => this.updateExchangeSpacer());
             onCleanup(() => window.cancelAnimationFrame(rafId));
@@ -785,6 +804,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return _.cloneDeep(rawMessages);
     }
 
+    private isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
+        return message?.sender === IrisSender.LLM && message.final === false;
+    }
+
     ngAfterViewInit() {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
@@ -893,11 +916,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      * @param helpful A boolean indicating if the message is helpful or not.
      */
     rateMessage(message: IrisMessage, helpful?: boolean) {
-        if (message.sender !== IrisSender.LLM) {
+        if (!this.canRateMessage(message)) {
             return;
         }
         message.helpful = !!helpful;
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
+
+    protected canRateMessage(message: IrisMessage): message is IrisAssistantMessage {
+        return message.sender === IrisSender.LLM && message.final !== false;
     }
 
     onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {

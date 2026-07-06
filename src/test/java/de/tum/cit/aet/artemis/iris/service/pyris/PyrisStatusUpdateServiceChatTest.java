@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,8 +14,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
@@ -41,7 +39,7 @@ class PyrisStatusUpdateServiceChatTest {
     @Test
     void partialChatStatusUpdateIsRelayedWithoutUpdatingJob() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, List.of(stage(PyrisStageState.IN_PROGRESS)), null, null, null, null, null, "partial", 4);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.RUNNING, null, null, null, null, null, null, "partial", 4, null, null);
 
         service.handleStatusUpdate(job, statusUpdate);
 
@@ -53,7 +51,7 @@ class PyrisStatusUpdateServiceChatTest {
     @Test
     void nonPartialChatStatusUpdateUsesNormalResultPath() {
         var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO("result", List.of(stage(PyrisStageState.DONE)), null, null, null, null, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
@@ -61,9 +59,5 @@ class PyrisStatusUpdateServiceChatTest {
         verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate);
         verify(irisChatSessionService, never()).handlePartialStatusUpdate(job, statusUpdate);
         verify(pyrisJobService).removeJob(job);
-    }
-
-    private PyrisStageDTO stage(PyrisStageState state) {
-        return new PyrisStageDTO("stage", 1, state, null, false, null);
     }
 }
