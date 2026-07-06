@@ -39,5 +39,5 @@ final class AgentToolDescriptions {
 
     static final String SUBMIT_SUMMARY = "one-line summary of what you created or changed";
 
-    static final String TESTER_SUBMIT = "Submit your independently-authored test suite and end the session. Call this once your tests COMPILE against the template (you have run 'sh verify.sh template' via bash and it builds without a compile error) and cover every stated postcondition/edge case of the problem statement. Do NOT try to make tests pass — you do not have the reference solution. Stop immediately after calling it.";
+    static final String EXAMINER_SUBMIT = "Submit your independently-authored test suite and end the session. Call this once your tests COMPILE against the template (you have run 'sh verify.sh template' via bash and it builds without a compile error) and cover every stated postcondition/edge case of the problem statement. Do NOT try to make tests pass — you do not have the reference solution. Stop immediately after calling it.";
 }

@@ -51,17 +51,17 @@ public class IndependentExaminerService {
 
     private final AgentLoopRunner agentLoopRunner;
 
-    private final AgentSystemPromptService systemPromptFactory;
+    private final AgentSystemPromptService systemPromptService;
 
     /** The examiner has a bounded job (author tests, make them compile), so a smaller turn budget than the main author is enough. */
     private final int maxTurns;
 
     public IndependentExaminerService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
-            AgentSystemPromptService systemPromptFactory, @Value("${artemis.hyperion.crosscheck.examiner-max-turns:40}") int maxTurns) {
+            AgentSystemPromptService systemPromptService, @Value("${artemis.hyperion.crosscheck.examiner-max-turns:40}") int maxTurns) {
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
         this.agentLoopRunner = agentLoopRunner;
-        this.systemPromptFactory = systemPromptFactory;
+        this.systemPromptService = systemPromptService;
         this.maxTurns = maxTurns;
     }
 
@@ -90,14 +90,14 @@ public class IndependentExaminerService {
         String sessionId = null;
         try {
             if (progress != null) {
-                progress.accept("Running an independent examiner to cross-check correctness");
+                progress.accept("Running an independent examiner to cross-check the exercise");
             }
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
             // Decorrelation by ABSENCE: the examiner's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference
             // sample.
             workspace.seedExaminerWorkspace(sandbox, sessionId, exercise, producedTemplateFiles, producedTestsFiles);
             ExaminerAgentTools tools = new ExaminerAgentTools(sandbox, sessionId);
-            agentLoopRunner.run(systemPromptFactory.buildExaminerPrompt(exercise), EXAMINER_USER_PROMPT, tools, maxTurns, cancelled, usageSink, progress);
+            agentLoopRunner.run(systemPromptService.buildExaminerPrompt(exercise), EXAMINER_USER_PROMPT, tools, maxTurns, cancelled, usageSink, progress);
             // Read the authored suite back out (best-effort: even a partial suite lets the cross-check run and fail-open if it does not compile).
             return workspace.extractRepositoryFiles(sandbox, sessionId, RepositoryType.TESTS);
         }

@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * sample
  * test sources while keeping the harness. No Docker, no git, no model.
  */
-class GenerationWorkspaceServiceTesterSeedingTest {
+class GenerationWorkspaceServiceExaminerSeedingTest {
 
     private static GenerationWorkspaceService newWorkspaceService() {
         BuildPhasesTemplateService phases = mock(BuildPhasesTemplateService.class);

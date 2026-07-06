@@ -82,7 +82,7 @@ public class ExaminerAgentTools {
      * @param summary an optional one-line summary of the authored suite
      * @return a confirmation that the suite was submitted
      */
-    @Tool(name = "submit", description = AgentToolDescriptions.TESTER_SUBMIT)
+    @Tool(name = "submit", description = AgentToolDescriptions.EXAMINER_SUBMIT)
     public String submit(@ToolParam(required = false, description = AgentToolDescriptions.SUBMIT_SUMMARY) String summary) {
         return delegate.submit(summary);
     }

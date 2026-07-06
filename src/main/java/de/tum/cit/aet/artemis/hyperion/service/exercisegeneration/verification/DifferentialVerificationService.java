@@ -254,7 +254,7 @@ public class DifferentialVerificationService {
         boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound && noAdaptWipe;
         if (!accepted) {
             log.info(
-                    "Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
+                    "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
                             + "extractionSound={}, noAdaptWipe={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound, noAdaptWipe);
         }

@@ -94,6 +94,7 @@ artemis:
       enabled: true  # ADVISORY: on an already-accepted exercise, ADDS a CONTRACT_CONTRADICTION finding that surfaces as a review comment; it NEVER retries, loosens, or blocks acceptance (retry/hard-block only fire when reject-on-contradiction is on).
       languages: JAVA  # Allowlist of languages the cross-check is validated for; a non-listed language is never cross-checked.
       reject-on-contradiction: false  # Keep OFF until the live false-reject rate is measured at scale; ON would hard-block an accepted-but-contradicted exercise into review.
+      examiner-max-turns: 40  # Max agent turns the independent examiner may spend authoring its shadow suite.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
     # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys

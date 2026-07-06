@@ -167,7 +167,6 @@ public class GenerationWorkspaceService {
         for (Map.Entry<String, String> entry : producedTemplateFiles.entrySet()) {
             textFiles.put(directoryFor(RepositoryType.TEMPLATE) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }
-        // tests harness, sample sources stripped
         for (Map.Entry<String, String> entry : stripSampleTestSources(producedTestsFiles).entrySet()) {
             textFiles.put(directoryFor(RepositoryType.TESTS) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue());
         }

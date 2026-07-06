@@ -76,7 +76,7 @@ class ExerciseGenerationOrchestrationServiceTest {
 
     private GenerationWorkspaceService workspace;
 
-    private AgentSystemPromptService systemPromptFactory;
+    private AgentSystemPromptService systemPromptService;
 
     private ExerciseGenerationJobService jobService;
 
@@ -98,7 +98,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         workspace = mock(GenerationWorkspaceService.class);
         agentLoopRunner = mock(AgentLoopRunner.class);
         verifier = mock(DifferentialVerificationService.class);
-        systemPromptFactory = mock(AgentSystemPromptService.class);
+        systemPromptService = mock(AgentSystemPromptService.class);
         structuralOracleSeeder = mock(StructuralOracleSeedingService.class);
         specFidelityCritic = mock(SpecFidelityCriticService.class);
         independentExaminer = mock(IndependentExaminerService.class);
@@ -107,7 +107,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         llmTokenUsageService = mock(LLMTokenUsageService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
-        when(systemPromptFactory.build(any(), any())).thenReturn("SYSTEM_PROMPT");
+        when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         // Default to a successful, empty extraction (the verifier is mocked, so files are not inspected here).
         when(workspace.extractRepository(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
@@ -136,7 +136,7 @@ class ExerciseGenerationOrchestrationServiceTest {
 
     /** Builds the service with the cross-check enabled/disabled and the reject-on-contradiction flag set, allowlisting JAVA (the exercise's language). */
     private ExerciseGenerationOrchestrationService crossCheckService(boolean crossCheckEnabled, boolean rejectOnContradiction) {
-        return new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptFactory, structuralOracleSeeder,
+        return new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder,
                 specFidelityCritic, independentExaminer, crossCheckService, jobService, llmTokenUsageService, Optional.of(testCaseRepository), 100, crossCheckEnabled,
                 Set.of(ProgrammingLanguage.JAVA), rejectOnContradiction);
     }
@@ -174,7 +174,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         List<String> prompts = promptCaptor.getAllValues();
         assertThat(prompts.get(0)).as("the first prompt is the instructor brief").isEqualTo("Build a bubble sort exercise.");
         assertThat(prompts.get(1)).as("the second prompt carries the verifier's rejection report so the agent can fix exactly those issues")
-                .contains("template unexpectedly passed all tests").contains("rejected by the authoritative verifier");
+                .contains("template unexpectedly passed all tests").contains("rejected by the differential verifier");
     }
 
     /** Acceptance on the first attempt runs the agent exactly once — no needless retry. */
@@ -331,7 +331,7 @@ class ExerciseGenerationOrchestrationServiceTest {
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
         String retryPrompt = promptCaptor.getAllValues().get(1);
-        assertThat(retryPrompt).as("the retry prompt still carries the hard rejection").contains("rejected by the authoritative verifier").contains("template passed a test");
+        assertThat(retryPrompt).as("the retry prompt still carries the hard rejection").contains("rejected by the differential verifier").contains("template passed a test");
         assertThat(retryPrompt).as("and also the advisory spec-fidelity gap").contains("did NOT cause rejection").contains("emoji").contains("Add a test");
     }
 
@@ -488,7 +488,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     }
 
     /**
-     * The off-switch still works: with the master flag explicitly OFF the cross-check never runs — no tester agent, no cross-check — and the outcome carries no cross-check result.
+     * The off-switch still works: with the master flag explicitly OFF the cross-check never runs — no examiner agent, no cross-check — and the outcome carries no cross-check
+     * result.
      */
     @Test
     void crossCheckCanBeExplicitlyDisabled() {

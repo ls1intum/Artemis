@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * GPU-gated authentic proof of the LIVE half of Design F: a real independent-examiner agent, given ONLY the {@code realistic-pasted-lru} problem statement + template (never the
+ * GPU-gated authentic proof of the decorrelated cross-check: a real independent-examiner agent, given ONLY the {@code realistic-pasted-lru} problem statement + template (never the
  * reference solution), authors a test suite that CATCHES the co-authored false-accept — its suite FAILS on the buggy LRU solution (which evicts the wrong key) and PASSES on a
  * correct one.
  * <p>
@@ -222,7 +222,7 @@ class HyperionDecorrelatedExaminerAuthenticTest extends AbstractSpringIntegratio
             // LIVE independent examiner THROUGH THE PRODUCTION PATH: authorShadowSuite owns its own solution-free session, seeds from the produced template + tests maps (never the
             // solution), runs the real examiner loop, and reads the authored suite back out — validating seedExaminerWorkspace(...produced maps), not a hand-seed.
             // Decorrelation-by-absence
-            // is proven deterministically by GenerationWorkspaceServiceTesterSeedingTest.
+            // is proven deterministically by GenerationWorkspaceServiceExaminerSeedingTest.
             Map<String, String> shadowSuite = independentExaminer.authorShadowSuite(exercise, FIXTURE_TEMPLATE_FILES, FIXTURE_TESTS_HARNESS, () -> false, null,
                     line -> log.info("[examiner attempt {}] {}", currentAttempt, line));
             if (shadowSuite.isEmpty()) {

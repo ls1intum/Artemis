@@ -144,11 +144,6 @@ class CrossCheckServiceTest {
         assertThat(advisory.requirement()).contains("evictsLeastRecentlyUsedInsertionOrder");
     }
 
-    /**
-     * Serves the shadow-suite build reports on {@code copyOut} (routed by the reports-dir path ending {@code /solution}) and the build exit code/timeout on {@code exec}, so the
-     * cross-check runs its real seed+build+copyOut+parse path against scripted reports — no Docker. The cross-check only ever builds the solution, so only that assignment is
-     * scripted.
-     */
     /** A sandbox whose every operation throws, to drive the outer {@code catch (RuntimeException)} fail-open path. */
     private static final class ThrowingSandbox implements InteractiveSandbox {
 
@@ -177,6 +172,11 @@ class CrossCheckServiceTest {
         }
     }
 
+    /**
+     * Serves the shadow-suite build reports on {@code copyOut} (routed by the reports-dir path ending {@code /solution}) and the build exit code/timeout on {@code exec}, so the
+     * cross-check runs its real seed+build+copyOut+parse path against scripted reports — no Docker. The cross-check only ever builds the solution, so only that assignment is
+     * scripted.
+     */
     private static final class ScriptedShadowSandbox implements InteractiveSandbox {
 
         private final List<String> names;

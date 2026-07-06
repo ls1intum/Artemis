@@ -78,7 +78,7 @@ public class ExerciseGenerationOrchestrationService {
 
     private final DifferentialVerificationService verifier;
 
-    private final AgentSystemPromptService systemPromptFactory;
+    private final AgentSystemPromptService systemPromptService;
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
@@ -119,7 +119,7 @@ public class ExerciseGenerationOrchestrationService {
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
-            DifferentialVerificationService verifier, AgentSystemPromptService systemPromptFactory, StructuralOracleSeedingService structuralOracleSeeder,
+            DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, CrossCheckService crossCheckService,
             ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
@@ -130,7 +130,7 @@ public class ExerciseGenerationOrchestrationService {
         this.workspace = workspace;
         this.agentLoopRunner = agentLoopRunner;
         this.verifier = verifier;
-        this.systemPromptFactory = systemPromptFactory;
+        this.systemPromptService = systemPromptService;
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.specFidelityCritic = specFidelityCritic;
         this.independentExaminer = independentExaminer;
@@ -188,7 +188,7 @@ public class ExerciseGenerationOrchestrationService {
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
-            String systemPrompt = systemPromptFactory.build(exercise, mode);
+            String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the SAME differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); post-loop
             // verify(...)
             // below stays the sole acceptance truth.
@@ -289,7 +289,7 @@ public class ExerciseGenerationOrchestrationService {
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
-                currentPrompt = "Your previous attempt was rejected by the authoritative verifier:\n" + verification.report()
+                currentPrompt = "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
                         + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, re-run `sh verify.sh solution` and "
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
