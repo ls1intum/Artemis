@@ -330,6 +330,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(storedSubmission.id()).as("in-time submission was found").isEqualTo(submission.getId());
         assertThat(storedSubmission.submissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.results()).as("result is not set").isNullOrEmpty();
+        assertThat(storedSubmission.participation().exercise().exampleSolution()).isEqualTo(releasedFileUploadExercise.getExampleSolution());
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -434,6 +435,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission.participation().exercise().isAtLeastTutor()).isFalse();
         assertThat(submission.participation().exercise().isAtLeastEditor()).isFalse();
         assertThat(submission.participation().exercise().isAtLeastInstructor()).isFalse();
+        assertThat(submission.participation().exercise().exampleSolution()).isNull();
     }
 
     @Test

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param title                                  the title of the exercise
  * @param problemStatement                       the problem statement description
  * @param gradingInstructions                    the grading instructions text
+ * @param exampleSolution                        the example solution for the exercise
  * @param releaseDate                            the release date of the exercise
  * @param startDate                              the start date of the exercise
  * @param dueDate                                the due date of the exercise
@@ -42,10 +43,11 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param gradingCriteria                        the grading criteria defined for the exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExerciseContextDTO(Long id, String title, String problemStatement, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate,
-        ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, Boolean allowComplaintsForAutomaticAssessments,
-        Boolean allowFeedbackRequests, ExerciseType type, String filePattern, Boolean teamMode, Boolean isAtLeastTutor, Boolean isAtLeastEditor, Boolean isAtLeastInstructor,
-        FileUploadCourseContextDTO course, FileUploadExerciseGroupContextDTO exerciseGroup, Set<GradingCriterionDTO> gradingCriteria) {
+public record FileUploadExerciseContextDTO(Long id, String title, String problemStatement, String gradingInstructions, String exampleSolution, ZonedDateTime releaseDate,
+        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, AssessmentType assessmentType,
+        Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, ExerciseType type, String filePattern, Boolean teamMode, Boolean isAtLeastTutor,
+        Boolean isAtLeastEditor, Boolean isAtLeastInstructor, FileUploadCourseContextDTO course, FileUploadExerciseGroupContextDTO exerciseGroup,
+        Set<GradingCriterionDTO> gradingCriteria) {
 
     /**
      * Factory method to create a {@link FileUploadExerciseContextDTO} from a {@link FileUploadExercise} entity.
@@ -91,9 +93,9 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
             gradingCriteriaDTOs = exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
         }
 
-        return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getAssessmentType(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getExerciseType(), exercise.getFilePattern(),
-                exercise.isTeamMode(), isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, courseDTO, exerciseGroupDTO, gradingCriteriaDTOs);
+        return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getExampleSolution(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),
+                exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getExerciseType(),
+                exercise.getFilePattern(), exercise.isTeamMode(), isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, courseDTO, exerciseGroupDTO, gradingCriteriaDTOs);
     }
 }
