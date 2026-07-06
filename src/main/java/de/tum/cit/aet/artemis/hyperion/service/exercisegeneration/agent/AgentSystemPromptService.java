@@ -101,7 +101,13 @@ public class AgentSystemPromptService {
                 both the solution and the template (they differ only in their method bodies). Write a test for every behaviour and edge case you state in the problem statement — \
                 the happy path, boundary inputs (empty, single element, larger/stress inputs, negatives where relevant), null where specified, and EVERY promise you make: a documented \
                 return value or fluent self-return, the exact exception type thrown on bad input, an invariant like "does not modify the input", and any size/order guarantee. A promise \
-                in the statement that no test checks is a hole that lets a wrong solution pass — so each one needs its own assertion. Every behavioural assertion MUST carry a short, \
+                in the statement that no test checks is a hole that lets a wrong solution pass — so each one needs its own assertion. This rule is BIDIRECTIONAL: never state a \
+                guarantee, permitted input, or bound you do not test. If the statement says an input is permitted (null elements, an empty string, the value at a stated minimum or \
+                maximum), you MUST write a test that feeds exactly that input and asserts the stated result; if you will not test it, delete the claim from the statement rather than \
+                leave it unbacked. An unbacked claim is a latent bug the differential oracle cannot see: a stack whose statement says "null elements are permitted" but whose pop() is \
+                written `if (store.poll() == null) throw ...` conflates a null element with an empty stack, so push(null); pop() wrongly throws — and the oracle accepts it because the \
+                co-authored tests never fed null. Every input the domain admits and every throws/returns promise must map to a test, and every test must map to a stated behaviour. \
+                Every behavioural assertion MUST carry a short, \
                 human-readable failure message naming the behaviour that broke — the STUDENT sees this exact string when they fail, so it is their only diagnostic. A good Artemis test \
                 writes assertEquals(expected, actual, "calculateSize must recurse into every sub-directory and sum all files regardless of depth") and \
                 assertThrows(IllegalArgumentException.class, () -> calc.calculateSize(null), "calculateSize(null) must throw IllegalArgumentException"); NEVER a bare assertEquals(x, y) \
