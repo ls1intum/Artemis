@@ -199,8 +199,12 @@ export class ExerciseTableComponent {
         return getExerciseUrlSegment(exercise.type);
     }
 
-    titleLink(exercise: Exercise): (string | number)[] {
-        return ['/course-management', this.courseId(), this.urlSegment(exercise), exercise.id!];
+    /** Detail-page link for the exercise, or `undefined` for unsaved drafts (RouterLink disables navigation for null/undefined). */
+    titleLink(exercise: Exercise): (string | number)[] | undefined {
+        if (exercise.id === undefined) {
+            return undefined;
+        }
+        return ['/course-management', this.courseId(), this.urlSegment(exercise), exercise.id];
     }
 
     icon(exercise: Exercise) {
@@ -259,7 +263,7 @@ export class ExerciseTableComponent {
     }
 
     protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {
-        if (exercise.type !== ExerciseType.QUIZ) return exercise.id ?? exercise;
+        if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) return exercise.id ?? exercise;
         const q = exercise as QuizExercise;
         // In zoneless Angular, ngFor embedded views may not re-evaluate when let-exercise gets a new
         // object reference with the same id. Including the properties that drive lifecycle-button

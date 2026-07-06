@@ -156,9 +156,20 @@ class ExerciseVariantGroupTest {
     }
 
     @Test
-    void testExampleSolutionPublicationDateBeforeDueDateIsInvalid() {
+    void testExampleSolutionPublicationDateBeforeDueDateIsAllowed() {
+        // Unlike a single exercise, the group cannot decide the "example solution not before the due date" rule
+        // (it has no IncludedInOverallScore); each member exercise re-validates it when the group timeline is applied.
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setDueDate(BASE.plusDays(2));
+        group.setExampleSolutionPublicationDate(BASE.plusDays(1));
+
+        assertThat(group.areDatesValid()).isTrue();
+    }
+
+    @Test
+    void testExampleSolutionPublicationDateBeforeReleaseDateIsInvalid() {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setReleaseDate(BASE.plusDays(2));
         group.setExampleSolutionPublicationDate(BASE.plusDays(1));
 
         assertThat(group.areDatesValid()).isFalse();

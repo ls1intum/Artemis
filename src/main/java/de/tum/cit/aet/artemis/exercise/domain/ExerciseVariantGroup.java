@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -36,7 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseVariantGroup extends DomainObject {
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
     /**
@@ -87,7 +88,7 @@ public class ExerciseVariantGroup extends DomainObject {
     }
 
     public void setTitle(String title) {
-        this.title = title != null ? title.strip() : null;
+        this.title = Objects.requireNonNull(title, "title must not be null").strip();
     }
 
     @Nullable

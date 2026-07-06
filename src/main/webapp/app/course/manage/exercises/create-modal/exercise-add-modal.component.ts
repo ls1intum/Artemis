@@ -147,7 +147,7 @@ export class ExerciseAddModalComponent {
     navigateToCreate(card: ExerciseTypeCard): void {
         const id = this.courseId();
         if (id !== undefined) {
-            this.router.navigate(['/course-management', id, ...card.routeSegment.split('/')]);
+            void this.router.navigate(['/course-management', id, ...card.routeSegment.split('/')]);
         }
         this.close();
     }
@@ -190,7 +190,7 @@ export class ExerciseAddModalComponent {
                 if (type === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(exercise);
                 } else {
-                    this.router.navigate(['/course-management', this.courseId(), type + '-exercises', exercise.id, 'import']);
+                    void this.router.navigate(['/course-management', this.courseId(), type + '-exercises', exercise.id, 'import']);
                 }
             }
         });
@@ -205,11 +205,11 @@ export class ExerciseAddModalComponent {
     private handleProgrammingImport(result: Exercise): void {
         // When the exercise is imported from a file, the id is undefined.
         if (result.id === undefined) {
-            this.router.navigate(['/course-management', this.courseId(), 'programming-exercises', 'import-from-file'], {
+            void this.router.navigate(['/course-management', this.courseId(), 'programming-exercises', 'import-from-file'], {
                 state: { programmingExerciseForImportFromFile: result },
             });
         } else {
-            this.router.navigate(['/course-management', this.courseId(), 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', this.courseId(), 'programming-exercises', 'import', result.id]);
         }
     }
 

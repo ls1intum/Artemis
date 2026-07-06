@@ -10,7 +10,9 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="title" type="varchar(255)"/>
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
             <column name="max_points" type="double"/>
             <column name="release_date" type="datetime(3)"/>
             <column name="start_date" type="datetime(3)"/>

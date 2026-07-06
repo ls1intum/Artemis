@@ -174,6 +174,6 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
         if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
             return;
         }
-        this.router.navigateByUrl(group.routerLink);
+        void this.router.navigateByUrl(group.routerLink);
     }
 }
