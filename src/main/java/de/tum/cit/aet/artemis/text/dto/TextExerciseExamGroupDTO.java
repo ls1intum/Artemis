@@ -59,8 +59,8 @@ public record TextExerciseExamGroupDTO(Long id, ExamReferenceDTO exam) implement
             return new TextExerciseExamGroupDTO(exerciseGroup.getId(), null);
         }
         CourseForQuizExerciseDTO course = Hibernate.isInitialized(exam.getCourse()) && exam.getCourse() != null ? CourseForQuizExerciseDTO.of(exam.getCourse()) : null;
-        ExamReferenceDTO examRef = new ExamReferenceDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.getPublishResultsDate(), exam.getExampleSolutionPublicationDate(),
-                exam.getNumberOfCorrectionRoundsInExam(), course);
+        ExamReferenceDTO examRef = new ExamReferenceDTO(exam.getId(), exam.getTitle(), !exam.getExamMode().isReal(), exam.getPublishResultsDate(),
+                exam.getExampleSolutionPublicationDate(), exam.getNumberOfCorrectionRoundsInExam(), course);
         return new TextExerciseExamGroupDTO(exerciseGroup.getId(), examRef);
     }
 }
