@@ -93,6 +93,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
+        fixture.detectChanges(); // second pass needed for NgModel viewChild to initialize and validate
         expect(comp.isPackageNameValid()).toBe(true);
     });
 });

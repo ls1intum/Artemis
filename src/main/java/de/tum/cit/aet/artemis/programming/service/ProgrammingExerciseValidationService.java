@@ -174,6 +174,12 @@ public class ProgrammingExerciseValidationService {
         }
     }
 
+    public void validatePackageName(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        validatePackageName(programmingExercise, programmingLanguageFeature);
+    }
+
     private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         if (!programmingLanguageFeature.packageNameRequired()) {
             return;
