@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.math.service;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -138,8 +139,7 @@ public class MathExerciseImportService extends ExerciseImportService {
      * @return a map from submission id to the submission with its assessment graph eagerly loaded (empty if there are none)
      */
     private Map<Long, MathSubmission> loadSubmissionsWithAssessment(Set<ExampleSubmission> exampleSubmissions) {
-        Set<Long> submissionIds = exampleSubmissions.stream().map(ExampleSubmission::getSubmission).filter(submission -> submission != null).map(Submission::getId)
-                .collect(Collectors.toSet());
+        Set<Long> submissionIds = exampleSubmissions.stream().map(ExampleSubmission::getSubmission).filter(Objects::nonNull).map(Submission::getId).collect(Collectors.toSet());
         if (submissionIds.isEmpty()) {
             return Map.of();
         }
@@ -163,7 +163,8 @@ public class MathExerciseImportService extends ExerciseImportService {
             newSubmission.setExampleSubmission(true);
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
             newSubmission.setType(originalSubmission.getType());
-            newSubmission.setParticipation(originalSubmission.getParticipation());
+            // Intentionally not copying the participation: example submissions are standalone teaching artifacts and must
+            // not inherit the source exercise's participation (see ExampleSubmissionService#importStudentSubmissionAsExampleSubmission).
             newSubmission.setContent(originalSubmission.getContent());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             Result originalResult = originalSubmission.getLatestResult();
