@@ -20,10 +20,41 @@ tasks.register("webapp_test", PnpmTask) {
     args = ["run", "webapp:test"]
 }
 
-tasks.register("webapp", PnpmTask) {
-    dependsOn pnpmInstall
-    args = ["run", "webapp:prod"]
-    environment = [APP_VERSION: project.version]
+// CI (.github/workflows/ci-build.yml) builds the Angular client in a separate, isolated
+// `ng build` step so Node/esbuild get full system memory instead of competing with the Gradle
+// JVM, then leaves the result at build/webapp-dist instead of the final build/resources/main/static.
+//
+// That indirection matters because Gradle deletes any declared task-output directory it does
+// not already recognize from a previous build in this workspace *before* any task runs — on a
+// fresh checkout (every CI run) that registry is always empty, so this happens every time,
+// regardless of Gradle version. build/resources/main/static is processResources' declared
+// output directory, so anything placed there by a plain shell command before Gradle starts
+// (rather than by a task Gradle knows is part of the current run) is wiped again before the
+// first task body executes, silently leaving the WAR without a client. build/webapp-dist is
+// not declared as any task's output, so it survives that cleanup; below, the `webapp` task
+// picks it up from there and copies it into place as part of the tracked task graph.
+def prebuiltWebappDir = file("${projectDir}/build/webapp-dist")
+def webappBuildDir = file("${projectDir}/build/resources/main/static")
+if (prebuiltWebappDir.exists()) {
+    tasks.register("webapp") {
+        dependsOn pnpmInstall
+        inputs.dir(prebuiltWebappDir).withPropertyName("prebuilt-webapp-dir")
+        outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
+        doLast {
+            delete(webappBuildDir)
+            copy {
+                from prebuiltWebappDir
+                into webappBuildDir
+            }
+        }
+    }
+} else {
+    tasks.register("webapp", PnpmTask) {
+        dependsOn pnpmInstall
+        outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
+        args = ["run", "webapp:prod"]
+        environment = [APP_VERSION: project.version]
+    }
 }
 
 processResources {

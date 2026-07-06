@@ -4,11 +4,6 @@ bootWar {
     mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
-    // CI prebuilds the Angular client outside Gradle and assembles the WAR with -x webapp.
-    // Add the generated client explicitly so bootWar packages it in that path as well.
-    from("build/resources/main/static") {
-        into "WEB-INF/classes/static"
-    }
     manifest {
         attributes("Implementation-Title": "Artemis",
                    "Implementation-Version": version)
