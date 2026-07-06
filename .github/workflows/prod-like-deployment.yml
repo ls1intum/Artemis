@@ -34,11 +34,12 @@ jobs:
     runs-on: [self-hosted, artemis-prod-deployment]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
+    env:
+      BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+      COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
     steps:
       - name: Print inputs
         env:
-          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
-          COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
           ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
           TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
@@ -59,8 +60,6 @@ jobs:
         id: set_build_workflow_id
         env:
           WORKFLOW_DATA: ${{ steps.get_workflow_run.outputs.data }}
-          COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
-          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
         run: |
           WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r '
             .workflow_runs[0].id // empty
@@ -86,7 +85,6 @@ jobs:
         id: check_result
         env:
           ARTIFACT_DATA: ${{ steps.verify_artifact.outputs.data }}
-          COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
         run: |
           TOTAL_COUNT=$(echo "$ARTIFACT_DATA" | jq -r '.total_count')
 
@@ -179,7 +177,7 @@ jobs:
           until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
             attempts=$((attempts + 1))
             if [ "$attempts" -ge "$max_attempts" ]; then
-              echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5 minutes) following deployment."
+              echo "::error::$HEALTH_CHECK_URL did not report healthy after $max_attempts attempts (~5-10 minutes, depending on how quickly each attempt fails) following deployment."
               exit 1
             fi
             echo "Waiting for $HEALTH_CHECK_URL to report healthy (attempt $attempts/$max_attempts)..."
