@@ -53,6 +53,7 @@ import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
 
 HOST = os.environ.get("MOCK_LLM_HOST", "0.0.0.0")
 PORT = int(os.environ.get("MOCK_LLM_PORT", "8081"))
@@ -190,7 +191,7 @@ def to_stream_chunks(response: dict) -> list:
     choice = response["choices"][0]
     message = choice["message"]
 
-    def chunk(delta: dict, finish_reason: str = None) -> dict:
+    def chunk(delta: dict, finish_reason: Optional[str] = None) -> dict:
         return {
             "id": response["id"],
             "object": "chat.completion.chunk",
@@ -271,9 +272,14 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Connection", "close")
         self.end_headers()
+        # wfile is buffered; flush after every event so chunks reach the client as they're
+        # produced instead of arriving in one burst when the connection closes, which would
+        # defeat streaming semantics (and delay tool-call/activity visibility in Pyris).
         for chunk in chunks:
             self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode("utf-8"))
+            self.wfile.flush()
         self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
         self.close_connection = True
 
     def do_GET(self) -> None:  # noqa: N802 - http.server API
