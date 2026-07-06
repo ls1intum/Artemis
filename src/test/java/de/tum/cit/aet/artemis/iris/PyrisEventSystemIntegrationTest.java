@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -267,7 +268,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         Result result = createFailingSubmissionWithLazyBuildLogEntries(studentParticipation);
         irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
             assertThat(dto.programmingExerciseSubmission()).isNotNull();
-            assertThat(dto.programmingExerciseSubmission().buildLogEntries()).extracting("message").containsExactly("compilation failed: cannot find symbol");
+            assertThat(dto.programmingExerciseSubmission().buildLogEntries()).extracting(PyrisBuildLogEntryDTO::message).containsExactly("compilation failed: cannot find symbol");
             pipelineDone.set(true);
         });
 
