@@ -91,7 +91,13 @@ export class TypeAheadUserSearchFieldComponent {
         if (user?.login) {
             this.loginOrName.set(user.login);
         }
-        this.searchQueryTooShort.set(normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH);
+        const tooShort = normalizedValue.length < this.MIN_SEARCH_QUERY_LENGTH;
+        this.searchQueryTooShort.set(tooShort);
+        if (tooShort) {
+            // Below minLength PrimeNG stops firing (completeMethod), so route the short value through the pipeline
+            // ourselves: switchMap then cancels any in-flight search and clears the now-stale suggestions.
+            this.query$.next(normalizedValue);
+        }
     }
 
     resultFormatter = (result: User): string => (result.name ?? '<no name>') + ' (' + (result.login ?? '<no login>') + ')';
