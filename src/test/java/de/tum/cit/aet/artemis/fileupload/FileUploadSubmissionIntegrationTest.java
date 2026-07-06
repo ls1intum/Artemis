@@ -521,6 +521,17 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission.submitted()).isTrue();
         assertThat(submission.results().getFirst().feedbacks()).hasSameSizeAs(feedbacks);
         assertThat(submission.results().getFirst().assessor()).as("students should not see the assessor information").isNull();
+
+        var course = submission.participation().exercise().course();
+        var expectedCourse = assessedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
+        assertThat(course.maxComplaints()).isEqualTo(expectedCourse.getMaxComplaints());
+        assertThat(course.maxTeamComplaints()).isEqualTo(expectedCourse.getMaxTeamComplaints());
+        assertThat(course.maxComplaintTimeDays()).isEqualTo(expectedCourse.getMaxComplaintTimeDays());
+        assertThat(course.maxRequestMoreFeedbackTimeDays()).isEqualTo(expectedCourse.getMaxRequestMoreFeedbackTimeDays());
+        assertThat(course.maxComplaintTextLimit()).isEqualTo(expectedCourse.getMaxComplaintTextLimit());
+        assertThat(course.maxComplaintResponseTextLimit()).isEqualTo(expectedCourse.getMaxComplaintResponseTextLimit());
+        assertThat(course.complaintsEnabled()).isEqualTo(expectedCourse.getComplaintsEnabled());
+        assertThat(course.requestMoreFeedbackEnabled()).isEqualTo(expectedCourse.getRequestMoreFeedbackEnabled());
     }
 
     @Test
