@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
@@ -76,7 +77,7 @@ public class SystemNotificationService {
      */
     @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        List<SystemNotification> notifications = findAllActiveAndFutureSystemNotifications();
+        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
         websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
         // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
         websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);
