@@ -182,6 +182,18 @@ export class ExerciseTableComponent {
         return this.sortAsc() ? this.faCaretUp : this.faCaretDown;
     }
 
+    /** Current sort state of a column for `aria-sort`, so assistive tech announces the active order. */
+    ariaSort(col: SortColumn): 'ascending' | 'descending' | 'none' {
+        if (this.sortColumn() !== col) return 'none';
+        return this.sortAsc() ? 'ascending' : 'descending';
+    }
+
+    /** Keyboard equivalent of the header click; prevents default so Space does not scroll the page. */
+    onSortKeydown(event: Event, col: SortColumn): void {
+        event.preventDefault();
+        this.sortBy(col);
+    }
+
     onDrop(event: CdkDragDrop<Exercise[]>): void {
         if (event.previousContainer === event.container) {
             // Reorder within this group: keep the dragged order and stop applying column sorting.

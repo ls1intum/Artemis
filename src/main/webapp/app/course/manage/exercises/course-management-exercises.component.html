@@ -39,8 +39,9 @@
             <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
         </div>
 
-        <!-- Mass actions row -->
-        @if (selectedCount() > 0) {
+        <!-- Mass actions row. All bulk actions target editor+ workflows, so tutors (who can reach this page but
+             cannot select rows) never see it. -->
+        @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
             <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
                 <span class="text-muted small">{{ 'artemisApp.exerciseManagement.selection.count' | artemisTranslate: { count: selectedCount() } }}</span>
                 <button
@@ -60,21 +61,23 @@
                         <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                     </button>
                 }
-                <button
-                    jhiDeleteButton
-                    deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-                    [translateValues]="{
-                        courseTitle: course()?.title,
-                        courseType: course()?.testCourse
-                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
-                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
-                    }"
-                    [requireConfirmationOnlyForAdditionalChecks]="true"
-                    (delete)="deleteSelectedExercises()"
-                    [dialogError]="selectedDeleteError$"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
+                @if (course()?.isAtLeastInstructor) {
+                    <button
+                        jhiDeleteButton
+                        deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        [translateValues]="{
+                            courseTitle: course()?.title,
+                            courseType: course()?.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
+                        [requireConfirmationOnlyForAdditionalChecks]="true"
+                        (delete)="deleteSelectedExercises()"
+                        [dialogError]="selectedDeleteError$"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                }
             </div>
         }
     </ng-template>
@@ -108,7 +111,7 @@
                             [showDragHandle]="isGroup()"
                             [showTypeIcon]="view() !== 'type'"
                             [showGroupSelector]="!isGroup() && groups().length > 0"
-                            [showCheckbox]="!isGroup()"
+                            [showCheckbox]="!isGroup() && (course()?.isAtLeastEditor ?? false)"
                             [selectedIds]="selectedIds()"
                             [groups]="groups()"
                             (groupChange)="onTableGroupChange($event)"

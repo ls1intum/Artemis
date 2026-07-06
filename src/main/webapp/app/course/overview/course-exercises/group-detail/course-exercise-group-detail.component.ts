@@ -214,15 +214,22 @@ export class CourseExerciseGroupDetailComponent {
             missing.forEach((exercise) => this.problemStatementsRequested.add(exercise.id));
             forkJoin(missing.map((exercise) => this.exerciseService.getExerciseDetails(exercise.id)))
                 .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((responses) => {
-                    const next = new Map(this.problemStatements());
-                    for (const response of responses) {
-                        const exercise = response.body?.exercise;
-                        if (exercise?.id !== undefined && exercise.problemStatement !== undefined) {
-                            next.set(exercise.id, exercise.problemStatement);
+                .subscribe({
+                    next: (responses) => {
+                        const next = new Map(this.problemStatements());
+                        for (const response of responses) {
+                            const exercise = response.body?.exercise;
+                            if (exercise?.id !== undefined && exercise.problemStatement !== undefined) {
+                                next.set(exercise.id, exercise.problemStatement);
+                            }
                         }
-                    }
-                    this.problemStatements.set(next);
+                        this.problemStatements.set(next);
+                    },
+                    error: () => {
+                        // The ids were optimistically marked as requested; release them again so a later change (or
+                        // revisit) can retry the batch instead of leaving the previews permanently blocked.
+                        missing.forEach((exercise) => this.problemStatementsRequested.delete(exercise.id));
+                    },
                 });
         });
     }

@@ -24,6 +24,7 @@
             (keydown.enter)="lockedClick.emit()"
             (keydown.space)="lockedClick.emit()"
             ngbTooltip="{{ 'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate }}"
+            [attr.aria-label]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faLock" class="date-lock-icon text-secondary" />
         </div>

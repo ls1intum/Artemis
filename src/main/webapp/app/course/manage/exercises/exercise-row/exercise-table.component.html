@@ -17,17 +17,45 @@
                 @if (showDragHandle()) {
                     <th style="width: 2.5rem"></th>
                 }
-                <th class="sort-col" (click)="sortBy('title')">
+                <th
+                    class="sort-col"
+                    tabindex="0"
+                    [attr.aria-sort]="ariaSort('title')"
+                    (click)="sortBy('title')"
+                    (keydown.enter)="onSortKeydown($event, 'title')"
+                    (keydown.space)="onSortKeydown($event, 'title')"
+                >
                     <span jhiTranslate="artemisApp.exercise.title"></span> <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" />
                 </th>
-                <th class="sort-col col-dates" (click)="sortBy('dueDate')">
+                <th
+                    class="sort-col col-dates"
+                    tabindex="0"
+                    [attr.aria-sort]="ariaSort('dueDate')"
+                    (click)="sortBy('dueDate')"
+                    (keydown.enter)="onSortKeydown($event, 'dueDate')"
+                    (keydown.space)="onSortKeydown($event, 'dueDate')"
+                >
                     <span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span> <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" />
                 </th>
-                <th class="sort-col" (click)="sortBy('points')">
+                <th
+                    class="sort-col"
+                    tabindex="0"
+                    [attr.aria-sort]="ariaSort('points')"
+                    (click)="sortBy('points')"
+                    (keydown.enter)="onSortKeydown($event, 'points')"
+                    (keydown.space)="onSortKeydown($event, 'points')"
+                >
                     <span jhiTranslate="artemisApp.exercise.points"></span> <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" />
                 </th>
                 @if (!showGroupSelector()) {
-                    <th class="sort-col" (click)="sortBy('difficulty')">
+                    <th
+                        class="sort-col"
+                        tabindex="0"
+                        [attr.aria-sort]="ariaSort('difficulty')"
+                        (click)="sortBy('difficulty')"
+                        (keydown.enter)="onSortKeydown($event, 'difficulty')"
+                        (keydown.space)="onSortKeydown($event, 'difficulty')"
+                    >
                         <span jhiTranslate="artemisApp.exercise.difficulty"></span> <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" />
                     </th>
                 }

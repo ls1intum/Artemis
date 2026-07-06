@@ -598,11 +598,20 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     /** Loads the course's variant groups from the server and merges them into the exercise list and view model. */
     private loadGroupsFromServer(courseId: number): void {
-        this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe((dtos) => {
-            const merged = this.groupSync.mergeGroupsIntoExercises(this.exercises(), dtos);
-            this.exercises.set(merged.exercises);
-            this.groups.set(merged.groups);
-            this.rebuildCards();
+        this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe({
+            next: (dtos) => {
+                const merged = this.groupSync.mergeGroupsIntoExercises(this.exercises(), dtos);
+                this.exercises.set(merged.exercises);
+                this.groups.set(merged.groups);
+                this.rebuildCards();
+            },
+            error: (errorRes: HttpErrorResponse) => {
+                // Do not keep groups from a previously shown course when this course's fetch fails — the stale groups
+                // would be rendered against the new exercise list.
+                this.groups.set([]);
+                this.rebuildCards();
+                this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params);
+            },
         });
     }
 

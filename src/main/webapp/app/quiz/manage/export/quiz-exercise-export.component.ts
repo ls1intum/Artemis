@@ -72,43 +72,49 @@ export class QuizExerciseExportComponent implements OnInit {
      */
     private loadForCourse(courseId: number) {
         this.isLoading.set(true);
-        this.courseService.find(this.courseId).subscribe((courseResponse) => {
-            this.course.set(courseResponse.body!);
-            // For the given course, get the list of all quiz exercises, then load each quiz's questions in parallel.
-            this.quizExerciseService.findForCourse(courseId).subscribe({
-                next: (res: HttpResponse<QuizExercise[]>) => {
-                    const quizExercises = (res.body ?? []).filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
-                    if (quizExercises.length === 0) {
-                        this.questions.set([]);
-                        this.isLoading.set(false);
-                        return;
-                    }
-                    forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id))).subscribe({
-                        next: (responses: HttpResponse<QuizExercise>[]) => {
-                            const collected: QuizQuestion[] = [];
-                            responses.forEach((response, index) => {
-                                const quizExercise = quizExercises[index];
-                                // reconnect course and exercise in case we need this information later
-                                quizExercise.course = this.course();
-                                response.body?.quizQuestions?.forEach((question) => {
-                                    question.exercise = quizExercise;
-                                    collected.push(question);
+        this.courseService.find(courseId).subscribe({
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
+            next: (courseResponse) => {
+                this.course.set(courseResponse.body!);
+                // For the given course, get the list of all quiz exercises, then load each quiz's questions in parallel.
+                this.quizExerciseService.findForCourse(courseId).subscribe({
+                    next: (res: HttpResponse<QuizExercise[]>) => {
+                        const quizExercises = (res.body ?? []).filter((quizExercise): quizExercise is QuizExercise & { id: number } => quizExercise.id !== undefined);
+                        if (quizExercises.length === 0) {
+                            this.questions.set([]);
+                            this.isLoading.set(false);
+                            return;
+                        }
+                        forkJoin(quizExercises.map((quizExercise) => this.quizExerciseService.find(quizExercise.id))).subscribe({
+                            next: (responses: HttpResponse<QuizExercise>[]) => {
+                                const collected: QuizQuestion[] = [];
+                                responses.forEach((response, index) => {
+                                    const quizExercise = quizExercises[index];
+                                    // reconnect course and exercise in case we need this information later
+                                    quizExercise.course = this.course();
+                                    response.body?.quizQuestions?.forEach((question) => {
+                                        question.exercise = quizExercise;
+                                        collected.push(question);
+                                    });
                                 });
-                            });
-                            this.questions.set(collected);
-                            this.isLoading.set(false);
-                        },
-                        error: (error: HttpErrorResponse) => {
-                            this.isLoading.set(false);
-                            onError(this.alertService, error);
-                        },
-                    });
-                },
-                error: (error: HttpErrorResponse) => {
-                    this.isLoading.set(false);
-                    onError(this.alertService, error);
-                },
-            });
+                                this.questions.set(collected);
+                                this.isLoading.set(false);
+                            },
+                            error: (error: HttpErrorResponse) => {
+                                this.isLoading.set(false);
+                                onError(this.alertService, error);
+                            },
+                        });
+                    },
+                    error: (error: HttpErrorResponse) => {
+                        this.isLoading.set(false);
+                        onError(this.alertService, error);
+                    },
+                });
+            },
         });
     }
 
