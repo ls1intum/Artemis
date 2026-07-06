@@ -51,10 +51,14 @@ jobs:
     runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Print Inputs
+        env:
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Environment: ${{ github.event.inputs.environment_name }}"
-          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
+          echo "Branch: $BRANCH_NAME"
+          echo "Environment: $ENVIRONMENT_NAME"
+          echo "Triggered by: $TRIGGERED_BY"
           echo "RAW_URL: ${{ env.RAW_URL }}"
 
   determine-build-context:
@@ -71,8 +75,8 @@ jobs:
         id: get_pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
         run: |
-          BRANCH_NAME=${{ github.event.inputs.branch_name }}
           IS_MAIN_OR_DEVELOP=false
 
           REPO_NAME=${{ github.repository }}
@@ -95,7 +99,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
 
             # Fetch the latest commit SHA of the branch
-            LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
+            LATEST_SHA=$(gh api "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
 
             if [ -z "$LATEST_SHA" ]; then
               echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
@@ -215,9 +219,15 @@ jobs:
   # Deploy to the test-server
   deploy:
     needs: [ determine-build-context, conditional-build, check-existing-build-for-pull-request, check-existing-build-for-branch, check-database-migration-approval ]
-    # Run if either the conditional-build or check-existing-build job was successful
-    # Use always() since one of the jobs will always skip
-    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
+    # Run if either the conditional-build or check-existing-build job was successful.
+    # Use always() since one of the jobs will always skip.
+    #
+    # check-database-migration-approval only runs when a PR exists (it needs one to check
+    # approval against) and is otherwise skipped. A bare "skipped" would also let migration
+    # approval be silently bypassed when deploying an arbitrary branch that has no PR at all
+    # (the conditional-build path) — only accept a skip when deploying develop/main directly,
+    # which is already reviewed via the merge itself.
+    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || (needs.check-database-migration-approval.result == 'skipped' && needs.determine-build-context.outputs.is_main_or_develop == 'true'))
     name: Deploy to Test-Server
     runs-on: [self-hosted, artemis-test-deployment]
     environment:
