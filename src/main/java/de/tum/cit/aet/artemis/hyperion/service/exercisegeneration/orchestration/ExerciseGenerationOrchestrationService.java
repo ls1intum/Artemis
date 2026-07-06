@@ -21,8 +21,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -35,7 +33,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileSnap
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
@@ -67,8 +64,6 @@ public class ExerciseGenerationOrchestrationService {
     /** First attempt plus a couple of verifier-feedback-driven fix iterations before giving up. */
     private static final int MAX_GENERATION_ATTEMPTS = 3;
 
-    private static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
-
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
 
@@ -88,9 +83,8 @@ public class ExerciseGenerationOrchestrationService {
 
     // DECORRELATED cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. ADDITIVE and
     // advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise.
+    // Owns BOTH halves of the cross-check: authors the decorrelated shadow suite AND runs it against the real solution (via its own CrossCheckService).
     private final IndependentExaminerService independentExaminer;
-
-    private final CrossCheckService crossCheckService;
 
     /**
      * Whether to run the decorrelated cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist). Under the advisory default an accepted
@@ -111,8 +105,6 @@ public class ExerciseGenerationOrchestrationService {
     // poll.
     private final ExerciseGenerationJobService jobService;
 
-    private final LLMTokenUsageService llmTokenUsageService;
-
     // Source of the authoritative pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a
     // build-agent-only
     // node; when absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
@@ -120,9 +112,9 @@ public class ExerciseGenerationOrchestrationService {
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
-            SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, CrossCheckService crossCheckService,
-            ExerciseGenerationJobService jobService, LLMTokenUsageService llmTokenUsageService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns, @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
+            SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, ExerciseGenerationJobService jobService,
+            Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns,
+            @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
             @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
             @Value("${artemis.hyperion.crosscheck.reject-on-contradiction:false}") boolean rejectOnContradiction) {
         this.maxTurns = maxTurns;
@@ -134,9 +126,7 @@ public class ExerciseGenerationOrchestrationService {
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.specFidelityCritic = specFidelityCritic;
         this.independentExaminer = independentExaminer;
-        this.crossCheckService = crossCheckService;
         this.jobService = jobService;
-        this.llmTokenUsageService = llmTokenUsageService;
         this.testCaseRepository = testCaseRepository;
         this.crossCheckEnabled = crossCheckEnabled;
         this.crossCheckLanguages = crossCheckLanguages;
@@ -175,8 +165,7 @@ public class ExerciseGenerationOrchestrationService {
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
-        Consumer<ChatResponse> usageSink = chatResponse -> llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
-                builder -> builder.withCourse(courseId).withExercise(exercise.getId()).withUser(user.getId()));
+        Consumer<ChatResponse> usageSink = jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         try {
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
@@ -260,9 +249,7 @@ public class ExerciseGenerationOrchestrationService {
                     // Seed the examiner from the artifacts the agent ACTUALLY produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
                     // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real
                     // solution).
-                    Map<String, String> shadowSuite = independentExaminer.authorShadowSuite(exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink,
-                            progress);
-                    crossCheck = crossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
+                    crossCheck = independentExaminer.crossCheck(sandbox, sessionId, exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink, progress);
                     emit(progress, "Independent examiner cross-check: " + crossCheck.status() + (crossCheck.detail() != null ? " — " + crossCheck.detail() : ""));
                     if (crossCheck.isContradiction()) {
                         // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under

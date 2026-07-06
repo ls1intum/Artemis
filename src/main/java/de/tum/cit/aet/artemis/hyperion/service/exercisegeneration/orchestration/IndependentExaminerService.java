@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ExaminerAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.CrossCheckVerdict;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -29,9 +31,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * ({@link GenerationWorkspaceService#seedExaminerWorkspace}) — so the examiner provably cannot read {@code solution/}. The examiner authors a test suite that pins the problem
  * statement's stated contract, using the restricted {@link ExaminerAgentTools} (no {@code verify} tool), and iterates only to make the suite compile against the template.
  * <p>
- * The authored suite (the tests-repo working tree, read back out of the examiner container) is returned to the caller, which then runs it against the REAL solution/template via
- * the
- * {@code CrossCheckService}. It is only invoked when the cross-check is enabled and the language is allowlisted.
+ * The authored suite (the tests-repo working tree, read back out of the examiner container) is then run against the REAL solution/template via the {@link CrossCheckService};
+ * {@link #crossCheck} bundles both halves so the orchestrator's cross-check step is a single call. It is only invoked when the cross-check is enabled and the language is
+ * allowlisted.
  */
 @Lazy
 @Service
@@ -53,16 +55,40 @@ public class IndependentExaminerService {
 
     private final AgentSystemPromptService systemPromptService;
 
+    private final CrossCheckService crossCheckService;
+
     /** The examiner has a bounded job (author tests, make them compile), so a smaller turn budget than the main author is enough. */
     private final int maxTurns;
 
     public IndependentExaminerService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
-            AgentSystemPromptService systemPromptService, @Value("${artemis.hyperion.crosscheck.examiner-max-turns:40}") int maxTurns) {
+            AgentSystemPromptService systemPromptService, CrossCheckService crossCheckService, @Value("${artemis.hyperion.crosscheck.examiner-max-turns:40}") int maxTurns) {
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
+        this.crossCheckService = crossCheckService;
         this.maxTurns = maxTurns;
+    }
+
+    /**
+     * Authors a decorrelated shadow suite ({@link #authorShadowSuite}) and evaluates it against the real solution via the {@link CrossCheckService}. Bundling the two halves —
+     * authoring the independent suite and running it — behind one call keeps the orchestrator's cross-check step a single, intention-revealing statement and shares the examiner's
+     * one attribution/{@code usageSink} path.
+     *
+     * @param sandbox               the live generation sandbox the shadow suite is run against (holds the real produced solution/template)
+     * @param sessionId             the generation session id in that sandbox
+     * @param exercise              the accepted exercise being cross-checked
+     * @param producedTemplateFiles the produced TEMPLATE files the examiner writes tests against
+     * @param producedTestsFiles    the produced TESTS files (sample sources stripped before seeding)
+     * @param cancelled             polled cooperatively between turns; a {@code true} aborts the examiner loop
+     * @param usageSink             receives each model call's response for token-usage tracking; may be {@code null}
+     * @param progress              short human-readable progress lines for the live transcript; may be {@code null}
+     * @return the cross-check verdict (an empty authored suite fails open to a non-contradiction verdict)
+     */
+    public CrossCheckVerdict crossCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTemplateFiles,
+            Map<String, String> producedTestsFiles, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress) {
+        Map<String, String> shadowSuite = authorShadowSuite(exercise, producedTemplateFiles, producedTestsFiles, cancelled, usageSink, progress);
+        return crossCheckService.runAgainstShadowSuite(sandbox, sessionId, exercise, shadowSuite);
     }
 
     /**

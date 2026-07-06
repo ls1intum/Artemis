@@ -12,11 +12,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
@@ -28,6 +31,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
@@ -60,6 +65,9 @@ public class ExerciseGenerationJobService {
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
+    /** Pipeline id under which a generation run's model-call token usage is recorded. */
+    private static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
+
     private static final int JOB_TTL_SECONDS = 7200;
 
     /** How long a finished run's transcript stays retrievable so a reloading client can replay it after the slot is gone. */
@@ -76,6 +84,8 @@ public class ExerciseGenerationJobService {
     // Run launched via an event so this service does not depend on the task service, which would close a construction cycle.
     private final ApplicationEventPublisher eventPublisher;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
     private IMap<String, JobInfo> jobMap;
 
     private IMap<String, Boolean> cancellationMap;
@@ -88,9 +98,25 @@ public class ExerciseGenerationJobService {
     // flag.
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
-    public ExerciseGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher) {
+    public ExerciseGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
+            LLMTokenUsageService llmTokenUsageService) {
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
+        this.llmTokenUsageService = llmTokenUsageService;
+    }
+
+    /**
+     * The token-usage sink for a generation run's model calls: each {@link ChatResponse} is recorded against the run's course/exercise/user. It lives here — with the rest of the
+     * run's bookkeeping — so the orchestrator and the independent examiner attribute their model calls through one shared path.
+     *
+     * @param courseId   the run's course id, or {@code null} if unavailable
+     * @param exerciseId the run's exercise id, or {@code null} if unavailable
+     * @param userId     the initiating user's id, or {@code null} if unavailable
+     * @return a sink that records each model response's token usage
+     */
+    public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
+        return chatResponse -> llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
     }
 
     /**

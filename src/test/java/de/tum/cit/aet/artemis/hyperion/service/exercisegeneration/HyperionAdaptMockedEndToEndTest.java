@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -266,7 +268,8 @@ class HyperionAdaptMockedEndToEndTest extends AbstractSpringIntegrationLocalCILo
         for (Map.Entry<String, String> file : new LinkedHashMap<>(filesByRelativePath).entrySet()) {
             Path target = root.resolve(file.getKey());
             Files.createDirectories(target.getParent());
-            Files.writeString(target, file.getValue());
+            // FileUtils (not Files.writeString) per the architecture rule: it creates missing parent directories.
+            FileUtils.writeStringToFile(target.toFile(), file.getValue(), StandardCharsets.UTF_8);
         }
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Seed existing " + repositoryType + " content for the adapt", false, null);

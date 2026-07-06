@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,6 +16,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -39,9 +41,9 @@ class ExerciseGenerationJobServiceTest {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
-        // No-op publisher: the test needs only the slot/transcript side effects, not the run.
+        // No-op publisher: the test needs only the slot/transcript side effects, not the run. Token usage is exercised elsewhere, so a mock sink source suffices here.
         jobService = new ExerciseGenerationJobService(hazelcastInstance, event -> {
-        });
+        }, mock(LLMTokenUsageService.class));
         jobService.init();
     }
 
