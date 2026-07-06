@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
@@ -10,10 +11,11 @@ import { VariantJob } from 'app/openapi/model/variantJob';
  * Vitest specs for ExerciseVariantGenerationService (plan Sections 5.2–5.4, 10).
  */
 describe('ExerciseVariantGenerationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExerciseVariantGenerationService;
     let apiMock: {
         generateVariant: ReturnType<typeof vi.fn>;
-        getActiveJob: ReturnType<typeof vi.fn>;
         getJobsOfCurrentUser: ReturnType<typeof vi.fn>;
         getJobDetail: ReturnType<typeof vi.fn>;
         cancelJob: ReturnType<typeof vi.fn>;
@@ -28,7 +30,6 @@ describe('ExerciseVariantGenerationService', () => {
         eventSubjects = new Map();
         apiMock = {
             generateVariant: vi.fn(),
-            getActiveJob: vi.fn(),
             getJobsOfCurrentUser: vi.fn(),
             getJobDetail: vi.fn(),
             cancelJob: vi.fn(),
@@ -121,17 +122,19 @@ describe('ExerciseVariantGenerationService', () => {
         expect(websocketMock.unsubscribeFromJob).toHaveBeenCalledWith('job-1');
     });
 
-    it('getActiveJob maps a 204 (undefined body) to undefined and attaches when a job is running', () => {
-        apiMock.getActiveJob.mockReturnValue(of(undefined));
-        let result: VariantJob | undefined = { jobId: 'sentinel' };
-        service.getActiveJob(42).subscribe((job) => (result = job));
-        expect(result).toBeUndefined();
-        expect(websocketMock.subscribeToJob).not.toHaveBeenCalled();
+    it('supports several running jobs for the SAME exercise at once', () => {
+        apiMock.generateVariant
+            .mockReturnValueOnce(of({ jobId: 'job-1' }))
+            .mockReturnValueOnce(of({ jobId: 'job-2' }))
+            .mockReturnValueOnce(of({ jobId: 'job-3' }));
 
-        apiMock.getActiveJob.mockReturnValue(of({ jobId: 'job-9', phase: 'PLANNING' } as VariantJob));
-        service.getActiveJob(42).subscribe((job) => (result = job));
-        expect(result).toMatchObject({ jobId: 'job-9' });
-        expect(websocketMock.subscribeToJob).toHaveBeenCalledWith('job-9');
-        expect(service.jobs()).toHaveLength(1);
+        service.startGeneration(42, {}).subscribe();
+        service.startGeneration(42, {}).subscribe();
+        service.startGeneration(42, {}).subscribe();
+
+        expect(service.runningJobs()).toHaveLength(3);
+        eventSubjects.get('job-2')!.next({ type: 'DONE', phase: 'COMPLETED', variantExerciseId: 7 });
+        expect(service.runningJobs()).toHaveLength(2);
+        expect(service.jobs()).toHaveLength(3);
     });
 });

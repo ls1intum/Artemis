@@ -141,6 +141,11 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         List<QuizQuestion> questions = quiz.getQuizQuestions();
         for (int i = 0; i < questions.size(); i++) {
             QuizQuestion question = questions.get(i);
+            if (question == null) {
+                // Gap in the @OrderColumn list — a question row lost its exercise FK. Must be a finding, not an NPE.
+                findings.add(new VerificationReport.VerificationFinding("QUIZ_VALIDITY", "Question " + i + " is missing — the question list has a gap at this position."));
+                continue;
+            }
             if (!question.isValid()) {
                 findings.add(new VerificationReport.VerificationFinding("QUIZ_VALIDITY", "Question " + i + " (" + question.getClass().getSimpleName() + ", \"" + question.getTitle()
                         + "\") is invalid. " + QuizVariantTools.renderValidationReport(quiz)));

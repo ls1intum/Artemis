@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Router } from '@angular/router';
 import { computed, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +8,8 @@ import { of } from 'rxjs';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,6 +20,8 @@ import { VariantJob } from 'app/openapi/model/variantJob';
  * Vitest specs for the navbar job tray (plan Sections 5.4 "State handling" and 10 "Client tests").
  */
 describe('VariantGenerationTrayComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<VariantGenerationTrayComponent>;
     let component: VariantGenerationTrayComponent;
     let jobs: ReturnType<typeof signal<VariantJob[]>>;
@@ -25,9 +30,11 @@ describe('VariantGenerationTrayComponent', () => {
         runningJobs: unknown;
         hasJobs: unknown;
         loadJobs: ReturnType<typeof vi.fn>;
+        clearJobs: ReturnType<typeof vi.fn>;
         cancelJob: ReturnType<typeof vi.fn>;
     };
     let routerMock: { navigate: ReturnType<typeof vi.fn> };
+    let userIdentity: ReturnType<typeof signal<User | undefined>>;
 
     const runningJob: VariantJob = { jobId: 'job-1', sourceExerciseId: 42, courseId: 7, sourceExerciseTitle: 'Sorting Basics', exerciseType: 'programming', phase: 'TRANSFORMING' };
     const completedJob: VariantJob = {
@@ -47,14 +54,17 @@ describe('VariantGenerationTrayComponent', () => {
             runningJobs: computed(() => jobs().filter((job) => !isTerminalVariantPhase(job.phase))),
             hasJobs: computed(() => jobs().length > 0),
             loadJobs: vi.fn().mockReturnValue(of([])),
+            clearJobs: vi.fn(),
             cancelJob: vi.fn().mockReturnValue(of(undefined)),
         };
         routerMock = { navigate: vi.fn() };
+        userIdentity = signal<User | undefined>({ login: 'instructor1' } as User);
 
         await TestBed.configureTestingModule({
             imports: [VariantGenerationTrayComponent],
             providers: [
                 { provide: ExerciseVariantGenerationService, useValue: serviceMock },
+                { provide: AccountService, useValue: { userIdentity } },
                 { provide: Router, useValue: routerMock },
                 {
                     provide: TranslateService,
@@ -70,6 +80,25 @@ describe('VariantGenerationTrayComponent', () => {
 
         fixture = TestBed.createComponent(VariantGenerationTrayComponent);
         component = fixture.componentInstance;
+    });
+
+    it('syncs the job list when the user logs in and clears it on logout', () => {
+        userIdentity.set(undefined);
+        fixture.detectChanges();
+        expect(serviceMock.loadJobs).not.toHaveBeenCalled();
+
+        userIdentity.set({ login: 'instructor1' } as User);
+        fixture.detectChanges();
+        expect(serviceMock.loadJobs).toHaveBeenCalledTimes(1);
+
+        // A refreshed identity object for the SAME user must not trigger a redundant re-sync.
+        userIdentity.set({ login: 'instructor1' } as User);
+        fixture.detectChanges();
+        expect(serviceMock.loadJobs).toHaveBeenCalledTimes(1);
+
+        userIdentity.set(undefined);
+        fixture.detectChanges();
+        expect(serviceMock.clearJobs).toHaveBeenCalled();
     });
 
     it('is hidden without jobs and shows the spinner + count badge for a running job', () => {

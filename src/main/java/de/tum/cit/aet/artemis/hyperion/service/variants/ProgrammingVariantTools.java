@@ -62,6 +62,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private static final int MAX_FILE_CONTENT_LENGTH = 100_000;
 
+    /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
+    private static final int TOOL_CALL_BUDGET = 60;
+
     private final ProgrammingExercise exercise;
 
     private final User user;
@@ -95,6 +98,8 @@ class ProgrammingVariantTools implements VariantToolset {
     private boolean touchedTestRepo;
 
     private String finishSummary;
+
+    private int toolCallsUsed;
 
     /** Small indirection so tests can stub CI triggering without a full CI setup. */
     @FunctionalInterface
@@ -139,9 +144,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Tool(description = "List all files in one of the variant exercise's repositories. Valid repositories: TEMPLATE, SOLUTION, TESTS.")
     public String listFiles(@ToolParam(description = "the repository to list: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -160,9 +165,9 @@ class ProgrammingVariantTools implements VariantToolset {
     @Tool(description = "Read the content of a file in one of the variant exercise's repositories (TEMPLATE, SOLUTION, or TESTS).")
     public String readFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root, e.g. src/de/tum/Sorting.java") String path) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -192,9 +197,9 @@ class ProgrammingVariantTools implements VariantToolset {
             @ToolParam(description = "the file path relative to the repository root") String path,
             @ToolParam(description = "the exact text to search for; must match exactly one occurrence") String search,
             @ToolParam(description = "the replacement text") String replace) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -240,9 +245,9 @@ class ProgrammingVariantTools implements VariantToolset {
     public String writeFile(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository,
             @ToolParam(description = "the file path relative to the repository root; must start with src/ (TEMPLATE, SOLUTION) or test/ (TESTS)") String path,
             @ToolParam(description = "the full new file content") String content) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -268,9 +273,9 @@ class ProgrammingVariantTools implements VariantToolset {
     @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
             + "so every test referenced in the tasks actually exists in the test repository.")
     public String updateProblemStatement(@ToolParam(description = "the full new problem statement in Artemis Markdown") String problemStatement) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         if (problemStatement == null || problemStatement.isBlank()) {
             return "Error: the problem statement must not be empty.";
@@ -293,9 +298,9 @@ class ProgrammingVariantTools implements VariantToolset {
             + "Build targets: SOLUTION must pass 100% of tests, TEMPLATE must compile but score 0% (tests must run and fail), TESTS must build successfully. "
             + "Changing the TESTS repository invalidates earlier SOLUTION/TEMPLATE results — re-run both afterwards.")
     public String runBuild(@ToolParam(description = "the repository to build: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -337,9 +342,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Tool(description = "Get the detailed result of the most recent runBuild call for a repository (compiler output and failed test names/messages).")
     public String getBuildAndTestResults(@ToolParam(description = "the repository: TEMPLATE, SOLUTION, or TESTS") String repository) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         RepositoryType repositoryType = parseRepositoryType(repository);
         if (repositoryType == null) {
@@ -348,22 +353,31 @@ class ProgrammingVariantTools implements VariantToolset {
         return lastBuildResults.getOrDefault(repositoryType, "No build has been run for the " + repositoryType + " repository in this round yet. Use runBuild first.");
     }
 
-    @Tool(description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
+    // returnDirect ends the internal tool loop immediately — no extra LLM round after the model finishes,
+    // and the "budget exhausted, call finish" directive has a guaranteed exit.
+    @Tool(returnDirect = true, description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
     public String finish(@ToolParam(description = "a short summary of the changes made in this round") String summary) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
-        }
         this.finishSummary = summary;
         return "Summary recorded. You are done with this round.";
     }
 
-    private String cancellationNotice() {
+    /**
+     * Combined stop check for cancellation and the per-round tool budget — every tool except finish
+     * short-circuits with the returned directive.
+     *
+     * Short-circuit instead of throwing: Spring AI returns tool exceptions to the model as ordinary tool
+     * results anyway, so an exception cannot abort the round — an explicit stop instruction converges the
+     * round fastest. The pipeline performs the actual abort at the next round boundary (plan Section 5.2).
+     * The budget exists because Spring AI's internal tool loop has no iteration cap and a model that keeps
+     * re-reading and re-reasoning would loop indefinitely.
+     */
+    private String stopNotice() {
         if (jobService.isCancelRequested(jobId)) {
-            // Short-circuit instead of throwing: Spring AI returns tool exceptions to the model as ordinary tool
-            // results anyway, so an exception cannot abort the round — an explicit stop instruction converges the
-            // round fastest. The pipeline performs the actual abort at the next round boundary (plan Section 5.2).
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
+        }
+        toolCallsUsed++;
+        if (toolCallsUsed > TOOL_CALL_BUDGET) {
+            return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;
     }

@@ -71,11 +71,12 @@ public class HyperionExerciseVariantResource {
 
     /**
      * POST exercises/{exerciseId}/generate-variant : start a variant-generation job (plan Section 5.1).
+     * Several jobs may run for the same exercise simultaneously — an instructor generating three variants
+     * must not have to wait for each one to finish.
      *
      * @param exerciseId the source exercise id
      * @param request    the wizard request (intents by field presence, placement)
-     * @return 200 with the created job id; 400 on missing intent / unsupported type / invalid placement;
-     *         409 when a job is already running for the exercise
+     * @return 200 with the created job id; 400 on missing intent / unsupported type / invalid placement
      */
     @PostMapping("exercises/{exerciseId}/generate-variant")
     @EnforceAtLeastEditorInExercise
@@ -88,20 +89,6 @@ public class HyperionExerciseVariantResource {
         taskService.runJobAsync(job);
         log.info("Started variant generation job [{}] for exercise [{}]", job.getJobId(), exerciseId);
         return ResponseEntity.ok(new VariantJobStartDTO(job.getJobId()));
-    }
-
-    /**
-     * GET exercises/{exerciseId}/generate-variant/active : running job for wizard reconnect
-     * (plan Sections 5.1 and 5.3, point 5).
-     *
-     * @param exerciseId the source exercise id
-     * @return 200 with the running job, or 204 when none
-     */
-    @GetMapping("exercises/{exerciseId}/generate-variant/active")
-    @EnforceAtLeastEditorInExercise
-    public ResponseEntity<VariantJobDTO> getActiveJob(@PathVariable long exerciseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        return jobService.getActiveJob(user, exerciseId).map(job -> ResponseEntity.ok(VariantJobDTO.of(job))).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**

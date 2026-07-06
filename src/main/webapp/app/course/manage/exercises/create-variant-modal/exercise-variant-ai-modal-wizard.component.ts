@@ -173,8 +173,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private eventsSubscription?: Subscription;
 
     constructor() {
-        // On open: monitor mode initializes from the job-detail endpoint; otherwise re-attach to a still-running
-        // job for the source exercise (resume, plan Section 5.3, point 5).
+        // On open: monitor mode initializes from the job-detail endpoint. A regular open always starts a
+        // FRESH wizard — running jobs are monitored via the navbar tray, and several variants of the same
+        // exercise may be generated simultaneously, so the wizard never auto-attaches to an existing job.
         effect(() => {
             if (!this.visible()) {
                 return;
@@ -183,8 +184,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             untracked(() => {
                 if (monitorId) {
                     this.openInMonitorMode(monitorId);
-                } else if (!this.jobId()) {
-                    this.resumeActiveJobIfAny();
                 }
             });
         });
@@ -421,20 +420,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 error: () => {},
             });
         }
-    }
-
-    /** Re-attach to a still-running job of the source exercise when the wizard opens (plan Section 5.3, point 5). */
-    private resumeActiveJobIfAny(): void {
-        const exerciseId = this.sourceExercise()?.id;
-        if (!exerciseId) return;
-        this.variantGenerationService.getActiveJob(exerciseId).subscribe({
-            next: (job) => {
-                if (job?.jobId && !isTerminalVariantPhase(job.phase)) {
-                    this.initializeFromJobId(job.jobId, job.phase, job.attempt, job.maxAttempts);
-                }
-            },
-            error: () => {},
-        });
     }
 
     /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3 (plan Section 5.4). */

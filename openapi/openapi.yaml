@@ -1217,21 +1217,6 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/exercises/{exerciseId}/generate-variant/active:
-    get:
-      tags: [hyperion-exercise-variant]
-      operationId: getActiveJob
-      parameters:
-      - name: exerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/VariantJob'}
 components:
   schemas:
     TutorialGroupStudentImportData:

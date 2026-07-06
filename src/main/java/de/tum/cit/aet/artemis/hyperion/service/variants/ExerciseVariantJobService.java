@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
  * Hazelcast-backed job store for variant generation — mirrors {@code HyperionCodeGenerationJobService}
  * (plan Section 5.2), generalized: the job record is a rich {@link VariantJob} (phase, ChangePlan, step
  * outputs) and finished jobs are RETAINED under TTL for the navbar tray instead of being removed
- * (Section 5.2, "Job retention for the tray"). A separate short-TTL lock map provides the per-exercise
- * dedup — only the lock is released on completion, the job record stays readable.
+ * (Section 5.2, "Job retention for the tray"). There is deliberately NO per-exercise dedup: instructors
+ * may generate several variants of the same exercise simultaneously; each POST creates an independent job.
  *
  * This service is the single writer to job records AND the single publisher of the per-job websocket
  * topic, so map state and client-visible events cannot diverge.
@@ -43,8 +43,6 @@ public class ExerciseVariantJobService {
 
     private static final String JOB_MAP_NAME = "hyperion-exercise-variant-jobs";
 
-    private static final String LOCK_MAP_NAME = "hyperion-exercise-variant-job-locks";
-
     private static final String ENTITY_NAME = "exerciseVariantGeneration";
 
     private static final String TOPIC_SUFFIX_PREFIX = "variant-generation/jobs/";
@@ -52,17 +50,11 @@ public class ExerciseVariantJobService {
     // Finished jobs stay listable/deep-linkable in the tray for a day (plan Section 5.2).
     private static final int JOB_TTL_SECONDS = 24 * 3600;
 
-    // Safety bound for the dedup lock: longer than any plausible job runtime so a crashed node cannot block
-    // an exercise forever, short enough that a stale lock resolves the same day.
-    private static final int LOCK_TTL_SECONDS = 2 * 3600;
-
     private final HazelcastInstance hazelcastInstance;
 
     private final HyperionWebsocketService websocketService;
 
     private IMap<String, VariantJob> jobMap;
-
-    private IMap<Long, String> lockMap;
 
     public ExerciseVariantJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, HyperionWebsocketService websocketService) {
         this.hazelcastInstance = hazelcastInstance;
@@ -70,34 +62,26 @@ public class ExerciseVariantJobService {
     }
 
     /**
-     * Initializes the Hazelcast-backed job and dedup-lock maps with their TTLs.
+     * Initializes the Hazelcast-backed job map with its TTL.
      */
     @PostConstruct
     public void init() {
         MapConfig jobMapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
         jobMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
-
-        MapConfig lockMapConfig = hazelcastInstance.getConfig().getMapConfig(LOCK_MAP_NAME);
-        lockMapConfig.setTimeToLiveSeconds(LOCK_TTL_SECONDS);
-        lockMap = hazelcastInstance.getMap(LOCK_MAP_NAME);
     }
 
     /**
-     * Claims the per-exercise slot and creates the job record (plan Sections 5.1/5.2).
+     * Creates the job record (plan Sections 5.1/5.2). Several jobs may run for the same exercise at the
+     * same time — parallel variant generation is an explicit requirement, so there is no dedup here.
      *
      * @param user     initiating user
      * @param exercise source exercise
      * @param request  validated wizard request
-     * @return the claimed job
-     * @throws ConflictException when a variant generation is already running for the exercise
+     * @return the created job
      */
     public VariantJob startJob(User user, Exercise exercise, VariantGenerationRequestDTO request) {
         String jobId = UUID.randomUUID().toString();
-        String existing = lockMap.putIfAbsent(exercise.getId(), jobId);
-        if (existing != null) {
-            throw new ConflictException("Variant generation already running for this exercise", ENTITY_NAME, "variantGenerationRunning");
-        }
         VariantJob job = new VariantJob();
         job.setJobId(jobId);
         job.setSourceExerciseId(exercise.getId());
@@ -116,38 +100,6 @@ public class ExerciseVariantJobService {
         job.setStartedAt(Instant.now());
         jobMap.put(jobId, job);
         return job;
-    }
-
-    /**
-     * Releases the per-exercise dedup lock if it is still held by the given job. The job record itself is
-     * retained for the tray (plan Section 5.2, "Job retention").
-     *
-     * @param exerciseId exercise whose slot should be released
-     * @param jobId      the job that held the slot
-     */
-    public void releaseLock(long exerciseId, String jobId) {
-        // Removal is best-effort: the entry may have been evicted/replaced; remove(key, value) no-ops then.
-        lockMap.remove(exerciseId, jobId);
-    }
-
-    /**
-     * Returns the RUNNING job for the exercise if it belongs to the given user (per-user scoping re-checked
-     * server-side, plan Section 5.1) — backs GET .../generate-variant/active for wizard reconnect.
-     *
-     * @param user       requesting user
-     * @param exerciseId source exercise id
-     * @return the running job, or empty
-     */
-    public Optional<VariantJob> getActiveJob(User user, long exerciseId) {
-        String jobId = lockMap.get(exerciseId);
-        if (jobId == null) {
-            return Optional.empty();
-        }
-        VariantJob job = jobMap.get(jobId);
-        if (job == null || !job.getInitiatorLogin().equals(user.getLogin()) || job.getPhase().isTerminal()) {
-            return Optional.empty();
-        }
-        return Optional.of(job);
     }
 
     /**
@@ -300,7 +252,7 @@ public class ExerciseVariantJobService {
 
     /**
      * Terminal transition to COMPLETED or DRAFT_WITH_WARNINGS; publishes DONE with the variant exercise id
-     * and any warnings, and releases the dedup lock (plan Section 5.2).
+     * and any warnings (plan Section 5.2).
      *
      * @param jobId             the job id
      * @param variantExerciseId the created exercise
@@ -316,13 +268,12 @@ public class ExerciseVariantJobService {
             }
             mutableJob.setFinishedAt(Instant.now());
         });
-        releaseLock(job.getSourceExerciseId(), jobId);
         publish(job, VariantGenerationEventDTO.done(terminalPhase, variantExerciseId, warnings));
     }
 
     /**
-     * Terminal transition to FAILED; publishes FAILED with the failure detail and releases the dedup lock.
-     * The phase the job failed in is preserved on the job record for the tray label (plan Section 5.4).
+     * Terminal transition to FAILED; publishes FAILED with the failure detail. The phase the job failed in
+     * is preserved on the job record so the tray can label the entry "Failed (VERIFYING)" (plan Section 5.4).
      *
      * @param jobId  the job id
      * @param detail failure description including the phase
@@ -333,13 +284,12 @@ public class ExerciseVariantJobService {
             mutableJob.setPhase(VariantJobPhase.FAILED);
             mutableJob.setFinishedAt(Instant.now());
         });
-        releaseLock(job.getSourceExerciseId(), jobId);
         publish(job, VariantGenerationEventDTO.failed(detail));
     }
 
     /**
      * Terminal transition to CANCELLED (after the pipeline finished the clone cleanup); publishes CANCELLED
-     * and releases the dedup lock (plan Section 5.2).
+     * (plan Section 5.2).
      *
      * @param jobId the job id
      */
@@ -349,7 +299,6 @@ public class ExerciseVariantJobService {
             mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link (plan Section 5.4)
             mutableJob.setFinishedAt(Instant.now());
         });
-        releaseLock(job.getSourceExerciseId(), jobId);
         publish(job, VariantGenerationEventDTO.cancelled());
     }
 

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ConfirmationService } from 'primeng/api';
@@ -28,8 +29,9 @@ const RUNNING_PHASE_ORDER = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORM
     providers: [ConfirmationService],
     imports: [FaIconComponent, PopoverModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
-export class VariantGenerationTrayComponent implements OnInit {
+export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
+    private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
@@ -47,9 +49,28 @@ export class VariantGenerationTrayComponent implements OnInit {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
 
-    ngOnInit(): void {
-        // Initial sync; per-job websocket topics keep the list live afterwards (plan Section 5.4, "State handling").
-        this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
+    /** Login of the user whose jobs are currently loaded — guards against redundant re-syncs. */
+    private loadedForLogin?: string;
+
+    constructor() {
+        // The navbar — and with it this tray — is instantiated BEFORE login, so a one-shot load in ngOnInit
+        // ran unauthenticated, failed silently, and left the tray hidden even while jobs were running or had
+        // failed in the background. Sync the job list whenever the authenticated user changes instead; the
+        // per-job websocket topics keep the list live afterwards (plan Section 5.4, "State handling").
+        effect(() => {
+            const login = this.accountService.userIdentity()?.login;
+            untracked(() => {
+                if (login === this.loadedForLogin) {
+                    return;
+                }
+                this.loadedForLogin = login;
+                if (login) {
+                    this.variantGenerationService.loadJobs().subscribe({ error: () => {} });
+                } else {
+                    this.variantGenerationService.clearJobs();
+                }
+            });
+        });
     }
 
     /** Progress through the running phases as a percentage for the slim progress bar (plan Section 5.4). */

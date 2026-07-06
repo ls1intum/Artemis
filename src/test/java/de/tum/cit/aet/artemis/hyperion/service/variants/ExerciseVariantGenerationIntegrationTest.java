@@ -31,7 +31,8 @@ class ExerciseVariantGenerationIntegrationTest {
     // QuizExercise.isValid() on the result (Section 10).
     //
     // 6. REST layer: per-user scoping of variant-jobs endpoints (foreign job → 404), 400 on no-intent request,
-    // 400 on unsupported exercise type, 409 on duplicate job per exercise (Section 5.1).
+    // 400 on unsupported exercise type; several jobs for the SAME exercise can run simultaneously (parallel
+    // variant generation is an explicit requirement — there is deliberately no per-exercise dedup).
     //
     // 7. Exam placement: source in an exam exercise group → variant lands in the SAME exam exercise group;
     // non-exam exercise with SAME_EXAM_GROUP placement → 400 (Section 5.5).

@@ -143,12 +143,14 @@ public class VariantAgentLoopRunner {
     private String initialUserMessage(ChangePlan plan) {
         return "Apply the change plan to the exercise copy now using your tools. Work through the intended changes in order, "
                 + "verify your work with the available validation/build tools, and call finish with a short summary when done. " + "There are " + plan.intendedChanges().size()
-                + " intended change(s).";
+                + " intended change(s). Be efficient: you have a limited tool-call budget for this round — read the current state once, "
+                + "apply each change once, validate once at the end, and then call finish. Do NOT re-read or re-validate after every single edit.";
     }
 
     private String repairUserMessage(VerificationReport report) {
         String findings = report.findings().stream().map(finding -> "[" + finding.gate() + "] " + finding.message()).collect(Collectors.joining("\n"));
         return "Verification failed with the following findings. Fix exactly these issues using your tools, keeping all invariants intact, "
-                + "then call finish with a short summary.\n\nFindings:\n" + findings;
+                + "then call finish with a short summary. Be efficient: you have a limited tool-call budget for this round — "
+                + "fix each finding once, validate once, then call finish.\n\nFindings:\n" + findings;
     }
 }

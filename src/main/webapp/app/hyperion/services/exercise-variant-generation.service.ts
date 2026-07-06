@@ -49,21 +49,6 @@ export class ExerciseVariantGenerationService {
     }
 
     /**
-     * Running job for the exercise, if any — wizard resume support on open (plan Section 5.3, point 5).
-     * A 204 (no running job) is mapped to `undefined` by the generated client.
-     */
-    getActiveJob(exerciseId: number): Observable<VariantJob | undefined> {
-        return this.api.getActiveJob(exerciseId).pipe(
-            tap((job) => {
-                if (job?.jobId) {
-                    this.upsertJob(job);
-                    this.attachToJob(job.jobId);
-                }
-            }),
-        );
-    }
-
-    /**
      * Re-syncs the tray list from REST — called on login, tray open, and websocket reconnect
      * (plan Section 5.4, "State handling"): events are fire-and-forget, the job record is authoritative.
      */
@@ -74,6 +59,16 @@ export class ExerciseVariantGenerationService {
                 jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).forEach((job) => this.attachToJob(job.jobId!));
             }),
         );
+    }
+
+    /** Clears the tray state and detaches all websocket subscriptions — called on logout. */
+    clearJobs(): void {
+        this.jobSubscriptions.forEach((subscription, jobId) => {
+            subscription.unsubscribe();
+            this.websocketService.unsubscribeFromJob(jobId);
+        });
+        this.jobSubscriptions.clear();
+        this.jobs.set([]);
     }
 
     /** Full job detail incl. per-phase step outputs — reopening the modal in monitor mode (plan Section 5.4). */

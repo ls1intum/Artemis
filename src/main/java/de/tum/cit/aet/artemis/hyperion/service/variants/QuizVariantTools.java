@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -18,8 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionComponent;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
@@ -40,6 +44,14 @@ class QuizVariantTools implements VariantToolset {
 
     private static final Logger log = LoggerFactory.getLogger(QuizVariantTools.class);
 
+    /**
+     * Per-round tool-call budget. Spring AI's internal tool loop has no iteration cap, and a model that
+     * keeps re-reading and re-reasoning about the same questions would loop indefinitely (observed with a
+     * local reasoning model: 100-message conversations). Once the budget is used up, every tool except
+     * {@code finish} returns the same short directive to call finish, so runaway rounds converge.
+     */
+    private static final int TOOL_CALL_BUDGET = 25;
+
     private final long quizExerciseId;
 
     private final String jobId;
@@ -53,6 +65,8 @@ class QuizVariantTools implements VariantToolset {
     private final ObjectMapper objectMapper;
 
     private String finishSummary;
+
+    private int toolCallsUsed;
 
     QuizVariantTools(long quizExerciseId, String jobId, ExerciseVariantJobService jobService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseService quizExerciseService, ObjectMapper objectMapper) {
@@ -77,9 +91,9 @@ class QuizVariantTools implements VariantToolset {
     @Tool(description = "Get all questions of the variant quiz as a JSON array (the quiz editor format, discriminated by \"type\"). "
             + "Array order is the question order; use the array index with updateQuestion. Preserve the ids of elements you keep.")
     public String getQuestions() {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         try {
             QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
@@ -93,19 +107,33 @@ class QuizVariantTools implements VariantToolset {
     @Tool(description = "Replace one question of the variant quiz with the given question JSON (same format as getQuestions returns, "
             + "including the \"type\" discriminator). The question type must stay the same. Keep the ids of all elements you do not remove. "
             + "For drag-and-drop questions, image paths (background and drag item pictures) must remain exactly as they are — only text and mappings may change.")
-    public String updateQuestion(@ToolParam(description = "the 0-based index of the question to replace (order of getQuestions)") int index,
+    public String updateQuestion(@ToolParam(description = "the 0-based index of the question to replace (order of getQuestions)") Integer index,
             @ToolParam(description = "the full new question as JSON, in the same format getQuestions returns") String questionJson) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
+        }
+        // Boxed parameter on purpose: with a primitive int, a model omitting "index" crashes argument
+        // unboxing inside Spring AI and kills the whole round; a null must go back to the model instead.
+        if (index == null) {
+            return "Error: the \"index\" argument is required — pass the 0-based question index from getQuestions.";
+        }
+        if (questionJson == null || questionJson.isBlank()) {
+            return "Error: the \"questionJson\" argument is required — pass the full question JSON.";
         }
         try {
-            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+            // Statistics MUST be fetched eagerly: QuizService.save re-initializes/fixes the per-question
+            // statistic objects, and a lazy statistic proxy on this detached instance would throw a
+            // LazyInitializationException on save.
+            QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
             List<QuizQuestion> questions = quiz.getQuizQuestions();
             if (index < 0 || index >= questions.size()) {
                 return "Error: question index " + index + " is out of range — the quiz has " + questions.size() + " question(s) (indices 0-" + (questions.size() - 1) + ").";
             }
             QuizQuestion existing = questions.get(index);
+            if (existing == null) {
+                return "Error: there is no question at index " + index + " (the question list has a gap at this position).";
+            }
             QuizQuestion updated;
             try {
                 updated = objectMapper.readValue(questionJson, QuizQuestion.class);
@@ -122,11 +150,22 @@ class QuizVariantTools implements VariantToolset {
                 return imageError;
             }
             updated.setId(existing.getId());
+            // Keep the persisted statistic: the JSON payload has none, and QuizService.save would otherwise
+            // create a second statistic for the same question. The save path reconciles the statistic's
+            // counters with the (possibly changed) options/spots, same as the quiz editor's update flow.
+            updated.setQuizQuestionStatistic(existing.getQuizQuestionStatistic());
             if (!updated.isValid()) {
                 return "Error: the updated question is not valid (check: non-empty title/text, at least one correct multiple-choice option, "
                         + "consistent drag-and-drop/short-answer mappings, valid scoring type). Fix the question and try again.";
             }
             questions.set(index, updated);
+            // The child side owns every FK here (question -> exercise, option/mapping -> question, statistic ->
+            // question), and all those back-references are @JsonIgnore'd, so they are null on the deserialized
+            // instance. Saving without restoring them writes NULL FKs: the question row is orphaned and the
+            // @OrderColumn list comes back with a null gap (observed as an NPE in VERIFYING). Same wiring as
+            // QuizConfiguration.reconnectJSONIgnoreAttributes, but only for the replaced question — the full
+            // reconnect walks lazy statistic-counter collections this detached graph has not fetched.
+            reconnectReplacedQuestion(quiz, updated);
             quizExerciseService.save(quiz);
             log.debug("Variant job {}: replaced quiz question {} of exercise {}", jobId, index, quizExerciseId);
             return "Question " + index + " updated. " + (quiz.isValid() ? "The quiz is currently valid." : "The quiz is NOT valid yet — use validateQuiz for details.");
@@ -138,9 +177,9 @@ class QuizVariantTools implements VariantToolset {
 
     @Tool(description = "Validate the variant quiz: overall validity and a per-question report. Fix all reported problems before you finish.")
     public String validateQuiz() {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
+        String stop = stopNotice();
+        if (stop != null) {
+            return stop;
         }
         try {
             QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
@@ -151,12 +190,10 @@ class QuizVariantTools implements VariantToolset {
         }
     }
 
-    @Tool(description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
+    // returnDirect ends the internal tool loop immediately — no extra LLM round after the model finishes,
+    // and the "budget exhausted, call finish" directive has a guaranteed exit.
+    @Tool(returnDirect = true, description = "Signal that you are done with this round and provide a short summary of what you changed and verified.")
     public String finish(@ToolParam(description = "a short summary of the changes made in this round") String summary) {
-        String cancelled = cancellationNotice();
-        if (cancelled != null) {
-            return cancelled;
-        }
         this.finishSummary = summary;
         return "Summary recorded. You are done with this round.";
     }
@@ -170,6 +207,11 @@ class QuizVariantTools implements VariantToolset {
         List<QuizQuestion> questions = quiz.getQuizQuestions();
         for (int i = 0; i < questions.size(); i++) {
             QuizQuestion question = questions.get(i);
+            if (question == null) {
+                // A null element means the @OrderColumn list has a gap (a question row lost its exercise FK).
+                report.append("Question ").append(i).append(": MISSING — the question list has a gap at this position.\n");
+                continue;
+            }
             report.append("Question ").append(i).append(" (").append(question.getClass().getSimpleName()).append(", \"").append(question.getTitle()).append("\"): ")
                     .append(question.isValid() ? "valid" : "INVALID").append('\n');
         }
@@ -203,9 +245,50 @@ class QuizVariantTools implements VariantToolset {
         return new HashSet<>(question.getDragItems().stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet()));
     }
 
-    private String cancellationNotice() {
+    /**
+     * Restores the @JsonIgnore'd child-to-parent pointers of one deserialized question so the child-owned
+     * FKs are written correctly on save — the per-question subset of
+     * {@code QuizConfiguration.reconnectJSONIgnoreAttributes}.
+     */
+    private static void reconnectReplacedQuestion(QuizExercise quiz, QuizQuestion question) {
+        question.setExercise(quiz);
+        if (question.getQuizQuestionStatistic() != null) {
+            question.getQuizQuestionStatistic().setQuestion(question);
+        }
+        switch (question) {
+            case MultipleChoiceQuestion mcQuestion -> reconnectComponents(mcQuestion.getAnswerOptions(), mcQuestion);
+            case DragAndDropQuestion dndQuestion -> {
+                reconnectComponents(dndQuestion.getDropLocations(), dndQuestion);
+                reconnectComponents(dndQuestion.getDragItems(), dndQuestion);
+                reconnectComponents(dndQuestion.getCorrectMappings(), dndQuestion);
+            }
+            case ShortAnswerQuestion saQuestion -> {
+                reconnectComponents(saQuestion.getSpots(), saQuestion);
+                reconnectComponents(saQuestion.getSolutions(), saQuestion);
+                reconnectComponents(saQuestion.getCorrectMappings(), saQuestion);
+            }
+            default -> {
+            }
+        }
+    }
+
+    private static <Q extends QuizQuestion> void reconnectComponents(Collection<? extends QuizQuestionComponent<Q>> components, Q question) {
+        if (components != null) {
+            components.forEach(component -> component.setQuestion(question));
+        }
+    }
+
+    /**
+     * Combined stop check for cancellation and the per-round tool budget — every tool except finish
+     * short-circuits with the returned directive.
+     */
+    private String stopNotice() {
         if (jobService.isCancelRequested(jobId)) {
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
+        }
+        toolCallsUsed++;
+        if (toolCallsUsed > TOOL_CALL_BUDGET) {
+            return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;
     }
