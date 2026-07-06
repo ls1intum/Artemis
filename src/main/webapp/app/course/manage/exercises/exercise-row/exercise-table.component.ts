@@ -74,7 +74,7 @@ export class ExerciseTableComponent {
     readonly showCheckbox = input<boolean>(false);
     readonly selectedIds = input<Set<number>>(new Set());
     readonly groups = input<CourseExerciseGroup[]>([]);
-    /** CDK drop-list id for this table's exercises (the owning bucket's id). */
+    /** CDK drop-list id for this table's exercises (the owning card's id). */
     readonly dropListId = input<string>('');
     /** Ids of the sibling exercise tables this one can exchange exercises with (enables cross-group drag-and-drop). */
     readonly connectedDropLists = input<string[]>([]);
@@ -163,7 +163,7 @@ export class ExerciseTableComponent {
     readonly groupOptions = computed(() => [
         { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
         ...this.groups().map((g) => ({
-            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: g.id }),
+            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
             value: g.id,
         })),
     ]);
@@ -212,8 +212,8 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * The group whose timeline governs this exercise. In the group view the bucket's group is passed in
-     * directly; in the type/week/list views the bucket has no single group, so we resolve the exercise's
+     * The group whose timeline governs this exercise. In the group view the card's group is passed in
+     * directly; in the type/week/list views the card has no single group, so we resolve the exercise's
      * owning group from the full groups list. This keeps the displayed dates consistent across all views.
      */
     private effectiveGroupFor(exercise: Exercise): CourseExerciseGroup | undefined {

@@ -45,7 +45,7 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupService, toCourseExerciseGroup, toCreateGroupPayload, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
-import { Bucket, ExerciseManagementView, buildBuckets as buildBucketsForView } from 'app/course/manage/exercises/exercise-buckets';
+import { CourseExerciseCard, ExerciseManagementView, buildCourseExerciseCards } from 'app/course/manage/exercises/course-exercise-cards';
 import { ExerciseGroupSyncService } from 'app/course/manage/exercises/exercise-group-sync.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/course/manage/exercises/create-modal/exercise-add-modal.component';
@@ -116,7 +116,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly course = signal<Course | undefined>(undefined);
     readonly exercises = signal<Exercise[]>([]);
     readonly groups = signal<CourseExerciseGroup[]>([]);
-    readonly buckets = signal<Bucket[]>([]);
+    readonly cards = signal<CourseExerciseCard[]>([]);
     /**
      * Whether the initial exercise load has finished. Gates the "no exercises match" empty state so it is not shown
      * during the brief window before the exercises arrive on first (direct) access — switching views afterwards keeps
@@ -131,8 +131,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly isGroup = computed(() => this.view() === 'group');
     /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
     readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
-    /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
-    readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
+    /** Ids of all rendered cards, so each group's exercise table is a connected CDK drop target for the others. */
+    readonly dropListIds = computed(() => this.cards().map((card) => card.id));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly courseId = computed(() => this.course()?.id);
     readonly selectedCount = computed(() => this.selectedIds().size);
@@ -191,10 +191,10 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Bucket titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
+        // CourseExerciseCard titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
         // this zoneless app they must be rebuilt when the language changes — otherwise they keep the previous language
-        // until the next user interaction rebuilds the buckets.
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildBuckets());
+        // until the next user interaction rebuilds the cards.
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.rebuildCards());
 
         this.route.parent!.data.subscribe(({ course }) => {
             if (course) {
@@ -203,13 +203,13 @@ export class CourseManagementExercisesComponent implements OnInit {
             if (course?.id) {
                 this.loadCourseExercises(course.id);
             } else {
-                this.buildBuckets();
+                this.rebuildCards();
                 this.loaded.set(true);
             }
         });
     }
 
-    /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the buckets. */
+    /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the cards. */
     private loadCourseExercises(courseId: number): void {
         this.courseManagementService.findWithExercises(courseId).subscribe({
             next: (response) => {
@@ -229,7 +229,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                 if (loadedCourse?.isAtLeastEditor) {
                     this.loadGroupsFromServer(courseId);
                 }
-                this.buildBuckets();
+                this.rebuildCards();
                 this.loaded.set(true);
                 this.loadQuizBatches(courseId);
             },
@@ -240,12 +240,12 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.view.set(view);
         // Remember the selection so it is restored when the component is re-instantiated (e.g. after closing an editor).
         this.localStorageService.store(VIEW_STORAGE_KEY, view);
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     onSearchChange(term: string): void {
         this.search.set(term);
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     /** Only individual-mode quizzes support per-student dates, so only they can join a group's shared timeline. */
@@ -340,7 +340,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     /**
      * Opens the shared "edit selected" modal to apply a common timeline (release/due/assessment dates, etc.) to all
      * selected programming exercises at once. On close the exercises are reloaded so the updated dates are reflected
-     * in the table and the week/group buckets. Mirrors the develop programming-exercise list behaviour.
+     * in the table and the week/group cards. Mirrors the develop programming-exercise list behaviour.
      */
     editSelectedExercises(): void {
         const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
@@ -417,9 +417,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.changeExerciseGroup(event.exercise, event.group);
     }
 
-    onTableSelectionAllChange(bucket: Bucket, selectAll: boolean): void {
+    onTableSelectionAllChange(card: CourseExerciseCard, selectAll: boolean): void {
         const current = new Set(this.selectedIds());
-        for (const exercise of bucket.exercises) {
+        for (const exercise of card.exercises) {
             if (exercise.id !== undefined) {
                 if (selectAll) {
                     current.add(exercise.id);
@@ -431,9 +431,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.selectedIds.set(current);
     }
 
-    onTableRowsReordered(bucket: Bucket, reorderedExercises: Exercise[]): void {
-        bucket.exercises = reorderedExercises;
-        this.buckets.set([...this.buckets()]);
+    onTableRowsReordered(card: CourseExerciseCard, reorderedExercises: Exercise[]): void {
+        card.exercises = reorderedExercises;
+        this.cards.set([...this.cards()]);
     }
 
     onExerciseUpdated(updated: Exercise): void {
@@ -444,11 +444,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                 exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)),
             })),
         );
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     onExerciseDeleted(deleted: Exercise): void {
-        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the buckets
+        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the cards
         // so it disappears from the view without requiring a page refresh.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
         this.groups.set(
@@ -462,13 +462,13 @@ export class CourseManagementExercisesComponent implements OnInit {
             remaining.delete(deleted.id);
             this.selectedIds.set(remaining);
         }
-        this.buildBuckets();
+        this.rebuildCards();
     }
 
     /** Rebuilds the view's panels for the current view mode, exercises, groups and search term. */
-    private buildBuckets(): void {
-        this.buckets.set(
-            buildBucketsForView(this.view(), {
+    private rebuildCards(): void {
+        this.cards.set(
+            buildCourseExerciseCards(this.view(), {
                 exercises: this.exercises(),
                 groups: this.groups(),
                 searchTerm: this.search(),
@@ -522,7 +522,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         });
     }
 
-    /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" bucket. */
+    /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" card. */
     private deleteGroup(group: CourseExerciseGroup): void {
         const courseId = this.course()?.id;
         if (courseId !== undefined && group.id !== undefined) {
@@ -549,7 +549,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     next: (dto) => {
                         const created = toCourseExerciseGroup(dto, this.exercisesById());
                         this.groups.set([...this.groups(), created]);
-                        this.buildBuckets();
+                        this.rebuildCards();
                     },
                     error: (errorRes: HttpErrorResponse) =>
                         this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
@@ -572,7 +572,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
                     const mapped = toCourseExerciseGroup(dto, refreshedById);
                     this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
-                    this.buildBuckets();
+                    this.rebuildCards();
                 },
                 error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
             });
@@ -592,7 +592,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
             this.exercises.set(merged.exercises);
             this.groups.set(merged.groups);
-            this.buildBuckets();
+            this.rebuildCards();
         });
     }
 
@@ -602,7 +602,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             const merged = this.groupSync.mergeGroupsIntoExercises(this.exercises(), dtos);
             this.exercises.set(merged.exercises);
             this.groups.set(merged.groups);
-            this.buildBuckets();
+            this.rebuildCards();
         });
     }
 

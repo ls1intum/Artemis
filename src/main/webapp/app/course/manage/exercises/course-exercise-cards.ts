@@ -7,7 +7,7 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 export type ExerciseManagementView = 'type' | 'week' | 'group' | 'list';
 
 /** One collapsible panel of the exercise management page: a titled slice of the course's exercises. */
-export interface Bucket {
+export interface CourseExerciseCard {
     id: string;
     title: string;
     icon?: IconProp;
@@ -16,11 +16,11 @@ export interface Bucket {
     exercises: Exercise[];
 }
 
-/** Resolves a translation key eagerly (the buckets carry ready-to-render titles). */
+/** Resolves a translation key eagerly (the cards carry ready-to-render titles). */
 export type TranslateFn = (key: string, interpolateParams?: object) => string;
 
-/** Everything the bucket builders need from the exercise management page's state. */
-export interface BucketContext {
+/** Everything the card builders need from the exercise management page's state. */
+export interface CourseExerciseCardContext {
     exercises: Exercise[];
     groups: CourseExerciseGroup[];
     searchTerm: string;
@@ -37,16 +37,16 @@ const TYPE_TITLE_KEYS: Record<string, string> = {
 };
 
 /** Builds the panels for the requested view from the current exercises, groups and search term. */
-export function buildBuckets(view: ExerciseManagementView, context: BucketContext): Bucket[] {
+export function buildCourseExerciseCards(view: ExerciseManagementView, context: CourseExerciseCardContext): CourseExerciseCard[] {
     switch (view) {
         case 'group':
-            return buildGroupBuckets(context);
+            return buildGroupCards(context);
         case 'type':
-            return buildTypeBuckets(context);
+            return buildTypeCards(context);
         case 'week':
-            return buildWeekBuckets(context);
+            return buildWeekCards(context);
         case 'list':
-            return buildListBuckets(context);
+            return buildListCards(context);
     }
 }
 
@@ -55,20 +55,20 @@ export function owningGroup(exercise: Exercise, groups: CourseExerciseGroup[]): 
     return groups.find((group) => group.exercises?.some((member) => member.id === exercise.id));
 }
 
-function hasSearch(context: BucketContext): boolean {
+function hasSearch(context: CourseExerciseCardContext): boolean {
     return context.searchTerm.trim().length > 0;
 }
 
-function matches(exercise: Exercise, context: BucketContext): boolean {
+function matches(exercise: Exercise, context: CourseExerciseCardContext): boolean {
     const term = context.searchTerm.trim().toLowerCase();
     return !term || (exercise.title ?? '').toLowerCase().includes(term);
 }
 
-function visibleExercises(context: BucketContext): Exercise[] {
+function visibleExercises(context: CourseExerciseCardContext): Exercise[] {
     return context.exercises.filter((exercise) => matches(exercise, context));
 }
 
-function sortExercises(exercises: Exercise[], context: BucketContext): Exercise[] {
+function sortExercises(exercises: Exercise[], context: CourseExerciseCardContext): Exercise[] {
     return [...exercises].sort((a, b) => {
         const da = effectiveDate(a, owningGroup(a, context.groups), 'dueDate');
         const db = effectiveDate(b, owningGroup(b, context.groups), 'dueDate');
@@ -76,16 +76,16 @@ function sortExercises(exercises: Exercise[], context: BucketContext): Exercise[
     });
 }
 
-function buildListBuckets(context: BucketContext): Bucket[] {
+function buildListCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
     const exercises = sortExercises(visibleExercises(context), context);
     if (exercises.length === 0) return [];
-    return [{ id: 'all', title: context.translate('artemisApp.exerciseManagement.bucket.all'), exercises }];
+    return [{ id: 'all', title: context.translate('artemisApp.exerciseManagement.card.all'), exercises }];
 }
 
-function buildGroupBuckets(context: BucketContext): Bucket[] {
+function buildGroupCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
     const groupedIds = new Set<number>();
     const searching = hasSearch(context);
-    const buckets: Bucket[] = context.groups
+    const cards: CourseExerciseCard[] = context.groups
         .slice()
         .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
         .map((group) => {
@@ -93,7 +93,7 @@ function buildGroupBuckets(context: BucketContext): Bucket[] {
             members.forEach((exercise) => exercise.id !== undefined && groupedIds.add(exercise.id));
             return {
                 id: `group-${group.id}`,
-                title: group.title ?? context.translate('artemisApp.exerciseManagement.bucket.group', { id: group.id }),
+                title: group.title ?? context.translate('artemisApp.exerciseManagement.card.group', { id: group.id }),
                 group,
                 exercises: sortExercises(
                     members.filter((exercise) => matches(exercise, context)),
@@ -101,19 +101,19 @@ function buildGroupBuckets(context: BucketContext): Bucket[] {
                 ),
             };
         })
-        .filter((bucket) => !searching || bucket.exercises.length > 0);
+        .filter((card) => !searching || card.exercises.length > 0);
 
     const ungrouped = sortExercises(
         visibleExercises(context).filter((exercise) => exercise.id === undefined || !groupedIds.has(exercise.id)),
         context,
     );
     if (ungrouped.length > 0) {
-        buckets.push({ id: 'ungrouped', title: context.translate('artemisApp.exerciseManagement.bucket.ungrouped'), exercises: ungrouped });
+        cards.push({ id: 'ungrouped', title: context.translate('artemisApp.exerciseManagement.card.ungrouped'), exercises: ungrouped });
     }
-    return buckets;
+    return cards;
 }
 
-function buildTypeBuckets(context: BucketContext): Bucket[] {
+function buildTypeCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
     return TYPE_ORDER.map((type) => ({
         id: `type-${type}`,
         title: TYPE_TITLE_KEYS[type] ? context.translate(TYPE_TITLE_KEYS[type]) : type,
@@ -123,10 +123,10 @@ function buildTypeBuckets(context: BucketContext): Bucket[] {
             visibleExercises(context).filter((exercise) => exercise.type === type),
             context,
         ),
-    })).filter((bucket) => bucket.exercises.length > 0);
+    })).filter((card) => card.exercises.length > 0);
 }
 
-function buildWeekBuckets(context: BucketContext): Bucket[] {
+function buildWeekCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
     const startOf = (exercise: Exercise): dayjs.Dayjs | undefined =>
         effectiveDate(exercise, owningGroup(exercise, context.groups), 'startDate') ?? effectiveDate(exercise, owningGroup(exercise, context.groups), 'releaseDate');
 
@@ -150,16 +150,16 @@ function buildWeekBuckets(context: BucketContext): Bucket[] {
         list.push(exercise);
     }
 
-    const buckets: Bucket[] = [...byWeek.keys()]
+    const cards: CourseExerciseCard[] = [...byWeek.keys()]
         .sort((a, b) => a - b)
         .map((weekIndex) => ({
             id: `week-${weekIndex}`,
-            title: context.translate('artemisApp.exerciseManagement.bucket.week', { number: weekIndex + 1 }),
+            title: context.translate('artemisApp.exerciseManagement.card.week', { number: weekIndex + 1 }),
             exercises: sortExercises(byWeek.get(weekIndex)!, context),
         }));
 
     if (undated.length > 0) {
-        buckets.push({ id: 'unscheduled', title: context.translate('artemisApp.exerciseManagement.bucket.unscheduled'), exercises: sortExercises(undated, context) });
+        cards.push({ id: 'unscheduled', title: context.translate('artemisApp.exerciseManagement.card.unscheduled'), exercises: sortExercises(undated, context) });
     }
-    return buckets;
+    return cards;
 }

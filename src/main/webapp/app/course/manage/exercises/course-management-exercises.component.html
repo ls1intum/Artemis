@@ -79,31 +79,31 @@
         }
     </ng-template>
 
-    @if (loaded() && buckets().length === 0) {
+    @if (loaded() && cards().length === 0) {
         <div class="alert alert-secondary" role="alert">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</div>
     }
     <div class="d-flex flex-column gap-3">
-        @for (bucket of buckets(); track bucket.id) {
+        @for (card of cards(); track card.id) {
             <div style="min-width: 0">
                 <p-panel [toggleable]="true">
                     <ng-template pTemplate="header">
                         <div class="d-flex align-items-center gap-2 w-100">
-                            @if (isGroup() && bucket.group) {
+                            @if (isGroup() && card.group) {
                                 <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
-                            } @else if (bucket.icon) {
-                                <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
+                            } @else if (card.icon) {
+                                <fa-icon [icon]="card.icon" [fixedWidth]="true" />
                             }
-                            <span class="fw-semibold">{{ bucket.title }} ({{ bucket.exercises.length }})</span>
+                            <span class="fw-semibold">{{ card.title }} ({{ card.exercises.length }})</span>
                         </div>
                     </ng-template>
 
                     @if (courseId() !== undefined) {
                         <jhi-exercise-table
-                            [exercises]="bucket.exercises"
+                            [exercises]="card.exercises"
                             [courseId]="courseId()!"
                             [course]="course()"
-                            [group]="bucket.group"
-                            [dropListId]="bucket.id"
+                            [group]="card.group"
+                            [dropListId]="card.id"
                             [connectedDropLists]="dropListIds()"
                             [showDragHandle]="isGroup()"
                             [showTypeIcon]="view() !== 'type'"
@@ -112,54 +112,54 @@
                             [selectedIds]="selectedIds()"
                             [groups]="groups()"
                             (groupChange)="onTableGroupChange($event)"
-                            (rowsReordered)="onTableRowsReordered(bucket, $event)"
+                            (rowsReordered)="onTableRowsReordered(card, $event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
                             (exerciseDeleted)="onExerciseDeleted($event)"
                             (selectionToggle)="toggleSelection($event)"
-                            (selectionAllChange)="onTableSelectionAllChange(bucket, $event)"
+                            (selectionAllChange)="onTableSelectionAllChange(card, $event)"
                         />
                     }
 
                     <!-- Group footer: shared group meta info on the left, group-level actions on the right -->
-                    @if (isGroup() && bucket.group) {
+                    @if (isGroup() && card.group) {
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
                             <div class="d-flex flex-wrap gap-3 small text-muted">
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
-                                    @if (bucket.group.releaseDate) {
-                                        {{ bucket.group.releaseDate | artemisDate }}
+                                    @if (card.group.releaseDate) {
+                                        {{ card.group.releaseDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.start"></span>:</span>
-                                    @if (bucket.group.startDate) {
-                                        {{ bucket.group.startDate | artemisDate }}
+                                    @if (card.group.startDate) {
+                                        {{ card.group.startDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.due"></span>:</span>
-                                    @if (bucket.group.dueDate) {
-                                        {{ bucket.group.dueDate | artemisDate }}
+                                    @if (card.group.dueDate) {
+                                        {{ card.group.dueDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>:</span>
-                                    @if (bucket.group.assessmentDueDate) {
-                                        {{ bucket.group.assessmentDueDate | artemisDate }}
+                                    @if (card.group.assessmentDueDate) {
+                                        {{ card.group.assessmentDueDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span class="d-flex align-items-center gap-1">
                                     <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.maxPoints"></span>
-                                    @if (bucket.group.maxPoints !== undefined) {
-                                        {{ bucket.group.maxPoints }}p
+                                    @if (card.group.maxPoints !== undefined) {
+                                        {{ card.group.maxPoints }}p
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
@@ -171,12 +171,12 @@
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="openGroupEditModal(bucket.group.id!)">
+                                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
                                 </p-button>
                                 @if (canDeleteGroups()) {
-                                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="confirmDeleteGroup(bucket.group)">
+                                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="confirmDeleteGroup(card.group)">
                                         <fa-icon [icon]="faTrash" />
                                         <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.delete"></span>
                                     </p-button>
