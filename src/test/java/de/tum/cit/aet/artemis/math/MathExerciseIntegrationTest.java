@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.math;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,18 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createMathExercise_withTooLongTitle_returnsBadRequest() throws Exception {
+        MathExercise newExercise = MathExerciseFactory.generateMathExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
+                course);
+        // the title column is varchar(255); a longer title must be rejected with 400 instead of failing as a 500 on insert
+        newExercise.setTitle("a".repeat(256));
+        MathExerciseDTO tooLongTitle = MathExerciseDTO.of(newExercise);
+
+        request.postWithResponseBody("/api/math/math-exercises", tooLongTitle, MathExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getMathExercise_asTutor_returnsOk() throws Exception {
         MathExerciseDTO result = request.get("/api/math/math-exercises/" + exercise.getId(), HttpStatus.OK, MathExerciseDTO.class);
@@ -116,6 +129,16 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MathExerciseDTO result = request.putWithResponseBody("/api/math/math-exercises", updateDTO, MathExerciseDTO.class, HttpStatus.OK);
 
         assertThat(result.description()).isEqualTo("Updated description");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateMathExercise_withTooLongTitle_returnsBadRequest() throws Exception {
+        // the title column is varchar(255); a longer title must be rejected with 400 instead of failing as a 500 on insert
+        exercise.setTitle("a".repeat(256));
+        MathExerciseDTO tooLongTitle = MathExerciseDTO.of(exercise);
+
+        request.putWithResponseBody("/api/math/math-exercises", tooLongTitle, MathExerciseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -200,8 +223,8 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         MathExercise imported = mathExerciseRepository.findByIdWithCourseAndExampleSubmissions(result.id()).orElseThrow();
         long copiedSubmissionId = imported.getExampleSubmissions().iterator().next().getSubmission().getId();
-        // Reload the copied submission's assessment via the targeted query (the exercise query no longer eagerly fetches results).
-        MathSubmission copiedSubmission = mathSubmissionRepository.findByIdWithResultsAndFeedbacksAndAssessor(copiedSubmissionId).orElseThrow();
+        // Reload the copied submission's assessment via the bulk query (the exercise query no longer eagerly fetches results).
+        MathSubmission copiedSubmission = mathSubmissionRepository.findAllWithResultsAndFeedbacksAndAssessorByIdIn(Set.of(copiedSubmissionId)).getFirst();
         // The assessment must be copied as exactly one distinct result with its feedback and score.
         assertThat(copiedSubmission.getResults()).hasSize(1);
         Result copiedResult = copiedSubmission.getResults().getFirst();

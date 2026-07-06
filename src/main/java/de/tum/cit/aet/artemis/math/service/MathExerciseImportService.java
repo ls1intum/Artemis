@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
@@ -95,7 +96,7 @@ public class MathExerciseImportService extends ExerciseImportService {
 
     /**
      * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
-     * To copy the corresponding {@link de.tum.cit.aet.artemis.exercise.domain.Submission} entity this calls {@link #copySubmission(Submission, Map)}.
+     * To copy the corresponding {@link de.tum.cit.aet.artemis.exercise.domain.Submission} entity this calls {@link #copySubmission(MathSubmission, Map)}.
      *
      * @param templateExercise              The original exercise from which to fetch the example submissions
      * @param newExercise                   The new exercise in which we will insert the example submissions
@@ -108,10 +109,15 @@ public class MathExerciseImportService extends ExerciseImportService {
         if (!Hibernate.isInitialized(templateExercise.getExampleSubmissions())) {
             return newExampleSubmissions;
         }
+        // Preload every example submission's assessment graph (result + feedbacks + assessor) in a single bulk query,
+        // so copySubmission does not issue one query per example submission (N+1).
+        Map<Long, MathSubmission> submissionsWithAssessmentById = loadSubmissionsWithAssessment(templateExercise.getExampleSubmissions());
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
+            Submission originalSubmission = originalExampleSubmission.getSubmission();
             // Hard-copy the submission: ExampleSubmission.submission is a unique @OneToOne with cascade=REMOVE/orphanRemoval,
             // so the new example submission must own its own submission rather than share the template's.
-            MathSubmission newSubmission = copySubmission(originalExampleSubmission.getSubmission(), gradingInstructionCopyTracker);
+            MathSubmission source = originalSubmission == null ? null : submissionsWithAssessmentById.get(originalSubmission.getId());
+            MathSubmission newSubmission = copySubmission(source, gradingInstructionCopyTracker);
 
             ExampleSubmission newExampleSubmission = new ExampleSubmission();
             newExampleSubmission.setExercise(newExercise);
@@ -125,14 +131,32 @@ public class MathExerciseImportService extends ExerciseImportService {
     }
 
     /**
+     * Bulk-loads the assessment graph (results + feedbacks + assessor) for every submission behind the given example submissions,
+     * keyed by submission id. Loading them all at once avoids issuing one query per example submission in {@link #copySubmission}.
+     *
+     * @param exampleSubmissions the template's example submissions
+     * @return a map from submission id to the submission with its assessment graph eagerly loaded (empty if there are none)
+     */
+    private Map<Long, MathSubmission> loadSubmissionsWithAssessment(Set<ExampleSubmission> exampleSubmissions) {
+        Set<Long> submissionIds = exampleSubmissions.stream().map(ExampleSubmission::getSubmission).filter(submission -> submission != null).map(Submission::getId)
+                .collect(Collectors.toSet());
+        if (submissionIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, MathSubmission> submissionsById = new HashMap<>();
+        mathSubmissionRepository.findAllWithResultsAndFeedbacksAndAssessorByIdIn(submissionIds).forEach(submission -> submissionsById.put(submission.getId(), submission));
+        return submissionsById;
+    }
+
+    /**
      * This helper function does a hard copy of the {@code originalSubmission} into a new {@link MathSubmission}, including its
      * latest example result. Mirrors {@code TextExerciseImportService#copySubmission} but without text blocks.
      *
-     * @param originalSubmission            The original submission to be copied (may be {@code null})
+     * @param originalSubmission            The original submission to be copied, with its assessment graph preloaded (may be {@code null})
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned submission
      */
-    private MathSubmission copySubmission(final Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private MathSubmission copySubmission(final MathSubmission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         MathSubmission newSubmission = new MathSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
@@ -140,12 +164,9 @@ public class MathExerciseImportService extends ExerciseImportService {
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
-            newSubmission.setContent(((MathSubmission) originalSubmission).getContent());
+            newSubmission.setContent(originalSubmission.getContent());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            // Load the assessment graph (result + feedbacks + assessor) in a separate targeted query instead of eagerly fetching
-            // it on the exercise-import query, which would grow that query's fetch graph beyond the allowed size.
-            Result originalResult = mathSubmissionRepository.findByIdWithResultsAndFeedbacksAndAssessor(originalSubmission.getId()).map(MathSubmission::getLatestResult)
-                    .orElse(null);
+            Result originalResult = originalSubmission.getLatestResult();
             if (originalResult != null) {
                 newSubmission.addResult(copyExampleResult(originalResult, newSubmission, gradingInstructionCopyTracker));
                 newSubmission = submissionRepository.saveAndFlush(newSubmission);

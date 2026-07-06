@@ -53,6 +53,9 @@ public class MathExerciseResource {
 
     private static final String ENTITY_NAME = "mathExercise";
 
+    // The title column is varchar(255); reject longer titles with a 400 instead of letting them fail as a 500 on insert.
+    private static final int MAX_TITLE_LENGTH = 255;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -100,6 +103,7 @@ public class MathExerciseResource {
         mathExerciseDTO.applyToEntity(exercise);
         applyCourse(mathExerciseDTO, exercise);
         exercise.validateTitle();
+        validateTitleLength(exercise);
         exercise.validateGeneralSettings();
         MathExercise saved = mathExerciseRepository.findByIdWithCategories(mathExerciseRepository.save(exercise).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/math/math-exercises/" + saved.getId()))
@@ -126,9 +130,10 @@ public class MathExerciseResource {
         mathExerciseDTO.applyToEntity(existing);
         applyCourse(mathExerciseDTO, existing);
         existing.validateTitle();
+        validateTitleLength(existing);
         existing.validateGeneralSettings();
         MathExercise saved = mathExerciseRepository.findByIdWithCategories(mathExerciseRepository.save(existing).getId()).orElseThrow();
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(MathExerciseDTO.of(saved));
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getTitle())).body(MathExerciseDTO.of(saved));
     }
 
     /**
@@ -177,7 +182,7 @@ public class MathExerciseResource {
         // NOTE: we use the exerciseDeletionService here, because it cleans up all related entities (participations, submissions,
         // results, channels, competency links, etc.) in the correct order. A direct repository delete fails on FK constraints.
         exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exercise.getTitle())).build();
     }
 
     /**
@@ -223,6 +228,12 @@ public class MathExerciseResource {
         MathExercise result = mathExerciseRepository.findByIdWithCategories(mathExerciseImportService.importMathExercise(sourceExercise, target).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/math/math-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(MathExerciseDTO.of(result));
+    }
+
+    private void validateTitleLength(MathExercise exercise) {
+        if (exercise.getTitle() != null && exercise.getTitle().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The title is too long.", ENTITY_NAME, "titleLengthInvalid");
+        }
     }
 
     private void applyCourse(MathExerciseDTO dto, MathExercise exercise) {

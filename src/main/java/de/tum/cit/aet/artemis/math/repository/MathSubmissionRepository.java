@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.math.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -25,13 +26,13 @@ public interface MathSubmissionRepository extends JpaRepository<MathSubmission, 
     Optional<MathSubmission> findByIdWithResults(@Param("id") Long id);
 
     @Query("""
-            SELECT s FROM MathSubmission s
+            SELECT DISTINCT s FROM MathSubmission s
                 LEFT JOIN FETCH s.results result
                 LEFT JOIN FETCH result.feedbacks
                 LEFT JOIN FETCH result.assessor
-            WHERE s.id = :id
+            WHERE s.id IN :ids
             """)
-    Optional<MathSubmission> findByIdWithResultsAndFeedbacksAndAssessor(@Param("id") Long id);
+    List<MathSubmission> findAllWithResultsAndFeedbacksAndAssessorByIdIn(@Param("ids") Set<Long> ids);
 
     @Query("SELECT s FROM MathSubmission s LEFT JOIN FETCH s.results LEFT JOIN FETCH s.participation p LEFT JOIN FETCH p.exercise WHERE s.id = :id")
     Optional<MathSubmission> findByIdWithResultsAndParticipation(@Param("id") Long id);

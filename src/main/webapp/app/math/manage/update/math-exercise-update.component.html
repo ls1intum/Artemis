@@ -112,7 +112,12 @@
         </div>
         <div class="row mt-3">
             <div class="col-12 col-md-6">
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="mathExercise.includedInOverallScore" [allowNotIncluded]="true" />
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScoreCourseLabel"></label>
+                    <div>
+                        <jhi-included-in-overall-score-picker [(includedInOverallScore)]="mathExercise.includedInOverallScore" [allowNotIncluded]="true" />
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row mt-3">
