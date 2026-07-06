@@ -232,11 +232,12 @@
             </div>
         }
         <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
-            @if (messages()?.length) {
-                <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
+            @if (messages()?.length || liveAssistantDraft()) {
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
+                                [attr.data-message-id]="message.id"
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
@@ -265,6 +266,12 @@
                                 }
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
+                                        @if (getActivities(message).length) {
+                                            <details class="activity-trail" open>
+                                                <summary>{{ activityTrailSummary(getActivities(message)) }}</summary>
+                                                <jhi-iris-activity-feed [activities]="getActivities(message)" mode="trail" />
+                                            </details>
+                                        }
                                         @for (content of message.content; track content.id ?? $index) {
                                             @if (isMcqSetContent(content)) {
                                                 <jhi-iris-mcq-carousel
@@ -303,33 +310,46 @@
                                             >
                                                 <fa-icon [icon]="isCopied(message, i) ? faCheck : faCopy" />
                                             </button>
-                                            <button
-                                                class="btn btn-sm"
-                                                [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
-                                                [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
-                                                [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
-                                                (click)="rateMessage(message, true)"
-                                                [disabled]="(message | as: IrisAssistantMessage).helpful"
-                                                [attr.aria-label]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
-                                                [title]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
-                                            >
-                                                <fa-icon [icon]="faThumbsUp" />
-                                            </button>
-                                            <button
-                                                class="btn btn-sm"
-                                                [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
-                                                [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                (click)="rateMessage(message, false)"
-                                                [disabled]="(message | as: IrisAssistantMessage).helpful === false"
-                                                [attr.aria-label]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
-                                                [title]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
-                                            >
-                                                <fa-icon [icon]="faThumbsDown" />
-                                            </button>
+                                            @if (canRateMessage(message)) {
+                                                <button
+                                                    class="btn btn-sm"
+                                                    [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
+                                                    [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
+                                                    [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
+                                                    (click)="rateMessage(message, true)"
+                                                    [disabled]="(message | as: IrisAssistantMessage).helpful"
+                                                    [attr.aria-label]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                    [title]="'artemisApp.exerciseChatbot.actions.goodResponse' | artemisTranslate"
+                                                >
+                                                    <fa-icon [icon]="faThumbsUp" />
+                                                </button>
+                                                <button
+                                                    class="btn btn-sm"
+                                                    [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
+                                                    [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                    [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                    (click)="rateMessage(message, false)"
+                                                    [disabled]="(message | as: IrisAssistantMessage).helpful === false"
+                                                    [attr.aria-label]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                    [title]="'artemisApp.exerciseChatbot.actions.badResponse' | artemisTranslate"
+                                                >
+                                                    <fa-icon [icon]="faThumbsDown" />
+                                                </button>
+                                            }
                                         </div>
                                     </div>
                                 }
+                            </div>
+                        }
+                        <jhi-iris-activity-feed [activities]="activities()" mode="live" />
+                        @if (liveAssistantDraft()) {
+                            <div class="llm-message-wrapper streaming-draft-wrapper">
+                                <div class="bubble-left streaming-draft-bubble">
+                                    <jhi-iris-citation-text [text]="displayedLiveAssistantDraftText()" [citationInfo]="citationInfo()" />
+                                    <div class="streaming-draft-meta" aria-hidden="true">
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    </div>
+                                </div>
                             </div>
                         }
                         @if (canShowSuggestions()) {
@@ -347,18 +367,19 @@
                                 </div>
                             </div>
                         }
-                        @if (activeChatMessage()) {
+                        @if (shouldShowThinkingBubble()) {
                             <div class="llm-message-wrapper">
-                                <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
+                                <jhi-iris-thinking-bubble [message]="thinkingMessage()" />
                             </div>
                         }
                         @if (shouldShowStatusBar()) {
-                            <jhi-chat-status-bar [stages]="stages()" />
+                            <jhi-chat-status-bar [runInfo]="runInfo()" />
                         }
+                        <div class="stream-exchange-spacer" aria-hidden="true" [style.height.px]="exchangeSpacerPx()"></div>
                     </div>
                 </div>
             }
-            @if (!messages()?.length && !isEmbeddedChat()) {
+            @if (!messages()?.length && !liveAssistantDraft() && !isEmbeddedChat()) {
                 <div class="empty-chat-message">
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
