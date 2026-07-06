@@ -21,6 +21,7 @@
         "strictBindCallApply": true,
         "noImplicitThis": true,
         "useUnknownInCatchVariables": true,
+        "alwaysStrict": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
         "outDir": "build/resources/main/static/app",
