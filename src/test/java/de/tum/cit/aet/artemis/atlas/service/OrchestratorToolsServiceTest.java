@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @ExtendWith(MockitoExtension.class)
 class OrchestratorToolsServiceTest {
@@ -660,6 +662,37 @@ class OrchestratorToolsServiceTest {
 
         assertThat(result).contains("does not belong to the current course");
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
+    }
+
+    @Test
+    void getExerciseContent_programmingExercise_returnsExtractedContent() {
+        Course course = courseWithId(COURSE_ID);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(contentExtractionService.extractContent(exercise))
+                .thenReturn(new ExtractedContentDTO("Implement Quicksort", "Sort an array in O(n log n).", Map.of("exerciseType", "programming")));
+
+        String result = service.getExerciseContent(20L, toolContext);
+
+        assertThat(result).contains("Implement Quicksort").contains("Sort an array in O(n log n).").contains("programming");
+    }
+
+    @Test
+    void getExerciseContent_quizExercise_returnsExtractedContentNotStub() {
+        Course course = courseWithId(COURSE_ID);
+        QuizExercise quiz = new QuizExercise();
+        quiz.setId(21L);
+        quiz.setTitle("Data structures quiz");
+        quiz.setCourse(course);
+        when(exerciseRepository.findByIdElseThrow(21L)).thenReturn(quiz);
+        when(contentExtractionService.extractContent(quiz))
+                .thenReturn(new ExtractedContentDTO("Data structures quiz", "Question 1: ...", Map.of("exerciseType", "quiz", "questionCount", "3")));
+
+        String result = service.getExerciseContent(21L, toolContext);
+
+        // Non-programming exercises are now text-extracted (previously a title-only "only programming" stub).
+        assertThat(result).contains("Data structures quiz").contains("questionCount").doesNotContain("only available for programming");
+        verify(contentExtractionService).extractContent(quiz);
     }
 
     @Test

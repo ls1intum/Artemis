@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Tools exposed to the Atlas orchestrator LLM. Mixes read and write operations:
@@ -241,9 +240,10 @@ public class OrchestratorToolsService {
      * @param toolContext carries the current course id
      * @return the JSON-serialized content
      */
-    @Tool(description = "Extract the learning-relevant content (title, problem statement text, and metadata) for an exercise that belongs to the current course. "
-            + "Only programming exercises are text-extractable; for quiz, text, modeling, or file-upload exercises this returns a stub with the title and type "
-            + "(no problem statement) — judge their fit by title alone in that case, don't call this tool repeatedly for the same non-programming id.")
+    @Tool(description = "Extract the learning-relevant content for an exercise that belongs to the current course. Returns a title, the learning text, and metadata. "
+            + "For programming, text, modeling and file-upload exercises the learning text is the problem statement (plus example solution where available); for quizzes "
+            + "it is the assembled questions with their correct answers/solutions. Metadata always carries the exercise type and, when set, difficulty / maxPoints "
+            + "(plus type-specific keys such as questionCount for quizzes).")
     public String getExerciseContent(@ToolParam(description = "id of the exercise whose content should be extracted") Long exerciseId, ToolContext toolContext) {
         Long courseId = courseIdFromContext(toolContext);
         if (courseId == null) {
@@ -261,11 +261,6 @@ public class OrchestratorToolsService {
         }
         if (!exerciseBelongsToCourse(exercise, courseId)) {
             return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
-        }
-        if (!(exercise instanceof ProgrammingExercise)) {
-            String title = Objects.requireNonNullElse(exercise.getTitle(), "");
-            return toJson(Map.of("id", exerciseId, "title", title, "type", exerciseType(exercise), "textExtractable", false, "note",
-                    "Content extraction is only available for programming exercises. Use the title and type to decide fit."));
         }
         try {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);

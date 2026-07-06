@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,21 +25,41 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO.EditDTO;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Extracts learning-relevant content from {@link LearningObject}s (exercises and lecture units)
- * into {@link ExtractedContentDTO}s for downstream LLM consumption. Currently supports
- * {@link ProgrammingExercise}; other exercise types and lecture unit types will follow.
+ * into {@link ExtractedContentDTO}s for downstream LLM consumption. Supports all exercise types
+ * (programming, text, modeling, file upload, quiz); lecture unit types are not yet supported.
+ * <p>
+ * Text, modeling and file-upload exercises carry a prose problem statement (flavor-stripped) plus
+ * their example/sample solution; quizzes have no problem statement, so their content is assembled
+ * from the questions, answer options, and correct solutions. All extracted content is server-side
+ * only and is sanitized (fence-neutralized, truncated) by the orchestrator before it reaches the
+ * prompt — see {@code CompetencyOrchestrationService.sanitizeForPrompt}.
  * <p>
  * To add a new learning object type:
  * <ol>
- * <li>Add an {@code instanceof} branch in {@link #extractContent(LearningObject)} for the new
- * {@code LearningObject} subtype</li>
+ * <li>Add an {@code instanceof} branch in {@link #extractContent(LearningObject, boolean)} for the
+ * new {@code LearningObject} subtype</li>
  * <li>Create a private {@code extractFrom*()} method accepting the concrete type</li>
- * <li>Always set {@code exerciseType} in metadata via {@link ExerciseType#getValue()} (for exercises)
- * or an equivalent type discriminator for lecture units</li>
+ * <li>Always set {@code exerciseType} in metadata (for exercises {@link #baseMetadata(Exercise)}
+ * derives it from {@code Exercise#getExerciseType()}) or an equivalent type discriminator for
+ * lecture units</li>
  * <li>Add corresponding tests in {@code ContentExtractionServiceTest}</li>
  * </ol>
  */
@@ -54,18 +76,21 @@ public class ContentExtractionService {
 
     private final AtlasPromptTemplateService templateService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final String flavorStripModel;
 
     private final String flavorStripReasoningEffort;
 
     private final double flavorStripTemperature;
 
-    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService,
+    public ContentExtractionService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, QuizExerciseRepository quizExerciseRepository,
             @Value("${artemis.atlas.flavor-strip-model:gpt-5.4-mini}") String flavorStripModel,
             @Value("${artemis.atlas.flavor-strip-reasoning-effort:medium}") String flavorStripReasoningEffort,
             @Value("${artemis.atlas.flavor-strip-temperature:1.0}") double flavorStripTemperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.flavorStripModel = flavorStripModel;
         this.flavorStripReasoningEffort = flavorStripReasoningEffort;
         this.flavorStripTemperature = flavorStripTemperature;
@@ -94,10 +119,14 @@ public class ContentExtractionService {
      */
     public ExtractedContentDTO extractContent(LearningObject learningObject, boolean stripFlavorText) {
         Objects.requireNonNull(learningObject, "learningObject must not be null");
-        if (learningObject instanceof ProgrammingExercise programmingExercise) {
-            return extractFromProgrammingExercise(programmingExercise, stripFlavorText);
-        }
-        throw new IllegalArgumentException("Unsupported learning object type: " + learningObject.getClass().getSimpleName());
+        return switch (learningObject) {
+            case ProgrammingExercise programmingExercise -> extractFromProgrammingExercise(programmingExercise, stripFlavorText);
+            case TextExercise textExercise -> extractFromTextExercise(textExercise, stripFlavorText);
+            case ModelingExercise modelingExercise -> extractFromModelingExercise(modelingExercise, stripFlavorText);
+            case FileUploadExercise fileUploadExercise -> extractFromFileUploadExercise(fileUploadExercise, stripFlavorText);
+            case QuizExercise quizExercise -> extractFromQuizExercise(quizExercise);
+            default -> throw new IllegalArgumentException("Unsupported learning object type: " + learningObject.getClass().getSimpleName());
+        };
     }
 
     /**
@@ -243,18 +272,187 @@ public class ContentExtractionService {
         String title = Objects.requireNonNullElse(exercise.getTitle(), "");
         String raw = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
         String learningText = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
+    }
 
-        // LinkedHashMap preserves insertion order for deterministic JSON serialization
+    private ExtractedContentDTO extractFromTextExercise(TextExercise exercise, boolean applyFlavorStrip) {
+        String title = Objects.requireNonNullElse(exercise.getTitle(), "");
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        return new ExtractedContentDTO(title, learningText, baseMetadata(exercise));
+    }
+
+    private ExtractedContentDTO extractFromModelingExercise(ModelingExercise exercise, boolean applyFlavorStrip) {
+        String title = Objects.requireNonNullElse(exercise.getTitle(), "");
+        // The example-solution *explanation* is prose; the example-solution *model* is serialized Apollon
+        // JSON and is deliberately excluded — it is noise for competency reasoning, not learning content.
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolutionExplanation(), applyFlavorStrip);
+        Map<String, String> metadata = baseMetadata(exercise);
+        if (exercise.getDiagramType() != null) {
+            metadata.put("diagramType", exercise.getDiagramType().name().toLowerCase(Locale.ROOT));
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    private ExtractedContentDTO extractFromFileUploadExercise(FileUploadExercise exercise, boolean applyFlavorStrip) {
+        String title = Objects.requireNonNullElse(exercise.getTitle(), "");
+        String learningText = statementWithSolution(exercise.getProblemStatement(), exercise.getExampleSolution(), applyFlavorStrip);
+        Map<String, String> metadata = baseMetadata(exercise);
+        if (exercise.getFilePattern() != null && !exercise.getFilePattern().isBlank()) {
+            metadata.put("filePattern", exercise.getFilePattern().strip());
+        }
+        return new ExtractedContentDTO(title, learningText, metadata);
+    }
+
+    /**
+     * Extracts quiz content. Quizzes carry no problem statement, so the learning text is assembled from
+     * the questions and their correct answers/solutions ({@link #renderQuizQuestions}).
+     * <p>
+     * The {@code quizQuestions} collection is {@code LAZY} and extraction runs on the async scheduler
+     * thread with no open session, so a persisted quiz is re-fetched with its questions eagerly loaded
+     * to avoid a {@code LazyInitializationException}. In-memory quizzes (no id — unit tests) already
+     * carry their questions and are used as-is. The unfiltered entity is read on purpose: the LLM needs
+     * the correct answers to judge competency fit, and nothing here is exposed to students.
+     * <p>
+     * Flavor-text stripping is intentionally skipped: quiz content is terse structured Q&amp;A, not the
+     * narrative prose the strip pass targets, so it would add latency and an LLM call for no benefit.
+     */
+    private ExtractedContentDTO extractFromQuizExercise(QuizExercise exercise) {
+        QuizExercise source = exercise.getId() != null ? quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()) : exercise;
+        String title = Objects.requireNonNullElse(source.getTitle(), "");
+        List<QuizQuestion> questions = source.getQuizQuestions() == null ? List.of() : source.getQuizQuestions();
+        Map<String, String> metadata = baseMetadata(source);
+        metadata.put("questionCount", Integer.toString(questions.size()));
+        return new ExtractedContentDTO(title, renderQuizQuestions(questions), metadata);
+    }
+
+    /**
+     * Builds the base metadata every exercise carries. A {@link LinkedHashMap} preserves insertion order
+     * for deterministic JSON serialization. {@code exerciseType} is derived from the concrete type so it
+     * stays correct for every subtype; {@code difficulty} / {@code maxPoints} are added when present.
+     */
+    private static Map<String, String> baseMetadata(Exercise exercise) {
         Map<String, String> metadata = new LinkedHashMap<>();
-        metadata.put("exerciseType", ExerciseType.PROGRAMMING.getValue());
-
+        metadata.put("exerciseType", exercise.getExerciseType().getValue());
         if (exercise.getDifficulty() != null) {
             metadata.put("difficulty", exercise.getDifficulty().name().toLowerCase(Locale.ROOT));
         }
         if (exercise.getMaxPoints() != null) {
             metadata.put("maxPoints", String.format(Locale.ROOT, "%.1f", exercise.getMaxPoints()));
         }
+        return metadata;
+    }
 
-        return new ExtractedContentDTO(title, learningText, metadata);
+    /**
+     * Flavor-strips the (prose) problem statement like a programming exercise, then appends the labeled
+     * example solution verbatim. The solution is not flavor-stripped — it is the reference answer, not
+     * narrative scaffolding. Returns just the statement when no solution is present, and just the labeled
+     * solution when the statement is blank.
+     */
+    private String statementWithSolution(@Nullable String problemStatement, @Nullable String exampleSolution, boolean applyFlavorStrip) {
+        String raw = Objects.requireNonNullElse(problemStatement, "");
+        String statement = applyFlavorStrip ? stripFlavorText(raw) : raw;
+        if (exampleSolution == null || exampleSolution.isBlank()) {
+            return statement;
+        }
+        String labeledSolution = "Example solution:\n" + exampleSolution.strip();
+        return statement.isBlank() ? labeledSolution : statement + "\n\n" + labeledSolution;
+    }
+
+    /** Assembles the pedagogical content of a quiz's questions into a single learning-text block. */
+    private static String renderQuizQuestions(List<QuizQuestion> questions) {
+        StringBuilder sb = new StringBuilder();
+        int index = 1;
+        for (QuizQuestion question : questions) {
+            if (index > 1) {
+                sb.append("\n\n");
+            }
+            String questionTitle = question.getTitle() == null ? "" : question.getTitle().strip();
+            sb.append("Question ").append(index);
+            if (!questionTitle.isBlank()) {
+                sb.append(": ").append(questionTitle);
+            }
+            sb.append('\n');
+            appendField(sb, null, question.getText());
+            appendField(sb, "Hint", question.getHint());
+            appendField(sb, "Explanation", question.getExplanation());
+            switch (question) {
+                case MultipleChoiceQuestion mc -> renderMultipleChoice(sb, mc);
+                case ShortAnswerQuestion sa -> renderShortAnswer(sb, sa);
+                case DragAndDropQuestion dnd -> renderDragAndDrop(sb, dnd);
+                default -> {
+                    // Unknown question subtype: the shared title/text/hint/explanation above is still emitted.
+                }
+            }
+            index++;
+        }
+        return sb.toString().strip();
+    }
+
+    private static void renderMultipleChoice(StringBuilder sb, MultipleChoiceQuestion question) {
+        List<AnswerOption> options = question.getAnswerOptions();
+        if (options == null || options.isEmpty()) {
+            return;
+        }
+        sb.append("Answer options:\n");
+        for (AnswerOption option : options) {
+            String text = option.getText() == null ? "" : option.getText().strip();
+            sb.append("- ").append(text).append(Boolean.TRUE.equals(option.isIsCorrect()) ? " [correct]" : " [incorrect]");
+            if (option.getExplanation() != null && !option.getExplanation().isBlank()) {
+                sb.append(" (").append(option.getExplanation().strip()).append(')');
+            }
+            sb.append('\n');
+        }
+    }
+
+    private static void renderShortAnswer(StringBuilder sb, ShortAnswerQuestion question) {
+        Set<ShortAnswerMapping> mappings = question.getCorrectMappings();
+        if (mappings != null && !mappings.isEmpty()) {
+            sb.append("Correct answers by spot:\n");
+            mappings.stream().filter(mapping -> mapping.getSpot() != null && mapping.getSolution() != null)
+                    .sorted(Comparator.comparing(mapping -> Objects.requireNonNullElse(mapping.getSpot().getSpotNr(), 0)))
+                    .forEach(mapping -> sb.append("- Spot ").append(mapping.getSpot().getSpotNr()).append(": ")
+                            .append(mapping.getSolution().getText() == null ? "" : mapping.getSolution().getText().strip()).append('\n'));
+            return;
+        }
+        List<ShortAnswerSolution> solutions = question.getSolutions();
+        if (solutions == null || solutions.isEmpty()) {
+            return;
+        }
+        sb.append("Accepted answers:\n");
+        for (ShortAnswerSolution solution : solutions) {
+            if (solution.getText() != null && !solution.getText().isBlank()) {
+                sb.append("- ").append(solution.getText().strip()).append('\n');
+            }
+        }
+    }
+
+    private static void renderDragAndDrop(StringBuilder sb, DragAndDropQuestion question) {
+        // Drop locations carry only geometry (no text), so only the text drag items are extractable content.
+        List<DragItem> dragItems = question.getDragItems();
+        if (dragItems == null || dragItems.isEmpty()) {
+            return;
+        }
+        boolean headerWritten = false;
+        for (DragItem item : dragItems) {
+            if (item.getText() == null || item.getText().isBlank()) {
+                continue;
+            }
+            if (!headerWritten) {
+                sb.append("Drag items:\n");
+                headerWritten = true;
+            }
+            sb.append("- ").append(item.getText().strip()).append('\n');
+        }
+    }
+
+    /** Appends {@code "<label>: <value>\n"} (or just {@code "<value>\n"} when {@code label} is null), skipping blank values. */
+    private static void appendField(StringBuilder sb, @Nullable String label, @Nullable String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        if (label != null) {
+            sb.append(label).append(": ");
+        }
+        sb.append(value.strip()).append('\n');
     }
 }

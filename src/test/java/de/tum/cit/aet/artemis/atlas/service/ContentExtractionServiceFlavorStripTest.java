@@ -23,6 +23,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.FlavorStripEditsDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
 /**
  * Flavor-strip-specific coverage for {@link ContentExtractionService#stripFlavorText(String)}
@@ -38,11 +39,14 @@ class ContentExtractionServiceFlavorStripTest {
     @Mock
     private AtlasPromptTemplateService templateService;
 
+    @Mock
+    private QuizExerciseRepository quizExerciseRepository;
+
     private ContentExtractionService service;
 
     @BeforeEach
     void setUp() {
-        service = new ContentExtractionService(chatClient, templateService, "gpt-5.4-mini", "low", 1.0);
+        service = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
     }
 
     private void stubLlm(FlavorStripEditsDTO edits) {
@@ -66,7 +70,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_blankModel_returnsRawAndNeverCallsClient() {
-        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, "", "low", 1.0);
+        ContentExtractionService blankModelService = new ContentExtractionService(chatClient, templateService, quizExerciseRepository, "", "low", 1.0);
 
         assertThat(blankModelService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(chatClient);
@@ -74,7 +78,7 @@ class ContentExtractionServiceFlavorStripTest {
 
     @Test
     void stripFlavorText_nullChatClient_returnsRawAndNeverCallsTemplateService() {
-        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, "gpt-5.4-mini", "low", 1.0);
+        ContentExtractionService noClientService = new ContentExtractionService(null, templateService, quizExerciseRepository, "gpt-5.4-mini", "low", 1.0);
 
         assertThat(noClientService.stripFlavorText("Keep this text.")).isEqualTo("Keep this text.");
         verifyNoInteractions(templateService);
