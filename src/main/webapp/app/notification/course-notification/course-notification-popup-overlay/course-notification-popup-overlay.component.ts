@@ -35,7 +35,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     protected readonly notifications = signal<CourseNotification[]>([]);
     protected readonly isExpanded = signal(false);
 
-    private courseNotificationWebsocketSubscription: Subscription;
+    private courseNotificationWebsocketSubscription?: Subscription;
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -62,7 +62,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     }
 
     ngOnDestroy(): void {
-        this.courseNotificationWebsocketSubscription.unsubscribe();
+        this.courseNotificationWebsocketSubscription?.unsubscribe();
     }
 
     /**

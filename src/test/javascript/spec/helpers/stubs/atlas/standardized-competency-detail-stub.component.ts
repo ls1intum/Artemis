@@ -8,7 +8,7 @@ import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardize
 })
 export class StandardizedCompetencyDetailStubComponent {
     // values for the knowledge area select
-    @Input({ required: true }) competency: StandardizedCompetencyDTO;
+    @Input({ required: true }) competency!: StandardizedCompetencyDTO;
     @Input() knowledgeAreaTitle = '';
     @Input() sourceString = '';
 

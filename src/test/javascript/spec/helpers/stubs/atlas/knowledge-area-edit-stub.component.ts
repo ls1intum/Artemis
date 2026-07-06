@@ -8,9 +8,9 @@ import { Observable } from 'rxjs';
 })
 export class KnowledgeAreaEditStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
-    @Input() knowledgeArea: KnowledgeAreaDTO;
+    @Input() knowledgeArea!: KnowledgeAreaDTO;
     @Input() isEditing = false;
-    @Input() dialogError: Observable<string>;
+    @Input() dialogError!: Observable<string>;
 
     @Output() onSave = new EventEmitter<KnowledgeAreaDTO>();
     @Output() onDelete = new EventEmitter<number>();

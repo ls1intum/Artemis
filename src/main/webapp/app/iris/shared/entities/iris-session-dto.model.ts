@@ -1,6 +1,6 @@
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
-export class IrisSessionDTO {
+export interface IrisSessionDTO {
     id: number;
     title?: string;
     creationDate: Date;

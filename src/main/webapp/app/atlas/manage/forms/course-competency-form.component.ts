@@ -62,7 +62,7 @@ export abstract class CourseCompetencyFormComponent {
     onCancel = output<void>();
     formSubmitted = output<CourseCompetencyFormData>();
 
-    form: FormGroup;
+    form!: FormGroup; // built in initializeForm(), called by subclasses before the form is rendered/read
 
     // Icons
     protected readonly faTimes = faTimes;

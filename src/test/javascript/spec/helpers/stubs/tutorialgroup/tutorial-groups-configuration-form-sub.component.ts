@@ -5,9 +5,9 @@ import { Course } from 'app/course/shared/entities/course.model';
 @Component({ selector: 'jhi-tutorial-groups-configuration-form', template: '' })
 export class TutorialGroupsConfigurationFormStubComponent {
     @Input() isEditMode = false;
-    @Input() formData: TutorialGroupsConfigurationFormData;
+    @Input() formData!: TutorialGroupsConfigurationFormData;
     @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
 
     @Input()
-    course: Course;
+    course!: Course;
 }

@@ -130,10 +130,10 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     ascending = false;
 
     /** Interval timer for updating running build job durations every second */
-    buildDurationInterval: ReturnType<typeof setInterval>;
+    buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
 
     /** Subscription for debounced search input handling */
-    searchSubscription: Subscription;
+    searchSubscription!: Subscription; // set in ngOnInit()
 
     /** Subject for triggering debounced search requests for finished build jobs */
     finishedJobsSearchTrigger = new Subject<void>();

@@ -203,7 +203,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly dialogError = this.dialogErrorSource.asObservable();
 
     /** Search form */
-    userSearchForm: FormGroup;
+    userSearchForm!: FormGroup; // initialized in ngOnInit()
 
     /** Icons */
     protected readonly faSort = faSort;

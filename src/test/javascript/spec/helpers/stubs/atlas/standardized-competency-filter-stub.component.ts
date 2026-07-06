@@ -7,7 +7,7 @@ import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-compete
     standalone: true,
 })
 export class StandardizedCompetencyFilterStubComponent {
-    @Input() competencyTitleFilter: string;
+    @Input() competencyTitleFilter!: string;
     @Input() knowledgeAreaFilter?: KnowledgeAreaDTO;
     @Input() knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
 

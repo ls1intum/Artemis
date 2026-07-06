@@ -4,5 +4,5 @@ import { Directive, Input } from '@angular/core';
     selector: '[jhiTranslate]',
 })
 export class MockJhiTranslateDirective {
-    @Input() jhiTranslate: string;
+    @Input() jhiTranslate!: string;
 }

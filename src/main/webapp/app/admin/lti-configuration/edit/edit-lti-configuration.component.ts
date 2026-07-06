@@ -26,7 +26,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     private readonly alertService = inject(AlertService);
 
     readonly platform = signal<LtiPlatformConfiguration>(undefined!);
-    platformConfigurationForm: FormGroup;
+    platformConfigurationForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Whether save is in progress */
     readonly isSaving = signal(false);

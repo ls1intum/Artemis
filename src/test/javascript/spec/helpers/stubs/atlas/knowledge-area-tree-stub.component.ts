@@ -10,6 +10,6 @@ import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/s
 export class KnowledgeAreaTreeStubComponent {
     @Input() nodes: TreeNode<KnowledgeAreaForTree | StandardizedCompetencyForTree>[] = [];
 
-    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
-    @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;
+    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate!: TemplateRef<any>;
+    @ContentChild('competencyTemplate') competencyTemplate!: TemplateRef<any>;
 }

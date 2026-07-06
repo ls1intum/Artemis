@@ -9,9 +9,9 @@ import { Observable } from 'rxjs';
 export class StandardizedCompetencyEditStubComponent {
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     @Input() sources: Source[] = [];
-    @Input() competency: StandardizedCompetencyDTO;
+    @Input() competency!: StandardizedCompetencyDTO;
     @Input() isEditing = false;
-    @Input() dialogError: Observable<string>;
+    @Input() dialogError!: Observable<string>;
 
     @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
     @Output() onDelete = new EventEmitter<number>();
