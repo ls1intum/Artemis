@@ -152,10 +152,6 @@ export class KnowledgeAreaTreeComponent {
         }
     }
 
-    /**
-     * Recursively builds the PrimeNG tree nodes for the given knowledge areas, filtering out hidden ones and
-     * applying the persisted expansion state.
-     */
     private buildKnowledgeAreaNodes(knowledgeAreas: KnowledgeAreaForTree[], expanded: Set<number>): TreeNode<KnowledgeAreaForTree | CompetencyNodeData>[] {
         return knowledgeAreas
             .filter((knowledgeArea) => knowledgeArea.isVisible)
