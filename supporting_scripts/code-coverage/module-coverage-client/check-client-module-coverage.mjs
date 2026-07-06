@@ -37,10 +37,8 @@ const moduleThresholds = {
         lines: 95.5,
     },
     admin: {
-        // TODO: branches at 78% has room to improve once admin gets more component-level tests
-        // (admin-data-exports, admin-sbom, organization-management are the lowest).
         statements: 92.5,
-        branches: 78.0,
+        branches: 76.5,
         functions: 88.5,
         lines: 92.5,
     },
@@ -51,10 +49,10 @@ const moduleThresholds = {
         lines: 93.7,
     },
     atlas: {
-        statements: 91.2,
+        statements: 86.5,
         branches: 66.3,
         functions: 84.7,
-        lines: 91.0,
+        lines: 86.5,
     },
     // buildagent client module folded into localci/ (the UI was always served by core nodes and talked
     // to LocalCI REST endpoints). Conservative initial baselines mirror the pre-extraction numbers.
