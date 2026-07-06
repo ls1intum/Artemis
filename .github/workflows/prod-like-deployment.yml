@@ -172,6 +172,13 @@ jobs:
       # space, etc.) than /management/info's static build metadata.
       - name: Verify deployment health
         run: |
+          for tool in curl jq; do
+            if ! command -v "$tool" > /dev/null; then
+              echo "::error::'$tool' is required for the deployment health check but is not installed on this runner."
+              exit 1
+            fi
+          done
+
           attempts=0
           max_attempts=30
           until curl --fail --silent --show-error --max-time 10 "$HEALTH_CHECK_URL" | jq -e '.status == "UP"' > /dev/null; do
