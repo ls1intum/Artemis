@@ -52,7 +52,7 @@ export class ReviewAdaptExerciseDialogComponent {
     readonly isFreeMode = this.findings.length === 0;
     readonly instructions = signal('');
 
-    /** Maps a finding severity to its PrimeNG tag severity for the coloured tag (High → danger, Medium → warn, Low → info). */
+    /** Maps a finding severity to its PrimeNG tag severity for the coloured tag. */
     protected severityTag(severity: AdaptFinding['severity']): 'danger' | 'warn' | 'info' {
         switch (severity) {
             case ConsistencyIssue.SeverityEnum.High:

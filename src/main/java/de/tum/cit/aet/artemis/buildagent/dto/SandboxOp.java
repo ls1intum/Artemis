@@ -7,18 +7,18 @@ package de.tum.cit.aet.artemis.buildagent.dto;
  */
 public enum SandboxOp {
 
-    /** Create and start a warm session container; see {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#createSession}. */
+    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#createSession */
     CREATE,
 
-    /** Run a command inside the session container; see {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#exec}. */
+    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#exec */
     EXEC,
 
-    /** Copy a tar archive into the session container; see {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyIn}. */
+    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyIn */
     COPY_IN,
 
-    /** Read a path out of the session container as a tar archive; see {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyOut}. */
+    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyOut */
     COPY_OUT,
 
-    /** Stop and remove the session container; see {@link de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#destroySession}. */
+    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#destroySession */
     DESTROY
 }

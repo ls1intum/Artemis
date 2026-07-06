@@ -1,8 +1,9 @@
-import { Component, input } from '@angular/core';
+import { Component, forwardRef, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Observable, Subject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -11,12 +12,21 @@ import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generat
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
 import { HyperionFileSnapshot, HyperionGenerationMessage, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
-// A selector-matching stub so the read-only Monaco preview does not instantiate the real editor in jsdom. It is NOT a MonacoEditorComponent, so the component's
-// viewChild(MonacoEditorComponent) stays undefined and the render effect guards out — exactly the behaviour we want under test.
-@Component({ selector: 'jhi-monaco-editor', template: '' })
-class StubMonacoEditorComponent {
+// A lightweight fake so the read-only preview does not instantiate the real Monaco editor in jsdom. It provides the MonacoEditorComponent DI token so the component's
+// viewChild(MonacoEditorComponent) RESOLVES to it, exercising the security-critical render effect: we can then assert that snapshot content routes to the text-only
+// changeModel() sink (never innerHTML), and that changed lines create a decorations collection.
+@Component({
+    selector: 'jhi-monaco-editor',
+    template: '',
+    providers: [{ provide: MonacoEditorComponent, useExisting: forwardRef(() => FakeMonacoEditorComponent) }],
+})
+class FakeMonacoEditorComponent {
     readOnly = input(false);
     shrinkToFit = input(true);
+    changeModel = vi.fn();
+    decorationsCollection = { clear: vi.fn() };
+    createDecorationsCollection = vi.fn(() => this.decorationsCollection);
+    getEditor = vi.fn(() => ({ createDecorationsCollection: this.createDecorationsCollection }));
 }
 
 class MockService {
@@ -66,7 +76,7 @@ describe('HyperionGenerationActivityComponent', () => {
         });
         TestBed.overrideComponent(HyperionGenerationActivityComponent, {
             remove: { imports: [MonacoEditorComponent] },
-            add: { imports: [StubMonacoEditorComponent] },
+            add: { imports: [FakeMonacoEditorComponent] },
         });
     });
 
@@ -198,5 +208,38 @@ describe('HyperionGenerationActivityComponent', () => {
         component.attachToJob('j9', 'GENERATE');
         service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
         expect(component.canRevert()).toBe(false);
+    });
+
+    it('follows a re-edit of an earlier file, not merely the last-created file', () => {
+        // Regression: following must track the last-written path, not array order. upsertSnapshot replaces edited files in place,
+        // so a re-edit of an earlier file would otherwise never surface (the last array slot is a different, later-created file).
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const component = fixture.componentInstance;
+
+        service.stream$.next(snapshot('solution/A.java', 'create', 'a'));
+        service.stream$.next(snapshot('solution/B.java', 'create', 'b'));
+        expect(component.activeSnapshot()?.path).toBe('solution/B.java');
+
+        service.stream$.next(snapshot('solution/A.java', 'edit', 'a2'));
+        expect(component.snapshots()).toHaveLength(2);
+        expect(component.activeSnapshot()?.path).toBe('solution/A.java');
+        expect(component.activeSnapshot()?.content).toBe('a2');
+    });
+
+    it('routes snapshot content to the text-only changeModel sink and decorates only edits', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const editor = fixture.debugElement.query(By.directive(FakeMonacoEditorComponent)).componentInstance as FakeMonacoEditorComponent;
+
+        // A created file: content reaches Monaco via changeModel (never innerHTML), with no diff decorations for a brand-new file.
+        service.stream$.next(snapshot('solution/A.java', 'create', 'line1\nline2'));
+        fixture.detectChanges();
+        expect(editor.changeModel).toHaveBeenCalledWith('solution/A.java', 'line1\nline2');
+        expect(editor.createDecorationsCollection).not.toHaveBeenCalled();
+
+        // A re-edit that changes a line: routed through changeModel again, and the changed line is marked via a decorations collection.
+        service.stream$.next(snapshot('solution/A.java', 'edit', 'line1\nCHANGED'));
+        fixture.detectChanges();
+        expect(editor.changeModel).toHaveBeenLastCalledWith('solution/A.java', 'line1\nCHANGED');
+        expect(editor.createDecorationsCollection).toHaveBeenCalledTimes(1);
     });
 });

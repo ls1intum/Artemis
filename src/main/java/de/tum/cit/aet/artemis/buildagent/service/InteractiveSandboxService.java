@@ -156,7 +156,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             }
 
             if (!completed) {
-                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block.
+                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is NOT killed here
+                // and keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the trusted-instructor
+                // model.
                 return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
             }
 

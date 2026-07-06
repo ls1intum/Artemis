@@ -61,6 +61,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     readonly follow = signal<boolean>(true);
     readonly pinnedPath = signal<string | undefined>(undefined);
+    // The path of the file the agent last wrote (created OR re-edited in place). Following tracks this, not array order,
+    // so re-editing an earlier file jumps the preview back to it (upsertSnapshot replaces in place, keeping array order).
+    readonly lastWrittenPath = signal<string | undefined>(undefined);
     readonly cancelRequested = signal<boolean>(false);
 
     // Revert affordance for a completed, accepted in-place adaptation.
@@ -84,11 +87,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     /** The file currently shown in the preview: the pinned file, otherwise the most-recently-written file while following. */
     readonly activeSnapshot = computed<HyperionFileSnapshot | undefined>(() => {
         const files = this.snapshots();
-        if (!this.follow()) {
-            const pinned = this.pinnedPath();
-            return files.find((file) => file.path === pinned);
-        }
-        return files.length ? files[files.length - 1] : undefined;
+        const targetPath = this.follow() ? this.lastWrittenPath() : this.pinnedPath();
+        return files.find((file) => file.path === targetPath) ?? (this.follow() ? files.at(-1) : undefined);
     });
 
     readonly activePath = computed(() => this.activeSnapshot()?.path);
@@ -209,7 +209,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 this.jobId.set(status.jobId);
                 this.mode.set(status.mode);
                 this.events.set(status.events ?? []);
-                this.snapshots.set(status.fileSnapshots ?? []);
+                const fileSnapshots = status.fileSnapshots ?? [];
+                this.snapshots.set(fileSnapshots);
+                this.lastWrittenPath.set(fileSnapshots.at(-1)?.path);
                 this.restoreTerminalState(status.events ?? []);
                 this.running.set(status.running);
                 if (status.running) {
@@ -241,6 +243,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     }
 
     private upsertSnapshot(snapshot: HyperionFileSnapshot): void {
+        this.lastWrittenPath.set(snapshot.path);
         this.snapshots.update((list) => {
             const index = list.findIndex((file) => file.path === snapshot.path);
             if (index < 0) {
@@ -262,7 +265,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
     }
 
-    /** Highlights the lines that changed versus the previously streamed content of this file, so an edit is visible at a glance. */
+    /** Cosmetic gutter hint marking lines that changed versus the previous streamed content of this file. Heuristic (line-set membership), so moved/duplicate lines can be missed. */
     private applyDiffDecorations(editor: MonacoEditorComponent, snapshot: HyperionFileSnapshot): void {
         const previous = this.previousContentByPath.get(snapshot.path);
         this.previousContentByPath.set(snapshot.path, snapshot.content);
@@ -307,6 +310,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.verdict.set(undefined);
         this.follow.set(true);
         this.pinnedPath.set(undefined);
+        this.lastWrittenPath.set(undefined);
         this.cancelRequested.set(false);
         this.changedLineDecorations?.clear();
         this.changedLineDecorations = undefined;

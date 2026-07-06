@@ -29,6 +29,21 @@ public record SandboxOpResponse(String correlationId, boolean success, String se
         return new SandboxOpResponse(correlationId, true, sessionId, null, null, null);
     }
 
+    /** A {@link SandboxOp#CREATE} success response carrying the new container id as the session handle. */
+    public static SandboxOpResponse created(String correlationId, String containerId) {
+        return new SandboxOpResponse(correlationId, true, containerId, null, null, null);
+    }
+
+    /** An {@link SandboxOp#EXEC} success response carrying the captured exit code and bounded output. */
+    public static SandboxOpResponse execResult(String correlationId, String sessionId, SandboxExecResult execResult) {
+        return new SandboxOpResponse(correlationId, true, sessionId, execResult, null, null);
+    }
+
+    /** A {@link SandboxOp#COPY_OUT} success response carrying the repacked tar payload. */
+    public static SandboxOpResponse copiedOut(String correlationId, String sessionId, byte[] payload) {
+        return new SandboxOpResponse(correlationId, true, sessionId, null, payload, null);
+    }
+
     /** A failure response carrying a short error description for the blocked caller to rethrow. */
     public static SandboxOpResponse failure(String correlationId, String errorMessage) {
         return new SandboxOpResponse(correlationId, false, null, null, null, errorMessage);

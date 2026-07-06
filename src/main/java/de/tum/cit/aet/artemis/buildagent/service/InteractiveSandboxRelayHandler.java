@@ -203,7 +203,7 @@ public class InteractiveSandboxRelayHandler {
             String containerId = interactiveSandboxService.createSession(request.sessionSpec());
             ownedSessions.add(containerId);
             created = true;
-            return new SandboxOpResponse(request.correlationId(), true, containerId, null, null, null);
+            return SandboxOpResponse.created(request.correlationId(), containerId);
         }
         finally {
             // Release the permit if the container never came up, so a failed create does not leak capacity.
@@ -215,7 +215,7 @@ public class InteractiveSandboxRelayHandler {
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
         SandboxExecResult result = interactiveSandboxService.exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
-        return new SandboxOpResponse(request.correlationId(), true, request.sessionId(), result, null, null);
+        return SandboxOpResponse.execResult(request.correlationId(), request.sessionId(), result);
     }
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
@@ -232,7 +232,7 @@ public class InteractiveSandboxRelayHandler {
     private SandboxOpResponse handleCopyOut(SandboxOpRequest request) {
         try (TarArchiveInputStream tar = interactiveSandboxService.copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
-            return new SandboxOpResponse(request.correlationId(), true, request.sessionId(), null, payload, null);
+            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId(), payload);
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());

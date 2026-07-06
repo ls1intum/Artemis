@@ -47,7 +47,11 @@ import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalTopic;
  * needed.
  * <p>
  * It proves the contract the orchestrator relies on: createSession encodes affinity into the handle, exec returns the agent's stdout/exit, copy-in/copy-out round-trip the tar
- * bytes, destroy is idempotent, an oversize copy-in payload is rejected before it reaches the wire, and a request for a different agent short name is ignored by the handler.
+ * bytes, destroy is idempotent, an oversize copy-in payload is rejected before it reaches the wire, and a request for a different agent short name is ignored by the handler. It
+ * also
+ * pins the correctness-critical relay invariants: the Docker work runs off the topic-listener thread (worker-pool handoff), an oversize copy-out archive is rejected as a
+ * relay-limit
+ * failure, and the per-agent session semaphore refuses at capacity and releases a permit exactly once per owned session (so a redundant DESTROY cannot over-release capacity).
  */
 class InteractiveSandboxRelayRoundTripTest {
 
@@ -119,7 +123,8 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void copyIn_roundTripsTarBytesToAgent() {
         AtomicReference<byte[]> received = new AtomicReference<>();
-        // Capture exactly the bytes the local sandbox is asked to extract, so we can assert the payload survived serialization unchanged.
+        // Capture exactly the bytes the local sandbox is asked to extract: LocalTopic delivers by reference in-JVM (no serialization), so this asserts the client's bounded read
+        // and the handler's ByteArrayInputStream re-wrap preserve the payload byte-for-byte.
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
         doAnswer(invocation -> {
             InputStream in = invocation.getArgument(2);
@@ -185,6 +190,115 @@ class InteractiveSandboxRelayRoundTripTest {
         await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(localSandbox, times(1)).destroySession(CONTAINER_ID));
     }
 
+    @Test
+    void execRunsOffTheTopicListenerThread() {
+        // The single most safety-relevant relay invariant: Docker work must never run on the topic-listener (distributed event) thread. With the synchronous LocalTopic, the
+        // listener
+        // runs on the publishing caller thread, so capturing the thread the local exec runs on and asserting it differs (and is a named relay worker) directly proves the handoff.
+        AtomicReference<Thread> execThread = new AtomicReference<>();
+        when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("x"))).thenAnswer(invocation -> {
+            execThread.set(Thread.currentThread());
+            return new SandboxExecResult(0, "", "", false);
+        });
+
+        Thread callerThread = Thread.currentThread();
+        client.exec(handle(), Duration.ofSeconds(5), "echo", "x");
+
+        assertThat(execThread.get()).isNotSameAs(callerThread);
+        assertThat(execThread.get().getName()).startsWith("hyperion-sandbox-relay-");
+    }
+
+    @Test
+    void oversizeCopyOutArchive_isRejectedAsRelayLimit() {
+        // The handler repacks the local copy-out stream and must fail closed when the repacked archive exceeds MAX_PAYLOAD_BYTES, so an oversized extraction cannot overwhelm the
+        // messaging layer. The failure must surface to the caller as a relay-limit error, never as silently truncated bytes.
+        byte[] oversizeTar = tarWithEntryOfSize("big.bin", RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + 1);
+        when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(oversizeTar)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("relay limit");
+    }
+
+    @Test
+    void secondConcurrentCreate_isRefusedAtSessionCapacity() {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            // The first create holds the single permit; the second must be refused with a capacity failure rather than queued or silently starving CI.
+            harness.client().createSession(new SandboxSessionSpec("some-image", null));
+
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
+                    .withMessageContaining("session capacity");
+        }
+    }
+
+    @Test
+    void permitReclaimedAfterDestroy_allowsAnotherCreate() {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+            harness.client().destroySession(handle);
+
+            // The permit released by DESTROY is reclaimed, so a subsequent create succeeds rather than being refused at capacity.
+            String reCreated = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+            assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+        }
+    }
+
+    @Test
+    void redundantDestroy_releasesPermitExactlyOnce() {
+        try (RelayHarness harness = newHarness(1)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+
+            // Two DESTROYs for the same owned session, each a distinct correlation id (so the idempotency dedup does NOT swallow the second): the permit is released exactly once,
+            // gated by ownedSessions.remove. If the second destroy wrongly released a second permit, the cap-1 semaphore would then hold two permits and BOTH creates below
+            // succeed.
+            harness.client().destroySession(handle);
+            harness.client().destroySession(handle);
+
+            String reCreated = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+            assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
+                    .withMessageContaining("session capacity");
+        }
+    }
+
+    /**
+     * An isolated client+handler pair over its own in-JVM topics, so a test can exercise a specific session-capacity cap without the shared agent registered in {@link #setUp()}
+     * also answering (both would self-filter on the same short name and race to respond).
+     */
+    private record RelayHarness(RemoteInteractiveSandboxClient client, InteractiveSandboxRelayHandler handler, InteractiveSandboxService localSandbox) implements AutoCloseable {
+
+        @Override
+        public void close() {
+            handler.shutdown();
+            client.removeResponseListener();
+        }
+    }
+
+    private static RelayHarness newHarness(int maxConcurrentSessions) {
+        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+
+        DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
+        when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent(AGENT_SHORT_NAME, 0, 4)));
+
+        DistributedDataAccessService handlerAccess = mock(DistributedDataAccessService.class);
+        when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+
+        InteractiveSandboxService localSandbox = mock(InteractiveSandboxService.class);
+        RemoteInteractiveSandboxClient client = new RemoteInteractiveSandboxClient(clientAccess);
+        client.registerResponseListener();
+
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess);
+        ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
+        ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxConcurrentSessions);
+        handler.registerRequestListener();
+        return new RelayHarness(client, handler, localSandbox);
+    }
+
     private static String handle() {
         return AGENT_SHORT_NAME + "::" + CONTAINER_ID;
     }
@@ -194,7 +308,14 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static byte[] tarWithSingleFile(String name, String content) {
-        byte[] body = content.getBytes(StandardCharsets.UTF_8);
+        return tarWithBody(name, content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static byte[] tarWithEntryOfSize(String name, int size) {
+        return tarWithBody(name, new byte[size]);
+    }
+
+    private static byte[] tarWithBody(String name, byte[] body) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             TarArchiveEntry entry = new TarArchiveEntry(name);
             entry.setSize(body.length);

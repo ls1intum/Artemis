@@ -62,7 +62,6 @@ public class InteractiveSandboxReaperService {
     // https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation
     @PostConstruct
     public void scheduleCleanup() {
-        // Schedule the cleanup of orphaned sandbox containers 30 seconds after the application has started and then every sandboxCleanupScheduleMinutes minutes.
         taskScheduler.scheduleAtFixedRate(this::reapOrphanedSessions, Instant.now().plusSeconds(30), Duration.ofMinutes(sandboxCleanupScheduleMinutes));
     }
 
@@ -79,7 +78,6 @@ public class InteractiveSandboxReaperService {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         // Current time in seconds, to compare against the container creation time (also in epoch seconds).
         long now = Instant.now().getEpochSecond();
-        // Threshold for "orphaned" sandbox containers in seconds.
         long ageThreshold = sandboxContainerExpiryMinutes * 60L;
 
         List<Container> orphanedSandboxContainers;

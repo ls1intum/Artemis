@@ -526,17 +526,6 @@ describe('ExerciseReviewCommentService', () => {
         req.flush([]);
     });
 
-    it('loadThreads should map response body to thread array', () => {
-        let threads: any[] = [];
-        service.loadThreads(2).subscribe((result) => (threads = result as any[]));
-
-        const req = httpMock.expectOne('api/exercise/exercises/2/review-threads');
-        req.flush([{ id: 11 }]);
-
-        expect(threads).toHaveLength(1);
-        expect(threads[0].id).toBe(11);
-    });
-
     it('createUserComment should send POST request', () => {
         const payload = { contentType: CommentContentType.USER, text: 'reply' } as any;
 

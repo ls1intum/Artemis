@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -15,6 +16,9 @@ import java.io.Serializable;
  * @param timedOut whether the command was killed because it exceeded its timeout
  */
 public record SandboxExecResult(int exitCode, String stdout, String stderr, boolean timedOut) implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public boolean isSuccess() {
         return exitCode == 0 && !timedOut;

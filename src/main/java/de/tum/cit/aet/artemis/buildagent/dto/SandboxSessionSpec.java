@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -13,4 +14,7 @@ import java.io.Serializable;
  * @param runConfig optional per-container overrides; only the network mode is consulted for generation sessions
  */
 public record SandboxSessionSpec(String image, DockerRunConfig runConfig) implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 }
