@@ -82,7 +82,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadFaqs() {
         this.faqService
             .findAllByCourseIdAndState(this.courseId, this.faqState)
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
             .subscribe({
                 next: (res: Faq[]) => {
                     this.faqs.set(res);

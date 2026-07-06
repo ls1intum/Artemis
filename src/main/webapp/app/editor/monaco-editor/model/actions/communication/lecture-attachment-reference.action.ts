@@ -74,7 +74,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
      * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment video unit).
      * @param args The arguments to execute the action with.
      */
-    executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
+    override executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
         super.executeInCurrentEditor(args);
     }
 
@@ -120,7 +120,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         editor.focus();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.lecturesWithDetails = [];
     }

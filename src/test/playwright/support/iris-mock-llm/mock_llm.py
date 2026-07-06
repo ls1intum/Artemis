@@ -55,10 +55,69 @@ CANNED_REPLY = os.environ.get(
     "real Pyris for end-to-end testing of the Artemis Iris integration.",
 )
 EMBED_DIM = max(0, int(os.environ.get("MOCK_LLM_EMBED_DIM", "1536")))
+# When the latest user message contains this marker and the request offers tools,
+# the mock answers ONE tool-call round before the canned reply. This lets e2e tests
+# exercise the real activity-visibility pipeline (tool start/finish snapshots) with
+# a deterministic tool round. The follow-up delay keeps the finished activity chip
+# on screen long enough for the UI assertion before the final answer replaces it.
+TOOL_MARKER = os.environ.get("MOCK_LLM_TOOL_MARKER", "[e2e-tool]")
+TOOL_FOLLOWUP_DELAY_S = float(os.environ.get("MOCK_LLM_TOOL_FOLLOWUP_DELAY_S", "1.5"))
+TOOL_PREAMBLE = "Let me check the course details first — mock-preamble"
 
 
 def log(message: str) -> None:
     print(f"[mock-llm] {message}", flush=True)
+
+
+def message_text(message: dict) -> str:
+    """Extract plain text from a chat message whose content may be a string or parts."""
+    content = message.get("content")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(part.get("text", "") for part in content if isinstance(part, dict))
+    return ""
+
+
+def tool_call_body(model: str, tool_name: str) -> dict:
+    """Build a response that asks the agent to run one tool with empty arguments."""
+    now = int(time.time())
+    return {
+        "id": f"chatcmpl-mock-{now}",
+        "object": "chat.completion",
+        "created": now,
+        "model": model or "mock-model",
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": TOOL_PREAMBLE,
+                    "refusal": None,
+                    "tool_calls": [
+                        {
+                            "id": "call_mock_1",
+                            "type": "function",
+                            "function": {"name": tool_name, "arguments": "{}"},
+                        }
+                    ],
+                },
+                "logprobs": None,
+                "finish_reason": "tool_calls",
+            }
+        ],
+        "usage": {"prompt_tokens": 11, "completion_tokens": 9, "total_tokens": 20},
+    }
+
+
+def pick_tool_name(tools: list) -> str:
+    """Prefer the no-argument course-details tool; fall back to the first offered tool."""
+    names = [t.get("function", {}).get("name", "") for t in tools if isinstance(t, dict)]
+    names = [n for n in names if n]
+    for preferred in ("get_course_details", "get_simple_course_details"):
+        if preferred in names:
+            return preferred
+    return names[0] if names else "get_course_details"
 
 
 def chat_completion_body(model: str, wants_json: bool) -> dict:
@@ -172,8 +231,22 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         if path.endswith("/v1/chat/completions"):
             response_format = body.get("response_format") or {}
             wants_json = isinstance(response_format, dict) and response_format.get("type") == "json_object"
-            has_tools = bool(body.get("tools"))
-            log(f"chat.completions model={model!r} json={wants_json} tools={has_tools}")
+            tools = body.get("tools") or []
+            messages = body.get("messages") or []
+            last_user_text = ""
+            for message in reversed(messages):
+                if isinstance(message, dict) and message.get("role") == "user":
+                    last_user_text = message_text(message)
+                    break
+            wants_tool_round = bool(tools) and TOOL_MARKER in last_user_text
+            has_tool_result = any(isinstance(m, dict) and m.get("role") == "tool" for m in messages)
+            log(f"chat.completions model={model!r} json={wants_json} tools={len(tools)} tool_round={wants_tool_round} tool_result={has_tool_result}")
+            if wants_tool_round and not has_tool_result:
+                self._respond(200, tool_call_body(model, pick_tool_name(tools)))
+                return
+            if wants_tool_round and has_tool_result and TOOL_FOLLOWUP_DELAY_S > 0:
+                # Keep the finished tool chip visible for the UI assertion window.
+                time.sleep(TOOL_FOLLOWUP_DELAY_S)
             self._respond(200, chat_completion_body(model, wants_json))
             return
 

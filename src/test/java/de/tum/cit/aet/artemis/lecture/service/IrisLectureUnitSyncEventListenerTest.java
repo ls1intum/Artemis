@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -77,7 +78,7 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
-        assertThat(state.getNextRetryAt()).isEqualTo(nextRetryAt);
+        assertThat(state.getNextRetryAt().toInstant()).isEqualTo(nextRetryAt.toInstant());
     }
 
     @Test
@@ -91,6 +92,7 @@ class IrisLectureUnitSyncEventListenerTest {
 
         verify(syncStateRepository).delete(state);
         verify(syncStateRepository, never()).save(state);
+        verifyNoInteractions(syncDispatchService);
     }
 
     private static IrisLectureUnitSyncState syncState() {

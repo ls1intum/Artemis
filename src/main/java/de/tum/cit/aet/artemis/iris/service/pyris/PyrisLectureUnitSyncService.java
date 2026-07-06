@@ -79,7 +79,7 @@ public class PyrisLectureUnitSyncService {
             lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
         }
 
-        ResolvedVideo resolved = videoSourceResolver.resolve(attachmentVideoUnit.getVideoSource());
+        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
         String videoUrl = resolved.type() != null ? resolved.url() : null;
 
         return new PyrisLectureUnitMetadataWebhookDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), lectureUnitLink, lecture.getId(), lecture.getTitle(),
@@ -94,6 +94,13 @@ public class PyrisLectureUnitSyncService {
 
         return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(),
                 slideVisibility);
+    }
+
+    private ResolvedVideo resolveVideoUrl(String videoSource) {
+        if (videoSource == null || videoSource.isBlank()) {
+            return new ResolvedVideo(null, null, null);
+        }
+        return videoSourceResolver.resolve(videoSource);
     }
 
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {

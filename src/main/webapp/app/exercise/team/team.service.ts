@@ -11,7 +11,6 @@ import { downloadFile } from 'app/foundation/util/download.util';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
-import { EntityResponseType } from 'app/exercise/services/exercise.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
@@ -266,7 +265,7 @@ export class TeamService implements ITeamService, OnDestroy {
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http
             .get<Course>(`api/exercise/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)));
+            .pipe(map((res: HttpResponse<Course>) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 
     /**
@@ -364,7 +363,7 @@ export class TeamService implements ITeamService, OnDestroy {
         return team;
     }
 
-    private setAccessRightsCourseEntityResponseType(res: EntityResponseType): EntityResponseType {
+    private setAccessRightsCourseEntityResponseType(res: HttpResponse<Course>): HttpResponse<Course> {
         if (res.body) {
             this.accountService.setAccessRightsForCourse(res.body);
         }

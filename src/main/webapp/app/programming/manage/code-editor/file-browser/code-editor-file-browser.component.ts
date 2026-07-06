@@ -497,7 +497,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return { ...node, children: node.children.map(this.compressTree.bind(this)) };
+            return { ...node, children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)) };
         }
         // If the node has no children, there is nothing to compress.
         else {

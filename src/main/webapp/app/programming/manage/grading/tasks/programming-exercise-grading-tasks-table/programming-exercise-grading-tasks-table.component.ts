@@ -138,8 +138,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
 
         // the objects task and test have their name attribute named differently, making this necessary
         if (this.currentSort?.by === 'name') {
-            comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
-                const order = this.compareStringForAttribute('testName')(a, b);
+            comparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+                const order = this.compareStringForAttribute<ProgrammingExerciseTestCase>('testName')(a, b);
                 return this.currentSort?.descending ? order : -order;
             };
         }
@@ -148,8 +148,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {
-        return (a: T, b: T) => {
-            return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
+        return (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+            return (((a as T)[attributeKey] as number) ?? 0) - (((b as T)[attributeKey] as number) ?? 0);
         };
     };
 
@@ -160,9 +160,9 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private compareStringForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseServerSideTask | ProgrammingExerciseTestCase>(
         attributeKey: keyof T,
     ): TaskComparator => {
-        return (a: T, b: T) => {
-            const aType = a[attributeKey] ?? '';
-            const bType = b[attributeKey] ?? '';
+        return (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
+            const aType = (a as T)[attributeKey] ?? '';
+            const bType = (b as T)[attributeKey] ?? '';
 
             if (aType < bType) return -1;
             if (aType > bType) return 1;

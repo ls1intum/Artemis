@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -77,8 +78,22 @@ class IrisLectureUnitSyncDispatchServiceTest {
     }
 
     @Test
+    void triggerSyncForUpdateKindNoOpsForNone() {
+        service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.NONE);
+
+        verifyNoInteractions(irisLectureUnitSyncApi);
+        verify(slideRepository, never()).findAllByAttachmentVideoUnitId(any());
+    }
+
+    @Test
     void triggerSyncForUpdateKindRejectsContentUpdates() {
         assertThatIllegalArgumentException().isThrownBy(() -> service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.CONTENT))
+                .withMessage("Only metadata and visibility updates are supported by the retryable sync dispatcher");
+    }
+
+    @Test
+    void triggerSyncForUpdateKindRejectsDeleteUpdates() {
+        assertThatIllegalArgumentException().isThrownBy(() -> service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.DELETE))
                 .withMessage("Only metadata and visibility updates are supported by the retryable sync dispatcher");
     }
 

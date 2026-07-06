@@ -16,12 +16,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
+import { IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 
 export type CompetencyFormControlsWithViewed = {
     competency: FormGroup<CompetencyFormControls>;
@@ -41,7 +41,8 @@ export type CompetencyRecommendation = {
 };
 
 type CompetencyGenerationStatusUpdate = {
-    stages: IrisStageDTO[];
+    runState: IrisRunState;
+    error?: IrisStatusError;
     result?: CompetencyRecommendation[];
 };
 
@@ -118,12 +119,12 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
                                     this.addCompetencyToForm(competency);
                                 }
                             }
-                            if (update.stages.every((stage) => stage.state === IrisStageStateDTO.DONE)) {
+                            if (update.runState === IrisRunState.FINISHED) {
                                 this.alertService.success('artemisApp.competency.generate.courseDescription.success', { noOfCompetencies: update.result?.length });
-                            } else if (update.stages.some((stage) => stage.state === IrisStageStateDTO.ERROR)) {
+                            } else if (update.runState === IrisRunState.FAILED) {
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
-                            if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
+                            if (update.runState !== IrisRunState.RUNNING) {
                                 this.websocketSubscription?.unsubscribe();
                                 this.isLoading.set(false);
                             }

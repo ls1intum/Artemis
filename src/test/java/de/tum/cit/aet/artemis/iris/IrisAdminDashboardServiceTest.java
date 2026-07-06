@@ -161,6 +161,47 @@ class IrisAdminDashboardServiceTest {
     }
 
     @Test
+    void overview_responseTime_intermediatesAreSkippedAndFinalAnswerIsMeasured() {
+        stubAllRepositoryMethods();
+        // Repository contract after skipping two LLM intermediate rows: nextSender/nextSentAt point at the final LLM answer.
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:14Z"), "CHAT", 1 }));
+
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+
+        assertThat(overview.avgResponseTimeSeconds()).isEqualTo(14.0);
+        assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(14.0);
+        assertThat(overview.p95ResponseTimeSeconds()).isEqualTo(14.0);
+    }
+
+    @Test
+    void overview_responseTime_intermediateOnlyRunIsExcluded() {
+        stubAllRepositoryMethods();
+        // Repository contract after skipping LLM intermediate rows: no final next message remains.
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), null, null, "CHAT", 0 }));
+
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+
+        assertThat(overview.avgResponseTimeSeconds()).isEqualTo(0.0);
+        assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(0.0);
+        assertThat(overview.p95ResponseTimeSeconds()).isEqualTo(0.0);
+    }
+
+    @Test
+    void overview_responseTime_legacyNullIntermediateRowsStayMeasured() {
+        stubAllRepositoryMethods();
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
+                .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT", 1 },
+                        new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT", 1 }));
+
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
+
+        assertThat(overview.avgResponseTimeSeconds()).isEqualTo(7.5);
+        assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(7.5);
+    }
+
+    @Test
     void overview_tokenCost_summedCorrectly() {
         stubAllRepositoryMethods();
         when(repository.computeTokenCost(any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));

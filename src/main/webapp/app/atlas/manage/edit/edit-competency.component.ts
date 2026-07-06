@@ -22,7 +22,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     readonly competency = signal<Competency>(undefined!);
     readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
 
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])

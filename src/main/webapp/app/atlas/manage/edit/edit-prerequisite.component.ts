@@ -22,7 +22,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     readonly prerequisite = signal<Prerequisite>(undefined!);
     readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
 
         this.isLoading.set(true);

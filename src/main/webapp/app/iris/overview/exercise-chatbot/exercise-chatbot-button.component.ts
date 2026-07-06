@@ -9,13 +9,13 @@ import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
-import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { createStageRotation } from 'app/iris/overview/iris-stage-rotation.util';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisActivityState } from 'app/iris/shared/entities/iris-activity.model';
+import { prettifyActivityName } from 'app/iris/overview/base-chatbot/iris-activity-feed/iris-activity-feed.component';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -54,19 +54,20 @@ export class IrisExerciseChatbotButtonComponent {
     private readonly numNewMessages = toSignal(this.chatService.numNewMessages, { initialValue: 0 });
     readonly hasNewMessages = computed(() => this.numNewMessages() > 0);
 
-    // Convert stages observable to signal for processing indicator
-    private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
-    private readonly visibleStages = computed(() => this.currentStages().filter((s) => !s.internal));
-
-    // Active stage: first visible stage that is not completed (ERROR, NOT_STARTED, IN_PROGRESS are all "unfinished")
-    readonly activeStage = computed(() => this.visibleStages().find((s) => s.state !== IrisStageStateDTO.DONE && s.state !== IrisStageStateDTO.SKIPPED));
-    readonly isProcessing = computed(() => {
-        const stage = this.activeStage();
-        return stage?.state === IrisStageStateDTO.IN_PROGRESS || stage?.state === IrisStageStateDTO.NOT_STARTED;
+    private readonly currentActivities = toSignal(this.chatService.currentActivities(), { initialValue: [] });
+    readonly runningActivity = computed(() => this.currentActivities().find((activity) => activity.state === IrisActivityState.RUNNING));
+    readonly isProcessing = computed(() => this.chatService.awaitingAnswer());
+    readonly displayName = computed(() => {
+        this.currentLocale();
+        if (!this.isProcessing()) {
+            return '';
+        }
+        const activity = this.runningActivity();
+        if (!activity) {
+            return this.translateService.instant('artemisApp.iris.thinking');
+        }
+        return this.translateActivityName(activity.name);
     });
-    private readonly stageRotation = createStageRotation(this.translateService, this.destroyRef);
-    readonly displayName = this.stageRotation.displayName;
-    readonly animToggle = this.stageRotation.animToggle;
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -158,13 +159,6 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Display name effect — show stage message, rotate labels during IN_PROGRESS
-        effect(() => {
-            const stage = this.activeStage();
-            this.currentLocale();
-            this.stageRotation.update(stage);
-        });
-
         effect(() => {
             const shouldReopen = this.shouldReopenChat();
             if (shouldReopen && !untracked(() => this.chatOpen())) {
@@ -174,6 +168,15 @@ export class IrisExerciseChatbotButtonComponent {
                 });
             }
         });
+    }
+
+    private translateActivityName(name: string): string {
+        const key = `artemisApp.iris.activities.${name}`;
+        const translated = this.translateService.instant(key);
+        if (typeof translated === 'string' && translated !== key && !translated.startsWith('translation-not-found[')) {
+            return translated;
+        }
+        return prettifyActivityName(name);
     }
 
     /**

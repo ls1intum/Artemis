@@ -80,7 +80,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         try {
             const engine = await this.pdfEngineService.getEngine();
             const containerEl = this.pdfContainer().nativeElement;
-            const canvases = containerEl.querySelectorAll('.pdf-canvas-container canvas');
+            const canvases = containerEl.querySelectorAll<HTMLCanvasElement>('.pdf-canvas-container canvas');
             canvases.forEach((canvas: HTMLCanvasElement) => {
                 if (canvas.parentNode) {
                     this.renderer.removeChild(canvas.parentNode, canvas);
@@ -249,7 +249,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * Updates checkbox states to match the current selection model
      */
     private updateCheckboxStates(): void {
-        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
+        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
 
         checkboxes.forEach((checkbox: HTMLInputElement) => {
             const match = checkbox.id.match(/checkbox-(.+)/);

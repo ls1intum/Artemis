@@ -7,7 +7,7 @@ import { Locator, Page, expect } from '@playwright/test';
  * opens the widget overlay `.chat-widget`. The widget header `.chat-header` exposes
  * `button.header-control` controls whose fa icons are `circle-info` (info), `expand`/`compress`
  * (maximize/restore), and `xmark` (close). Maximizing resizes `.chat-widget` to ~93% of the
- * `.cdk-overlay-container` width via an inline pixel `style.width`.
+ * the positioning context width (PrimeNG dialog mask / viewport) via an inline pixel `style.width`.
  */
 export class IrisChatbotWidget {
     private readonly page: Page;
@@ -105,11 +105,20 @@ export class IrisChatbotWidget {
         await expect(messageInput).toBeVisible();
     }
 
-    /** Returns the width of the CDK overlay container (the widget's positioning context). */
+    /**
+     * Returns the width of the widget's positioning context. The widget is a PrimeNG
+     * DynamicDialog, so this mirrors the component's own measurement: the dialog mask
+     * (`.p-dialog-mask`) when present, else the viewport (chatbot-widget.component.ts).
+     */
     async getOverlayWidth(): Promise<number> {
-        const box = await this.page.locator('.cdk-overlay-container').boundingBox();
-        expect(box, { message: 'cdk-overlay-container should have a bounding box' }).not.toBeNull();
-        return box!.width;
+        const mask = this.page.locator('.p-dialog-mask').first();
+        if (await mask.count()) {
+            const box = await mask.boundingBox();
+            if (box) {
+                return box.width;
+            }
+        }
+        return this.page.evaluate(() => window.innerWidth);
     }
 
     async getWidgetWidth(): Promise<number> {

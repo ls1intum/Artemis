@@ -189,6 +189,7 @@ class IrisLectureUnitSyncServiceTest {
 
         service.markMetadataDirtyAfterCommit(snapshot());
 
+        verify(repository).saveAndFlush(any(IrisLectureUnitSyncState.class));
         verify(repository).save(existingState);
         assertThat(existingState.getMetadataHash()).hasSize(64);
         assertThat(existingState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);

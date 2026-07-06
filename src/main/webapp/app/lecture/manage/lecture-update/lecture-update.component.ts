@@ -315,7 +315,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         this.isSaving.set(false);
 
         if (!lecture.course?.id) {
-            captureException('Lecture has no course id: ' + lecture);
+            captureException('Lecture has no course id: ' + lecture.id);
             return;
         }
 

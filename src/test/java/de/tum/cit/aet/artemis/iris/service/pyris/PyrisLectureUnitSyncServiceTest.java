@@ -91,6 +91,20 @@ class PyrisLectureUnitSyncServiceTest {
     }
 
     @Test
+    void updateLectureUnitMetadataInPyrisDoesNotResolveVideoForPdfOnlyUnit() {
+        AttachmentVideoUnit unit = attachmentVideoUnit();
+        unit.setVideoSource(null);
+        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
+
+        service.updateLectureUnitMetadataInPyris(unit);
+
+        ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
+        verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
+        assertThat(dtoCaptor.getValue().videoLink()).isNull();
+        verify(videoSourceResolver, never()).resolve(any());
+    }
+
+    @Test
     void updateLectureUnitVisibilityInPyrisSendsSortedLightweightVisibility() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         ZonedDateTime releaseDate = ZonedDateTime.parse("2026-07-02T10:15:30+02:00[Europe/Berlin]");
