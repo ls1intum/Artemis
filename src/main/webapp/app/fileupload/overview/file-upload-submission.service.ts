@@ -121,7 +121,7 @@ export class FileUploadSubmissionService {
      * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
      */
     private convertFileSubmissionFromServer(res: FileUploadSubmissionDTO): FileUploadSubmission {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res as FileUploadSubmission);
+        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer<FileUploadSubmission>(res);
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
         return convertedBaseSubmission;
     }
@@ -130,7 +130,7 @@ export class FileUploadSubmissionService {
      * See {@link convertFileSubmissionFromServer}
      */
     private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmissionDTO>): HttpResponse<FileUploadSubmission> {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res as HttpResponse<FileUploadSubmission>);
+        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer<FileUploadSubmission>(res);
         if (convertedBaseSubmission.body) {
             convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
         }
