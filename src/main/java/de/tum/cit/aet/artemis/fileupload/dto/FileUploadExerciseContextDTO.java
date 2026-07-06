@@ -93,9 +93,10 @@ public record FileUploadExerciseContextDTO(Long id, String title, String problem
             gradingCriteriaDTOs = exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
         }
 
-        return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(), exercise.getExampleSolution(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getExerciseType(),
-                exercise.getFilePattern(), exercise.isTeamMode(), isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, courseDTO, exerciseGroupDTO, gradingCriteriaDTOs);
+        return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
+                exercise.getExampleSolution(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(),
+                exercise.getBonusPoints(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
+                exercise.getExerciseType(), exercise.getFilePattern(), exercise.isTeamMode(), isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor, courseDTO, exerciseGroupDTO,
+                gradingCriteriaDTOs);
     }
 }
