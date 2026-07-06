@@ -191,7 +191,11 @@ public class IrisChatPipelineExecutionService {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
                 programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
-                var actualSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(progExercise, user));
+                // Reload via the eager graph instead of trusting the caller-supplied entity: latestSubmission may be an event
+                // payload handed off across a thread boundary (e.g. CompletableFuture.runAsync) with no Hibernate session,
+                // so its lazy buildLogEntries/results associations would throw LazyInitializationException otherwise.
+                var actualSubmission = latestSubmission.flatMap(s -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(s.getId()))
+                        .or(() -> getLatestSubmissionIfExists(progExercise, user));
                 progSubmission = actualSubmission.map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
             }
             case TEXT_EXERCISE_CHAT -> {
