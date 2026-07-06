@@ -17,9 +17,10 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  * @param stepOutputs per-phase outputs backing the expandable step panels (plan Section 2.4): rendered plan,
  *                        provisioned exercise id, per-attempt transform summaries and diffs-of-record,
  *                        verification reports
+ * @param request     the original generation request — the modal's "what is being adapted" chips (todo-c)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOutputDTO> stepOutputs) implements Serializable {
+public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOutputDTO> stepOutputs, VariantGenerationRequestDTO request) implements Serializable {
 
     /**
      * Client-facing projection of one phase's StepOutput.
@@ -39,6 +40,6 @@ public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, StepOu
     public static VariantJobDetailDTO of(VariantJob job) {
         Map<VariantJobPhase, StepOutputDTO> stepOutputs = new EnumMap<>(VariantJobPhase.class);
         job.getStepOutputs().forEach((phase, output) -> stepOutputs.put(phase, new StepOutputDTO(output.summary(), output.detail())));
-        return new VariantJobDetailDTO(VariantJobDTO.of(job), stepOutputs);
+        return new VariantJobDetailDTO(VariantJobDTO.of(job), stepOutputs, job.getRequest());
     }
 }

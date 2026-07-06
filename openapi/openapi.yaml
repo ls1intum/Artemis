@@ -2193,9 +2193,12 @@ components:
           type: string
           enum: [ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING,
             FINALIZING, COMPLETED, DRAFT_WITH_WARNINGS, FAILED, CANCELLED]
+        failureDetail: {type: string}
+        instructorSummary: {type: string}
         attempt: {type: integer, format: int32}
         maxAttempts: {type: integer, format: int32}
         variantExerciseId: {type: integer, format: int64}
+        variantExerciseTitle: {type: string}
         warnings:
           type: array
           items: {type: string}
@@ -2234,6 +2237,7 @@ components:
         stepOutputs:
           type: object
           additionalProperties: {$ref: '#/components/schemas/StepOutput'}
+        request: {$ref: '#/components/schemas/VariantGenerationRequest'}
     StepOutput:
       type: object
       properties:

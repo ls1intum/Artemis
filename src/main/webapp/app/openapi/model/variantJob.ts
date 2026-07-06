@@ -17,9 +17,12 @@ export interface VariantJob {
     exerciseType?: VariantJob.ExerciseTypeEnum;
     phase?: VariantJob.PhaseEnum;
     failedInPhase?: VariantJob.PhaseEnum;
+    failureDetail?: string;
+    instructorSummary?: string;
     attempt?: number;
     maxAttempts?: number;
     variantExerciseId?: number;
+    variantExerciseTitle?: string;
     warnings?: Array<string>;
     startedAt?: string;
     finishedAt?: string;

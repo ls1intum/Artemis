@@ -51,6 +51,9 @@ public class ExerciseVariantGenerationPipeline {
     /** Pipeline id for token-usage traces of the PLANNING call (plan Section 7 telemetry). */
     private static final String PLAN_PIPELINE_ID = "exercise-variant-plan";
 
+    /** Pipeline id for token-usage traces of the failure-summary call (todo-d follow-up). */
+    private static final String FAILURE_SUMMARY_PIPELINE_ID = "exercise-variant-failure-summary";
+
     /** Internal control-flow signal for cooperative cancellation (plan Section 5.2). */
     private static class JobCancelledException extends RuntimeException {
     }
@@ -170,9 +173,12 @@ public class ExerciseVariantGenerationPipeline {
             log.info("Variant generation job {} cancelled (exercise {})", jobId, job.getSourceExerciseId());
         }
         catch (PhaseFailedException failure) {
-            // Hard-failure policy (plan Section 6): delete any half-created exercise, then FAILED.
+            // Hard-failure policy (plan Section 6): delete any half-created exercise, then FAILED. The
+            // instructor summary is generated BEFORE the terminal transition so the FAILED event's detail
+            // fetch already sees it (the modal loads the job detail as soon as the event arrives).
             cleanupProvisionedVariant(variant, jobId);
-            jobService.fail(jobId, failure.getMessage());
+            String instructorSummary = generateFailureSummary(job, failure.getMessage());
+            jobService.fail(jobId, failure.getMessage(), instructorSummary);
             log.warn("Variant generation job {} failed: {}", jobId, failure.getMessage(), failure.getCause());
         }
     }
@@ -247,7 +253,7 @@ public class ExerciseVariantGenerationPipeline {
             try {
                 String repromptSuffix = lastError == null ? "" : "\n\nYour previous output was invalid: " + lastError + "\nProduce a corrected change plan.";
                 ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user(userMessage + repromptSuffix).call().chatResponse();
-                trackPlanningTokenUsage(job, chatResponse);
+                trackTokenUsage(job, chatResponse, PLAN_PIPELINE_ID);
                 ChangePlan plan = outputConverter.convert(LLMTokenUsageService.extractResponseText(chatResponse));
                 validatePlan(plan);
                 return plan;
@@ -263,9 +269,58 @@ public class ExerciseVariantGenerationPipeline {
         throw new PhaseFailedException("Failed in PLANNING: planner produced no valid change plan after " + (MAX_PLANNING_RETRIES + 1) + " attempts (" + lastError + ")");
     }
 
-    private void trackPlanningTokenUsage(VariantJob job, ChatResponse chatResponse) {
+    /**
+     * One best-effort LLM call producing the instructor-facing failure summary (todo-d follow-up): what
+     * state the exercise landed in (source untouched, clone deleted) and how to fix or retry. Grounded in
+     * the recorded step outputs and the change plan. Never fails the failure handling — returns null when
+     * the chat client is missing or the call itself errors.
+     */
+    private String generateFailureSummary(VariantJob job, String failureMessage) {
+        if (chatClient == null) {
+            return null;
+        }
+        try {
+            // The local job copy is stale (step outputs are recorded via the job service) — read the map record.
+            VariantJob currentJob = jobService.getJob(job.getJobId(), job.getInitiatorLogin()).orElse(job);
+            Map<String, String> variables = new HashMap<>();
+            variables.put("exerciseType", String.valueOf(job.getExerciseType()));
+            variables.put("sourceTitle", orDefault(job.getSourceExerciseTitle(), "(unknown)"));
+            variables.put("failedPhase", String.valueOf(currentJob.getPhase()));
+            variables.put("failureDetail", orDefault(failureMessage, "(no detail)"));
+            variables.put("targetDifficulty", job.getRequest().targetDifficulty() != null ? job.getRequest().targetDifficulty().name() : "unchanged");
+            variables.put("domainText", orDefault(job.getRequest().domainText(), "unchanged"));
+            variables.put("additionalInstructions", orDefault(job.getRequest().additionalInstructions(), "none"));
+            variables.put("changePlan", currentJob.getChangePlan() != null ? renderPlan(currentJob.getChangePlan()) : "No change plan was produced yet.");
+            variables.put("stepOutputs", renderStepOutputs(currentJob));
+            String systemPrompt = templateService.render("prompts/hyperion/variants/failure_summary.st", variables);
+            ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user("Write the summary for the instructor now.").call().chatResponse();
+            trackTokenUsage(job, chatResponse, FAILURE_SUMMARY_PIPELINE_ID);
+            String summary = LLMTokenUsageService.extractResponseText(chatResponse);
+            return summary == null || summary.isBlank() ? null : truncate(summary.strip());
+        }
+        catch (Exception e) {
+            log.warn("Failure-summary generation for variant job {} failed itself — failing without a summary", job.getJobId(), e);
+            return null;
+        }
+    }
+
+    private String renderStepOutputs(VariantJob job) {
+        if (job.getStepOutputs() == null || job.getStepOutputs().isEmpty()) {
+            return "No steps were completed.";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (VariantJobPhase phase : VariantJobPhase.values()) {
+            StepOutput output = job.getStepOutputs().get(phase);
+            if (output != null) {
+                builder.append(phase).append(": ").append(output.summary()).append('\n');
+            }
+        }
+        return builder.toString();
+    }
+
+    private void trackTokenUsage(VariantJob job, ChatResponse chatResponse, String pipelineId) {
         Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
-        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, PLAN_PIPELINE_ID,
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, pipelineId,
                 builder -> builder.withExercise(job.getSourceExerciseId()).withUser(userId));
         if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null
                 && chatResponse.getMetadata().getUsage().getTotalTokens() != null) {

@@ -101,7 +101,7 @@ describe('VariantGenerationTrayComponent', () => {
         expect(serviceMock.clearJobs).toHaveBeenCalled();
     });
 
-    it('is hidden without jobs and shows the spinner + count badge for a running job', () => {
+    it('is hidden without jobs and shows the icon-only spinner status for a running job', () => {
         fixture.detectChanges();
         expect(serviceMock.loadJobs).toHaveBeenCalled();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-generation-tray"]')).toBeNull();
@@ -110,43 +110,54 @@ describe('VariantGenerationTrayComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-generation-tray"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-count"]')?.textContent?.trim()).toBe('1');
-    });
-
-    it('hides the spinner and badge when all jobs are terminal', () => {
-        jobs.set([completedJob]);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="variant-generation-tray"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).toBeNull();
+        // Icon-only button — no count badge (todo-d).
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-count"]')).toBeNull();
     });
 
-    it('computes progress from the phase position within the running order', () => {
-        expect(component.phaseProgress({ phase: 'ANALYZING' } as VariantJob)).toBeGreaterThan(0);
-        expect(component.phaseProgress({ phase: 'TRANSFORMING' } as VariantJob)).toBeLessThan(component.phaseProgress({ phase: 'FINALIZING' } as VariantJob));
-        expect(component.phaseProgress({ phase: 'COMPLETED' } as VariantJob)).toBe(100);
+    it('shows the checkmark when all jobs finished successfully and the warning when one needs attention', () => {
+        jobs.set([completedJob]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-success"]')).not.toBeNull();
+
+        jobs.set([completedJob, Object.assign({}, completedJob, { jobId: 'job-3', phase: 'FAILED' as const })]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-success"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-attention"]')).not.toBeNull();
+
+        // A running job wins over finished states.
+        jobs.set([completedJob, runningJob]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).not.toBeNull();
     });
 
-    it('deep-links a finished job to the type-aware editor route', () => {
-        component.openVariant(completedJob);
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'quiz-exercises', 4711]);
-
-        component.openVariant(Object.assign({}, completedJob, { exerciseType: 'programming' as const }));
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'programming-exercises', 4711]);
-    });
-
-    it('offers the variant link only for terminal phases that kept the variant', () => {
-        expect(component.hasVariantLink(completedJob)).toBe(true);
-        expect(component.hasVariantLink(Object.assign({}, completedJob, { phase: 'DRAFT_WITH_WARNINGS' as const }))).toBe(true);
-        expect(component.hasVariantLink(Object.assign({}, completedJob, { phase: 'CANCELLED' as const, variantExerciseId: undefined }))).toBe(false);
-        expect(component.hasVariantLink(Object.assign({}, completedJob, { phase: 'FAILED' as const, variantExerciseId: undefined }))).toBe(false);
-        expect(component.hasVariantLink(runningJob)).toBe(false);
-    });
-
-    it('opens a clicked entry in monitor mode via the tray-hosted wizard', () => {
+    it('always opens a clicked entry in the tray-hosted modal — running and finished alike (todo-c)', () => {
         component.openJobEntry(runningJob);
         expect(component.monitorJobId()).toBe('job-1');
         expect(component.monitorVisible()).toBe(true);
+
+        component.openJobEntry(completedJob);
+        expect(component.monitorJobId()).toBe('job-2');
+        expect(component.monitorVisible()).toBe(true);
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('navigates to the type-aware edit route when the modal confirms the variant', () => {
+        component.onVariantConfirmed({ id: 4711, type: 'quiz', course: { id: 7 } } as never);
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 7, 'quiz-exercises', 4711, 'edit']);
+    });
+
+    it('flags failed jobs and drafts with warnings as needing attention', () => {
+        expect(component.needsAttention(runningJob)).toBe(false);
+        expect(component.needsAttention(completedJob)).toBe(false);
+        expect(component.needsAttention(Object.assign({}, completedJob, { phase: 'FAILED' as const }))).toBe(true);
+        expect(component.needsAttention(Object.assign({}, completedJob, { phase: 'DRAFT_WITH_WARNINGS' as const }))).toBe(true);
+    });
+
+    it('maps phases onto the step-dot timeline and off it for terminal phases', () => {
+        expect(component.phaseIndex({ phase: 'ANALYZING' } as VariantJob)).toBe(0);
+        expect(component.phaseIndex({ phase: 'TRANSFORMING' } as VariantJob)).toBeGreaterThan(component.phaseIndex({ phase: 'PLANNING' } as VariantJob));
+        expect(component.phaseIndex({ phase: 'COMPLETED' } as VariantJob)).toBe(-1);
     });
 
     it('cancels a job only after the confirmation is accepted', () => {

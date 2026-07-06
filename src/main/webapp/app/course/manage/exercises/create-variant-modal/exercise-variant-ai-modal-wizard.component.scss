@@ -357,13 +357,64 @@ $purple: #8b5cf6;
     }
 }
 
+// Full modal width (todo-d) so expanded step logs don't get squeezed into a narrow column.
 .generation-steps {
     list-style: none;
     padding: 0;
     margin: 0;
     width: 100%;
-    max-width: 320px;
     text-align: left;
+}
+
+// Expanded step logs: full width, capped height, scrollable (todo-d).
+.step-output-detail {
+    width: 100%;
+    max-height: 220px;
+    overflow: auto;
+    margin: 0.35rem 0 0;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--bs-secondary-color);
+    background: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+// "What the AI did" summary on the result step (todo-d).
+.step-summary {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: var(--bs-body-bg);
+    font-size: 0.8rem;
+
+    &__title {
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: $purple;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.5rem;
+    }
+
+    &__entry {
+        padding: 0.35rem 0;
+
+        &:not(:last-child) {
+            border-bottom: 1px solid var(--bs-border-color-translucent);
+        }
+    }
+}
+
+// AI-generated failure post-mortem — plain text with line breaks preserved.
+.instructor-summary-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8rem;
+    line-height: 1.5;
 }
 
 .generation-step {
@@ -446,48 +497,37 @@ $purple: #8b5cf6;
     }
 }
 
-.variant-card {
+// "source → variant" flow card shown on the generating and result steps (todo-c).
+.variant-flow-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     border: 1px solid var(--bs-border-color);
     border-radius: 0.75rem;
-    padding: 1rem 1.1rem;
-    background: var(--bs-body-bg);
+    padding: 0.7rem 1rem;
+    background: var(--bs-tertiary-bg);
+    font-size: 0.9rem;
 
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        margin-bottom: 0.4rem;
-        font-size: 0.75rem;
-        color: var(--bs-secondary-color);
-    }
-    &__type-icon {
-        font-size: 0.85rem;
+    &__icon {
         color: $purple;
-    }
-    &__type-label {
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-weight: 600;
+        flex-shrink: 0;
     }
     &__title {
         font-weight: 600;
-        font-size: 1rem;
-        margin: 0 0 0.5rem;
+        min-width: 0;
+
+        &--target {
+            color: $purple;
+        }
     }
-    &__chips {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.35rem;
-        margin-bottom: 0.75rem;
+    &__arrow {
+        color: $purple;
+        flex-shrink: 0;
     }
-    &__preview {
-        font-size: 0.8rem;
+    &__pending {
         color: var(--bs-secondary-color);
-        margin: 0;
-        line-height: 1.5;
-        border-left: 3px solid rgba($purple, 0.4);
-        padding-left: 0.6rem;
+        letter-spacing: 2px;
+        animation: pulse-icon 1.4s ease-in-out infinite;
     }
 }
 

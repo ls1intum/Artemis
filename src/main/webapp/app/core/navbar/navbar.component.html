@@ -8,6 +8,7 @@
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
         }
+        <jhi-variant-generation-tray />
         @if (!currAccount() && languages && languages.length > 1) {
             <div ngbDropdown class="dropdown pointer" display="dynamic">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
@@ -132,7 +133,6 @@
             </div>
         </a>
         <div class="indicators">
-            <jhi-variant-generation-tray />
             <jhi-connection-warning class="align-self-center" />
             <jhi-loading-notification class="align-self-center" />
         </div>

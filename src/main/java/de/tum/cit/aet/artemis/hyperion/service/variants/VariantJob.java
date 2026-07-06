@@ -43,6 +43,18 @@ public class VariantJob implements Serializable {
     /** The phase the job was in when it failed — tray label "failed in VERIFYING" (plan Section 5.4). */
     private VariantJobPhase failedInPhase;
 
+    /**
+     * The failure description published with the FAILED event — persisted so the tray's "show summary"
+     * modal can still explain why the job failed after the live event is gone (plan Section 5.4).
+     */
+    private String failureDetail;
+
+    /**
+     * AI-generated, instructor-facing failure summary: what state the exercise is in and which next steps
+     * fix or retry the generation (todo-d follow-up). Best-effort — null when the summary call itself failed.
+     */
+    private String instructorSummary;
+
     private int attempt;
 
     private int maxAttempts;
@@ -56,6 +68,9 @@ public class VariantJob implements Serializable {
     private List<String> warnings = new ArrayList<>();
 
     private Long variantExerciseId;
+
+    /** The planned/provisioned variant title — the tray/modal "source → variant" display (todo-c). */
+    private String variantExerciseTitle;
 
     private VariantGenerationRequestDTO request;
 
@@ -133,6 +148,22 @@ public class VariantJob implements Serializable {
         this.failedInPhase = failedInPhase;
     }
 
+    public String getFailureDetail() {
+        return failureDetail;
+    }
+
+    public void setFailureDetail(String failureDetail) {
+        this.failureDetail = failureDetail;
+    }
+
+    public String getInstructorSummary() {
+        return instructorSummary;
+    }
+
+    public void setInstructorSummary(String instructorSummary) {
+        this.instructorSummary = instructorSummary;
+    }
+
     public int getAttempt() {
         return attempt;
     }
@@ -187,6 +218,14 @@ public class VariantJob implements Serializable {
 
     public void setVariantExerciseId(Long variantExerciseId) {
         this.variantExerciseId = variantExerciseId;
+    }
+
+    public String getVariantExerciseTitle() {
+        return variantExerciseTitle;
+    }
+
+    public void setVariantExerciseTitle(String variantExerciseTitle) {
+        this.variantExerciseTitle = variantExerciseTitle;
     }
 
     public VariantGenerationRequestDTO getRequest() {

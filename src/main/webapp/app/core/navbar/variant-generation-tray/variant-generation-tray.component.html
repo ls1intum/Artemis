@@ -2,25 +2,43 @@
     <div class="position-relative d-inline-block align-self-center" data-testid="variant-generation-tray">
         <button
             type="button"
-            class="btn btn-link nav-link position-relative"
+            class="btn btn-link nav-link position-relative variant-tray-toggle"
             data-testid="variant-tray-button"
             [attr.aria-label]="'artemisApp.exerciseVariantGeneration.tray.ariaLabel' | artemisTranslate"
             (click)="trayPopover.toggle($event)"
         >
             <fa-icon [icon]="faWandMagicSparkles" />
-            @if (variantGenerationService.runningJobs().length > 0) {
-                <fa-icon [icon]="faSpinner" animation="spin" size="xs" class="position-absolute top-0 end-0 text-primary" data-testid="variant-tray-spinner" />
-                <span class="badge rounded-pill bg-primary position-absolute bottom-0 end-0" data-testid="variant-tray-count">
-                    {{ variantGenerationService.runningJobs().length }}
-                </span>
+            <!-- Status badge: small solid circle with a white glyph, like a notification badge (todo-c). -->
+            @switch (trayStatus()) {
+                @case ('running') {
+                    <span class="variant-tray-status variant-tray-status--running" data-testid="variant-tray-spinner">
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    </span>
+                }
+                @case ('success') {
+                    <span class="variant-tray-status variant-tray-status--success" data-testid="variant-tray-success">
+                        <fa-icon [icon]="faCheck" />
+                    </span>
+                }
+                @case ('attention') {
+                    <span class="variant-tray-status variant-tray-status--attention" data-testid="variant-tray-attention">
+                        <fa-icon [icon]="faExclamation" />
+                    </span>
+                }
             }
         </button>
-        <p-popover #trayPopover>
-            <div class="d-flex flex-column gap-2" style="min-width: 320px; max-width: 420px" data-testid="variant-tray-list">
-                <strong>{{ 'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate }}</strong>
+        <!-- baseZIndex lifts the popover above the sticky navbar/breadcrumbs (z-index 1030; PrimeNG's
+             default overlay z-index of ~1000 rendered the list clipped behind the breadcrumb bar). -->
+        <p-popover #trayPopover [baseZIndex]="2000">
+            <div class="variant-tray-list d-flex flex-column gap-2" data-testid="variant-tray-list">
+                <div class="variant-tray-list__title">
+                    <fa-icon [icon]="faWandMagicSparkles" class="me-2" />
+                    {{ 'artemisApp.exerciseVariantGeneration.tray.title' | artemisTranslate }}
+                </div>
                 @for (job of variantGenerationService.jobs(); track job.jobId) {
                     <div
-                        class="border rounded p-2 d-flex flex-column gap-1"
+                        class="variant-tray-entry"
+                        [class.variant-tray-entry--attention]="needsAttention(job)"
                         role="button"
                         tabindex="0"
                         data-testid="variant-tray-entry"
@@ -28,14 +46,26 @@
                         (keydown.enter)="openJobEntry(job)"
                     >
                         <div class="d-flex align-items-center justify-content-between gap-2">
-                            <span class="fw-bold text-truncate">{{ job.sourceExerciseTitle }}</span>
+                            <span class="fw-semibold text-truncate">{{ job.sourceExerciseTitle }}</span>
                             @if (!isTerminalVariantPhase(job.phase)) {
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-testid="variant-tray-cancel" (click)="cancelJob(job, $event)">
-                                    {{ 'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate }}
-                                </button>
+                                <p-button
+                                    severity="danger"
+                                    [outlined]="true"
+                                    [rounded]="true"
+                                    size="small"
+                                    styleClass="flex-shrink-0"
+                                    data-testid="variant-tray-cancel"
+                                    [label]="'artemisApp.exerciseVariantGeneration.tray.cancel' | artemisTranslate"
+                                    (onClick)="cancelJob(job, $event)"
+                                />
                             }
                         </div>
                         <div class="d-flex align-items-center gap-2 small text-body-secondary">
+                            @if (job.phase === 'COMPLETED') {
+                                <fa-icon [icon]="faCircleCheck" class="text-success" />
+                            } @else if (job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS') {
+                                <fa-icon [icon]="faTriangleExclamation" class="text-warning" data-testid="variant-tray-warning" />
+                            }
                             <span data-testid="variant-tray-phase">{{ phaseLabelKey(job) | artemisTranslate }}</span>
                             @if (job.phase === 'FAILED' && job.failedInPhase) {
                                 <span>({{ 'artemisApp.exerciseVariantGeneration.phase.' + job.failedInPhase | artemisTranslate }})</span>
@@ -43,22 +73,21 @@
                             @if (job.phase === 'REPAIRING' && job.attempt) {
                                 <span>({{ 'artemisApp.exerciseVariantGeneration.tray.attempt' | artemisTranslate: { attempt: job.attempt, max: job.maxAttempts } }})</span>
                             }
-                            @if (job.phase === 'DRAFT_WITH_WARNINGS') {
-                                <fa-icon [icon]="faTriangleExclamation" class="text-warning" data-testid="variant-tray-warning" />
-                            }
                         </div>
                         @if (!isTerminalVariantPhase(job.phase)) {
-                            <p-progressbar [value]="phaseProgress(job)" [showValue]="false" styleClass="variant-tray-progress" />
-                        }
-                        @if (hasVariantLink(job)) {
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-primary align-self-start"
-                                data-testid="variant-tray-open"
-                                (click)="openVariant(job); $event.stopPropagation()"
-                            >
-                                {{ 'artemisApp.exerciseVariantGeneration.tray.openVariant' | artemisTranslate }}
-                            </button>
+                            <div class="variant-tray-steps" data-testid="variant-tray-steps">
+                                @for (phase of runningPhases; track phase; let i = $index) {
+                                    <span
+                                        class="variant-tray-steps__dot"
+                                        [class.variant-tray-steps__dot--done]="i < phaseIndex(job)"
+                                        [class.variant-tray-steps__dot--active]="i === phaseIndex(job)"
+                                        [attr.title]="'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate"
+                                    ></span>
+                                    @if (i < runningPhases.length - 1) {
+                                        <span class="variant-tray-steps__line" [class.variant-tray-steps__line--done]="i < phaseIndex(job)"></span>
+                                    }
+                                }
+                            </div>
                         }
                     </div>
                 }
@@ -66,7 +95,12 @@
         </p-popover>
         <p-confirmdialog />
         <!-- Tray-hosted generation modal in monitor mode (plan Section 5.4): no source exercise, initialized
-             from the job-detail endpoint via monitorJobId. -->
-        <jhi-exercise-variant-ai-modal-wizard [visible]="monitorVisible()" (visibleChange)="monitorVisible.set($event)" [monitorJobId]="monitorJobId()" />
+             from the job-detail endpoint via monitorJobId. "Open in Editor" navigates like a finished entry. -->
+        <jhi-exercise-variant-ai-modal-wizard
+            [visible]="monitorVisible()"
+            (visibleChange)="monitorVisible.set($event)"
+            [monitorJobId]="monitorJobId()"
+            (variantAdded)="onVariantConfirmed($event)"
+        />
     </div>
 }

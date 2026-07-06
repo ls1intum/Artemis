@@ -6,14 +6,20 @@
                 "ariaLabel": "KI-Variantengenerierungs-Jobs",
                 "cancel": "Abbrechen",
                 "cancelConfirmation": "Diese Variantengenerierung abbrechen? Die bisherige Arbeit der KI wird verworfen und die angelegte Übungskopie gelöscht.",
-                "attempt": "Versuch {{ attempt }}/{{ max }}",
-                "openVariant": "Variante öffnen"
+                "attempt": "Versuch {{ attempt }}/{{ max }}"
             },
             "wizard": {
+                "title": "Neue Variante mit KI erstellen",
+                "monitorTitle": "KI-Variantengenerierung",
                 "generatingTitle": "Deine Variante wird generiert…",
                 "backgroundHint": "Du kannst dieses Fenster schließen — die Generierung läuft im Hintergrund weiter und das Ergebnis ist hier, wenn du zurückkommst.",
                 "startFailed": "Der Generierungsjob konnte nicht gestartet werden. Bitte versuche es erneut.",
                 "failedTitle": "Variantengenerierung fehlgeschlagen",
+                "failedInPhase": "Fehlgeschlagen während:",
+                "failedGuidanceWithExercise": "Die Übungskopie wurde vor dem Fehler bereits erstellt. Öffne sie im Editor, um die angewendeten Änderungen zu prüfen und die restlichen Schritte manuell abzuschließen.",
+                "failedGuidanceNoExercise": "Es wurde keine Übung erstellt. Prüfe die Schritt-Zusammenfassung unten, um die Ursache zu sehen, und starte dann eine neue Generierung — oft hilft es, die Anweisungen anzupassen.",
+                "summaryTitle": "Was die KI gemacht hat",
+                "nextStepsTitle": "Was passiert ist & wie es weitergeht",
                 "draftWithWarnings": "Die Variante wurde als markierter Entwurf behalten — überprüfe und repariere sie im Editor.",
                 "aiDisclaimer": "KI-generierte Inhalte können Fehler enthalten. Überprüfe Problemstellung, Testfälle und Lösung sorgfältig vor der Veröffentlichung.",
                 "openInEditor": "Im Editor öffnen",

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,8 +31,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { VariantGenerationRequest } from 'app/openapi/model/variantGenerationRequest';
@@ -61,10 +62,22 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
     providers: [ConfirmationService],
-    imports: [DialogModule, ButtonModule, RadioButtonModule, InputTextModule, TextareaModule, ConfirmDialogModule, FormsModule, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        DialogModule,
+        ButtonModule,
+        RadioButtonModule,
+        InputTextModule,
+        TextareaModule,
+        ConfirmDialogModule,
+        FormsModule,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        NgTemplateOutlet,
+    ],
 })
 export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly variantGenerationService = inject(ExerciseVariantGenerationService);
+    private readonly variantGroupService = inject(ExerciseVariantGroupService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
@@ -78,6 +91,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     readonly visibleChange = output<boolean>();
     readonly variantAdded = output<Exercise>();
+
+    /** Monitor mode skips the wizard chrome: no 5-step indicator, job-centric dialog title (todo-d). */
+    readonly isMonitorMode = computed(() => !!this.monitorJobId());
+    readonly headerKey = computed(() => (this.isMonitorMode() ? 'artemisApp.exerciseVariantGeneration.wizard.monitorTitle' : 'artemisApp.exerciseVariantGeneration.wizard.title'));
 
     readonly wizardStep = signal<WizardStep>(1);
     readonly placementChoice = signal<PlacementChoice>('existing-group');
@@ -109,13 +126,22 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly warnings = signal<string[]>([]);
     readonly failurePhase = signal<VariantJobPhase | undefined>(undefined);
     readonly failureDetail = signal<string | undefined>(undefined);
+    /** AI-generated state-and-next-steps summary for failed jobs (server-side best effort, may stay empty). */
+    readonly instructorSummary = signal<string | undefined>(undefined);
+    /** Job-record context for monitor mode, where no sourceExercise input exists (todo-c flow card). */
+    readonly monitorSourceTitle = signal<string | undefined>(undefined);
+    readonly monitorExerciseType = signal<ExerciseType | undefined>(undefined);
+    /** The planned variant title — available from PLANNING on, drives the "source → variant" display. */
+    readonly variantTitle = signal<string | undefined>(undefined);
+    /** The original generation request, fetched with the job detail (monitor mode / live refresh). */
+    readonly monitorRequest = signal<VariantGenerationRequest | undefined>(undefined);
     readonly generatedVariant = signal<Exercise | undefined>(undefined);
 
     /**
-     * TODO: wire this up once the backend/course context is available to this component; until then the
-     * "existing group" placement option never applies and the wizard defaults to creating a new group.
+     * The variant group the source exercise already belongs to, loaded from the course's variant groups on
+     * open — offers the "add to existing group" placement (plan Section 5.5; TODO resolved in todo-d).
      */
-    readonly sourceGroup = computed<CourseExerciseGroup | undefined>(() => undefined);
+    readonly sourceGroup = signal<ExerciseVariantGroupDTO | undefined>(undefined);
 
     /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced (plan Section 5.5). */
     readonly isExamExercise = computed(() => !!this.sourceExercise()?.exerciseGroup);
@@ -148,6 +174,39 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     });
 
     readonly isRunning = computed(() => this.jobId() !== undefined && !isTerminalVariantPhase(this.jobPhase()));
+
+    /** "source → variant" flow card (todo-c): wizard mode uses the input exercise, monitor mode the job record. */
+    readonly displaySourceTitle = computed(() => this.sourceExercise()?.title ?? this.monitorSourceTitle());
+    readonly displayExerciseType = computed(() => this.sourceExercise()?.type ?? this.monitorExerciseType());
+    readonly displayVariantTitle = computed(() => this.generatedVariant()?.title ?? this.variantTitle());
+
+    /** "What is being adapted" chips (todo-c): the fetched request wins; a fresh wizard run uses the form state. */
+    readonly adaptations = computed<string[]>(() => {
+        const request = this.monitorRequest();
+        const items: string[] = [];
+        const difficulty = request ? request.targetDifficulty : this.changeDifficulty() ? this.targetDifficulty() : undefined;
+        const domain = request ? request.domainText : this.changeDomain() ? this.domainText().trim() : undefined;
+        const instructions = request ? request.additionalInstructions : this.changeCustom() ? this.additionalInstructions().trim() : undefined;
+        if (difficulty) {
+            items.push(`Difficulty → ${difficultyLabel(difficulty as DifficultyLevel)}`);
+        }
+        if (domain) {
+            items.push(`Domain: ${domain}`);
+        }
+        if (instructions) {
+            items.push(instructions.length > 80 ? `Custom: ${instructions.slice(0, 80)}…` : `Custom: ${instructions}`);
+        }
+        return items;
+    });
+
+    /**
+     * Recorded step outputs in pipeline order — the result step's "what the AI did" summary (todo-d:
+     * failed/warning summaries explain what was applied and where the instructor should continue).
+     */
+    readonly recordedStepOutputs = computed<Array<{ phase: string; output: StepOutput }>>(() => {
+        const outputs = this.stepOutputs();
+        return [...GENERATION_PHASES, 'REPAIRING'].filter((phase) => outputs[phase]).map((phase) => ({ phase, output: outputs[phase] }));
+    });
 
     readonly generationPhases = GENERATION_PHASES;
     readonly wizardSteps = WIZARD_STEPS;
@@ -184,6 +243,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             untracked(() => {
                 if (monitorId) {
                     this.openInMonitorMode(monitorId);
+                } else {
+                    this.loadSourceGroup();
                 }
             });
         });
@@ -254,6 +315,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.eventsSubscription = undefined;
         this.wizardStep.set(1);
         this.resetJobState();
+        this.sourceGroup.set(undefined);
         this.placementChoice.set('existing-group');
         this.newGroupTitle.set('');
         this.newGroupMaxPoints.set(undefined);
@@ -392,11 +454,15 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 if (event.phase && event.detail) {
                     this.recordStepOutput(event.phase, { summary: event.detail });
                 }
+                // The event only carries the summary; the full log detail lives on the job record. Pull it right
+                // away — otherwise the step renders an expandable arrow with nothing behind it (todo-c).
+                this.loadFullStepOutputs();
                 break;
             case 'DONE':
                 this.jobPhase.set(event.phase ?? 'COMPLETED');
                 this.warnings.set(event.warnings ?? []);
                 this.showResult(event.variantExerciseId);
+                this.loadFullStepOutputs();
                 break;
             case 'FAILED':
                 // The FAILED event's phase is FAILED itself — the phase the job died in is the last live phase.
@@ -404,12 +470,38 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.failureDetail.set(event.detail);
                 this.jobPhase.set('FAILED');
                 this.wizardStep.set(5);
+                // The event carries neither the kept clone id nor full step logs — pull the job detail so
+                // the failure summary can link into the editor and show complete logs (todo-d).
+                this.loadFullStepOutputs();
                 break;
             case 'CANCELLED':
                 this.jobPhase.set('CANCELLED');
                 this.wizardStep.set(5);
                 break;
         }
+    }
+
+    /**
+     * Live STEP_OUTPUT events only carry summaries; the job record additionally holds the full detail logs
+     * and — for failures — the id of a clone kept from PROVISIONING. Fetched once on a terminal event.
+     */
+    private loadFullStepOutputs(): void {
+        const jobId = this.jobId();
+        if (!jobId) {
+            return;
+        }
+        this.variantGenerationService.getJobDetail(jobId).subscribe({
+            next: (detail) => {
+                this.stepOutputs.set(detail.stepOutputs ?? {});
+                this.instructorSummary.set(detail.job?.instructorSummary);
+                this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());
+                this.monitorRequest.set(detail.request ?? this.monitorRequest());
+                if (this.jobPhase() === 'FAILED') {
+                    this.showResult(detail.job?.variantExerciseId);
+                }
+            },
+            error: () => {},
+        });
     }
 
     private showResult(variantExerciseId: number | undefined): void {
@@ -422,6 +514,20 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         }
     }
 
+    /** Resolves the variant group the source exercise is a member of — basis of the "existing group" placement. */
+    private loadSourceGroup(): void {
+        this.sourceGroup.set(undefined);
+        const courseId = this.courseId();
+        const exerciseId = this.sourceExercise()?.id;
+        if (!courseId || !exerciseId || this.isExamExercise()) {
+            return;
+        }
+        this.variantGroupService.getGroupsForCourse(courseId).subscribe({
+            next: (groups) => this.sourceGroup.set(groups.find((group) => group.exerciseIds?.includes(exerciseId))),
+            error: () => {},
+        });
+    }
+
     /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3 (plan Section 5.4). */
     private openInMonitorMode(jobId: string): void {
         this.variantGenerationService.getJobDetail(jobId).subscribe({
@@ -430,10 +536,16 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.initializeFromJobId(jobId, job?.phase, job?.attempt, job?.maxAttempts);
                 this.stepOutputs.set(detail.stepOutputs ?? {});
                 this.warnings.set(job?.warnings ?? []);
+                this.monitorSourceTitle.set(job?.sourceExerciseTitle);
+                this.monitorExerciseType.set(job?.exerciseType as ExerciseType | undefined);
+                this.variantTitle.set(job?.variantExerciseTitle);
+                this.monitorRequest.set(detail.request);
                 if (isTerminalVariantPhase(job?.phase)) {
                     this.jobId.set(jobId);
                     this.jobPhase.set(job!.phase!);
                     this.failurePhase.set(job?.failedInPhase);
+                    this.failureDetail.set(job?.failureDetail);
+                    this.instructorSummary.set(job?.instructorSummary);
                     this.showResult(job?.variantExerciseId);
                 }
             },
@@ -471,6 +583,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.warnings.set([]);
         this.failurePhase.set(undefined);
         this.failureDetail.set(undefined);
+        this.instructorSummary.set(undefined);
+        this.monitorSourceTitle.set(undefined);
+        this.monitorExerciseType.set(undefined);
+        this.variantTitle.set(undefined);
+        this.monitorRequest.set(undefined);
         this.generatedVariant.set(undefined);
     }
 

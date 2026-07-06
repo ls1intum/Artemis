@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
@@ -115,6 +118,18 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         }
         if (plan.problemStatement() != null && !plan.problemStatement().isBlank()) {
             original.setProblemStatement(plan.problemStatement());
+        }
+        // Group placements require INDIVIDUAL mode — ExerciseVariantGroupService.assignExerciseToGroup rejects
+        // synchronized/batched quizzes (single shared run vs. per-student group timeline), so FINALIZING would
+        // always fail for such sources. Switch the clone's mode and drop the copied batches (they belong to the
+        // source's run mode); the source exercise itself stays untouched.
+        VariantPlacementDTO placement = request.placement();
+        boolean groupPlacement = placement != null
+                && (placement.type() == VariantPlacementDTO.PlacementType.NEW_GROUP || placement.type() == VariantPlacementDTO.PlacementType.EXISTING_GROUP);
+        if (groupPlacement && original.getQuizMode() != QuizMode.INDIVIDUAL) {
+            log.debug("Switching quiz variant of exercise {} from {} to INDIVIDUAL mode for group placement", source.getId(), original.getQuizMode());
+            original.setQuizMode(QuizMode.INDIVIDUAL);
+            original.setQuizBatches(new HashSet<>());
         }
         try {
             QuizExercise variant = quizExerciseImportService.importQuizExercise(original, original, null);

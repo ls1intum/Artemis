@@ -1,33 +1,37 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
-import { ProgressBarModule } from 'primeng/progressbar';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
 import { VariantJob } from 'app/openapi/model/variantJob';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 
-/** Pipeline phases in execution order — drives the tray's slim progress bar (plan Section 5.2). */
+/** Pipeline phases in execution order — drives the tray's per-entry step-dot timeline (plan Section 5.2). */
 const RUNNING_PHASE_ORDER = ['ANALYZING', 'PLANNING', 'PROVISIONING', 'TRANSFORMING', 'VERIFYING', 'REPAIRING', 'FINALIZING'] as const;
+
+/** Aggregated tray-button state: spinner while anything runs, then checkmark or warning (todo-d). */
+type TrayStatus = 'running' | 'success' | 'attention';
 
 /**
  * Navbar job tray for background variant generation (plan Section 5.4).
- * Mounted in navbar.component.html. Tray = state at a glance; the generation modal = full inspection.
+ * Mounted in the navbar's right-side icon menu. Tray = state at a glance; the generation modal = full inspection.
  */
 @Component({
     selector: 'jhi-variant-generation-tray',
     templateUrl: './variant-generation-tray.component.html',
+    styleUrl: './variant-generation-tray.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [ConfirmationService],
-    imports: [FaIconComponent, PopoverModule, ButtonModule, ProgressBarModule, ConfirmDialogModule, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
+    imports: [FaIconComponent, PopoverModule, ButtonModule, ConfirmDialogModule, ArtemisTranslatePipe, ExerciseVariantAiModalWizardComponent],
 })
 export class VariantGenerationTrayComponent {
     protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
@@ -37,17 +41,35 @@ export class VariantGenerationTrayComponent {
     private readonly translateService = inject(TranslateService);
 
     /**
-     * Clicking a job entry opens the tray-hosted generation modal in monitor mode, initialized from the
-     * job-detail endpoint (plan Section 5.4). Finished jobs with a variant additionally deep-link to the
-     * exercise via the button rendered next to the entry.
+     * Clicking a running/failed job entry opens the tray-hosted generation modal in monitor mode, initialized
+     * from the job-detail endpoint (plan Section 5.4). Finished entries with a variant deep-link straight to
+     * the exercise editor instead (todo-d: card click = navigate, modal only while running or for summaries).
      */
     readonly monitorJobId = signal<string | undefined>(undefined);
     readonly monitorVisible = signal(false);
 
+    private readonly trayPopover = viewChild<Popover>('trayPopover');
+
+    /**
+     * Icon-only status of the tray button (todo-d): spinner while any job runs, warning once all finished
+     * but at least one needs attention (failed or draft with warnings), checkmark otherwise.
+     */
+    readonly trayStatus = computed<TrayStatus>(() => {
+        if (this.variantGenerationService.runningJobs().length > 0) {
+            return 'running';
+        }
+        const needsAttention = this.variantGenerationService.jobs().some((job) => job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS');
+        return needsAttention ? 'attention' : 'success';
+    });
+
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly faSpinner = faSpinner;
+    protected readonly faCheck = faCheck;
+    protected readonly faExclamation = faExclamation;
+    protected readonly faCircleCheck = faCircleCheck;
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly isTerminalVariantPhase = isTerminalVariantPhase;
+    protected readonly runningPhases = RUNNING_PHASE_ORDER;
 
     /** Login of the user whose jobs are currently loaded — guards against redundant re-syncs. */
     private loadedForLogin?: string;
@@ -73,30 +95,18 @@ export class VariantGenerationTrayComponent {
         });
     }
 
-    /** Progress through the running phases as a percentage for the slim progress bar (plan Section 5.4). */
-    phaseProgress(job: VariantJob): number {
-        const index = RUNNING_PHASE_ORDER.indexOf(job.phase as (typeof RUNNING_PHASE_ORDER)[number]);
-        if (index < 0) {
-            return 100;
-        }
-        return Math.round(((index + 1) / RUNNING_PHASE_ORDER.length) * 100);
+    /** Index of the job's phase in the running order — done/active/pending classes of the step dots. */
+    phaseIndex(job: VariantJob): number {
+        return RUNNING_PHASE_ORDER.indexOf(job.phase as (typeof RUNNING_PHASE_ORDER)[number]);
     }
 
     phaseLabelKey(job: VariantJob): string {
         return `artemisApp.exerciseVariantGeneration.phase.${job.phase}`;
     }
 
-    /** Finished jobs with a kept variant deep-link to the type-aware editor route (plan Section 5.4). */
-    openVariant(job: VariantJob): void {
-        if (!job.courseId || !job.variantExerciseId) {
-            return;
-        }
-        const typeSegment = job.exerciseType === 'quiz' ? 'quiz-exercises' : `${job.exerciseType}-exercises`;
-        this.router.navigate(['/course-management', job.courseId, typeSegment, job.variantExerciseId]);
-    }
-
-    hasVariantLink(job: VariantJob): boolean {
-        return (job.phase === 'COMPLETED' || job.phase === 'DRAFT_WITH_WARNINGS') && !!job.variantExerciseId && !!job.courseId;
+    /** Entries needing instructor attention get the warning accent in the list. */
+    needsAttention(job: VariantJob): boolean {
+        return job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS';
     }
 
     /** Cooperative cancel behind a confirmation — discards the LLM work and deletes the clone (plan Section 5.4). */
@@ -113,11 +123,26 @@ export class VariantGenerationTrayComponent {
         });
     }
 
+    /**
+     * Card click always opens the generation modal (running: live timeline; finished: summary, todo-c) —
+     * navigation to the exercise happens via the modal's "Open in Editor" button only.
+     */
     openJobEntry(job: VariantJob): void {
         if (!job.jobId) {
             return;
         }
+        this.trayPopover()?.hide();
         this.monitorJobId.set(job.jobId);
         this.monitorVisible.set(true);
+    }
+
+    /** The modal's "Open in Editor" — deep-link into the type-aware edit route of the created variant. */
+    onVariantConfirmed(exercise: Exercise): void {
+        const courseId = exercise.course?.id;
+        if (!courseId || !exercise.id) {
+            return;
+        }
+        const typeSegment = `${exercise.type ?? 'programming'}-exercises`;
+        this.router.navigate(['/course-management', courseId, typeSegment, exercise.id, 'edit']);
     }
 }

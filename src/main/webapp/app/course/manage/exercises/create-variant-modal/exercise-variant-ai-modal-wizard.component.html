@@ -1,26 +1,52 @@
 <p-dialog
-    header="Create a new variant with AI"
+    [header]="headerKey() | artemisTranslate"
     [visible]="visible()"
     (visibleChange)="onClose($event)"
     [modal]="true"
     appendTo="body"
+    [baseZIndex]="2000"
     [style]="{ width: '660px', maxWidth: '95vw' }"
     [draggable]="false"
 >
-    <!-- ── Step indicator ──────────────────────────────────────────────────────── -->
-    <div class="wizard-step-indicator mb-4">
-        @for (step of wizardSteps; track step.label; let i = $index) {
-            <div class="wiz-step-item" [class.wiz-step-item--active]="wizardStep() === i + 1" [class.wiz-step-item--completed]="wizardStep() > i + 1">
-                <div class="wiz-step-circle">
-                    <fa-icon [icon]="step.icon" />
+    <!-- ── Step indicator (wizard flow only — monitor mode has no steps 1–3, todo-d) ── -->
+    @if (!isMonitorMode()) {
+        <div class="wizard-step-indicator mb-4">
+            @for (step of wizardSteps; track step.label; let i = $index) {
+                <div class="wiz-step-item" [class.wiz-step-item--active]="wizardStep() === i + 1" [class.wiz-step-item--completed]="wizardStep() > i + 1">
+                    <div class="wiz-step-circle">
+                        <fa-icon [icon]="step.icon" />
+                    </div>
+                    <div class="wiz-step-label">{{ step.label }}</div>
                 </div>
-                <div class="wiz-step-label">{{ step.label }}</div>
-            </div>
-            @if (i < wizardSteps.length - 1) {
-                <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > i + 1"></div>
+                @if (i < wizardSteps.length - 1) {
+                    <div class="wiz-step-line" [class.wiz-step-line--completed]="wizardStep() > i + 1"></div>
+                }
             }
+        </div>
+    }
+
+    <!-- ── Source → variant flow card + "what is being adapted" chips (steps 4 and 5, todo-c) ── -->
+    @if (wizardStep() === 4 || wizardStep() === 5) {
+        <div class="variant-flow-card mb-2" data-testid="variant-wizard-flow">
+            @if (displayExerciseType(); as type) {
+                <fa-icon [icon]="getIcon(type)" class="variant-flow-card__icon" />
+            }
+            <span class="variant-flow-card__title text-truncate">{{ displaySourceTitle() }}</span>
+            <fa-icon [icon]="faArrowRight" class="variant-flow-card__arrow" />
+            @if (displayVariantTitle(); as title) {
+                <span class="variant-flow-card__title variant-flow-card__title--target text-truncate" data-testid="variant-wizard-flow-target">{{ title }}</span>
+            } @else {
+                <span class="variant-flow-card__pending" data-testid="variant-wizard-flow-pending">•••</span>
+            }
+        </div>
+        @if (adaptations().length > 0) {
+            <div class="d-flex flex-wrap gap-1 mb-3" data-testid="variant-wizard-adaptations">
+                @for (chip of adaptations(); track chip) {
+                    <span class="info-chip">{{ chip }}</span>
+                }
+            </div>
         }
-    </div>
+    }
 
     <!-- ── Step 1: Select ─────────────────────────────────────────────────────── -->
     @if (wizardStep() === 1) {
@@ -151,7 +177,7 @@
                         />
                         <div class="placement-option__body">
                             <span class="placement-option__title">Add to group "{{ group.title }}"</span>
-                            <span class="placement-option__hint">Alongside {{ group.exercises?.length ?? 0 }} existing variant(s)</span>
+                            <span class="placement-option__hint">Alongside {{ group.exerciseIds?.length ?? 0 }} existing variant(s)</span>
                         </div>
                     </label>
                 }
@@ -277,12 +303,18 @@
                                 <span class="d-block text-muted small" data-testid="variant-wizard-step-detail">{{ detail }}</span>
                             }
                             @if (stepOutputs()[phase]; as stepOutput) {
-                                <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
-                                    <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
-                                    {{ stepOutput.summary }}
-                                </a>
-                                @if (expandedPhases()[phase] && stepOutput.detail) {
-                                    <pre class="step-output-detail small text-muted mt-1 mb-0" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
+                                <!-- Expandable only once the full log detail arrived — an arrow with an empty body
+                                     behind it is worse than no arrow (todo-c). -->
+                                @if (stepOutput.detail) {
+                                    <a class="d-block small text-decoration-none pointer" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
+                                        <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="me-1" />
+                                        {{ stepOutput.summary }}
+                                    </a>
+                                    @if (expandedPhases()[phase]) {
+                                        <pre class="step-output-detail" data-testid="variant-wizard-step-output-detail">{{ stepOutput.detail }}</pre>
+                                    }
+                                } @else {
+                                    <span class="d-block small text-muted">{{ stepOutput.summary }}</span>
                                 }
                             }
                         </span>
@@ -308,17 +340,46 @@
                 <div>
                     <div class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.failedTitle' | artemisTranslate }}</div>
                     @if (failurePhase(); as phase) {
-                        <div class="small">{{ 'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate }}</div>
+                        <div class="small">
+                            {{ 'artemisApp.exerciseVariantGeneration.wizard.failedInPhase' | artemisTranslate }}
+                            {{ 'artemisApp.exerciseVariantGeneration.phase.' + phase | artemisTranslate }}
+                        </div>
                     }
                     @if (failureDetail(); as detail) {
                         <div class="small text-muted">{{ detail }}</div>
                     }
                 </div>
             </div>
-            <div class="d-flex justify-content-end">
+            <!-- How to continue: the AI-generated post-mortem (state of the exercise + next steps) when the
+                 server could produce one, otherwise the static fallback guidance. -->
+            @if (instructorSummary(); as summary) {
+                <div class="step-summary mb-3" data-testid="variant-wizard-instructor-summary">
+                    <div class="step-summary__title">
+                        <fa-icon [icon]="faRobot" class="me-1" />
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.nextStepsTitle' | artemisTranslate }}
+                    </div>
+                    <div class="instructor-summary-text">{{ summary }}</div>
+                </div>
+            } @else {
+                <p class="small text-muted mb-3" data-testid="variant-wizard-failed-guidance">
+                    @if (generatedVariant()) {
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.failedGuidanceWithExercise' | artemisTranslate }}
+                    } @else {
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.failedGuidanceNoExercise' | artemisTranslate }}
+                    }
+                </p>
+            }
+            <ng-container *ngTemplateOutlet="stepSummary" />
+            <div class="d-flex justify-content-end gap-2">
                 <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</p-button>
+                @if (generatedVariant()) {
+                    <button type="button" class="btn btn-sm btn-ai-generate" (click)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <fa-icon [icon]="faPenToSquare" class="me-1" />
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
+                    </button>
+                }
             </div>
         } @else if (jobPhase() === 'CANCELLED') {
             <div class="ai-warning mb-3" data-testid="variant-wizard-cancelled">
@@ -331,21 +392,15 @@
                 }}</p-button>
             </div>
         } @else {
+            <!-- Title/type live in the flow card above (todo-c); this row only adds the variant's key facts. -->
             @if (generatedVariant(); as variant) {
-                <div class="variant-card mb-3" data-testid="variant-wizard-result">
-                    <div class="variant-card__header">
-                        <fa-icon [icon]="getIcon(variant.type)" class="variant-card__type-icon" />
-                        <span class="variant-card__type-label">{{ variant.type }}</span>
-                    </div>
-                    <h6 class="variant-card__title">{{ variant.title }}</h6>
-                    <div class="variant-card__chips">
-                        @if (variant.maxPoints) {
-                            <span class="info-chip">{{ variant.maxPoints }} pts</span>
-                        }
-                        @if (variant.difficulty) {
-                            <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
-                        }
-                    </div>
+                <div class="d-flex flex-wrap align-items-center gap-1 mb-3" data-testid="variant-wizard-result">
+                    @if (variant.maxPoints) {
+                        <span class="info-chip">{{ variant.maxPoints }} pts</span>
+                    }
+                    @if (variant.difficulty) {
+                        <span class="badge {{ difficultyBadgeClass(variant.difficulty) }}">{{ variant.difficulty }}</span>
+                    }
                 </div>
             }
             @if (jobPhase() === 'DRAFT_WITH_WARNINGS' && warnings().length > 0) {
@@ -361,6 +416,7 @@
                     </div>
                 </div>
             }
+            <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="ai-warning mt-3">
                 <fa-icon [icon]="faTriangleExclamation" class="ai-warning__icon" />
                 <span>{{ 'artemisApp.exerciseVariantGeneration.wizard.aiDisclaimer' | artemisTranslate }}</span>
@@ -377,5 +433,29 @@
             </div>
         }
     }
+    <!-- ── "What the AI did" summary — shared by the failed and result views (todo-d) ── -->
+    <ng-template #stepSummary>
+        @if (recordedStepOutputs().length > 0) {
+            <div class="step-summary mb-3" data-testid="variant-wizard-summary">
+                <div class="step-summary__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.summaryTitle' | artemisTranslate }}</div>
+                @for (entry of recordedStepOutputs(); track entry.phase) {
+                    <div class="step-summary__entry">
+                        <span class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.phase.' + entry.phase | artemisTranslate }}</span>
+                        @if (entry.output.detail) {
+                            <a class="d-block text-decoration-none pointer" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
+                                <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="me-1" />
+                                {{ entry.output.summary }}
+                            </a>
+                            @if (expandedPhases()[entry.phase]) {
+                                <pre class="step-output-detail" data-testid="variant-wizard-summary-detail">{{ entry.output.detail }}</pre>
+                            }
+                        } @else {
+                            <span class="d-block text-muted">{{ entry.output.summary }}</span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </ng-template>
     <p-confirmdialog />
 </p-dialog>

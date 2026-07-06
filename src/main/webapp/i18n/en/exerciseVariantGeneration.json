@@ -6,14 +6,20 @@
                 "ariaLabel": "AI variant generation jobs",
                 "cancel": "Cancel",
                 "cancelConfirmation": "Cancel this variant generation? The AI's work so far will be discarded and the provisioned exercise copy deleted.",
-                "attempt": "attempt {{ attempt }}/{{ max }}",
-                "openVariant": "Open variant"
+                "attempt": "attempt {{ attempt }}/{{ max }}"
             },
             "wizard": {
+                "title": "Create a new variant with AI",
+                "monitorTitle": "AI variant generation",
                 "generatingTitle": "Generating your variant…",
                 "backgroundHint": "You can close this window — generation continues in the background and the result will be here when you come back.",
                 "startFailed": "The generation job could not be started. Please try again.",
                 "failedTitle": "Variant generation failed",
+                "failedInPhase": "Failed during:",
+                "failedGuidanceWithExercise": "The exercise copy was already created before the failure. Open it in the editor to review what was applied and finish the remaining steps manually.",
+                "failedGuidanceNoExercise": "No exercise was created. Review the step summary below to see why it failed, then start a new generation — adjusting your instructions often helps.",
+                "summaryTitle": "What the AI did",
+                "nextStepsTitle": "What happened & how to continue",
                 "draftWithWarnings": "The variant was kept as a flagged draft — review and repair it in the editor.",
                 "aiDisclaimer": "AI-generated content may contain errors. Review the problem statement, test cases, and solution carefully before publishing.",
                 "openInEditor": "Open in Editor",

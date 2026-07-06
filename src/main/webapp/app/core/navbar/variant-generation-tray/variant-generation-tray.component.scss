@@ -1,0 +1,116 @@
+// Visual language shared with the variant wizard (exercise-variant-ai-modal-wizard.component.scss).
+$purple: #8b5cf6;
+
+// ── Navbar button: base wand icon + notification-style status badge (todo-c) ──
+
+.variant-tray-status {
+    position: absolute;
+    top: 1px;
+    right: -3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    line-height: 1;
+    color: #fff;
+    pointer-events: none;
+
+    &--running {
+        background: $purple;
+    }
+    &--success {
+        background: var(--bs-success);
+    }
+    &--attention {
+        background: var(--bs-warning);
+        color: #212529;
+    }
+}
+
+// ── Popover job list ──────────────────────────────────────────────────────────
+
+.variant-tray-list {
+    min-width: 340px;
+    max-width: 420px;
+
+    &__title {
+        font-weight: 600;
+        font-size: 0.875rem;
+
+        fa-icon {
+            color: $purple;
+        }
+    }
+}
+
+.variant-tray-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        border-color: rgba($purple, 0.5);
+        background: rgba($purple, 0.04);
+    }
+
+    &--attention {
+        border-color: rgba(var(--bs-warning-rgb), 0.5);
+    }
+}
+
+// ── Per-entry step-dot timeline (mirrors the wizard's step indicator, todo-d) ──
+
+.variant-tray-steps {
+    display: flex;
+    align-items: center;
+    padding: 0.15rem 0;
+
+    &__dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--bs-border-color);
+        flex-shrink: 0;
+        transition: background 0.3s ease;
+
+        &--done {
+            background: $purple;
+        }
+
+        &--active {
+            background: $purple;
+            box-shadow: 0 0 0 3px rgba($purple, 0.25);
+            animation: variant-dot-pulse 1.2s ease-in-out infinite;
+        }
+    }
+
+    &__line {
+        flex: 1;
+        height: 2px;
+        background: var(--bs-border-color);
+        border-radius: 2px;
+        transition: background 0.3s ease;
+
+        &--done {
+            background: $purple;
+        }
+    }
+}
+
+@keyframes variant-dot-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 3px rgba($purple, 0.25);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba($purple, 0.1);
+    }
+}

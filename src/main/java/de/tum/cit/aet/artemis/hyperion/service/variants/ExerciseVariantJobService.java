@@ -223,7 +223,12 @@ public class ExerciseVariantJobService {
      * @param plan  the change plan
      */
     public void recordChangePlan(String jobId, ChangePlan plan) {
-        mutate(jobId, mutableJob -> mutableJob.setChangePlan(plan));
+        mutate(jobId, mutableJob -> {
+            mutableJob.setChangePlan(plan);
+            // The planned title doubles as the "source → variant" display in the tray/modal (todo-c) — it is
+            // known long before the exercise is provisioned.
+            mutableJob.setVariantExerciseTitle(plan.variantTitle());
+        });
     }
 
     /**
@@ -279,9 +284,25 @@ public class ExerciseVariantJobService {
      * @param detail failure description including the phase
      */
     public void fail(String jobId, String detail) {
+        fail(jobId, detail, null);
+    }
+
+    /**
+     * Terminal transition to FAILED with an optional AI-generated instructor summary (state of the exercise
+     * plus next steps). Also clears the variant exercise id — the hard-failure policy deletes the provisioned
+     * clone before failing (plan Section 6), so a deep link would point at a deleted exercise.
+     *
+     * @param jobId             the job id
+     * @param detail            failure description including the phase
+     * @param instructorSummary AI-generated next-steps summary, or null when unavailable
+     */
+    public void fail(String jobId, String detail, String instructorSummary) {
         VariantJob job = mutate(jobId, mutableJob -> {
             mutableJob.setFailedInPhase(mutableJob.getPhase());
+            mutableJob.setFailureDetail(detail);
+            mutableJob.setInstructorSummary(instructorSummary);
             mutableJob.setPhase(VariantJobPhase.FAILED);
+            mutableJob.setVariantExerciseId(null); // clone was deleted by the hard-failure cleanup — no deep link
             mutableJob.setFinishedAt(Instant.now());
         });
         publish(job, VariantGenerationEventDTO.failed(detail));
