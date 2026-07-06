@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -102,9 +103,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
+                irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -123,7 +124,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     @Override
     public void sendOverWebsocket(IrisChatSession session, IrisMessage message) {
-        irisChatWebsocketService.sendMessage(session, message, null);
+        irisChatWebsocketService.sendMessage(session, message, null, null);
     }
 
     @Override
