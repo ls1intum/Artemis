@@ -407,6 +407,31 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void runBatch_oneExerciseExtractionThrows_isSkippedAndBatchProceeds() {
+        // A quiz deleted mid-run makes its refetch throw; that must not drop the rest of the batch.
+        QuizExercise doomedQuiz = quizExercise(12L);
+        ProgrammingExercise healthy = courseExercise(10L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(doomedQuiz, healthy));
+        stubRunMap();
+        when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        // Fail at render so we stop after preparation without driving the LLM.
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L, 12L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        assertThat(result.failureReason()).isEqualTo(INTERNAL_ERROR);
+        // The throwing quiz is skipped, but the healthy exercise is still extracted and the batch proceeds to prepare
+        // the prompt (index fetched, render reached) — proving one bad exercise no longer poisons the whole batch.
+        verify(contentExtractionService).extractContent(healthy);
+        verify(orchestratorToolsService).listCompetencyIndex(COURSE_ID);
+        verify(templateService).render(anyString(), anyMap());
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
     void run_nonProgrammingExercise_isOrchestrated() {
         TextExercise exercise = textExercise(17L);
         when(exerciseRepository.findByIdElseThrow(17L)).thenReturn(exercise);

@@ -407,12 +407,16 @@ public class ContentExtractionService {
     private static void renderShortAnswer(StringBuilder sb, ShortAnswerQuestion question) {
         Set<ShortAnswerMapping> mappings = question.getCorrectMappings();
         if (mappings != null && !mappings.isEmpty()) {
-            sb.append("Correct answers by spot:\n");
-            mappings.stream().filter(mapping -> mapping.getSpot() != null && mapping.getSolution() != null)
-                    .sorted(Comparator.comparing(mapping -> Objects.requireNonNullElse(mapping.getSpot().getSpotNr(), 0)))
-                    .forEach(mapping -> sb.append("- Spot ").append(mapping.getSpot().getSpotNr()).append(": ")
-                            .append(mapping.getSolution().getText() == null ? "" : mapping.getSolution().getText().strip()).append('\n'));
-            return;
+            List<ShortAnswerMapping> mapped = mappings.stream().filter(mapping -> mapping.getSpot() != null && mapping.getSolution() != null)
+                    .sorted(Comparator.comparing(mapping -> Objects.requireNonNullElse(mapping.getSpot().getSpotNr(), 0))).toList();
+            if (!mapped.isEmpty()) {
+                sb.append("Correct answers by spot:\n");
+                for (ShortAnswerMapping mapping : mapped) {
+                    sb.append("- Spot ").append(Objects.requireNonNullElse(mapping.getSpot().getSpotNr(), 0)).append(": ")
+                            .append(mapping.getSolution().getText() == null ? "" : mapping.getSolution().getText().strip()).append('\n');
+                }
+                return;
+            }
         }
         List<ShortAnswerSolution> solutions = question.getSolutions();
         if (solutions == null || solutions.isEmpty()) {

@@ -446,8 +446,19 @@ public class CompetencyOrchestrationService {
         try {
             List<ExerciseChange> changes = new ArrayList<>();
             for (Exercise exercise : exercises) {
-                ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
-                changes.add(new ExerciseChange(exercise.getId(), extracted.title(), extracted.extractedLearningText()));
+                try {
+                    ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+                    changes.add(new ExerciseChange(exercise.getId(), extracted.title(), extracted.extractedLearningText()));
+                }
+                catch (Exception ex) {
+                    // Isolate per-exercise failures (e.g. a quiz deleted mid-run whose refetch throws) so one bad entry
+                    // does not drop the whole batch and burn the course's daily-run slot. The exercise is skipped this run.
+                    log.warn("Atlas orchestrator (batch) skipping exercise {} for course {}: {}", exercise.getId(), courseId, ex.getMessage(), ex);
+                }
+            }
+            if (changes.isEmpty()) {
+                log.warn("Atlas orchestrator (batch) has no extractable exercises for course {}", courseId);
+                return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.INTERNAL_ERROR);
             }
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
