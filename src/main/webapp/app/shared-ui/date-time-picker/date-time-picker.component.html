@@ -14,7 +14,7 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
-<div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()">
+<div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()" (keydown)="onPickerKeydown($event)" (paste)="onPickerPaste($event)">
     <p-datepicker
         #datePicker
         [inputId]="inputId()"

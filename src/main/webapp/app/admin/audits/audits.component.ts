@@ -99,7 +99,7 @@ export class AuditsComponent implements OnInit {
 
     transition(): void {
         if (this.canLoad()) {
-            this.router.navigate(['/admin/audits'], {
+            void this.router.navigate(['/admin/audits'], {
                 queryParams: {
                     page: this.page(),
                     sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),

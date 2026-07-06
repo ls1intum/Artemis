@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
@@ -10,8 +10,8 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
@@ -39,7 +39,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -77,11 +77,15 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarData = signal<SidebarData | undefined>(undefined);
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     isExamStarted = signal(false);
     withinWorkingTime: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeExamDetails = signal<ExamParticipationComponent | undefined>(undefined);
+    protected readonly activeExamDetailsSidebarSync = effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -139,10 +143,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
             // First, try to navigate to the last selected exam
-            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
             // Second, try to navigate to the upcoming exam
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
             this.examSelected.set(!!examId);
@@ -160,7 +164,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
                 studentExams.forEach((exam) => {
                     const studentExam = cloneDeep(exam) as StudentExam;
                     this.studentExamsForRealExams.set(studentExam.id!, studentExam);
@@ -226,17 +230,17 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * @return value for sort()-function
      */
     sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
-        if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isBefore(exam2.startDate)) {
             return -1;
         }
-        if (dayjs(exam1.startDate!).isAfter(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isAfter(exam2.startDate)) {
             return 1;
         }
         return 0;
     }
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));
@@ -263,6 +267,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     getLastSelectedExam(): number | undefined {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     toggleSidebar() {
@@ -309,6 +317,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
         this.updateSidebarData();
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof ExamParticipationComponent) {
+            this.activeExamDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {

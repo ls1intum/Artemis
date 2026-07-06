@@ -337,7 +337,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             .then((response) => {
                 const importedExam = response.body?.exam;
                 if (importedExam) {
-                    this.onSaveSuccess(importedExam);
+                    void this.onSaveSuccess(importedExam);
                 } else {
                     this.isSaving.set(false);
                 }
@@ -371,7 +371,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
-            this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
         } else {

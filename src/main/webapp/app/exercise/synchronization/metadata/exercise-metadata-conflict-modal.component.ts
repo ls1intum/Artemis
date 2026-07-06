@@ -190,7 +190,8 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         try {
             return JSON.stringify(value);
         } catch {
-            return String(value);
+            // value could not be serialized (e.g. circular); fall back to the object tag without a base-toString coercion
+            return Object.prototype.toString.call(value);
         }
     }
 
@@ -258,7 +259,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
 
         return entries.map((entry) => ({
             labelKey: entry.labelKey,
-            value: config ? config[entry.key as keyof ProgrammingExerciseBuildConfig] : undefined,
+            value: config ? config[entry.key] : undefined,
         }));
     }
 

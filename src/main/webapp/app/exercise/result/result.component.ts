@@ -218,6 +218,7 @@ export class ResultComponent {
             }
             return 'artemisApp.result.preliminaryTooltip';
         }
+        return undefined;
     }
 
     /**
@@ -234,7 +235,7 @@ export class ResultComponent {
 
             const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
-            this.router.navigate([
+            void this.router.navigate([
                 '/courses',
                 courseId,
                 'exercises',
@@ -274,11 +275,10 @@ export class ResultComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackComponentParameters.exerciseType,
                 showScoreChart: feedbackComponentParameters.showScoreChart,
                 messageKey: feedbackComponentParameters.messageKey,
                 latestDueDate: feedbackComponentParameters.latestDueDate,

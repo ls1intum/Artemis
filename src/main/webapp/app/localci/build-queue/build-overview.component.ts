@@ -601,9 +601,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         if (!jobId) return;
         const courseId = this.courseId();
         if (courseId) {
-            this.router.navigate(['/course-management', courseId, 'build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/course-management', courseId, 'build-overview', jobId, 'job-details']);
         } else {
-            this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
         }
     }
 

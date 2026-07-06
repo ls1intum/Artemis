@@ -108,7 +108,7 @@ export class LtiConfigurationComponent implements OnInit {
     }
 
     transition(): void {
-        this.router.navigate(['/admin/lti-configuration'], {
+        void this.router.navigate(['/admin/lti-configuration'], {
             queryParams: {
                 page: this.page(),
                 sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),

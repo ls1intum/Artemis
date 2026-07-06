@@ -55,7 +55,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     waitingForQuizStart = false;
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval: ReturnType<typeof setInterval>;
 
     // Icons
     faSync = faSync;
@@ -149,7 +149,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
         this.loadData();
@@ -164,7 +164,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !this.quizExercise().quizStarted;

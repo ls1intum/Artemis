@@ -82,10 +82,10 @@ export class MetricsModalThreadsComponent {
         }
 
         // Filter the threads only on the visible attributes and look for case-insensitive match
-        const filteredAttributes = ['threadName', 'threadId', 'blockedTime', 'blockedCount', 'waitedTime', 'waitedCount', 'lockName'];
-        return Object.keys(thread)
-            .filter((key) => filteredAttributes.includes(key))
-            .some((key) => thread[key as keyof Thread]?.toString().toLowerCase().includes(filter.toLowerCase()));
+        // Only the scalar (string/number) attributes are searchable; `as const` narrows the key union so
+        // `thread[key]` is a scalar (not the full `keyof Thread` union, which includes object-typed fields).
+        const filteredAttributes = ['threadName', 'threadId', 'blockedTime', 'blockedCount', 'waitedTime', 'waitedCount', 'lockName'] as const satisfies readonly (keyof Thread)[];
+        return filteredAttributes.some((key) => thread[key]?.toString().toLowerCase().includes(filter.toLowerCase()));
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {

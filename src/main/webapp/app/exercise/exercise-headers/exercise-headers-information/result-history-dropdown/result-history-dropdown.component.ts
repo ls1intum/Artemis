@@ -124,15 +124,15 @@ export class ResultHistoryDropdownComponent {
 
         if (exercise.type === ExerciseType.QUIZ) {
             if (isPracticeMode(participation)) {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
             } else {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
             }
             return;
         }
 
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
+        void this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
     }
 
     resultsPopover = viewChild<Popover>('resultsPopover');
@@ -228,16 +228,28 @@ export class ResultHistoryDropdownComponent {
         if (exercise.type === ExerciseType.QUIZ) {
             if (isPracticeMode(participation)) {
                 const submissionId = result.submission?.id;
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
             } else {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
+                void this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
             }
             return;
         }
 
         const submissionId = result.submission?.id;
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id, 'submission', submissionId, 'result', result.id]);
+        void this.router.navigate([
+            '/courses',
+            courseId,
+            'exercises',
+            exerciseTypePath,
+            exercise.id,
+            'participate',
+            participation.id,
+            'submission',
+            submissionId,
+            'result',
+            result.id,
+        ]);
     }
 
     showFeedback(result: Result, event: Event) {
@@ -265,11 +277,10 @@ export class ResultHistoryDropdownComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackParams.exerciseType,
                 showScoreChart: feedbackParams.showScoreChart,
                 messageKey: feedbackParams.messageKey,
                 latestDueDate: feedbackParams.latestDueDate,

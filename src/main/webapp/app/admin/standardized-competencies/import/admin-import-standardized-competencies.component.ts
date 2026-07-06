@@ -164,7 +164,7 @@ export class AdminImportStandardizedCompetenciesComponent {
             next: () => {
                 this.isLoading.set(false);
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
@@ -178,7 +178,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**

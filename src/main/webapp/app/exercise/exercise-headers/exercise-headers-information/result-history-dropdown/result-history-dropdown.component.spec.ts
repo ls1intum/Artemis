@@ -364,7 +364,7 @@ describe('ResultHistoryDropdownComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({ exercise: defaultExercise, result, participation }),
+                    inputValues: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );
         });

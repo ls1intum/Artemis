@@ -60,7 +60,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
     }
 
     previousState() {
-        this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
+        void this.router.navigate(['course-management', this.courseId, 'exams', this.route.snapshot.paramMap.get('examId'), 'exercise-groups']);
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ExerciseGroup>>) {

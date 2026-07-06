@@ -24,7 +24,7 @@ import {
 } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
@@ -239,8 +239,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
-    readonly complaintsLink = signal<any[]>(undefined!);
-    readonly moreFeedbackRequestsLink = signal<any[]>(undefined!);
+    readonly complaintsLink = signal<(string | number)[]>(undefined!);
+    readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
 
     // Icons
     faSpinner = faSpinner;
@@ -352,7 +352,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
                         break;
                     case ExerciseType.PROGRAMMING:
-                        this.programmingExercise.set(exercise as ProgrammingExercise);
+                        this.programmingExercise.set(exercise);
                         break;
                 }
 
@@ -554,6 +554,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         submissionsObservable
             .pipe(
                 map((res) => res.body),
+                filter((body): body is Submission[] => body != undefined),
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
@@ -585,7 +586,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
                 // reconnect some associations
-                latestResult!.submission = submission;
+                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -687,7 +688,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 next: (res: HttpResponse<TutorParticipationDTO>) => {
                     const dto = res.body!;
                     this.tutorParticipation.set(dto);
-                    this.tutorParticipationStatus.set(dto.status!);
+                    this.tutorParticipationStatus.set(dto.status);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
@@ -736,7 +737,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             queryParams.toComplete = toComplete;
         }
 
-        this.router.navigate([route], { queryParams });
+        void this.router.navigate([route], { queryParams });
     }
 
     isComplaintLocked(complaint: Complaint) {
@@ -787,6 +788,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (result !== undefined) {
             return this.getAssessmentQueryParams(result.results!.length - 1);
         }
+        return undefined;
     }
 
     /**
@@ -804,12 +806,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             }
             return submissionToView;
         }
+        return undefined;
     }
 
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton.set(true);
         this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
-            this.secondCorrectionEnabled.set(res as boolean);
+            this.secondCorrectionEnabled.set(res);
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             this.togglingSecondCorrectionButton.set(false);
         });

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -28,7 +28,6 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     readonly showMissingAutomaticFeedbackInformation = signal(false);
     readonly messageKey = signal<string | undefined>(undefined);
-    readonly exerciseType = signal<ExerciseType>(undefined!);
 
     readonly latestDueDate = signal<dayjs.Dayjs | undefined>(undefined);
 
@@ -72,8 +71,6 @@ export class StandaloneFeedbackComponent implements OnInit {
     private setup() {
         const exercise = this.exercise();
         if (exercise && this.result()) {
-            this.exerciseType.set(exercise.type!);
-
             const latestDueDate = this.latestDueDate();
             if (latestDueDate) {
                 this.showMissingAutomaticFeedbackInformation.set(dayjs().isBefore(latestDueDate));

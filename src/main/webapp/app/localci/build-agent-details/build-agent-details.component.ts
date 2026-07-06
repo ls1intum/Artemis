@@ -589,6 +589,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * @param jobId The ID of the build job
      */
     navigateToJobDetail(jobId: string): void {
-        this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
+        void this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
     }
 }

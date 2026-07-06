@@ -25,7 +25,7 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -76,7 +76,7 @@ export class MetisService implements OnDestroy {
     private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
@@ -435,7 +435,7 @@ export class MetisService implements OnDestroy {
                     // Only add reaction if not already there (can happen due to WebSocket update)
                     if (indexOfReaction === -1) {
                         cachedPost.reactions = cachedPost.reactions ?? [];
-                        cachedPost.reactions!.push(createdReaction);
+                        cachedPost.reactions.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
@@ -510,7 +510,7 @@ export class MetisService implements OnDestroy {
         if (conversation) {
             emptyPost.conversation = conversation;
         } else if (plagiarismCase) {
-            emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
+            emptyPost.plagiarismCase = { id: plagiarismCase.id };
         }
         return emptyPost;
     }
@@ -653,7 +653,7 @@ export class MetisService implements OnDestroy {
     }
 
     public savePost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus);
         this.savedPostService.savePost(post).subscribe({
             next: () => {},
         });
@@ -661,7 +661,7 @@ export class MetisService implements OnDestroy {
     }
 
     public removeSavedPost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus);
         this.savedPostService.removeSavedPost(post).subscribe({
             next: () => {},
         });
@@ -764,7 +764,7 @@ export class MetisService implements OnDestroy {
                 if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
                     setTimeout(() => {
                         // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter!.conversationIds![0]).subscribe();
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
                     }, 1000);
                 }
 
@@ -951,12 +951,20 @@ export class MetisService implements OnDestroy {
 
                 // Map original posts to ForwardedMessage instances referencing the newly created post
                 const forwardedMessages: ForwardedMessage[] = originalPosts.map(
-                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id }, undefined, newContent || ''),
                 );
 
                 // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
-                    this.forwardedMessageService.createForwardedMessage(message).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                    this.forwardedMessageService.createForwardedMessage(message).pipe(
+                        // Return the locally-built ForwardedMessage entity (which carries `destinationPost`, used by the
+                        // cache-marking logic below) updated with the server-assigned id, rather than casting the response
+                        // DTO — which only exposes `destinationPostId` — to the entity type.
+                        map((res: HttpResponse<ForwardedMessageDTO>) => {
+                            message.id = res.body?.id;
+                            return message;
+                        }),
+                    ),
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(

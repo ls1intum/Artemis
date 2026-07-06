@@ -69,7 +69,7 @@ export class EditTextUnitComponent implements OnInit {
                 finalize(() => {
                     this.isLoading.set(false);
                     // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/text-units/:textUnitId/edit
-                    this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

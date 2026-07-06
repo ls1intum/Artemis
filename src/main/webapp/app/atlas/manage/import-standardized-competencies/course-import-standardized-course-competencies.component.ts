@@ -139,7 +139,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 next: (countImportedCompetencies) => {
                     this.isSubmitted = true;
                     this.alertService.success('artemisApp.standardizedCompetency.courseImport.success', { count: countImportedCompetencies });
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 complete: () => {
@@ -149,7 +149,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     }
 
     protected cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**

@@ -300,7 +300,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             return undefined;
         }
         return Object.assign({}, settings, {
-            customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(settings.customInstructions),
         });
     }
 
@@ -360,7 +360,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         // Normalize empty strings to undefined before saving
         const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
-            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         const originalSettingsValue = this.originalSettings();
@@ -446,7 +446,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         // empty custom instructions the same way saveSettings() does.
         const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             enabled,
-            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         if (!this.isAdmin()) {

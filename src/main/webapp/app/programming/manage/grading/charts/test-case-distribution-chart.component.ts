@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-type TestCaseColors = {
+export type TestCaseColors = {
     [label: string]: string;
 };
 
@@ -34,7 +34,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     readonly totalParticipations = input<number>();
     readonly exercise = input.required<ProgrammingExercise>();
 
-    readonly testCaseColorsChange = output<any>();
+    readonly testCaseColorsChange = output<TestCaseColors>();
     readonly testCaseRowFilter = output<number>();
 
     // visible test cases (filtered out the ones that are never visible), exposed for templates and tests
@@ -63,7 +63,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             horizontal: true,
             stacked: true,
             percentScale: true,
-            xAxis: { tickFormatter: this.xAxisFormatting },
+            xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             tooltip: {
                 title: (items) => items[0]?.dataset.label ?? '',
                 label: (item) => {
@@ -89,7 +89,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         barChartOptions({
             horizontal: true,
             stacked: true,
-            xAxis: { max: 100, tickFormatter: this.xAxisFormatting },
+            xAxis: { max: 100, tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             tooltip: {
                 title: (items) => items[0]?.dataset.label ?? '',
                 label: (item) => {
@@ -146,7 +146,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 // relative score percentage
                 relScore: score * 100,
                 // relative points percentage
-                relPoints: stats && totalPoints > 0 ? ((stats.numPassed! * score * maxPoints) / totalPoints) * 100 : 0,
+                relPoints: stats && totalPoints > 0 ? ((stats.numPassed * score * maxPoints) / totalPoints) * 100 : 0,
             };
         });
 
@@ -228,7 +228,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
      * Filters the table left to the charts in order to display only the test case that is clicked
      * @param event event that is delegated by p-chart and identifies the clicked segment
      */
-    onSelectWeight(event: any): void {
+    onSelectWeight(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.weightChartData());
         const testCaseId = selected?.meta?.['id'];
         if (testCaseId === undefined) {
@@ -241,7 +241,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     /**
      * Auxiliary method that
      */
-    resetTableFilter(): void {
+    override resetTableFilter(): void {
         this.tableFiltered = false;
         this.testCaseRowFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
     }

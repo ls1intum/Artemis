@@ -145,7 +145,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     navigateToJobDetail(jobId?: string): void {
         if (jobId) {
-            this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
         }
     }
 
