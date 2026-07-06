@@ -4,9 +4,9 @@
     (click)="triggerAtlasOrchestrator()"
     [disabled]="orchestrationRunning()"
     pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
-    class="btn btn-outline-primary btn-sm me-1 mb-2"
+    [class]="buttonClass()"
 >
     <fa-icon [icon]="faWandMagicSparkles" />
-    <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
+    <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
 </button>
 <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />

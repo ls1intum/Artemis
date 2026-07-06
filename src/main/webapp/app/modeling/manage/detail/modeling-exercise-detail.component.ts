@@ -17,7 +17,8 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_APOLLON } from 'app/app.constants';
+import { MODULE_FEATURE_APOLLON, MODULE_FEATURE_ATLAS } from 'app/app.constants';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
@@ -34,7 +35,14 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
-    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
@@ -62,6 +70,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly isExamExercise = signal<boolean>(false);
 
     isApollonEnabled = false;
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {

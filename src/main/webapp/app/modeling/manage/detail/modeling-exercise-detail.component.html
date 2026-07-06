@@ -9,7 +9,11 @@
                 <hr />
                 <div class="text-start">
                     @if (course()) {
-                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="course()!" [exercise]="modelingExercise()" />
+                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="course()!" [exercise]="modelingExercise()">
+                            @if (atlasModuleActive && modelingExercise().isAtLeastInstructor && !isExamExercise()) {
+                                <jhi-atlas-orchestration-trigger [exercise]="modelingExercise()" />
+                            }
+                        </jhi-non-programming-exercise-detail-common-actions>
                     }
                 </div>
                 <hr />

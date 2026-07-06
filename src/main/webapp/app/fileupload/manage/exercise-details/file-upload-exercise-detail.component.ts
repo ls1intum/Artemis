@@ -26,11 +26,21 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
 import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
     templateUrl: './file-upload-exercise-detail.component.html',
-    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        NonProgrammingExerciseDetailCommonActionsComponent,
+        ExerciseDetailStatisticsComponent,
+        DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseDetailComponent {
@@ -41,10 +51,12 @@ export class FileUploadExerciseDetailComponent {
     private statisticsService = inject(StatisticsService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private destroyRef = inject(DestroyRef);
+    private profileService = inject(ProfileService);
 
     readonly documentationType: DocumentationType = 'FileUpload';
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     private exerciseId = toSignal(this.route.params.pipe(map((params) => Number(params['exerciseId']))), { requireSync: true });
     private reloadSignal = signal(0);

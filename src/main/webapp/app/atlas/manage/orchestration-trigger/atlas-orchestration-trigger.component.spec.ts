@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AppliedActionType, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
@@ -25,7 +25,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
     let alertService: AlertService;
     let apiService: CompetencyOrchestrationApiService;
 
-    const exercise = { id: 123 } as ProgrammingExercise;
+    const exercise = { id: 123 } as Exercise;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -35,7 +35,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
         fixture = TestBed.createComponent(AtlasOrchestrationTriggerComponent);
         comp = fixture.componentInstance;
-        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('exercise', exercise);
         alertService = TestBed.inject(AlertService);
         apiService = TestBed.inject(CompetencyOrchestrationApiService);
     });
@@ -45,7 +45,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
     });
 
     it('should open the orchestration result dialog with applied actions when the run succeeds', async () => {
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+        vi.spyOn(apiService, 'runForExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Success,
             summary: 'Assigned this exercise to Recursion.',
             appliedActions: [
@@ -73,7 +73,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should show warning toast and dialog when orchestrator returns PARTIAL', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+        vi.spyOn(apiService, 'runForExercise').mockResolvedValue({
             status: CompetencyOrchestrationStatus.Partial,
             summary: 'Orchestrator failed after applying 1 action(s).',
             appliedActions: [
@@ -103,7 +103,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should error when Atlas orchestrator returns FAILED', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
             new HttpErrorResponse({
                 status: 503,
                 error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
@@ -120,7 +120,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should surface the summary when Atlas orchestrator returns INTERNAL_ERROR (500)', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(
             new HttpErrorResponse({
                 status: 500,
                 error: { status: CompetencyOrchestrationStatus.Failed, summary: 'Atlas orchestrator run failed.' },
@@ -136,7 +136,7 @@ describe('AtlasOrchestrationTriggerComponent', () => {
 
     it('should error when Atlas orchestrator request throws', async () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
-        vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
+        vi.spyOn(apiService, 'runForExercise').mockRejectedValue(new Error('boom'));
 
         await comp.triggerAtlasOrchestrator();
 

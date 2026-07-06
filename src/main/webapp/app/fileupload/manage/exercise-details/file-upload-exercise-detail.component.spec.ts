@@ -30,6 +30,8 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exerc
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('FileUploadExerciseDetailComponent', () => {
     setupTestBed({ zoneless: true });
@@ -103,6 +105,7 @@ describe('FileUploadExerciseDetailComponent', () => {
                         destroy: vi.fn(),
                     },
                 },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideComponent(FileUploadExerciseDetailComponent, {

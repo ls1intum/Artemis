@@ -20,6 +20,9 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -31,6 +34,7 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
         QuizExerciseLifecycleButtonsComponent,
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
+        AtlasOrchestrationTriggerComponent,
     ],
 })
 export class QuizExerciseDetailComponent implements OnInit {
@@ -38,9 +42,11 @@ export class QuizExerciseDetailComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
     private statisticsService = inject(StatisticsService);
     private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
 
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     courseId: number;
     examId: number;
