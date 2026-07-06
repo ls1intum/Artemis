@@ -3,7 +3,7 @@
  *
  * `crypto.randomUUID` only exists in a secure context (HTTPS or localhost), so an app served over plain HTTP from
  * a non-localhost origin (some E2E harnesses, IP-based deployments) would otherwise throw "randomUUID is not a
- * function" — fatal when it runs during bootstrap. Falls back to `crypto.getRandomValues`, then to `Math.random`.
+ * function" — fatal when it runs during bootstrap.
  */
 export function generateUuid(): string {
     const webCrypto: Crypto | undefined = window.crypto;
