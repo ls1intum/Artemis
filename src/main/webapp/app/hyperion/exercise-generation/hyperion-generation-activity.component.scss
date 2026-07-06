@@ -163,6 +163,7 @@
 
 ::ng-deep .hyperion-snapshot-changed-gutter {
     background: rgba(46, 160, 67, 0.6);
+    // Monaco inline-styles the gutter decoration width, so !important is required to override it.
     width: 3px !important;
     margin-left: 3px;
 }

@@ -12,7 +12,6 @@ import java.io.Serializable;
  * description so the caller can throw a meaningful exception (which the orchestrator treats as session-fatal).
  *
  * @param correlationId the id of the {@link SandboxOpRequest} this response answers
- * @param success       whether the operation completed successfully
  * @param sessionId     the created container id for {@link SandboxOp#CREATE}; echoed back otherwise (may be {@code null})
  * @param execResult    the captured exit code and bounded stdout/stderr for {@link SandboxOp#EXEC}; {@code null} otherwise
  * @param payload       the tar bytes for {@link SandboxOp#COPY_OUT}; {@code null} otherwise
@@ -35,7 +34,7 @@ public record SandboxOpResponse(String correlationId, boolean success, String se
     }
 
     /** An {@link SandboxOp#EXEC} success response carrying the captured exit code and bounded output. */
-    public static SandboxOpResponse execResult(String correlationId, String sessionId, SandboxExecResult execResult) {
+    public static SandboxOpResponse exec(String correlationId, String sessionId, SandboxExecResult execResult) {
         return new SandboxOpResponse(correlationId, true, sessionId, execResult, null, null);
     }
 

@@ -1,5 +1,6 @@
 import {
     adaptFinding,
+    adaptFindingTagSeverity,
     firstConsistencyIssueContent,
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
@@ -247,6 +248,7 @@ describe('adaptFinding', () => {
         expect(adaptFinding(issue, 'loc:3')).toEqual({
             category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
             severity: ConsistencyIssue.SeverityEnum.Medium,
+            tagSeverity: 'warn',
             locationLabel: 'loc:3',
             description: 'wrong type',
             suggestedFix: { startLine: 1, endLine: 2, applied: false },
@@ -259,9 +261,23 @@ describe('adaptFinding', () => {
     });
 });
 
+describe('adaptFindingTagSeverity', () => {
+    it('should map each severity to its PrimeNG tag severity', () => {
+        expect(adaptFindingTagSeverity(ConsistencyIssue.SeverityEnum.High)).toBe('danger');
+        expect(adaptFindingTagSeverity(ConsistencyIssue.SeverityEnum.Medium)).toBe('warn');
+        expect(adaptFindingTagSeverity(ConsistencyIssue.SeverityEnum.Low)).toBe('info');
+    });
+});
+
 describe('selectedThreadsFindings', () => {
-    it('should derive findings only from consistency threads, preserving thread order', () => {
-        const consistencyThread = {
+    it('should derive findings only from consistency threads, preserving input thread order', () => {
+        const consistencyThreadB = {
+            targetType: CommentThreadLocationType.SOLUTION_REPO,
+            filePath: 'src/B.java',
+            lineNumber: 9,
+            comments: [consistencyComment({ text: 'second' })],
+        } as any;
+        const consistencyThreadA = {
             targetType: CommentThreadLocationType.SOLUTION_REPO,
             filePath: 'src/A.java',
             lineNumber: 5,
@@ -272,11 +288,14 @@ describe('selectedThreadsFindings', () => {
             comments: [{ id: 9, createdDate: '2024-01-01T00:00:00Z', type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'note' } }],
         } as any;
 
-        const findings = selectedThreadsFindings([consistencyThread, plainThread], translate);
+        // The plain (non-consistency) thread is dropped; the two consistency threads keep the order they were passed in (B before A).
+        const findings = selectedThreadsFindings([consistencyThreadB, plainThread, consistencyThreadA], translate);
 
-        expect(findings).toHaveLength(1);
-        expect(findings[0].description).toBe('first');
-        expect(findings[0].locationLabel).toBe('artemisApp.review.relatedLocationRepository.solution: src/A.java:5');
+        expect(findings.map((f) => f.description)).toEqual(['second', 'first']);
+        expect(findings.map((f) => f.locationLabel)).toEqual([
+            'artemisApp.review.relatedLocationRepository.solution: src/B.java:9',
+            'artemisApp.review.relatedLocationRepository.solution: src/A.java:5',
+        ]);
     });
 
     it('should return an empty array when no thread is a consistency finding', () => {

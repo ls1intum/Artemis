@@ -14,7 +14,7 @@
             @for (finding of findings; track finding) {
                 <div class="review-adapt-exercise-dialog__finding-card">
                     <div class="review-adapt-exercise-dialog__finding-header">
-                        <p-tag [severity]="severityTag(finding.severity)" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                        <p-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
                         <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
                         @if (finding.locationLabel) {
                             <code class="review-adapt-exercise-dialog__finding-location">{{ finding.locationLabel }}</code>

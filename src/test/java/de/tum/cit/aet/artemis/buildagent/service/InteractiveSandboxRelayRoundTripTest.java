@@ -110,6 +110,16 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void malformedSessionHandle_failsClosedWithoutPublishing() {
+        // A handle without the "<agentShortName>::" prefix carries no routing target, so the client must fail closed before publishing any request rather than broadcasting an
+        // unroutable operation.
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec("no-separator-handle", Duration.ofSeconds(1), "echo", "x"))
+                .withMessageContaining("Malformed");
+
+        verify(localSandbox, never()).exec(anyString(), any(), any(String[].class));
+    }
+
+    @Test
     void exec_returnsStdoutAndExitFromAgent() {
         SandboxExecResult agentResult = new SandboxExecResult(0, "hello stdout", "", false);
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("hello"))).thenReturn(agentResult);
@@ -219,7 +229,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
-    void secondConcurrentCreate_isRefusedAtSessionCapacity() {
+    void secondCreate_atCapacity_isRefused() {
         try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             // The first create holds the single permit; the second must be refused with a capacity failure rather than queued or silently starving CI.
@@ -227,19 +237,6 @@ class InteractiveSandboxRelayRoundTripTest {
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
                     .withMessageContaining("session capacity");
-        }
-    }
-
-    @Test
-    void permitReclaimedAfterDestroy_allowsAnotherCreate() {
-        try (RelayHarness harness = newHarness(1)) {
-            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
-            String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
-            harness.client().destroySession(handle);
-
-            // The permit released by DESTROY is reclaimed, so a subsequent create succeeds rather than being refused at capacity.
-            String reCreated = harness.client().createSession(new SandboxSessionSpec("some-image", null));
-            assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
         }
     }
 

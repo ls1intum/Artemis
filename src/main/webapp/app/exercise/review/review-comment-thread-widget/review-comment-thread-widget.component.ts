@@ -15,7 +15,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { firstConsistencyIssueContent, sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { consistencyIssueContentOf, sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
@@ -85,7 +85,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
-    readonly firstConsistencyIssueContent = computed(() => firstConsistencyIssueContent(this.thread()));
+    readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     /** Whether to offer the per-thread "Adapt with feedback" action: a consistency finding, host-permitted, and not outdated. */
     readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().outdated);

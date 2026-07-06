@@ -164,8 +164,8 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         String containerId = containerOf(sessionId);
         SandboxOpRequest request = SandboxOpRequest.copyOut(newCorrelationId(), targetAgent, containerId, path);
         SandboxOpResponse response = relay(request, CONTROL_OP_TIMEOUT);
-        byte[] payload = response.payload() != null ? response.payload() : new byte[0];
-        return new TarArchiveInputStream(new ByteArrayInputStream(payload));
+        // A successful COPY_OUT response always carries the repacked tar bytes (relay() throws on failure), so the payload is non-null here.
+        return new TarArchiveInputStream(new ByteArrayInputStream(response.payload()));
     }
 
     @Override
@@ -205,6 +205,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new LocalCIException("Interrupted while waiting for remote sandbox operation " + request.op(), e);
+        }
+        catch (LocalCIException e) {
+            // The !success branch above already threw a fully-formed session-fatal exception; let it propagate unchanged rather than re-wrapping it as a publish failure.
+            throw e;
+        }
+        catch (RuntimeException e) {
+            // A publish failure (serialization error, cluster down) is session-fatal just like a timeout, so surface it as a LocalCIException rather than an opaque runtime error.
+            throw new LocalCIException("Failed to publish remote sandbox operation " + request.op() + " to agent " + request.targetAgentShortName(), e);
         }
         finally {
             pendingOperations.remove(request.correlationId());

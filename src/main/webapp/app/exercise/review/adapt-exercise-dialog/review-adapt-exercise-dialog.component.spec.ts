@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
+import { AdaptFinding, adaptFindingTagSeverity } from 'app/exercise/review/review-comment-utils';
 import {
     ReviewAdaptExerciseDialogComponent,
     ReviewAdaptExerciseDialogData,
@@ -13,7 +13,7 @@ import {
 } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
 function finding(severity: ConsistencyIssue.SeverityEnum, description: string): AdaptFinding {
-    return { category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch, severity, description };
+    return { category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch, severity, tagSeverity: adaptFindingTagSeverity(severity), description };
 }
 
 async function setup(data: ReviewAdaptExerciseDialogData): Promise<{
@@ -70,13 +70,6 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(component.confirmDisabled()).toBe(false);
         component.confirm();
         expect(close).toHaveBeenCalledWith({ instructions: undefined } satisfies ReviewAdaptExerciseDialogResult);
-    });
-
-    it('maps finding severities to PrimeNG tag severities', async () => {
-        const { component } = await setup({});
-        expect(component['severityTag'](ConsistencyIssue.SeverityEnum.High)).toBe('danger');
-        expect(component['severityTag'](ConsistencyIssue.SeverityEnum.Medium)).toBe('warn');
-        expect(component['severityTag'](ConsistencyIssue.SeverityEnum.Low)).toBe('info');
     });
 
     it('closes with undefined when cancelled', async () => {

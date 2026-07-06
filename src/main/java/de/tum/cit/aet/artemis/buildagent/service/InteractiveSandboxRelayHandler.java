@@ -215,12 +215,12 @@ public class InteractiveSandboxRelayHandler {
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
         SandboxExecResult result = interactiveSandboxService.exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
-        return SandboxOpResponse.execResult(request.correlationId(), request.sessionId(), result);
+        return SandboxOpResponse.exec(request.correlationId(), request.sessionId(), result);
     }
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
-        byte[] payload = request.payload() != null ? request.payload() : new byte[0];
-        try (InputStream tar = new ByteArrayInputStream(payload)) {
+        // A COPY_IN request always carries a non-null (bounded) payload from the client's readBounded; a null here would surface as a caught NPE -> failure response.
+        try (InputStream tar = new ByteArrayInputStream(request.payload())) {
             interactiveSandboxService.copyIn(request.sessionId(), request.workspacePath(), tar);
         }
         catch (IOException e) {

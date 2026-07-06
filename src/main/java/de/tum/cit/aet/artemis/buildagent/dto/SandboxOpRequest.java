@@ -13,7 +13,6 @@ import java.io.Serializable;
  *
  * @param correlationId        unique id correlating this request with its {@link SandboxOpResponse}; also the idempotency key on the handler
  * @param targetAgentShortName the short name of the build agent that owns the session and must handle this request (all other agents ignore it)
- * @param op                   the operation to perform
  * @param sessionId            the container id of the session for non-create operations; {@code null} for {@link SandboxOp#CREATE}
  * @param sessionSpec          the session specification for {@link SandboxOp#CREATE}; {@code null} otherwise
  * @param command              the command and its arguments for {@link SandboxOp#EXEC}; {@code null} otherwise

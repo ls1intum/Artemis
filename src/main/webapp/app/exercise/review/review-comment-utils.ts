@@ -2,6 +2,7 @@ import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/en
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { TranslateService } from '@ngx-translate/core';
 
 /** Sorts comments by creation timestamp and then by id for deterministic ordering. */
@@ -81,8 +82,7 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
  * Returns the consistency-issue content of a thread's first (chronological) comment, or {@code undefined} if that comment is not a consistency-check finding. Used to decide whether
  * a thread can be turned into Artemis Intelligence adapt feedback.
  */
-export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
-    const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
+export function consistencyIssueContentOf(firstComment: Comment | undefined): ConsistencyIssueCommentContent | undefined {
     if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
         return undefined;
     }
@@ -91,6 +91,10 @@ export function firstConsistencyIssueContent(thread: CommentThread): Consistency
         return undefined;
     }
     return content;
+}
+
+export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+    return consistencyIssueContentOf(getFirstCommentByCreatedDateThenId(thread.comments));
 }
 
 /** Maps a thread location type to its human-readable repository label. */
@@ -132,9 +136,25 @@ export function threadLocationLabel(thread: CommentThread, translate: TranslateS
  * A structured consistency finding for the adapt dialog's read-only display (severity tag, category, location, description, suggested fix). The dialog renders these as cards; the
  * agent prompt itself is assembled server-side from the selected thread ids, so this type never leaves the client.
  */
+export type AdaptFindingTagSeverity = 'danger' | 'warn' | 'info';
+
+/** Maps a finding severity to its PrimeNG tag severity. Called once at build time so the template binds a plain field, not a per-change-detection method. */
+export function adaptFindingTagSeverity(severity: ConsistencyIssueCommentContent['severity']): AdaptFindingTagSeverity {
+    switch (severity) {
+        case ConsistencyIssue.SeverityEnum.High:
+            return 'danger';
+        case ConsistencyIssue.SeverityEnum.Medium:
+            return 'warn';
+        default:
+            return 'info';
+    }
+}
+
 export interface AdaptFinding {
     category: ConsistencyIssueCommentContent['category'];
     severity: ConsistencyIssueCommentContent['severity'];
+    /** The PrimeNG tag severity for the coloured severity tag, precomputed so the template binds a field rather than a per-change-detection method. */
+    tagSeverity: AdaptFindingTagSeverity;
     /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
     locationLabel?: string;
     /** The finding's description text. */
@@ -148,6 +168,7 @@ export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locat
     return {
         category: issueContent.category,
         severity: issueContent.severity,
+        tagSeverity: adaptFindingTagSeverity(issueContent.severity),
         locationLabel,
         description: issueContent.text,
         suggestedFix: issueContent.suggestedFix ?? undefined,

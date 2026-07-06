@@ -104,19 +104,25 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     private streamSubscription?: Subscription;
     private loadedExerciseId?: number;
+    // Monotonic token guarding the async status fetch: a newer load or a freshly attached live run (attachToJob) bumps it so a
+    // late getStatus response cannot clobber the current run.
+    private loadToken = 0;
     private changedLineDecorations?: monaco.editor.IEditorDecorationsCollection;
     private readonly previousContentByPath = new Map<string, string>();
 
     constructor() {
         // Reconnect whenever the target exercise changes: fetch its status, rehydrate the preview, and resume the stream if it is still running.
+        // When the exercise clears (id -> undefined) the drawer must reset and self-hide rather than keep showing the previous run.
         effect(() => {
             const id = this.exerciseId();
-            if (id === undefined || id === this.loadedExerciseId) {
+            if (id === this.loadedExerciseId) {
                 return;
             }
             this.loadedExerciseId = id;
             this.reset();
-            this.loadStatus(id);
+            if (id !== undefined) {
+                this.loadStatus(id);
+            }
         });
         // Render the active file into the read-only preview whenever it changes (text-only Monaco sink; never innerHTML — file contents are untrusted).
         effect(() => {
@@ -142,6 +148,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         if (this.exerciseId() === undefined) {
             return;
         }
+        // Invalidate any in-flight reconnect status fetch so its late response cannot overwrite this freshly attached live run.
+        this.loadToken++;
         this.reset();
         this.mode.set(mode);
         this.jobId.set(jobId);
@@ -196,10 +204,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     }
 
     private loadStatus(exerciseId: number): void {
+        const token = ++this.loadToken;
         this.service.getStatus(exerciseId).subscribe({
             next: (response) => {
-                if (this.exerciseId() !== exerciseId) {
-                    return; // A newer exercise was selected while this request was in flight.
+                if (token !== this.loadToken) {
+                    return; // A newer load or a freshly attached live run superseded this status fetch.
                 }
                 const status = response.body ?? undefined;
                 if (!status) {
@@ -218,7 +227,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     this.openStream(status.jobId);
                 }
             },
-            error: () => this.reset(),
+            error: () => {
+                if (token === this.loadToken) {
+                    this.reset();
+                }
+            },
         });
     }
 

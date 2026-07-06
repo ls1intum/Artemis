@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
-/** Data passed into the adapt-exercise dialog (see {@link ReviewAdaptExerciseDialogComponent.isFreeMode}/{@link ReviewAdaptExerciseDialogComponent.confirmDisabled}). */
+/** Data passed into the adapt-exercise dialog. */
 export interface ReviewAdaptExerciseDialogData {
     /** The structured review-comment findings to address, shown read-only as cards. Absent/empty in the finding-free "free adapt" mode. */
     findings?: AdaptFinding[];
@@ -51,18 +51,6 @@ export class ReviewAdaptExerciseDialogComponent {
     /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */
     readonly isFreeMode = this.findings.length === 0;
     readonly instructions = signal('');
-
-    /** Maps a finding severity to its PrimeNG tag severity for the coloured tag. */
-    protected severityTag(severity: AdaptFinding['severity']): 'danger' | 'warn' | 'info' {
-        switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
-                return 'danger';
-            case ConsistencyIssue.SeverityEnum.Medium:
-                return 'warn';
-            default:
-                return 'info';
-        }
-    }
 
     /** In free mode the confirm action is blocked until the instructor has typed instructions; with review comments to address the comments alone suffice. */
     readonly confirmDisabled = computed(() => this.isFreeMode && this.instructions().trim().length === 0);
