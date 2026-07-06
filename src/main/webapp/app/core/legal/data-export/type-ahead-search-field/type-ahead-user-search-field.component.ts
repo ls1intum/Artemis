@@ -1,4 +1,5 @@
 import { Component, inject, model, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, OperatorFunction, Subject, catchError, map, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/account/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -33,7 +34,9 @@ export class TypeAheadUserSearchFieldComponent {
     private readonly query$ = new Subject<string>();
 
     constructor() {
-        this.search(this.query$).subscribe((users) => this.suggestions.set(users));
+        this.search(this.query$)
+            .pipe(takeUntilDestroyed())
+            .subscribe((users) => this.suggestions.set(users));
     }
 
     search: OperatorFunction<string, User[]> = (login: Observable<string>) => {

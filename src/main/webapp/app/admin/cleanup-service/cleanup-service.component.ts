@@ -16,7 +16,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -35,7 +35,7 @@ import { DatePickerModule } from 'primeng/datepicker';
         CleanupOperationModalComponent,
         TableModule,
         ButtonModule,
-        DatePickerModule,
+        FormDateTimePickerComponent,
         FaIconComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +44,7 @@ export class CleanupServiceComponent implements OnInit {
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTrash = faTrash;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
@@ -116,62 +117,16 @@ export class CleanupServiceComponent implements OnInit {
         operation.datesValid.set(datesValid);
     }
 
-    /**
-     * Per-operation cache of the native {@link Date} objects handed to the PrimeNG datepickers.
-     * PrimeNG compares the `[ngModel]` value by reference, so a fresh `Date` each change-detection
-     * pass forces a full month-grid rebuild. Memoize per dayjs value for a stable reference.
-     */
-    private readonly dateCache = new WeakMap<CleanupOperation, { fromMs?: number; fromDate?: Date; toMs?: number; toDate?: Date }>();
-
-    /**
-     * Convert a dayjs value (UTC-backed) to a native Date for the PrimeNG datepicker,
-     * which works with local Date objects. The result is memoized per operation/field so the
-     * `[ngModel]` binding receives a stable reference across change-detection passes (see
-     * {@link dateCache}).
-     */
-    toDate(operation: CleanupOperation, field: 'from' | 'to'): Date | undefined {
-        const value = field === 'from' ? operation.deleteFrom : operation.deleteTo;
-        if (!value) {
-            return undefined;
-        }
-        const ms = value.valueOf();
-        let entry = this.dateCache.get(operation);
-        if (!entry) {
-            entry = {};
-            this.dateCache.set(operation, entry);
-        }
-        if (field === 'from') {
-            if (entry.fromMs !== ms || !entry.fromDate) {
-                entry.fromMs = ms;
-                entry.fromDate = value.toDate();
-            }
-            return entry.fromDate;
-        }
-        if (entry.toMs !== ms || !entry.toDate) {
-            entry.toMs = ms;
-            entry.toDate = value.toDate();
-        }
-        return entry.toDate;
-    }
-
-    /**
-     * Handle the start date change emitted by the PrimeNG datepicker (a local Date),
-     * convert it back to dayjs and re-validate the operation.
-     */
-    onDeleteFromChange(operation: CleanupOperation, date: Date | undefined): void {
-        if (date) {
-            operation.deleteFrom = dayjs(date);
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
+        if (value) {
+            operation.deleteFrom = dayjs(value);
         }
         this.validateDates(operation);
     }
 
-    /**
-     * Handle the end date change emitted by the PrimeNG datepicker (a local Date),
-     * convert it back to dayjs and re-validate the operation.
-     */
-    onDeleteToChange(operation: CleanupOperation, date: Date | undefined): void {
-        if (date) {
-            operation.deleteTo = dayjs(date);
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
+        if (value) {
+            operation.deleteTo = dayjs(value);
         }
         this.validateDates(operation);
     }

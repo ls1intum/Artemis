@@ -88,8 +88,16 @@ describe('LogsComponent', () => {
         );
         comp.ngOnInit();
 
-        // Apply filter - computed signal updates automatically
-        comp.filter.set('test');
+        // Apply filter via the debounced pipeline; computed signal updates automatically
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('test');
+            TestBed.tick();
+            vi.advanceTimersByTime(200);
+            TestBed.tick();
+        } finally {
+            vi.useRealTimers();
+        }
 
         expect(comp.filteredAndOrderedLoggers()).toEqual([{ name: 'footestbar', level: 'DEBUG' }]);
     });
@@ -162,8 +170,10 @@ describe('LogsComponent', () => {
             // the immediate signal reflects the input right away for responsive typing
             expect(comp.filterInput()).toBe('testFilter');
             // the debounced filter only applies after the debounce window
+            TestBed.tick();
             expect(comp.filter()).toBe('');
             vi.advanceTimersByTime(200);
+            TestBed.tick();
             expect(comp.filter()).toBe('testFilter');
         } finally {
             vi.useRealTimers();
@@ -209,7 +219,15 @@ describe('LogsComponent', () => {
         );
         comp.ngOnInit();
 
-        comp.filter.set('TEST');
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('TEST');
+            TestBed.tick();
+            vi.advanceTimersByTime(200);
+            TestBed.tick();
+        } finally {
+            vi.useRealTimers();
+        }
 
         expect(comp.filteredAndOrderedLoggers()).toHaveLength(1);
         expect(comp.filteredAndOrderedLoggers()[0].name).toBe('TestLogger');

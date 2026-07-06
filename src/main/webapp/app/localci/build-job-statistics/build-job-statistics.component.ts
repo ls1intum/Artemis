@@ -50,7 +50,6 @@ export class BuildJobStatisticsComponent implements OnInit {
 
     protected readonly SpanType = SpanType;
 
-    /** Options for the time span selector (day, week, month) */
     protected readonly spanOptions = [
         { label: 'artemisApp.buildQueue.statistics.daySpan', value: SpanType.DAY },
         { label: 'artemisApp.buildQueue.statistics.weekSpan', value: SpanType.WEEK },

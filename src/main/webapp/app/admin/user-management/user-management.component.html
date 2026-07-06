@@ -28,7 +28,7 @@
                     }
                 </div>
                 <div class="flex items-center justify-center gap-2 md:justify-end">
-                    <jhi-delete-users-button (deletionCompleted)="this.deleteNotEnrolledUsersComplete()" />
+                    <jhi-delete-users-button (deletionCompleted)="deleteNotEnrolledUsersComplete()" />
                     <button
                         pButton
                         severity="danger"
@@ -254,7 +254,7 @@
 >
     <div class="flex flex-col">
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pb-1">
-            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: this.filters().authorityFilter.size }"></h5>
+            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: filters().authorityFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
         </div>
         <div class="border-b bg-[var(--user-management-background-color)] pt-2">
@@ -264,7 +264,7 @@
                         inputId="authorityFilter"
                         name="authorityFilterGroup"
                         [value]="'all'"
-                        [ngModel]="this.filters().authorityFilter.size === this.authorityFilters.length && !this.filters().noAuthority ? 'all' : undefined"
+                        [ngModel]="filters().authorityFilter.size === authorityFilters.length && !filters().noAuthority ? 'all' : undefined"
                         (onClick)="selectAllRoles()"
                     />
                     <label for="authorityFilter" jhiTranslate="artemisApp.userManagement.filter.all"></label>
@@ -274,7 +274,7 @@
                         inputId="emptyRoles"
                         name="authorityFilterGroup"
                         [value]="'empty'"
-                        [ngModel]="this.filters().authorityFilter.size === 0 && this.filters().noAuthority ? 'empty' : undefined"
+                        [ngModel]="filters().authorityFilter.size === 0 && filters().noAuthority ? 'empty' : undefined"
                         (onClick)="selectEmptyRoles()"
                     />
                     <label for="emptyRoles" jhiTranslate="artemisApp.userManagement.filter.authority.without"></label>
@@ -285,7 +285,7 @@
                         inputId="deselectAll"
                         name="authorityFilterGroup"
                         [value]="'none'"
-                        [ngModel]="this.filters().authorityFilter.size === 0 && !this.filters().noAuthority ? 'none' : undefined"
+                        [ngModel]="filters().authorityFilter.size === 0 && !filters().noAuthority ? 'none' : undefined"
                         (onClick)="deselectAllRoles()"
                     />
                     <label for="deselectAll" jhiTranslate="artemisApp.userManagement.filter.none"></label>
@@ -294,13 +294,13 @@
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 grid grid-cols-3 gap-2 py-2 text-nowrap">
-                @for (authority of this.authorityFilters; track authority) {
+                @for (authority of authorityFilters; track authority) {
                     <li>
                         <label class="flex items-center gap-2">
                             <p-checkbox
                                 [binary]="true"
-                                [ngModel]="this.filters().authorityFilter.has(authority)"
-                                (onChange)="this.toggleAuthorityFilter(this.filters().authorityFilter, authority)"
+                                [ngModel]="filters().authorityFilter.has(authority)"
+                                (onChange)="toggleAuthorityFilter(filters().authorityFilter, authority)"
                             />
                             <span>{{ 'artemisApp.userManagement.filter.authority.' + authority.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
@@ -309,19 +309,19 @@
             </ul>
         </div>
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
-            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.origin.title" [translateValues]="{ num: this.filters().originFilter.size }"></h5>
+            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.origin.title" [translateValues]="{ num: filters().originFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
-                @for (origin of this.originFilters; track origin) {
+                @for (origin of originFilters; track origin) {
                     <li>
                         <label class="flex items-center gap-1">
                             <p-radiobutton
                                 name="originFilterGroup"
                                 [value]="origin"
-                                [ngModel]="this.filters().originFilter.has(origin) ? origin : undefined"
-                                (onClick)="this.toggleOriginFilter(origin)"
+                                [ngModel]="filters().originFilter.has(origin) ? origin : undefined"
+                                (onClick)="toggleOriginFilter(origin)"
                             />
                             <span>{{ 'artemisApp.userManagement.filter.origin.' + origin.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
@@ -329,33 +329,30 @@
                 }
                 <li class="flex items-center gap-1">
                     <p-radiobutton
+                        inputId="toggleOriginFilter"
                         name="originFilterGroup"
                         [value]="'none'"
-                        [ngModel]="this.filters().originFilter.size === 0 ? 'none' : undefined"
-                        (onClick)="this.toggleOriginFilter()"
+                        [ngModel]="filters().originFilter.size === 0 ? 'none' : undefined"
+                        (onClick)="toggleOriginFilter()"
                     />
-                    <label jhiTranslate="artemisApp.userManagement.filter.none"></label>
+                    <label for="toggleOriginFilter" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                 </li>
             </ul>
         </div>
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
-            <h5
-                class="my-0"
-                jhiTranslate="artemisApp.userManagement.filter.registrationNumber.title"
-                [translateValues]="{ num: this.filters().registrationNumberFilter.size }"
-            ></h5>
+            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.registrationNumber.title" [translateValues]="{ num: filters().registrationNumberFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
-                @for (registrationNumber of this.registrationNumberFilters; track registrationNumber) {
+                @for (registrationNumber of registrationNumberFilters; track registrationNumber) {
                     <li>
                         <label class="flex items-center gap-1">
                             <p-radiobutton
                                 name="registrationFilterGroup"
                                 [value]="registrationNumber"
-                                [ngModel]="this.filters().registrationNumberFilter.has(registrationNumber) ? registrationNumber : undefined"
-                                (onClick)="this.toggleRegistrationNumberFilter(registrationNumber)"
+                                [ngModel]="filters().registrationNumberFilter.has(registrationNumber) ? registrationNumber : undefined"
+                                (onClick)="toggleRegistrationNumberFilter(registrationNumber)"
                             />
                             <span>{{ 'artemisApp.userManagement.filter.registrationNumber.' + registrationNumber.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
@@ -366,27 +363,27 @@
                         inputId="toggleRegistrationNumberFilter"
                         name="registrationFilterGroup"
                         [value]="'none'"
-                        [ngModel]="this.filters().registrationNumberFilter.size === 0 ? 'none' : undefined"
-                        (onClick)="this.toggleRegistrationNumberFilter()"
+                        [ngModel]="filters().registrationNumberFilter.size === 0 ? 'none' : undefined"
+                        (onClick)="toggleRegistrationNumberFilter()"
                     />
                     <label for="toggleRegistrationNumberFilter" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                 </li>
             </ul>
         </div>
         <div class="flex items-center border-b-2 border-[var(--overview-blue-border-color)] pt-3 pb-1">
-            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.status.title" [translateValues]="{ num: this.filters().statusFilter.size }"></h5>
+            <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.status.title" [translateValues]="{ num: filters().statusFilter.size }"></h5>
             <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
         </div>
         <div class="bg-[var(--user-management-background-color)] px-3">
             <ul class="my-0 flex flex-wrap gap-4 py-2 text-nowrap">
-                @for (status of this.statusFilters; track status) {
+                @for (status of statusFilters; track status) {
                     <li>
                         <label class="flex items-center gap-1">
                             <p-radiobutton
                                 name="statusFilterGroup"
                                 [value]="status"
-                                [ngModel]="this.filters().statusFilter.has(status) ? status : undefined"
-                                (onClick)="this.toggleStatusFilter(status)"
+                                [ngModel]="filters().statusFilter.has(status) ? status : undefined"
+                                (onClick)="toggleStatusFilter(status)"
                             />
                             <span>{{ 'artemisApp.userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
                         </label>
@@ -394,12 +391,13 @@
                 }
                 <li class="flex items-center gap-1">
                     <p-radiobutton
+                        inputId="toggleStatusFilter"
                         name="statusFilterGroup"
                         [value]="'none'"
-                        [ngModel]="this.filters().statusFilter.size === 0 ? 'none' : undefined"
-                        (onClick)="this.toggleStatusFilter()"
+                        [ngModel]="filters().statusFilter.size === 0 ? 'none' : undefined"
+                        (onClick)="toggleStatusFilter()"
                     />
-                    <label jhiTranslate="artemisApp.userManagement.filter.none"></label>
+                    <label for="toggleStatusFilter" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                 </li>
             </ul>
         </div>

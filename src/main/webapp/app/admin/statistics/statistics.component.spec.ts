@@ -56,7 +56,6 @@ describe('StatisticsComponent', () => {
 
     it('should initialize with default span WEEK', () => {
         fixture.detectChanges();
-        expect(component).not.toBeNull();
         expect(component.currentSpan()).toBe(SpanType.WEEK);
     });
 

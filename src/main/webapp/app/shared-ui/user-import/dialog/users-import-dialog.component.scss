@@ -31,16 +31,16 @@
 .import-success {
     td,
     th {
-        color: var(--success);
-        background-color: color-mix(in srgb, var(--success) 12%, transparent);
+        color: var(--color-state-success);
+        background-color: color-mix(in srgb, var(--color-state-success) 12%, transparent);
     }
 }
 
 .import-fail {
     td,
     th {
-        color: var(--danger);
-        background-color: color-mix(in srgb, var(--danger) 12%, transparent);
+        color: var(--color-state-danger);
+        background-color: color-mix(in srgb, var(--color-state-danger) 12%, transparent);
     }
 }
 

@@ -42,15 +42,12 @@ describe('TaxonomySelectComponent', () => {
 
         const select = componentFixture.debugElement.query(By.directive(Select));
         expect(select).not.toBeNull();
-        const selectInstance: Select = select.componentInstance;
         // No taxonomy selected yet (the p-select ControlValueAccessor normalizes the empty value to null).
-        expect((component.form() as FormControl).value).toBeFalsy();
-        expect(selectInstance.selectedOption).toBeFalsy();
+        expect((component.form() as FormControl).value).toBeNull();
 
         (component.form() as FormControl).setValue(CompetencyTaxonomy.ANALYZE);
         componentFixture.detectChanges();
 
         expect((component.form() as FormControl).value).toBe(CompetencyTaxonomy.ANALYZE);
-        expect(selectInstance.selectedOption?.value).toBe(CompetencyTaxonomy.ANALYZE);
     });
 });

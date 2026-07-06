@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs/operators';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -36,7 +38,7 @@ import { InputTextModule } from 'primeng/inputtext';
         InputTextModule,
     ],
 })
-export class LogsComponent implements OnInit, OnDestroy {
+export class LogsComponent implements OnInit {
     private readonly logsService = inject(LogsService);
 
     /** Debounce delay (ms) before the filter is applied to the (potentially large) logger list */
@@ -56,10 +58,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     readonly filterInput = signal('');
 
     /** Debounced filter string actually used for filtering/sorting the logger list */
-    readonly filter = signal('');
-
-    /** Pending debounce timer handle for the filter input */
-    private filterDebounceHandle?: ReturnType<typeof setTimeout>;
+    readonly filter = toSignal(toObservable(this.filterInput).pipe(debounceTime(LogsComponent.FILTER_DEBOUNCE_MS)), { initialValue: '' });
 
     /** Property to sort by */
     readonly orderProp = signal<keyof Log>('name');
@@ -108,15 +107,6 @@ export class LogsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Cleans up any pending debounce timer.
-     */
-    ngOnDestroy(): void {
-        if (this.filterDebounceHandle !== undefined) {
-            clearTimeout(this.filterDebounceHandle);
-        }
-    }
-
-    /**
      * Updates filter value for logger filtering.
      * The bound input updates immediately for responsiveness, while the actual filter applied to the
      * (potentially large) logger list is debounced so the filter+sort computation does not re-run on every keystroke.
@@ -124,10 +114,6 @@ export class LogsComponent implements OnInit, OnDestroy {
      */
     updateFilter(value: string): void {
         this.filterInput.set(value);
-        if (this.filterDebounceHandle !== undefined) {
-            clearTimeout(this.filterDebounceHandle);
-        }
-        this.filterDebounceHandle = setTimeout(() => this.filter.set(value), LogsComponent.FILTER_DEBOUNCE_MS);
     }
 
     /**

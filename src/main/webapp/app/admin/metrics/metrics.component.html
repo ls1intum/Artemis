@@ -9,16 +9,7 @@
         <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</p-button>
         <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('datasource-metrics')" data-testid="nav-datasource">Datasource</p-button>
         @if (nodeOptions().length > 1) {
-            <p-select
-                [(ngModel)]="selectedNodeId"
-                [options]="nodeOptions()"
-                optionLabel="label"
-                optionValue="value"
-                (onChange)="onNodeChange()"
-                size="small"
-                styleClass="w-auto"
-                [style]="{ height: '31px', 'font-size': '0.875rem' }"
-            />
+            <p-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" styleClass="w-auto" />
         }
         <p-button severity="secondary" size="small" [outlined]="true" (onClick)="refresh()" data-testid="refresh-button">
             <fa-icon [icon]="faSync" />

@@ -76,26 +76,32 @@ export class KnowledgeAreaTreeComponent {
 
     /** Syncs the persisted expansion state when the user expands a node via the built-in toggler. */
     protected onNodeExpand(node: TreeNode<KnowledgeAreaForTree | CompetencyNodeData>): void {
-        const knowledgeArea = node.data as KnowledgeAreaForTree | undefined;
-        if (node.type === KNOWLEDGE_AREA_NODE_TYPE && knowledgeArea?.id !== undefined) {
-            this.expandedIds.update((ids) => {
-                const next = new Set(ids);
-                next.add(knowledgeArea.id!);
-                return next;
-            });
-        }
+        this.toggleFromNode(node, true);
     }
 
     /** Syncs the persisted expansion state when the user collapses a node via the built-in toggler. */
     protected onNodeCollapse(node: TreeNode<KnowledgeAreaForTree | CompetencyNodeData>): void {
-        const knowledgeArea = node.data as KnowledgeAreaForTree | undefined;
-        if (node.type === KNOWLEDGE_AREA_NODE_TYPE && knowledgeArea?.id !== undefined) {
-            this.expandedIds.update((ids) => {
-                const next = new Set(ids);
-                next.delete(knowledgeArea.id!);
-                return next;
-            });
+        this.toggleFromNode(node, false);
+    }
+
+    /** Adds or removes the knowledge area id from the persisted expansion state, ignoring non-knowledge-area nodes. */
+    private toggleFromNode(node: TreeNode<KnowledgeAreaForTree | CompetencyNodeData>, expanded: boolean): void {
+        if (node.type !== KNOWLEDGE_AREA_NODE_TYPE) {
+            return;
         }
+        const knowledgeArea = node.data as KnowledgeAreaForTree | undefined;
+        if (knowledgeArea?.id === undefined) {
+            return;
+        }
+        this.expandedIds.update((ids) => {
+            const next = new Set(ids);
+            if (expanded) {
+                next.add(knowledgeArea.id!);
+            } else {
+                next.delete(knowledgeArea.id!);
+            }
+            return next;
+        });
     }
 
     expand(knowledgeArea: KnowledgeAreaForTree): void {

@@ -89,6 +89,18 @@ describe('KnowledgeAreaTreeComponent', () => {
         expect(emptyNode).not.toBeNull();
     });
 
+    it('should not render an empty-state node for a knowledge area whose only competency is hidden', () => {
+        host.dataSource = { data: [ka({ id: 1, competencies: [{ id: 10, title: 'Hidden', isVisible: false }] })] };
+        hostFixture.detectChanges();
+        host.tree().expandAll();
+        hostFixture.detectChanges();
+
+        const emptyNode = hostFixture.debugElement.query(By.css('[data-testid="empty-node"]'));
+        expect(emptyNode).toBeNull();
+        const competencyNodes = hostFixture.debugElement.queryAll(By.css('[data-testid="competency-node"]'));
+        expect(competencyNodes).toHaveLength(0);
+    });
+
     it('should render competencies and project the competency template when expanded', () => {
         host.dataSource = {
             data: [

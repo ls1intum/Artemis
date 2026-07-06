@@ -47,6 +47,17 @@ vi.mock('@sentry/angular', async () => {
     };
 });
 
+const testBedProviders = [
+    LocalStorageService,
+    SessionStorageService,
+    MockProvider(DialogService),
+    { provide: TranslateService, useClass: MockTranslateService },
+    { provide: Router, useClass: MockRouter },
+    { provide: ProfileService, useClass: MockProfileService },
+    provideHttpClient(),
+    provideHttpClientTesting(),
+];
+
 describe('UserManagementUpdateComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -73,17 +84,7 @@ describe('UserManagementUpdateComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: mockRoute },
-                LocalStorageService,
-                SessionStorageService,
-                MockProvider(DialogService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProfileService, useClass: MockProfileService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
             .compileComponents();
@@ -796,17 +797,7 @@ describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: mockRoute },
-                LocalStorageService,
-                SessionStorageService,
-                MockProvider(DialogService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProfileService, useClass: MockProfileService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
         }).compileComponents();
 
         fixture = TestBed.createComponent(UserManagementUpdateComponent);

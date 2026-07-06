@@ -18,15 +18,16 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <p-datepicker
+                    <jhi-date-time-picker
+                        #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
-                        [ngModel]="toDate(operation, 'from')"
-                        (ngModelChange)="onDeleteFromChange(operation, $event)"
-                        [firstDayOfWeek]="1"
-                        [invalid]="!operation.datesValid()"
-                        [showTime]="true"
-                        hourFormat="24"
-                        [appendTo]="'body'"
+                        [pickerType]="DateTimePickerType.DEFAULT"
+                        [value]="operation.deleteFrom"
+                        (valueChange)="onDeleteFromChange(operation, deleteFromPicker.isValid() ? deleteFromPicker.value() : undefined)"
+                        [error]="!operation.datesValid()"
+                        [hideLabelName]="true"
+                        [hideValidationMessage]="true"
+                        [shouldDisplayTimeZoneWarning]="false"
                         [baseZIndex]="100000"
                         data-testid="delete-from-picker"
                     />
@@ -34,15 +35,16 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <p-datepicker
+                    <jhi-date-time-picker
+                        #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"
-                        [ngModel]="toDate(operation, 'to')"
-                        (ngModelChange)="onDeleteToChange(operation, $event)"
-                        [firstDayOfWeek]="1"
-                        [invalid]="!operation.datesValid()"
-                        [showTime]="true"
-                        hourFormat="24"
-                        [appendTo]="'body'"
+                        [pickerType]="DateTimePickerType.DEFAULT"
+                        [value]="operation.deleteTo"
+                        (valueChange)="onDeleteToChange(operation, deleteToPicker.isValid() ? deleteToPicker.value() : undefined)"
+                        [error]="!operation.datesValid()"
+                        [hideLabelName]="true"
+                        [hideValidationMessage]="true"
+                        [shouldDisplayTimeZoneWarning]="false"
                         [baseZIndex]="100000"
                         data-testid="delete-to-picker"
                     />
