@@ -55,6 +55,25 @@ if (prebuiltWebappDir.exists()) {
 } else {
     tasks.register("webapp", PnpmTask) {
         dependsOn pnpmInstall
+        // Mirrors profile_dev.gradle's inputs: without them this task has no way to tell a
+        // frontend source change from a no-op, so Gradle would mark it UP-TO-DATE on a second
+        // non-clean `-Pprod -Pwar bootWar` and silently ship the previous run's stale bundle.
+        inputs.property("appVersion", project.version)
+        inputs.files("pnpm-lock.yaml")
+            .withPropertyName("pnpm-lock")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("build.gradle")
+            .withPropertyName("build.gradle")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("angular.json")
+            .withPropertyName("angular.json")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files("tsconfig.json", "tsconfig.app.json")
+            .withPropertyName("tsconfig")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.dir("src/main/webapp/")
+            .withPropertyName("webapp-source-dir")
+            .withPathSensitivity(PathSensitivity.RELATIVE)
         outputs.dir(webappBuildDir).withPropertyName("webapp-build-dir")
         args = ["run", "webapp:prod"]
         environment = [APP_VERSION: project.version]
