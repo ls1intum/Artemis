@@ -38,6 +38,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -105,8 +106,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             ],
         })
             .overrideComponent(ExerciseDetailsStudentActionsComponent, {
-                remove: { imports: [CodeButtonComponent] },
-                add: { imports: [MockComponent(CodeButtonComponent)] },
+                remove: { imports: [CodeButtonComponent, RequestFeedbackButtonComponent] },
+                add: { imports: [MockComponent(CodeButtonComponent), MockComponent(RequestFeedbackButtonComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
@@ -386,6 +387,36 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeEditorButton).toBeNull();
         codeButton = debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).not.toBeNull();
+    });
+
+    it('should pass feedback generation state to the programming feedback button', async () => {
+        const participation = {
+            id: 1,
+            initializationState: InitializationState.INITIALIZED,
+            repositoryUri: 'https://clone-me.git',
+        } as ProgrammingExerciseStudentParticipation;
+        const exerciseData = {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            allowFeedbackRequests: true,
+            studentParticipations: [participation],
+        } as ProgrammingExercise;
+        const generatingFeedbackSpy = vi.fn();
+        comp.generatingFeedback.subscribe(generatingFeedbackSpy);
+
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', exerciseData);
+        fixture.componentRef.setInput('isGeneratingFeedback', true);
+        TestBed.tick();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const feedbackButton = debugElement.query(By.directive(RequestFeedbackButtonComponent));
+        expect(feedbackButton.componentInstance.isGeneratingFeedback).toBe(true);
+
+        feedbackButton.componentInstance.generatingFeedback.emit();
+
+        expect(generatingFeedbackSpy).toHaveBeenCalledOnce();
     });
 
     // Quiz not supported yet
