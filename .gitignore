@@ -280,3 +280,4 @@ deferredEagerBeanInstantiationViolations.dot
 /src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionAdaptWithFeedbackEndToEndTest.java
 /src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionGpuTestEnvironment.java
 /src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/GeneratedExerciseExporter.java
+/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionDecorrelatedExaminerAuthenticTest.java
