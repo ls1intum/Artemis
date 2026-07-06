@@ -340,6 +340,8 @@ public class ExamUserService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Set<String> staffGroupNames = getStaffGroupNames(course);
 
+        // The repository applies a deterministic order for the LIMIT/OFFSET pages, so the pages are stable across
+        // requests and no matching user shuffles between pages (see issue #13069).
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> users = userRepository.searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm, staffGroupNames);
 

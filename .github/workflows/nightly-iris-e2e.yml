@@ -41,15 +41,29 @@ jobs:
       - name: Checkout Artemis
         uses: actions/checkout@v6
 
+      - name: Pull the published Pyris image (edutelligence main)
+        # edutelligence's own CI (iris_build-and-push-docker.yml) publishes
+        # ghcr.io/ls1intum/edutelligence/iris:latest on every push to main (tagged with the exact
+        # commit SHA in org.opencontainers.image.revision), so the default nightly run can just pull
+        # it instead of rebuilding from source — saving the checkout plus a from-scratch apt/pip build.
+        if: github.event.inputs.edutelligence_ref == '' || github.event.inputs.edutelligence_ref == 'main'
+        run: |
+          docker pull ghcr.io/ls1intum/edutelligence/iris:latest
+          docker tag ghcr.io/ls1intum/edutelligence/iris:latest pyris-e2e:local
+
       - name: Checkout edutelligence (Pyris source)
+        # Only needed for a non-main ref requested via manual dispatch (e.g. to validate an
+        # in-progress edutelligence branch/PR before merge) — no published image exists for those.
+        if: github.event.inputs.edutelligence_ref != '' && github.event.inputs.edutelligence_ref != 'main'
         uses: actions/checkout@v6
         with:
           repository: ls1intum/edutelligence
-          ref: ${{ github.event.inputs.edutelligence_ref || 'main' }}
+          ref: ${{ github.event.inputs.edutelligence_ref }}
           path: edutelligence
 
-      - name: Build the Pyris image
+      - name: Build the Pyris image from source
         # Build context is the edutelligence repo root; the Dockerfile lives in its iris/ subdir.
+        if: github.event.inputs.edutelligence_ref != '' && github.event.inputs.edutelligence_ref != 'main'
         run: docker build -f edutelligence/iris/Dockerfile -t pyris-e2e:local edutelligence
 
       - name: Set up Java

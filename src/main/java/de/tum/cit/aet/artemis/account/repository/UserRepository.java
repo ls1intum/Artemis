@@ -643,7 +643,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Page.empty(page);
         }
         String escaped = escapeSearchTerm(searchTerm);
-        return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
+        // Guarantee a deterministic order so the LIMIT/OFFSET pages form a stable, non-overlapping partition. Without a
+        // fixed order the database may return the results in a different order per page, so a matching user can shuffle
+        // between pages and never appear on the page the caller is viewing (see issue #13069). Applied here so every
+        // caller (exam and organization registration) is covered; a caller that already requested an order keeps it.
+        Pageable stablePage = stabilizePageable(page);
+        return findAllByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped);
     }
 
     @Query("""
@@ -675,7 +680,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Page.empty(page);
         }
         String escaped = escapeSearchTerm(searchTerm);
-        return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(page, escaped, staffGroupNames);
+        Pageable stablePage = stabilizePageable(page);
+        return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped, staffGroupNames);
     }
 
     @Query("""
@@ -705,6 +711,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     private static String escapeSearchTerm(final String searchTerm) {
         return searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    private static Pageable stabilizePageable(Pageable pageable) {
+        return pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
     }
 
     /**
