@@ -7,12 +7,11 @@ import java.util.Set;
 /**
  * Identifies non-behavioural build/compile/configure gate test cases — the C/C++ FACT harness reports e.g. {@code GBS-Tester-1.36.CompileSort} / {@code TestConfigure}, the C
  * {@code Compile}/{@code TestCompile}, a generic {@code Configure}/{@code Build}. They assert only "does it compile/configure", which the same-signature placeholder template
- * satisfies BY DESIGN, so they legitimately pass on both the solution and the template.
+ * satisfies by design, so they legitimately pass on both the solution and the template.
  * <p>
- * This single definition is the source of truth for two call sites that must agree (parity by construction): the differential oracle EXEMPTS these from its "every gradable test
- * must
- * fail on the template" gate, and the persistence step ZERO-WEIGHTS them on the generated exercise so production grading also gives no points for them — otherwise a student
- * submitting the untouched (compiling) template would score above 0%.
+ * Shared by two call sites that must agree: the differential oracle exempts these from its "every gradable test must fail on the template" gate, and the persistence step
+ * zero-weights them on the generated exercise so production grading gives no points for them — otherwise a student submitting the untouched (compiling) template would score above
+ * 0%.
  */
 public final class BuildGateTestNames {
 

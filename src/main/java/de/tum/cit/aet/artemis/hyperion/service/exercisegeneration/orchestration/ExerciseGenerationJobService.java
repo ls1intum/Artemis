@@ -60,7 +60,7 @@ public class ExerciseGenerationJobService {
 
     private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
 
-    /** The latest whole-file snapshots per run, kept OUT of the replay transcript (latest-per-file only) so a reloading client can rehydrate the live editor preview. */
+    /** The latest whole-file snapshots per run, kept out of the replay transcript (latest-per-file only) so a reloading client can rehydrate the live editor preview. */
     private static final String SNAPSHOT_MAP_NAME = "hyperion-exercise-generation-file-snapshots";
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
@@ -241,7 +241,7 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Requests cooperative cancellation of the running job — but ONLY by the instructor who started it. The owner check matters because the jobId is not a secret (returned to the
+     * Requests cooperative cancellation of the running job — but only by the instructor who started it. The owner check matters because the jobId is not a secret (returned to the
      * client and embedded in the websocket topic path), so without it any same-course editor who observes the id could abort a colleague's run. A non-owner gets {@code false}
      * (404).
      *

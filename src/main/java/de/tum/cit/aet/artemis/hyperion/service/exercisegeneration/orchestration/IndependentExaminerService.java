@@ -26,12 +26,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Drives the DECORRELATED test-author (independent examiner) agent for the cross-check, in its OWN fresh sandbox container that is seeded WITHOUT the reference
- * solution
- * ({@link GenerationWorkspaceService#seedExaminerWorkspace}) — so the examiner provably cannot read {@code solution/}. The examiner authors a test suite that pins the problem
- * statement's stated contract, using the restricted {@link ExaminerAgentTools} (no {@code verify} tool), and iterates only to make the suite compile against the template.
+ * Drives the decorrelated test-author (independent examiner) agent for the cross-check, in its own fresh sandbox container seeded without the reference solution
+ * ({@link GenerationWorkspaceService#seedExaminerWorkspace}) so the examiner cannot read {@code solution/}. The examiner authors a test suite that pins the problem statement's
+ * stated contract, using the restricted {@link ExaminerAgentTools} (no {@code verify} tool), and iterates only to make the suite compile against the template.
  * <p>
- * The authored suite (the tests-repo working tree, read back out of the examiner container) is then run against the REAL solution/template via the {@link CrossCheckService};
+ * The authored suite (the tests-repo working tree, read back out of the examiner container) is then run against the real solution/template via the {@link CrossCheckService};
  * {@link #crossCheck} bundles both halves so the orchestrator's cross-check step is a single call. It is only invoked when the cross-check is enabled and the language is
  * allowlisted.
  */
@@ -94,9 +93,8 @@ public class IndependentExaminerService {
     /**
      * Runs the independent examiner in a fresh, solution-free sandbox and returns the authored shadow suite (the tests-repo working tree read back out). The examiner is seeded
      * from
-     * the caller's PRODUCED template + tests maps (not a fresh git checkout of the stale pre-generation scaffold), so it authors tests against the API the agent actually produced
-     * —
-     * the shadow suite then compiles against the real solution and a solution-side failure is a genuine contradiction rather than an against-the-wrong-API compile error.
+     * the caller's produced template + tests maps (not a fresh git checkout of the stale pre-generation scaffold), so it authors tests against the API the agent produced — the
+     * shadow suite then compiles against the real solution and a solution-side failure is a contradiction rather than an against-the-wrong-API compile error.
      *
      * @param exercise              the exercise whose statement the examiner tests against
      * @param producedTemplateFiles the produced TEMPLATE files (repository-relative path to content) — the real public API the examiner writes tests against
@@ -119,7 +117,7 @@ public class IndependentExaminerService {
                 progress.accept("Running an independent examiner to cross-check the exercise");
             }
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
-            // Decorrelation by ABSENCE: the examiner's container is seeded with the statement + PRODUCED template + stripped PRODUCED tests, and NEVER the solution or reference
+            // Decorrelation by absence: the examiner's container is seeded with the statement + produced template + stripped produced tests, never the solution or reference
             // sample.
             workspace.seedExaminerWorkspace(sandbox, sessionId, exercise, producedTemplateFiles, producedTestsFiles);
             ExaminerAgentTools tools = new ExaminerAgentTools(sandbox, sessionId);

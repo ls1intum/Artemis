@@ -14,14 +14,11 @@ import org.springframework.ai.chat.prompt.Prompt;
 import reactor.core.publisher.Flux;
 
 /**
- * A thin {@link ChatModel} decorator that strips gpt-oss "harmony" control tokens (e.g. {@code <|channel|>commentary}, {@code <|message|>}, {@code <|start|>}, {@code <|end|>})
- * the deployment occasionally leaks into the assistant {@code content}. If such a token were stored and replayed verbatim in the next request, the server's harmony chat template
- * would re-parse it as structure — most visibly producing an {@code "Unknown role: assistant<|channel|>commentary"} HTTP 400 that aborts a long, otherwise-healthy run. Removing
- * the
- * control tokens (the visible text around them is harmless) keeps the conversation replayable.
+ * A thin {@link ChatModel} decorator that strips gpt-oss "harmony" control tokens (e.g. {@code <|channel|>commentary}, {@code <|end|>}) the deployment occasionally leaks into the
+ * assistant {@code content}. If such a token were replayed verbatim in the next request, the server's harmony chat template would re-parse it as structure — most visibly an
+ * {@code "Unknown role: assistant<|channel|>commentary"} HTTP 400 that aborts a long, otherwise-healthy run. Removing the tokens keeps the conversation replayable.
  * <p>
- * The Spring AI OpenAI starter does the transport; this decorator adds only the harmony scrubber (mirroring {@code HyperionUtils.stripWrapperMarkers}). It delegates
- * {@link #getDefaultOptions()} so the loop can still read the configured model id, and delegates streaming unchanged (the agent loop never streams).
+ * It delegates {@link #getDefaultOptions()} so the loop can still read the configured model id, and delegates streaming unchanged (the agent loop never streams).
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 

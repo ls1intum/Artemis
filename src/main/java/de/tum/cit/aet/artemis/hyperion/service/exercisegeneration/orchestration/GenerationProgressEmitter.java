@@ -6,9 +6,9 @@ import java.util.function.Consumer;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
- * Records every event into the replayable transcript (the source of truth on reconnect) AND pushes it to the live client immediately, so the user sees per-turn progress with no
- * buffering lag. A generation run is bounded (~15–90 turns, roughly one progress line per agent turn), so pushing each line is not a flood. Only ever used from the single
- * generation thread, so it needs no synchronisation.
+ * Records every event into the replayable transcript (used on reconnect) and pushes it to the live client immediately, so the user sees per-turn progress. A generation run is
+ * bounded (~15–90 turns, roughly one progress line per agent turn), so pushing each line is not a flood. Used only from the single generation thread, so it needs no
+ * synchronisation.
  */
 class GenerationProgressEmitter {
 

@@ -79,8 +79,8 @@ public class ExerciseAdaptationRevertService {
     }
 
     /**
-     * Records a revertible baseline for an adaptation that was ACCEPTED and applied to the live repositories in place, from the pre-persist commit HEADs the persist captured just
-     * before it overwrote each repository. It is written ONLY on that accepted-and-applied path (never at job start), so a cancelled, rejected, or errored run — which leaves the
+     * Records a revertible baseline for an adaptation that was accepted and applied to the live repositories in place, from the pre-persist commit HEADs the persist captured just
+     * before it overwrote each repository. It is written only on that accepted-and-applied path (never at job start), so a cancelled, rejected, or errored run — which leaves the
      * live repositories unchanged — can never overwrite a prior accepted adaptation's baseline with the current (post-adaptation) HEAD and make that earlier change non-revertible.
      * A repository with no captured pre-persist HEAD (nothing was committed to it, or it had no prior commit) is omitted and not reverted. Best-effort: a failure only means the
      * run

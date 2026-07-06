@@ -9,15 +9,12 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 
 /**
- * A long-lived, interactive execution sandbox: a warm Docker container that an agentic exercise-generation session drives through many cheap operations
- * (read a file, write a file, run a command), rather than the fire-and-forget single-script model of a regular CI build.
+ * A long-lived interactive execution sandbox: a warm Docker container an agentic exercise-generation session drives through many cheap operations (read a file, write a file, run a
+ * command), rather than the fire-and-forget single-script model of a regular CI build.
  * <p>
- * This is the generic primitive that decouples the agent loop (which runs on the core node, holding the LLM client and database) from the actual code execution (which must
- * happen on a build agent, where untrusted code already runs in isolation without access to credentials or the database). A single-node deployment talks to a local
- * implementation in-process; a multi-node deployment relays the same operations to the owning build agent.
- * <p>
- * The fast feedback loop comes from the container staying <em>warm</em> across the whole session: dependencies and the toolchain are resolved once, files are edited in place,
- * and incremental builds reuse the warm state — there is no per-iteration container start or cold build.
+ * The primitive decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation
+ * without credentials or database access). A single-node deployment talks to a local implementation in-process; a multi-node deployment relays the same operations to the owning
+ * build agent. The container stays warm across the session, so the toolchain resolves once and incremental builds reuse it — no per-iteration container start or cold build.
  */
 public interface InteractiveSandbox {
 

@@ -29,10 +29,9 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 /**
- * Drives the user-controlled Spring AI tool-calling loop for agentic exercise generation: the runner repeatedly calls the model, executes the requested tools, feeds the results
- * back, and continues until the model stops requesting tools, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring
- * AI's automatic tool execution has no iteration cap and no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided
- * separately by the out-of-band verifier. Task-agnostic (depends only on Spring AI), so it is wired as a bean by {@code HyperionAsyncConfiguration}.
+ * Drives the Spring AI tool-calling loop for agentic exercise generation: repeatedly calls the model, executes the requested tools, and feeds the results back until the model
+ * stops, the turn budget is reached, cancellation is requested, or an error occurs. A manual loop is required because Spring AI's automatic tool execution has no iteration cap and
+ * no per-step hook, so it cannot enforce the safety budget or produce the transcript. Artifact correctness is decided separately by the out-of-band verifier.
  */
 public class AgentLoopRunner {
 
@@ -52,7 +51,7 @@ public class AgentLoopRunner {
     /** Target size of the verbatim recent tail kept across a compaction (everything older is summarized). */
     private static final int KEEP_RECENT_TOKENS = 20_000;
 
-    /** Chars-per-token divisor for the fallback estimate; dense code/JSON tokenizes to ~3 chars/token, so 3 (not 4) avoids under-counting. */
+    /** Chars-per-token divisor for the fallback estimate; dense code/JSON tokenizes to ~3 chars/token. */
     private static final int CHARS_PER_TOKEN = 3;
 
     private static final int MESSAGE_OVERHEAD_TOKENS = 4;
@@ -72,9 +71,8 @@ public class AgentLoopRunner {
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 2_000;
 
     /**
-     * Per-turn completion cap (max_tokens) for the main agent call. A turn is a tool-calling step (reasoning + a handful of tool calls), never a long prose essay, so this bound
-     * keeps a single turn from running away in cost/latency. It is only the fallback: a deployment that sets {@code spring.ai.openai.chat.options.max-tokens} overrides it (see
-     * {@link #configuredTurnMaxTokens()}), and one that does not still runs with this per-turn bound.
+     * Fallback per-turn completion cap (max_tokens) for the main agent call, bounding a single tool-calling step's cost/latency. A deployment that sets
+     * {@code spring.ai.openai.chat.options.max-tokens} overrides it (see {@link #configuredTurnMaxTokens()}).
      */
     private static final int TURN_MAX_OUTPUT_TOKENS = 2_500;
 
@@ -127,11 +125,9 @@ public class AgentLoopRunner {
     }
 
     /**
-     * The model id the configured {@link ChatModel} was set up with (e.g. {@code openai/gpt-oss-120b}). Must be pinned on every {@link OpenAiChatOptions} this loop builds:
-     * {@code OpenAiChatOptions.builder()} seeds {@code model} with Spring AI's {@code DEFAULT_CHAT_MODEL} ({@code gpt-5-mini}), and that non-null value would win the
-     * request-options
-     * merge in {@code OpenAiChatModel#buildRequestPrompt} over the deployment's configured model — sending {@code gpt-5-mini} to an endpoint that does not serve it. Returns
-     * {@code null} when the model exposes no default options.
+     * The model id the configured {@link ChatModel} was set up with. Must be pinned on every {@link OpenAiChatOptions} this loop builds: {@code OpenAiChatOptions.builder()} seeds
+     * {@code model} with Spring AI's default ({@code gpt-5-mini}), which would otherwise win the request-options merge in {@code OpenAiChatModel#buildRequestPrompt} over the
+     * deployment's configured model. Returns {@code null} when the model exposes no default options.
      */
     @Nullable
     private String configuredModel() {
@@ -139,9 +135,10 @@ public class AgentLoopRunner {
     }
 
     /**
-     * The per-turn completion cap to pin on the main call: the operator-configured {@code spring.ai.openai.chat.options.max-tokens} when set, otherwise the built-in
-     * {@link #TURN_MAX_OUTPUT_TOKENS} default. Pinning it on the request options is required for the property to take effect at all — the loop builds its own
-     * {@link OpenAiChatOptions}, whose non-null fields win the request-options merge over the configured defaults, so an unset field here would silently drop a per-turn bound.
+     * The per-turn completion cap to pin on the main call: the operator-configured {@code spring.ai.openai.chat.options.max-tokens} when set, otherwise
+     * {@link #TURN_MAX_OUTPUT_TOKENS}.
+     * Pinning it is required for the property to take effect: the loop builds its own {@link OpenAiChatOptions}, whose non-null fields win the request-options merge over the
+     * configured defaults.
      */
     private int configuredTurnMaxTokens() {
         Integer configured = chatModel != null && chatModel.getDefaultOptions() != null ? chatModel.getDefaultOptions().getMaxTokens() : null;
@@ -174,14 +171,9 @@ public class AgentLoopRunner {
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
-        // Spring AI 2.0 never auto-executes tools, so the response carries raw tool calls that this loop executes explicitly via toolCallingManager.executeToolCalls(...).
-        // Build OpenAiChatOptions (not the generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the prompt's runtime options directly to OpenAiChatOptions, so
-        // a
-        // DefaultToolCallingChatOptions throws ClassCastException. The model is pinned explicitly (see configuredModel()); temperature/reasoning-effort still merge in from the
-        // configured default options.
-        // Pin a per-turn completion cap (max_tokens): a turn is a bounded tool-calling step, so an unbounded turn is pure cost/latency risk. Uses the operator-configured value
-        // when
-        // present, else the built-in default (see configuredTurnMaxTokens()).
+        // Spring AI 2.0 never auto-executes tools, so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
+        // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a
+        // DefaultToolCallingChatOptions throws ClassCastException. The model and per-turn max_tokens cap are pinned explicitly (see configuredModel()/configuredTurnMaxTokens()).
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder().toolCallbacks(toolCallbacks).maxTokens(configuredTurnMaxTokens());
         String configuredModel = configuredModel();
         if (configuredModel != null) {
@@ -254,7 +246,7 @@ public class AgentLoopRunner {
                 }
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
-                // Must answer EVERY requested call id, or the chat-completions tool-pairing contract is violated; per-call errors also tell the model which call failed.
+                // Must answer every requested call id, or the chat-completions tool-pairing contract is violated; per-call errors also tell the model which call failed.
                 List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
                         .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
                                 "ERROR: this tool call could not be executed: " + e.getMessage()
@@ -276,7 +268,7 @@ public class AgentLoopRunner {
             conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
             // Bound each result as it enters the context, so one oversized build log cannot blow the window before compaction runs.
             capToolResponses(conversation);
-            // Budget-pressure nudge, appended AFTER the conversation is rebuilt from the tool-execution history (otherwise it would be discarded with that rebuild).
+            // Budget-pressure nudge, appended after the conversation is rebuilt from the tool-execution history (otherwise it would be discarded with that rebuild).
             if (turn == maxTurns - 1) {
                 conversation.add(new UserMessage("You are close to the step limit. Finish the current change, make sure the build and tests reflect the intended outcome, "
                         + "and then stop calling tools."));
@@ -348,7 +340,7 @@ public class AgentLoopRunner {
      * Renders a tool call as a single transcript line: tool name plus its most informative argument (path for file tools, command for bash), truncated to keep large bodies out.
      * <p>
      * Cross-cutting contract: the client ({@code generation-progress.model.ts}) parses this line for the "files changed" view, so tool names must stay stable and for file tools
-     * the {@code path} must be rendered FIRST and IN FULL — otherwise a large {@code content} argument would push it past the truncation point and the UI would miss the file.
+     * the {@code path} must be rendered first and in full — otherwise a large {@code content} argument would push it past the truncation point and the UI would miss the file.
      */
     private static String describeToolCall(AssistantMessage.ToolCall toolCall) {
         String arguments = toolCall.arguments() == null ? "" : toolCall.arguments().replaceAll("\\s+", " ").trim();
@@ -616,9 +608,8 @@ public class AgentLoopRunner {
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
         // OpenAiChatOptions with no tool callbacks so the summarizer cannot call tools; the output cap keeps the summary small. Must be OpenAiChatOptions (not a generic
-        // ChatOptions): OpenAiChatModel#buildRequestPrompt casts the prompt's runtime options to OpenAiChatOptions, so a DefaultChatOptions would throw ClassCastException. The
-        // model
-        // is pinned explicitly for the same reason as the agent loop (see configuredModel()).
+        // ChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a DefaultChatOptions would throw ClassCastException. Model pinned
+        // as in the agent loop (see configuredModel()).
         OpenAiChatOptions.Builder summaryOptions = OpenAiChatOptions.builder().maxTokens(SUMMARY_MAX_OUTPUT_TOKENS);
         String configuredModel = configuredModel();
         if (configuredModel != null) {

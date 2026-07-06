@@ -41,13 +41,12 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  * Build-agent-side endpoint of the interactive-sandbox relay: it performs, on the local Docker host, the operations a core node requests over the
  * {@code hyperion-sandbox-requests} topic and publishes the result on {@code hyperion-sandbox-responses}.
  * <p>
- * It self-filters on this agent's short name exactly like the existing build-job cancel / pause / resume listeners: every agent receives every broadcast request, but only the
- * agent named in {@link SandboxOpRequest#targetAgentShortName()} acts on it. The work itself ({@code docker exec}, image pull, archive copy) is never run on the topic-listener
- * thread — that thread only hands the request to a small worker pool, mirroring the build-queue listener's rule that no heavy work runs on the distributed event thread.
+ * It self-filters on this agent's short name like the build-job cancel / pause / resume listeners: every agent receives every broadcast request, but only the agent named in
+ * {@link SandboxOpRequest#targetAgentShortName()} acts on it. The work itself ({@code docker exec}, image pull, archive copy) never runs on the topic-listener thread — that thread
+ * only hands the request to a small worker pool, so no heavy work runs on the distributed event thread.
  * <p>
- * Handling is idempotent per correlation id: a redelivered broadcast (or a {@code CREATE}/{@code DESTROY} already in flight) is dropped rather than performed twice. A small
- * per-agent session semaphore caps how many concurrent generation sessions this agent will host so a generation cannot silently starve CI capacity; the permit is released on
- * {@code DESTROY}. This is a deliberately simple guard — see the deferred-integration note on {@link #maxConcurrentSessions}.
+ * Handling is idempotent per correlation id: a redelivered broadcast is dropped rather than performed twice. A per-agent session semaphore caps how many concurrent generation
+ * sessions this agent will host so a generation cannot silently starve CI capacity; the permit is released on {@code DESTROY}.
  *
  * @see RemoteInteractiveSandboxClient the core-node client whose requests this handler serves
  * @see InteractiveSandboxService the local implementation that actually performs each operation
@@ -67,22 +66,16 @@ public class InteractiveSandboxRelayHandler {
     private String buildAgentShortName;
 
     /**
-     * Maximum number of concurrent interactive sandbox sessions this agent will host. A session is long-lived (several minutes), so this is a coarse guard that keeps generation
-     * from monopolizing the agent.
-     * <p>
-     * Deferred integration: this is a standalone per-agent session limit, intentionally decoupled from the build-job scheduler's thread-pool accounting to keep the change
-     * low-risk.
-     * A tighter integration would have a generation session consume a real build-executor slot (so CI and generation share one capacity budget and the existing availability checks
-     * apply uniformly), to be wired in once the scheduler exposes a reservation API.
+     * Maximum number of concurrent interactive sandbox sessions this agent will host. A session is long-lived (several minutes), so this per-agent limit is a coarse guard that
+     * keeps generation from monopolizing the agent; it is decoupled from the build-job scheduler's thread-pool accounting.
      */
     @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:1}")
     private int maxConcurrentSessions;
 
     /**
      * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. Known gap: if a CREATE succeeds but its response is lost in transit, the core client never learns
-     * the
-     * container id and can never issue DESTROY, so the permit stays held until this agent restarts. The reaper reclaims the orphaned container but does NOT yet release its permit;
-     * acceptable at the current default cap because agents restart routinely — reclaim it from the reaper when the deferred session-slot integration noted above lands.
+     * the container id and can never issue DESTROY, so the permit stays held until this agent restarts. The reaper reclaims the orphaned container but not its permit; acceptable
+     * because agents restart routinely.
      */
     private Semaphore sessionPermits;
 
@@ -240,10 +233,9 @@ public class InteractiveSandboxRelayHandler {
     }
 
     /**
-     * Re-serializes the entries of a {@link TarArchiveInputStream} into a fresh tar byte array for transport, preserving each entry's name, size, content, and (for regular files)
-     * directory flag. The local {@code copyOut} hands back a decoding {@link TarArchiveInputStream} rather than the raw Docker bytes, so the relay rebuilds an equivalent archive
-     * that the core-node client can re-wrap as a {@link TarArchiveInputStream} and read exactly as it would in the co-located case. Fails closed if the repacked archive exceeds
-     * {@link RemoteInteractiveSandboxClient#MAX_PAYLOAD_BYTES} so an oversized extraction cannot overwhelm the messaging layer.
+     * Re-serializes the entries of a {@link TarArchiveInputStream} into a fresh tar byte array for transport. The local {@code copyOut} hands back a decoding
+     * {@link TarArchiveInputStream} rather than the raw Docker bytes, so the relay rebuilds an equivalent archive the core-node client can re-wrap and read as in the co-located
+     * case. Fails closed if the repacked archive exceeds {@link RemoteInteractiveSandboxClient#MAX_PAYLOAD_BYTES}.
      *
      * @param source the decoded tar stream from the local sandbox
      * @return the repacked tar bytes

@@ -42,20 +42,15 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 
 /**
- * Core-node implementation of the {@link InteractiveSandbox} primitive that drives a sandbox container physically living on a <em>remote</em> build agent.
+ * Core-node {@link InteractiveSandbox} that drives a sandbox container living on a remote build agent — the multi-node counterpart of the co-located
+ * {@link InteractiveSandboxService}. A core-only node has no Docker, so every operation is relayed to the owning agent over two broadcast topics ({@code hyperion-sandbox-requests}
+ * / {@code hyperion-sandbox-responses}); agents commonly run as Hazelcast clients rather than members, so a member-targeted RPC is impossible and the owning agent self-filters on
+ * its short name.
  * <p>
- * It is the multi-node counterpart of the co-located {@link InteractiveSandboxService}: a core-only Artemis node holds the LLM client and database but has no Docker, so every
- * sandbox operation is relayed to the owning build agent over two broadcast topics ({@code hyperion-sandbox-requests} / {@code hyperion-sandbox-responses}). Build agents commonly
- * run as Hazelcast <em>clients</em> rather than members, so a member-targeted RPC is impossible; the request is broadcast and the owning agent self-filters on its short name —
- * exactly the pattern Artemis already uses for build-job cancel / agent pause / resume.
- * <p>
- * Session affinity is encoded into the session handle itself: {@link #createSession} picks a target agent and returns {@code "<agentShortName>::<containerId>"}. Every later
- * operation parses the short name back out and targets that same agent, so no new shared state is needed to remember which agent owns a session. The composite encoding is private
- * to this client; the build agent only ever sees the plain container id.
- * <p>
- * Each method publishes a request and blocks on a per-correlation-id future until the matching response arrives (or the relay budget elapses). Blocking is intentional and safe:
- * these calls run on the {@code hyperionGenerationExecutor}, never on a topic-listener thread. A dead agent simply lets the future time out; the resulting exception is treated as
- * session-fatal by the orchestrator, which tears the session down and the per-agent reaper removes the orphaned container.
+ * Session affinity is encoded into the handle itself: {@link #createSession} returns {@code "<agentShortName>::<containerId>"} and every later operation parses the short name back
+ * out to route to the same agent, so no shared state remembers which agent owns a session. Each method publishes a request and blocks on a per-correlation-id future until the
+ * response arrives (or the relay budget elapses); blocking is safe because these calls run on the {@code hyperionGenerationExecutor}, never on a topic-listener thread. A dead
+ * agent lets the future time out, and the orchestrator treats the resulting exception as session-fatal.
  *
  * @see InteractiveSandboxService the local, co-located implementation whose operations this client relays
  * @see InteractiveSandboxRelayHandler the build-agent-side listener that performs the relayed operations

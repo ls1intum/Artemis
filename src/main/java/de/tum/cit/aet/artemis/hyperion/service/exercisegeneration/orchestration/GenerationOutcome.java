@@ -43,16 +43,16 @@ public final class GenerationOutcome implements AutoCloseable {
     private final SpecFidelityReport specFidelityReport;
 
     /**
-     * The DECORRELATED cross-check result (an independently-authored suite run against the real solution). {@code null} when the cross-check did not run for this
-     * outcome
-     * (flag off, language not allowlisted, error/cancelled path). Never consulted by {@link #isAccepted()}.
+     * The decorrelated cross-check result (an independently-authored suite run against the real solution). {@code null} when the cross-check did not run for this outcome (flag
+     * off,
+     * language not allowlisted, error/cancelled path). Never consulted by {@link #isAccepted()}.
      */
     @Nullable
     private final CrossCheckVerdict crossCheckVerdict;
 
     /**
-     * Whether the cross-check's contradiction should HARD-BLOCK persistence (the {@code reject-on-contradiction} flag was on AND the cross-check found a contradiction). Layered on
-     * TOP of the oracle's accept decision — it can only ever make acceptance STRICTER, never looser — so a proven false-accept is routed to review instead of silently persisted.
+     * Whether the cross-check's contradiction should hard-block persistence (the {@code reject-on-contradiction} flag was on and the cross-check found a contradiction). Layered on
+     * top of the oracle's accept decision — it can only make acceptance stricter, never looser — so a proven false-accept is routed to review instead of silently persisted.
      */
     private final boolean hardBlockedByCrossCheck;
 
@@ -98,7 +98,7 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * @return {@code true} only when verification accepted the exercise; UNCHANGED by the cross-check (the differential remains the sole author of acceptance)
+     * @return {@code true} only when verification accepted the exercise; not changed by the cross-check
      */
     public boolean isAccepted() {
         return verification != null && verification.accepted();
@@ -113,10 +113,10 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * Whether persistence must be HARD-BLOCKED because the cross-check proved a contract contradiction while the {@code reject-on-contradiction} flag was on. Separate from (and
+     * Whether persistence must be hard-blocked because the cross-check found a contract contradiction while the {@code reject-on-contradiction} flag was on. Separate from (and
      * layered on top of) {@link #isAccepted()}: an outcome can be differential-accepted yet hard-blocked, which routes it to review instead of a silent persist.
      *
-     * @return {@code true} when the accepted exercise must be diverted to review because of a proven contradiction
+     * @return {@code true} when the accepted exercise must be diverted to review because of a contradiction
      */
     public boolean isHardBlockedByCrossCheck() {
         return hardBlockedByCrossCheck;

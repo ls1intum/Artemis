@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * statement, record an exercise version), the same path a manual instructor edit uses. Runs only after the differential oracle has accepted the exercise.
  * <p>
  * The three repositories (template, solution, tests) cannot commit inside a single database/git transaction, so a broad {@code @Transactional} would not make the multi-repository
- * write atomic anyway. Instead the persist captures each repository's pre-persist commit before writing it and, if a later repository fails, COMPENSATES by force-resetting the
+ * write atomic anyway. Instead the persist captures each repository's pre-persist commit before writing it and, if a later repository fails, compensates by force-resetting the
  * already-committed repositories back to their captured commit, then raises {@link GenerationIncompleteException}. A crash between SOLUTION and TESTS therefore never leaves a
  * publishable, half-generated exercise on the live default branch: the exercise version (the publishable snapshot) is only recorded after all repositories committed successfully.
  */
@@ -112,7 +112,7 @@ public class GenerationPersistenceService {
         this.testCaseSyncPoll = testCaseSyncPoll;
     }
 
-    /** The repositories persisted, in the order they are committed. Tests are committed LAST so the test-triggered build sees the final solution. */
+    /** The repositories persisted, in the order they are committed. Tests are committed last so the test-triggered build sees the final solution. */
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
     /** Prefix of the isolated branch a recovery draft is diverted to for an adapt target; the job id is appended so concurrent/repeated runs never collide on the ref. */
@@ -161,7 +161,7 @@ public class GenerationPersistenceService {
 
     /**
      * @return {@code true} if any of the template/solution/tests repositories already tracks a non-{@code .git} file (an adapt target); {@code false} if all are empty.
-     *         Fails CLOSED to {@code true} when a repository cannot be inspected, so an inspection error never lets a failing draft overwrite the live exercise.
+     *         Fails closed to {@code true} when a repository cannot be inspected, so an inspection error never lets a failing draft overwrite the live exercise.
      */
     private boolean anyRepositoryHasContent(ProgrammingExercise exercise) {
         for (RepositoryType repositoryType : PERSIST_ORDER) {
@@ -189,7 +189,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Writes the produced files and commits them to an ISOLATED branch (never the default branch), pushing only that branch. Uses the same orphan-mirroring as the default-branch
+     * Writes the produced files and commits them to an isolated branch (never the default branch), pushing only that branch. Uses the same orphan-mirroring as the default-branch
      * commit. A commit/push failure is propagated so recovery reports a real failure rather than a half-saved draft.
      *
      * @param exercise       the exercise being recovered
@@ -332,7 +332,7 @@ public class GenerationPersistenceService {
     /**
      * Compensating action for a failed multi-repository persist: force-resets each already-committed repository back to the pre-persist commit captured in
      * {@code prePersistHashes},
-     * in REVERSE commit order. Best-effort per repository: a single revert failure is logged and does not stop the others, but makes the overall result "not fully reverted" so the
+     * in reverse commit order. Best-effort per repository: a single revert failure is logged and does not stop the others, but makes the overall result "not fully reverted" so the
      * caller can flag the exercise for manual review. A repository with no captured pre-persist hash (e.g. a brand-new empty repository with no prior commit) cannot be reverted
      * and
      * counts as not-fully-reverted.
@@ -371,7 +371,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Writes the produced files and commits, making the committed tree EXACTLY mirror the sandbox-final {@code producedFiles} (see {@link #deleteOrphanedFiles} for why). The
+     * Writes the produced files and commits, making the committed tree mirror the sandbox-final {@code producedFiles} (see {@link #deleteOrphanedFiles} for why). The
      * repository's pre-persist HEAD is captured into {@code prePersistHashes} BEFORE the commit, so the caller can revert this repository if a later one fails. A commit failure is
      * propagated so the caller does not report success after only some repositories were written.
      *
@@ -392,7 +392,7 @@ public class GenerationPersistenceService {
             return null;
         }
         try {
-            // Capture the pre-persist HEAD BEFORE mutating the repository, so this commit can be reverted if a subsequent repository fails (may be null for a repo with no commit).
+            // Capture the pre-persist HEAD before mutating the repository, so this commit can be reverted if a subsequent repository fails (may be null for a repo with no commit).
             prePersistHashes.put(repositoryType, gitService.getLastCommitHash(uri));
             Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
             if (repository == null) {
@@ -408,7 +408,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Makes the working copy EXACTLY mirror the sandbox-final {@code producedFiles}: removes the files the agent did not produce (see {@link #deleteOrphanedFiles}) then writes
+     * Makes the working copy mirror the sandbox-final {@code producedFiles}: removes the files the agent did not produce (see {@link #deleteOrphanedFiles}) then writes
      * every
      * produced file. Shared by the default-branch and isolated draft-branch commits so both produce an identical tree; the caller decides how to commit it.
      *
@@ -436,8 +436,8 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Deletes every tracked file the agent did NOT produce, so the committed tree mirrors the sandbox-final state rather than overlaying onto the scaffolded sample (which would
-     * orphan the sample's test sources / structure oracle into real grading). Harness/manifest files (graded verbatim, immutable by contract) are NEVER deleted, so a partial
+     * Deletes every tracked file the agent did not produce, so the committed tree mirrors the sandbox-final state rather than overlaying onto the scaffolded sample (which would
+     * orphan the sample's test sources / structure oracle into real grading). Harness/manifest files (graded verbatim, immutable by contract) are never deleted, so a partial
      * read-back cannot wipe the harness. A single-file delete failure is logged and skipped — a leftover file is a quality issue, not a reason to abort an otherwise-valid persist.
      *
      * @param repository     the checked-out repository working copy
@@ -484,7 +484,7 @@ public class GenerationPersistenceService {
 
     /**
      * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them
-     * ({@link BuildGateTestNames}) but production grades EVERY case, so without this a student submitting the untouched template would score above 0%. Waits (bounded) for the
+     * ({@link BuildGateTestNames}) but production grades every case, so without this a student submitting the untouched template would score above 0%. Waits (bounded) for the
      * complete set, then zero-weights the build gates to match the oracle. Best-effort, idempotent, a no-op for languages without build-gate cases.
      *
      * @param exerciseId               the generated exercise whose build-gate test cases should be excluded from grading

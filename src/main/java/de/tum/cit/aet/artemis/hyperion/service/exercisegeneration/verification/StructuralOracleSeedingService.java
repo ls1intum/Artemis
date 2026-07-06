@@ -40,10 +40,9 @@ import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.Oracl
  * only when their structures differ, seeds the {@code test.json} oracle plus the four boilerplate test classes ({@code ClassTest}/{@code MethodTest}/{@code AttributeTest}/
  * {@code ConstructorTest}) into the test repository.
  * <p>
- * Conservative and non-regressive: seeds ONLY for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its
- * public/protected surface, so a correct behaviour-only exercise is never burdened with spurious structural requirements. Any failure is logged and skipped — it must never abort
- * an
- * otherwise valid generation.
+ * Conservative: seeds only for a {@code public} class the student must create (present in the solution, absent from the template), and even then only its public/protected surface,
+ * so a correct behaviour-only exercise is never burdened with spurious structural requirements. Any failure is logged and skipped — it must never abort an otherwise valid
+ * generation.
  */
 @Lazy
 @Service
@@ -82,15 +81,15 @@ public class StructuralOracleSeedingService {
     /**
      * Generates the structure oracle and seeds the structural tests when the structures differ. Java only; a no-op for other languages and on any error.
      * <p>
-     * Returns the AUTHORITATIVE set of structural test-case names seeded this call ({@code testClass[X]}, {@code testMethods[X]}, {@code testAttributes[X]},
-     * {@code testConstructors[X]} per kept class), derived from the oracle THIS service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a
+     * Returns the authoritative set of structural test-case names seeded this call ({@code testClass[X]}, {@code testMethods[X]}, {@code testAttributes[X]},
+     * {@code testConstructors[X]} per kept class), derived from the oracle this service generated — not from anything the agent wrote, so the agent cannot grow it to smuggle a
      * behaviour test into the binding exemption. The verifier consumes it to exempt these auto-injected tests from the {@code [task]}-binding gate while still requiring
      * pass-on-solution / fail-on-template. Empty when nothing was seeded.
      *
      * @param sandbox   the live sandbox session holding the produced files
      * @param sessionId the session id
      * @param exercise  the exercise being generated
-     * @return the exact structural test-case names seeded this run (empty when none)
+     * @return the structural test-case names seeded this run (empty when none)
      */
     public Set<String> seedIfStructuralDiff(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
@@ -145,7 +144,7 @@ public class StructuralOracleSeedingService {
 
     /**
      * The exact Ares dynamic-test names the four structural test classes report at runtime for the classes in the filtered oracle: {@code testClass[<ClassName>]} /
-     * {@code testMethods[<ClassName>]} / {@code testAttributes[<ClassName>]} / {@code testConstructors[<ClassName>]} per class entry. Reconstructed from the oracle THIS service
+     * {@code testMethods[<ClassName>]} / {@code testAttributes[<ClassName>]} / {@code testConstructors[<ClassName>]} per class entry. Reconstructed from the oracle this service
      * produced so the verifier's exemption is keyed to a forgery-resistant authority, not a name pattern the agent could imitate.
      */
     private static Set<String> structuralTestNames(String oracle) throws IOException {

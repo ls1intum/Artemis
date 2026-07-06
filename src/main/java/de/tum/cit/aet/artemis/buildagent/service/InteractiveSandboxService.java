@@ -100,8 +100,6 @@ public class InteractiveSandboxService implements InteractiveSandbox {
      * <li>drops the {@code NET_RAW} capability (raw sockets / ARP spoofing are never needed by a language toolchain) while keeping the rest of the default set so Maven/Gradle
      * builds that {@code chown}/extract archives keep working.</li>
      * </ul>
-     * Stronger isolation (drop-all capabilities, non-root user, read-only rootfs) is intentionally deferred until it can be validated end-to-end against a real Java build, since
-     * an untested flag there silently breaks the toolchain; the trusted-instructor threat model makes egress restriction unnecessary.
      */
     private HostConfig hardenedHostConfig() {
         return buildAgentConfiguration.hostConfig().withAutoRemove(false).withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.NET_RAW);
@@ -156,8 +154,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             }
 
             if (!completed) {
-                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is NOT killed here
-                // and keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the trusted-instructor
+                // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is not killed here
+                // and
+                // keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the trusted-instructor
                 // model.
                 return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
             }

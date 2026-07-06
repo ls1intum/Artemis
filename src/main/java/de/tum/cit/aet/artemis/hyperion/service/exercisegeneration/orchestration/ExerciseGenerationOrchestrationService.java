@@ -77,44 +77,40 @@ public class ExerciseGenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Advisory critic for the brief-coverage axis the differential verifier is blind to. NON-BLOCKING: never affects the verdict (verifier is the sole truth); only feeds the retry
-    // prompt while attempts remain and surfaces as advisory review comments otherwise.
+    // Advisory critic for the brief-coverage axis the differential verifier is blind to. Non-blocking: never affects the verdict; only feeds the retry prompt while attempts remain
+    // and surfaces as advisory review comments otherwise.
     private final SpecFidelityCriticService specFidelityCritic;
 
-    // DECORRELATED cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. ADDITIVE and
-    // advisory by default — it never loosens accepted=; a contradiction only ever ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise.
-    // Owns BOTH halves of the cross-check: authors the decorrelated shadow suite AND runs it against the real solution (via its own CrossCheckService).
+    // Decorrelated cross-check: an independent examiner authors tests from the stated contract (never seeing solution/), run against the real solution. Additive and advisory by
+    // default — it never loosens acceptance; a contradiction only adds an advisory finding, or (behind reject-on-contradiction) hard-blocks an accepted exercise. Owns both halves:
+    // authors the shadow suite and runs it against the real solution (via its own CrossCheckService).
     private final IndependentExaminerService independentExaminer;
 
     /**
-     * Whether to run the decorrelated cross-check at all (default ON, but ADVISORY-only for the {@code {JAVA}} allowlist). Under the advisory default an accepted
-     * attempt
-     * ends the loop, so a contradiction surfaces only as an advisory review comment on the final exercise; the retry-prompt surfacing fires solely when
-     * {@link #rejectOnContradiction}
-     * is set (OFF until the GPU false-reject rate is measured at scale).
+     * Whether to run the decorrelated cross-check at all. Under the advisory default an accepted attempt ends the loop, so a contradiction surfaces only as an advisory review
+     * comment on the final exercise; the retry-prompt surfacing fires solely when {@link #rejectOnContradiction} is set.
      */
     private final boolean crossCheckEnabled;
 
     /** The languages the cross-check is validated for (default {@code {JAVA}}); a non-allowlisted language is never cross-checked. */
     private final Set<ProgrammingLanguage> crossCheckLanguages;
 
-    /** Whether a proven contradiction HARD-BLOCKS persistence (routes the accepted exercise to review) vs. advisory-only (default OFF). */
+    /** Whether a contradiction hard-blocks persistence (routes the accepted exercise to review) vs. advisory-only. */
     private final boolean rejectOnContradiction;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
     // poll.
     private final ExerciseGenerationJobService jobService;
 
-    // Source of the authoritative pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a
-    // build-agent-only
-    // node; when absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
+    // Source of the pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a build-agent-only node; when
+    // absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
     public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, IndependentExaminerService independentExaminer, ExerciseGenerationJobService jobService,
             Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns,
-            @Value("${artemis.hyperion.crosscheck.enabled:true}") boolean crossCheckEnabled,
+            @Value("${artemis.hyperion.crosscheck.enabled:false}") boolean crossCheckEnabled,
             @Value("${artemis.hyperion.crosscheck.languages:JAVA}") Set<ProgrammingLanguage> crossCheckLanguages,
             @Value("${artemis.hyperion.crosscheck.reject-on-contradiction:false}") boolean rejectOnContradiction) {
         this.maxTurns = maxTurns;
@@ -178,12 +174,11 @@ public class ExerciseGenerationOrchestrationService {
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
             String systemPrompt = systemPromptService.build(exercise, mode);
-            // The agent's `verify` tool runs the SAME differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); post-loop
-            // verify(...)
-            // below stays the sole acceptance truth.
+            // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
+            // verify(...) below stays the acceptance decision.
             SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
             // Wrap the tools in the snapshot-emitting decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
-            // re-exposes the identical @Tool surface (the model sees the same tools) and only adds emission.
+            // re-exposes the same @Tool surface (the model sees the same tools) and only adds emission.
             Object tools = fileSnapshotSink != null ? new FileSnapshotEmittingAgentTools(baseTools, fileSnapshotSink) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
@@ -218,14 +213,13 @@ public class ExerciseGenerationOrchestrationService {
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                // Seed Java structural tests when the produced solution/template structures differ. The returned set is the AUTHORITATIVE list of names just injected; the verifier
-                // exempts a [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring
-                // solution-pass/template-fail.
+                // Seed Java structural tests when the produced solution/template structures differ. The returned set is the list of names just injected; the verifier exempts a
+                // [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring solution-pass/template-fail.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
 
                 emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
                 // Read the produced repos back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across template/solution). The
-                // extraction-failed flag lets the verifier fail CLOSED on a read-back error, distinct from a genuinely empty repo.
+                // extraction-failed flag lets the verifier fail closed on a read-back error, distinct from an empty repo.
                 GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS);
                 GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE);
                 GenerationWorkspaceService.RepositoryExtraction producedSolution = workspace.extractRepository(sandbox, sessionId, RepositoryType.SOLUTION);
@@ -241,18 +235,16 @@ public class ExerciseGenerationOrchestrationService {
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
                         producedTests.files(), progress);
 
-                // DECORRELATED cross-check: only on an already-ACCEPTED exercise (the differential proved solution compiles + passes its own tests, so the shadow suite
-                // authored against the template compiles against the solution too — every contradiction is then a genuine behavioural defect, not an interpretation gap). ADDITIVE:
-                // it never touches `verification`; a contradiction only ADDS an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into
-                // review.
+                // Decorrelated cross-check: only on an already-accepted exercise (the differential proved solution compiles + passes its own tests, so the shadow suite authored
+                // against the template compiles against the solution too — a contradiction is then a behavioural defect, not an interpretation gap). It never touches
+                // `verification`; a contradiction only adds an advisory finding, or (behind reject-on-contradiction) hard-blocks the accepted exercise into review.
                 if (crossCheckEnabled && verification.accepted() && crossCheckLanguages.contains(exercise.getProgrammingLanguage())) {
-                    // Seed the examiner from the artifacts the agent ACTUALLY produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
-                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and the cross-check is EFFECTIVE (compiles against the real
-                    // solution).
+                    // Seed the examiner from the artifacts the agent produced (already extracted above for the integrity gates), not a fresh git checkout of the stale
+                    // pre-generation scaffold — so the shadow suite is authored against the real produced API and compiles against the real solution.
                     crossCheck = independentExaminer.crossCheck(sandbox, sessionId, exercise, producedTemplate.files(), producedTests.files(), cancelled, usageSink, progress);
                     emit(progress, "Independent examiner cross-check: " + crossCheck.status() + (crossCheck.detail() != null ? " — " + crossCheck.detail() : ""));
                     if (crossCheck.isContradiction()) {
-                        // Advisory ALWAYS: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under
+                        // Always advisory: fold the contradiction into the report that already rides the outcome (reviewer surface always; retry prompt only under
                         // reject-on-contradiction), never into `verification`.
                         specFidelityReport = specFidelityReport.withFinding(crossCheck.toAdvisoryFinding());
                         if (rejectOnContradiction) {
@@ -384,8 +376,8 @@ public class ExerciseGenerationOrchestrationService {
     }
 
     /**
-     * The exercise's currently-persisted test names — a conservative superset of the graded coverage the adapt total-wipe gate protects: it reads EVERY persisted case via
-     * {@code findByExerciseId} (the SAME repository production grading uses) rather than re-deriving the active/weighted subset, so it never under-reports the baseline. Returns
+     * The exercise's currently-persisted test names — a conservative superset of the graded coverage the adapt total-wipe gate protects: it reads every persisted case via
+     * {@code findByExerciseId} (the same repository production grading uses) rather than re-deriving the active/weighted subset, so it never under-reports the baseline. Returns
      * empty
      * (leaving the gate inert) when the repository is absent (a build-agent-only node) or the exercise has no id yet, so a missing baseline never fabricates a rejection.
      *

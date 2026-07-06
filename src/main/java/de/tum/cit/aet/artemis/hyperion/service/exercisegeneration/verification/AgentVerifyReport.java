@@ -3,27 +3,27 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 import java.util.List;
 
 /**
- * The IN-LOOP self-check report the agent's {@code verify} tool returns: the SAME differential analysis (two pristine builds parsed with the production parsers, then the
+ * The in-loop self-check report the agent's {@code verify} tool returns: the same differential analysis (two pristine builds parsed with the production parsers, then the
  * actionable
  * acceptance gates) the post-loop {@link DifferentialVerificationService#verify} acceptance decision uses, rendered as compact, structured, agent-readable feedback.
  * <p>
- * <strong>This is feedback, not a verdict.</strong> The post-loop {@code verify(...)} remains the SOLE acceptance truth; this report exists only so the agent can SEE — every time
- * it asks — exactly what that verdict will conclude (which tests pass/fail on the solution and template, the EXACT parser-form names to bind {@code [task]}s to, and which gates it
- * is currently failing) instead of misreading raw exit codes and bare {@code grep name=} output. It deliberately runs only the gates that depend on the live sandbox builds; the
- * sandbox-free integrity gates (harness immutability, solution leak) stay post-loop-only.
+ * This is feedback, not a verdict. The post-loop {@code verify(...)} remains the sole acceptance truth; this report exists so the agent can see — every time it asks — what that
+ * verdict will conclude (which tests pass/fail on the solution and template, the parser-form names to bind {@code [task]}s to, and which gates it is currently failing) instead of
+ * misreading raw exit codes and bare {@code grep name=} output. It runs only the gates that depend on the live sandbox builds; the sandbox-free integrity gates (harness
+ * immutability, solution leak) stay post-loop-only.
  *
- * @param solutionTests          the number of tests the solution ran (parser form, {@code <skipped>} excluded exactly as production grades)
+ * @param solutionTests          the number of tests the solution ran (parser form, {@code <skipped>} excluded as production grades)
  * @param solutionPassed         whether the solution compiled, ran at least one test, and passed every test
- * @param solutionFailedNames    the parser-form names the solution FAILED/ERRORED (empty when {@code solutionPassed}); the agent's reference solution must pass every test
+ * @param solutionFailedNames    the parser-form names the solution failed/errored (empty when {@code solutionPassed}); the agent's reference solution must pass every test
  * @param templateTests          the number of tests the template ran (must equal {@code solutionTests}; zero means the template did not compile)
  * @param templateCompiled       whether the template compiled and ran at least one test
- * @param templateFailed         whether the template compiled AND (correctly) failed enough tests; {@code false} when it compiled but passes too many (a near-complete template)
- * @param templateWronglyPassing the parser-form names that PASS on the template but should FAIL (the Go/no-exception zero-value-stub trap); each must be made to fail
+ * @param templateFailed         whether the template compiled and (correctly) failed enough tests; {@code false} when it compiled but passes too many (a near-complete template)
+ * @param templateWronglyPassing the parser-form names that pass on the template but should fail (the Go/no-exception zero-value-stub trap); each must be made to fail
  * @param exactTestNames         every parser-form test name (suite-prefixed, verbatim) the agent must copy into {@code [task]} bindings — never guessed
  * @param unresolvedTaskBindings {@code [task]} bindings that reference a name matching no real test (the C++/Catch2 bare-name trap)
  * @param possiblyDeadFiles      best-effort, language-agnostic: workspace files no build phase appears to read (advisory only; empty when the probe is unavailable)
- * @param wouldBeAccepted        whether the differential + actionable gates currently hold, i.e. the post-loop verdict would ACCEPT (modulo the post-loop-only integrity gates)
- * @param blockingReasons        the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the SAME wording the post-loop reasons carry
+ * @param wouldBeAccepted        whether the differential + actionable gates currently hold, i.e. the post-loop verdict would accept (modulo the post-loop-only integrity gates)
+ * @param blockingReasons        the human-readable reasons the verdict would currently reject (empty when {@code wouldBeAccepted}); the same wording the post-loop reasons carry
  */
 public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, int templateTests, boolean templateCompiled, boolean templateFailed,
         List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,

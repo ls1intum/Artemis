@@ -4,12 +4,9 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * The reply a remote build agent publishes after performing a {@link SandboxOpRequest}.
- * <p>
- * Responses are broadcast over the {@code hyperion-sandbox-responses}
- * {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic}; the originating core node matches them back to the blocked caller by
- * {@link #correlationId} and ignores responses for correlation ids it does not own. On failure {@link #success} is {@code false} and {@link #errorMessage} carries a short
- * description so the caller can throw a meaningful exception (which the orchestrator treats as session-fatal).
+ * The reply a remote build agent publishes after performing a {@link SandboxOpRequest}. Broadcast over the {@code hyperion-sandbox-responses}
+ * {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} and matched back to the blocked caller by {@link #correlationId}; on failure
+ * {@link #success} is {@code false} and {@link #errorMessage} carries a short description the caller rethrows as a session-fatal exception.
  *
  * @param correlationId the id of the {@link SandboxOpRequest} this response answers
  * @param sessionId     the created container id for {@link SandboxOp#CREATE}; echoed back otherwise (may be {@code null})

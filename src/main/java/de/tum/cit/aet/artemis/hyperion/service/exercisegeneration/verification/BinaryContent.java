@@ -10,14 +10,15 @@ import java.nio.file.Path;
  * Content-based binary-file detection for the generation extract/persist pipeline.
  * <p>
  * The generation workspace moves repository files as UTF-8 {@code String}s ({@link WorkspaceArchive#readTar} on read-back, {@code GenerationPersistenceService} on commit). That
- * round-trip is LOSSLESS for text but CORRUPTS binaries: decoding arbitrary bytes as UTF-8 substitutes the replacement character {@code U+FFFD} for every invalid sequence, and
- * re-encoding the decoded {@code String} back to UTF-8 then writes those replacement bytes — so a {@code gradle/wrapper/gradle-wrapper.jar} (shipped by Java PLAIN_GRADLE /
- * GRADLE_GRADLE) would be written back mangled and the Gradle build would fail in production. The agent never edits these binaries, so they are kept out of the String
- * pipeline entirely (excluded on read-back, preserved-from-scaffold on persist) rather than carried as bytes through the whole {@code Map<String, String>} contract.
+ * round-trip is lossless for text but corrupts binaries: decoding arbitrary bytes as UTF-8 substitutes the replacement character {@code U+FFFD} for every invalid sequence, and
+ * re-encoding the decoded {@code String} back to UTF-8 writes those replacement bytes — so a {@code gradle/wrapper/gradle-wrapper.jar} (shipped by Java PLAIN_GRADLE /
+ * GRADLE_GRADLE) would be written back mangled and the Gradle build would fail. The agent never edits these binaries, so they are kept out of the String pipeline entirely
+ * (excluded on read-back, preserved-from-scaffold on persist) rather than carried as bytes through the whole {@code Map<String, String>} contract.
  * <p>
- * Detection is by CONTENT, not by file extension: an extension allowlist would both miss an extensionless binary and — more dangerously — misclassify a genuinely-textual
- * {@code run.sh}/{@code build.sh} test-harness script (a {@code .sh} is "binary" in Artemis's coarse extension list) as binary and wrongly drop it from the produced tree. The
- * content test is the precise signal: a NUL byte in the leading window (no text encoding Artemis uses embeds NUL) or a byte sequence that is not valid UTF-8.
+ * Detection is by content, not by file extension: an extension allowlist would both miss an extensionless binary and misclassify a genuinely-textual
+ * {@code run.sh}/{@code build.sh}
+ * test-harness script (a {@code .sh} is "binary" in Artemis's coarse extension list) as binary and wrongly drop it from the produced tree. The content test is the precise signal:
+ * a NUL byte in the leading window (no text encoding Artemis uses embeds NUL) or a byte sequence that is not valid UTF-8.
  */
 public final class BinaryContent {
 
@@ -60,7 +61,7 @@ public final class BinaryContent {
 
     /**
      * Whether the file at {@code path} is binary, sniffing only its leading window. Used by the persist orphan-sweep to protect a scaffolded binary (e.g. the Gradle wrapper JAR)
-     * that the agent never produced from being deleted as an "orphan". An unreadable file is treated as NON-binary (so the caller's normal handling applies) rather than silently
+     * that the agent never produced from being deleted as an "orphan". An unreadable file is treated as non-binary (so the caller's normal handling applies) rather than silently
      * protected.
      *
      * @param path the working-tree file to inspect

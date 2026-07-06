@@ -6,13 +6,12 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 
 /**
- * The trimmed tool surface for the DECORRELATED test-author (independent examiner) agent: {@code read_file}/{@code write_file}/{@code edit_file}/{@code bash}/{@code submit} — the
- * same file/shell tools as {@link SandboxAgentTools} but WITHOUT the {@code verify} tool. The examiner must not have {@code verify}: {@code verify} runs the solution-aware
- * differential (it builds the reference solution), and the examiner must never observe the solution's behaviour — its only ground truth is the problem statement's stated contract.
+ * The trimmed tool surface for the decorrelated test-author (independent examiner) agent: the same file/shell tools as {@link SandboxAgentTools} but without the {@code verify}
+ * tool. {@code verify} runs the solution-aware differential (it builds the reference solution), and the examiner must not observe the solution's behaviour — its only ground truth
+ * is the problem statement's stated contract.
  * <p>
- * Decorrelation is enforced primarily by ABSENCE (the examiner's container is seeded without {@code solution/}), and this restricted toolset is defence in depth: there is no tool
- * wired to the solution-aware verifier, and the delegated {@code workspaceRelativePath} confines file access to {@code /workspace} (where {@code solution/} does not exist anyway).
- * The examiner iterates {@code bash sh verify.sh template} only to make its suite COMPILE against the template's public API — never to make a test pass.
+ * Decorrelation is enforced primarily by absence (the examiner's container is seeded without {@code solution/}); this restricted toolset backs that up — no tool is wired to the
+ * solution-aware verifier. The examiner iterates {@code bash sh verify.sh template} only to make its suite compile against the template's public API, never to make a test pass.
  */
 public class ExaminerAgentTools {
 

@@ -10,15 +10,14 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 /**
  * Hardened reader for the {@code copyOut} tar of the verifier-owned reports directory. The directory is written by the pristine {@code verify.sh} (collecting only build-fresh
- * regular files), but the tar stream the container hands back is still untrusted: a compromised or buggy collection — or a Docker quirk — must not let an entry escape the expected
+ * regular files), but the tar stream the container hands back is untrusted: a compromised or buggy collection — or a Docker quirk — must not let an entry escape the expected
  * directory, dereference a planted symlink, or exhaust memory. So before any byte is handed to a production parser, every entry is validated:
  * <ul>
- * <li><strong>regular files only</strong> — a symbolic link ({@link TarArchiveEntry#isSymbolicLink()}), a hard link ({@link TarArchiveEntry#isLink()}), a directory, or any other
- * non-regular entry ({@link TarArchiveEntry#isFile()} is {@code false}) is REJECTED, so a planted link cannot redirect the verifier to read a file outside the reports dir;</li>
- * <li><strong>no path escape</strong> — the entry's normalized, prefix-stripped path must not be absolute and must not contain a {@code ..} segment, so it cannot point above the
+ * <li>regular files only — a symbolic link ({@link TarArchiveEntry#isSymbolicLink()}), a hard link ({@link TarArchiveEntry#isLink()}), a directory, or any other
+ * non-regular entry ({@link TarArchiveEntry#isFile()} is {@code false}) is rejected, so a planted link cannot redirect the verifier to read a file outside the reports dir;</li>
+ * <li>no path escape — the entry's normalized, prefix-stripped path must not be absolute and must not contain a {@code ..} segment, so it cannot point above the
  * reports directory;</li>
- * <li><strong>bounded size</strong> — each entry is capped at {@link #MAX_FILE_BYTES} and the whole archive at {@link #MAX_TOTAL_BYTES}, so a hostile report cannot exhaust
- * memory.</li>
+ * <li>bounded size — each entry is capped at {@link #MAX_FILE_BYTES} and the whole archive at {@link #MAX_TOTAL_BYTES}, so a hostile report cannot exhaust memory.</li>
  * </ul>
  * Only the surviving entries' bytes are returned, keyed by their flat collected file name (the verifier routes each name to the JUnit or the SCA parser). Any violation throws
  * {@link RejectedReportException}; the verifier treats that as a failed (rejected) verification rather than parsing partial, possibly-forged input.

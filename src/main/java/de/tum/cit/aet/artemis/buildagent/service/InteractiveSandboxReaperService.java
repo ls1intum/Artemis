@@ -45,7 +45,7 @@ public class InteractiveSandboxReaperService {
 
     /**
      * Sandbox containers older than this (by creation time) are considered orphaned. The threshold must exceed the maximum wall-clock of a live session (the agent turns plus the
-     * two verification builds) so an in-progress session is never reaped; the default is set comfortably above that worst case.
+     * two verification builds) so an in-progress session is never reaped.
      */
     @Value("${artemis.continuous-integration.build-agent.generation-container-expiry-minutes:90}")
     private int sandboxContainerExpiryMinutes;
@@ -66,8 +66,7 @@ public class InteractiveSandboxReaperService {
     }
 
     /**
-     * Removes all sandbox containers that are older than the configured expiry threshold. Containers younger than the threshold belong to sessions that may still be in progress
-     * and are therefore left untouched.
+     * Removes sandbox containers older than the configured expiry threshold; younger ones may belong to a session still in progress and are left untouched.
      */
     public void reapOrphanedSessions() {
         if (!buildAgentConfiguration.isDockerAvailable()) {
@@ -76,7 +75,6 @@ public class InteractiveSandboxReaperService {
         }
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        // Current time in seconds, to compare against the container creation time (also in epoch seconds).
         long now = Instant.now().getEpochSecond();
         long ageThreshold = sandboxContainerExpiryMinutes * 60L;
 

@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * The read/write/edit/bash/verify tools the exercise-generation agent calls, bound to one sandbox session. Created per session (holds the session id), so not a Spring bean.
  * <p>
  * The agent has a full shell safely because correctness is never judged from what these tools report — that is the out-of-band verifier's job. The {@code verify} tool runs the
- * SAME differential as the post-loop acceptance verifier (two pristine builds parsed with the production parsers) and returns structured feedback (per-build test outcomes, the
- * exact names to bind {@code [task]}s to, the current verdict), but it is advisory only; the post-loop verifier remains the sole acceptance truth.
+ * same differential as the post-loop acceptance verifier (two pristine builds parsed with the production parsers) and returns structured feedback, but it is advisory only; the
+ * post-loop verifier decides acceptance.
  */
 public class SandboxAgentTools {
 
@@ -56,7 +56,7 @@ public class SandboxAgentTools {
 
     private final String sessionId;
 
-    /** The authoritative verifier, reused by the {@code verify} tool to run the SAME differential the post-loop acceptance gate runs; {@code null} disables the tool in tests. */
+    /** The authoritative verifier, reused by the {@code verify} tool to run the same differential the post-loop acceptance gate runs; {@code null} disables the tool in tests. */
     @Nullable
     private final DifferentialVerificationService verifier;
 
@@ -82,8 +82,7 @@ public class SandboxAgentTools {
 
     /**
      * Verify-free constructor: the verifier and exercise are absent, so the {@code verify} tool is never wired. Used by the decorrelated {@link ExaminerAgentTools} (the examiner
-     * must
-     * not build the solution) and by unit tests of the file/shell tools.
+     * must not build the solution) and by unit tests of the file/shell tools.
      *
      * @param sandbox   the sandbox session the tools operate on
      * @param sessionId the session handle
@@ -180,7 +179,7 @@ public class SandboxAgentTools {
         if (isMangledArrayCommand(command)) {
             return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
         }
-        // Short-circuit a Codex-style `apply_patch` invocation: it is not installed, so the shell would exit 127 but leave the workspace UNCHANGED while the model believes the
+        // Short-circuit a Codex-style `apply_patch` invocation: it is not installed, so the shell would exit 127 but leave the workspace unchanged while the model believes the
         // edit
         // landed and thrashes. Reject loudly without touching the sandbox so the agent switches to write_file / edit_file.
         if (isApplyPatchInvocation(command)) {
@@ -188,11 +187,10 @@ public class SandboxAgentTools {
         }
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
-        // Run in a SUBSHELL so an `exit` inside (e.g. from verify.sh) cannot abort this wrapper before it reports the code and tail. Combined output is redirected (not piped:
-        // POSIX
-        // sh has no PIPESTATUS) so the real exit code comes from `$?`; `ulimit -f` caps the spill size and `</dev/null` stops a stdin-reading command from hanging until the
-        // timeout.
-        // `wc` is run through `tr -d` because some implementations pad the count with spaces, which would otherwise corrupt the meta line and lose the authoritative exit code.
+        // Run in a subshell so an `exit` inside (e.g. from verify.sh) cannot abort this wrapper before it reports the code and tail. Combined output is redirected, not piped
+        // (POSIX
+        // sh has no PIPESTATUS), so the real exit code comes from `$?`; `ulimit -f` caps the spill size and `</dev/null` stops a stdin-reading command from hanging until the
+        // timeout. `wc` is run through `tr -d` because some implementations pad the count with spaces, which would corrupt the meta line and lose the authoritative exit code.
         String script = "LOG=" + logPath + "\n" + "mkdir -p " + SPILL_DIR + "\n" + "( ulimit -f " + SPILL_ULIMIT_BLOCKS + " 2>/dev/null; cd " + WORKSPACE + " && " + command
                 + " ) </dev/null > \"$LOG\" 2>&1\n" + "rc=$?\n" + "bytes=$(wc -c < \"$LOG\" | tr -d ' \\t')\n" + "lines=$(wc -l < \"$LOG\" | tr -d ' \\t')\n"
                 + "printf '__HYP_META__ rc=%s bytes=%s lines=%s\\n' \"$rc\" \"$bytes\" \"$lines\"\n" + "tail -c " + BASH_TAIL_BYTES + " \"$LOG\"\n";

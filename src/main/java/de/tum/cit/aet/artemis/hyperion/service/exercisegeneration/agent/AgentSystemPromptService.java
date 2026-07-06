@@ -19,10 +19,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 /**
  * Builds the system prompt for the exercise-generation agent.
  * <p>
- * The prompt encodes the correctness contract the verifier enforces (solution passes, template compiles but fails, tests are meaningful and run identically against both) and,
- * critically, the two things an LLM cannot infer from a cleared scaffold: <em>where</em> sources go (the Artemis test project uses a non-standard layout — the assignment is
- * mounted next to the tests, not under {@code src/main/java}) and <em>how</em> to self-check ({@code verify.sh}, the exact recipe the grader also runs). For JVM exercises it adds
- * the Ares test-framework conventions, whose absence (an unannotated test class is refused by Ares) is otherwise the most common reason a generated exercise fails to build.
+ * The prompt encodes the correctness contract the verifier enforces (solution passes, template compiles but fails, tests run identically against both) and the two things an LLM
+ * cannot infer from a cleared scaffold: <em>where</em> sources go (the Artemis test project mounts the assignment next to the tests, not under {@code src/main/java}) and
+ * <em>how</em>
+ * to self-check ({@code verify.sh}, the recipe the grader also runs). For JVM exercises it adds the Ares conventions, whose absence (Ares refuses an unannotated test class) is the
+ * most common reason a generated exercise fails to build.
  */
 @Lazy
 @Service
@@ -44,12 +45,10 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan (problem statement +
-     * metadata),
-     * while {@link GenerationMode#ADAPT} tells the agent the sandbox is already seeded with the CURRENT working exercise and it must apply the requested feedback while preserving
-     * everything the feedback leaves untouched. The contract, quality, layout, and self-check sections are identical for both — the differential oracle enforces the same
-     * invariants
-     * either way.
+     * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan, while
+     * {@link GenerationMode#ADAPT} tells the agent the sandbox is already seeded with the current working exercise and it must apply the requested feedback while preserving what
+     * the
+     * feedback leaves untouched. The contract, quality, layout, and self-check sections are identical for both.
      *
      * @param exercise the exercise being generated or adapted
      * @param mode     the explicit run intent (generate a fresh exercise vs. adapt the existing one)
@@ -58,9 +57,8 @@ public class AgentSystemPromptService {
     public String build(ProgrammingExercise exercise, GenerationMode mode) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
-        // Spec mode: when the exercise already carries a real problem statement, it is the starting point — the BRIEF (the user message) still governs and may refine it or change
-        // the
-        // task, so this must not hard-lock the existing topic. With no brief the brief is silent, so the statement is preserved verbatim and merely lifted to the quality bar.
+        // Spec mode: when the exercise already carries a real problem statement, it is the starting point — the brief (the user message) still governs and may refine or change the
+        // task, so this must not hard-lock the existing topic. With no brief, the statement is preserved verbatim and merely lifted to the quality bar.
         String problemStatementGuidance = isNonTrivialProblemStatement(exercise.getProblemStatement())
                 ? "- problem-statement.md : the exercise's CURRENT problem statement and the starting point for this run. Follow the BRIEF: it is authoritative and may refine this "
                         + "statement or change the task itself (topic, named types, requirements). Where the BRIEF is silent, preserve the statement's intent and every stated requirement "
@@ -260,12 +258,12 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Builds the system prompt for the DECORRELATED test-author (independent examiner) agent used by the cross-check. This agent has the problem statement and the
-     * student template (the public API — signatures with stub bodies) but NOT the reference solution, and it authors a test suite that pins the STATED contract, iterating only to
-     * make the suite COMPILE against the template (never to make a test pass — it cannot run against a reference).
+     * Builds the system prompt for the decorrelated test-author (independent examiner) agent used by the cross-check. It has the problem statement and the student template (the
+     * public API with stub bodies) but not the reference solution, and authors a test suite pinning the stated contract, iterating only to make the suite compile against the
+     * template (never to make a test pass — it cannot run against a reference).
      * <p>
-     * The brief deliberately PRIORITISES deriving one minimal falsifying test per stated postcondition/invariant over replaying the statement's worked examples: those examples are
-     * co-authored with the (possibly buggy) solution and may share its blind spot, so replaying them reproduces the very hole the cross-check exists to catch. It reuses
+     * The brief prioritises deriving one minimal falsifying test per stated postcondition/invariant over replaying the statement's worked examples: those examples are co-authored
+     * with the (possibly buggy) solution and may share its blind spot, so replaying them reproduces the very hole the cross-check exists to catch. It reuses
      * {@link SandboxBuildCommandService#describeBuildContext} so the examiner knows the build/report layout.
      *
      * @param exercise the exercise whose statement/template the examiner tests against
@@ -310,10 +308,9 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Prepended in {@link GenerationMode#ADAPT}: the sandbox is seeded with the CURRENT, working exercise, so the run is a targeted revision, not a from-scratch author. It tells
+     * Prepended in {@link GenerationMode#ADAPT}: the sandbox is seeded with the current working exercise, so the run is a targeted revision. It tells the agent to apply exactly
      * the
-     * agent to apply exactly the requested feedback and preserve everything the feedback leaves untouched, so an adaptation never silently rewrites unrelated parts of a working
-     * exercise. The contract below still governs — the revised exercise must satisfy every invariant the verifier enforces.
+     * requested feedback and preserve everything else, so an adaptation never silently rewrites unrelated parts of a working exercise. The contract below still governs.
      */
     private static final String ADAPT_MODE_FRAMING = """
             ADAPT MODE — you are REVISING an existing, working exercise, not authoring a new one. The solution/, template/, and tests/ directories are ALREADY populated with the \
@@ -325,10 +322,9 @@ public class AgentSystemPromptService {
             """;
 
     /**
-     * A tight, exercise-specific BUILD CONTEXT block: the resolved project type, package/module name, checkout layout, the EXACT build phase commands the grader runs, and the
-     * report locations it parses. These are facts the agent would otherwise have to infer from the manifests; surfacing them up front (derived from the same recipe behind
-     * {@code verify.sh}, so they cannot drift from what the grader actually runs) closes the "verify.sh passed but real CI scored zero" class. Kept deliberately short — it lists
-     * the commands and paths, not full manifests. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
+     * A tight, exercise-specific build-context block: the resolved project type, package/module name, checkout layout, the build phase commands the grader runs, and the report
+     * locations it parses. Derived from the same recipe behind {@code verify.sh} so it cannot drift from what the grader runs, closing the "verify.sh passed but real CI scored
+     * zero" class. Returns the empty string if the build context cannot be resolved, so prompt building never fails on it.
      *
      * @param exercise the exercise being generated or adapted
      * @return the build-context section (prefixed with a blank line), or {@code ""} when it cannot be resolved
@@ -382,9 +378,9 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Extra contract clause when static code analysis is ENABLED for the exercise: the reference solution must be clean of static-analysis findings in the GRADED categories,
-     * because production folds an SCA penalty into the score and the out-of-band verifier REJECTS a solution whose build trips a graded SCA category (it would otherwise grade
-     * below 100% for a student). Empty when SCA is disabled, so a non-SCA prompt is unchanged.
+     * Extra contract clause when static code analysis is enabled: the reference solution must be clean of findings in the graded categories, because production folds an SCA
+     * penalty
+     * into the score and the verifier rejects a solution whose build trips a graded SCA category (it would otherwise grade below 100%). Empty when SCA is disabled.
      */
     private static String staticCodeAnalysisGuidance(ProgrammingExercise exercise) {
         if (!Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -417,10 +413,7 @@ public class AgentSystemPromptService {
      * Resolves the instruction for a generation run. A present brief is authoritative and may refine the current problem statement or change the task outright; against an existing
      * statement it is layered so the statement is preserved where the brief is silent. With no brief the default is mode-aware: match an existing statement (spec mode), or author
      * a
-     * fresh exercise from scratch.
-     * <p>
-     * This lives next to {@link #isNonTrivialProblemStatement} so the resource's mode-aware default and the system prompt's spec/from-scratch framing always agree on the same
-     * threshold.
+     * fresh exercise from scratch. Lives next to {@link #isNonTrivialProblemStatement} so the resource default and the prompt framing agree on the same threshold.
      *
      * @param request  the generation request holding the optional prompt
      * @param exercise the exercise being generated or adapted
@@ -428,9 +421,8 @@ public class AgentSystemPromptService {
      */
     public String resolvePrompt(ExerciseGenerationRequestDTO request, ProgrammingExercise exercise) {
         String brief = request.prompt() == null ? "" : request.prompt().strip();
-        // A present brief is the authoritative instruction for this run: it may refine the current statement or change the task entirely (an adaptation), so it must be able to
-        // override a statement on a different topic. The statement is the starting point, not a lock — preserved where the brief is silent, which keeps a reviewed plan intact when
-        // no brief changes it. With no brief, the statement alone binds.
+        // A present brief is the authoritative instruction for this run and may change the task entirely, so it can override a statement on a different topic; the statement is the
+        // starting point, preserved where the brief is silent. With no brief, the statement alone binds.
         boolean hasSpec = isNonTrivialProblemStatement(exercise.getProblemStatement());
         if (!brief.isBlank()) {
             if (hasSpec) {
@@ -448,8 +440,8 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * The single source of truth (defined on {@link LanguageGenerationProfile#supportedLanguages()}) for the languages Hyperion offers for one-click whole-exercise generation —
-     * the oracle-verifiable ones. Exposed so the resource can both guard a run and serve the set to clients rather than have them hardcode it.
+     * The oracle-verifiable languages Hyperion offers for one-click whole-exercise generation, defined on {@link LanguageGenerationProfile#supportedLanguages()}. Exposed so the
+     * resource can both guard a run and serve the set to clients rather than have them hardcode it.
      *
      * @return the immutable set of generation-supported languages
      */

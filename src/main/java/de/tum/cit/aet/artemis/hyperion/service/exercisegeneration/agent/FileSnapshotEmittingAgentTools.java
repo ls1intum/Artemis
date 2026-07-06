@@ -13,12 +13,13 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 
 /**
- * A thin emitting decorator around {@link SandboxAgentTools}: it re-exposes the exact same {@code @Tool} surface (so the model sees an identical toolset) but, whenever
- * {@code write_file} or {@code edit_file} succeeds, it emits a whole-file {@link HyperionFileSnapshotDTO} to the given sink for live streaming to the triggering instructor.
+ * A thin decorator around {@link SandboxAgentTools} that re-exposes the same {@code @Tool} surface but, whenever {@code write_file} or {@code edit_file} succeeds, emits a
+ * whole-file {@link HyperionFileSnapshotDTO} to the given sink for live streaming to the triggering instructor.
  * <p>
- * It never touches the tool bodies: read/bash/verify/submit are pure delegations, and the two write paths delegate to the inner tools first and only emit on success. The whole
- * file content is already in memory here — {@code write_file} receives it as an argument, and for {@code edit_file} the decorator reconstructs it from the last snapshot it holds
- * for that path (falling back to a single read only if it has no cached copy), so no extra sandbox read-back is needed on the common path.
+ * It never touches the tool bodies (read/bash/verify/submit are pure delegations, and the write paths emit only on success). The whole file content is already in memory:
+ * {@code write_file} receives it as an argument, and {@code edit_file} reconstructs it from the last snapshot for that path (falling back to a single read only on a cache miss),
+ * so
+ * no extra sandbox read-back is needed on the common path.
  * <p>
  * Created per session and driven serially by the single-threaded agent loop, so the per-path cache needs no synchronisation.
  */

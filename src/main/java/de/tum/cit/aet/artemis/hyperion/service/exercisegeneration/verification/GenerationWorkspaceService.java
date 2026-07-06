@@ -115,7 +115,7 @@ public class GenerationWorkspaceService {
             Path workingTree = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
             if (workingTree != null) {
                 repositoryTrees.put(directoryFor(repositoryType), workingTree);
-                // Snapshot the SEEDED tests harness so the verifier can later reject tampering against this exact baseline; read from the same tree packed into the sandbox.
+                // Snapshot the seeded tests harness so the verifier can later reject tampering against this baseline; read from the same tree packed into the sandbox.
                 if (repositoryType == RepositoryType.TESTS) {
                     testsSeedSnapshot = readWorkingTreeTextFiles(workingTree);
                 }
@@ -129,26 +129,23 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * The base-name shapes of a SAMPLE test SOURCE file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…); see
+     * The base-name shapes of a sample test source file across the shipped languages ({@code FooTest.java}/{@code FooTests.kt}/{@code foo_test.py}/{@code foo.test.ts}/…); see
      * {@link #stripSampleTestSources} for why these are dropped from the examiner's seed.
      */
     private static final Pattern SAMPLE_TEST_SOURCE = Pattern
             .compile(".*(?:Test|Tests|Spec)\\.(?:java|kt)$|.*(?:_test|_spec)\\.(?:py|rb|go|rs)$|.*\\.(?:test|spec)\\.(?:ts|js|tsx|jsx)$|.*Tests?\\.cs$", Pattern.CASE_INSENSITIVE);
 
     /**
-     * Seeds the DECORRELATED independent-examiner workspace from the agent's PRODUCED artifacts: the problem statement, the {@code verify.sh} helper, the produced
-     * TEMPLATE
-     * files (the real public API — signatures with stub bodies), and the produced TESTS harness with the sample test SOURCES stripped. It NEVER seeds the SOLUTION repository or
-     * the
-     * worked-sample {@code reference/} directory — neither is even passed in — so the reference solution simply does not exist in the examiner's container: decorrelation by
-     * ABSENCE,
-     * strictly stronger than any path allowlist (there is nothing for the examiner to read even with a full shell).
+     * Seeds the decorrelated independent-examiner workspace from the agent's produced artifacts: the problem statement, the {@code verify.sh} helper, the produced template files
+     * (the public API — signatures with stub bodies), and the produced tests harness with the sample test sources stripped. It never seeds the solution repository or the
+     * worked-sample {@code reference/} directory — neither is passed in — so the reference solution does not exist in the examiner's container (decorrelation by absence, stronger
+     * than a path allowlist: there is nothing for the examiner to read).
      * <p>
-     * Seeding from the PRODUCED maps (not a fresh git checkout of the pre-generation scaffold) is what makes the cross-check EFFECTIVE: the examiner writes tests against the API
-     * the
-     * agent actually produced, so the shadow suite compiles against the real solution and a solution-side failure is a genuine contract contradiction rather than an
-     * against-the-wrong-API compile error that would fail the whole check OPEN (a no-op). The produced template map came from {@code extractRepository(TEMPLATE)}, which already
-     * stripped any solution residue outside the canonical roots, so no solution content can ride in on the template.
+     * Seeding from the produced maps (not a fresh checkout of the pre-generation scaffold) is what makes the cross-check effective: the examiner writes tests against the API the
+     * agent produced, so the shadow suite compiles against the real solution and a solution-side failure is a genuine contract contradiction rather than an against-the-wrong-API
+     * compile error that would fail the whole check open (a no-op). The produced template map came from {@code extractRepository(TEMPLATE)}, which already stripped solution
+     * residue
+     * outside the canonical roots, so no solution content can ride in on the template.
      * <p>
      * The tests harness is seeded as text (manifests/configs kept, sample {@code *Test.*} sources dropped via {@link #stripSampleTestSources}); binary harness assets (a Gradle
      * wrapper JAR) are not preserved here, so this path is validated for the {@code {JAVA}} cross-check allowlist (Maven, no wrapper).
@@ -156,8 +153,8 @@ public class GenerationWorkspaceService {
      * @param sandbox               the examiner's own (separate) sandbox session
      * @param sessionId             the examiner session handle
      * @param exercise              the exercise whose statement is seeded for the examiner
-     * @param producedTemplateFiles the produced TEMPLATE files (repository-relative path to content) — the real public API the examiner writes tests against
-     * @param producedTestsFiles    the produced TESTS files (repository-relative path to content); the sample test sources are stripped before seeding
+     * @param producedTemplateFiles the produced template files (repository-relative path to content) — the public API the examiner writes tests against
+     * @param producedTestsFiles    the produced tests files (repository-relative path to content); the sample test sources are stripped before seeding
      */
     public void seedExaminerWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> producedTemplateFiles,
             Map<String, String> producedTestsFiles) {
@@ -175,7 +172,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Drops the sample test SOURCE files (see {@link #SAMPLE_TEST_SOURCE}) from a tests-repo text map, keeping every build manifest, test config, package skeleton, and readme, so
+     * Drops the sample test source files (see {@link #SAMPLE_TEST_SOURCE}) from a tests-repo text map, keeping every build manifest, test config, package skeleton, and readme, so
      * the decorrelated examiner is handed the harness but not the co-authored tests.
      *
      * @param testsFiles the tests-repo files keyed by repository-relative path
@@ -258,7 +255,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Probes the freshly-seeded workspace ONCE and renders a compact snapshot — a recursive listing of the {@code solution}/{@code template}/{@code tests} dirs plus the head of
+     * Probes the freshly-seeded workspace once and renders a compact snapshot — a recursive listing of the {@code solution}/{@code template}/{@code tests} dirs plus the head of
      * any
      * build manifest found at their roots — handed to the agent on turn 0 so it does not spend turns discovering the layout. Language/toolchain-agnostic, bounded in shell and
      * again
@@ -333,8 +330,8 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * The produced files of a repository read back out of the sandbox, plus whether the read-back FAILED. A failed read-back ({@code extractionFailed=true}) is distinct from a
-     * genuinely empty repository (extraction succeeded, {@code files} empty): the verifier fails CLOSED on the former (it cannot run the integrity gates on missing files) but
+     * The produced files of a repository read back out of the sandbox, plus whether the read-back failed. A failed read-back ({@code extractionFailed=true}) is distinct from a
+     * genuinely empty repository (extraction succeeded, {@code files} empty): the verifier fails closed on the former (it cannot run the integrity gates on missing files) but
      * stays
      * fail-open on the latter.
      *
@@ -357,7 +354,7 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Reads the produced files of a repository back out of the sandbox, reporting whether the read-back FAILED (so the verifier can fail closed on a genuine extraction error while
+     * Reads the produced files of a repository back out of the sandbox, reporting whether the read-back failed (so the verifier can fail closed on a genuine extraction error while
      * staying fail-open on a genuinely empty repo). Uses the tar API rather than per-file reads so large files are never truncated.
      *
      * @param sandbox        the sandbox session
@@ -370,7 +367,7 @@ public class GenerationWorkspaceService {
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + dir)) {
             // Docker prefixes copied-out entries with the source directory's own name.
             Map<String, String> files = stripRedundantGitkeeps(WorkspaceArchive.readTar(tar, dir));
-            // For TEMPLATE and SOLUTION, drop source residue OUTSIDE the canonical roots (e.g. a nested template/assignment/solution/src) that would leak the solution to students
+            // For TEMPLATE and SOLUTION, drop source residue outside the canonical roots (e.g. a nested template/assignment/solution/src) that would leak the solution to students
             // or
             // inflate the solution-vs-template diff. The tests repo keeps everything (its harness lives at the root).
             if (repositoryType == RepositoryType.TEMPLATE || repositoryType == RepositoryType.SOLUTION) {

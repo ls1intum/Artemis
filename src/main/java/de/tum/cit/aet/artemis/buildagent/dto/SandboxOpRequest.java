@@ -4,12 +4,10 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * A single interactive-sandbox operation that a core node asks a specific remote build agent to perform on the warm container it owns.
- * <p>
- * Requests are broadcast over the {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} (because build agents
- * commonly run as Hazelcast clients, so a member-targeted RPC is not available) and self-filtered on the build agent by {@link #targetAgentShortName}: only the agent whose short
- * name matches handles the request; every other agent ignores it. The {@link #correlationId} ties the eventual {@link SandboxOpResponse} back to the blocked caller and makes
- * handling idempotent if the broadcast is delivered more than once.
+ * A single interactive-sandbox operation a core node asks a specific remote build agent to perform on the warm container it owns. Requests are broadcast over the
+ * {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} (build agents commonly run as Hazelcast clients, so a
+ * member-targeted RPC is not available) and self-filtered by {@link #targetAgentShortName}; the {@link #correlationId} ties the eventual {@link SandboxOpResponse} back to the
+ * blocked caller and makes handling idempotent under redelivery.
  *
  * @param correlationId        unique id correlating this request with its {@link SandboxOpResponse}; also the idempotency key on the handler
  * @param targetAgentShortName the short name of the build agent that owns the session and must handle this request (all other agents ignore it)

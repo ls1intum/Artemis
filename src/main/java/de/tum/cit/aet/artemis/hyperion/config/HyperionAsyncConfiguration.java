@@ -17,10 +17,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 /**
  * Wiring for Hyperion's agentic generation infrastructure: the dedicated generation executor and the task-agnostic {@link AgentLoopRunner} bean.
  * <p>
- * A generation run is a long-lived, mostly-blocked task (waiting on LLM turns and sandbox builds) that also publishes progress over the websocket — and websocket delivery itself
- * runs on the shared {@code taskExecutor}. Running generation on that same pool would let a couple of concurrent runs occupy every thread while each blocks on a websocket send it
- * submitted back to the same (now-saturated) pool, a self-deadlock. Isolating generation on its own bounded pool removes that coupling and prevents long generations from starving
- * the rest of Artemis's async work.
+ * A generation run is long-lived and mostly blocked (on LLM turns and sandbox builds) and publishes progress over the websocket, whose delivery runs on the shared
+ * {@code taskExecutor}. Running generation on that same pool risks it deadlocking against its own websocket sends and starving other async work, so it gets its own bounded pool.
  */
 @Lazy
 @Configuration
@@ -52,11 +50,9 @@ public class HyperionAsyncConfiguration {
         executor.setQueueCapacity(64);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");
-        // On saturation ABORT (throw RejectedExecutionException) rather than run the generation on the caller: the submit path is the HTTP request thread, and CallerRunsPolicy
-        // would
-        // block that request for the full multi-minute generation and, worse, occupy a request-handling thread — a thread-pool DoS. Aborting lets the REST layer map the rejection
-        // to
-        // 429/Conflict and shed load. Per-exercise single-flight keeps the number of concurrent runs low, so reaching this saturation point is rare.
+        // On saturation, abort (throw RejectedExecutionException) rather than run on the caller: the submit path is the HTTP request thread, and CallerRunsPolicy would block it
+        // for
+        // the full multi-minute generation. Aborting lets the REST layer map the rejection to 429/Conflict and shed load.
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
         executor.initialize();
         return executor;

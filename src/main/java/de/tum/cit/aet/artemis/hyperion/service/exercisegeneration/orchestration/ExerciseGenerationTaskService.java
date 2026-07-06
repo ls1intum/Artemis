@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
  * <p>
  * It owns the end-to-end flow: drive the {@link ExerciseGenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
- * clean, verified exercise; and when it does NOT accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist the best-effort draft and
+ * clean, verified exercise; and when it does not accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist the best-effort draft and
  * surface
  * every verification finding as review comments so a near-miss is recoverable instead of discarded.
  * <p>
@@ -91,7 +91,7 @@ public class ExerciseGenerationTaskService {
         String topic = TOPIC_PREFIX + jobId;
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),
                 progressEvent -> websocket.send(login, topic, progressEvent));
-        // Whole-file snapshots are streamed to the owner on the SAME per-user topic as the progress events (told apart by their FILE_SNAPSHOT type) and retained latest-per-file
+        // Whole-file snapshots are streamed to the owner on the same per-user topic as the progress events (told apart by their FILE_SNAPSHOT type) and retained latest-per-file
         // for
         // reconnect — kept out of the replay transcript so the write stream cannot bloat it.
         Consumer<HyperionFileSnapshotDTO> fileSnapshotSink = snapshot -> {
@@ -100,7 +100,7 @@ public class ExerciseGenerationTaskService {
         };
         // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
         // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
-        // initialized — and fail CLOSED with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
+        // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
         ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(exerciseId).orElse(null);
         if (exercise == null) {
             log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
@@ -118,22 +118,23 @@ public class ExerciseGenerationTaskService {
                 // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                 case COMPLETED, BUDGET_EXHAUSTED -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                    // The differential accepted the exercise, UNLESS the decorrelated cross-check hard-blocked it (a proven contract contradiction with the
-                    // reject-on-contradiction flag on). A hard block routes the accepted exercise to review (with the contradiction attached as a review comment) rather than a
-                    // silent persist — an honest response to a proven false-accept. With the flag OFF (default) this conjunct is always true, so behaviour is byte-identical.
+                    // The differential accepted the exercise, unless the decorrelated cross-check hard-blocked it (a contract contradiction with the reject-on-contradiction flag
+                    // on). A hard block routes the accepted exercise to review (with the contradiction attached as a review comment) rather than a silent persist. With the flag
+                    // off
+                    // (default) this conjunct is always true, so behaviour is unchanged.
                     if (outcome.isAccepted() && !outcome.isHardBlockedByCrossCheck()) {
                         emitter.progress("Checks passed. Saving the exercise.");
                         try {
                             // persist captures each repository's pre-persist HEAD (the pre-adaptation state, since the sandbox run never touched the live repos) and returns it
                             // only
-                            // after every repository committed successfully. Record a revertible baseline ONLY for an accepted ADAPT applied in place — never for a
-                            // cancelled/rejected/
-                            // errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing to revert to.
+                            // after every repository committed successfully. Record a revertible baseline only for an accepted ADAPT applied in place — never for a
+                            // cancelled/rejected/errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing
+                            // to revert to.
                             Map<RepositoryType, String> preAdaptationHeads = persistenceService.persist(exercise, user, outcome);
                             if (event.mode() == GenerationMode.ADAPT) {
                                 adaptationRevertService.recordBaseline(exercise, jobId, preAdaptationHeads);
                             }
-                            // Advisory only: surface any spec-fidelity / coverage gaps as review comments WITHOUT changing the accepted status. The differential oracle accepted
+                            // Advisory only: surface any spec-fidelity / coverage gaps as review comments without changing the accepted status. The differential oracle accepted
                             // the
                             // exercise; these are non-blocking notes the instructor may act on. Best-effort — a failed attach never downgrades the SUCCESS.
                             int advisoryCount = recoveryService.surfaceAdvisoryFindings(exercise, outcome.specFidelityReport());
@@ -183,7 +184,7 @@ public class ExerciseGenerationTaskService {
             emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
             GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId);
             int issueCount = result.reviewThreadCount();
-            // Where the draft landed: for an adapt of a working exercise it is diverted to an isolated branch and the LIVE exercise is left untouched (it keeps working); for a
+            // Where the draft landed: for an adapt of a working exercise it is diverted to an isolated branch and the live exercise is left untouched (it keeps working); for a
             // from-scratch target it is committed to the exercise in place. The message makes this explicit so the instructor knows whether their working exercise was preserved.
             String placement = result.liveExerciseUntouched()
                     ? " Your existing working exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch()
@@ -199,7 +200,7 @@ public class ExerciseGenerationTaskService {
             emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict));
         }
         catch (RuntimeException e) {
-            // Recovery failed at the PERSIST step: nothing durable was saved, so report PARTIAL (the instructor can retry).
+            // Recovery failed at the persist step: nothing durable was saved, so report PARTIAL (the instructor can retry).
             log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft could not be persisted)", exerciseId, e);
             emitter.milestone(ExerciseGenerationEventDTO.done(reason + " Saving the draft for review failed (" + e.getMessage() + ").",
                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));

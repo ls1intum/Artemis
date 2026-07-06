@@ -9,8 +9,8 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * The pre-adaptation commit state of an ACCEPTED {@code ADAPT} run applied to the live repositories in place, so the instructor can later revert the adaptation. It records, per
- * repository, the commit HEAD each repository pointed at immediately BEFORE the accepted adaptation was committed over it. Reverting resets every repository back to these commits.
+ * The pre-adaptation commit state of an accepted {@code ADAPT} run applied to the live repositories in place, so the instructor can later revert the adaptation. It records, per
+ * repository, the commit HEAD each repository pointed at immediately before the accepted adaptation was committed over it. Reverting resets every repository back to these commits.
  * It is recorded only on the accepted-and-applied path, so a cancelled/rejected/errored run (which leaves the live repositories untouched) never overwrites it.
  * <p>
  * Serializable so it can live in the Hazelcast baseline map (keyed by exercise id); a repository with nothing committed to it (or no prior commit) is absent from

@@ -170,7 +170,7 @@ public class GenerationRecoveryService {
     }
 
     /**
-     * Surfaces an ACCEPTED exercise's advisory spec-fidelity findings as review-comment threads WITHOUT changing its accepted status — purely advisory context the instructor may
+     * Surfaces an accepted exercise's advisory spec-fidelity findings as review-comment threads without changing its accepted status — purely advisory context the instructor may
      * act
      * on or dismiss. Best-effort and never throws: a failed attach must not turn a successful generation into a failure.
      *

@@ -11,8 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param running       whether the run is still active; when {@code true} the client should subscribe to the websocket to keep receiving live events
  * @param mode          the explicit run intent (generate vs. adapt), so a reconnecting client can restore the correct header label and the revert affordance without inferring it
  * @param events        the events produced so far, oldest first, to replay into the transcript
- * @param fileSnapshots the latest whole-file snapshot per file written so far (latest-per-file only), so a reloading client can rehydrate the live editor preview and resume the
- *                          stream; ordered by the write order
+ * @param fileSnapshots the latest whole-file snapshot per file written so far, in write order, so a reloading client can rehydrate the live editor preview and resume the stream
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,

@@ -17,13 +17,13 @@ import java.util.stream.Collectors;
  * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
  * oracle alone cannot see (the sandbox build can pass while production is broken or the solution is leaked):
  * <ul>
- * <li><b>Harness tampering.</b> The seeded TESTS-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one's source layout (e.g. a
+ * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one's source layout (e.g. a
  * {@code *.cabal} {@code hs-source-dirs} or a {@code tsconfig.json} project reference) away from the CI layout, the sandbox build can still pass while production fails because CI
  * lays the tree out differently. We snapshot those files at seed time and reject any post-generation layout change, modulo the CI placeholder substitution the pipeline applies (so
- * an agent that does NOT touch the harness is never penalized).</li>
- * <li><b>Solution leak.</b> The template repository ships to students. A reference-solution IMPLEMENTATION copied into a non-graded template path hands students the answer while
+ * an agent that does not touch the harness is not penalized).</li>
+ * <li><b>Solution leak.</b> The template repository ships to students. A reference-solution implementation copied into a non-graded template path hands students the answer while
  * the
- * build still passes. The primary defence is the residue strip; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that are
+ * build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that are
  * legitimately identical between template and solution (a graded-path copy that makes the template pass is left to the differential oracle).</li>
  * </ul>
  * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
@@ -32,16 +32,15 @@ import java.util.stream.Collectors;
 public final class ExerciseIntegrityGate {
 
     /**
-     * The CI checkout directory names — the sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is
-     * one
+     * The CI checkout directory names — the sibling repositories CI lays out next to each other, not legitimate top-level source folders. A file whose first path component is one
      * of these is orphan residue (e.g. a nested {@code solution/src/…} left inside another repo): stripped on read-back, never counted as a harness or source file.
      */
     private static final Set<String> CI_CHECKOUT_DIRECTORY_NAMES = Set.of("assignment", "solution", "template", "tests");
 
     /**
-     * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them (it edits only the test SOURCE
+     * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them (it edits only the test source
      * files,
-     * deliberately NOT in this set). Matched case-insensitively.
+     * which are not in this set). Matched case-insensitively.
      */
     private static final Set<String> HARNESS_FILE_NAMES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
             "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "cargo.toml", "cargo.lock", "cabal.project",
@@ -115,7 +114,7 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Normalizes a harness line for build-layout comparison: collapses whitespace and applies the SAME CI directory-placeholder substitution the pipeline applies, so an unchanged
+     * Normalizes a harness line for build-layout comparison: collapses whitespace and applies the same CI directory-placeholder substitution the pipeline applies, so an unchanged
      * seed (still carrying raw {@code ${…}} placeholders) compares equal to a produced file the pipeline already substituted. Mirrors
      * {@code SandboxBuildCommandService.verifyScriptContent}.
      *
@@ -128,8 +127,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Whether a harness line is BUILD-LAYOUT-relevant: it defines where the build looks for the submission/solution/template source. We track only these lines so creation-time
-     * non-layout placeholders the pipeline does NOT substitute ({@code ${packageName}}, …) never count as tampering. A line qualifies if it references a CI directory placeholder,
+     * Whether a harness line is build-layout-relevant: it defines where the build looks for the submission/solution/template source. Only these lines are tracked, so creation-time
+     * non-layout placeholders the pipeline does not substitute ({@code ${packageName}}, …) never count as tampering. A line qualifies if it references a CI directory placeholder,
      * or
      * is a recognized source-path directive ({@code hs-source-dirs}, {@code ProjectReference Include=}, {@code workspaces}/{@code path}, {@code sourceDirectory}, …) pointing at a
      * CI
@@ -179,16 +178,16 @@ public final class ExerciseIntegrityGate {
      * Detects harness tampering (see class javadoc): only the seed's build-layout lines are compared positionally, after placeholder normalization, so a deleted harness file or a
      * moved source/solution/template path is flagged while creation-time placeholders the sandbox does not substitute never count.
      * <p>
-     * The gate fails OPEN on an empty seed snapshot (a genuinely harness-free language, or a best-effort snapshot that read nothing). But for a language whose tests repository
-     * ALWAYS ships a build harness (Java: {@code pom.xml}/{@code build.gradle}) an EMPTY snapshot is not "no harness to protect" — it means the snapshot capture FAILED, which
-     * would
-     * silently disable the whole harness-immutability gate and let a tampered harness through. When {@code requireNonEmptySnapshot} is set we therefore REJECT on an empty snapshot
-     * rather than skipping the gate.
+     * The gate fails open on an empty seed snapshot (a harness-free language, or a best-effort snapshot that read nothing). But for a language whose tests repository always ships
+     * a
+     * build harness (Java: {@code pom.xml}/{@code build.gradle}) an empty snapshot is not "no harness to protect" — it means the snapshot capture failed, which would silently
+     * disable the whole harness-immutability gate and let a tampered harness through. When {@code requireNonEmptySnapshot} is set we therefore reject on an empty snapshot rather
+     * than skipping the gate.
      *
      * @param seedTestsFiles          the tests-repo files snapshotted at seed time (repository-relative)
      * @param producedTestsFiles      the tests-repo files read back after generation (repository-relative)
      * @param requireNonEmptySnapshot whether the language guarantees a tests harness, so an empty snapshot is a failed capture that must fail closed
-     * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is legitimately disabled)
+     * @return one rejection reason per offending file (empty when the harness layout is intact or the gate is disabled)
      */
     static List<String> harnessTamperingReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean requireNonEmptySnapshot) {
         if (seedTestsFiles == null || seedTestsFiles.isEmpty()) {
@@ -220,7 +219,7 @@ public final class ExerciseIntegrityGate {
             List<String> producedNormalized = normalizedLines(produced);
             boolean tampered = false;
             for (int index : layoutIndices) {
-                // A removed/inserted line ahead of this index, or a changed directive at it, means the seeded source/solution path no longer resolves as production expects.
+                // A removed/inserted line ahead of this index, or a changed directive at it, means the seeded source/solution path no longer resolves the way production expects.
                 if (index >= producedNormalized.size() || !seedNormalized.get(index).equals(producedNormalized.get(index))) {
                     tampered = true;
                     break;
@@ -237,17 +236,19 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * The adapt total-wipe (zero-retention) gate: an ADAPT run must refine the existing exercise, not replace it wholesale. If the exercise already had at least one graded test
+     * The adapt total-wipe (zero-retention) gate: an adapt run must refine the existing exercise, not replace it wholesale. If the exercise already had at least one graded test
      * and
-     * the produced tests retain NONE of those graded test names, the run rebuilt the graded coverage from scratch under the guise of an adapt — a destructive rewrite the
-     * differential oracle cannot see (the regenerated exercise is internally consistent: its own solution passes and its own template fails). We reject only that unambiguous total
-     * wipe; every partial edit (renaming, adding, or removing SOME tests while keeping at least one graded name) is a legitimate adapt and passes untouched.
+     * the produced tests retain none of those graded test names, the run rebuilt the graded coverage from scratch under the guise of an adapt — a destructive rewrite the
+     * differential oracle cannot see (the regenerated exercise is internally consistent: its own solution passes and its own template fails). Only that total wipe is rejected;
+     * every
+     * partial edit (renaming, adding, or removing some tests while keeping at least one graded name) is a legitimate adapt and passes untouched.
      * <p>
-     * Fails OPEN on an empty baseline (GENERATE, or a genuinely never-graded exercise) — it never fabricates a rejection. Names are normalized (trimmed, a trailing {@code ()}
-     * dropped) so {@code testFoo} and {@code testFoo()} match. Post-loop only: the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does
-     * not have mid-session, so this gate lives alongside the other read-back integrity gates, not the in-loop self-check.
+     * Fails open on an empty baseline (generate, or a never-graded exercise). Names are normalized (trimmed, a trailing {@code ()} dropped) so {@code testFoo} and
+     * {@code testFoo()}
+     * match. Post-loop only: the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does not have mid-session, so this gate lives alongside
+     * the other read-back integrity gates, not the in-loop self-check.
      *
-     * @param baselineGradedTestNames   the exercise's graded test names captured BEFORE the adapt ran (empty for GENERATE or a never-graded exercise; the gate is then inert)
+     * @param baselineGradedTestNames   the exercise's graded test names captured before the adapt ran (empty for generate or a never-graded exercise; the gate is then inert)
      * @param producedSolutionTestNames the test names the produced tests ran against the solution (the post-adapt graded set)
      * @return a single rejection reason when a non-empty baseline is retained by nothing produced, otherwise an empty list
      */
@@ -309,15 +310,15 @@ public final class ExerciseIntegrityGate {
     private static final Pattern HASKELL_IMPORT = Pattern.compile("^import\\s+(?:qualified\\s+)?([\\w.]+)");
 
     /**
-     * Detects a Haskell test harness that compares the submission against ITSELF — a tautology the differential oracle is blind to (the template still errors, so the
-     * solution-passes/template-fails invariant holds) yet which scores ANY submission 100%. Under the cabal mixin layout the tests rename the reference module
+     * Detects a Haskell test harness that compares the submission against itself — a tautology the differential oracle is blind to (the template still errors, so the
+     * solution-passes/template-fails invariant holds) yet which scores any submission 100%. Under the cabal mixin layout the tests rename the reference module
      * ({@code solution (Exercise as Solution)}) and reach the student code via an {@code Interface} indirection; the bug is {@code import qualified Exercise as Sol}, where the
      * bare
-     * {@code Exercise} module IS the submission, so every assertion becomes {@code submission == submission}.
+     * {@code Exercise} module is the submission, so every assertion becomes {@code submission == submission}.
      * <p>
-     * Haskell-only and contract-gated: fires ONLY when a cabal declares the {@code solution (Exercise as <Ref>)} mixin plus an {@code Interface} indirection, and REJECTS only on
+     * Haskell-only and contract-gated: fires only when a cabal declares the {@code solution (Exercise as <Ref>)} mixin plus an {@code Interface} indirection, and rejects only on
      * the
-     * unambiguous fingerprint (bare {@code Exercise} import present AND no renamed-reference import). Every other shape fails OPEN — a false reject (burning the retry budget) is
+     * unambiguous fingerprint (bare {@code Exercise} import present and no renamed-reference import). Every other shape fails open — a false reject (burning the retry budget) is
      * worse than the gap.
      *
      * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
@@ -343,7 +344,7 @@ public final class ExerciseIntegrityGate {
             if (cabal == null || testHs == null) {
                 return List.of();
             }
-            // Learn the renamed-reference module name(s) FROM the cabal (never hardcode "Solution"); require the Interface indirection too.
+            // Learn the renamed-reference module name(s) from the cabal (do not hardcode "Solution"); require the Interface indirection too.
             Set<String> referenceModules = new LinkedHashSet<>();
             Matcher mixin = CABAL_REFERENCE_MIXIN.matcher(cabal);
             while (mixin.find()) {
@@ -368,7 +369,7 @@ public final class ExerciseIntegrityGate {
                     importsRenamedReference = true;
                 }
             }
-            // REJECT only on the certain fingerprint: bare submission imported as the reference AND no renamed reference imported. Both-present is ambiguous -> open.
+            // Reject only on the certain fingerprint: bare submission imported as the reference and no renamed reference imported. Both-present is ambiguous -> open.
             if (importsBareExercise && !importsRenamedReference) {
                 String reference = referenceModules.iterator().next();
                 return List.of(
@@ -405,13 +406,13 @@ public final class ExerciseIntegrityGate {
     /**
      * Detects a solution leak the differential oracle cannot see (see class javadoc). The hard part is what to flag:
      * <ul>
-     * <li>NOT files legitimately identical between template and solution at the SAME path — shared interfaces/headers, git dotfiles, harness files (an implementation file is one
+     * <li>Not files legitimately identical between template and solution at the same path — shared interfaces/headers, git dotfiles, harness files (an implementation file is one
      * that
-     * DIFFERS from the template at its own path).</li>
-     * <li>NOT a template that copies the solution into the SAME graded path — that makes the template pass, already rejected by the oracle's "template must fail" gate.</li>
-     * <li>MUST flag the solution implementation copied into an EXTRA template file at a non-graded path.</li>
+     * differs from the template at its own path).</li>
+     * <li>Not a template that copies the solution into the same graded path — that makes the template pass, already rejected by the oracle's "template must fail" gate.</li>
+     * <li>Flags the solution implementation copied into an extra template file at a non-graded path.</li>
      * </ul>
-     * Fails OPEN when either side is empty.
+     * Fails open when either side is empty.
      *
      * @param templateFiles the produced TEMPLATE repository files (repository-relative; residue already stripped)
      * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
@@ -421,7 +422,7 @@ public final class ExerciseIntegrityGate {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
             return List.of();
         }
-        // Solution IMPLEMENTATION bodies: solution source whose content differs from the template's at the same path (so a shared interface/config identical there is excluded).
+        // Solution implementation bodies: solution source whose content differs from the template's at the same path (so a shared interface/config identical there is excluded).
         Set<String> implementationBodies = new HashSet<>();
         for (Map.Entry<String, String> entry : solutionFiles.entrySet()) {
             if (isLeakIgnoredFile(entry.getKey())) {
@@ -447,7 +448,7 @@ public final class ExerciseIntegrityGate {
             if (body.length() < MIN_LEAK_BODY_LENGTH || !implementationBodies.contains(body)) {
                 continue;
             }
-            // A copy at the SAME graded path makes the template pass — already rejected by the oracle, so do not double-report it.
+            // A copy at the same graded path makes the template pass — already rejected by the oracle, so do not double-report it.
             if (body.equals(normalizeBody(solutionFiles.get(path)))) {
                 continue;
             }

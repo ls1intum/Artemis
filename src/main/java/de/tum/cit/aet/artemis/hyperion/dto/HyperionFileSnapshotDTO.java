@@ -13,19 +13,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * A whole-file snapshot streamed to the triggering instructor while the agent writes the exercise repositories, so the editor can render a live, auto-following preview of what the
- * agent is producing without polling the sandbox.
- * <p>
- * The full current content is already in memory on the loop node when {@code write_file}/{@code edit_file} run, so no read-back from the sandbox is needed. The snapshot carries a
- * fixed {@link #TYPE} discriminator so it can share the per-user websocket topic with the progress events and still be told apart by the client. It is {@link Serializable} because
- * the latest snapshot per file is retained in a distributed Hazelcast map so a reloading client can rehydrate the preview and resume the stream.
+ * A whole-file snapshot streamed to the triggering instructor while the agent writes the exercise repositories, so the editor can render a live, auto-following preview without
+ * polling the sandbox. The full content is already in memory on the loop node when {@code write_file}/{@code edit_file} run, so no read-back is needed. It carries a fixed
+ * {@link #TYPE} discriminator so it can share the per-user websocket topic with the progress events, and is {@link Serializable} because the latest snapshot per file is retained
+ * in a distributed Hazelcast map so a reloading client can rehydrate the preview and resume the stream.
  *
  * @param type      the constant {@link #TYPE} discriminator (distinguishes a snapshot from a progress event on the shared topic)
  * @param path      the workspace-relative file path
  * @param repo      the owning repository bucket ({@code solution}, {@code template}, {@code tests} or {@code other})
  * @param action    whether the file was newly created or edited in place ({@code create} or {@code edit})
  * @param content   the whole current file content, capped at {@link #MAX_CONTENT_BYTES} (see {@link #truncated})
- * @param sha256    the SHA-256 hex digest of the FULL (untruncated) content, so a client can detect change even when the content is truncated
+ * @param sha256    the SHA-256 hex digest of the full (untruncated) content, so a client can detect change even when the content is truncated
  * @param bytes     the full (untruncated) content size in bytes
  * @param truncated whether {@link #content} was truncated because the file exceeded {@link #MAX_CONTENT_BYTES}
  * @param turn      the agent turn on which the write happened (best-effort telemetry; {@code 0} if unknown)
@@ -57,7 +55,7 @@ public record HyperionFileSnapshotDTO(@Schema(description = "Constant discrimina
     public static final String ACTION_EDIT = "edit";
 
     /**
-     * Builds a snapshot for a write, classifying the repository bucket from the path, hashing the FULL content, and truncating the streamed content to {@link #MAX_CONTENT_BYTES}.
+     * Builds a snapshot for a write, classifying the repository bucket from the path, hashing the full content, and truncating the streamed content to {@link #MAX_CONTENT_BYTES}.
      *
      * @param path        the workspace-relative path just written
      * @param action      {@link #ACTION_CREATE} or {@link #ACTION_EDIT}

@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
  * The script reproduces the real Artemis CI layout: a fresh hermetic build tree with the tests checked out and the chosen assignment ({@code solution/} or {@code template/})
  * copied into {@code assignment/} next to them, then runs the exercise's real per-language build phases ({@link BuildPhasesTemplateService}).
  * <p>
- * The verdict is NOT parsed in the shell: the script only COLLECTS the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the Java verifier
- * copies that directory out and parses it with the SAME production code as the LocalCI pipeline ({@code TestResultXmlParser}, {@code ReportParser}) — parity by construction. The
+ * The verdict is not parsed in the shell: the script only collects the build-fresh report files into a fixed, verifier-owned directory ({@link #REPORTS_DIR}); the Java verifier
+ * copies that directory out and parses it with the same production code as the LocalCI pipeline ({@code TestResultXmlParser}, {@code ReportParser}) — parity by construction. The
  * script prints only a single non-authoritative {@code HYPERION_COLLECTED} liveness line.
  */
 @Lazy
@@ -52,11 +52,11 @@ public class SandboxBuildCommandService {
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
     static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
-    /** Verifier-owned, agent-unreachable directory the script collects reports INTO and the verifier {@code copyOut}s FROM. */
+    /** Verifier-owned, agent-unreachable directory the script collects reports into and the verifier {@code copyOut}s from. */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
     /**
-     * The workspace directory holding the DECORRELATED examiner suite for the cross-check, seeded separately from (and never overwriting) the agent's own
+     * The workspace directory holding the decorrelated examiner suite for the cross-check, seeded separately from (and never overwriting) the agent's own
      * {@code tests}. The cross-check invokes {@code verify.sh <assignment> shadow-tests} so the shadow suite is assembled in place of the agent's tests.
      */
     static final String CROSSCHECK_TESTS_DIR = "shadow-tests";
@@ -146,7 +146,7 @@ public class SandboxBuildCommandService {
         // moot.
         String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
         String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
-        // Materialize a sibling solution/ EXACTLY when real CI would (language defines a solution checkout path — Haskell/OCaml — AND the exercise checks it out), so the harness
+        // Materialize a sibling solution/ exactly when real CI would (language defines a solution checkout path — Haskell/OCaml — and the exercise checks it out), so the harness
         // reference (e.g. the Haskell cabal's `library solution`) resolves. Other languages get no solution/, keeping their differential unchanged.
         boolean materializeSolution = recipe.materializesSolution();
         String solutionCopySection = materializeSolution
@@ -299,7 +299,7 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Summary of the resolved build recipe for the agent's system prompt, derived from the SAME {@link #resolveBuildRecipe} that renders {@code verify.sh} so prompt and grader
+     * Summary of the resolved build recipe for the agent's system prompt, derived from the same {@link #resolveBuildRecipe} that renders {@code verify.sh} so prompt and grader
      * cannot drift.
      *
      * @param phaseScripts         the placeholder-substituted per-phase commands, run in order from the build root
@@ -402,7 +402,7 @@ public class SandboxBuildCommandService {
     }
 
     /**
-     * Substitutes the CI directory placeholders to the resolved checkout layout via the exact real-CI substitution. An empty test dir maps to {@code .} so {@code cd
+     * Substitutes the CI directory placeholders to the resolved checkout layout via the real-CI substitution. An empty test dir maps to {@code .} so {@code cd
      * ${testWorkingDirectory}} stays put rather than {@code cd} with no argument. Returns the input unchanged when the LocalCI service is absent.
      */
     private String substitute(String script, String assignmentDir, String testDir) {

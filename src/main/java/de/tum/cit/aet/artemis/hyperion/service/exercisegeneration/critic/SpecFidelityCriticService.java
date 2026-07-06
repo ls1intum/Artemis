@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * Spec-fidelity / coverage critic — the one quality axis the differential oracle ({@link DifferentialVerificationService}) is structurally blind to.
  * <p>
  * The oracle proves an exercise is internally <em>consistent</em> (the solution passes its own tests, the template fails them, every [task] binds) but never whether the produced
- * tests cover the requirements the <em>instructor's brief</em> actually names. Real defect classes from a GPU+sandbox hard-exercise audit slip straight through it, for example:
+ * tests cover the requirements the <em>instructor's brief</em> actually names. Real defect classes slip straight through it, for example:
  * <ul>
  * <li><strong>Spec-narrowing:</strong> a "count user-perceived characters incl. emoji and CJK" brief shipped with tests for only precomposed {@code café} and one emoji, with no
  * CJK and no ZWJ/flag-emoji test — internally consistent, but wrong for the real spec.</li>
@@ -39,11 +39,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * It combines deterministic passes (a regex scan of the problem statement for grader-mechanics leaks and a scan of the produced tests for message-less assertions, both model-free)
  * with a single bounded LLM pass (uncovered requirements, missing worked examples, and invented requirements). See {@link SpecFidelityReport.Kind} for the full set of findings.
  * <p>
- * <strong>Non-blocking by construction.</strong> The differential oracle stays the sole source of truth for acceptance; this critic NEVER participates in the accept/reject
- * decision,
- * so a false positive (its real risk) can only ever add an advisory note. Its findings are folded into the verifier-feedback retry prompt while attempts remain (so the agent adds
- * the missing test) and surfaced as advisory review comments otherwise. Any failure of the model pass — a timeout, an error, empty or garbage output — is swallowed and yields no
- * findings, so a critic failure never perturbs the run.
+ * Non-blocking: this critic never participates in the accept/reject decision, so a false positive (its real risk) can only add an advisory note. Its findings are folded into the
+ * verifier-feedback retry prompt while attempts remain and surfaced as advisory review comments otherwise. Any failure of the model pass (timeout, error, empty or garbage output)
+ * is swallowed and yields no findings, so a critic failure never perturbs the run.
  */
 @Lazy
 @Service
@@ -289,7 +287,7 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Languages whose default assertion failure does NOT name the behaviour — a bare {@code assertEquals(600L, actual)} reports only "expected 600 but was 500", so a human failure
+     * Languages whose default assertion failure does not name the behaviour — a bare {@code assertEquals(600L, actual)} reports only "expected 600 but was 500", so a human failure
      * message is the failing student's only diagnostic. Other frameworks self-describe (Go {@code t.Errorf} format strings, Jest's auto-diff plus descriptive {@code it()} names,
      * Catch2/gtest expression expansion), so they are deliberately out of scope and fail open.
      */
@@ -299,20 +297,19 @@ public class SpecFidelityCriticService {
     private static final Pattern JVM_ASSERTION_CALL = Pattern.compile("\\b(?:assert\\w*|fail)\\s*\\(");
 
     /**
-     * A JVM assertion/{@code fail} call carrying a string-literal argument somewhere in the same statement. Used only at the FILE level to decide a file is not WHOLLY
-     * message-less: a
-     * matched string may be a real failure message ({@code fail("...")}) or a string expected-value ({@code assertEquals("olleh", ...)}); both make the file "not wholly bare", so
-     * the
-     * check conservatively under-fires rather than risk a false advisory. The {@code [^;{}]} bound keeps the scan inside one statement and out of a braced lambda body.
+     * A JVM assertion/{@code fail} call carrying a string-literal argument somewhere in the same statement. Used only at the file level to decide a file is not wholly
+     * message-less:
+     * a matched string may be a real failure message ({@code fail("...")}) or a string expected-value ({@code assertEquals("olleh", ...)}); both make the file "not wholly bare",
+     * so
+     * the check conservatively under-fires rather than risk a false advisory. The {@code [^;{}]} bound keeps the scan inside one statement and out of a braced lambda body.
      */
     private static final Pattern JVM_ASSERTION_WITH_STRING = Pattern.compile("\\b(?:assert\\w*|fail)\\s*\\([^;{}]*\"");
 
     /**
-     * Deterministic, model-free advisory check: flags a graded JVM test file whose assertions carry NO human-readable failure message, so a failing student sees only the raw value
-     * mismatch with no hint at which behaviour broke (the gold-standard {@code SortingExampleBehaviorTest} pairs every branch with a descriptive {@code fail("...")}). File-level
-     * by
-     * design — it flags only a WHOLLY message-less file, which sidesteps per-assertion argument parsing and keeps false positives near zero (a mixed file, or any framework that
-     * self-describes, is left alone). Advisory only; it never affects acceptance, so it can never bounce a correctness-valid exercise into the retry budget.
+     * Deterministic, model-free advisory check: flags a graded JVM test file whose assertions carry no human-readable failure message, so a failing student sees only the raw value
+     * mismatch with no hint at which behaviour broke. File-level by design — it flags only a wholly message-less file, which sidesteps per-assertion argument parsing and keeps
+     * false
+     * positives near zero (a mixed file, or any framework that self-describes, is left alone). Advisory only; it never affects acceptance.
      *
      * @param language           the exercise programming language
      * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)

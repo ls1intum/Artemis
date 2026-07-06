@@ -17,20 +17,19 @@ public final class LanguageGenerationProfile {
     }
 
     /**
-     * The single source of truth for the languages Hyperion offers for one-click whole-exercise generation and adaptation, served over the generation resource so clients fetch it
-     * rather than mirror it by hand. Currently only Java is enabled (see {@link #SUPPORTED_LANGUAGES}): the set is rollout-gated because only the Java differential oracle is
-     * validated end-to-end. A language becomes eligible only once its test runner produces parseable reports (JUnit-XML / SCA) the oracle can self-verify — the niche
-     * simulator/license-bound targets ({@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER}, {@code MATLAB}, {@code VHDL}) and the template-less languages ({@code EMPTY},
-     * {@code SQL}, {@code POWERSHELL}, {@code ADA}, {@code PHP}) never qualify.
+     * The languages Hyperion offers for one-click whole-exercise generation and adaptation, served over the generation resource so clients fetch it rather than mirror it by hand.
+     * A language is eligible only once its test runner produces parseable reports (JUnit-XML / SCA) the differential oracle can self-verify — the niche simulator/license-bound
+     * targets ({@code C}, {@code OCAML}, {@code BASH}, {@code ASSEMBLER}, {@code MATLAB}, {@code VHDL}) and the template-less languages ({@code EMPTY}, {@code SQL},
+     * {@code POWERSHELL}, {@code ADA}, {@code PHP}) never qualify.
      *
-     * @return the immutable set of currently-enabled, oracle-verifiable generation-supported languages
+     * @return the immutable set of oracle-verifiable generation-supported languages
      */
     public static Set<ProgrammingLanguage> supportedLanguages() {
         return SUPPORTED_LANGUAGES;
     }
 
-    // The production-enabled set is intentionally JUST Java for this rollout: only the Java differential oracle is validated end-to-end. The per-language guidance arms below are
-    // retained in full so enabling another language is a one-line change here (add it once its oracle path is validated) rather than re-authoring the profile.
+    // The enabled set is intentionally just Java: only the Java differential oracle is validated end-to-end. The per-language guidance arms below are retained in full so enabling
+    // another language is a one-line change here (add it once its oracle path is validated) rather than re-authoring the profile.
     private static final Set<ProgrammingLanguage> SUPPORTED_LANGUAGES = Set.of(ProgrammingLanguage.JAVA);
 
     /**
@@ -77,7 +76,7 @@ public final class LanguageGenerationProfile {
         };
     }
 
-    /** The universal rule, stated once, that every profile relies on: a {@code [task]} binds to the test's NAME AS THE RUNNER REPORTS IT — which varies by framework. */
+    /** The universal rule every profile relies on: a {@code [task]} binds to the test's name as the runner reports it — which varies by framework. */
     private static final String TASK_NAME_RULE = "Remember: a [task]'s parenthesised names must be the test identifiers EXACTLY as this framework's runner writes them into its result "
             + "report (see below) — never a @DisplayName or a prose title.";
 

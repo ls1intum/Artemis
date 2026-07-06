@@ -16,11 +16,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Runs an independently-authored shadow test suite against the REAL solution through the exact same production build+parse path the differential oracle uses, so the shadow suite
- * is
- * judged with parity-by-construction. Exercise-agnostic: it flags any solution-side failure that is not a build/compile gate, from ANY shadow suite, and never decides acceptance
- * itself. On doubt it fails OPEN ({@link CrossCheckVerdict.Status#INCONCLUSIVE}), so it can only ever ADD an advisory (or, behind a config flag, a hard block on top of an
- * already-accepted exercise). Why decorrelation matters is documented on {@link CrossCheckVerdict}.
+ * Runs an independently-authored shadow test suite against the solution through the same production build+parse path the differential oracle uses. Exercise-agnostic: it flags any
+ * solution-side failure that is not a build/compile gate and never decides acceptance itself. On doubt it fails open ({@link CrossCheckVerdict.Status#INCONCLUSIVE}), so it can
+ * only
+ * add an advisory (or, behind a config flag, a hard block on top of an already-accepted exercise). See {@link CrossCheckVerdict} for why the decorrelation matters.
  */
 @Lazy
 @Service
@@ -41,7 +40,7 @@ public class CrossCheckService {
     /**
      * Runs the given shadow suite against the real solution and decides whether the solution contradicts its own stated contract.
      * <p>
-     * The shadow suite is seeded into a SEPARATE workspace directory ({@code shadow-tests/}) — it never overwrites the agent's own {@code tests/} — and the build re-wipes and
+     * The shadow suite is seeded into a separate workspace directory ({@code shadow-tests/}) — it never overwrites the agent's own {@code tests/} — and the build re-wipes and
      * re-collects its verifier-owned reports dir, so running this after the main differential in the same session is collision-free.
      *
      * @param sandbox         the open sandbox session (the same one the differential ran in)
@@ -61,7 +60,7 @@ public class CrossCheckService {
             return decide(solution);
         }
         catch (RuntimeException e) {
-            // Fail open (never a reject): a build/copyOut error tells us nothing about the solution, and the cross-check must never perturb a run.
+            // Fail open: a build/copyOut error tells us nothing about the solution.
             log.warn("Cross-check could not run; treating as inconclusive: {}", e.getMessage());
             return CrossCheckVerdict.inconclusive("The cross-check build could not run: " + e.getMessage());
         }
@@ -83,7 +82,7 @@ public class CrossCheckService {
     private static CrossCheckVerdict decide(DifferentialVerificationService.BuildSummary solution) {
         // tests() == 0 also covers a timed-out build (BuildSummary.timedOut reports zero tests).
         if (solution.tests() == 0) {
-            // Fail open (never a reject): a shadow suite that did not run tells us nothing about the solution.
+            // Fail open: a shadow suite that did not run tells us nothing about the solution.
             return CrossCheckVerdict.inconclusive("The shadow suite did not run against the reference solution (it did not compile, ran no tests, or timed out).");
         }
         List<String> contradicted = gradableFailures(solution);
@@ -94,7 +93,7 @@ public class CrossCheckService {
         return new CrossCheckVerdict(CrossCheckVerdict.Status.CONSISTENT, List.of(), "The reference solution passes every independently-authored contract test.");
     }
 
-    /** The build's failed/errored test names EXCLUDING build/compile/configure gates, deduplicated — the same exemption the acceptance gate applies. */
+    /** The build's failed/errored test names excluding build/compile/configure gates, deduplicated — the same exemption the acceptance gate applies. */
     private static List<String> gradableFailures(DifferentialVerificationService.BuildSummary build) {
         return build.testFailedNames().stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).distinct().toList();
     }

@@ -269,15 +269,3 @@ deferredEagerBeanInstantiationViolations.dot
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/
 
-######################################################################
-# Live-GPU Hyperion exercise-generation E2E tests
-######################################################################
-# Kept on disk for occasional MANUAL validation against the real GPU endpoint, but NOT
-# committed: they are non-deterministic, cost money, and hit an external LLM. CI relies on the
-# committed deterministic mocked-LLM E2E tests instead.
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionExerciseGenerationEndToEndTest.java
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionAuthenticEndToEndGradingTest.java
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionAdaptWithFeedbackEndToEndTest.java
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionGpuTestEnvironment.java
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/GeneratedExerciseExporter.java
-/src/test/java/de/tum/cit/aet/artemis/hyperion/service/exercisegeneration/HyperionDecorrelatedExaminerAuthenticTest.java

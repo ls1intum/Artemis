@@ -90,18 +90,18 @@ final class WorkspaceArchive {
     }
 
     /**
-     * Reads the regular TEXT files from a tar archive, returning their UTF-8 content keyed by path with the given prefix removed.
+     * Reads the regular text files from a tar archive, returning their UTF-8 content keyed by path with the given prefix removed.
      * <p>
-     * <strong>Binary files are EXCLUDED.</strong> A binary entry (a NUL byte or non-UTF-8 content in its leading window — e.g. the {@code gradle/wrapper/gradle-wrapper.jar} a Java
+     * Binary files are excluded. A binary entry (a NUL byte or non-UTF-8 content in its leading window — e.g. the {@code gradle/wrapper/gradle-wrapper.jar} a Java
      * PLAIN_GRADLE / GRADLE_GRADLE exercise ships) cannot survive a lossless round-trip through a UTF-8 {@code String}: decoding it substitutes {@code U+FFFD} for every invalid
      * byte
      * sequence, and a downstream re-encode would write that mangled content back and break the build. The agent never edits these scaffolded binaries, so the persist step
      * preserves
-     * them byte-exact from the scaffold (and the orphan-sweep never deletes them) — they must therefore NOT enter the produced text map here.
+     * them byte-exact from the scaffold (and the orphan-sweep never deletes them) — they must therefore not enter the produced text map here.
      *
      * @param tar           the archive to read (closed by the caller)
      * @param prefixToStrip a leading path segment to drop from each entry name (Docker prefixes copied-out entries with the source directory name); may be empty
-     * @return the TEXT file contents keyed by their path relative to {@code prefixToStrip} (binary files omitted)
+     * @return the text file contents keyed by their path relative to {@code prefixToStrip} (binary files omitted)
      * @throws IOException if reading the archive fails
      */
     static Map<String, String> readTar(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
