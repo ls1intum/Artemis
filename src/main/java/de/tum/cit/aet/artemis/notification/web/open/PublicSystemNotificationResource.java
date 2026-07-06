@@ -48,6 +48,6 @@ public class PublicSystemNotificationResource {
     @EnforceNothing
     public ResponseEntity<List<SystemNotificationDTO>> getActiveAndFutureSystemNotifications() {
         log.debug("REST request to get relevant system notifications");
-        return ResponseEntity.ok(systemNotificationService.findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList());
+        return ResponseEntity.ok(systemNotificationService.findAllActiveAndFutureSystemNotificationDTOs());
     }
 }

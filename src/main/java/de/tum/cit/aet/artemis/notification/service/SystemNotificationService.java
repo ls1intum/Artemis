@@ -63,6 +63,15 @@ public class SystemNotificationService {
         return systemNotificationRepository.findAllActiveAndFutureSystemNotifications(ZonedDateTime.now());
     }
 
+    /**
+     * Finds all active and future system notifications and maps them to DTOs.
+     *
+     * @return the list of notification DTOs
+     */
+    public List<SystemNotificationDTO> findAllActiveAndFutureSystemNotificationDTOs() {
+        return findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
+    }
+
     static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
 
     // Legacy STOMP destination kept in parallel during the migration to /topic/notification/...
@@ -77,7 +86,7 @@ public class SystemNotificationService {
      */
     @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotifications().stream().map(SystemNotificationDTO::from).toList();
+        List<SystemNotificationDTO> notifications = findAllActiveAndFutureSystemNotificationDTOs();
         websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
         // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
         websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);
