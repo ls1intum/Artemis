@@ -6,7 +6,7 @@ import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service'
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 describe('AuthServerProvider', () => {
     setupTestBed({ zoneless: true });
