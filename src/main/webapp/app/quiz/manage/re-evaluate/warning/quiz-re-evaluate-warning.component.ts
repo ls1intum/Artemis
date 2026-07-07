@@ -25,7 +25,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     private quizReEvaluateService = inject(QuizReEvaluateService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    isSaving: boolean;
+    isSaving = false;
 
     readonly successful = signal(false);
     readonly failed = signal(false);
@@ -39,10 +39,10 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     readonly scoringChanged = signal(false);
     readonly solutionAdded = signal(false);
 
-    quizExercise: QuizExercise;
-    backUpQuiz: QuizExercise;
+    quizExercise!: QuizExercise; // set in ngOnInit() from the DynamicDialog config data
+    backUpQuiz!: QuizExercise; // set in ngOnInit() from the server response before it is read
 
-    files: Map<string, File>;
+    files!: Map<string, File>; // set in ngOnInit() from the DynamicDialog config data
 
     // Icons
     faBan = faBan;

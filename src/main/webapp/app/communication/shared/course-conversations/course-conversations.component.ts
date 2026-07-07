@@ -170,10 +170,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     });
 
     private ngUnsubscribe = new Subject<void>();
-    private closeSidebarEventSubscription: Subscription;
-    private openSidebarEventSubscription: Subscription;
-    private toggleSidebarEventSubscription: Subscription;
-    private reloadSidebarEventSubscription: Subscription;
+    private closeSidebarEventSubscription?: Subscription;
+    private openSidebarEventSubscription?: Subscription;
+    private toggleSidebarEventSubscription?: Subscription;
+    private reloadSidebarEventSubscription?: Subscription;
     // Transient observers that watch for a post/reply to appear in the DOM. They self-disconnect on
     // success and via a 5s timeout, but are stored here so ngOnDestroy can disconnect them if the
     // component is torn down within that window.

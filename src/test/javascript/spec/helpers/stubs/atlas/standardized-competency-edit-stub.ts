@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Observable } from 'rxjs';
 
@@ -7,14 +7,14 @@ import { Observable } from 'rxjs';
     template: '',
 })
 export class StandardizedCompetencyEditStubComponent {
-    @Input() knowledgeAreas: KnowledgeArea[] = [];
-    @Input() sources: Source[] = [];
-    @Input() competency: StandardizedCompetencyDTO;
-    @Input() isEditing = false;
-    @Input() dialogError: Observable<string>;
+    knowledgeAreas = input<KnowledgeArea[]>([]);
+    sources = input<Source[]>([]);
+    competency = input<StandardizedCompetencyDTO>();
+    isEditing = input(false);
+    dialogError = input<Observable<string>>();
 
-    @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
-    @Output() onDelete = new EventEmitter<number>();
-    @Output() onClose = new EventEmitter<void>();
-    @Output() isEditingChange = new EventEmitter<boolean>();
+    onSave = output<StandardizedCompetencyDTO>();
+    onDelete = output<number>();
+    onClose = output<void>();
+    isEditingChange = output<boolean>();
 }

@@ -35,18 +35,18 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     readonly postComponent = viewChild.required<PostComponent>('post');
     readonly ButtonType = ButtonType;
 
-    courseId: number;
-    plagiarismCaseId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
     readonly plagiarismCase = signal<PlagiarismCase | undefined>(undefined);
 
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     getIcon = getIcon;
     faUser = faUser;
 
     readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
     readonly posts = signal<Post[]>([]);
 
     readonly affectedExerciseRouterLink = signal<(string | number)[]>([]);

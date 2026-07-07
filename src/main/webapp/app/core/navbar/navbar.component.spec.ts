@@ -69,9 +69,9 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { LoginService } from 'app/core/login/login.service';
 
 class MockBreadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }
 
 describe('NavbarComponent', () => {

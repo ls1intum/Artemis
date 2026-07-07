@@ -1,13 +1,13 @@
-<div class="row d-flex justify-content-center">
+<div class="flex flex-col justify-center">
     <div>
         <h3>{{ chartName() | artemisTranslate }}</h3>
     </div>
-    <div class="row">
-        <fa-icon [icon]="faArrowLeft" size="2x" class="col-1 d-flex justify-content-end align-items-center px-0" role="button" (click)="switchTimeSpan(LEFT)" />
-        <div class="chart col-10 px-0" style="height: 250px">
+    <div class="flex">
+        <fa-icon [icon]="faArrowLeft" size="2x" class="flex justify-end items-center px-0 w-[8.333%]" role="button" (click)="switchTimeSpan(LEFT)" />
+        <div class="chart grow px-0" style="height: 250px">
             <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
         </div>
-        <fa-icon [icon]="faArrowRight" size="2x" class="col-1 d-flex justify-content-start align-items-center px-0" role="button" (click)="switchTimeSpan(RIGHT)" />
+        <fa-icon [icon]="faArrowRight" size="2x" class="flex justify-start items-center px-0 w-[8.333%]" role="button" (click)="switchTimeSpan(RIGHT)" />
     </div>
 </div>
-<h4 class="col-xl-9 offset-xl-2 text-center mt-3 mb-5">{{ chartTime() }}</h4>
+<h4 class="w-3/4 ml-[16.667%] text-center mt-3 mb-5">{{ chartTime() }}</h4>
