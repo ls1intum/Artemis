@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * 2. A "result" callback when the pipeline finishes, with the final answer (or null).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
+public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(10) int limit, PyrisPipelineExecutionSettingsDTO settings,
         @JsonProperty("initialStages") List<PyrisStageDTO> initialStages, @JsonProperty("accessContext") PyrisAccessContextDTO accessContext,
         @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
 }

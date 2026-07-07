@@ -10,5 +10,5 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, @NotNull UUID runId) {
+public record PyrisSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(10) int limit, @NotNull UUID runId) {
 }

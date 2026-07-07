@@ -45,7 +45,7 @@ export class IrisSearchAnswerService {
      * The Observable completes after the final result message (`isThinking: false`).
      * `switchMap` in the caller guarantees the previous subscription is torn down before the next starts.
      */
-    ask(query: string, limit = 5): Observable<IrisSearchStatusUpdate> {
+    ask(query: string, limit = 10): Observable<IrisSearchStatusUpdate> {
         return new Observable<IrisSearchStatusUpdate>((subscriber) => {
             // Generate the correlation ID client-side so it's known before the HTTP call.
             // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.

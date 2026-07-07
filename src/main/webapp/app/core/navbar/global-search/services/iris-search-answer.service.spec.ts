@@ -42,12 +42,12 @@ describe('IrisSearchAnswerService', () => {
         expect(service).toBeTruthy();
     });
 
-    it('should POST to api/iris/search-answer with query, default limit of 5, and client-generated runId', () => {
+    it('should POST to api/iris/search-answer with query, default limit of 10, and client-generated runId', () => {
         service.ask('what are signals?').subscribe();
 
         const req = httpTesting.expectOne('api/iris/search-answer');
         expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5, runId: MOCK_RUN_ID });
+        expect(req.request.body).toEqual({ query: 'what are signals?', limit: 10, runId: MOCK_RUN_ID });
 
         req.flush(null, { status: 202, statusText: 'Accepted' });
     });
