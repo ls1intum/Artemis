@@ -21,7 +21,7 @@ public class ShortAnswerTextSelection {
     @JsonProperty("text")
     private String text;
 
-    @JsonProperty("isCorrect")
+    @JsonProperty("correct")
     private Boolean isCorrect;
 
     public ShortAnswerTextSelection() {

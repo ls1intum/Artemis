@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param dragItemId     the question-scoped id of the dragged item
  * @param dropLocationId the question-scoped id of the drop location it was dropped onto
  */
-public record DragAndDropMappingSelection(@JsonProperty("dragItemId") Long dragItemId, @JsonProperty("dropLocationId") Long dropLocationId) {
+public record DragAndDropMappingSelection(@JsonProperty("diId") Long dragItemId, @JsonProperty("dlId") Long dropLocationId) {
 }

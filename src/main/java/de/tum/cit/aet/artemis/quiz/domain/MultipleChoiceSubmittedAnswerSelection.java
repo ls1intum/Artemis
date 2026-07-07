@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class MultipleChoiceSubmittedAnswerSelection implements SubmittedAnswerSelection {
 
-    @JsonProperty("selectedOptionIds")
+    @JsonProperty("soIds")
     private List<Long> selectedOptionIds = new ArrayList<>();
 
     public List<Long> getSelectedOptionIds() {

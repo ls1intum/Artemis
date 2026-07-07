@@ -42,7 +42,9 @@ Note that `drag_and_drop_mapping` was **dual-purpose**: it stored both a questio
 
 ## JSON schemas
 
-Every stored object matches a POJO in `de.tum.cit.aet.artemis.quiz.domain`. The `content` and `selection` values are polymorphic and carry a `"type"` discriminator (`drag-and-drop` / `short-answer` / `multiple-choice`), matching the `@JsonTypeInfo` / `@JsonSubTypes` on `QuizQuestionContent` and `SubmittedAnswerSelection`. The `counters` value is a plain array (its type is fixed by the owning statistic subtype, so it needs no discriminator).
+Every stored object matches a POJO in `de.tum.cit.aet.artemis.quiz.domain`. The `content` and `selection` values are polymorphic and carry a `"type"` discriminator, matching the `@JsonTypeInfo` / `@JsonSubTypes` on `QuizQuestionContent` and `SubmittedAnswerSelection`. The `counters` value is a plain array (its type is fixed by the owning statistic subtype, so it needs no discriminator).
+
+`content` and `counters` use **descriptive keys** (`drag-and-drop` / `short-answer` / `multiple-choice`, `dropLocations`, `posX`, …) because those POJOs are also serialized to clients (the statistics websocket and exam conduction broadcast the raw entity via `getDropLocations()` / `getDropLocationCounters()` / … — so their keys are part of the wire contract). **`submitted_answer.selection` uses abbreviated keys** (`dnd`/`sa`/`mc`, `maps`, `diId`, …) to save space: it is the only high-volume column (one row per submitted answer, millions at scale, mostly below the TOAST compression threshold), and its POJOs are never serialized to a client (the wire uses the resolved objects from `getMappings()` / `getSubmittedTexts()` / `getSelectedOptions()`). The `selection` legend is below.
 
 Component ids inside the JSON are **question-scoped** (unique only within one question) and are the verbatim old primary keys after migration; new components get `max(existing ids)+1` minted server-side.
 
@@ -68,11 +70,27 @@ Component ids inside the JSON are **question-scoped** (unique only within one qu
 
 ### `submitted_answer.selection`
 
+Abbreviated keys (see the legend below):
+
 ```jsonc
-{ "type": "drag-and-drop",   "mappings":       [ { "dragItemId": 2, "dropLocationId": 1 } ] }
-{ "type": "short-answer",    "submittedTexts": [ { "spotId": 1, "text": "is", "isCorrect": true } ] }
-{ "type": "multiple-choice", "selectedOptionIds": [ 1, 4 ] }
+{ "type": "dnd", "maps":  [ { "diId": 2, "dlId": 1 } ] }
+{ "type": "sa",  "texts": [ { "spotId": 1, "text": "is", "correct": true } ] }
+{ "type": "mc",  "soIds": [ 1, 4 ] }
 ```
+
+#### `selection` key legend (for reading the column directly)
+
+| JSON key | Meaning (Java field) |
+| --- | --- |
+| `type` = `dnd` / `sa` / `mc` | drag-and-drop / short-answer / multiple-choice submitted answer |
+| `maps` | `mappings` (drag-and-drop) |
+| `diId` | `dragItemId` |
+| `dlId` | `dropLocationId` |
+| `texts` | `submittedTexts` (short-answer) |
+| `spotId` | `spotId` (unchanged — already short) |
+| `text` | `text` (unchanged) |
+| `correct` | `isCorrect` |
+| `soIds` | `selectedOptionIds` (multiple-choice) |
 
 ### `quiz_statistic.counters`
 
@@ -101,7 +119,7 @@ Every old column and where it lands. `content` / `selection` are on the question
 | `drag_item.text` | `content.dragItems[].text` |
 | `drag_item.invalid` | `content.dragItems[].invalid` |
 | `drag_and_drop_mapping.{id, drag_item_id, drop_location_id, invalid}` **where `question_id` is set** | `content.correctMappings[].{id, dragItemId, dropLocationId, invalid}` |
-| `drag_and_drop_mapping.{drag_item_id, drop_location_id}` **where `submitted_answer_id` is set** | `selection.mappings[].{dragItemId, dropLocationId}` (no id — submission mappings have no identity) |
+| `drag_and_drop_mapping.{drag_item_id, drop_location_id}` **where `submitted_answer_id` is set** | `selection.maps[].{diId, dlId}` (abbreviated; no id — submission mappings have no identity) |
 | `quiz_statistic_counter.{drop_location_id, rated_counter, un_rated_counter}` (discriminator `DD`) | `quiz_statistic.counters[].{dropLocationId, ratedCounter, unRatedCounter}` |
 
 ### Short-answer
@@ -111,7 +129,7 @@ Every old column and where it lands. `content` / `selection` are on the question
 | `short_answer_spot.{id, spot_nr, width, invalid}` | `content.spots[].{id, spotNr, width, invalid}` |
 | `short_answer_solution.{id, text, invalid}` | `content.solutions[].{id, text, invalid}` |
 | `short_answer_mapping.{id, spot_id, solution_id, invalid}` | `content.correctMappings[].{id, spotId, solutionId, invalid}` |
-| `short_answer_submitted_text.{spot_id, text, is_correct}` | `selection.submittedTexts[].{spotId, text, isCorrect}` (row `id` dropped — no identity) |
+| `short_answer_submitted_text.{spot_id, text, is_correct}` | `selection.texts[].{spotId, text, correct}` (abbreviated; row `id` dropped — no identity) |
 | `quiz_statistic_counter.{spot_id, rated_counter, un_rated_counter}` (discriminator `SA`) | `quiz_statistic.counters[].{spotId, ratedCounter, unRatedCounter}` |
 
 ### Multiple-choice
@@ -119,7 +137,7 @@ Every old column and where it lands. `content` / `selection` are on the question
 | Old column | New location |
 | --- | --- |
 | `answer_option.{id, text, hint, explanation, is_correct, invalid}` | `content.answerOptions[].{id, text, hint, explanation, isCorrect, invalid}` |
-| `multiple_choice_submitted_answer_selected_options.selected_options_id` | `selection.selectedOptionIds[]` |
+| `multiple_choice_submitted_answer_selected_options.selected_options_id` | `selection.soIds[]` (abbreviated) |
 | `quiz_statistic_counter.{answer_id, rated_counter, un_rated_counter}` (discriminator `AC`) | `quiz_statistic.counters[].{answerId, ratedCounter, unRatedCounter}` |
 
 ### Not carried over (intentionally dropped)

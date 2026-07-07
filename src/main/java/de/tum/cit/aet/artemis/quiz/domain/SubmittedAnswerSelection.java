@@ -13,8 +13,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
  * <p>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = DragAndDropSubmittedAnswerSelection.class, name = "drag-and-drop"),
-        @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswerSelection.class, name = "short-answer"),
-        @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswerSelection.class, name = "multiple-choice") })
+// The type discriminator and all selection keys are abbreviated (dnd/sa/mc, and short field keys on the subtypes) to save space: submitted_answer.selection has one row per
+// submitted
+// answer (millions at scale, mostly below the TOAST compression threshold). This is safe because the selection subtypes are never serialized to a client — the wire uses the
+// resolved objects returned by getMappings()/getSubmittedTexts()/getSelectedOptions(). See documentation/docs/developer/guidelines/quiz-json-persistence-migration.mdx for the
+// legend.
+@JsonSubTypes({ @JsonSubTypes.Type(value = DragAndDropSubmittedAnswerSelection.class, name = "dnd"),
+        @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswerSelection.class, name = "sa"), @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswerSelection.class, name = "mc") })
 public sealed interface SubmittedAnswerSelection permits DragAndDropSubmittedAnswerSelection, ShortAnswerSubmittedAnswerSelection, MultipleChoiceSubmittedAnswerSelection {
 }

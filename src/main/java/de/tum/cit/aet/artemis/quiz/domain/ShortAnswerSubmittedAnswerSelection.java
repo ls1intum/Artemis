@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class ShortAnswerSubmittedAnswerSelection implements SubmittedAnswerSelection {
 
-    @JsonProperty("submittedTexts")
+    @JsonProperty("texts")
     private List<ShortAnswerTextSelection> submittedTexts = new ArrayList<>();
 
     public List<ShortAnswerTextSelection> getSubmittedTexts() {

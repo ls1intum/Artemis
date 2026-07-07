@@ -81,9 +81,9 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = jsonb_build_object(
-                'type', 'drag-and-drop',
-                'mappings', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object('dragItemId', dm.drag_item_id, 'dropLocationId', dm.drop_location_id))
+                'type', 'dnd',
+                'maps', COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object('diId', dm.drag_item_id, 'dlId', dm.drop_location_id))
                     FROM drag_and_drop_mapping dm WHERE dm.submitted_answer_id = sa.id), '[]'::jsonb))
             WHERE sa.discriminator = 'DD';
         </sql>
@@ -114,9 +114,9 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = JSON_OBJECT(
-                'type', 'drag-and-drop',
-                'mappings', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('dragItemId', dm.drag_item_id, 'dropLocationId', dm.drop_location_id))
+                'type', 'dnd',
+                'maps', COALESCE((
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('diId', dm.drag_item_id, 'dlId', dm.drop_location_id))
                     FROM drag_and_drop_mapping dm WHERE dm.submitted_answer_id = sa.id), JSON_ARRAY()))
             WHERE sa.discriminator = 'DD';
         </sql>
@@ -251,9 +251,9 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = jsonb_build_object(
-                'type', 'short-answer',
-                'submittedTexts', COALESCE((
-                    SELECT jsonb_agg(jsonb_build_object('spotId', t.spot_id, 'text', t.text, 'isCorrect', t.is_correct))
+                'type', 'sa',
+                'texts', COALESCE((
+                    SELECT jsonb_agg(jsonb_build_object('spotId', t.spot_id, 'text', t.text, 'correct', t.is_correct))
                     FROM short_answer_submitted_text t WHERE t.submitted_answer_id = sa.id), '[]'::jsonb))
             WHERE sa.discriminator = 'SA';
         </sql>
@@ -264,9 +264,9 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = JSON_OBJECT(
-                'type', 'short-answer',
-                'submittedTexts', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('spotId', t.spot_id, 'text', t.text, 'isCorrect', t.is_correct = TRUE))
+                'type', 'sa',
+                'texts', COALESCE((
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('spotId', t.spot_id, 'text', t.text, 'correct', t.is_correct = TRUE))
                     FROM short_answer_submitted_text t WHERE t.submitted_answer_id = sa.id), JSON_ARRAY()))
             WHERE sa.discriminator = 'SA';
         </sql>
@@ -351,8 +351,8 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = jsonb_build_object(
-                'type', 'multiple-choice',
-                'selectedOptionIds', COALESCE((
+                'type', 'mc',
+                'soIds', COALESCE((
                     SELECT jsonb_agg(j.selected_options_id)
                     FROM multiple_choice_submitted_answer_selected_options j WHERE j.multiple_choice_submitted_answers_id = sa.id), '[]'::jsonb))
             WHERE sa.discriminator = 'MC';
@@ -364,8 +364,8 @@
         <sql>
             UPDATE submitted_answer sa
             SET selection = JSON_OBJECT(
-                'type', 'multiple-choice',
-                'selectedOptionIds', COALESCE((
+                'type', 'mc',
+                'soIds', COALESCE((
                     SELECT JSON_ARRAYAGG(j.selected_options_id)
                     FROM multiple_choice_submitted_answer_selected_options j WHERE j.multiple_choice_submitted_answers_id = sa.id), JSON_ARRAY()))
             WHERE sa.discriminator = 'MC';

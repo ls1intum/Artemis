@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public final class DragAndDropSubmittedAnswerSelection implements SubmittedAnswerSelection {
 
-    @JsonProperty("mappings")
+    @JsonProperty("maps")
     private List<DragAndDropMappingSelection> mappings = new ArrayList<>();
 
     public List<DragAndDropMappingSelection> getMappings() {
