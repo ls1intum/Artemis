@@ -6,7 +6,7 @@ import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service'
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
 describe('AuthServerProvider', () => {
     setupTestBed({ zoneless: true });
@@ -93,6 +93,25 @@ describe('AuthServerProvider', () => {
             req.flush(respPayload);
 
             await loginPromise;
+        });
+    });
+
+    describe('test login with OIDC', () => {
+        beforeEach(() => {
+            vi.stubGlobal('location', new URL('http://localhost:9000/'));
+        });
+
+        afterEach(() => {
+            vi.unstubAllGlobals();
+        });
+
+        it('should redirect browser to OIDC authorization endpoint', async () => {
+            const loginPromise = firstValueFrom(service.loginOIDC(true));
+
+            expect(window.location.href).toBe('http://localhost:9000/oauth2/authorization/oidc');
+
+            const resp = await loginPromise;
+            expect(resp).toEqual({});
         });
     });
 
