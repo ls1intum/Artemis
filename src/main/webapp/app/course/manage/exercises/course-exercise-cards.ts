@@ -72,7 +72,12 @@ function sortExercises(exercises: Exercise[], context: CourseExerciseCardContext
     return [...exercises].sort((a, b) => {
         const da = effectiveDate(a, owningGroup(a, context.groups), 'dueDate');
         const db = effectiveDate(b, owningGroup(b, context.groups), 'dueDate');
-        return (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
+        // Exercises without an (effective) due date sort last rather than as if due at the epoch, so an undated
+        // exercise is not presented as the most urgent one.
+        if (da === undefined && db === undefined) return 0;
+        if (da === undefined) return 1;
+        if (db === undefined) return -1;
+        return da.valueOf() - db.valueOf();
     });
 }
 

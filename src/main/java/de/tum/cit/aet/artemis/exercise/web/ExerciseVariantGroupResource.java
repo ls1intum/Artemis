@@ -102,6 +102,9 @@ public class ExerciseVariantGroupResource {
         group.validateDates();
         // The course owns the unidirectional collection (the course_id FK lives on this table but is managed from the
         // Course side). Persist the group first so it gets an id, then attach it to the course so the FK is written.
+        // The two saves are deliberately not wrapped in a transaction (this codebase avoids service-level
+        // @Transactional): all validation happens before the first save, so the remaining failure window can only
+        // leave behind an empty, course-less group that no course-scoped query ever sees.
         group = exerciseVariantGroupRepository.save(group);
         Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
         course.addExerciseVariantGroup(group);
@@ -191,6 +194,10 @@ public class ExerciseVariantGroupResource {
      * PUT /courses/:courseId/exercises/:exerciseId/variant-group : Assign an exercise to a variant group, or remove it
      * from its current group. Membership is edited from the exercise side, so moving an exercise between groups is a
      * single request.
+     * <p>
+     * A group may deliberately mix exercise types (the variants of one task can come in different formats, e.g. a text
+     * and a modeling version). Scoring caps such a group once across all types in the overall course score; only the
+     * per-exercise-type breakdown on the instructor scores page applies the cap per type bucket.
      *
      * @param assignmentDTO the target group ({@code groupId == null} removes the exercise from its group)
      * @param exerciseId    the id of the exercise to (re-)assign

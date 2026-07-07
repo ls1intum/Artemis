@@ -59,6 +59,13 @@ describe('exercise cards', () => {
         expect(cards[0].exercises[0].id).toBe(2);
     });
 
+    it('sorts exercises without an effective due date last, not first', () => {
+        const dated = { id: 20, title: 'Dated', type: ExerciseType.TEXT, dueDate: dayjs('2026-07-09') } as Exercise;
+        const undated = { id: 21, title: 'Undated', type: ExerciseType.TEXT } as Exercise;
+        const cards = buildCourseExerciseCards('list', context({ exercises: [undated, dated], groups: [] }));
+        expect(cards[0].exercises.map((exercise) => exercise.id)).toEqual([20, 21]);
+    });
+
     it('cards dated exercises by week and collects undated ones separately', () => {
         const early = { id: 4, title: 'Week one', type: ExerciseType.TEXT, releaseDate: dayjs('2026-06-01') } as Exercise;
         const later = { id: 5, title: 'Week three', type: ExerciseType.TEXT, releaseDate: dayjs('2026-06-15') } as Exercise;
