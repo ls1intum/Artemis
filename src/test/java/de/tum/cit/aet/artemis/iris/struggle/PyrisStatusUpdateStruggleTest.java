@@ -50,10 +50,10 @@ class PyrisStatusUpdateStruggleTest {
     private PyrisStatusUpdateService service;
 
     // jobId "t", courseId 7, exerciseId 42, userId 3 (decide / legacy intent)
-    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null);
+    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null, null);
 
     // A11 mode jobs: intent carries the routing key; action is null on the response (deadlock guard)
-    private final StruggleInterventionJob confirmCloseJob = new StruggleInterventionJob("cc", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null);
+    private final StruggleInterventionJob confirmCloseJob = new StruggleInterventionJob("cc", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null, null);
 
     @BeforeEach
     void setUp() {

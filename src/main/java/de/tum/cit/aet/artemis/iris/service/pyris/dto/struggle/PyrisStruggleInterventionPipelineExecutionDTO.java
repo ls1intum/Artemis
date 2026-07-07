@@ -5,6 +5,7 @@ import java.util.List;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -25,9 +26,14 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * {@code episode} is the client-allocated episode block; the {@link StruggleEpisodeDTO} uses bare
  * {@code @JsonInclude()} (Include.ALWAYS) so an empty {@code hints:[]} is always serialized -- NON_EMPTY
  * would drop it and break the Pyris contract on the first FREE-slot decide.
+ * <p>
+ * {@code proactivityMode} ({@code pull} | {@code push}) is passed to Pyris purely as prompt tone context
+ * (reticent vs. willing to reach out); the hard Pull guarantee is enforced deterministically in Artemis
+ * ({@code handleDecision}), not by the LLM (spec §4/§10). Serialized snake_case for the Pyris boundary.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionPipelineExecutionDTO(PyrisStruggleSignalDTO struggleSignal, @Nullable PyrisProgrammingExerciseDTO programmingExercise,
         @Nullable PyrisSubmissionDTO programmingExerciseSubmission, List<PyrisMessageDTO> chatHistory, @Nullable PyrisCourseDTO course, @Nullable PyrisUserDTO user,
-        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, @Nullable String intent, @Nullable StruggleEpisodeDTO episode) {
+        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, @Nullable String intent, @Nullable StruggleEpisodeDTO episode,
+        @JsonProperty("proactivity_mode") @Nullable String proactivityMode) {
 }

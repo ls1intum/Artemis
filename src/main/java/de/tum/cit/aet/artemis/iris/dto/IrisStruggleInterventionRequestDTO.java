@@ -23,14 +23,17 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  * {@code intent} values: {@code decide} (default) | {@code confirm_close}
  * (snake-case wire values, spec §17). {@code confirmReason} values: {@code progress}
  * | {@code parked_progress} (A11 close-mode discriminator). {@code requestToken} is a client-minted UUID
- * used as the scoped-cancel identity (A10).
+ * used as the scoped-cancel identity (A10). {@code proactivityMode} values: {@code pull} (Less) |
+ * {@code push} (More, default when absent); in {@code pull} the server deterministically forces an
+ * {@code active} decision down to {@code ambient} (spec §4/§10).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisStruggleInterventionRequestDTO(@NotNull PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles, @Nullable String intent,
-        @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken) {
+        @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
 
     public IrisStruggleInterventionRequestDTO {
         uncommittedFiles = uncommittedFiles != null ? uncommittedFiles : Map.of();
         intent = intent != null ? intent : "decide";
+        proactivityMode = proactivityMode != null ? proactivityMode : "push";
     }
 }

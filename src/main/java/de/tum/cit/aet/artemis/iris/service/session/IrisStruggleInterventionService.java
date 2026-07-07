@@ -130,12 +130,13 @@ public class IrisStruggleInterventionService {
      * @param episode          the client-allocated episode block (null when not sent by an older client)
      * @param confirmReason    the close-mode discriminator (null unless intent is {@code confirm_close})
      * @param requestToken     the scoped-cancel identity (A10); null on older clients
+     * @param proactivityMode  the presence level ({@code pull} | {@code push}); enforces Pull in the callback (spec §4/§10)
      * @param user             the requesting student
      * @return the trigger outcome (accepted + job token, or rejected with the course-off flag for the 202)
      */
     public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, @Nullable String intent,
-            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, User user) {
-        var prepared = prepareTrigger(exerciseId, user, intent, episode, confirmReason, requestToken);
+            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode, User user) {
+        var prepared = prepareTrigger(exerciseId, user, intent, episode, confirmReason, requestToken, proactivityMode);
         if (!prepared.accepted()) {
             return new StruggleTriggerOutcome(false, prepared.courseDisabled(), null);
         }
@@ -153,16 +154,17 @@ public class IrisStruggleInterventionService {
      * (spec §13), then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
      * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
-     * @param exerciseId    the programming exercise id
-     * @param user          the requesting student
-     * @param intent        the slot intent; passed through to the job so async callbacks can route by intent
-     * @param episode       the client episode; the episodeId is stamped on the job for correlation
-     * @param confirmReason the close-mode discriminator; stamped on the job for A11 routing
-     * @param requestToken  the scoped-cancel UUID; stamped on the job for A10 cancel matching
+     * @param exerciseId      the programming exercise id
+     * @param user            the requesting student
+     * @param intent          the slot intent; passed through to the job so async callbacks can route by intent
+     * @param episode         the client episode; the episodeId is stamped on the job for correlation
+     * @param confirmReason   the close-mode discriminator; stamped on the job for A11 routing
+     * @param requestToken    the scoped-cancel UUID; stamped on the job for A10 cancel matching
+     * @param proactivityMode the presence level ({@code pull} | {@code push}); stamped on the job and forwarded to Pyris for tone
      * @return a typed preparation: the reserved trigger, or a rejection tagged course-off vs in-flight
      */
     public TriggerPreparation prepareTrigger(long exerciseId, User user, @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason,
-            @Nullable String requestToken) {
+            @Nullable String requestToken, @Nullable String proactivityMode) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
@@ -171,13 +173,14 @@ public class IrisStruggleInterventionService {
             return TriggerPreparation.courseOff();
         }
         String episodeId = episode != null ? episode.episodeId() : null;
-        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken);
+        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken,
+                proactivityMode);
         if (tokenOpt.isEmpty()) {
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
             return TriggerPreparation.inFlight();
         }
         return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), settings.supportLevel().jsonValue(),
-                tokenOpt.get(), intent, episode, confirmReason, requestToken));
+                tokenOpt.get(), intent, episode, confirmReason, requestToken, proactivityMode));
     }
 
     /**
@@ -214,7 +217,7 @@ public class IrisStruggleInterventionService {
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
                 .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
         pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
-                p.exerciseId(), p.intent(), p.episode());
+                p.exerciseId(), p.intent(), p.episode(), p.proactivityMode());
     }
 
     /**
@@ -237,6 +240,11 @@ public class IrisStruggleInterventionService {
         var confidence = statusUpdate.confidence();
         boolean belowThreshold = confidence == null || confidence < confidenceThreshold;   // fail-closed on null
         String finalAction = ("silent".equals(action) || belowThreshold) ? "silent" : action;
+        // Pull (Less, spec §4/§10): the hard guarantee that Iris never actively pushes a banner in Pull is enforced
+        // HERE, deterministically -- not left to the Pyris prompt. Cap an above-threshold active down to ambient.
+        if ("pull".equals(job.proactivityMode()) && "active".equals(finalAction)) {
+            finalAction = "ambient";
+        }
         log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
 
         String episodeId = job.episodeId();
@@ -651,7 +659,7 @@ public class IrisStruggleInterventionService {
      * The new episode/intent/confirmReason/requestToken fields are immutable value objects, safe to cross threads.
      */
     public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String jobToken, @Nullable String intent,
-            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken) {
+            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
     }
 
     /**

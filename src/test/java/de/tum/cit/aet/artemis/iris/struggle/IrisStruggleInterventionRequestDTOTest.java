@@ -27,8 +27,28 @@ class IrisStruggleInterventionRequestDTOTest {
 
     @Test
     void nullUncommittedFilesNormalizedToEmptyMap() {
-        var dto = new IrisStruggleInterventionRequestDTO(null, null, null, null, null, null);
+        var dto = new IrisStruggleInterventionRequestDTO(null, null, null, null, null, null, null);
         assertThat(dto.uncommittedFiles()).isNotNull().isEmpty();
+    }
+
+    @Test
+    void defaultProactivityModeIsPush_whenNotPresent() throws Exception {
+        String json = """
+                {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
+                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                 "uncommittedFiles":{}}""";
+        var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
+        assertThat(dto.proactivityMode()).isEqualTo("push");
+    }
+
+    @Test
+    void deserializesProactivityModePull() throws Exception {
+        String json = """
+                {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
+                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                 "uncommittedFiles":{},"proactivityMode":"pull"}""";
+        var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
+        assertThat(dto.proactivityMode()).isEqualTo("pull");
     }
 
     @Test

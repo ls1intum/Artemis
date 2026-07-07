@@ -229,26 +229,27 @@ public class PyrisPipelineService {
      * data DTOs (the caller loaded them off-thread, by id). Uses a no-op status consumer that releases the
      * single-flight slot on a preparation/connector ERROR (no callback will then arrive).
      *
-     * @param variant       resolved Iris variant (e.g. "default")
-     * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
-     * @param jobToken      the token already registered in the job map (StruggleInterventionJob)
-     * @param user          the student (for the AI selection + user DTO)
-     * @param signal        the struggle signal from the client engine
-     * @param exerciseDTO   the exercise DTO (problem statement + repos)
-     * @param submissionDTO the submission DTO (merged live + committed code), or null if no submission yet
-     * @param courseDTO     the course DTO
-     * @param chatHistory   read-only exercise-chat history (empty if no session exists yet)
-     * @param exerciseId    for the single-flight release key on an ERROR stage
-     * @param intent        the slot intent ({@code decide} | {@code confirm_close})
-     * @param episode       the client-allocated episode block (null when not sent)
+     * @param variant         resolved Iris variant (e.g. "default")
+     * @param supportLevel    the instructional support level ("low" / "moderate" / "high")
+     * @param jobToken        the token already registered in the job map (StruggleInterventionJob)
+     * @param user            the student (for the AI selection + user DTO)
+     * @param signal          the struggle signal from the client engine
+     * @param exerciseDTO     the exercise DTO (problem statement + repos)
+     * @param submissionDTO   the submission DTO (merged live + committed code), or null if no submission yet
+     * @param courseDTO       the course DTO
+     * @param chatHistory     read-only exercise-chat history (empty if no session exists yet)
+     * @param exerciseId      for the single-flight release key on an ERROR stage
+     * @param intent          the slot intent ({@code decide} | {@code confirm_close})
+     * @param episode         the client-allocated episode block (null when not sent)
+     * @param proactivityMode the presence level ({@code pull} | {@code push}), passed to Pyris as prompt tone context
      */
     public void executeStruggleInterventionPipeline(String variant, String supportLevel, String jobToken, User user, PyrisStruggleSignalDTO signal,
             PyrisProgrammingExerciseDTO exerciseDTO, @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId,
-            @Nullable String intent, @Nullable StruggleEpisodeDTO episode) {
+            @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String proactivityMode) {
         var pyrisUser = toPyrisUserDTO(user);
         executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, supportLevel, Optional.empty(), jobToken,
                 executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
-                        executionDto.initialStages(), intent, episode),
+                        executionDto.initialStages(), intent, episode, proactivityMode),
                 stages -> {
                     if (stages.stream().anyMatch(stage -> stage.state() == PyrisStageState.ERROR)) {
                         pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);

@@ -78,7 +78,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     private IrisStruggleInterventionRequestDTO requestBody() {
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
                 List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), List.of(new PyrisStruggleSignalDTO.ComponentDTO("feedbackViewing", 0.8)), 540);
-        return new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null);
+        return new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
     }
 
     @Test
@@ -93,9 +93,10 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         assertThat(accepted.exerciseId()).isEqualTo(exerciseId());
         assertThat(accepted.jobId()).isNotNull();
 
-        // executeStruggleInterventionPipeline(variant, supportLevel, jobToken, user, signal, exercise, submission, course, chatHistory, exerciseId, intent, episode)
+        // executeStruggleInterventionPipeline(variant, supportLevel, jobToken, user, signal, exercise, submission, course, chatHistory, exerciseId, intent, episode,
+        // proactivityMode)
         verify(pyrisPipelineService, timeout(3000)).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(),
-                any());
+                any(), any());
     }
 
     @Test
@@ -122,7 +123,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     void missingStruggleSignal_isBadRequest() throws Exception {
         // @Valid + @NotNull on the request body rejects a null struggleSignal synchronously (400) instead of
         // returning 202 and only failing later in the async send (which would leak the single-flight slot).
-        var invalid = new IrisStruggleInterventionRequestDTO(null, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null);
+        var invalid = new IrisStruggleInterventionRequestDTO(null, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
     }
 }

@@ -102,11 +102,14 @@ class IrisStruggleInterventionDecisionTest {
 
     private User user;
 
-    // job with no episodeId (legacy / single-episode scenarios)
-    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null);
+    // job with no episodeId (legacy / single-episode scenarios); null proactivityMode == push (no downgrade)
+    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null, null);
 
     // job with an explicit episodeId (A9 episodeId-threading tests)
-    private final StruggleInterventionJob jobWithEpisode = new StruggleInterventionJob("t2", 7L, 42L, 3L, "decide", "ep-123", null, null);
+    private final StruggleInterventionJob jobWithEpisode = new StruggleInterventionJob("t2", 7L, 42L, 3L, "decide", "ep-123", null, null, null);
+
+    // job in Pull (Less): an above-threshold active decision must be deterministically capped to ambient (spec §4/§10)
+    private final StruggleInterventionJob pullJob = new StruggleInterventionJob("tp", 7L, 42L, 3L, null, null, null, null, "pull");
 
     @BeforeEach
     void setUp() {
@@ -166,6 +169,25 @@ class IrisStruggleInterventionDecisionTest {
                 argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
                         && e.messageId() == null && "Sort.java".equals(e.anchorFile()) && Objects.equals(e.anchorLine(), 42) && "off-by-one?".equals(e.inlineHint())
                         && Objects.equals(e.confidence(), 0.7)));
+    }
+
+    @Test
+    void active_aboveThreshold_pullMode_cappedToAmbient_noPersist() {
+        // Less/Pull (spec §4/§10): an above-threshold ACTIVE decision is deterministically capped to ambient.
+        // No message row is persisted, no chat message is sent, and the emitted event carries action="ambient".
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "active", 0.8, "FM", List.of(), List.of(), "Sort.java", 42, "off-by-one?", null, null,
+                null);
+
+        service.handleDecision(pullJob, update);
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action())
+                && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L) && e.messageId() == null));
+        // the downgrade is total: NO separate action="active" event frame is ever emitted in Pull
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action())));
     }
 
     @Test
