@@ -115,7 +115,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
         assertThat(terminal.verdict()).isNotNull();
         assertThat(terminal.verdict().accepted()).isTrue();
-        // Exactly one PROGRESS "saving" line precedes the terminal DONE on the accepted path.
+        // At least one PROGRESS line (e.g. the "saving" step) precedes the terminal DONE on the accepted path.
         assertThat(events).anyMatch(event -> event.type() == ExerciseGenerationEventDTO.Type.PROGRESS);
     }
 
