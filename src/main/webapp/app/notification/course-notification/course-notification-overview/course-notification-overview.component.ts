@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, effect, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -8,7 +8,7 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { Subscription, fromEvent } from 'rxjs';
+import { fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -43,7 +43,7 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
     templateUrl: './course-notification-overview.component.html',
     styleUrls: ['./course-notification-overview.component.scss'],
 })
-export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, AfterViewInit {
+export class CourseNotificationOverviewComponent implements AfterViewInit {
     readonly courseId = input.required<number>();
 
     private elementRef = inject(ElementRef);
@@ -74,8 +74,6 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected savedScrollPosition: number = 0;
     protected pagesFinished: boolean = false;
     protected readonly isLoading = signal<boolean>(false);
-    private courseNotificationCountSubscription?: Subscription;
-    private courseNotificationSubscription?: Subscription;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     protected readonly CourseNotificationViewingStatus = CourseNotificationViewingStatus;
@@ -115,6 +113,55 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
                 infoSubscription.unsubscribe();
             });
         });
+
+        effect((onCleanup) => {
+            const courseId = this.courseId();
+
+            this.notifications = undefined;
+            this.notificationsForSelectedCategory.set([]);
+            this.queryStartSize = 0;
+            this.queryCount = 1;
+            this.pagesFinished = false;
+            this.savedScrollPosition = 0;
+            this.isLoading.set(false);
+            this.courseNotificationCount.set(0);
+
+            const courseNotificationCountSubscription = this.courseNotificationService.getNotificationCountForCourse$(courseId).subscribe((count: number) => {
+                this.courseNotificationCount.set(count);
+            });
+
+            const courseNotificationSubscription = this.courseNotificationService.getNotificationsForCourse$(courseId).subscribe((notifications) => {
+                this.notifications = notifications;
+
+                this.filterNotificationsIntoCurrentCategory();
+
+                // Note: This is a temporary solution until server-side categorization paging is possible
+                if (
+                    this.isLoading() &&
+                    !this.pagesFinished &&
+                    this.queryCount <= 3 &&
+                    this.notificationsForSelectedCategory().length < this.queryStartSize + this.courseNotificationService.pageSize
+                ) {
+                    this.queryCount++;
+                    this.queryCurrentCategory();
+                } else {
+                    this.isLoading.set(false);
+                    this.queryCount = 1;
+
+                    if (this.isShown()) {
+                        setTimeout(() => {
+                            this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
+                        });
+                        this.updateCurrentCategoryNotificationsToSeenOnServer();
+                    }
+                }
+            });
+
+            onCleanup(() => {
+                courseNotificationCountSubscription.unsubscribe();
+                courseNotificationSubscription.unsubscribe();
+            });
+        });
     }
 
     ngAfterViewInit(): void {
@@ -130,47 +177,6 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
                     this.onScrollReachBottom();
                 }
             });
-    }
-
-    ngOnInit(): void {
-        this.courseNotificationCountSubscription = this.courseNotificationService.getNotificationCountForCourse$(this.courseId()).subscribe((count: number) => {
-            this.courseNotificationCount.set(count);
-        });
-        this.courseNotificationSubscription = this.courseNotificationService.getNotificationsForCourse$(this.courseId()).subscribe((notifications) => {
-            this.notifications = notifications;
-
-            this.filterNotificationsIntoCurrentCategory();
-
-            // Note: This is a temporary solution until server-side categorization paging is possible
-            if (
-                this.isLoading() &&
-                !this.pagesFinished &&
-                this.queryCount <= 3 &&
-                this.notificationsForSelectedCategory().length < this.queryStartSize + this.courseNotificationService.pageSize
-            ) {
-                this.queryCount++;
-                this.queryCurrentCategory();
-            } else {
-                this.isLoading.set(false);
-                this.queryCount = 1;
-
-                if (this.isShown()) {
-                    setTimeout(() => {
-                        this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
-                    });
-                    this.updateCurrentCategoryNotificationsToSeenOnServer();
-                }
-            }
-        });
-    }
-
-    ngOnDestroy(): void {
-        if (this.courseNotificationCountSubscription) {
-            this.courseNotificationCountSubscription.unsubscribe();
-        }
-        if (this.courseNotificationSubscription) {
-            this.courseNotificationSubscription.unsubscribe();
-        }
     }
 
     /**

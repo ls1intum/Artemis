@@ -143,15 +143,43 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(componentAsAny.isLoading()).toBe(false);
     });
 
-    it('should set up notification count subscription on init', () => {
+    it('should set up notification count subscription when courseId is available', () => {
         expect(courseNotificationService.getNotificationCountForCourse$).toHaveBeenCalledWith(101);
 
         notificationCountSubject.next(5);
         expect(componentAsAny.courseNotificationCount()).toBe(5);
     });
 
-    it('should set up notifications subscription on init', () => {
+    it('should set up notifications subscription when courseId is available', () => {
         expect(courseNotificationService.getNotificationsForCourse$).toHaveBeenCalledWith(101);
+    });
+
+    it('should rebind notification subscriptions and reset course-local state when courseId changes', () => {
+        notificationCountSubject.next(7);
+        componentAsAny.notifications = [createMockNotification(1, 101, CourseNotificationCategory.GENERAL)];
+        componentAsAny.notificationsForSelectedCategory.set([createMockNotification(1, 101, CourseNotificationCategory.GENERAL)]);
+        componentAsAny.queryStartSize = 5;
+        componentAsAny.queryCount = 2;
+        componentAsAny.pagesFinished = true;
+        componentAsAny.savedScrollPosition = 120;
+        componentAsAny.isLoading.set(true);
+
+        vi.mocked(courseNotificationService.getNotificationCountForCourse$).mockClear();
+        vi.mocked(courseNotificationService.getNotificationsForCourse$).mockClear();
+
+        fixture.componentRef.setInput('courseId', 202);
+        fixture.detectChanges();
+
+        expect(courseNotificationService.getNotificationCountForCourse$).toHaveBeenCalledWith(202);
+        expect(courseNotificationService.getNotificationsForCourse$).toHaveBeenCalledWith(202);
+        expect(componentAsAny.notifications).toBeUndefined();
+        expect(componentAsAny.notificationsForSelectedCategory()).toEqual([]);
+        expect(componentAsAny.courseNotificationCount()).toBe(0);
+        expect(componentAsAny.queryStartSize).toBe(0);
+        expect(componentAsAny.queryCount).toBe(1);
+        expect(componentAsAny.pagesFinished).toBe(false);
+        expect(componentAsAny.savedScrollPosition).toBe(0);
+        expect(componentAsAny.isLoading()).toBe(false);
     });
 
     it('should filter notifications by selected category', () => {
@@ -368,24 +396,6 @@ describe('CourseNotificationOverviewComponent', () => {
 
         expect(componentAsAny.pagesFinished).toBe(true);
         expect(componentAsAny.isLoading()).toBe(false);
-    });
-
-    it('should properly clean up subscriptions on destroy', () => {
-        const countUnsubscribeSpy = vi.fn();
-        const notificationsUnsubscribeSpy = vi.fn();
-
-        componentAsAny.courseNotificationCountSubscription = {
-            unsubscribe: countUnsubscribeSpy,
-        };
-
-        componentAsAny.courseNotificationSubscription = {
-            unsubscribe: notificationsUnsubscribeSpy,
-        };
-
-        component.ngOnDestroy();
-
-        expect(countUnsubscribeSpy).toHaveBeenCalledOnce();
-        expect(notificationsUnsubscribeSpy).toHaveBeenCalledOnce();
     });
 
     it('should toggle overlay when button is clicked', () => {
