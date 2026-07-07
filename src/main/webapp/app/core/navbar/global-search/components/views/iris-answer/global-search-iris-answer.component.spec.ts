@@ -27,7 +27,7 @@ import {
 import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
-import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
+import { IrisSearchHandoff, IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 
@@ -532,6 +532,42 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         it('should return empty object for other source types', () => {
             expect(component['queryParamsFor'](src('exercise'))).toEqual({});
             expect(component['queryParamsFor'](src('faq'))).toEqual({});
+        });
+    });
+
+    describe('handoffQueryParams()', () => {
+        const setResultWithHandoff = (handoff: IrisSearchHandoff) => {
+            fixture.componentRef.setInput('searchQuery', 'what is a signal?');
+            // @ts-expect-error — accessing protected signal for testing
+            component.irisResult.set({ answer: 'An answer', sources: [], handoff });
+            fixture.detectChanges();
+        };
+
+        it('should return empty object when there is no handoff', () => {
+            // @ts-expect-error
+            component.irisResult.set({ answer: 'An answer', sources: [] });
+            fixture.detectChanges();
+            expect(component['handoffQueryParams']()).toEqual({});
+        });
+
+        it('should return lecture context for a lecture handoff', () => {
+            setResultWithHandoff({ type: 'lecture', courseId: 1, lectureId: 5 });
+            expect(component['handoffQueryParams']()).toEqual({ irisContext: 'lecture:5' });
+        });
+
+        it('should return exercise context for an exercise handoff', () => {
+            setResultWithHandoff({ type: 'exercise', courseId: 1, exerciseId: 7 });
+            expect(component['handoffQueryParams']()).toEqual({ irisContext: 'exercise:7' });
+        });
+
+        it('should return empty object for a course handoff', () => {
+            setResultWithHandoff({ type: 'course', courseId: 1 });
+            expect(component['handoffQueryParams']()).toEqual({});
+        });
+
+        it('should never include irisQuestion so the chat input stays empty after handoff', () => {
+            setResultWithHandoff({ type: 'lecture', courseId: 1, lectureId: 5 });
+            expect(component['handoffQueryParams']()).not.toHaveProperty('irisQuestion');
         });
     });
 });

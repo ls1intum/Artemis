@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { captureException } from '@sentry/angular';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -76,7 +77,9 @@ export class CourseChatbotComponent {
                             switchMap(() => this.chatService.seedFromGlobalSearch(handoffCtx.query, handoffCtx.answer)),
                             takeUntilDestroyed(this.destroyRef),
                         )
-                        .subscribe();
+                        .subscribe({
+                            error: (error) => captureException('Failed to seed Iris session from global search handoff', error),
+                        });
                 });
             } else {
                 if (contextType === 'lecture' && entityId !== undefined) {

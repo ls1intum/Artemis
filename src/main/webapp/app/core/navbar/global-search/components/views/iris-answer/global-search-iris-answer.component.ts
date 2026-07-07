@@ -83,7 +83,10 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly handoffQueryParams = computed(() => {
         const handoff = this.irisResult()?.handoff;
         if (!handoff) return {};
-        const params: Record<string, string> = { irisQuestion: this.searchQuery() };
+        // Deliberately no `irisQuestion` param here: the Q&A pair is seeded into the new
+        // session via IrisHandoffContextService, so passing the question in the URL would
+        // only prefill the chat input with an already-answered question.
+        const params: Record<string, string> = {};
         if (handoff.type === 'lecture' && handoff.lectureId != null) {
             params['irisContext'] = `lecture:${handoff.lectureId}`;
         } else if (handoff.type === 'exercise' && handoff.exerciseId != null) {

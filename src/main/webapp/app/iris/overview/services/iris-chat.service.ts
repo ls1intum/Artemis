@@ -186,6 +186,7 @@ export class IrisChatService implements OnDestroy {
         this.error.next(undefined);
         this.chatSessions.next([]);
         this.shouldReopenChatSubject.next(false);
+        this.initialLoadCompleteSubject.next(false);
         // Plain fields.
         this.latestStartedSession = undefined;
         this.sessionContext = undefined;
@@ -625,8 +626,11 @@ export class IrisChatService implements OnDestroy {
             this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
-            this.initialLoadCompleteSubject.next(false);
         }
+        // Rearm the gate unconditionally: it can be stale-true without a sessionId
+        // (failed session load, or a logout that ran resetState), and consumers waiting
+        // on filter(Boolean) would otherwise fire before the next session has loaded.
+        this.initialLoadCompleteSubject.next(false);
         this.error.next(undefined);
     }
 

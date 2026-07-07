@@ -154,6 +154,23 @@ describe('IrisChatService', () => {
 
             expect(values.at(-1)).toBe(true);
         });
+
+        it('should rearm to false on switchToNewSession even when the gate is stale-true without a sessionId', () => {
+            // Stale-true without a sessionId happens after a failed session load or after
+            // resetState() ran on logout. A global-search handoff waiting on filter(Boolean)
+            // must not fire until the NEW session has loaded.
+            service['initialLoadCompleteSubject'].next(true);
+            expect(service.sessionId).toBeUndefined();
+            const values = collectInitialLoadValues();
+            expect(values).toEqual([true]);
+
+            const inFlight = new Subject<HttpResponse<IrisSession>>();
+            vi.spyOn(httpService, 'createSession').mockReturnValue(inFlight.asObservable());
+            service.switchToNewSession(ChatServiceMode.COURSE, id);
+
+            // The session creation request is still in flight, so the gate must be closed again.
+            expect(values.at(-1)).toBe(false);
+        });
     });
 
     it('should initialize current chat context from newly loaded session', async () => {
@@ -752,6 +769,18 @@ describe('IrisChatService', () => {
             authState.next(undefined);
 
             const value = await firstValueFrom(scopedService.shouldReopenChat$);
+            expect(value).toBe(false);
+        });
+
+        it('should reset initialLoadComplete$ on logout so a post-relogin handoff waits for the new session', async () => {
+            // Regression: the gate survived resetState() as stale-true, so the first
+            // global-search handoff after logout/login seeded before the new session
+            // existed ('Not initialized') and the Q&A silently never appeared.
+            scopedService['initialLoadCompleteSubject'].next(true);
+
+            authState.next(undefined);
+
+            const value = await firstValueFrom(scopedService.initialLoadComplete$);
             expect(value).toBe(false);
         });
 
