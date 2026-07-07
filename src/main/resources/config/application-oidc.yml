@@ -1,0 +1,42 @@
+artemis:
+    user-management:
+        oidc:
+            enabled: true
+            # Map internal Java User fields to incoming OIDC JSON claims
+            # key - java User attribute
+            # value - name of the claim key in identity provider`s JSON
+            mappings:
+                username: "${ARTEMIS_OIDC_MAPPING_USERNAME:preferred_username}"
+                matriculation-number: "${ARTEMIS_OIDC_MAPPING_MATRICULATION:matriculation_number}"
+                first-name: "${ARTEMIS_OIDC_MAPPING_FIRST_NAME:given_name}"
+                last-name: "${ARTEMIS_OIDC_MAPPING_LAST_NAME:family_name}"
+                email: "${ARTEMIS_OIDC_MAPPING_EMAIL:email}"
+
+spring:
+    security:
+        oauth2:
+            client:
+                registration:
+                    oidc:
+                        provider: oidc
+                        # Client credentials assigned to Artemis by the university Identity Provider
+                        client-id: "${ARTEMIS_OIDC_CLIENT_ID:placeholder-artemis-client-id}"
+                        client-secret: "${ARTEMIS_OIDC_CLIENT_SECRET:placeholder-artemis-client-secret}"
+                        # Categories of user permissions requested from the university IdP
+                        scope:
+                            - "openid"
+                            - "profile"
+                            - "email"
+                        # Endpoints where Spring Security intercepts the authorization code
+                        redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+                        authorization-grant-type: "authorization_code"
+                provider:
+                    oidc:
+                        # The URI where the user's browser is redirected to display the university IdP page
+                        authorization-uri: "${ARTEMIS_OIDC_AUTHORIZATION_URI:https://login.tum.de/idp/profile/oidc/authorize}"
+                        # The secure back-channel URI where Artemis exchanges the auth code for OIDC tokens
+                        token-uri: "${ARTEMIS_OIDC_TOKEN_URI:https://login.tum.de/idp/profile/oidc/token}"
+                        # The secure back-channel URI where Artemis requests the user JSON payload
+                        user-info-uri: "${ARTEMIS_OIDC_USER_INFO_URI:https://login.tum.de/idp/profile/oidc/userinfo}"
+                        # The public keys URI used by Artemis to cryptographically verify OIDC token signatures
+                        jwk-set-uri: "${ARTEMIS_OIDC_JWK_SET_URI:https://login.tum.de/idp/profile/oidc/keys}"

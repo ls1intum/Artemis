@@ -1,0 +1,545 @@
+{
+  "id": "artemis-oidc",
+  "realm": "artemis-oidc",
+  "displayName": "Identity Provider mock for local development",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "clients": [
+    {
+      "clientId": "artemis-oidc-client",
+      "name": "Artemis Project",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "secret": "mock-client-secret-placeholder-12345",
+      "redirectUris": [
+        "http://localhost:9000/login/oauth2/code/oidc",
+        "http://localhost:8080/login/oauth2/code/oidc"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "protocolMappers": [
+        {
+          "name": "matriculation_number_mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "matriculation_number",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "matriculation_number",
+            "jsonType.label": "String",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "artemis_admin",
+      "enabled": true,
+      "firstName": "Administrator",
+      "lastName": "Administrator",
+      "email": "admin@localhost",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_admin",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_1",
+      "enabled": true,
+      "firstName": "artemis_test_user_1",
+      "lastName": "artemis_test_user_1",
+      "email": "artemis_test_user_1@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000001"
+        ]
+      },
+      "groups": [
+        "artemis-students"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_1",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_2",
+      "enabled": true,
+      "firstName": "artemis_test_user_2",
+      "lastName": "artemis_test_user_2",
+      "email": "artemis_test_user_2@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000002"
+        ]
+      },
+      "groups": [
+        "artemis-students"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_2",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_3",
+      "enabled": true,
+      "firstName": "artemis_test_user_3",
+      "lastName": "artemis_test_user_3",
+      "email": "artemis_test_user_3@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000003"
+        ]
+      },
+      "groups": [
+        "artemis-students"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_3",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_4",
+      "enabled": true,
+      "firstName": "artemis_test_user_4",
+      "lastName": "artemis_test_user_4",
+      "email": "artemis_test_user_4@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000004"
+        ]
+      },
+      "groups": [
+        "artemis-students"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_4",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_5",
+      "enabled": true,
+      "firstName": "artemis_test_user_5",
+      "lastName": "artemis_test_user_5",
+      "email": "artemis_test_user_5@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000005"
+        ]
+      },
+      "groups": [
+       "artemis-students"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_5",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_6",
+      "enabled": true,
+      "firstName": "artemis_test_user_6",
+      "lastName": "artemis_test_user_6",
+      "email": "artemis_test_user_6@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000006"
+        ]
+      },
+      "groups": [
+        "artemis-tutors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_6",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_7",
+      "enabled": true,
+      "firstName": "artemis_test_user_7",
+      "lastName": "artemis_test_user_7",
+      "email": "artemis_test_user_7@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000007"
+        ]
+      },
+      "groups": [
+        "artemis-tutors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_7",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_8",
+      "enabled": true,
+      "firstName": "artemis_test_user_8",
+      "lastName": "artemis_test_user_8",
+      "email": "artemis_test_user_8@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000008"
+        ]
+      },
+      "groups": [
+        "artemis-tutors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_8",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_9",
+      "enabled": true,
+      "firstName": "artemis_test_user_9",
+      "lastName": "artemis_test_user_9",
+      "email": "artemis_test_user_9@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000009"
+        ]
+      },
+      "groups": [
+        "artemis-tutors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_9",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_10",
+      "enabled": true,
+      "firstName": "artemis_test_user_10",
+      "lastName": "artemis_test_user_10",
+      "email": "artemis_test_user_10@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000010"
+        ]
+      },
+      "groups": [
+        "artemis-tutors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_10",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_11",
+      "enabled": true,
+      "firstName": "artemis_test_user_11",
+      "lastName": "artemis_test_user_11",
+      "email": "artemis_test_user_11@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000011"
+        ]
+      },
+      "groups": [
+        "artemis-editors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_11",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_12",
+      "enabled": true,
+      "firstName": "artemis_test_user_12",
+      "lastName": "artemis_test_user_12",
+      "email": "artemis_test_user_12@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000012"
+        ]
+      },
+      "groups": [
+        "artemis-editors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_12",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_13",
+      "enabled": true,
+      "firstName": "artemis_test_user_13",
+      "lastName": "artemis_test_user_13",
+      "email": "artemis_test_user_13@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000013"
+        ]
+      },
+      "groups": [
+        "artemis-editors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_13",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_14",
+      "enabled": true,
+      "firstName": "artemis_test_user_14",
+      "lastName": "artemis_test_user_14",
+      "email": "artemis_test_user_14@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000014"
+        ]
+      },
+      "groups": [
+        "artemis-editors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_14",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_15",
+      "enabled": true,
+      "firstName": "artemis_test_user_15",
+      "lastName": "artemis_test_user_15",
+      "email": "artemis_test_user_15@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000015"
+        ]
+      },
+      "groups": [
+        "artemis-editors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_15",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_16",
+      "enabled": true,
+      "firstName": "artemis_test_user_16",
+      "lastName": "artemis_test_user_16",
+      "email": "artemis_test_user_16@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000016"
+        ]
+      },
+      "groups": [
+        "artemis-instructors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_16",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_17",
+      "enabled": true,
+      "firstName": "artemis_test_user_17",
+      "lastName": "artemis_test_user_17",
+      "email": "artemis_test_user_17@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000017"
+        ]
+      },
+      "groups": [
+        "artemis-instructors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_17",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_18",
+      "enabled": true,
+      "firstName": "artemis_test_user_18",
+      "lastName": "artemis_test_user_18",
+      "email": "artemis_test_user_18@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000018"
+        ]
+      },
+      "groups": [
+        "artemis-instructors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_18",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_19",
+      "enabled": true,
+      "firstName": "artemis_test_user_19",
+      "lastName": "artemis_test_user_19",
+      "email": "artemis_test_user_19@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000019"
+        ]
+      },
+      "groups": [
+        "artemis-instructors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_19",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "artemis_test_user_20",
+      "enabled": true,
+      "firstName": "artemis_test_user_20",
+      "lastName": "artemis_test_user_20",
+      "email": "artemis_test_user_20@artemis.local",
+      "attributes": {
+        "matriculation_number": [
+          "1000020"
+        ]
+      },
+      "groups": [
+        "artemis-instructors"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "artemis_test_user_20",
+          "temporary": false
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "artemis-admins",
+      "path": "/artemis-admins",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    },
+    {
+      "name": "artemis-instructors",
+      "path": "/artemis-instructors",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    },
+    {
+      "name": "artemis-editors",
+      "path": "/artemis-editors",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    },
+    {
+      "name": "artemis-tutors",
+      "path": "/artemis-tutors",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    },
+    {
+      "name": "artemis-students",
+      "path": "/artemis-students",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    }
+  ]
+}

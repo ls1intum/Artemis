@@ -1,0 +1,32 @@
+artemis:
+    user-management:
+        oidc:
+            enabled: true
+            mappings:
+                username: "preferred_username"
+                matriculation-number: "matriculation_number"
+                first-name: "given_name"
+                last-name: "family_name"
+                email: "email"
+
+spring:
+    security:
+        oauth2:
+            client:
+                registration:
+                    oidc:
+                        provider: oidc
+                        client-id: "artemis-oidc-client"
+                        client-secret: "mock-client-secret-placeholder-12345"
+                        scope:
+                            - "openid"
+                            - "profile"
+                            - "email"
+                        redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+                        authorization-grant-type: "authorization_code"
+                provider:
+                    oidc:
+                        authorization-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/auth"
+                        token-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/token"
+                        user-info-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/userinfo"
+                        jwk-set-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/certs"
