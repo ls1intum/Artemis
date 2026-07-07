@@ -32,20 +32,7 @@
             >
                 @if (course()) {
                     @if (showCourseTitleBar()) {
-                        <jhi-course-title-bar
-                            [hasSidebar]="hasSidebar()"
-                            [isSidebarCollapsed]="isSidebarCollapsed()"
-                            [pageTitle]="pageTitle()"
-                            [isExamStarted]="isExamStarted()"
-                            (toggleSidebar)="toggleSidebar()"
-                        >
-                            @if (showRefreshButton()) {
-                                <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
-                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />
-                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                                </button>
-                            }
-                        </jhi-course-title-bar>
+                        <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()" />
                     }
 
                     <div

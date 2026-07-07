@@ -1008,33 +1008,6 @@ describe('NavbarComponent', () => {
     });
 
     describe('course controls in navbar', () => {
-        it('should be a student course view when on a student course route with a current course', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
-            component.currentUrl.set('/courses/1/exercises');
-
-            expect(component.isStudentCourseView()).toBe(true);
-        });
-
-        it('should not be a student course view on a management route', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
-            component.currentUrl.set('/course-management/1/exercises');
-
-            expect(component.isStudentCourseView()).toBe(false);
-        });
-
-        it('should not be a student course view during an active or started exam', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
-            component.currentUrl.set('/courses/1/exams/2');
-            component.isExamActive.set(true);
-
-            expect(component.isStudentCourseView()).toBe(false);
-
-            component.isExamActive.set(false);
-            component.isExamStarted.set(true);
-
-            expect(component.isStudentCourseView()).toBe(false);
-        });
-
         it('should render the notification overview when a course is active', () => {
             currentCourseContextService.setCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
@@ -1056,6 +1029,23 @@ describe('NavbarComponent', () => {
         it('should not render the notification overview when no course is active', () => {
             currentCourseContextService.clearCourse();
             router.setUrl('/courses');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+        });
+
+        it('should not render the notification overview during an active or started exam', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
+            router.setUrl('/courses/1/exercises');
+            component.isExamActive.set(true);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+
+            component.isExamActive.set(false);
+            component.isExamStarted.set(true);
 
             fixture.detectChanges();
 

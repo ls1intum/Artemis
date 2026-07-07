@@ -12,9 +12,9 @@
             <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
 
             <div class="course-notification-overview-header-actions">
-                @if (selectableSettingPresets()) {
+                @if (selectableSettingPresets(); as selectableSettingPresets) {
                     <jhi-course-notification-preset-picker
-                        [availableCourseSettingPresets]="selectableSettingPresets()!"
+                        [availableCourseSettingPresets]="selectableSettingPresets"
                         [selectedCourseSettingPreset]="selectedSettingPreset()"
                         [isSmallButton]="true"
                         (onPresetSelected)="presetSelected($event)"

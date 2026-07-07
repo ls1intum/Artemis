@@ -140,10 +140,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
-    readonly currentUrl = signal<string>('');
-
-    readonly isStudentCourseView = computed(() => this.currentUrl().startsWith('/courses') && !!this.currentCourse()?.id && !this.isExamActive() && !this.isExamStarted());
-
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
     lectureTitle = signal<string | undefined>(undefined);
@@ -417,7 +413,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Fills the breadcrumbs array with entries for admin and course-management routes
      */
     private buildBreadcrumbs(fullURI: string): void {
-        this.currentUrl.set(fullURI ?? '');
         this.breadcrumbs.set([]);
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];
