@@ -4,7 +4,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { CreateExerciseVariantGroupDTO, ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import {
+    CreateExerciseVariantGroupDTO,
+    ExerciseVariantGroupDTO,
+    ExerciseVariantGroupService,
+    toCourseExerciseGroup,
+    toCreateGroupPayload,
+    toUpdateGroupPayload,
+} from 'app/course/manage/exercises/exercise-variant-group.service';
+import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseVariantGroupService', () => {
     setupTestBed({ zoneless: true });
@@ -93,5 +102,71 @@ describe('ExerciseVariantGroupService', () => {
         expect(req.request.method).toBe('PUT');
         expect(req.request.body.groupId).toBeUndefined();
         req.flush(null);
+    });
+
+    it('should convert all timeline fields from their server representation', () => {
+        const iso = '2026-06-15T10:00:00Z';
+        const serverGroup = {
+            id: 1,
+            title: 'G',
+            releaseDate: iso,
+            startDate: iso,
+            dueDate: iso,
+            assessmentDueDate: iso,
+            exampleSolutionPublicationDate: iso,
+            buildAndTestStudentSubmissionsAfterDueDate: iso,
+        };
+        let received: ExerciseVariantGroupDTO | undefined;
+
+        service.getGroupsForCourse(courseId).subscribe((groups) => (received = groups[0]));
+        httpMock.expectOne(baseUrl).flush([serverGroup]);
+
+        for (const field of ['releaseDate', 'startDate', 'dueDate', 'assessmentDueDate', 'exampleSolutionPublicationDate', 'buildAndTestStudentSubmissionsAfterDueDate'] as const) {
+            expect(dayjs.isDayjs(received![field])).toBe(true);
+        }
+    });
+
+    describe('payload mappers', () => {
+        const group: CourseExerciseGroup = {
+            id: 7,
+            title: 'Loop variants',
+            maxPoints: 10,
+            releaseDate: dayjs('2026-01-01T00:00:00Z'),
+            dueDate: dayjs('2026-02-02T00:00:00Z'),
+            exercises: [{ id: 1, type: ExerciseType.TEXT } as Exercise],
+        };
+
+        it('maps the edit dialog view model to the create payload (without id and members)', () => {
+            const payload = toCreateGroupPayload(group);
+            expect(payload).toEqual({
+                title: 'Loop variants',
+                maxPoints: 10,
+                releaseDate: group.releaseDate,
+                startDate: undefined,
+                dueDate: group.dueDate,
+                assessmentDueDate: undefined,
+                exampleSolutionPublicationDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+            });
+        });
+
+        it('maps the edit dialog view model to the update payload including the id', () => {
+            const payload = toUpdateGroupPayload(group);
+            expect(payload.id).toBe(7);
+            expect(payload.title).toBe('Loop variants');
+        });
+
+        it('maps a server DTO to the client group and resolves members by id', () => {
+            const one = { id: 1, type: ExerciseType.TEXT } as Exercise;
+            const dto: ExerciseVariantGroupDTO = { id: 7, title: 'G', maxPoints: 5, dueDate: dayjs('2026-02-02T00:00:00Z'), exerciseIds: [1, 999] };
+
+            const mapped = toCourseExerciseGroup(dto, new Map([[1, one]]));
+
+            expect(mapped.id).toBe(7);
+            expect(mapped.maxPoints).toBe(5);
+            expect(mapped.dueDate).toBe(dto.dueDate);
+            // Unknown ids (999) are dropped instead of producing holes.
+            expect(mapped.exercises).toEqual([one]);
+        });
     });
 });
