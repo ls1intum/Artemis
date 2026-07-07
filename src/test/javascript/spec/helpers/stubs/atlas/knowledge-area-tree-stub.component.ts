@@ -1,6 +1,5 @@
 import { Component, TemplateRef, contentChild, input } from '@angular/core';
-import { TreeNode } from 'primeng/api';
-import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',
@@ -8,7 +7,7 @@ import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/s
     standalone: true,
 })
 export class KnowledgeAreaTreeStubComponent {
-    nodes = input<TreeNode<KnowledgeAreaForTree | StandardizedCompetencyForTree>[]>([]);
+    dataSource = input<KnowledgeAreaTreeDataSource>({ data: [] });
 
     knowledgeAreaTemplate = contentChild<TemplateRef<any>>('knowledgeAreaTemplate');
     competencyTemplate = contentChild<TemplateRef<any>>('competencyTemplate');

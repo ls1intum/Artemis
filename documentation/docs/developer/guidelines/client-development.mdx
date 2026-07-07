@@ -77,14 +77,16 @@ Key principles:
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-    **We are migrating from Bootstrap to PrimeNG.** All new UI elements must be implemented using [PrimeNG](https://primeng.org/) components. Do not introduce new Bootstrap
-    components. Existing Bootstrap usage will be migrated incrementally.
+    **We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use
+    PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is
+    migrated module by module.
 </Callout>
 
 - Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
 - For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
+- Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
+- In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
 - Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
-- Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete, but prefer PrimeNG's built-in layout capabilities where available.
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -444,6 +446,7 @@ If you use icons next to text (for example for a button or link), make sure that
 
 Do this:
 
+{/* prettier-ignore */}
 ```html
 <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
 ```
@@ -578,11 +581,93 @@ From a methodology viewpoint we encourage the use of [BEM](http://getbem.com/int
 }
 ```
 
-For new UI elements, use [PrimeNG](https://primeng.org/) components instead of Bootstrap components. Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete:
+We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components)**. Tailwind is wired app-wide (`src/main/webapp/tailwind.css`, see below); apply it module by module.
+
+**Decision rule — what to reach for:**
+
+- **Tailwind utility** for pure presentation: layout, flexbox/grid, spacing, sizing, typography, and color application (`flex`, `grid grid-cols-12`, `gap-2`, `mb-3`, `text-end`, `font-semibold`, `w-full`).
+- **PrimeNG component** for anything with behavior, state, accessibility semantics, or that Bootstrap modeled as a _component_: `p-button`, `p-tag` (badges), `p-message` (alerts), `p-card`, `p-table`, `p-tabs`, `p-paginator`, `p-tooltip`, `p-progressbar`, dialogs (`DialogService`), form inputs (`pInputText`/`p-select`/`p-checkbox`), `p-menu`, `p-datepicker`.
+- **A small owned helper** only when neither fits and it recurs.
+
+**Bootstrap → Tailwind/PrimeNG quick reference** (apply when migrating a module):
+
+| Bootstrap                                                       | Replacement                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `p-button` (`severity`, `size="small"`, `[outlined]`, `<p-buttonGroup>`)                                                                                                                                                                                          |
+| `badge` / `bg-success` badge                                    | `p-tag` (`severity`, `[rounded]`)                                                                                                                                                                                                                                 |
+| `alert alert-*`                                                 | `p-message` (`severity`)                                                                                                                                                                                                                                          |
+| `card`                                                          | `p-card` (or a Tailwind `rounded-lg border p-4` box for a static panel)                                                                                                                                                                                           |
+| `table table-striped table-responsive`                          | `p-table`                                                                                                                                                                                                                                                         |
+| `form-control` / `form-group` / `form-check`                    | PrimeNG inputs + `<div class="flex flex-col gap-2">` + `p-checkbox`/`p-radiobutton`                                                                                                                                                                               |
+| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*` (or flex)                                                                                                                                                                                                    |
+| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                                                                                                                 |
+| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                                                                                                    |
+| `text-right` / `text-left`                                      | `text-end` / `text-start` (logical)                                                                                                                                                                                                                               |
+| `text-muted`                                                    | `text-muted-color`                                                                                                                                                                                                                                                |
+| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-state-danger` / `text-state-success` / `text-state-warning` / `text-state-info` (named state tokens — see **Colors** below)                                                                                                                                 |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | same-named Tailwind utilities, but **the numeric scales differ** — Bootstrap's steps are rem-fixed (`mb-3` = 1rem) while Tailwind's are `0.25rem × n` (`mb-3` = 0.75rem). Convert by target rem (Bootstrap `mb-3` → Tailwind `mb-4`), never by copying the index. |
+
+**Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
+
+| Need                                    | Use                                                                                                                           | Never                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| brand / neutral / surface               | `text-primary`, `text-color`, `text-muted-color`, `bg-surface-*`, `border-surface-*` (tailwindcss-primeui — always available) | `text-blue-500`, `bg-[#…]`                                                                                    |
+| state on a **PrimeNG component**        | the `severity` prop: `p-message` / `p-tag` / `p-button` `severity="error \| warn \| success \| info"`                         | a color class on the component                                                                                |
+| state on **plain markup** (static)      | the named state utility `text-state-danger` / `bg-state-success` / `border-state-warning` / `text-state-info`                 | `text-danger` (Bootstrap), `text-(--danger)` (superseded arbitrary form), or `text-(--p-red-500)` (primitive) |
+| state that is **dynamic / conditional** | `[style.color]="cond ? 'var(--danger)' : undefined"`                                                                          | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`                                                   |
+
+The Artemis state tokens are `--danger` (red), `--success` (green), `--warning` (yellow) and `--info` (**cyan — never blue**). They are theme-aware (regenerated for light **and** dark by the `generate-css-vars` mixin) and are the same tokens `AuraArtemis` feeds into the PrimeNG palette, so plain markup, PrimeNG components and the theme share one source of truth — no `dark:` variant needed.
+
+Why the **named** `state-*` form (`text-state-danger`) rather than a bare `text-danger`? A `text-danger` utility would collide with Bootstrap's still-loaded **unlayered** `.text-danger { … !important }`, which beats any layered Tailwind utility unconditionally (an unlayered `!important` rule wins over any layered rule regardless of layer order — so even wrapping Bootstrap in a `@layer` does not help). The `state-` namespace shares no selector with Bootstrap, so it sidesteps the collision **and** needs no rename when Bootstrap is eventually removed — it is the permanent, idiomatic form, not a transitional one. The tokens are defined once, in `tailwind.css`:
+
+```css
+@theme inline {
+    --color-state-danger: var(--danger);
+    --color-state-success: var(--success);
+    --color-state-warning: var(--warning);
+    --color-state-info: var(--info);
+}
+```
+
+`@theme inline` emits each utility as a direct `var(--danger)` **reference** (e.g. `.text-state-danger { color: var(--danger) }`) instead of also creating a redundant `--color-state-*` global. Both `@theme` and `@theme inline` are dark-mode-correct — CSS variables resolve lazily at the element, so `--danger`'s dark value wins either way — so `inline` is a cleanliness choice (no extra indirection), not a correctness one. There is no exit-gate rename — these tokens survive Bootstrap removal as-is.
+
+**Pick the tool by shape, not by syntax.** When status is a **labelled pill/badge** (the graded/practice result badge, …), render it with a PrimeNG `severity` component (`p-tag` / `p-badge` / `p-message`) — it carries its own dark-mode-correct colour and a11y, and needs no colour utility at all. The `text-state-*` utility (or `[style.color]="…var(--state)…"` when the colour is a multi-state enum) is for **irreducible inline colour** with no component host: a translated validation `<small>`, a required-field asterisk, or a lone state-coloured `<fa-icon>` status glyph. Don't wrap a bare colour in a `severity` component just to avoid the utility — that adds markup for no gain.
+
+Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
+
+Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — it bans raw palette and hex in `class`/`[class]`, primitive `--p-<color>-<n>` tokens used for meaning (both as utilities `text-(--p-red-500)` and as `var(--p-…)` inside `[style.*]`/`[color]` bindings; a bare hex inside a style binding is **not** caught), and the superseded arbitrary brand-state form (`text-(--danger)` → use `text-state-danger`). Hand-written PrimeNG component **root** classes (e.g. `class="p-button"`) are banned across all templates by `localRules/no-primeng-component-classes`: PrimeNG injects each component's CSS lazily, so a bare element carrying a root class renders non-deterministically — render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) instead; modifier classes (`p-button-sm`) on a real component are fine. Bootstrap colour/component classes (e.g. named `text-danger`) are banned by `localRules/no-bootstrap-classes`, applied to the fully-migrated modules listed in the `files` array of its block in `eslint.config.mjs` (extend that array as each module is finished); the same class stays legitimate in not-yet-migrated modules. A matching stylelint hex/`--bs-` ban covers the SCSS of those same modules (see the scoped override in `.stylelintrc.json`).
 
 ```html
-<div class="d-flex ms-2">some content</div>
+<!-- layout/spacing in Tailwind, the button as a PrimeNG component -->
+<div class="flex items-center justify-between gap-2">
+    <h5 class="mb-0" jhiTranslate="..."></h5>
+    <p-button severity="primary" size="small" (onClick)="save()" [label]="'entity.action.save' | artemisTranslate" />
+</div>
 ```
+
+**Coexistence with Bootstrap (transitional).** Bootstrap is still loaded globally for not-yet-migrated modules. To avoid global breakage during coexistence, `tailwind.css` deliberately does **not** import Tailwind's Preflight (Bootstrap's Reboot stays the authoritative reset) and uses `source(none)` with an explicit `@source` allowlist (one line per migrated module) so Tailwind only emits utilities for migrated code. A migrated module must be **fully** converted — never use a Tailwind utility to override a Bootstrap-styled element, because Tailwind's layer loses the cascade to unlayered Bootstrap. Once a module is Bootstrap-free, lock it in three places the `migration-source-coverage` test (`rules/`) keeps consistent: the `no-bootstrap-classes` ESLint glob (`eslint.config.mjs`) and the stylelint hex/`--bs-` override (`.stylelintrc.json`) must name the **same** modules, and every locked path must appear in the Tailwind `@source` allowlist (`tailwind.css`) — which may be a _superset_, since a partially-migrated module is scanned for its utilities before it is fully lockable. A missing `@source` entry fails **silently** (the module's utilities simply never generate), so the test turns any drift into a red build.
+
+**Migrate a section — the runbook.** Migrating a section off Bootstrap, in order:
+
+1. **Closure first, not directory.** Map what actually _renders_: the section's component tree **plus** the global shell (footer, navbar, alert overlay) and any runtime dialogs (`jhiDeleteButton → delete-dialog → confirm-entity-name`). For each shared/leaf component in that closure — if already locked, reuse it; if small and section-local, migrate it first as its own locked unit; if app-wide and not yet migrated, **leave it Bootstrap and do not put a Tailwind utility on its host** (a half-migrated shared component loses the cascade everywhere it renders).
+2. **Enumerate + triage.** Grep the closure's `.html` for Bootstrap classes and its `.scss`/`.ts` for hex / `var(--bs-*)` / class-strings. Discount false positives (shared spacing `mb-*`/`me-*`/`gap-*` are allowed; many `row`/`table` hits are `p-table` `styleClass` or custom classes).
+3. **Convert templates fully** (never half). Utilities via the quick-reference table above — but **convert spacing by target rem, not by index** (Bootstrap `mb-3` = 1rem → Tailwind `mb-4`; the lint is blind to this by design). Components via PrimeNG (`btn`→`pButton`, `table`→`p-table`, …); never hand-paint a `p-*` root class (lazy CSS → non-deterministic render) — render the real component.
+4. **Convert ng-bootstrap → PrimeNG** (`NgbModal`→`DialogService`, `NgbTooltip`→`pTooltip`). Pass modal data via the `DialogService` `data` config — assigning `modalRef.componentInstance.X` silently no-ops for signal inputs.
+5. **Convert colours in `.html` AND `.scss` AND `.ts`.** The template lint is HTML-only, so colours set in TypeScript (`buttonClassName`, `[ngClass]` keys) or SCSS (hex, `--bs-*`) are invisible to it — grep them. `text-danger`→`text-state-danger`, `text-muted`→`text-muted-color`, SCSS hex → `var(--p-*)` / state tokens.
+6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
+7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
+8. **Lock it** — add the path to the three lists the `migration-source-coverage` test keeps consistent (see above). `no-raw-tailwind-color-palette` and `no-primeng-component-classes` are already app-wide and need no per-section wiring.
+9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
+10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
+
+| Symptom                                          | Cause                                                      | Fix                                |
+| ------------------------------------------------ | ---------------------------------------------------------- | ---------------------------------- |
+| Styles absent in the build                       | path missing from `@source`                                | add it (step 8)                    |
+| Spacing shifted ~4×                              | copied the class index instead of converting by rem        | step 3                             |
+| A control renders grey/unstyled                  | a `p-*` root class hand-painted on a bare element          | render the real component (step 3) |
+| A migrated element still shows Bootstrap styling | a half-migrated ancestor/shared component wins the cascade | convert the whole closure (step 1) |
+
+**Exit criteria (global Bootstrap removal — separate effort).** Once Bootstrap is removed app-wide: switch `tailwind.css` to `@import 'tailwindcss';` (re-enables Preflight), configure the PrimeNG `cssLayer` ordering (`tailwind-base, primeng, tailwind-utilities`) in `app.config.ts`, drop `source(none)` + the `@source` allowlist, and remove the `bootstrap` dependency. The brand state-color tokens need no exit work — they are collision-free and permanent.
 
 ### Chart Instantiation
 

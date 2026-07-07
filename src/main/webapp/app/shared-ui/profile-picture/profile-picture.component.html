@@ -1,8 +1,8 @@
-<div [ngClass]="isBoxShadow() ? 'is-box-shadow' : ''" class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize(), height: imageSize() }">
+<div [ngClass]="isBoxShadow() ? 'is-box-shadow' : ''" class="profile-picture-wrap rounded-lg" [ngStyle]="{ width: imageSize(), height: imageSize() }">
     @if (imageUrl() === undefined) {
         <strong
             [id]="defaultPictureId()"
-            class="profile-picture rounded-3"
+            class="profile-picture rounded-lg"
             [ngStyle]="{ 'background-color': isGray() ? undefined : profilePictureBackgroundColor(), 'font-size': fontSize() }"
             [ngClass]="defaultPictureClass() + (isGray() ? ' is-grayscale' : '')"
             >{{ userProfilePictureInitials() }}</strong
@@ -11,14 +11,14 @@
         <img
             [id]="imageId()"
             [alt]="authorName()"
-            class="profile-picture rounded-3"
+            class="profile-picture rounded-lg"
             [src]="imageUrl()"
             [ngStyle]="{ 'background-color': imageBackgroundColor() ?? profilePictureBackgroundColor() }"
             [ngClass]="imageClass() + (isGray() ? ' is-grayscale' : '')"
         />
     }
     @if (isEditable()) {
-        <a class="edit-profile-picture-overlay rounded-3 d-flex align-items-center justify-content-center" [routerLink]="['/user-settings']" routerLinkActive="active">
+        <a class="edit-profile-picture-overlay rounded-lg flex items-center justify-center" [routerLink]="['/user-settings']" routerLinkActive="active">
             <fa-icon class="text-white" [icon]="faCog" />
         </a>
     }

@@ -10,8 +10,9 @@ import {
 } from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -44,6 +45,12 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
     protected sortService = inject(SortService);
+
+    private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
+
+    protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
+        return this.knowledgeAreaTree();
+    }
 
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
