@@ -38,7 +38,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     readonly round = round;
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
-    quizPointStatistic: QuizPointStatistic;
+    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess()/loadNewData() before the chart is rendered
 
     labels: string[] = [];
 
@@ -46,8 +46,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     backgroundColor: string[] = [];
 
     readonly maxScore = signal<number>(undefined!);
-    websocketChannelForData: string;
-    quizExerciseChannel: string;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
+    quizExerciseChannel?: string;
     private quizExerciseSubscription?: Subscription;
     private quizDataSubscription?: Subscription;
 
@@ -55,7 +55,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     waitingForQuizStart = false;
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() via setInterval(), cleared in ngOnDestroy()
 
     // Icons
     faSync = faSync;
@@ -149,7 +149,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
         this.loadData();
@@ -164,7 +164,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !this.quizExercise().quizStarted;

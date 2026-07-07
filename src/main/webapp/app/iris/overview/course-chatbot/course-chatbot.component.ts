@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { captureException } from '@sentry/angular';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -32,6 +32,8 @@ export class CourseChatbotComponent {
     readonly initialContextType = input<string | undefined>(undefined);
     /** Entity ID corresponding to initialContextType. */
     readonly initialContextEntityId = input<number | undefined>(undefined);
+
+    readonly isChatHistoryOpen = computed<boolean>(() => this.irisBaseChatbot()?.isChatHistoryOpen() ?? true);
 
     constructor() {
         effect(() => {

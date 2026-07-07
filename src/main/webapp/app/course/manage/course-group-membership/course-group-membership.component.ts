@@ -28,7 +28,7 @@ export class CourseGroupMembershipComponent implements OnInit {
     courseGroup = signal<CourseGroup | undefined>(undefined);
     isLoading = signal(false);
     isAdmin = signal(false);
-    paramSub: Subscription;
+    paramSub?: Subscription;
     filteredUsersSize = signal(0);
 
     readonly capitalize = capitalize;
@@ -52,7 +52,7 @@ export class CourseGroupMembershipComponent implements OnInit {
             case CourseGroup.INSTRUCTORS:
                 return course.instructorGroupName;
             default:
-                captureException('Unknown course group: ' + courseGroup);
+                captureException('Unknown course group: ' + String(courseGroup));
                 return undefined;
         }
     });
@@ -107,7 +107,8 @@ export class CourseGroupMembershipComponent implements OnInit {
             this.paramSub = this.route.params.subscribe((params) => {
                 this.courseGroup.set(params['courseGroup']);
                 if (!courseGroups.includes(this.courseGroup()!)) {
-                    return this.router.navigate(['/course-management']);
+                    void this.router.navigate(['/course-management']);
+                    return;
                 }
                 this.courseService.getAllUsersInCourseGroup(this.course()!.id!, this.courseGroup()!).subscribe((usersResponse) => {
                     this.allCourseGroupUsers.set(usersResponse.body!);

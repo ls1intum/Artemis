@@ -205,7 +205,7 @@ describe('Bonus Service', () => {
             100,
             undefined,
         ],
-    ])('should get included boundary points [%p, %p, %p, %p]', (gradeStep: GradeStep, maxPoints: number, expected: number) => {
+    ])('should get included boundary points [%p, %p, %p, %p]', (gradeStep: GradeStep, maxPoints: number, expected: number | undefined) => {
         const result = service.getIncludedBoundaryPoints(gradeStep, maxPoints);
         expect(result).toBe(expected);
     });

@@ -18,7 +18,7 @@ export class LoadingNotificationInterceptor implements HttpInterceptor {
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         if (this.activeRequests === 0) {
             this.loadingNotificationService.startLoading();
         }

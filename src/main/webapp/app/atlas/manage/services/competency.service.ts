@@ -59,14 +59,14 @@ export class CompetencyService extends CourseCompetencyService {
         );
     }
 
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
+    override getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<CourseCompetencyResponseDTO[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseDTOType) => this.mapCompetencyArrayResponse(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
     }
 
-    findById(competencyId: number, courseId: number) {
+    override findById(competencyId: number, courseId: number) {
         return this.httpClient.get<CourseCompetencyResponseDTO>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseDTOType) => {
                 const mapped = this.mapCompetencyResponse(res);
@@ -120,7 +120,7 @@ export class CompetencyService extends CourseCompetencyService {
             .pipe(map((res: HttpResponse<Array<CompetencyWithTailRelationResponseDTO>>) => this.mapCompetencyImportResponse(res)));
     }
 
-    importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
+    override importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
         const payload: CourseCompetencyImportOptionsDTO = {
             importExercises: false,
             importRelations: importRelations,

@@ -150,7 +150,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     /**
      * BehaviorSubjects that emit the latest result per participationId.
      */
-    resultObservables: Map<number, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
+    resultObservables: Map<number, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result | undefined>>();
 
     /**
      * BehaviorSubject that emits the latest updated participation.
@@ -206,7 +206,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             this.removeParticipation(participation.id!, participation.exercise?.id);
         });
         this.cachedParticipations = new Map<number, StudentParticipation>();
-        this.resultObservables = new Map<number, BehaviorSubject<Result>>();
+        this.resultObservables = new Map<number, BehaviorSubject<Result | undefined>>();
         this.participationObservable = undefined;
         this.subscribedExercises = new Map<number, Set<number>>();
         this.participationSubscriptionTypes = new Map<number, boolean>();
@@ -217,9 +217,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * @param participation Updated participation object
      */
-    private notifyParticipationSubscribers = (participation: Participation): void => {
+    private notifyParticipationSubscribers = (participation: Participation | undefined): void => {
         if (!this.participationObservable) {
-            this.participationObservable = new BehaviorSubject(participation);
+            this.participationObservable = new BehaviorSubject<Participation | undefined>(participation);
         } else {
             this.participationObservable.next(participation);
         }
@@ -235,7 +235,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
         //  this could be an issue in some parts of app when a formatted date is needed.
         if (!resultObservable) {
-            this.resultObservables.set(result.submission!.participation!.id!, new BehaviorSubject(result));
+            this.resultObservables.set(result.submission!.participation!.id!, new BehaviorSubject<Result | undefined>(result));
         } else {
             resultObservable.next(result);
         }

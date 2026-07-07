@@ -244,7 +244,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should write value of form group in content variable', () => {
-        component.writeValue(metisAnswerPostUser2);
+        component.writeValue(metisAnswerPostUser2 as unknown as string);
         expect(component.content()).toEqual(metisAnswerPostUser2);
     });
 

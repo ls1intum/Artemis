@@ -81,7 +81,7 @@ export class CourseRegistrationComponent implements OnInit {
      * Triggers a route transition, updating the URL with the current sorting parameters.
      */
     transition(): void {
-        this.router.navigate(['/courses/enroll'], {
+        void this.router.navigate(['/courses/enroll'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
                 sort: `${this.predicate},${this.ascending ? ASC : DESC}`,

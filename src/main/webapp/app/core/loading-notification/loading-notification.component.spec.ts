@@ -166,7 +166,7 @@ describe('LoadingNotificationComponent', () => {
         it('should unsubscribe from loadingStatus on destroy', () => {
             fixture.detectChanges();
 
-            const unsubscribeSpy = vi.spyOn(component.loadingSubscription, 'unsubscribe');
+            const unsubscribeSpy = vi.spyOn(component.loadingSubscription!, 'unsubscribe');
 
             component.ngOnDestroy();
 

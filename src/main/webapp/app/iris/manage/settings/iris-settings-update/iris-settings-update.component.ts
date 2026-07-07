@@ -37,6 +37,7 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonDirective } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
+import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
@@ -67,6 +68,7 @@ interface SaveSettingsOptions {
         InputNumberModule,
         ButtonDirective,
         MessageModule,
+        TagModule,
         ProgressSpinnerModule,
         IrisLogoComponent,
     ],
@@ -298,7 +300,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             return undefined;
         }
         return Object.assign({}, settings, {
-            customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(settings.customInstructions),
         });
     }
 
@@ -358,7 +360,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         // Normalize empty strings to undefined before saving
         const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
-            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         const originalSettingsValue = this.originalSettings();
@@ -444,7 +446,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         // empty custom instructions the same way saveSettings() does.
         const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             enabled,
-            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions),
         });
 
         if (!this.isAdmin()) {

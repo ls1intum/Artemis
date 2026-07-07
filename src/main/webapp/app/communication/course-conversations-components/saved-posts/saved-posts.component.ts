@@ -1,12 +1,13 @@
 import { Component, OnDestroy, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
-import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faChevronLeft, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
 import { Subscription, take } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 @Component({
     selector: 'jhi-saved-posts',
@@ -22,6 +23,7 @@ export class SavedPostsComponent implements OnDestroy {
 
     private readonly savedPostService = inject(SavedPostService);
     private readonly alertService = inject(AlertService);
+    private readonly courseSidebarService = inject(CourseSidebarService);
     private fetchSubscription?: Subscription;
 
     protected readonly posts = signal<Posting[]>([]);
@@ -31,6 +33,7 @@ export class SavedPostsComponent implements OnDestroy {
     // Icons
     readonly faBookmark = faBookmark;
     readonly faInfoCircle = faInfoCircle;
+    readonly faChevronLeft = faChevronLeft;
 
     constructor() {
         effect(() => {
@@ -61,6 +64,10 @@ export class SavedPostsComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.fetchSubscription?.unsubscribe();
+    }
+
+    protected openSidebar() {
+        this.courseSidebarService.openSidebar();
     }
 
     protected trackPostFunction = (index: number, post: Posting): string => index + '' + post.id!;

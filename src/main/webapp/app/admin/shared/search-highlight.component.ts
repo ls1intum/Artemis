@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 interface HighlightSegment {
     text: string;
@@ -24,6 +24,7 @@ function escapeRegExp(value: string): string {
         <span [class.search-highlight]="segment.match">{{ segment.text }}</span>
     }`,
     styles: ['.search-highlight { font-weight: 700; }'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchHighlightComponent {
     /** The full text to display. */

@@ -62,7 +62,7 @@ describe('CompetencyPopoverComponent', () => {
         expect(competencyPopoverComponent).toBeDefined();
     });
 
-    it.each([
+    it.each<['competencyManagement' | 'courseCompetencies', string[]]>([
         ['courseCompetencies', ['/courses', '1', 'competencies']],
         ['competencyManagement', ['/course-management', '1', 'competency-management']],
     ])('should navigate', (navigateTo: 'competencyManagement' | 'courseCompetencies', expectedNavigation: string[]) => {

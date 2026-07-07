@@ -38,7 +38,7 @@ export class DoughnutChartComponent implements OnInit {
 
     readonly receivedStats = signal(false);
     readonly doughnutChartTitle = signal<string>(undefined!);
-    stats: number[];
+    stats: number[] = [];
     readonly titleLink = signal<string[] | undefined>(undefined);
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([
@@ -108,7 +108,7 @@ export class DoughnutChartComponent implements OnInit {
     openCorrespondingPage() {
         const titleLink = this.titleLink();
         if (this.course().id && this.exerciseId() && titleLink) {
-            this.router.navigate(titleLink);
+            void this.router.navigate(titleLink);
         }
     }
 
