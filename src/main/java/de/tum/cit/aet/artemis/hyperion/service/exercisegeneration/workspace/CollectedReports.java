@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +22,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
  * Only the surviving entries' bytes are returned, keyed by their flat collected file name (the verifier routes each name to the JUnit or the SCA parser). Any violation throws
  * {@link RejectedReportException}; the verifier treats that as a failed (rejected) verification rather than parsing partial, possibly-forged input.
  */
-final class CollectedReports {
+public final class CollectedReports {
 
     /** Per-file cap. A single test/SCA report far larger than this is pathological; 32 MiB comfortably covers a verbose multi-suite JUnit XML or a large SARIF file. */
     static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
@@ -34,7 +34,7 @@ final class CollectedReports {
     }
 
     /** Signals that a {@code copyOut} reports archive contained an entry that failed validation (symlink, hardlink, non-regular, path escape, or oversize). */
-    static final class RejectedReportException extends RuntimeException {
+    public static final class RejectedReportException extends RuntimeException {
 
         RejectedReportException(String message) {
             super(message);
@@ -51,7 +51,7 @@ final class CollectedReports {
      * @throws IOException             if reading the archive fails
      * @throws RejectedReportException if any entry is a symlink/hardlink/non-regular/path-escaping/oversize entry
      */
-    static Map<String, byte[]> read(TarArchiveInputStream tar, String expectedPrefix) throws IOException {
+    public static Map<String, byte[]> read(TarArchiveInputStream tar, String expectedPrefix) throws IOException {
         Map<String, byte[]> result = new LinkedHashMap<>();
         String normalizedPrefix = expectedPrefix.isEmpty() || expectedPrefix.endsWith("/") ? expectedPrefix : expectedPrefix + "/";
         long total = 0;
@@ -93,8 +93,13 @@ final class CollectedReports {
         return result;
     }
 
-    /** Decodes a collected report's bytes as UTF-8 (the production parsers consume the report content as a String). */
-    static String asString(byte[] bytes) {
+    /**
+     * Decodes a collected report's bytes as UTF-8 (the production parsers consume the report content as a String).
+     *
+     * @param bytes the collected report's raw bytes
+     * @return the report content decoded as UTF-8
+     */
+    public static String asString(byte[] bytes) {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 

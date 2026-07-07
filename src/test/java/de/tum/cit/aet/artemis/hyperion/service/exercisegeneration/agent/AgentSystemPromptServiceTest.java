@@ -13,7 +13,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SandboxBuildCommandService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;

@@ -12,6 +12,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
+
 /**
  * Builds the {@code copyOut} report tars the verifier reads from the sandbox's verifier-owned reports directory, so the deterministic
  * {@link DifferentialVerificationServiceTest} can drive the NEW copyOut+production-parser flow without Docker. The verifier copies the reports dir out and routes each collected

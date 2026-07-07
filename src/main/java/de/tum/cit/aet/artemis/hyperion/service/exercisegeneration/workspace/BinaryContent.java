@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.io.IOException;
 import java.nio.charset.CodingErrorAction;

@@ -13,6 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
+
 /**
  * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
  * oracle alone cannot see (the sandbox build can pass while production is broken or the solution is leaked):
@@ -83,7 +85,7 @@ public final class ExerciseIntegrityGate {
      * @param files the produced files keyed by repository-relative path
      * @return the same map without orphan residue files
      */
-    static Map<String, String> stripResidueOutsideCanonicalRoots(Map<String, String> files) {
+    public static Map<String, String> stripResidueOutsideCanonicalRoots(Map<String, String> files) {
         Map<String, String> cleaned = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : files.entrySet()) {
             if (!isResidueOutsideCanonicalRoot(entry.getKey())) {

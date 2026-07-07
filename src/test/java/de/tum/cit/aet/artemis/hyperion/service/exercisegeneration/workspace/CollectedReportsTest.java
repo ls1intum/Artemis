@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;

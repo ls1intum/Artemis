@@ -91,17 +91,21 @@ class HarmonyScrubbingChatModelTest {
     }
 
     @Test
-    void getDefaultOptionsAndStream_delegateUnchanged() {
+    void getDefaultOptions_delegatesUnchanged_andStreamScrubsEachChunk() {
         ChatModel delegate = mock(ChatModel.class);
         ChatOptions options = mock(ChatOptions.class);
         Prompt prompt = new Prompt("hi");
-        Flux<ChatResponse> stream = Flux.empty();
+        ChatResponse dirtyChunk = new ChatResponse(List.of(new Generation(new AssistantMessage("chunk<|end|>"))));
         when(delegate.getDefaultOptions()).thenReturn(options);
-        when(delegate.stream(prompt)).thenReturn(stream);
+        when(delegate.stream(prompt)).thenReturn(Flux.just(dirtyChunk));
         HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
 
-        // Both are passed straight through: the loop reads the configured model id via options, and never streams.
+        // getDefaultOptions is a straight pass-through so the loop can read the configured model id.
         assertThat(model.getDefaultOptions()).isSameAs(options);
-        assertThat(model.stream(prompt)).isSameAs(stream);
+        // stream() now scrubs each emitted chunk with the same routine as call(): a harmony token leaked mid-stream is stripped, so any ChatClient streaming consumer stays
+        // protected.
+        List<ChatResponse> chunks = model.stream(prompt).collectList().block();
+        assertThat(chunks).hasSize(1);
+        assertThat(chunks.getFirst().getResult().getOutput().getText()).isEqualTo("chunk");
     }
 }

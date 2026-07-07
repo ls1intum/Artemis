@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -40,17 +41,17 @@ public class SandboxBuildCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(SandboxBuildCommandService.class);
 
-    static final String VERIFY_SCRIPT_NAME = "verify.sh";
+    public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
     /**
      * Verifier-owned directory OUTSIDE {@code /workspace} where the verifier re-seeds a pristine {@code verify.sh} per run and that script collects the reports. The agent tools
      * only resolve paths under {@code /workspace}, so this is unreachable to them — the grader runs a script the agent never touched and reads reports it cannot write, which is
      * what makes the verdict non-forgeable.
      */
-    static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
+    public static final String PRISTINE_VERIFY_DIR = "/opt/hyperion";
 
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
-    static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
+    public static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
     /** Verifier-owned, agent-unreachable directory the script collects reports into and the verifier {@code copyOut}s from. */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
@@ -62,10 +63,10 @@ public class SandboxBuildCommandService {
      * Canonical token the collect step appends to every collected JUnit report ({@code <seq>__junit.xml}); the verifier routes a file with this token through
      * {@code TestResultXmlParser}. SCA reports keep their per-tool name ({@code spotbugsXml.xml}, …) as the token instead.
      */
-    static final String COLLECTED_JUNIT_TOKEN = "junit.xml";
+    public static final String COLLECTED_JUNIT_TOKEN = "junit.xml";
 
     /** Separator between the uniquifying sequence and the canonical token in a collected file name ({@code 0001__junit.xml}). */
-    static final String COLLECTED_NAME_SEPARATOR = "__";
+    public static final String COLLECTED_NAME_SEPARATOR = "__";
 
     /**
      * JUnit-XML report locations covering all shipped languages, independent of phase-declared paths (Maven surefire/failsafe, Gradle test-results, and the test-reports/ dir

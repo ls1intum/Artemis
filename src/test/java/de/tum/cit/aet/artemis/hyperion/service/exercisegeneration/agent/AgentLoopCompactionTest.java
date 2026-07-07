@@ -52,11 +52,11 @@ class AgentLoopCompactionTest {
     }
 
     @Test
-    void estimateMessageTokens_addsOverheadAndUsesCharsPerToken() {
-        // 30 chars of user text => ceil(30/3)=10 plus the flat per-message overhead.
-        assertThat(AgentLoopRunner.estimateMessageTokens(new UserMessage("x".repeat(30)))).isEqualTo(10 + 4);
-        // A tool result: per-message overhead + per-result overhead + ceil(chars/3).
-        assertThat(AgentLoopRunner.estimateMessageTokens(toolResult("c", "bash", "x".repeat(30)))).isEqualTo(4 + 8 + 10);
+    void estimateMessageTokens_addsStructuralOverheadOnTopOfJtokkit() {
+        // 30 repeated 'x' chars tokenize to 5 tokens under jtokkit's o200k_base encoding, plus the flat per-message overhead (4).
+        assertThat(AgentLoopRunner.estimateMessageTokens(new UserMessage("x".repeat(30)))).isEqualTo(5 + 4);
+        // A tool result: per-message overhead (4) + per-result overhead (8) + the jtokkit count of the payload (5).
+        assertThat(AgentLoopRunner.estimateMessageTokens(toolResult("c", "bash", "x".repeat(30)))).isEqualTo(4 + 8 + 5);
     }
 
     @Test
@@ -104,8 +104,8 @@ class AgentLoopCompactionTest {
     @Test
     void findCutIndex_landsOnATurnStartNeverAToolResult() {
         AgentLoopRunner runner = new AgentLoopRunner(List.of(mock(ChatModel.class)), 128_000);
-        // 12 turns of ~9 KB results comfortably exceed the 20k-token keep-recent target, so a cut is taken.
-        List<Message> conversation = conversationWithTurns(12, 9_000);
+        // 12 turns whose results tokenize to ~3k tokens each comfortably exceed the 20k-token keep-recent target, so a cut is taken.
+        List<Message> conversation = conversationWithTurns(12, 24_000);
         int cut = runner.findCutIndex(conversation, 2);
         assertThat(cut).isGreaterThan(2).isLessThan(conversation.size());
         // The kept tail must begin at a turn start (an assistant tool-call), never an orphaned tool result.
@@ -144,7 +144,7 @@ class AgentLoopCompactionTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("## Goal\nBuild a bubble-sort exercise.\n## Next steps\nFinish the tests."));
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
 
-        List<Message> conversation = conversationWithTurns(12, 9_000);
+        List<Message> conversation = conversationWithTurns(12, 24_000);
         List<Message> compacted = runner.compact(conversation, null);
 
         // System prompt and the initial instruction are always preserved at the front.
@@ -166,7 +166,7 @@ class AgentLoopCompactionTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("summarizer 500"));
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
 
-        List<Message> conversation = conversationWithTurns(12, 9_000);
+        List<Message> conversation = conversationWithTurns(12, 24_000);
         List<Message> compacted = runner.compact(conversation, null);
 
         assertThat(compacted.get(2).getText()).contains("SESSION SUMMARY").contains("omitted to fit the context window");

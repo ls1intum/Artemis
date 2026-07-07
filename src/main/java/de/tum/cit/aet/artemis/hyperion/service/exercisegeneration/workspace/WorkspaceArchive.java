@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,7 +23,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
  * shell quoting of model-controlled file paths. The repository trees are packed from the checked-out working copies on disk (not from a string map) so that binary files such as
  * the Gradle wrapper JAR and the executable bit on {@code gradlew} survive the round-trip — without that, a Gradle-based exercise could not be built inside the sandbox.
  */
-final class WorkspaceArchive {
+public final class WorkspaceArchive {
 
     /** Default permissions: world-readable regular file, and executable for files that are executable in the working copy (e.g. {@code gradlew}). */
     private static final int MODE_FILE = 0644;
@@ -40,7 +40,7 @@ final class WorkspaceArchive {
      * @param directoryTrees working-copy directories keyed by the archive-relative prefix to place them under (e.g. {@code solution} -> the checked-out solution repo)
      * @return a stream over the resulting tar archive
      */
-    static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees) {
+    public static InputStream buildWorkspaceTarStream(Map<String, String> textFiles, Map<String, Path> directoryTrees) {
         return new ByteArrayInputStream(build(textFiles, directoryTrees));
     }
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
+package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -45,7 +46,7 @@ public class GenerationWorkspaceService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationWorkspaceService.class);
 
-    static final String WORKSPACE = "/workspace";
+    public static final String WORKSPACE = "/workspace";
 
     private static final String PROBLEM_STATEMENT_FILE = "problem-statement.md";
 
