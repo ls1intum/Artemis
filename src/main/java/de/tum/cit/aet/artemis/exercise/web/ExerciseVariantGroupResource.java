@@ -342,18 +342,18 @@ public class ExerciseVariantGroupResource {
     }
 
     /**
-     * Validates the exercise's date combination, skipping {@link QuizExercise}: {@link QuizExercise#validateDates()}
-     * also iterates {@code quizBatches}, a lazy collection that is not initialized on the exercises loaded here (no
-     * open Hibernate session outside the originating repository call), which would otherwise throw
+     * Validates the exercise's date combination via {@link Exercise#validateBaseDates()} rather than the polymorphic
+     * {@link Exercise#validateDates()}, so that for a {@link QuizExercise} this runs only the base
+     * release/start/due/assessmentDue/exampleSolutionPublication check and not {@link QuizExercise}'s additional
+     * {@code quizBatches} loop: {@code quizBatches} is a lazy collection that is not initialized on the exercises loaded
+     * here (no open Hibernate session outside the originating repository call), so iterating it would throw
      * {@code LazyInitializationException}. Only individual-mode quizzes can be group members (enforced in
      * {@link #setExerciseVariantGroup}), so the batch-specific check this skips is not relevant for group timelines.
      *
      * @param exercise the exercise whose (already updated) dates should be validated
      */
     private void validateDatesIfPossible(Exercise exercise) {
-        if (!(exercise instanceof QuizExercise)) {
-            exercise.validateDates();
-        }
+        exercise.validateBaseDates();
     }
 
     /**

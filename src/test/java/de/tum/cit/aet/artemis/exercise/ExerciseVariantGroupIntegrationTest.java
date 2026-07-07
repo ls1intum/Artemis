@@ -385,4 +385,23 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(reloaded.getReleaseDate().toInstant()).isEqualTo(release.toInstant());
         assertThat(reloaded.getDueDate().toInstant()).isEqualTo(due.toInstant());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignIndividualQuizToGroup_exampleSolutionDateBeforeDueDate_badRequest() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime exampleSolution = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        // Valid at the group level (exampleSolution >= release), but the quiz's own (default INCLUDED_COMPLETELY) dates
+        // require exampleSolution >= dueDate once applied to the member exercise (Exercise#validateBaseDates()).
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Quiz variants", null, release, null, due, null, exampleSolution, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        QuizExercise quiz = addQuizToCourse(QuizMode.INDIVIDUAL);
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + quiz.getId() + "/variant-group";
+
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        Exercise reloaded = exerciseRepository.findByIdElseThrow(quiz.getId());
+        assertThat(reloaded.getExerciseVariantGroup()).isNull();
+    }
 }

@@ -115,7 +115,15 @@ export class ExerciseTableComponent {
                 case 'dueDate': {
                     const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
                     const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
-                    cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
+                    if (da === undefined || db === undefined) {
+                        // Undated exercises must sort last regardless of asc/desc. The shared `asc ? cmp : -cmp` flip
+                        // below negates cmp for desc, so pre-negate here for desc to cancel that out and keep the
+                        // "undefined sorts last" result stable in both directions (mirrors course-exercise-cards.ts).
+                        const undefinedLast = da === undefined && db === undefined ? 0 : da === undefined ? 1 : -1;
+                        cmp = asc ? undefinedLast : -undefinedLast;
+                    } else {
+                        cmp = da.valueOf() - db.valueOf();
+                    }
                     break;
                 }
                 case 'points':
@@ -258,7 +266,7 @@ export class ExerciseTableComponent {
     }
 
     owningGroupForExercise(exercise: Exercise): CourseExerciseGroup | undefined {
-        return this.groups().find((g) => g.exercises?.some((e) => e.id === exercise.id));
+        return this.groups().find((g) => g.exercises?.some((e) => (exercise.id !== undefined && e.id !== undefined ? e.id === exercise.id : e === exercise)));
     }
 
     owningGroupId(exercise: Exercise): number | undefined {

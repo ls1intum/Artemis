@@ -56,8 +56,9 @@ export class ExerciseGroupEditModalComponent {
     });
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
+        const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
         const items: TimelineItem[] = [
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate },
+            releaseDateItem,
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
         ];
@@ -66,7 +67,14 @@ export class ExerciseGroupEditModalComponent {
         }
         items.push(
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.assessmentDueDate', date: this.draftAssessmentDueDate },
-            { kind: 'optional', labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate', date: this.draftExampleSolutionPublicationDate },
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                date: this.draftExampleSolutionPublicationDate,
+                // The group only requires exampleSolutionPublicationDate >= releaseDate (ExerciseVariantGroup#areDatesValid);
+                // unlike a single exercise it has no IncludedInOverallScore, so it can't enforce the stricter due-date rule.
+                orderCheckAgainst: [releaseDateItem],
+            },
         );
         return items;
     });

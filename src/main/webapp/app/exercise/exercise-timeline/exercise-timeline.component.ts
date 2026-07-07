@@ -13,6 +13,14 @@ export interface TimelineItem {
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
+    /**
+     * Overrides which earlier items this item's date is checked against for ordering. By default (when undefined) an
+     * item must not precede any earlier item in the {@link ExerciseTimelineComponent.timelineItems} array. Pass an
+     * explicit list to restrict the check to only those items instead — e.g. an exercise-variant-group's example
+     * solution publication date only needs to be `>= releaseDate` (see `ExerciseVariantGroup#areDatesValid`), not
+     * `>= dueDate` as a single exercise's date would.
+     */
+    orderCheckAgainst?: TimelineItem[];
 }
 
 export interface ExerciseTimelineStatus {
@@ -135,7 +143,7 @@ export class ExerciseTimelineComponent {
             const date = item.date();
             const isBeforePreviousDate =
                 date !== undefined &&
-                items.slice(0, index).some((previousItem) => {
+                (item.orderCheckAgainst ?? items.slice(0, index)).some((previousItem) => {
                     const previousDate = previousItem.date();
                     return previousDate !== undefined && date.isBefore(previousDate);
                 });

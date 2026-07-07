@@ -834,6 +834,19 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @throws BadRequestAlertException if the dates are not valid
      */
     public void validateDates() {
+        validateBaseDates();
+    }
+
+    /**
+     * Validates the base date combination shared by every exercise type (release/start/due/assessmentDue/exampleSolutionPublication
+     * ordering). Deliberately not overridden by {@link de.tum.cit.aet.artemis.quiz.domain.QuizExercise}, unlike {@link #validateDates()}:
+     * callers that hold a {@code QuizExercise} instance whose lazily-loaded {@code quizBatches} collection is not initialized (e.g. a
+     * detached entity loaded without that collection fetched) can call this method directly to run the base check without triggering a
+     * {@code LazyInitializationException} from the quiz-batch check that {@code QuizExercise.validateDates()} additionally performs.
+     *
+     * @throws BadRequestAlertException if the dates are not valid
+     */
+    public final void validateBaseDates() {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
