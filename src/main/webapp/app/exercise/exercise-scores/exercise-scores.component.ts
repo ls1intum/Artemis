@@ -434,6 +434,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         result.successful = dto.successful;
         result.completionDate = dto.completionDate;
         result.assessmentType = dto.assessmentType;
+        result.testCaseCount = dto.testCaseCount;
+        result.passedTestCaseCount = dto.passedTestCaseCount;
+        result.codeIssueCount = dto.codeIssueCount;
         return result;
     }
 
@@ -460,6 +463,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                                         successful: dto.successful,
                                         completionDate: dto.completionDate,
                                         assessmentType: dto.assessmentType,
+                                        testCaseCount: dto.testCaseCount,
+                                        passedTestCaseCount: dto.passedTestCaseCount,
+                                        codeIssueCount: dto.codeIssueCount,
                                     },
                                 ]
                               : [],

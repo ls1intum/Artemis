@@ -63,6 +63,9 @@ describe('Exercise Scores Component', () => {
         buildPlanId: '1',
         repositoryUri: 'url',
         testRun: false,
+        testCaseCount: 10,
+        passedTestCaseCount: 5,
+        codeIssueCount: 0,
     };
 
     const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
