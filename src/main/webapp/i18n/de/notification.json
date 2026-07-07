@@ -313,6 +313,11 @@
                 "content": "Die Übungsgruppe {{groupTitle}} wurde gelöscht.",
                 "settingsTitle": "Übungsgruppe gelöscht"
             },
+            "irisResponseNotification": {
+                "title": "Iris hat geantwortet - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris-Antwort"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

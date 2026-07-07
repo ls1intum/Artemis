@@ -313,6 +313,11 @@
                 "content": "Tutorial group {{groupTitle}} was deleted.",
                 "settingsTitle": "Tutorial deleted"
             },
+            "irisResponseNotification": {
+                "title": "Iris responded - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris response"
+            },
             "temporal": {
                 "now": "Now",
                 "oneHourAgo": "1 hour ago.",
