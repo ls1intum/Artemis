@@ -373,14 +373,13 @@ export class ExerciseActionsComponent {
         });
 
         // Measure the always-visible quiz buttons' width whenever the quiz state or language changes (they never
-        // collapse, so their reserved width just needs to stay accurate).
+        // collapse, so their reserved width just needs to stay accurate). Reset to 0 when a quiz transition removes the
+        // button group, so the overflow logic does not keep reserving space for buttons that are no longer rendered.
         afterRenderEffect(() => {
             this.quizExercise();
             this.languageVersion();
             const quizEl = this.quizGroup()?.nativeElement;
-            if (quizEl) {
-                this.quizWidth.set(quizEl.offsetWidth);
-            }
+            this.quizWidth.set(quizEl ? quizEl.offsetWidth : 0);
         });
 
         // Measure each distinct button's natural width once (while it is visible) and cache it. Hidden buttons read 0,

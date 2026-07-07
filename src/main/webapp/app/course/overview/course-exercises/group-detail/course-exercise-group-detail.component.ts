@@ -23,7 +23,7 @@ import { InformationBox, InformationBoxComponent } from 'app/shared-ui/informati
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { TooltipModule } from 'primeng/tooltip';
@@ -64,6 +64,7 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly DifficultyLevel = DifficultyLevel;
 
     private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly scoresStorageService = inject(ScoresStorageService);
     private readonly now = this.serverDateService.now();
 
     private readonly groupId = signal<number | undefined>(undefined);
@@ -89,15 +90,20 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly exerciseSumMaxPoints = computed<number>(() => this.exercises().reduce((sum, ex) => sum + (ex.maxPoints ?? 0), 0));
 
     /**
-     * Sum of achieved points across all exercises in the group, based on latest rated results, capped at the group's
-     * configured maxPoints (matching the server-side cap in CourseScoreCalculationService) so the displayed score never
-     * exceeds the cap.
+     * Sum of achieved points across all exercises in the group, capped at the group's configured maxPoints (matching
+     * the server-side cap in CourseScoreCalculationService) so the displayed score never exceeds the cap.
+     * <p>
+     * Uses the server-computed relevant result per participation (via {@link ScoresStorageService}, populated by the
+     * course dashboard load), exactly like the course statistics page. That result is the one the server counts toward
+     * the course score — the due-date-relevant rated result — so this preview matches the official score instead of
+     * locally guessing with the newest rated result, which could wrongly include a post-deadline result.
      */
     protected readonly achievedGroupPoints = computed<number>(() => {
         const course = this.course();
         const achieved = this.exercises().reduce((sum, ex) => {
-            const relevantResult = getLatestResultOfStudentParticipation(this.exerciseParticipation(ex), false);
-            if (!relevantResult?.score || !ex.maxPoints) {
+            const participationId = this.exerciseParticipation(ex)?.id;
+            const relevantResult = participationId !== undefined ? this.scoresStorageService.getStoredParticipationResult(participationId) : undefined;
+            if (!relevantResult?.rated || !relevantResult.score || !ex.maxPoints) {
                 return sum;
             }
             return sum + (roundValueSpecifiedByCourseSettings((relevantResult.score * ex.maxPoints) / 100, course) ?? 0);
