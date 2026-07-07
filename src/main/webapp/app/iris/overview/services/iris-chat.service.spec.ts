@@ -247,10 +247,7 @@ describe('IrisChatService', () => {
             service.stagePendingContext(ChatServiceMode.LECTURE, 42);
             await firstValueFrom(service.sendMessage('hi', {}, context));
 
-            expect(createMessageSpy).toHaveBeenCalledWith(
-                id,
-                expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: 42 }, context }),
-            );
+            expect(createMessageSpy).toHaveBeenCalledWith(id, expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: 42 }, context }));
         });
 
         it('should not include pendingContext when user reverts to session current context before sending', async () => {
