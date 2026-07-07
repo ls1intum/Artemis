@@ -142,6 +142,11 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         // Fetching the tasks separately, as putting them in the query above leads to Hibernate duplicating the tasks.
         var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(original.getId());
         original.setTasks(new ArrayList<>(templateTasks));
+        // Exercise.categories is a lazy @ElementCollection NOT covered by the import fetch graph above (the REST
+        // import path receives categories in the request payload instead) — reading it on this detached instance
+        // in buildVariantSkeleton threw a LazyInitializationException in the first real-CI run. Hydrate separately.
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(source.getId())
+                .ifPresent(withCategories -> original.setCategories(withCategories.getCategories()));
 
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());

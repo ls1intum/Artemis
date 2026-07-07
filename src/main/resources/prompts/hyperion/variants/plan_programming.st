@@ -26,6 +26,10 @@ Produce a change plan with:
    "template repository: re-theme TODO comments and identifiers, keep the method stubs compiling",
    "test repository: rename `BankAccountTest` to `CargoBayTest`, keep every assertion logically identical".
    Only include changes required by the requested difficulty/domain/instructions above.
+   The problem statement is NOT a file in any repository — it is an exercise field you already rewrite fully in
+   the problemStatement output above. Never emit an intended change that edits a problem-statement file (there is
+   no problem_statement.md); if the statement needs a follow-up (e.g. renamed test names), phrase it as "update
+   the exercise problem statement".
 4. invariants — properties the transformation must NOT break, e.g. "the number of test cases stays identical",
    "grading-relevant method signatures keep their names unless listed in intendedChanges", "build configuration,
    project layout, and dependencies stay untouched", "the solution repository passes all tests", "the template

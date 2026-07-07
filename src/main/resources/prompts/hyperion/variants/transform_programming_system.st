@@ -19,7 +19,10 @@ Core contract:
   3. Template repository: apply the planned renames/re-theming. The template must still compile but FAIL the
      tests (functionality unimplemented) — runBuild(TEMPLATE) must not come back green.
   4. Problem statement LAST via updateProblemStatement, once the final test names are settled: every task marker
-     "[task][...](testName,...)" must reference tests that exist in the test repository.
+     "[task][...](testName,...)" must reference tests that exist in the test repository. The problem statement is
+     NOT a file in any repository (there is no problem_statement.md to find or edit) — updateProblemStatement is
+     the only way to change it, and it was already pre-set from the plan, so calling it is only needed when test
+     names changed during transformation.
 - Close the loop on real signals: after edits, use runBuild and getBuildAndTestResults and react to the actual
   compiler output and failed test names. Never assume an edit worked.
 - Tool errors (no match, multiple matches, invalid path) come back as the tool result — fix the call, do not
