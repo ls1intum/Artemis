@@ -1,4 +1,4 @@
-import { Directive, inject } from '@angular/core';
+import { Directive, inject, signal } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
@@ -15,21 +15,21 @@ export abstract class CourseDiscussionDirective {
     protected metisService = inject(MetisService);
 
     searchText?: string;
-    currentPostContextFilter: PostContextFilter;
-    formGroup: FormGroup;
+    currentPostContextFilter!: PostContextFilter; // set by setFilterAndSort() (implemented in subclasses) before use
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
     readonly ButtonType = ButtonType;
-    course?: Course;
-    createdPost: Post;
-    posts: Post[] = [];
-    isLoading = true;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly createdPost = signal<Post | undefined>(undefined);
+    readonly posts = signal<Post[]>([]);
+    readonly isLoading = signal(true);
 
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
-    currentSortDirection?: SortDirection;
+    readonly currentSortDirection = signal<SortDirection | undefined>(undefined);
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
 
-    protected postsSubscription: Subscription;
-    protected paramSubscription: Subscription;
+    protected postsSubscription?: Subscription;
+    protected paramSubscription?: Subscription;
 
     // Icons
     faPlus = faPlus;

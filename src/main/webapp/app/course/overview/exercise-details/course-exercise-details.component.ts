@@ -7,10 +7,21 @@ import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+
+/**
+ * Type guard mirroring the domain rule that a student participation is any participation that is neither a
+ * template nor a solution participation. Used to soundly narrow the app-wide participation stream (which is
+ * only ever fed student participations for this view) from Participation to StudentParticipation.
+ */
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
+}
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
@@ -22,7 +33,8 @@ import { LiveQuizParticipationStatus, QuizExercise, QuizStatus } from 'app/quiz/
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -69,11 +81,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
+    private courseStorageService = inject(CourseStorageService);
 
     protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
 
     protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
     protected readonly restartPractice = () => this.splitPanel()?.restartPractice() ?? false;
+    protected readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    protected readonly showSidebarToggle = computed(() => !!this.sidebarToggle());
+    protected readonly toggleSidebar = () => this.sidebarToggle()?.();
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
@@ -95,8 +112,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // Use signals for reactive state
     public learningPathMode = false;
-    public exerciseId: number;
-    public courseId: number;
+    public exerciseId!: number; // set in ngOnInit() from the route params subscription before it is read
+
+    // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
+    // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
+    // The backing signal is honestly typed as number | undefined (its construction-time value is genuinely undefined);
+    // the getter narrows with a single non-null assertion because courseId is always assigned before it is ever read.
+    private readonly _courseId = signal<number | undefined>(undefined);
+    public get courseId(): number {
+        return this._courseId()!;
+    }
+    public set courseId(value: number) {
+        this._courseId.set(value);
+    }
 
     // Main exercise signal
     private readonly _exercise = signal<Exercise | undefined>(undefined);
@@ -137,6 +165,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
 
     // Sorted results signal
     private readonly _sortedHistoryResults = signal<Result[]>([]);
@@ -280,7 +313,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
-        this.subscribeToTeamAssignmentUpdates();
+        void this.subscribeToTeamAssignmentUpdates();
 
         this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
         if (this.exercise?.type) {
@@ -333,9 +366,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._sortedHistoryResults.set(sorted);
         }
     }
-    private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate!).valueOf();
-        const bValue = dayjs(b.completionDate!).valueOf();
+    private resultSortFunction = (a: Result | undefined, b: Result | undefined) => {
+        // Missing/undefined completion dates sort last (treated as the max timestamp). This keeps the prior
+        // ordering (`dayjs(undefined)` evaluated to "now", placing undated results after real dates) but is
+        // deterministic and avoids the "now" footgun — and two undated results compare equal (0) rather than NaN.
+        const aValue = a?.completionDate ? dayjs(a.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
+        const bValue = b?.completionDate ? dayjs(b.completionDate).valueOf() : Number.MAX_SAFE_INTEGER;
         return aValue - bValue;
     };
 
@@ -359,7 +395,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise!);
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
         }
 
@@ -367,8 +403,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribeForParticipationChanges()
             // Skip the first event, as it is the initial state. All data should already be loaded.
             .pipe(skip(1), takeUntilDestroyed(this.destroyRef))
-            .subscribe((changedParticipation: StudentParticipation) => {
-                if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+            .subscribe((changedParticipation: Participation | undefined) => {
+                // The app-wide participation subject only ever emits (structurally plain) student participations for this view.
+                if (isStudentParticipationChange(changedParticipation) && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     const currentGraded = this.gradedStudentParticipation();
                     // Notify student about late submission result
                     if (
@@ -394,25 +431,18 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     const currentParticipations = this._studentParticipations();
                     let updatedParticipations: StudentParticipation[];
                     if (currentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                        // Keep the existing participation's fields (the websocket payload may only carry a result delta)
+                        // and merge in the changed submissions so prior attempts are not lost (see mergeSubmissions).
                         updatedParticipations = currentParticipations.map((participation) => {
                             if (participation.id !== changedParticipation.id) {
                                 return participation;
                             }
-
-                            const existingSubmissions = participation.submissions ?? [];
-                            const incomingSubmissions = changedParticipation.submissions ?? [];
-                            const existingIds = new Set(existingSubmissions.map((s) => s.id));
-
-                            const updatedExisting = existingSubmissions.map((existing) => {
-                                const incoming = incomingSubmissions.find((s) => s.id === existing.id);
-                                return incoming ?? existing;
-                            });
-                            const newSubmissions = incomingSubmissions.filter((s) => !existingIds.has(s.id));
-
-                            return { ...participation, submissions: [...updatedExisting, ...newSubmissions] };
+                            const merged = deepClone(participation);
+                            merged.submissions = this.mergeSubmissions(participation.submissions, changedParticipation.submissions);
+                            return merged;
                         });
                     } else {
-                        updatedParticipations = [...currentParticipations, changedParticipation];
+                        updatedParticipations = currentParticipations.concat(changedParticipation);
                     }
                     this._studentParticipations.set(updatedParticipations);
                     this.sortResults();
@@ -435,29 +465,86 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    this.exercise = { ...this.exercise!, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+                    const updatedExercise = deepClone(this.exercise);
+                    updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
+                    updatedExercise.studentParticipations = teamAssignment.studentParticipations;
+                    this.exercise = updatedExercise;
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
     }
 
+    /**
+     * Merges incoming submissions into the existing ones, deduplicating by id so the full attempt history is preserved.
+     *
+     * Practice quiz submits (and websocket result deltas) deliver a participation payload that only carries the latest
+     * submission. Replacing the stored submissions with that payload would drop every prior attempt from the
+     * result-history dropdown until a page refresh reloads the full participation. Existing submissions are therefore
+     * kept in place (an incoming submission with the same id replaces its older version), and genuinely new
+     * submissions are appended. Submissions without an id are never deduplicated away.
+     */
+    private mergeSubmissions(existingSubmissions: Submission[] = [], incomingSubmissions: Submission[] = []): Submission[] {
+        const incomingById = new Map(incomingSubmissions.filter((submission) => submission.id !== undefined).map((submission) => [submission.id, submission]));
+        const updatedExisting = existingSubmissions.map((submission) => (submission.id !== undefined ? (incomingById.get(submission.id) ?? submission) : submission));
+        const existingIds = new Set(existingSubmissions.map((submission) => submission.id));
+        const newSubmissions = incomingSubmissions.filter((submission) => submission.id === undefined || !existingIds.has(submission.id));
+        return updatedExisting.concat(newSubmissions);
+    }
+
     onNewParticipation(participation: StudentParticipation) {
         const current = this._studentParticipations();
         if (current.some((p) => p.id === participation.id)) {
-            this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
+            // Keep the incoming participation's fields (it is the freshly started/changed one) but preserve the full
+            // attempt history by merging submissions rather than replacing them (see mergeSubmissions for the why).
+            this._studentParticipations.set(
+                current.map((p) => {
+                    if (p.id !== participation.id) {
+                        return p;
+                    }
+                    const merged = deepClone(participation);
+                    merged.submissions = this.mergeSubmissions(p.submissions, participation.submissions);
+                    return merged;
+                }),
+            );
         } else {
-            this._studentParticipations.set([...current, participation]);
+            this._studentParticipations.set(current.concat(participation));
 
             if (this.exercise) {
-                this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                this.exercise.studentParticipations = (this.exercise.studentParticipations ?? []).concat(participation);
             }
             if (participation.id && this.exercise) {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             }
         }
+        this.propagateParticipationsToCachedCourse();
         this.sortResults();
         if (participation.testRun) {
             this.participationMode.set('practice');
+        }
+    }
+
+    /**
+     * Propagates the currently resolved student participations into the cached course (via {@link CourseStorageService})
+     * so the course-overview sidebar re-maps and reflects the started exercise live — its card transitions from
+     * "Not yet started" to the started/result state and shows the score without a page reload.
+     *
+     * This must run for both a participation that is new to this component instance and one that is already present:
+     * starting a programming exercise immediately navigates to the code editor, which re-resolves this component with
+     * the participation already loaded. In that case {@link onNewParticipation} takes the "already present" branch, so
+     * scoping the propagation to only newly created participations left the sidebar card stuck at "Not yet started".
+     */
+    private propagateParticipationsToCachedCourse(): void {
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId);
+        const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
+        if (course && cachedExercise) {
+            cachedExercise.studentParticipations = this._studentParticipations();
+            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
+            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
+            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
         }
     }
 
@@ -498,11 +585,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (participation.id !== graded.id) {
                 return participation;
             }
-            const existingSubmissions = participation.submissions ?? [];
-            const submissions = existingSubmissions.some((existing) => existing.id === submission.id)
-                ? existingSubmissions.map((existing) => (existing.id === submission.id ? submission : existing))
-                : [...existingSubmissions, submission];
-            return { ...participation, submissions };
+            const merged = deepClone(participation);
+            merged.submissions = this.mergeSubmissions(participation.submissions, [submission]);
+            return merged;
         });
         this._studentParticipations.set(updatedParticipations);
     }
@@ -550,7 +635,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     get quizExerciseStatus(): QuizStatus | undefined {
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
+            return this.quizExerciseService.getStatus(this.exercise);
         }
         return undefined;
     }
@@ -567,10 +652,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     createInstructorActions() {
         const items: InstructorActionItem[] = [];
         if (this.exercise?.isAtLeastTutor) {
-            items.push(...this.createTutorActions());
+            this.createTutorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastEditor) {
-            items.push(...this.createEditorActions());
+            this.createEditorActions().forEach((item) => items.push(item));
         }
         if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
             items.push(this.getReEvaluateItem());
@@ -579,9 +664,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     createTutorActions(): InstructorActionItem[] {
-        const tutorActionItems = [...this.getDefaultItems()];
+        const tutorActionItems = this.getDefaultItems().slice();
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            tutorActionItems.push(...this.getQuizItems());
+            this.getQuizItems().forEach((item) => tutorActionItems.push(item));
         } else {
             tutorActionItems.push(this.getParticipationItem());
         }
@@ -688,7 +773,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             return;
         }
-        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
+        void this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {

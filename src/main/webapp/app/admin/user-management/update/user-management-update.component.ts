@@ -1,32 +1,30 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/admin/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
+import { CheckboxModule } from 'primeng/checkbox';
+import { SelectModule } from 'primeng/select';
+import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
+import { ChipModule } from 'primeng/chip';
+import { ButtonModule } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatOption } from '@angular/material/core';
-import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -40,24 +38,20 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
-    styleUrls: ['./user-management-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
         TooltipModule,
         HelpIconComponent,
-        MatFormField,
-        MatChipGrid,
-        MatChipRow,
-        MatChipRemove,
+        InputTextModule,
+        CheckboxModule,
+        SelectModule,
+        AutoCompleteModule,
+        ChipModule,
+        ButtonModule,
         FaIconComponent,
-        MatAutocompleteTrigger,
-        MatChipInput,
-        MatAutocomplete,
-        MatOption,
-        AsyncPipe,
-        FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
@@ -77,9 +71,9 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     protected readonly faBan = faBan;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
     protected readonly faSave = faSave;
+
+    private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -90,11 +84,17 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
 
-    /** The user being edited */
-    user: User;
+    /** The user being edited. Signal so async mutations (route resolver data, organizations fetched via HTTP) render under zoneless. */
+    readonly user = signal<User>(undefined!);
 
     /** Available languages for selection */
-    languages: string[];
+    readonly languages = signal<string[]>(undefined!);
+
+    /** Language options ({ label, value }) derived for the PrimeNG select. */
+    readonly languageOptions = computed(() => (this.languages() ?? []).map((language) => ({ label: this.findLanguageFromKeyPipe.transform(language), value: language })));
+
+    /** Whether a random password should be generated (new users) or the old password kept (existing users). */
+    readonly useRandomPassword = signal(true);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -120,16 +120,9 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly isSaving = signal(false);
 
     /** All available groups for autocomplete */
-    allGroups: string[];
+    allGroups: string[] = [];
 
-    /** Filtered groups based on input */
-    filteredGroups: Observable<string[]>;
-
-    /** Separator key codes for chip input */
-    readonly separatorKeysCodes = [ENTER, COMMA, TAB];
-
-    /** Form control for group autocomplete */
-    readonly groupCtrl = new FormControl();
+    readonly groupSuggestions = signal<string[]>([]);
 
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
@@ -142,26 +135,27 @@ export class UserManagementUpdateComponent implements OnInit {
     };
 
     /** The reactive form for editing user properties */
-    editForm: FormGroup;
+    editForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Original login for detecting changes */
     private oldLogin?: string;
 
     /** Whether Jenkins profile is active */
-    private isJenkins: boolean;
+    private isJenkins = false;
 
     /**
      * Initializes the component by loading user data, authorities, languages, and groups.
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
-        this.user = new User();
+        this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
-                this.user = user.body ? user.body : user;
-                this.oldLogin = this.user.login;
-                this.organizationService.getOrganizationsByUser(this.user.id!).subscribe((organizations) => {
-                    this.user.organizations = organizations;
+                this.user.set(user.body ? user.body : user);
+                this.oldLogin = this.user().login;
+                this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
+                    // Rebuild the user reference so the async organization update renders under zoneless.
+                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
                 });
             }
         });
@@ -174,10 +168,7 @@ export class UserManagementUpdateComponent implements OnInit {
                     }
                 });
             }
-            this.filteredGroups = this.groupCtrl.valueChanges.pipe(
-                startWith(undefined),
-                map((value) => (value ? this.filter(value) : this.allGroups.slice())),
-            );
+            this.groupSuggestions.set(this.availableGroups());
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
@@ -185,13 +176,13 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
             );
         });
-        this.languages = this.languageHelper.getAll();
+        this.languages.set(this.languageHelper.getAll());
         // Empty array for new user
-        if (!this.user.id) {
-            this.user.groups = [];
+        if (!this.user().id) {
+            this.user().groups = [];
         }
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
-        this.user.password = undefined;
+        this.user().password = undefined;
         this.initializeForm();
     }
 
@@ -201,8 +192,8 @@ export class UserManagementUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new user
      */
     previousState() {
-        if (this.user.id) {
-            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user.login!.toString()]);
+        if (this.user().id) {
+            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user().login!.toString()]);
         } else {
             this.navigationUtilService.navigateBack(['admin', 'user-management']);
         }
@@ -215,20 +206,21 @@ export class UserManagementUpdateComponent implements OnInit {
     save(): void {
         this.isSaving.set(true);
         // temporarily store the user groups and organizations in variables, because they are not part of the edit form
-        const userGroups = this.user.groups;
-        const userOrganizations = this.user.organizations;
-        this.user = this.editForm.getRawValue();
-        this.user.groups = userGroups;
-        this.user.organizations = userOrganizations;
-        if (this.user.id) {
-            this.userService.update(this.user).subscribe({
+        const userGroups = this.user().groups;
+        const userOrganizations = this.user().organizations;
+        const updatedUser: User = this.editForm.getRawValue();
+        updatedUser.groups = userGroups;
+        updatedUser.organizations = userOrganizations;
+        this.user.set(updatedUser);
+        if (updatedUser.id) {
+            this.userService.update(updatedUser).subscribe({
                 next: () => {
-                    if (this.isJenkins && this.user.login !== this.oldLogin && !this.user.password) {
+                    if (this.isJenkins && updatedUser.login !== this.oldLogin && !updatedUser.password) {
                         this.alertService.addAlert({
                             type: AlertType.WARNING,
                             message: 'artemisApp.userManagement.jenkinsChange',
                             timeout: 0,
-                            translationParams: { oldLogin: this.oldLogin, newLogin: this.user.login },
+                            translationParams: { oldLogin: this.oldLogin, newLogin: updatedUser.login },
                         });
                     }
                     this.onSaveSuccess();
@@ -236,19 +228,16 @@ export class UserManagementUpdateComponent implements OnInit {
                 error: () => this.onSaveError(),
             });
         } else {
-            this.userService.create(this.user).subscribe({
+            this.userService.create(updatedUser).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),
             });
         }
     }
 
-    shouldRandomizePassword(useRandomPassword: any) {
-        if (useRandomPassword) {
-            this.user.password = undefined;
-        } else {
-            this.user.password = '';
-        }
+    shouldRandomizePassword(useRandomPassword: boolean) {
+        this.useRandomPassword.set(useRandomPassword);
+        this.user().password = useRandomPassword ? undefined : '';
     }
 
     /**
@@ -262,13 +251,13 @@ export class UserManagementUpdateComponent implements OnInit {
             closable: true,
             dismissableMask: true,
             data: {
-                organizations: this.user.organizations,
-            } as OrganizationSelectorDialogData,
+                organizations: this.user().organizations,
+            },
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                // Create a new array reference to trigger change detection with OnPush
-                this.user.organizations = [...(this.user.organizations ?? []), organization];
+                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
+                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
             }
         });
     }
@@ -278,38 +267,46 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromUser(organization: Organization) {
-        this.user.organizations = this.user.organizations!.filter((userOrganization) => userOrganization.id !== organization.id);
+        // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
+        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
+    }
+
+    /** Filters the group suggestions shown in the autocomplete dropdown based on the typed query. */
+    filterGroups(event: AutoCompleteCompleteEvent): void {
+        const query = (event.query ?? '').trim();
+        this.groupSuggestions.set(query ? this.filter(query) : this.availableGroups());
+    }
+
+    onGroupSelect(event: AutoCompleteSelectEvent): void {
+        const groupString = (event.value ?? '').toString().trim();
+        this.addGroup(this.user(), groupString);
     }
 
     /**
-     * Adds a group to the user
-     * @param user to add the group to
-     * @param event chip input event
+     * Adds the group typed into the autocomplete when the user presses Enter. Cancels the key first so it does not
+     * ALSO submit the surrounding `(ngSubmit)="save()"` edit form (which would save and navigate away mid-edit).
      */
-    onGroupAdd(user: User, event: MatChipInputEvent) {
-        const groupString = (event.value || '').trim();
-        this.addGroup(user, groupString);
-        this.groupCtrl.setValue('');
-        event.chipInput!.clear();
+    onGroupAdd(user: User, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const input = event.target as HTMLInputElement;
+        this.addGroup(user, (input.value || '').trim());
+        input.value = '';
     }
 
-    /**
-     * Removes a group from the user
-     * @param user to remove the group from
-     * @param group to remove
-     */
-    onGroupRemove(user: User, group: string) {
+    onGroupUnselect(event: AutoCompleteUnselectEvent): void {
+        const group = (event.value ?? '').toString();
+        this.removeGroup(this.user(), group);
+    }
+
+    removeGroup(user: User, group: string) {
         user.groups = user.groups?.filter((userGroup) => userGroup !== group);
+        this.commitUser(user);
     }
 
-    /**
-     * Adds the selected group from panel to the user
-     * @param event autocomplete event
-     */
-    onSelected(event: MatAutocompleteSelectedEvent): void {
-        const groupString = (event.option.viewValue || '').trim();
-        this.addGroup(this.user, groupString);
-        this.groupCtrl.setValue('');
+    private availableGroups(): string[] {
+        const assigned = this.user()?.groups ?? [];
+        return (this.allGroups ?? []).filter((group) => group != undefined && !assigned.includes(group));
     }
 
     private initializeForm() {
@@ -330,12 +327,12 @@ export class UserManagementUpdateComponent implements OnInit {
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
         // Conditionally enable or disable 'internal' input based on user.id
-        if (this.user.id !== undefined) {
+        if (this.user().id !== undefined) {
             this.editForm.get('internal')?.disable(); // Artemis does not support to edit the internal flag for existing users
         } else {
             this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
-        this.editForm.patchValue(this.user);
+        this.editForm.patchValue(this.user());
     }
 
     /**
@@ -373,7 +370,16 @@ export class UserManagementUpdateComponent implements OnInit {
                 user.groups = [];
             }
             user.groups.push(groupString);
+            this.commitUser(user);
         }
+    }
+
+    /**
+     * Rebuild the user signal reference after an in-place mutation so the dependent template (chip list) re-renders under zoneless.
+     * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
+     */
+    private commitUser(user: User) {
+        this.user.update((currentUser) => (currentUser === user ? { ...currentUser } : currentUser));
     }
 
     /**

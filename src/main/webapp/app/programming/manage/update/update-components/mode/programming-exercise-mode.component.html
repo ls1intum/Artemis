@@ -27,7 +27,7 @@
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title"></span>
                     @if (!programmingExerciseCreationConfig().validIdeSelection()) {
-                        @if (theiaEnabled) {
+                        @if (theiaEnabled()) {
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 class="text-danger"
@@ -62,7 +62,7 @@
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title"></span>
                     @if (!programmingExerciseCreationConfig().validIdeSelection()) {
-                        @if (theiaEnabled) {
+                        @if (theiaEnabled()) {
                             <fa-icon
                                 [icon]="faQuestionCircle"
                                 class="text-danger"
@@ -84,7 +84,7 @@
             </div>
         }
         <!-- only show this for non-exam exercises -->
-        @if (!programmingExercise().exerciseGroup && theiaEnabled && isEditFieldDisplayedRecord().allowOnlineIde) {
+        @if (!programmingExercise().exerciseGroup && theiaEnabled() && isEditFieldDisplayedRecord().allowOnlineIde) {
             <div class="form-check">
                 <label [class]="!programmingExerciseCreationConfig().validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineIde">
                     <input

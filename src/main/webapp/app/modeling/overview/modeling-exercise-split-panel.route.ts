@@ -9,7 +9,7 @@ export const modelingExerciseSplitPanelRoute: Routes = [
         loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -19,7 +19,7 @@ export const modelingExerciseSplitPanelRoute: Routes = [
         loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -29,7 +29,7 @@ export const modelingExerciseSplitPanelRoute: Routes = [
         loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.modelingExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],

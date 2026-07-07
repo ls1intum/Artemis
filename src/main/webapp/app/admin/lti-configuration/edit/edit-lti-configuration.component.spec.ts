@@ -268,7 +268,7 @@ describe('EditLtiConfigurationComponent', () => {
 
             expect(component.isEditMode()).toBe(true);
             expect(ltiConfigurationService.getLtiPlatformById).toHaveBeenCalledWith(1);
-            expect(component.platform).toEqual(mockPlatform);
+            expect(component.platform()).toEqual(mockPlatform);
             expect(component.platformConfigurationForm.get('clientId')?.value).toBe(mockPlatform.clientId);
             expect(component.platformConfigurationForm.get('authorizationUri')?.value).toBe(mockPlatform.authorizationUri);
         });

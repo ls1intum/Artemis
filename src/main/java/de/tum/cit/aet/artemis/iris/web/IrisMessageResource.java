@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Conditional;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -110,7 +112,7 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageRequestDTO requestDTO, HttpServletRequest request)
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO, HttpServletRequest request)
             throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
@@ -130,7 +132,9 @@ public class IrisMessageResource {
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+        // Extract context information from request (not persisted, only passed to Pyris)
+        List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context);
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
@@ -213,6 +217,9 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only rate messages sent by Iris");
+        }
+        if (Boolean.TRUE.equals(message.getIntermediate())) {
+            throw new BadRequestException("Intermediate messages cannot be rated");
         }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);

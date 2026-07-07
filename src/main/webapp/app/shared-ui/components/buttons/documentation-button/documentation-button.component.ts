@@ -2,7 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 
 // The routes here are used to build the link to the documentation.
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
@@ -39,10 +39,10 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     styleUrls: ['./documentation-button.component.scss'],
     template: `
         <a class="text-primary documentation-button ms-1" href="{{ BASE_URL + DocumentationLinks[this.type()] }}" target="_blank" rel="noopener noreferrer">
-            <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
+            <fa-icon [icon]="faCircleInfo" [pTooltip]="getTooltipForType()" />
         </a>
     `,
-    imports: [FaIconComponent, NgbTooltip],
+    imports: [FaIconComponent, TooltipModule],
 })
 export class DocumentationButtonComponent {
     private translateService = inject(TranslateService);

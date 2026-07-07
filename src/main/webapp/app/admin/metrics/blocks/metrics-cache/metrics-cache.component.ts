@@ -1,13 +1,15 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CacheMetrics } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
+import { TableModule } from 'primeng/table';
 
 @Component({
     selector: 'jhi-metrics-cache',
     templateUrl: './metrics-cache.component.html',
-    imports: [TranslateDirective, DecimalPipe, KeyValuePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, TableModule, DecimalPipe, KeyValuePipe],
 })
 export class MetricsCacheComponent {
     /**

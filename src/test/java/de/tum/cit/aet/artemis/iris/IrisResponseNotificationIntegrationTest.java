@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
@@ -215,7 +215,7 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
      */
     private void runChatWithAssistantAnswer(IrisChatSession session, String assistantAnswer, String userAgent) throws Exception {
         mockChatResponse(dto -> {
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), assistantAnswer, dto.initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), assistantAnswer));
             pipelineDone.set(true);
         });
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED, userAgentHeaders(userAgent));
@@ -250,10 +250,10 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(consumer);
     }
 
-    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
+    private void sendStatus(String jobId, String result) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null, null),
-                HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null, null, null), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {

@@ -74,15 +74,15 @@ export class PasskeySettingsComponent implements OnDestroy {
     });
 
     deleteMessage = '';
-    isDeletingPasskey = false;
+    readonly isDeletingPasskey = signal<boolean>(false);
 
-    private authStateSubscription: Subscription;
+    private authStateSubscription!: Subscription; // assigned in loadCurrentUser() from the constructor, before ngOnDestroy() unsubscribes
 
     constructor() {
         this.loadCurrentUser();
 
         effect(() => {
-            this.loadPasskeysWhenUserDetailsChange().then();
+            void this.loadPasskeysWhenUserDetailsChange();
         });
     }
 
@@ -111,7 +111,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     return this.currentUser;
                 }),
@@ -161,14 +161,14 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     async deletePasskey(passkey: PasskeyDTO) {
-        this.isDeletingPasskey = true;
+        this.isDeletingPasskey.set(true);
         try {
             await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
             await this.updateRegisteredPasskeys();
         } catch (error) {
             this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.delete');
         }
-        this.isDeletingPasskey = false;
+        this.isDeletingPasskey.set(false);
         this.dialogErrorSource.next('');
     }
 }

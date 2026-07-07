@@ -19,7 +19,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
@@ -38,7 +37,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [EditTutorialGroupFreePeriodComponent, OwlNativeDateTimeModule],
+            imports: [EditTutorialGroupFreePeriodComponent],
             providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         setUpTestComponent(generateExampleTutorialGroupFreePeriod({}));
@@ -54,8 +53,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
     it('should set form data correctly for editing free days', () => {
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should set form data correctly for editing free periods', () => {
@@ -68,8 +67,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
 
         setUpTestComponent(periodToEdit);
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodToEdit, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should set form data correctly for editing free periods within a day', () => {
@@ -81,8 +80,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         });
         setUpTestComponent(periodWithinDayToEdit);
         const formStub: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
-        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(periodWithinDayToEdit, 'Europe/Berlin'));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should send PUT request upon form submission and close dialog', () => {
@@ -143,8 +142,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         // Expect formData startTime and endTime hours match the UTC→Berlin hour
         const berlinStartHour = start.tz('Europe/Berlin').hour();
         const berlinEndHour = end.tz('Europe/Berlin').hour();
-        expect(component.formData.startTime!.getHours()).toBe(berlinStartHour);
-        expect(component.formData.endTime!.getHours()).toBe(berlinEndHour);
+        expect(component.formData().startTime!.getHours()).toBe(berlinStartHour);
+        expect(component.formData().endTime!.getHours()).toBe(berlinEndHour);
         expect(component.dialogVisible()).toBe(true);
     });
 

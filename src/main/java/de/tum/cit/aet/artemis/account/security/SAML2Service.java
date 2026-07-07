@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
@@ -143,7 +144,7 @@ public class SAML2Service {
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
                 if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(user.get());
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(user.get()));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());

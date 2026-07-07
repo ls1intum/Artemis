@@ -235,7 +235,7 @@ examples.forEach((activeConversation) => {
             component['checkNotificationStatus']();
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isNotificationsEnabled).toBeTruthy();
+            expect(component.isNotificationsEnabled()).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 
@@ -261,7 +261,7 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isNotificationsEnabled).toBeFalsy();
+            expect(component.isNotificationsEnabled()).toBeFalsy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
         });
@@ -283,7 +283,7 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
-            expect(component.isNotificationsEnabled).toBeTruthy();
+            expect(component.isNotificationsEnabled()).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 

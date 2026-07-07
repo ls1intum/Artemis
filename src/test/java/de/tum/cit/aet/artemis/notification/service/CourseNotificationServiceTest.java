@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
@@ -90,8 +91,8 @@ class CourseNotificationServiceTest {
 
         courseNotificationService.sendCourseNotification(notification, allRecipients);
 
-        verify(webappService).sendCourseNotification(any(CourseNotificationDTO.class), eq(webappRecipients));
-        verify(pushService).sendCourseNotification(any(CourseNotificationDTO.class), eq(pushRecipients));
+        verify(webappService).sendCourseNotification(any(CourseNotificationDTO.class), eq(webappRecipients.stream().map(CourseNotificationRecipientDTO::from).toList()));
+        verify(pushService).sendCourseNotification(any(CourseNotificationDTO.class), eq(pushRecipients.stream().map(CourseNotificationRecipientDTO::from).toList()));
         verify(emailService, never()).sendCourseNotification(any(CourseNotificationDTO.class), anyList());
 
         ArgumentCaptor<HashSet<User>> notifiedUsersCaptor = ArgumentCaptor.forClass(HashSet.class);

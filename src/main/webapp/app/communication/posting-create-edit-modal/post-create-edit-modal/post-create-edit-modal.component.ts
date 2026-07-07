@@ -36,16 +36,16 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
     exercises?: Exercise[];
     lectures?: Lecture[];
-    course: Course;
-    pageType: PageType;
-    isAtLeastTutorInCourse: boolean;
-    isAtLeastInstructorInCourse: boolean;
-    currentContextSelectorOption: ContextSelectorOption;
+    course!: Course; // set in ngOnInit() from metisService.getCourse()
+    pageType!: PageType; // set in resetFormGroup() before the modal is used
+    isAtLeastTutorInCourse!: boolean; // set in ngOnInit() from metisService
+    isAtLeastInstructorInCourse!: boolean; // set in ngOnInit() from metisService
+    currentContextSelectorOption!: ContextSelectorOption; // set in ngOnInit() via resetCurrentContextSelectorOption()
     similarPosts: Post[] = [];
     private contextSubscription?: Subscription;
 
     readonly PageType = PageType;
-    readonly EditType = PostingEditType;
+    override readonly EditType = PostingEditType;
     protected readonly getAsChannel = getAsChannelDTO;
 
     // Icons
@@ -58,7 +58,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * subscribe to the form control changes of the context selector in order to show the Announcement info box on selection;
      * authorize the user by invoking the metis service
      */
-    ngOnInit(): void {
+    override ngOnInit(): void {
         this.resetCurrentContextSelectorOption();
         super.ngOnInit();
         this.course = this.metisService.getCourse();
@@ -110,10 +110,10 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = this.setPostProperties(deepClone(posting));
@@ -123,13 +123,13 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
         create$.subscribe({
             next: (post: Post) => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.resetFormGroup();
                 this.isDialogVisible.set(false);
                 this.onCreate.emit(post);
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -141,18 +141,18 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     updatePosting(): void {
         const posting = this.posting();
         if (!posting) {
-            this.isLoading = false;
+            this.isLoading.set(false);
             return;
         }
         const payload = this.setPostProperties(deepClone(posting));
         this.metisService.updatePost(payload).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.resetFormGroup();
                 this.isDialogVisible.set(false);
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

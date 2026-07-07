@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -19,12 +19,12 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ProgressBar } from 'primeng/progressbar';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -33,12 +33,12 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
     imports: [
         CourseChatbotComponent,
         TranslateDirective,
-        NgbProgressbar,
         CourseExercisePerformanceComponent,
         CourseExerciseLatenessComponent,
         CompetencyAccordionComponent,
         FeatureToggleHideDirective,
         FeatureOverlayComponent,
+        ProgressBar,
     ],
 })
 export class CourseDashboardComponent implements OnDestroy {
@@ -65,7 +65,6 @@ export class CourseDashboardComponent implements OnDestroy {
     private readonly _competencies = signal<CompetencyInformation[]>([]);
     private readonly _openedAccordionIndex = signal<number | undefined>(undefined);
     private readonly _course = signal<Course | undefined>(undefined);
-    private readonly _isCollapsed = signal(false);
 
     readonly courseId = this._courseId.asReadonly();
     readonly points = this._points.asReadonly();
@@ -81,10 +80,14 @@ export class CourseDashboardComponent implements OnDestroy {
     readonly competencies = this._competencies.asReadonly();
     readonly openedAccordionIndex = this._openedAccordionIndex.asReadonly();
     readonly course = this._course.asReadonly();
-    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
-    get isCollapsed(): boolean {
-        return this._isCollapsed();
-    }
+    /**
+     * The value bound to the points `<p-progressbar>`, clamped to [0, 100]. Unlike the old `ngb-progressbar`, PrimeNG's
+     * progress bar does not clamp internally, so a raw percentage > 100 (reachable via bonus points, where accumulated
+     * `points` can exceed `maxPoints`) would overflow the track. Clamping here keeps the bar within its track.
+     */
+    readonly progressBarValue = computed(() => Math.min(100, Math.max(0, this.progress())));
+    // Derived from the chat-history state so the inner panel toggle and the title-bar toggle stay in sync.
+    readonly isCollapsed = computed<boolean>(() => !(this.courseChatbot()?.isChatHistoryOpen() ?? true));
 
     private metricsSubscription?: Subscription;
 
@@ -95,7 +98,6 @@ export class CourseDashboardComponent implements OnDestroy {
 
     toggleSidebar(): void {
         this.courseChatbot()?.toggleChatHistory();
-        this._isCollapsed.set(!this._isCollapsed());
     }
 
     constructor() {
@@ -167,6 +169,7 @@ export class CourseDashboardComponent implements OnDestroy {
                                     return true;
                                 }
                             }
+                            return false;
                         })
                         .sort((a, b) => {
                             return a.id < b.id ? -1 : 1;
@@ -197,7 +200,8 @@ export class CourseDashboardComponent implements OnDestroy {
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this._maxPoints.set(round(maxPoints, 1));
-        this._progress.set(round((points / maxPoints) * 100, 1));
+        // Guard against a division by zero (no relevant exercises / 0 max points) which would otherwise yield NaN in the label.
+        this._progress.set(maxPoints > 0 ? round((points / maxPoints) * 100, 1) : 0);
     }
 
     /**
@@ -267,6 +271,6 @@ export class CourseDashboardComponent implements OnDestroy {
     }
 
     navigateToLearningPaths() {
-        this.router.navigate(['courses', this._courseId(), 'learning-path']);
+        void this.router.navigate(['courses', this._courseId(), 'learning-path']);
     }
 }

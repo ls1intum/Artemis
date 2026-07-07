@@ -67,15 +67,15 @@ export class CourseTrainingQuizComponent {
     questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
     nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && this.hasNext());
 
-    submittedAnswer: SubmittedAnswer;
-    showingResult = false;
-    submitted = false;
-    questionScores: number = 0;
-    selectedAnswerOptions: AnswerOption[] = [];
-    dragAndDropMappings: DragAndDropMapping[] = [];
-    shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
+    submittedAnswer!: SubmittedAnswer; // populated by applySelection() before onSubmit() reads it
+    readonly showingResult = signal(false);
+    readonly submitted = signal(false);
+    readonly questionScores = signal<number>(0);
+    readonly selectedAnswerOptions = signal<AnswerOption[]>([]);
+    readonly dragAndDropMappings = signal<DragAndDropMapping[]>([]);
+    readonly shortAnswerSubmittedTexts = signal<ShortAnswerSubmittedText[]>([]);
     previousRatedStatus = true;
-    showUnratedConfirmation = false;
+    readonly showUnratedConfirmation = signal(false);
     questionIds: number[] = [];
     isNewSession = true;
 
@@ -190,7 +190,7 @@ export class CourseTrainingQuizComponent {
         const currentIsRated = this.isRated();
 
         if (this.previousRatedStatus && currentIsRated === false) {
-            this.showUnratedConfirmation = true;
+            this.showUnratedConfirmation.set(true);
         }
 
         this.previousRatedStatus = currentIsRated;
@@ -201,19 +201,19 @@ export class CourseTrainingQuizComponent {
      * @param question
      */
     initQuestion(question: QuizQuestion): void {
-        this.showingResult = false;
-        this.submitted = false;
+        this.showingResult.set(false);
+        this.submitted.set(false);
         this.checkRatingStatusChange();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
-                    this.selectedAnswerOptions = [];
+                    this.selectedAnswerOptions.set([]);
                     break;
                 case QuizQuestionType.DRAG_AND_DROP:
-                    this.dragAndDropMappings = [];
+                    this.dragAndDropMappings.set([]);
                     break;
                 case QuizQuestionType.SHORT_ANSWER:
-                    this.shortAnswerSubmittedTexts = [];
+                    this.shortAnswerSubmittedTexts.set([]);
                     break;
             }
         }
@@ -230,7 +230,7 @@ export class CourseTrainingQuizComponent {
 
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE: {
-                const answerOptions = this.selectedAnswerOptions;
+                const answerOptions = this.selectedAnswerOptions();
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
@@ -238,7 +238,7 @@ export class CourseTrainingQuizComponent {
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
-                const mappings = this.dragAndDropMappings;
+                const mappings = this.dragAndDropMappings();
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
@@ -246,7 +246,7 @@ export class CourseTrainingQuizComponent {
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
-                const submittedTexts = this.shortAnswerSubmittedTexts;
+                const submittedTexts = this.shortAnswerSubmittedTexts();
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
@@ -280,10 +280,10 @@ export class CourseTrainingQuizComponent {
     }
 
     onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
-        this.submitted = true;
-        this.showingResult = true;
+        this.submitted.set(true);
+        this.showingResult.set(true);
 
-        this.questionScores = roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course());
+        this.questionScores.set(roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course()));
 
         // update UI with the evaluated answer
         this.applyEvaluatedAnswer(evaluatedAnswer);
@@ -310,13 +310,13 @@ export class CourseTrainingQuizComponent {
 
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
-                this.selectedAnswerOptions = evaluatedAnswer.selectedOptions || [];
+                this.selectedAnswerOptions.set(evaluatedAnswer.selectedOptions || []);
                 break;
             case QuizQuestionType.DRAG_AND_DROP:
-                this.dragAndDropMappings = evaluatedAnswer.mappings || [];
+                this.dragAndDropMappings.set(evaluatedAnswer.mappings || []);
                 break;
             case QuizQuestionType.SHORT_ANSWER:
-                this.shortAnswerSubmittedTexts = evaluatedAnswer.submittedTexts || [];
+                this.shortAnswerSubmittedTexts.set(evaluatedAnswer.submittedTexts || []);
                 break;
         }
     }
@@ -325,15 +325,15 @@ export class CourseTrainingQuizComponent {
      * navigates to the course practice page
      */
     navigateToTraining(): void {
-        this.router.navigate(['courses', this.courseId(), 'training']);
+        void this.router.navigate(['courses', this.courseId(), 'training']);
     }
 
     confirmUnratedPractice(): void {
-        this.showUnratedConfirmation = false;
+        this.showUnratedConfirmation.set(false);
     }
 
     cancelUnratedPractice(): void {
-        this.showUnratedConfirmation = false;
+        this.showUnratedConfirmation.set(false);
         this.navigateToTraining();
     }
 }

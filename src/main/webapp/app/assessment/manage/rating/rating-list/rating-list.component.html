@@ -1,9 +1,9 @@
 <div class="col-12">
     <div class="row table-responsive">
-        <div [hidden]="ratings.length !== 0">
+        <div [hidden]="ratings().length !== 0">
             <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
         </div>
-        <table class="table" [hidden]="ratings.length === 0">
+        <table class="table" [hidden]="ratings().length === 0">
             <thead>
                 <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
@@ -38,7 +38,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (rating of ratings; track rating.id) {
+                @for (rating of ratings(); track rating.id) {
                     <tr>
                         <td>
                             {{ rating.id }}
@@ -74,17 +74,9 @@
                 }
             </tbody>
         </table>
-        @if (totalElements > pageSize) {
+        @if (totalElements() > pageSize) {
             <div class="d-flex justify-content-center mt-3">
-                <ngb-pagination
-                    [collectionSize]="totalElements"
-                    [(page)]="page"
-                    [pageSize]="pageSize"
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [boundaryLinks]="true"
-                    (pageChange)="onPageChange()"
-                />
+                <p-paginator [first]="(page() - 1) * pageSize" [rows]="pageSize" [totalRecords]="totalElements()" (onPageChange)="onPageChange($event)" />
             </div>
         }
     </div>

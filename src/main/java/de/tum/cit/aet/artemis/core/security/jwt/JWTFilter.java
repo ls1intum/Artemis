@@ -224,7 +224,7 @@ public class JWTFilter extends GenericFilterBean {
      */
     private static String collectHeaders(HttpServletRequest request) {
         List<String> headerEntries = new ArrayList<>();
-        request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add(String.format("\"%s\": \"%s\"", headerName, request.getHeader(headerName))));
+        request.getHeaderNames().asIterator().forEachRemaining(headerName -> headerEntries.add("\"%s\": \"%s\"".formatted(headerName, request.getHeader(headerName))));
         return "[\n" + String.join(",\n", headerEntries) + "\n]";
     }
 

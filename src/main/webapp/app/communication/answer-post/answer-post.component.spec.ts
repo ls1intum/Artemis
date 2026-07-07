@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
@@ -139,9 +139,8 @@ describe('AnswerPostComponent', () => {
 
     it('should close previous dropdown when another is opened', () => {
         const previousComponent = {
-            showDropdown: true,
+            showDropdown: signal(true),
             enableBodyScroll: vi.fn(),
-            changeDetector: { detectChanges: vi.fn() },
         } as any as AnswerPostComponent;
 
         AnswerPostComponent.activeDropdownPost = previousComponent;
@@ -151,18 +150,17 @@ describe('AnswerPostComponent', () => {
         Object.defineProperty(event, 'target', { value: target });
         component.onRightClick(event);
 
-        expect(previousComponent.showDropdown).toBe(false);
+        expect(previousComponent.showDropdown()).toBe(false);
         expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
-        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
         expect(AnswerPostComponent.activeDropdownPost).toBe(component);
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown()).toBe(true);
     });
 
     it('should handle click outside and hide dropdown', () => {
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         const enableBodyScrollSpy = vi.spyOn(component, 'enableBodyScroll' as any);
         component.onClickOutside();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown()).toBe(false);
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 
@@ -182,18 +180,18 @@ describe('AnswerPostComponent', () => {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        component.dropdownPosition = { x: screenWidth - 50, y: 100 };
+        component.dropdownPosition.set({ x: screenWidth - 50, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(screenWidth - dropdownWidth - 10);
+        expect(component.dropdownPosition().x).toBe(screenWidth - dropdownWidth - 10);
     });
 
     it('should not adjust dropdown position if it does not overflow the screen width', () => {
         const initialX = 100;
-        component.dropdownPosition = { x: initialX, y: 100 };
+        component.dropdownPosition.set({ x: initialX, y: 100 });
         component.adjustDropdownPosition();
 
-        expect(component.dropdownPosition.x).toBe(initialX);
+        expect(component.dropdownPosition().x).toBe(initialX);
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
@@ -242,8 +240,8 @@ describe('AnswerPostComponent', () => {
             component.onRightClick(event);
 
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
-            expect(component.showDropdown).toBe(showDropdown);
-            expect(component.dropdownPosition).toEqual(dropdownPosition);
+            expect(component.showDropdown()).toBe(showDropdown);
+            expect(component.dropdownPosition()).toEqual(dropdownPosition);
         });
     });
 
@@ -296,7 +294,7 @@ describe('AnswerPostComponent', () => {
 
     it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
         const forwardMessageSpy = vi.spyOn(component, 'forwardMessage');
-        component.showDropdown = true;
+        component.showDropdown.set(true);
         component.posting.set(post);
         fixture.changeDetectorRef.detectChanges();
 

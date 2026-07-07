@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { IconDefinition, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import {
     faBell,
@@ -16,6 +16,7 @@ import {
     faLock,
     faPlug,
     faPuzzlePiece,
+    faRobot,
     faStamp,
     faTachometerAlt,
     faTasks,
@@ -25,7 +26,6 @@ import {
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { TooltipModule } from 'primeng/tooltip';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -51,7 +51,9 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;
@@ -64,8 +66,8 @@ export class AdminSidebarComponent {
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
     passkeyEnabled = input<boolean>(false);
-    passkeyRequiredForAdmin = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
+    irisEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
 
@@ -103,7 +105,9 @@ export class AdminSidebarComponent {
                 testId: 'admin-user-management',
             },
         ];
-        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
+        // Show the passkey management table whenever passkeys are enabled, independent of whether passkeys are required for
+        // admin features. A super admin can then review and approve admin passkeys before that requirement is turned on.
+        if (this.passkeyEnabled() && this.isSuperAdmin()) {
             accountGroupItems.push({
                 routerLink: '/admin/passkey-management',
                 icon: faKey,
@@ -162,66 +166,78 @@ export class AdminSidebarComponent {
         });
 
         // Group 3: Monitoring & Diagnostics
+        const monitoringItems: AdminSidebarItem[] = [
+            {
+                routerLink: '/admin/audits',
+                icon: faBell,
+                title: 'Audits',
+                translation: 'global.menu.admin.sidebar.audits',
+                testId: 'admin-audits',
+            },
+            {
+                routerLink: '/admin/configuration',
+                icon: faList,
+                title: 'Configuration',
+                translation: 'global.menu.admin.sidebar.configuration',
+                testId: 'admin-configuration',
+            },
+            {
+                routerLink: '/admin/health',
+                icon: faHeart,
+                title: 'Health',
+                translation: 'global.menu.admin.sidebar.health',
+                testId: 'admin-health',
+            },
+            {
+                routerLink: '/admin/logs',
+                icon: faTasks,
+                title: 'Logs',
+                translation: 'global.menu.admin.sidebar.logs',
+                testId: 'admin-logs',
+            },
+            {
+                routerLink: '/admin/metrics',
+                icon: faTachometerAlt,
+                title: 'Metrics',
+                translation: 'global.menu.admin.sidebar.metrics',
+                testId: 'admin-metrics',
+            },
+            {
+                routerLink: '/admin/dependencies',
+                icon: faCubes,
+                title: 'Dependencies',
+                translation: 'global.menu.admin.sidebar.dependencies',
+                testId: 'admin-dependencies',
+            },
+            {
+                routerLink: '/admin/user-statistics',
+                icon: faEye,
+                title: 'Statistics',
+                translation: 'global.menu.admin.sidebar.statistics',
+                testId: 'admin-statistics',
+            },
+            {
+                routerLink: '/admin/websocket',
+                icon: faPlug,
+                title: 'Websocket',
+                translation: 'global.menu.admin.sidebar.websocket',
+                testId: 'admin-websocket',
+            },
+        ];
+
+        if (this.irisEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/iris-dashboard',
+                icon: faRobot,
+                title: 'Iris Dashboard',
+                translation: 'global.menu.admin.sidebar.irisDashboard',
+                testId: 'admin-iris-dashboard',
+            });
+        }
+
         groups.push({
             translation: 'global.menu.admin.groups.monitoringAndDiagnostics',
-            items: [
-                {
-                    routerLink: '/admin/audits',
-                    icon: faBell,
-                    title: 'Audits',
-                    translation: 'global.menu.admin.sidebar.audits',
-                    testId: 'admin-audits',
-                },
-                {
-                    routerLink: '/admin/configuration',
-                    icon: faList,
-                    title: 'Configuration',
-                    translation: 'global.menu.admin.sidebar.configuration',
-                    testId: 'admin-configuration',
-                },
-                {
-                    routerLink: '/admin/health',
-                    icon: faHeart,
-                    title: 'Health',
-                    translation: 'global.menu.admin.sidebar.health',
-                    testId: 'admin-health',
-                },
-                {
-                    routerLink: '/admin/logs',
-                    icon: faTasks,
-                    title: 'Logs',
-                    translation: 'global.menu.admin.sidebar.logs',
-                    testId: 'admin-logs',
-                },
-                {
-                    routerLink: '/admin/metrics',
-                    icon: faTachometerAlt,
-                    title: 'Metrics',
-                    translation: 'global.menu.admin.sidebar.metrics',
-                    testId: 'admin-metrics',
-                },
-                {
-                    routerLink: '/admin/dependencies',
-                    icon: faCubes,
-                    title: 'Dependencies',
-                    translation: 'global.menu.admin.sidebar.dependencies',
-                    testId: 'admin-dependencies',
-                },
-                {
-                    routerLink: '/admin/user-statistics',
-                    icon: faEye,
-                    title: 'Statistics',
-                    translation: 'global.menu.admin.sidebar.statistics',
-                    testId: 'admin-statistics',
-                },
-                {
-                    routerLink: '/admin/websocket',
-                    icon: faPlug,
-                    title: 'Websocket',
-                    translation: 'global.menu.admin.sidebar.websocket',
-                    testId: 'admin-websocket',
-                },
-            ],
+            items: monitoringItems,
         });
 
         // Group 4: Build System (conditional)

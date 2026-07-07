@@ -1,10 +1,10 @@
-@if (downloadText) {
+@if (downloadText()) {
     <div>
         <span jhiTranslate="artemisApp.feedback.truncatedInfo"></span>
-        <a [href]="downloadText" [download]="downloadFilename" jhiTranslate="artemisApp.feedback.downloadTruncatedFeedback"></a>
+        <a [href]="downloadText()" [download]="downloadFilename()" jhiTranslate="artemisApp.feedback.downloadTruncatedFeedback"></a>
     </div>
 }
 <br />
 <div class="feedback-text">
-    <p>{{ text }}</p>
+    <p>{{ text() }}</p>
 </div>

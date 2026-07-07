@@ -106,11 +106,19 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
             @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * Delete all complaint responses that belong to the given result
+     * Delete all complaint responses that belong to the given result.
+     * <p>
+     * Implemented as a bulk JPQL delete (via a subquery on the complaint id) on purpose: a Spring Data derived
+     * {@code deleteBy...} method would first load each {@link ComplaintResponse} together with its eagerly-fetched
+     * {@link de.tum.cit.aet.artemis.assessment.domain.Complaint} into the (Open-Session-In-View) session. When the
+     * response is then removed, the still-managed complaint's inverse {@code complaintResponse} association would point
+     * at the just-deleted (now transient) response, making the flush fail with a {@code TransientPropertyValueException}
+     * while deleting an exercise that has a resolved complaint. The bulk delete loads nothing into the session.
      *
      * @param resultId the id of the result where the complaint response should be deleted
      */
     @Transactional // ok because of delete
     @Modifying
-    void deleteByComplaint_Result_Id(long resultId);
+    @Query("DELETE FROM ComplaintResponse cr WHERE cr.complaint.id IN (SELECT c.id FROM Complaint c WHERE c.result.id = :resultId)")
+    void deleteByComplaint_Result_Id(@Param("resultId") long resultId);
 }

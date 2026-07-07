@@ -25,6 +25,7 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+
 // Darker primary tone used for on-brand buttons/tags that sit on white/light backgrounds and
 // need WCAG AA (≥ 4.5:1) contrast. 1f5c9a vs #fff ≈ 6.14:1.
 $primary-dark: #1f5c9a;
@@ -44,7 +45,7 @@ $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
 
 // Global colors
-$artemis-dark: #353d47; // (not bootstrap)
+$artemis-dark: #353d47;
 $link-color: $primary;
 
 // Border
@@ -113,7 +114,7 @@ $tab-bar-color-active: $primary;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
-$hover-slightly-darker-body-bg: #f3f3f3;
+$hover-slightly-darker-body-bg: #f1f5f9;
 
 // Borders
 $theme-switch-box-border-color: $border-color;
@@ -132,7 +133,6 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #f1f1f1;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -192,9 +192,6 @@ $fo-header-font-color: white;
 $fo-container-box-icon-background: $gray-200;
 $fo-blue-font-color: #3070b3;
 $fo-box-overlay-background: $gray-100;
-
-// Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: white;
@@ -281,7 +278,7 @@ $edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
 
 // Quiz Exercises
 $quiz-drag-items-background: white;
-$quiz-drag-item-background: #fafafa;
+$quiz-drag-item-background: #f8fafc;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
 
@@ -312,7 +309,7 @@ $quiz-participation-question-score-incorrect-result: $warning;
 $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
-$quiz-question-background: #fefefe;
+$quiz-question-background: #fff;
 $quiz-question-border-color: lightgrey;
 
 $quiz-visual-question-border-color: $quiz-question-border-color;
@@ -333,7 +330,7 @@ $dnd-question-drop-location-results-sample-background: white;
 $dnd-question-drop-location-result-symbol-color: $warning;
 $dnd-question-drop-location-result-invalid-color: $danger;
 $dnd-question-drop-location-drag-item-background: white;
-$dnd-question-dnd-items-drag-items-background: #eee;
+$dnd-question-dnd-items-drag-items-background: #e2e8f0;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
@@ -358,14 +355,14 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
 // SGI
 $edit-sqi-grading-instructions-update-border: lightgray;
-$edit-sqi-criterion-title-row-background: rgb(242 242 242);
+$edit-sqi-criterion-title-row-background: #f1f5f9;
 
 $sgi-assessment-layout-zero-background: #fff2cc;
 $sgi-assessment-layout-positive-background: #e3f0da;
 $sgi-assessment-layout-negative-background: #fbe5d6;
 
 // Code Editor
-$code-editor-file-browser-header-background: #f5f5f5;
+$code-editor-file-browser-header-background: #f1f5f9;
 $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
@@ -427,16 +424,16 @@ $notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
 $notification-sb-icon-color: var(--bs-body-color);
 
 // Text Editor
-$text-editor-background: #f9f9f9;
-$text-editor-focus-background: #fbfbfb;
+$text-editor-background: #f8fafc;
+$text-editor-focus-background: #f8fafc;
 $text-editor-color: black;
-$text-editor-border-color: #d5d5d5;
+$text-editor-border-color: #cbd5e1;
 
 // Exam (Manage)
 $exam-checklist-exercise-group-table-background: white;
 
 $exercise-group-border-color: #ccc;
-$exercise-group-header-background: #e1e1e1;
+$exercise-group-header-background: #e2e8f0;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
@@ -467,7 +464,7 @@ $team-short-name-background: rgba(0, 0, 180, 0.05);
 $team-short-name-color: #053d97;
 
 // Exam
-$exam-navigation-bar-background-color: #ecebe7;
+$exam-navigation-bar-background-color: #e2e8f0;
 $exam-navigation-bar-synced-color: white;
 $exam-navigation-bar-synced-background-color: #3e8acc;
 $exam-navigation-bar-not-synced-color: #1a1a1a;
@@ -542,7 +539,7 @@ $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
 $feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
 $graph-grey: rgba(127, 127, 127, 255);
 $graph-dark-blue: rgba(53, 61, 71, 1);
@@ -552,6 +549,10 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
+
+// Chart text and grid line colors (consumed by chart.js via ChartColorService)
+$chart-text-color: #666;
+$chart-grid-color: rgba(0, 0, 0, 0.1);
 
 // User-Management
 $user-management-background-color: rgba($black, 0.02);
@@ -576,6 +577,7 @@ $iris-label-color: $gray-600;
 $iris-accent-border-color: $gray-500;
 $iris-table-header-background: var(--gray-300);
 $iris-onboarding-backdrop: rgba($black, 0.4);
+$iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--white));
 
 // Iris Communication
 $tutor-suggestion-background: $gray-400;
@@ -606,8 +608,8 @@ $calendar-day-badge-selected: $gray-400;
 $league-badge-bronze-color: #cd7f32;
 $league-badge-silver-color: #c0c0c0;
 $league-badge-gold-color: #ffd700;
-$league-badge-diamond-color: hsl(195, 60%, 50%);
-$league-badge-master-color: hsl(270, 60%, 50%);
+$league-badge-diamond-color: hsl(195deg, 60%, 50%);
+$league-badge-master-color: hsl(270deg, 60%, 50%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-300;
 

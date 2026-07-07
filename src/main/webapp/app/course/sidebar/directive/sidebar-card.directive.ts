@@ -18,7 +18,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
 
     readonly onUpdateSidebar = output<void>();
 
-    private componentRef: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
+    private componentRef?: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
     private updateSubscription?: OutputRefSubscription;
 
     constructor() {
@@ -88,7 +88,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
 
-        if (channelTypes.includes(<string>this.groupKey())) {
+        if (channelTypes.includes(this.groupKey() as string)) {
             prefixes.forEach((prefix) => {
                 if (name?.startsWith(prefix)) {
                     name = name.substring(prefix.length);

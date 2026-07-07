@@ -93,7 +93,6 @@ describe('ExamNavigationSidebarComponent', () => {
 
     it('should change the exercise', () => {
         vi.spyOn(comp.onPageChanged, 'emit');
-        vi.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex()).toBe(0);
 
@@ -103,12 +102,10 @@ describe('ExamNavigationSidebarComponent', () => {
         comp.changePage(false, exerciseIndex, force);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
-        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should not change the exercise with invalid index', () => {
         vi.spyOn(comp.onPageChanged, 'emit');
-        vi.spyOn(comp, 'setExerciseButtonStatus');
 
         expect(comp.exerciseIndex()).toBe(0);
 
@@ -119,11 +116,10 @@ describe('ExamNavigationSidebarComponent', () => {
 
         expect(comp.exerciseIndex()).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
-        expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
 
     it('should set the exercise button status for undefined submission', () => {
-        const result = comp.setExerciseButtonStatus(1);
+        const result = comp.getExerciseButtonStatus(1);
 
         expect(result).toBe('synced');
     });
@@ -131,7 +127,7 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set the exercise button status for submitted and synced submission active', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(0);
+        const result = comp.getExerciseButtonStatus(0);
 
         expect(result).toBe('synced saved');
     });
@@ -139,24 +135,24 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set the exercise button status for submitted submission', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true };
 
-        const result = comp.setExerciseButtonStatus(0);
+        const result = comp.getExerciseButtonStatus(0);
 
-        expect(comp.icon).toEqual(facSaveWarning);
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveWarning);
         expect(result).toBe('notSynced');
     });
 
     it('should set the exercise button status for submitted and synced submission saved', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(0);
-        expect(comp.icon).toEqual(facSaveSuccess);
+        const result = comp.getExerciseButtonStatus(0);
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveSuccess);
         expect(result).toBe('synced saved');
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
         exercises[0].studentParticipations![0].submissions![0] = { submitted: true, isSynced: true };
 
-        const result = comp.setExerciseButtonStatus(1);
+        const result = comp.getExerciseButtonStatus(1);
 
         expect(result).toBe('synced');
     });
@@ -209,15 +205,15 @@ describe('ExamNavigationSidebarComponent', () => {
     it('should set exercise button status to synced active if it is the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
-        expect(comp.setExerciseButtonStatus(0)).toBe('synced saved');
-        expect(comp.icon).toEqual(facSaveSuccess);
+        expect(comp.getExerciseButtonStatus(0)).toBe('synced saved');
+        expect(comp.getExerciseIcon(0)).toEqual(facSaveSuccess);
     });
 
     it('should set exercise button status to synced if it is not the active exercise in the exam timeline view', () => {
         fixture.componentRef.setInput('examTimeLineView', true);
         fixture.componentRef.setInput('exerciseIndex', 0);
-        expect(comp.setExerciseButtonStatus(1)).toBe('synced');
-        expect(comp.icon).toEqual(facSaveSuccess);
+        expect(comp.getExerciseButtonStatus(1)).toBe('synced');
+        expect(comp.getExerciseIcon(1)).toEqual(facSaveSuccess);
     });
 
     it('should toggle sidebar based on isCollapsed', () => {

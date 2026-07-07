@@ -7,7 +7,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -704,7 +703,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
         String username = userStatisticEntry.getUsername();
         // if this index is not yet existing in users
         // if the value of the map for this index does not contain this username
-        users.computeIfAbsent(index, k -> new HashSet<>(Collections.singletonList(username))).add(username);
+        users.computeIfAbsent(index, k -> new HashSet<>(List.of(username))).add(username);
     }
 
     /**

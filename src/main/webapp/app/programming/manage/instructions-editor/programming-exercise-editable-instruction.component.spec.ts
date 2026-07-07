@@ -258,8 +258,27 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.updateProblemStatement('changed-during-sync');
 
         expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue).toBe(false);
+        expect(comp.unsavedChangesValue()).toBe(false);
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
+    });
+
+    it('does not propagate a blank problem statement to the parent during initial sync, but still restores real content (#13046)', () => {
+        const instructionChangeSpy = vi.fn();
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'existing content' });
+        fixture.detectChanges();
+
+        internals(comp).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness } as ProblemStatementSyncState;
+        problemStatementSyncServiceMock.isAwaitingInitialSync.mockReturnValue(true);
+
+        // The internal `model.setValue('')` used to clear Monaco before the Yjs binding fires an empty value during bootstrap.
+        // It must not reach the parent, otherwise a save racing the sync would wipe the persisted problem statement.
+        comp.updateProblemStatement('');
+        expect(instructionChangeSpy).not.toHaveBeenCalled();
+
+        // Once the initial sync delivers the real content, it must still propagate so the parent model is restored.
+        comp.updateProblemStatement('existing content restored');
+        expect(instructionChangeSpy).toHaveBeenCalledExactlyOnceWith('existing content restored');
     });
 
     it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', () => {
@@ -291,7 +310,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.updateProblemStatement('changed-after-finalize');
 
         expect(hasUnsavedSpy).not.toHaveBeenCalled();
-        expect(comp.unsavedChangesValue).toBe(false);
+        expect(comp.unsavedChangesValue()).toBe(false);
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
     });
 
@@ -317,7 +336,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.updateProblemStatement('first-user-edit-after-finalize');
 
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
-        expect(comp.unsavedChangesValue).toBe(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
     });
 
     it('marks unsaved when finalized sync content diverges from fallback', () => {
@@ -345,7 +364,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         });
 
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
-        expect(comp.unsavedChangesValue).toBe(true);
+        expect(comp.unsavedChangesValue()).toBe(true);
     });
 
     it('should reset sync service on component destroy', () => {
@@ -362,7 +381,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
-        expect(comp.exerciseTestCases).toHaveLength(0);
+        expect(comp.exerciseTestCases()).toHaveLength(0);
 
         fixture.destroy();
     });
@@ -374,8 +393,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
-        expect(comp.exerciseTestCases).toHaveLength(2);
-        expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
+        expect(comp.exerciseTestCases()).toHaveLength(2);
+        expect(comp.exerciseTestCases()).toEqual(['test1', 'test2']);
         const testCaseValues = comp.testCaseAction.getValues();
         expect(testCaseValues).toHaveLength(2);
         expect(testCaseValues).toEqual([
@@ -392,12 +411,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
 
-        expect(comp.exerciseTestCases).toHaveLength(2);
-        expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
+        expect(comp.exerciseTestCases()).toHaveLength(2);
+        expect(comp.exerciseTestCases()).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
 
-        expect(comp.exerciseTestCases).toHaveLength(0);
+        expect(comp.exerciseTestCases()).toHaveLength(0);
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
 
@@ -416,13 +435,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.exerciseTestCases).toHaveLength(0);
+        expect(comp.exerciseTestCases()).toHaveLength(0);
         expect(getLatestResultWithFeedbacksStub).toHaveBeenNthCalledWith(1, exercise.templateParticipation!.id!);
 
         subject.next({ feedbacks: [{ testCase: { testName: 'testY' } }, { testCase: { testName: 'testX' } }] } as Result);
 
-        expect(comp.exerciseTestCases).toHaveLength(2);
-        expect(comp.exerciseTestCases).toEqual(['testX', 'testY']);
+        expect(comp.exerciseTestCases()).toHaveLength(2);
+        expect(comp.exerciseTestCases()).toEqual(['testX', 'testY']);
 
         fixture.destroy();
     });
@@ -435,7 +454,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.exerciseTestCases).toHaveLength(0);
+        expect(comp.exerciseTestCases()).toHaveLength(0);
 
         expect(comp.testCaseSubscription).toBeUndefined();
         expect(subscribeForTestCaseSpy).not.toHaveBeenCalled();
@@ -536,7 +555,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
         expect(logErrorSpy).toHaveBeenCalledOnce();
         expect(problemStatementSavedSpy).not.toHaveBeenCalled();
-        expect(comp.savingInstructions).toBe(false);
+        expect(comp.savingInstructions()).toBe(false);
     });
 
     it('should save on key commands', () => {
@@ -718,7 +737,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should ignore inline fix application while instructions are already saving', () => {
-        comp.savingInstructions = true;
+        comp.savingInstructions.set(true);
 
         comp.onApplyInlineFix({ threadId: 10 });
 

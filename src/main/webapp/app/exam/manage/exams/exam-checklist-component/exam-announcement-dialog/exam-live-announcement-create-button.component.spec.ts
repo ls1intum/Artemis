@@ -55,7 +55,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         fixture.detectChanges();
 
         expect(component.faBullhorn).toEqual(faBullhorn);
-        expect(component.announcementCreationAllowed).toBe(expectedAnnouncementAllowed);
+        expect(component.announcementCreationAllowed()).toBe(expectedAnnouncementAllowed);
     });
 
     it('should open dialog when button is clicked', () => {

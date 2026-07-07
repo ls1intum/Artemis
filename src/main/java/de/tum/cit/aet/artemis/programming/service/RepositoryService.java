@@ -148,7 +148,7 @@ public class RepositoryService {
 
         files.forEach(file -> {
             try {
-                fileListWithContent.put(file.toString(), FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+                fileListWithContent.put(file.toString(), Files.readString(file.toPath(), StandardCharsets.UTF_8));
             }
             catch (IOException e) {
                 log.error("Content of file: {} could not be loaded and throws the following error: {}", file, e.getMessage());

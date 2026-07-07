@@ -47,6 +47,7 @@ export class CalendarSubscriptionPopoverComponent {
             if (this.copiedUrl()) {
                 return this.setTimerToToggleBackCopiedUrl();
             }
+            return undefined;
         });
     }
 
@@ -54,7 +55,7 @@ export class CalendarSubscriptionPopoverComponent {
         const url = this.subscriptionUrl();
         if (url) {
             this.copiedUrl.set(true);
-            navigator.clipboard.writeText(url);
+            void navigator.clipboard.writeText(url);
         }
     }
 

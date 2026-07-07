@@ -1,25 +1,7 @@
-import {
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    DestroyRef,
-    ElementRef,
-    Injector,
-    OnInit,
-    afterNextRender,
-    computed,
-    inject,
-    input,
-    model,
-    output,
-    signal,
-    viewChild,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, ElementRef, Injector, afterNextRender, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
 import { ButtonDirective } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
@@ -37,10 +19,7 @@ import { PROMPT_LENGTH_WARNING_THRESHOLD } from 'app/programming/manage/shared/p
     styleUrls: ['./inline-refinement-button.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InlineRefinementButtonComponent implements OnInit {
-    private readonly translateService = inject(TranslateService);
-    private readonly cdr = inject(ChangeDetectorRef);
-    private readonly destroyRef = inject(DestroyRef);
+export class InlineRefinementButtonComponent {
     private readonly injector = inject(Injector);
 
     // Input: Position where the button should appear
@@ -87,13 +66,6 @@ export class InlineRefinementButtonComponent implements OnInit {
 
     // Reference to input element for focus
     inputElement = viewChild<ElementRef<HTMLInputElement>>('instructionInput');
-
-    ngOnInit(): void {
-        // Subscribe to language changes to trigger re-render for translations
-        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            this.cdr.markForCheck();
-        });
-    }
 
     /**
      * Expands the button to show the input field.

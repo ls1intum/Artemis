@@ -119,7 +119,7 @@ export class AttachmentVideoUnitFormComponent {
 
     // have to handle the file input as a special case at is not part of the reactive form
     fileInput = viewChild<ElementRef>('fileInput');
-    file: File;
+    file?: File;
     fileInputTouched = false;
 
     fileName = signal<string | undefined>(undefined);
@@ -130,10 +130,19 @@ export class AttachmentVideoUnitFormComponent {
 
     private readonly formBuilder = inject(FormBuilder);
 
+    // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
+    private appliedFormData?: AttachmentVideoUnitFormData;
+
     constructor() {
+        // Patch ONCE per distinct formData value: form.patchValue() synchronously emits statusChanges,
+        // which is mirrored into the `statusChanges` signal via toSignal(...). Under zoneless that signal
+        // write reschedules the reactive flush, which re-runs this effect, which patches again — an
+        // infinite change-detection loop that leaves the edit form stuck behind the loading spinner.
+        // Guarding on the formData reference breaks the cycle and avoids clobbering in-progress edits.
         effect(() => {
             const formData = this.formData();
-            if (this.isEditMode() && formData) {
+            if (this.isEditMode() && formData && formData !== this.appliedFormData) {
+                this.appliedFormData = formData;
                 this.setFormValues(formData);
             }
         });
@@ -236,7 +245,7 @@ export class AttachmentVideoUnitFormComponent {
         }
     }
 
-    setEmbeddedVideoUrl(event: any) {
+    setEmbeddedVideoUrl(event: Event) {
         event.stopPropagation();
 
         const originalUrl = this.urlHelperControl!.value;

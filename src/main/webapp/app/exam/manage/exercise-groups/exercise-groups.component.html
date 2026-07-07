@@ -16,16 +16,16 @@
     }
 </div>
 <div class="mt-3 text-end" id="number-groups" style="font-size: 0.85rem">
-    {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups ? exerciseGroups.length : 0 }}
+    {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups() ? exerciseGroups()!.length : 0 }}
 </div>
-@for (exerciseGroup of exerciseGroups; track exerciseGroup; let i = $index) {
+@for (exerciseGroup of exerciseGroups(); track exerciseGroup; let i = $index) {
     <div class="exercise-group mt-3" id="{{ 'group-' + exerciseGroup.id }}">
         <div class="d-flex p-3 header flex-wrap">
             <div class="me-3 d-flex justify-content-center" style="align-items: center">
                 <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
                     <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem" />
                 </a>
-                <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
+                <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups()!.length - 1" class="border-0 p-0 bg-transparent">
                     <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem" />
                 </a>
             </div>
@@ -251,7 +251,7 @@
                                                     '/course-management',
                                                     course()!.id,
                                                     'exams',
-                                                    examId,
+                                                    examId(),
                                                     'exercise-groups',
                                                     exerciseGroup.id,
                                                     exercise.type + '-exercises',
@@ -275,7 +275,7 @@
                                                     '/course-management',
                                                     course()!.id,
                                                     'exams',
-                                                    examId,
+                                                    examId(),
                                                     'exercise-groups',
                                                     exerciseGroup.id,
                                                     exercise.type + '-exercises',
@@ -353,7 +353,7 @@
                                             <jhi-exam-exercise-row-buttons
                                                 class="d-flex justify-content-end"
                                                 [course]="course()!"
-                                                [exam]="exam"
+                                                [exam]="exam()!"
                                                 [exercise]="exercise"
                                                 [exerciseGroupId]="exerciseGroup.id"
                                                 [latestIndividualEndDate]="latestIndividualEndDate()"

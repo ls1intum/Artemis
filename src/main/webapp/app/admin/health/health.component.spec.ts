@@ -36,12 +36,12 @@ describe('HealthComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should return bg-success class for UP status', () => {
-        expect(comp.getBadgeClass('UP')).toBe('bg-success');
+    it('should return success severity for UP status', () => {
+        expect(comp.getBadgeSeverity('UP')).toBe('success');
     });
 
-    it('should return bg-danger class for DOWN status', () => {
-        expect(comp.getBadgeClass('DOWN')).toBe('bg-danger');
+    it('should return danger severity for DOWN status', () => {
+        expect(comp.getBadgeSeverity('DOWN')).toBe('danger');
     });
 
     it('should call refresh on init', () => {

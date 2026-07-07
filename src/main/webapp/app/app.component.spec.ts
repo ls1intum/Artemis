@@ -49,7 +49,10 @@ describe('AppComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ExamParticipationService, useValue: { examIsStarted$: of(false), testRunStarted$: of(false) } },
                 { provide: LtiService, useValue: { isShownViaLti$: of(false) } },
-                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(false) } },
+                {
+                    provide: FeatureToggleService,
+                    useValue: { getFeatureToggleActive: () => of(false), subscribeFeatureToggleUpdates: () => {}, unsubscribeFeatureToggleUpdates: () => {} },
+                },
                 { provide: SentryErrorHandler, useValue: { initSentry: vi.fn() } },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
                 provideHttpClient(),
@@ -86,8 +89,8 @@ describe('AppComponent', () => {
     });
 
     it('should display footer if there is no exam', () => {
-        comp.isExamStarted = false;
-        comp.showSkeleton = true;
+        comp.isExamStarted.set(false);
+        comp.showSkeleton.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         const footerElement = fixture.debugElement.query(By.css('jhi-footer'));
@@ -96,8 +99,8 @@ describe('AppComponent', () => {
     });
 
     it('should not display footer during an exam', () => {
-        comp.isExamStarted = true;
-        comp.showSkeleton = true;
+        comp.isExamStarted.set(true);
+        comp.showSkeleton.set(true);
         fixture.changeDetectorRef.detectChanges();
 
         const footerElement = fixture.debugElement.query(By.css('jhi-footer'));

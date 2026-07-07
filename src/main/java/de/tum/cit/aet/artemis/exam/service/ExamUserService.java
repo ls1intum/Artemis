@@ -6,7 +6,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -304,7 +303,7 @@ public class ExamUserService {
         Page<Long> idPage = examUserRepository.findExamUserIdsForExam(examId, search);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), idPage.getPageable(), idPage.getTotalElements());
+            return new PageImpl<>(List.of(), idPage.getPageable(), idPage.getTotalElements());
         }
 
         List<ExamUser> examUsers = examUserRepository.findByIdsWithUser(ids);
@@ -330,6 +329,8 @@ public class ExamUserService {
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
     public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
+        // The repository applies a deterministic order for the LIMIT/OFFSET pages, so the pages are stable across
+        // requests and no matching user shuffles between pages (see issue #13069).
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
 

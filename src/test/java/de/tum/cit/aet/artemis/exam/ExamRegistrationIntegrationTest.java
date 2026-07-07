@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -296,7 +295,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         int numberOfStudentsInCourse = userTestRepository.findAllByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
-        student99.setGroups(Collections.singleton("tumuser"));
+        student99.setGroups(Set.of("tumuser"));
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
         assertThat(student99.getGroups()).contains(course1.getStudentGroupName());
 

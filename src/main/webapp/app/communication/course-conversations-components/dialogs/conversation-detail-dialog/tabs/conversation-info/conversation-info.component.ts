@@ -70,7 +70,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     });
 
     canEditName(): boolean {
-        if (this.readOnlyMode) return false;
+        if (this.readOnlyMode()) return false;
         const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
         if (!channelOrGroupChat) return false;
         return isChannelDTO(channelOrGroupChat) ? this.canChangeChannelProperties(channelOrGroupChat) : this.canChangeGroupChatProperties(channelOrGroupChat);
@@ -95,26 +95,28 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private translateService = inject(TranslateService);
 
-    readOnlyMode = false;
+    readonly readOnlyMode = signal<boolean>(false);
     notificationSettings?: CourseNotificationSettingInfo;
-    isNotificationsEnabled = false;
+    readonly isNotificationsEnabled = signal(false);
+    readonly isMuted = signal(false);
 
-    muteOptions: { label: string; value: boolean }[] = [];
+    readonly muteOptions = signal<{ label: string; value: boolean }[]>([]);
 
     protected readonly faVolumeXmark = faVolumeXmark;
     protected readonly faCalendarPlus = faCalendarPlus;
     protected readonly faUser = faUser;
 
     ngOnInit(): void {
-        this.muteOptions = [
+        this.muteOptions.set([
             { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.unmuted'), value: false },
             { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.muted'), value: true },
-        ];
+        ]);
         if (this.activeConversation()) {
             if (getAsChannelDTO(this.activeConversation())) {
-                this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
+                this.readOnlyMode.set(!!getAsChannelDTO(this.activeConversation())?.isArchived);
             }
         }
+        this.isMuted.set(!!this.activeConversation()?.isMuted);
         this.initEditableValues();
         this.loadNotificationSettings();
         this.updateConversationIsMuted();
@@ -180,7 +182,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const trimmedValue = value.trim();
-        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
         if (!channelOrGroupChat) return;
 
         this.saveStatus.set('saving');
@@ -207,8 +209,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (updatedGroupChat: GroupChatDTO) => {
-                    groupChat[propertyName] = updatedGroupChat[propertyName];
+                next: (updatedGroupChat: GroupChatDTO | null) => {
+                    if (updatedGroupChat) {
+                        groupChat[propertyName] = updatedGroupChat[propertyName];
+                    }
                     this.markSaved();
                     this.onChangePerformed();
                 },
@@ -233,8 +237,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
-                next: (updatedChannel: ChannelDTO) => {
-                    channel[propertyName] = updatedChannel[propertyName];
+                next: (updatedChannel: ChannelDTO | null) => {
+                    if (updatedChannel) {
+                        channel[propertyName] = updatedChannel[propertyName];
+                    }
                     this.markSaved();
                     this.onChangePerformed();
                 },
@@ -273,6 +279,9 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                     if (conversation) {
                         conversation.isMuted = isMuted;
                     }
+                    // The conversation is held by an input signal whose reference does not change on
+                    // in-place mutation, so drive the muted state through a dedicated signal (zoneless).
+                    this.isMuted.set(isMuted);
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -299,7 +308,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private checkNotificationStatus() {
-        this.isNotificationsEnabled = this.notificationSettings?.selectedPreset !== 3;
+        this.isNotificationsEnabled.set(this.notificationSettings?.selectedPreset !== 3);
     }
 
     protected readonly ConversationDTO = ConversationDTO;

@@ -23,7 +23,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture = TestBed.createComponent(ExerciseUpdateWarningComponent);
         comp = fixture.componentInstance;
-        comp.deleteFeedback = false;
+        comp.deleteFeedback.set(false);
     });
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
@@ -77,6 +77,6 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(comp.deleteFeedback).toBe(true);
+        expect(comp.deleteFeedback()).toBe(true);
     });
 });

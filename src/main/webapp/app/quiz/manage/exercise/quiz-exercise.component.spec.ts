@@ -106,7 +106,7 @@ describe('QuizExercise Management Component', () => {
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
-            expect(comp.filteredQuizExercises).toHaveLength(1);
+            expect(comp.filteredQuizExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
@@ -116,7 +116,7 @@ describe('QuizExercise Management Component', () => {
 
             // THEN
             expect(comp.quizExercises()).toHaveLength(1);
-            expect(comp.filteredQuizExercises).toHaveLength(0);
+            expect(comp.filteredQuizExercises()).toHaveLength(0);
         });
     });
 
@@ -125,8 +125,8 @@ describe('QuizExercise Management Component', () => {
         comp.toggleExercise(quizExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: quizExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises().length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: quizExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.quizExercises().length);
     });
 
     it('should load one', () => {

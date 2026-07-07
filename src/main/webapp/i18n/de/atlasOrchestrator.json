@@ -26,6 +26,11 @@
                     "partial": "teilweise",
                     "incidental": "beiläufig"
                 }
+            },
+            "autoToast": {
+                "success": "Atlas wurde automatisch für {{count}} Aufgabe(n) ausgeführt.",
+                "partial": "Atlas wurde für {{count}} Aufgabe(n) ausgeführt: {{success}} erfolgreich, {{failure}} fehlgeschlagen.",
+                "failure": "Atlas wurde automatisch für {{count}} Aufgabe(n) ausgeführt, aber alle Läufe sind fehlgeschlagen. Bitte versuche es später erneut."
             }
         }
     }

@@ -27,7 +27,15 @@ export class QuizExerciseOverviewPage {
      * @param batchId The ID of the batch to start.
      */
     async startQuizBatch(exerciseId: number, batchId: number) {
+        // Wait for the start-batch request to actually complete before returning. Otherwise a student joining the batch
+        // immediately afterwards can race the in-flight start, find the batch not yet started, and never see the quiz
+        // question — the root cause of the batch-join flake.
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes(`/quiz/quiz-batches/${batchId}/start-batch`) && resp.request().method() === 'PUT' && resp.ok(),
+            { timeout: 20000 },
+        );
         await this.page.locator(`#instructor-quiz-start-${exerciseId}-${batchId}`).click();
+        await responsePromise;
     }
 
     /**

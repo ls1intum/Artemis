@@ -45,7 +45,7 @@ export class DeleteDialogComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
 
     readonly actionTypes = ActionType;
-    private delete: DeleteDialogDeleteHandler;
+    private delete!: DeleteDialogDeleteHandler; // set in ngOnInit() from dialog config data
 
     // Signals for reactive state
     submitDisabled = signal(false);
@@ -57,7 +57,15 @@ export class DeleteDialogComponent implements OnInit {
 
     // Regular properties for ngModel two-way binding
     confirmEntityName = '';
-    additionalChecksValues: { [key: string]: boolean } = {};
+    // Backed by a signal via a getter/setter facade: the template binds [(ngModel)]="additionalChecksValues[checkKey]"
+    // (a deep two-way target), so reads stay reactive while ngModel can still mutate the backing object in place.
+    private readonly _additionalChecksValues = signal<{ [key: string]: boolean }>({});
+    get additionalChecksValues(): { [key: string]: boolean } {
+        return this._additionalChecksValues();
+    }
+    set additionalChecksValues(value: { [key: string]: boolean }) {
+        this._additionalChecksValues.set(value);
+    }
 
     private readonly deleteFormRef = viewChild.required<NgForm>('deleteForm');
 
@@ -65,20 +73,20 @@ export class DeleteDialogComponent implements OnInit {
         return this.deleteFormRef();
     }
 
-    deleteQuestion: string;
-    entitySummaryTitle?: string;
-    translateValues: { [key: string]: unknown } = {};
-    deleteConfirmationText: string;
-    requireConfirmationOnlyForAdditionalChecks: boolean;
-    additionalChecks?: { [key: string]: string };
-    actionType: ActionType;
+    readonly deleteQuestion = signal<string>(undefined!);
+    readonly entitySummaryTitle = signal<string | undefined>(undefined);
+    readonly translateValues = signal<{ [key: string]: unknown }>({});
+    readonly deleteConfirmationText = signal<string>(undefined!);
+    readonly requireConfirmationOnlyForAdditionalChecks = signal<boolean>(undefined!);
+    readonly additionalChecks = signal<{ [key: string]: string } | undefined>(undefined);
+    readonly actionType = signal<ActionType>(undefined!);
     // do not use faTimes icon if it's a confirmation but not a delete dialog
-    useFaCheckIcon: boolean;
+    readonly useFaCheckIcon = signal<boolean>(undefined!);
 
     // used by @for in the template
     objectKeys = Object.keys;
 
-    warningTextColor: string;
+    warningTextColor!: string; // set in ngOnInit() based on buttonType
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -87,15 +95,15 @@ export class DeleteDialogComponent implements OnInit {
         // Get data from DynamicDialogConfig
         const data = this.dialogConfig.data;
         this.entityTitle.set(data.entityTitle);
-        this.deleteQuestion = data.deleteQuestion;
-        this.translateValues = data.translateValues;
-        this.deleteConfirmationText = data.deleteConfirmationText;
-        this.additionalChecks = data.additionalChecks;
-        this.entitySummaryTitle = data.entitySummaryTitle;
-        this.actionType = data.actionType;
+        this.deleteQuestion.set(data.deleteQuestion);
+        this.translateValues.set(data.translateValues);
+        this.deleteConfirmationText.set(data.deleteConfirmationText);
+        this.additionalChecks.set(data.additionalChecks);
+        this.entitySummaryTitle.set(data.entitySummaryTitle);
+        this.actionType.set(data.actionType);
         this.buttonType.set(data.buttonType);
         this.delete = data.delete;
-        this.requireConfirmationOnlyForAdditionalChecks = data.requireConfirmationOnlyForAdditionalChecks;
+        this.requireConfirmationOnlyForAdditionalChecks.set(data.requireConfirmationOnlyForAdditionalChecks);
 
         // Fetch entity summary if provided
         if (data.fetchCategorizedEntitySummary) {
@@ -107,14 +115,14 @@ export class DeleteDialogComponent implements OnInit {
         // Note: Error handling is done in DeleteDialogService since the dialog closes immediately on confirm.
         // The service subscribes to dialogError and displays errors via AlertService.
 
-        if (this.additionalChecks) {
-            this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
+        if (this.additionalChecks()) {
+            this.additionalChecksValues = mapValues(this.additionalChecks(), () => false);
         }
-        this.useFaCheckIcon = this.buttonType() !== ButtonType.ERROR;
+        this.useFaCheckIcon.set(this.buttonType() !== ButtonType.ERROR);
         if (ButtonType.ERROR !== this.buttonType()) {
-            this.warningTextColor = 'text-default';
+            this.warningTextColor = '';
         } else {
-            this.warningTextColor = 'text-danger';
+            this.warningTextColor = 'text-state-danger';
         }
     }
 

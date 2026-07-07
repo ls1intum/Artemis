@@ -91,6 +91,7 @@ describe('ThemeService', () => {
 
         expect(linkElement.remove).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
         service.applyThemePreference(Theme.LIGHT);
         TestBed.tick();
@@ -99,6 +100,26 @@ describe('ThemeService', () => {
         expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
         expect(linkElement.remove).toHaveBeenCalledTimes(2);
         expect(service.currentTheme()).toBe(Theme.LIGHT);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    });
+
+    it('bumps appliedThemeRevision only once the theme stylesheet is in effect', () => {
+        TestBed.tick();
+        const initialRevision = service.appliedThemeRevision();
+
+        service.applyThemePreference(Theme.DARK);
+        TestBed.tick();
+
+        // The dark stylesheet has not loaded yet, so the revision must not change
+        expect(service.appliedThemeRevision()).toBe(initialRevision);
+
+        newElement.onload!(new Event('load'));
+        expect(service.appliedThemeRevision()).toBe(initialRevision + 1);
+
+        // Switching back to the light theme removes the override synchronously
+        service.applyThemePreference(Theme.LIGHT);
+        TestBed.tick();
+        expect(service.appliedThemeRevision()).toBe(initialRevision + 2);
     });
 
     it('restores stored theme correctly', () => {

@@ -1,0 +1,43 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+.dag-graph {
+    display: block;
+    user-select: none;
+}
+
+.panning-rect {
+    fill: transparent;
+
+    &.pannable {
+        cursor: move;
+    }
+}
+
+// stroke inherits into the projected edge paths (replaces ngx-graph's former global `.graph .edge` styles)
+.edges {
+    stroke: var(--body-color);
+    fill: none;
+}
+
+.minimap {
+    .minimap-background {
+        fill: var(--body-color);
+        opacity: 0.08;
+    }
+
+    .minimap-nodes rect {
+        fill: var(--body-color);
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .minimap-viewport {
+        fill: none;
+        stroke: var(--body-color);
+        stroke-width: 1;
+        stroke-dasharray: 2;
+    }
+}

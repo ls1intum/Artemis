@@ -1,8 +1,8 @@
 @if (participation().submissionCount) {
-    @for (correctionRound of correctionRoundIndices; track correctionRound) {
+    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
         @if (
             (correctionRound === 0 || participation().submissions![0].results?.[correctionRound - 1]?.completionDate) &&
-            (newManualResultAllowed ||
+            (newManualResultAllowed() ||
                 (participation().submissions![0].results?.[correctionRound]?.assessmentType &&
                     participation().submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC &&
                     participation().submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
@@ -45,7 +45,7 @@
                     </span>
                 </a>
                 @if (
-                    newManualResultAllowed &&
+                    newManualResultAllowed() &&
                     participation().submissions![0].results?.[correctionRound]?.assessmentType &&
                     !participation().submissions![0].results?.[correctionRound]?.completionDate &&
                     participation().submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC

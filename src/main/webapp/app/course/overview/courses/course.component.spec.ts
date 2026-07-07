@@ -148,8 +148,8 @@ describe('CoursesComponent', () => {
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-            expect(component.courses).toEqual(courses);
-            expect(component.nextRelevantExams).toHaveLength(0);
+            expect(component.courses()).toEqual(courses);
+            expect(component.nextRelevantExams()).toHaveLength(0);
         });
 
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
@@ -160,7 +160,7 @@ describe('CoursesComponent', () => {
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.courses).toBeUndefined();
+            expect(component.courses()).toBeUndefined();
         });
 
         it('should load exercises on init', () => {
@@ -195,10 +195,10 @@ describe('CoursesComponent', () => {
                 courses.push(course);
             }
 
-            component.courses = courses;
+            component.courses.set(courses);
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses);
-            expect(component.recentlyAccessedCourses).toEqual([]);
+            expect(component.regularCourses()).toEqual(courses);
+            expect(component.recentlyAccessedCourses()).toEqual([]);
             expect(recentCoursesSpy).not.toHaveBeenCalled();
 
             // Test for more than 5 courses
@@ -206,21 +206,23 @@ describe('CoursesComponent', () => {
                 const course = { id: i };
                 courses.push(course);
             }
-            component.courses = courses;
+            component.courses.set(courses);
             component.sortCoursesInRecentlyAccessedAndRegularCourses();
-            expect(component.regularCourses).toEqual(courses.slice(2));
-            expect(component.recentlyAccessedCourses).toEqual(courses.slice(0, 2));
+            expect(component.regularCourses()).toEqual(courses.slice(2));
+            expect(component.recentlyAccessedCourses()).toEqual(courses.slice(0, 2));
             expect(recentCoursesSpy).toHaveBeenCalledOnce();
         });
     });
 
     it('should load next relevant exam', async () => {
         const navigateSpy = vi.spyOn(router, 'navigate');
-        component.nextRelevantCourseForExam = course1;
-        component.nextRelevantExams = [exam1];
+        // nextRelevantCourseForExam is derived from the relevant exam's course
+        const relevantExam: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: course1 };
+        component.nextRelevantExams.set([relevantExam]);
         component.openExam();
         await fixture.whenStable();
 
+        expect(component.nextRelevantCourseForExam()).toEqual(course1);
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
         expect(location.path()).toBe('/courses/1/exams/3');
     });
@@ -261,14 +263,14 @@ describe('CoursesComponent', () => {
         await fixture.whenStable();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-        expect(component.courses).toEqual([course1, course2, course6]);
-        expect(component.nextRelevantExams).toEqual([]);
+        expect(component.courses()).toEqual([course1, course2, course6]);
+        expect(component.nextRelevantExams()).toEqual([]);
     });
 
     it('should initialize search course text correctly', () => {
         const searchedCourse = 'Test Course';
         component.setSearchValue('Test Course');
-        expect(searchedCourse).toBe(component.searchCourseText);
+        expect(searchedCourse).toBe(component.searchCourseText());
     });
 
     it('should adjust sort direction by clicking on sort icon', () => {
@@ -277,13 +279,13 @@ describe('CoursesComponent', () => {
         component.ngOnInit();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
-        expect(component.courses).toEqual(courses);
-        expect(component.isSortAscending).toBe(true);
+        expect(component.courses()).toEqual(courses);
+        expect(component.isSortAscending()).toBe(true);
 
         const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
-        expect(component.isSortAscending).toBe(false);
+        expect(component.isSortAscending()).toBe(false);
     });
 });

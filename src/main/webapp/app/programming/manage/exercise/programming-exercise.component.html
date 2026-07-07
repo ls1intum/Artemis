@@ -1,11 +1,11 @@
-@if (programmingExercises() && filteredProgrammingExercises.length > 0) {
+@if (programmingExercises() && filteredProgrammingExercises().length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (courseContext.isAtLeastEditor) {
+                    @if (courseContext()?.isAtLeastEditor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises())" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises())" [ngModel]="allChecked()" />
                         </th>
                     }
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
@@ -14,7 +14,7 @@
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
-                    @if (courseContext.presentationScore) {
+                    @if (courseContext()?.presentationScore) {
                         <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -25,7 +25,7 @@
             </thead>
 
             <tbody>
-                @for (programmingExercise of filteredProgrammingExercises; track trackId($index, programmingExercise)) {
+                @for (programmingExercise of filteredProgrammingExercises(); track trackId($index, programmingExercise)) {
                     <tr id="exercise-card-{{ programmingExercise.id }}">
                         @if (programmingExercise.isAtLeastEditor) {
                             <td class="d-md-table-cell">
@@ -39,7 +39,7 @@
                         }
                         <td>
                             @if (programmingExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
+                                <a [routerLink]="['/course-management', courseId(), 'programming-exercises', programmingExercise.id]">
                                     {{ programmingExercise.title }}
                                 </a>
                             } @else {
@@ -112,7 +112,7 @@
                                     <fa-icon [icon]="faTimes" class="text-danger" [title]="'artemisApp.exercise.no' | artemisTranslate" />
                                 }
                             </div>
-                            @if (onlineIdeEnabled) {
+                            @if (onlineIdeEnabled()) {
                                 <div class="d-flex justify-content-between">
                                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
                                     @if (programmingExercise.allowOnlineIde) {
@@ -123,7 +123,7 @@
                                 </div>
                             }
                         </td>
-                        @if (courseContext.presentationScore) {
+                        @if (courseContext()?.presentationScore) {
                             <td class="d-md-table-cell">{{ programmingExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell">
@@ -133,7 +133,7 @@
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical me-1 mb-auto">
                                     @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
-                                        <a [routerLink]="['/course-management', courseId, 'exercises', programmingExercise.id, 'teams']" class="btn btn-primary btn-sm me-1 mb-1">
+                                        <a [routerLink]="['/course-management', courseId(), 'exercises', programmingExercise.id, 'teams']" class="btn btn-primary btn-sm me-1 mb-1">
                                             <fa-icon [icon]="faUsers" />
                                             <span class="d-md-inline" jhiTranslate="artemisApp.exercise.teams"></span>
                                         </a>
@@ -142,7 +142,7 @@
                                 <div class="btn-group-vertical me-1">
                                     @if (programmingExercise.isAtLeastTutor) {
                                         <a
-                                            [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'participations']"
+                                            [routerLink]="['/course-management', courseId(), 'programming-exercises', programmingExercise.id, 'participations']"
                                             class="btn btn-primary btn-sm me-1 mb-1"
                                             style="display: flex; justify-content: center; align-items: center"
                                         >
@@ -156,7 +156,7 @@
                                 <div class="btn-group-vertical me-1">
                                     @if (programmingExercise.isAtLeastTutor) {
                                         <a
-                                            [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'scores']"
+                                            [routerLink]="['/course-management', courseId(), 'programming-exercises', programmingExercise.id, 'scores']"
                                             class="btn btn-info btn-sm me-1 mb-1"
                                             style="display: flex; justify-content: center; align-items: center"
                                         >
@@ -174,7 +174,7 @@
                                             [attr.disabled]="false"
                                             [routerLink]="[
                                                 '/course-management',
-                                                courseId,
+                                                courseId(),
                                                 'programming-exercises',
                                                 programmingExercise.id,
                                                 'code-editor',
@@ -194,7 +194,7 @@
                                 <div class="btn-group-vertical me-1">
                                     @if (programmingExercise.isAtLeastEditor) {
                                         <a
-                                            [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id, 'edit']"
+                                            [routerLink]="['/course-management', courseId(), 'programming-exercises', programmingExercise.id, 'edit']"
                                             class="btn btn-warning btn-sm me-1 mb-1"
                                             style="display: flex; justify-content: center; align-items: center"
                                         >
@@ -215,15 +215,15 @@
                                             [fetchEntitySummary]="fetchExerciseDeletionSummary(programmingExercise)"
                                             deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                             [translateValues]="{
-                                                courseTitle: courseContext.title,
-                                                courseType: courseContext.testCourse
+                                                courseTitle: courseContext()?.title,
+                                                courseType: courseContext()?.testCourse
                                                     ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                                     : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                             }"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
                                             [additionalChecks]="
-                                                localCIEnabled
+                                                localCIEnabled()
                                                     ? {}
                                                     : {
                                                           deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
@@ -244,40 +244,40 @@
                 }
             </tbody>
         </table>
-        @if (selectedExercises.length > 0) {
+        @if (selectedExercises().length > 0) {
             <div>
                 <button type="submit" (click)="openEditSelectedModal()" class="btn btn-warning btn-sm me-1">
                     <fa-icon [icon]="faWrench" />
                     <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected"></span>
                 </button>
-                @if (courseContext.isAtLeastInstructor) {
-                    <jhi-programming-assessment-repo-export [programmingExercises]="selectedExercises" class="me-1" />
+                @if (courseContext()?.isAtLeastInstructor) {
+                    <jhi-programming-assessment-repo-export [programmingExercises]="selectedExercises()" class="me-1" />
                 }
-                @if (courseContext.isAtLeastInstructor) {
-                    <jhi-exercise-scores-export-button [exercises]="selectedExercises" />
+                @if (courseContext()?.isAtLeastInstructor) {
+                    <jhi-exercise-scores-export-button [exercises]="selectedExercises()" />
                 }
-                @if (courseContext.isAtLeastInstructor) {
+                @if (courseContext()?.isAtLeastInstructor) {
                     <button (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
                         <fa-icon [icon]="faCheckDouble" />
                         <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                     </button>
                 }
-                @if (courseContext.isAtLeastInstructor) {
+                @if (courseContext()?.isAtLeastInstructor) {
                     <button
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [entityTitle]="'Multiple Programming Exercises'"
                         deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.multiple"
                         [translateValues]="{
-                            courseTitle: courseContext.title,
-                            courseType: courseContext.testCourse
+                            courseTitle: courseContext()?.title,
+                            courseType: courseContext()?.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"
-                        (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
+                        (delete)="deleteMultipleProgrammingExercises(selectedExercises(), $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"
                         [additionalChecks]="
-                            localCIEnabled
+                            localCIEnabled()
                                 ? {}
                                 : {
                                       deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',

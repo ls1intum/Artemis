@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -17,9 +17,9 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
         <jhi-button
             id="re-evaluate-button"
             class="ms-3"
-            [disabled]="disabled() || isReEvaluationRunning"
+            [disabled]="disabled() || isReEvaluationRunning()"
             [btnType]="ButtonType.ERROR"
-            [isLoading]="isReEvaluationRunning"
+            [isLoading]="isReEvaluationRunning()"
             [tooltip]="'artemisApp.programmingExercise.reEvaluateTooltip'"
             [icon]="faRedo"
             [title]="'artemisApp.programmingExercise.reEvaluate'"
@@ -38,7 +38,7 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
     readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
 
-    isReEvaluationRunning = false;
+    readonly isReEvaluationRunning = signal(false);
 
     // Icons
     faRedo = faRedo;
@@ -47,14 +47,14 @@ export class ProgrammingExerciseReEvaluateButtonComponent {
      * Triggers the re-evaluation of the programming exercise and displays the result in the end using an alert.
      */
     triggerReEvaluate() {
-        this.isReEvaluationRunning = true;
+        this.isReEvaluationRunning.set(true);
         this.testCaseService.reEvaluate(this.exercise().id!).subscribe({
             next: (updatedResultsCount: number) => {
-                this.isReEvaluationRunning = false;
+                this.isReEvaluationRunning.set(false);
                 this.alertService.success(`artemisApp.programmingExercise.reEvaluateSuccessful`, { number: updatedResultsCount });
             },
             error: (error: HttpErrorResponse) => {
-                this.isReEvaluationRunning = false;
+                this.isReEvaluationRunning.set(false);
                 this.alertService.error(`artemisApp.programmingExercise.reEvaluateFailed`, { message: error.message });
             },
         });

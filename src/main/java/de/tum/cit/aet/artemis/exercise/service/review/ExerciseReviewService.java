@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -694,7 +693,7 @@ public class ExerciseReviewService {
      */
     private List<ConsistencyThreadLocation> mapConsistencyIssueLocations(ConsistencyIssueDTO issue, long exerciseId, ConsistencyTargetRepositoryUris repositoryUrisByTarget) {
         return issue.relatedLocations().stream().map(location -> mapConsistencyIssueLocation(location, exerciseId, repositoryUrisByTarget)).flatMap(Optional::stream).distinct()
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
     }
 
     /**

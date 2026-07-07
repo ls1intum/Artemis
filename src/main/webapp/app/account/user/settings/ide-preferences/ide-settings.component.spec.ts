@@ -60,10 +60,10 @@ describe('IdeSettingsComponent', () => {
 
         expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
         expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
-        expect(component.PREDEFINED_IDE).toEqual(predefinedIdes);
+        expect(component.PREDEFINED_IDE()).toEqual(predefinedIdes);
         expect(component.programmingLanguageToIde()).toEqual(loadedIdePreferences);
-        expect(component.assignedProgrammingLanguages).toEqual([ProgrammingLanguage.JAVA]);
-        expect(component.remainingProgrammingLanguages).toEqual(
+        expect(component.assignedProgrammingLanguages()).toEqual([ProgrammingLanguage.JAVA]);
+        expect(component.remainingProgrammingLanguages()).toEqual(
             Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA && x !== ProgrammingLanguage.EMPTY),
         );
     });
@@ -78,8 +78,8 @@ describe('IdeSettingsComponent', () => {
 
         expect(mockIdeSettingsService.saveIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage, ide);
         expect(component.programmingLanguageToIde().get(programmingLanguage)).toEqual(ide);
-        expect(component.assignedProgrammingLanguages).toContain(programmingLanguage);
-        expect(component.remainingProgrammingLanguages).not.toContain(programmingLanguage);
+        expect(component.assignedProgrammingLanguages()).toContain(programmingLanguage);
+        expect(component.remainingProgrammingLanguages()).not.toContain(programmingLanguage);
     });
 
     it('should change the IDE for a programming language', () => {
@@ -103,8 +103,8 @@ describe('IdeSettingsComponent', () => {
         const programmingLanguage = ProgrammingLanguage.JAVA;
         const idePreferences = new Map([[programmingLanguage, { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }]]);
         component.programmingLanguageToIde.set(idePreferences);
-        component.assignedProgrammingLanguages = [programmingLanguage];
-        component.remainingProgrammingLanguages = [];
+        component.assignedProgrammingLanguages.set([programmingLanguage]);
+        component.remainingProgrammingLanguages.set([]);
 
         mockIdeSettingsService.deleteIdePreference.mockReturnValue(of(null));
 
@@ -112,8 +112,8 @@ describe('IdeSettingsComponent', () => {
 
         expect(mockIdeSettingsService.deleteIdePreference).toHaveBeenCalledExactlyOnceWith(programmingLanguage);
         expect(component.programmingLanguageToIde().size).toBe(0);
-        expect(component.assignedProgrammingLanguages).not.toContain(programmingLanguage);
-        expect(component.remainingProgrammingLanguages).toContain(programmingLanguage);
+        expect(component.assignedProgrammingLanguages()).not.toContain(programmingLanguage);
+        expect(component.remainingProgrammingLanguages()).toContain(programmingLanguage);
     });
 
     it('should check if the IDE is assigned to a programming language', () => {

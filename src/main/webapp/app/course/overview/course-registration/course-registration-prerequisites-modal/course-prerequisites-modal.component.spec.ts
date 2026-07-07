@@ -47,7 +47,7 @@ describe('CoursePrerequisitesModal', () => {
         const competencyCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(CompetencyCardComponent));
         expect(competencyCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
-        expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
+        expect(coursePrerequisitesModalComponent.prerequisites()).toHaveLength(2);
     });
 
     it('should close dialog when cleared', () => {

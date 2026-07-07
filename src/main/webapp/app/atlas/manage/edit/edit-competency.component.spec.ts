@@ -98,14 +98,14 @@ describe('EditCompetencyComponent', () => {
         expect(findByIdSpy).toHaveBeenCalledWith(1, 1);
         expect(getCourseProgressSpy).toHaveBeenCalledWith(1, 1);
 
-        expect(editCompetencyComponent.competency.courseProgress).toEqual(courseProgress);
-        expect(editCompetencyComponent.formData).toMatchObject({
+        expect(editCompetencyComponent.competency().courseProgress).toEqual(courseProgress);
+        expect(editCompetencyComponent.formData()).toMatchObject({
             id: competencyOfResponse.id,
             title: competencyOfResponse.title,
             description: competencyOfResponse.description,
             optional: competencyOfResponse.optional,
         });
-        expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData);
+        expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -133,7 +133,7 @@ describe('EditCompetencyComponent', () => {
         );
         editCompetencyComponentFixture.detectChanges();
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(editCompetencyComponent.competency).toEqual(competencyDatabase);
+        expect(editCompetencyComponent.competency()).toEqual(competencyDatabase);
 
         const changedUnit: Competency = {
             ...competencyDatabase,

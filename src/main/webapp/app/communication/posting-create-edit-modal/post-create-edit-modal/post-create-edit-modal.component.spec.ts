@@ -108,7 +108,7 @@ describe('PostCreateEditModalComponent', () => {
             title: newTitle,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
@@ -134,7 +134,7 @@ describe('PostCreateEditModalComponent', () => {
             title: newTitle,
         });
         vi.advanceTimersByTime(800);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledOnce();
         vi.useRealTimers();
     });
@@ -161,7 +161,7 @@ describe('PostCreateEditModalComponent', () => {
             title: updatedTitle,
         });
         vi.advanceTimersByTime(0);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading()).toBe(false);
         vi.useRealTimers();
     });
 

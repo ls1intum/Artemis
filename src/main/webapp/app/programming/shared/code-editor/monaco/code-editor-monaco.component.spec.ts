@@ -271,18 +271,13 @@ describe('CodeEditorMonacoComponent', () => {
         expect(disposeFeedbackShortcutStub).toHaveBeenCalled();
     });
 
-    it('should clear feedback widgets before re-adding them', () => {
+    it('should clear feedback widgets before re-adding them', async () => {
         const disposeWidgetsByPrefixSpy = vi.spyOn(comp.editor(), 'disposeWidgetsByPrefix').mockImplementation(() => {});
-        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            cb(0);
-            return 1 as any;
-        });
 
         internals(comp).renderFeedbackWidgets();
+        await fixture.whenStable();
 
         expect(disposeWidgetsByPrefixSpy).toHaveBeenCalledWith('feedback-');
-
-        rafSpy.mockRestore();
     });
 
     it.each([

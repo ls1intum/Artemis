@@ -233,7 +233,7 @@ describe('QuizParticipationComponent - live mode', () => {
             invalid: false,
             exportQuiz: false,
         };
-        component.quizExercise = { ...quizExercise, quizQuestions: [mockQuestion] };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [mockQuestion] });
 
         component['highlightQuestion'](0);
 
@@ -242,7 +242,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
     it('should not highlight if question is not found', () => {
         const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-        component.quizExercise = { ...quizExercise, quizQuestions: [] };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [] });
 
         component['highlightQuestion'](1);
 
@@ -251,7 +251,7 @@ describe('QuizParticipationComponent - live mode', () => {
 
     it('should not highlight if quizQuestions is undefined', () => {
         const addTemporaryHighlightToQuestionSpy = vi.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-        component.quizExercise = { ...quizExercise, quizQuestions: undefined };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: undefined });
 
         component['highlightQuestion'](1);
 
@@ -262,13 +262,13 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-        expect(component.quizExercise).toEqual(quizExercise);
-        expect(component.waitingForQuizStart).toBe(false);
-        expect(component.totalScore).toBe(6);
-        expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
-        expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
-        expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
-        expect(component.submission).not.toBeNull();
+        expect(component.quizExercise()).toEqual(quizExercise);
+        expect(component.waitingForQuizStart()).toBe(false);
+        expect(component.totalScore()).toBe(6);
+        expect(component.dragAndDropMappings().get(question1.id!)).toEqual([]);
+        expect(component.selectedAnswerOptions().get(question2.id!)).toEqual([]);
+        expect(component.shortAnswerSubmittedTexts().get(question3.id!)).toEqual([]);
+        expect(component.submission()).not.toBeNull();
     });
 
     // These tests verify interval-based behavior by removing the second detectChanges() call
@@ -343,9 +343,9 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         component.endDate = dayjs().add(1, 'seconds');
-        component.quizExercise.quizMode = QuizMode.BATCHED;
-        component.submission.submissionDate = dayjs();
-        component.submission.submitted = false;
+        component.quizExercise().quizMode = QuizMode.BATCHED;
+        component.submission().submissionDate = dayjs();
+        component.submission().submitted = false;
 
         const triggerSaveStub = vi.spyOn(component, 'triggerSave').mockImplementation(() => {});
         const checkQuizEndSpy = vi.spyOn(component, 'checkForQuizEnd');
@@ -362,8 +362,8 @@ describe('QuizParticipationComponent - live mode', () => {
         fixture.detectChanges();
 
         // Set up component state for refresh
-        component.quizExercise.quizStarted = false;
-        component.quizBatch = { started: false };
+        component.quizExercise().quizStarted = false;
+        component.quizBatch.set({ started: false });
 
         const quizExerciseService = TestBed.inject(QuizExerciseService);
         const findForStudentSpy = vi.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(
@@ -386,26 +386,26 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should return true if student didnt interact with any question', () => {
-        component.quizExercise = { ...quizExercise, quizQuestions: undefined };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: undefined });
         expect(component.areAllQuestionsAnswered()).toBe(true);
 
-        component.quizExercise = { ...quizExercise, quizQuestions: [] };
+        component.quizExercise.set({ ...quizExercise, quizQuestions: [] });
         expect(component.areAllQuestionsAnswered()).toBe(true);
 
-        component.quizExercise = quizExercise;
-        component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        component.selectedAnswerOptions.set(2, []);
+        component.quizExercise.set(quizExercise);
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.selectedAnswerOptions.update((map) => new Map(map).set(2, []));
         expect(component.areAllQuestionsAnswered()).toBe(false);
 
-        component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        component.dragAndDropMappings.set(1, []);
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        component.dragAndDropMappings.update((map) => new Map(map).set(1, []));
         expect(component.areAllQuestionsAnswered()).toBe(false);
 
-        component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
-        component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-        component.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-        component.shortAnswerSubmittedTexts.set(3, []);
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>());
+        component.dragAndDropMappings.set(new Map<number, DragAndDropMapping[]>());
+        component.shortAnswerSubmittedTexts.set(new Map<number, ShortAnswerSubmittedText[]>());
+        component.shortAnswerSubmittedTexts.update((map) => new Map(map).set(3, []));
         expect(component.areAllQuestionsAnswered()).toBe(false);
     });
 
@@ -418,21 +418,22 @@ describe('QuizParticipationComponent - live mode', () => {
             submitted: true,
             submittedAnswers: [answer],
         };
-        component.result = {
+        const result: Result = {
             submission: quizSubmission,
         };
-        component.submission = quizSubmission;
-        component.quizExercise = quizExerciseForResults;
-        component.showingResult = true;
+        component.result.set(result);
+        component.submission.set(quizSubmission);
+        component.quizExercise.set(quizExerciseForResults);
+        component.showingResult.set(true);
 
-        expect(component.showingResult).toBe(true);
+        expect(component.showingResult()).toBe(true);
     });
 
     it('should mark changes as unsaved when an answer changes', () => {
         fixture.detectChanges();
-        component.unsavedChanges = false;
+        component.unsavedChanges.set(false);
         component.onSelectionChanged();
-        expect(component.unsavedChanges).toBe(true);
+        expect(component.unsavedChanges()).toBe(true);
     });
 
     it('should react to errors', () => {
@@ -448,8 +449,8 @@ describe('QuizParticipationComponent - live mode', () => {
     it('should express timespan in humanized text', () => {
         fixture.detectChanges();
 
-        component.remainingTimeSeconds = 90;
-        const result = component.relativeTimeText(component.remainingTimeSeconds);
+        component.remainingTimeSeconds.set(90);
+        const result = component.relativeTimeText(component.remainingTimeSeconds());
         expect(result).toBeDefined();
     });
 
@@ -466,7 +467,7 @@ describe('QuizParticipationComponent - live mode', () => {
         // applyQuizFull sets waitingForQuizStart based on quiz state
         component.applyQuizFull(unreleasedQuiz);
 
-        expect(component.waitingForQuizStart).toBe(true);
+        expect(component.waitingForQuizStart()).toBe(true);
     });
 
     it('should update participation from server', () => {
@@ -479,36 +480,36 @@ describe('QuizParticipationComponent - live mode', () => {
 
         component.updateParticipationFromServer(participation);
 
-        expect(component.quizExercise).toEqual(quizExercise);
+        expect(component.quizExercise()).toEqual(quizExercise);
     });
 
     it('should return false if there is no answer in any question type', () => {
-        component.selectedAnswerOptions = new Map();
-        component.dragAndDropMappings = new Map();
-        component.shortAnswerSubmittedTexts = new Map();
+        component.selectedAnswerOptions.set(new Map());
+        component.dragAndDropMappings.set(new Map());
+        component.shortAnswerSubmittedTexts.set(new Map());
 
         expect(component.hasAnyAnswer()).toBe(false);
     });
 
     it('should return true if there is at least one multiple choice answer', () => {
-        component.selectedAnswerOptions = new Map<number, AnswerOption[]>([[question2.id!, question2.answerOptions!]]);
-        component.dragAndDropMappings = new Map();
-        component.shortAnswerSubmittedTexts = new Map();
+        component.selectedAnswerOptions.set(new Map<number, AnswerOption[]>([[question2.id!, question2.answerOptions!]]));
+        component.dragAndDropMappings.set(new Map());
+        component.shortAnswerSubmittedTexts.set(new Map());
 
         expect(component.hasAnyAnswer()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true when submission is submitted', () => {
-        component.submission.submitted = true;
-        component.remainingTimeSeconds = -100;
+        component.submission().submitted = true;
+        component.remainingTimeSeconds.set(-100);
         component.syncSubmitState();
 
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if there is any answer', () => {
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = -1;
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
         component.syncSubmitState();
@@ -517,8 +518,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('shouldTreatAsSubmittedForUi should be false after timeout if there is no answer', () => {
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = -1;
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
         component.syncSubmitState();
@@ -527,22 +528,22 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submissionDate exists even without answers', () => {
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = -1;
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
-        component.submission.submissionDate = dayjs();
+        component.submission().submissionDate = dayjs();
         component.syncSubmitState();
 
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
     });
 
     it('shouldTreatAsSubmittedForUi should be true after timeout if submission id exists even without answers', () => {
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = -1;
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(-1);
 
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(false);
-        component.submission.id = 42;
+        component.submission().id = 42;
         component.syncSubmitState();
 
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
@@ -554,12 +555,12 @@ describe('QuizParticipationComponent - live mode', () => {
         ['live', false, true, -100, false, LiveQuizParticipationStatus.SUBMITTED],
         ['live', false, false, -1, true, LiveQuizParticipationStatus.MISSED],
     ])('should emit the live quiz status from syncSubmitState', (mode, waiting, submitted, remaining, quizEnded, expected) => {
-        component.mode = mode as string;
-        component.quizExercise = { id: 1, quizEnded: quizEnded as boolean } as QuizExercise;
-        component.waitingForQuizStart = waiting as boolean;
-        component.showingResult = false;
-        component.submission.submitted = submitted as boolean;
-        component.remainingTimeSeconds = remaining as number;
+        component.mode.set(mode as string);
+        component.quizExercise.set({ id: 1, quizEnded: quizEnded as boolean } as QuizExercise);
+        component.waitingForQuizStart.set(waiting as boolean);
+        component.showingResult.set(false);
+        component.submission().submitted = submitted as boolean;
+        component.remainingTimeSeconds.set(remaining as number);
         let emitted: LiveQuizParticipationStatus | undefined;
         component.liveQuizStatusChange.subscribe((status) => (emitted = status));
 
@@ -570,14 +571,14 @@ describe('QuizParticipationComponent - live mode', () => {
 
     it('should show the remaining time box in practice mode even though the official quiz has ended', () => {
         // In practice the official quiz has already ended, but the practice run has its own countdown that must still show.
-        component.mode = 'practice';
-        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
         component.endDate = dayjs().add(5, 'minute');
-        component.waitingForQuizStart = false;
-        component.showingResult = false;
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = 300;
-        component.remainingTimeText = '5 min';
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
 
         component.syncSubmitState();
 
@@ -587,14 +588,14 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should keep the same liveHeaderInfo reference across ticks when nothing displayed changes', () => {
-        component.mode = 'practice';
-        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
         component.endDate = dayjs().add(5, 'minute');
-        component.waitingForQuizStart = false;
-        component.showingResult = false;
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = 300;
-        component.remainingTimeText = '5 min';
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
 
         component.syncSubmitState();
         const first = component.liveHeaderInfo();
@@ -604,18 +605,18 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should produce a new liveHeaderInfo when a displayed field changes', () => {
-        component.mode = 'practice';
-        component.quizExercise = { id: 1, quizEnded: true, duration: 600 } as QuizExercise;
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizEnded: true, duration: 600 } as QuizExercise);
         component.endDate = dayjs().add(5, 'minute');
-        component.waitingForQuizStart = false;
-        component.showingResult = false;
-        component.submission.submitted = false;
-        component.remainingTimeSeconds = 300;
-        component.remainingTimeText = '5 min';
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
+        component.submission().submitted = false;
+        component.remainingTimeSeconds.set(300);
+        component.remainingTimeText.set('5 min');
         component.syncSubmitState();
         const first = component.liveHeaderInfo();
 
-        component.remainingTimeText = '4 min';
+        component.remainingTimeText.set('4 min');
         component.syncSubmitState();
 
         expect(component.liveHeaderInfo()).not.toBe(first);
@@ -623,9 +624,9 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should not emit a live quiz status before the quiz has loaded', () => {
-        component.mode = 'live';
-        component.quizExercise = undefined as unknown as QuizExercise;
-        component.waitingForQuizStart = false;
+        component.mode.set('live');
+        component.quizExercise.set(undefined as unknown as QuizExercise);
+        component.waitingForQuizStart.set(false);
         let emitCount = 0;
         component.liveQuizStatusChange.subscribe(() => emitCount++);
 
@@ -636,23 +637,23 @@ describe('QuizParticipationComponent - live mode', () => {
 
     it('should clear the live quiz status override when leaving live mode', () => {
         // Start in live mode so an override is emitted, then switch away and ensure it is cleared.
-        component.mode = 'live';
-        component.quizExercise = { id: 1 } as QuizExercise;
-        component.waitingForQuizStart = false;
-        component.showingResult = false;
+        component.mode.set('live');
+        component.quizExercise.set({ id: 1 } as QuizExercise);
+        component.waitingForQuizStart.set(false);
+        component.showingResult.set(false);
         const emitted: (LiveQuizParticipationStatus | undefined)[] = [];
         component.liveQuizStatusChange.subscribe((status) => emitted.push(status));
 
         component.syncSubmitState();
-        component.mode = 'practice';
+        component.mode.set('practice');
         component.syncSubmitState();
 
         expect(emitted).toEqual([LiveQuizParticipationStatus.PARTICIPATING, undefined]);
     });
 
     it('should emit the practice participation with its result after a practice submission', () => {
-        component.mode = 'practice';
-        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        component.mode.set('practice');
+        component.quizExercise.set({ id: 1, quizQuestions: [] } as unknown as QuizExercise);
         const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
         const submission = { participation } as QuizSubmission;
         const result = { score: 80, submission } as Result;
@@ -668,8 +669,8 @@ describe('QuizParticipationComponent - live mode', () => {
     });
 
     it('should not emit a practice participation in preview mode', () => {
-        component.mode = 'preview';
-        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        component.mode.set('preview');
+        component.quizExercise.set({ id: 1, quizQuestions: [] } as unknown as QuizExercise);
         const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
         const submission = { participation } as QuizSubmission;
         const result = { score: 80, submission } as Result;
@@ -707,7 +708,7 @@ describe('QuizParticipationComponent - live mode', () => {
             of({ body: { exercise: quizExerciseForResults as QuizExercise, submissions: [{ submitted: false }] } } as HttpResponse<StudentParticipation>),
         );
         vi.spyOn(component, 'hasAnyAnswer').mockReturnValue(true);
-        component.remainingTimeSeconds = -1;
+        component.remainingTimeSeconds.set(-1);
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#missed-deadline-message')).toBeNull();
@@ -983,18 +984,18 @@ describe('QuizParticipationComponent - solution mode', () => {
         fixture.detectChanges();
 
         expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
-        expect(component.showingResult).toBe(true);
-        expect(component.totalScore).toBe(6);
+        expect(component.showingResult()).toBe(true);
+        expect(component.totalScore()).toBe(6);
     });
 
     it('should update time', () => {
         fixture.detectChanges();
 
-        component.remainingTimeSeconds = 100;
+        component.remainingTimeSeconds.set(100);
         component.updateDisplayedTimes();
 
         // In solution mode, we're just showing results
-        expect(component.showingResult).toBe(true);
+        expect(component.showingResult()).toBe(true);
     });
 });
 
@@ -1145,17 +1146,17 @@ describe('QuizParticipationComponent - applySelection', () => {
 
         // Set up selections
         const answerOption = { id: 1 } as AnswerOption;
-        component.selectedAnswerOptions.set(question2.id!, [answerOption]);
+        component.selectedAnswerOptions.update((map) => new Map(map).set(question2.id!, [answerOption]));
 
         const mapping = { dragItem: { id: 1, invalid: false }, dropLocation: { id: 1, invalid: false }, invalid: false } as DragAndDropMapping;
-        component.dragAndDropMappings.set(question1.id!, [mapping]);
+        component.dragAndDropMappings.update((map) => new Map(map).set(question1.id!, [mapping]));
 
         const submittedText = { text: 'answer' } as ShortAnswerSubmittedText;
-        component.shortAnswerSubmittedTexts.set(question3.id!, [submittedText]);
+        component.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question3.id!, [submittedText]));
 
         component.applySelection();
 
-        expect(component.submission.submittedAnswers).toHaveLength(3);
+        expect(component.submission().submittedAnswers).toHaveLength(3);
     });
 
     it('should log error when question not found for multiple choice', () => {
@@ -1163,7 +1164,7 @@ describe('QuizParticipationComponent - applySelection', () => {
 
         // Set up selection for non-existent question
         const answerOption = { id: 1 } as AnswerOption;
-        component.selectedAnswerOptions.set(999, [answerOption]);
+        component.selectedAnswerOptions.update((map) => new Map(map).set(999, [answerOption]));
 
         component.applySelection();
 
@@ -1232,22 +1233,22 @@ describe('QuizParticipationComponent - showResult', () => {
     it('should calculate user score and question scores', () => {
         fixture.detectChanges();
 
-        component.submission = {
+        component.submission.set({
             scoreInPoints: 5,
             submittedAnswers: [
                 { quizQuestion: question1, scoreInPoints: 1 },
                 { quizQuestion: question2, scoreInPoints: 2 },
             ],
-        } as QuizSubmission;
+        } as QuizSubmission);
 
-        const result = { submission: component.submission } as Result;
+        const result = { submission: component.submission() } as Result;
 
         component.showResult(result);
 
-        expect(component.showingResult).toBe(true);
-        expect(component.userScore).toBe(5);
-        expect(component.questionScores[question1.id!]).toBe(1);
-        expect(component.questionScores[question2.id!]).toBe(2);
+        expect(component.showingResult()).toBe(true);
+        expect(component.userScore()).toBe(5);
+        expect(component.questionScores()[question1.id!]).toBe(1);
+        expect(component.questionScores()[question2.id!]).toBe(2);
     });
 
     it('should handle undefined result', () => {
@@ -1255,22 +1256,22 @@ describe('QuizParticipationComponent - showResult', () => {
 
         component.showResult(undefined as unknown as Result);
 
-        expect(component.showingResult).toBeFalsy();
+        expect(component.showingResult()).toBeFalsy();
     });
 
     it('should use 0 when scoreInPoints is undefined', () => {
         fixture.detectChanges();
 
-        component.submission = {
+        component.submission.set({
             scoreInPoints: undefined,
             submittedAnswers: [],
-        } as QuizSubmission;
+        } as QuizSubmission);
 
-        const result = { submission: component.submission } as Result;
+        const result = { submission: component.submission() } as Result;
 
         component.showResult(result);
 
-        expect(component.userScore).toBe(0);
+        expect(component.userScore()).toBe(0);
     });
 });
 
@@ -1343,8 +1344,8 @@ describe('QuizParticipationComponent - onSaveError', () => {
         component.onSaveError('Test error message');
 
         expect(alertSpy).toHaveBeenCalled();
-        expect(component.unsavedChanges).toBe(true);
-        expect(component.isSubmitting).toBe(false);
+        expect(component.unsavedChanges()).toBe(true);
+        expect(component.isSubmitting()).toBe(false);
     });
 
     it('should not show alert for empty error', () => {

@@ -1,0 +1,77 @@
+<p-dialog
+    [header]="'artemisApp.examManagement.import.progress.title' | artemisTranslate"
+    [visible]="visible()"
+    [modal]="true"
+    [closable]="ready()"
+    [closeOnEscape]="ready()"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '600px' }"
+    (onHide)="onDismiss()"
+>
+    @if (!ready()) {
+        <!-- Live progress while the import is running -->
+        <div class="d-flex align-items-center mb-3">
+            <fa-icon [icon]="faSpinner" animation="spin" class="me-2 text-primary" />
+            <span>
+                @if (currentExerciseTitle()) {
+                    {{ 'artemisApp.examManagement.import.progress.importing' | artemisTranslate: { title: currentExerciseTitle() } }}
+                } @else {
+                    {{ 'artemisApp.examManagement.import.progress.preparing' | artemisTranslate }}
+                }
+            </span>
+        </div>
+        <p-progressBar [value]="progressPercentage()" [showValue]="true" [style]="{ height: '1.5rem' }" />
+        <div class="text-muted small mt-2">
+            {{ 'artemisApp.examManagement.import.progress.counter' | artemisTranslate: { processed: processedExercises(), total: totalExercises() } }}
+        </div>
+    } @else {
+        @if (!hasIssues()) {
+            <!-- Everything imported successfully -->
+            <div class="d-flex align-items-center">
+                <fa-icon [icon]="faCheckCircle" size="lg" class="me-2 text-success" />
+                <span>{{ 'artemisApp.examManagement.import.progress.success' | artemisTranslate: { count: importedCount() } }}</span>
+            </div>
+        } @else {
+            <!-- Completed with issues: the instructor must review the listed exercises -->
+            <div class="d-flex align-items-center mb-3">
+                <fa-icon [icon]="faExclamationTriangle" size="lg" class="me-2 text-warning" />
+                <span>{{ 'artemisApp.examManagement.import.progress.summary' | artemisTranslate: { imported: importedCount(), total: totalExercises() } }}</span>
+            </div>
+            @if (incompleteExercises().length) {
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-1">
+                        <fa-icon [icon]="faExclamationTriangle" class="me-2 text-warning" />
+                        <strong>{{ 'artemisApp.examManagement.import.progress.incompleteHeader' | artemisTranslate }}</strong>
+                    </div>
+                    <ul class="mb-0">
+                        <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
+                        @for (title of incompleteExercises(); track $index) {
+                            <li>{{ title }}</li>
+                        }
+                    </ul>
+                </div>
+            }
+            @if (skippedExercises().length) {
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-1">
+                        <fa-icon [icon]="faInfoCircle" class="me-2 text-info" />
+                        <strong>{{ 'artemisApp.examManagement.import.progress.skippedHeader' | artemisTranslate }}</strong>
+                    </div>
+                    <ul class="mb-0">
+                        <!-- track by $index: exercise titles are not unique (and "(unnamed exercise)" repeats), so they are not safe track keys -->
+                        @for (title of skippedExercises(); track $index) {
+                            <li>{{ title }}</li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+        <div class="d-flex justify-content-end mt-4">
+            <button id="exam-import-progress-dismiss" type="button" class="btn btn-primary" (click)="onDismiss()">
+                {{ 'artemisApp.examManagement.import.progress.dismiss' | artemisTranslate }}
+            </button>
+        </div>
+    }
+</p-dialog>

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +54,7 @@ class OAuth2JWKSServiceTest {
 
         clientRegistration = mock(ClientRegistration.class);
         when(clientRegistration.getRegistrationId()).thenReturn(clientRegistrationId);
-        when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(Collections.singletonList(clientRegistration));
+        when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(List.of(clientRegistration));
 
         // Mock Hazelcast maps and behavior
         when(hazelcastInstance.getMap("ltiJwkMap")).thenAnswer(invocation -> clientRegistrationIdToJwk);

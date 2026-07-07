@@ -73,7 +73,7 @@ describe('ImageCropperComponent', () => {
             cropper = comp.cropper;
             settings = comp.settings;
             sourceImage = comp.sourceImage();
-            comp.imageVisible = false;
+            comp.imageVisible.set(false);
         });
 
         it('should reset cropper position without auto crop', () => {
@@ -84,7 +84,7 @@ describe('ImageCropperComponent', () => {
             // Without a sourceImage view child, cropperPositionService.resetCropperPosition is not invoked.
             expect(resetCropperPositionSpy).not.toHaveBeenCalled();
             expect(componentCropSpy).not.toHaveBeenCalled();
-            expect(comp.imageVisible).toBeTruthy();
+            expect(comp.imageVisible()).toBeTruthy();
             expect(cropper).toBe(comp.cropper);
             expect(settings).toBe(comp.settings);
             expect(sourceImage).toBeUndefined();
@@ -97,7 +97,7 @@ describe('ImageCropperComponent', () => {
 
             expect(resetCropperPositionSpy).not.toHaveBeenCalled();
             expect(componentCropSpy).toHaveBeenCalledOnce();
-            expect(comp.imageVisible).toBeTruthy();
+            expect(comp.imageVisible()).toBeTruthy();
         });
     });
 
@@ -160,33 +160,33 @@ describe('ImageCropperComponent', () => {
     describe('input change reset paths', () => {
         it('resets imageVisible when imageURL changes', () => {
             loadImageFromURLSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
-            comp.imageVisible = true;
+            comp.imageVisible.set(true);
             fixture.componentRef.setInput('imageURL', 'http://example.com/image.png');
             fixture.detectChanges();
-            expect(comp.imageVisible).toBeFalsy();
+            expect(comp.imageVisible()).toBeFalsy();
         });
 
         it('resets imageVisible when imageBase64 changes', () => {
             loadBase64ImageSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
-            comp.imageVisible = true;
+            comp.imageVisible.set(true);
             fixture.componentRef.setInput('imageBase64', 'data:image/png;base64,abc');
             fixture.detectChanges();
-            expect(comp.imageVisible).toBeFalsy();
+            expect(comp.imageVisible()).toBeFalsy();
         });
 
         it('resets imageVisible when imageChangedEvent changes', () => {
             loadImageFileSpy.mockImplementation(() => Promise.resolve({ transformed: {} } as LoadedImage));
-            comp.imageVisible = true;
+            comp.imageVisible.set(true);
             const file = new File([], 'test');
             fixture.componentRef.setInput('imageChangedEvent', { currentTarget: { files: [file] } });
             fixture.detectChanges();
-            expect(comp.imageVisible).toBeFalsy();
+            expect(comp.imageVisible()).toBeFalsy();
         });
 
         it('updates safeTransformStyle when transform changes', () => {
             fixture.componentRef.setInput('transform', { scale: 2, rotate: 90 });
             fixture.detectChanges();
-            expect(comp.safeTransformStyle).toBeDefined();
+            expect(comp.safeTransformStyle()).toBeDefined();
         });
 
         it('does not throw when transform is bound to undefined', () => {
@@ -209,7 +209,7 @@ describe('ImageCropperComponent', () => {
         fixture.detectChanges();
         loadImageFileSpy.mockClear();
 
-        comp.imageVisible = true;
+        comp.imageVisible.set(true);
         comp.loadedImage = { transformed: {} } as LoadedImage;
         comp.cropper = { x1: 42, y1: 42, x2: 42, y2: 42 };
         comp.maxSize = { width: 42, height: 42 };
@@ -218,7 +218,7 @@ describe('ImageCropperComponent', () => {
         fixture.componentRef.setInput('imageFile', undefined);
         fixture.detectChanges();
 
-        expect(comp.imageVisible).toBeFalsy();
+        expect(comp.imageVisible()).toBeFalsy();
         expect(comp.loadedImage).toBeUndefined();
         expect(comp.cropper).toEqual({ x1: -100, y1: -100, x2: 10000, y2: 10000 });
         expect(comp.maxSize).toEqual({ width: 0, height: 0 });
@@ -235,7 +235,7 @@ describe('ImageCropperComponent', () => {
         const cropper = { x1: 42, y1: 42, x2: 42, y2: 42 };
         const maxSize = { width: 42, height: 42 };
         const moveStart = {} as MoveStart;
-        comp.imageVisible = true;
+        comp.imageVisible.set(true);
         comp.loadedImage = loadedImage;
         comp.cropper = cropper;
         comp.maxSize = maxSize;
@@ -244,7 +244,7 @@ describe('ImageCropperComponent', () => {
         fixture.componentRef.setInput('autoCrop', false);
         fixture.detectChanges();
 
-        expect(comp.imageVisible).toBeTruthy();
+        expect(comp.imageVisible()).toBeTruthy();
         expect(comp.loadedImage).toBe(loadedImage);
         expect(comp.cropper).toBe(cropper);
         expect(comp.maxSize).toBe(maxSize);

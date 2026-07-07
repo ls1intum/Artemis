@@ -1,20 +1,20 @@
-<div #quizRoot [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
-    @if (quizExercise) {
-        @if (mode === 'live' && quizExercise.quizEnded && !shouldTreatAsSubmittedForUi()) {
+<div #quizRoot [id]="'exercise-' + quizExercise()?.id" class="position-relative min-h-100 d-flex flex-column">
+    @if (quizExercise()) {
+        @if (mode() === 'live' && quizExercise().quizEnded && !shouldTreatAsSubmittedForUi()) {
             <div id="missed-deadline-message" class="d-flex justify-content-center text-center my-3">
                 <span [jhiTranslate]="'artemisApp.quizExercise.missedDeadlinePracticeHint'"></span>
             </div>
         } @else {
-            @if (mode === 'preview' || mode === 'solution') {
+            @if (mode() === 'preview' || mode() === 'solution') {
                 <div id="quiz-header" #quizHeader class="row module-bg">
                     <div class="d-flex justify-content-between align-items-center module-bg gap-2 pt-2">
                         <h5 class="mb-0 d-flex gap-2 align-items-center">
                             <!-- Show the title only in preview and solution modes. In live and practice modes it is rendered by a dedicated exercise header component above this view. -->
-                            @if (mode === 'preview' || mode === 'solution') {
-                                {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
-                                - {{ quizExercise.title }}
+                            @if (mode() === 'preview' || mode() === 'solution') {
+                                {{ quizExercise().course?.title ? quizExercise().course?.title : quizExercise().exerciseGroup?.exam?.course?.title }}
+                                - {{ quizExercise().title }}
                             }
-                            @switch (mode) {
+                            @switch (mode()) {
                                 @case ('preview') {
                                     <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'preview' }" />
                                 }
@@ -29,56 +29,56 @@
                             </ng-template>
                         </h5>
                         <div>
-                            @if (!showingResult) {
+                            @if (!showingResult()) {
                                 <div class="d-flex gap-2 align-items-center">
-                                    @if (!waitingForQuizStart && !submission.submitted && remainingTimeSeconds >= 0) {
+                                    @if (!waitingForQuizStart() && !submission().submitted && remainingTimeSeconds() >= 0) {
                                         <div class="align-content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                                             <span
                                                 id="remaining-time-value"
                                                 [ngClass]="{
-                                                    'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
-                                                    'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2,
+                                                    'time-critical': remainingTimeSeconds() < 60 || remainingTimeSeconds() < quizExercise().duration! / 4,
+                                                    'time-warning': remainingTimeSeconds() < 120 || remainingTimeSeconds() < quizExercise().duration! / 2,
                                                 }"
                                             >
-                                                {{ remainingTimeText }}
+                                                {{ remainingTimeText() }}
                                             </span>
                                         </div>
-                                    } @else if (!waitingForQuizStart && remainingTimeSeconds < 0 && !showingResult && !hasAnyAnswer()) {
+                                    } @else if (!waitingForQuizStart() && remainingTimeSeconds() < 0 && !showingResult() && !hasAnyAnswer()) {
                                         <div class="align-content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                                            <span id="remaining-time-value" class="time-critical">{{ remainingTimeText }}</span>
+                                            <span id="remaining-time-value" class="time-critical">{{ remainingTimeText() }}</span>
                                         </div>
-                                    } @else if (quizExercise.dueDate && !quizExercise.quizEnded && submission.submitted) {
+                                    } @else if (quizExercise().dueDate && !quizExercise().quizEnded && submission().submitted) {
                                         <div class="align-content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
-                                            <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
+                                            <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
                                         </div>
-                                    } @else if (quizExercise.dueDate && remainingTimeSeconds < 0 && hasAnyAnswer()) {
+                                    } @else if (quizExercise().dueDate && remainingTimeSeconds() < 0 && hasAnyAnswer()) {
                                         <div class="align-content-center">
                                             <span jhiTranslate="artemisApp.quizExercise.resultsAvailable" class="colon-suffix"></span>
-                                            <span id="results-available-value">{{ quizExercise.dueDate | artemisDate }}</span>
+                                            <span id="results-available-value">{{ quizExercise().dueDate | artemisDate }}</span>
                                         </div>
                                     }
-                                    <!-- Show the submit button only in preview mode. In live and practice modes submission is handled by the quiz flow; solution mode is read-only. -->
-                                    @if (mode === 'preview') {
+                                    <!-- Show the submit button only in preview mode(). In live and practice modes submission() is handled by the quiz flow; solution mode() is read-only. -->
+                                    @if (mode() === 'preview') {
                                         <jhi-button
                                             id="submit-quiz"
                                             (onClick)="onSubmit()"
                                             [btnSize]="ButtonSize.SMALL"
                                             [btnType]="ButtonType.PRIMARY"
                                             [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
-                                            [disabled]="shouldTreatAsSubmittedForUi() || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                                            [disabled]="shouldTreatAsSubmittedForUi() || isSubmitting() || waitingForQuizStart() || remainingTimeSeconds() < 0"
                                         />
                                     }
                                 </div>
-                            } @else if (mode !== 'solution') {
+                            } @else if (mode() !== 'solution') {
                                 <div class="text-center">
-                                    <div id="quiz-score" [ngClass]="{ incorrect: userScore < totalScore }">
+                                    <div id="quiz-score" [ngClass]="{ incorrect: userScore() < totalScore() }">
                                         <span class="colon-suffix" jhiTranslate="artemisApp.quizExercise.totalScore"></span>
                                         <span id="quiz-score-result"
-                                            >{{ userScore }}/{{ totalScore }} ({{
-                                                roundScoreSpecifiedByCourseSettings(result.score, quizExercise.course || quizExercise.exerciseGroup?.exam?.course)
+                                            >{{ userScore() }}/{{ totalScore() }} ({{
+                                                roundScoreSpecifiedByCourseSettings(result().score, quizExercise().course || quizExercise().exerciseGroup?.exam?.course)
                                             }}
                                             %)</span
                                         >
@@ -98,16 +98,16 @@
                     <div
                         #stepWizard
                         class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
-                        [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }"
+                        [ngClass]="{ 'sticky-top-quiz': mode() === 'preview' }"
                     >
-                        @for (question of quizExercise.quizQuestions; track question; let index = $index) {
+                        @for (question of quizExercise().quizQuestions; track question; let index = $index) {
                             <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                                 @switch (question.type) {
                                     @case (DRAG_AND_DROP) {
                                         <ng-template
                                             [ngTemplateOutlet]="stepwizardCircle"
                                             [ngTemplateOutletContext]="{
-                                                questionAnswers: dragAndDropMappings,
+                                                questionAnswers: dragAndDropMappings(),
                                                 abbreviation: 'DD',
                                                 questionColorClass: 'draganddropcolor-question',
                                             }"
@@ -117,7 +117,7 @@
                                         <ng-template
                                             [ngTemplateOutlet]="stepwizardCircle"
                                             [ngTemplateOutletContext]="{
-                                                questionAnswers: selectedAnswerOptions,
+                                                questionAnswers: selectedAnswerOptions(),
                                                 abbreviation: 'MC',
                                                 questionColorClass: 'multiplechoicecolor-question',
                                             }"
@@ -127,7 +127,7 @@
                                         <ng-template
                                             [ngTemplateOutlet]="stepwizardCircle"
                                             [ngTemplateOutletContext]="{
-                                                questionAnswers: shortAnswerSubmittedTexts,
+                                                questionAnswers: shortAnswerSubmittedTexts(),
                                                 abbreviation: 'SA',
                                                 questionColorClass: 'shortanswercolor-question',
                                             }"
@@ -155,41 +155,41 @@
                 <!-- QUESTION CONTENT SECTION -->
                 <!-- TODO the QUESTION CONTENT SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
                 <div class="col p-0 quiz-content mb-3">
-                    @if (!waitingForQuizStart) {
-                        @if (!submission.submitted && !showingResult && remainingTimeSeconds >= 0) {
+                    @if (!waitingForQuizStart()) {
+                        @if (!submission().submitted && !showingResult() && remainingTimeSeconds() >= 0) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
                         }
-                        @if (!showingResult && !waitingForQuizStart && (submission.submitted || remainingTimeSeconds < 0) && hasAnyAnswer()) {
+                        @if (!showingResult() && !waitingForQuizStart() && (submission().submitted || remainingTimeSeconds() < 0) && hasAnyAnswer()) {
                             <p jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
                         }
-                        @if (showingResult && mode !== 'solution') {
+                        @if (showingResult() && mode() !== 'solution') {
                             <p
                                 jhiTranslate="artemisApp.quizExercise.quizInstructions.result"
                                 [translateValues]="{
-                                    userScore: userScore,
-                                    maxScore: totalScore,
-                                    percentage: roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(quizExercise)),
+                                    userScore: userScore(),
+                                    maxScore: totalScore(),
+                                    percentage: roundScoreSpecifiedByCourseSettings(result().score, getCourseFromExercise(quizExercise())),
                                 }"
                             ></p>
                         }
                     }
-                    @for (question of quizExercise.quizQuestions; track question; let index = $index) {
+                    @for (question of quizExercise().quizQuestions; track question; let index = $index) {
                         <div>
                             <!-- TODO: Map vs Array consistency -->
                             @if (question.type === MULTIPLE_CHOICE) {
                                 <jhi-multiple-choice-question
                                     id="question{{ index }}"
                                     [question]="question"
-                                    [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
-                                    (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
+                                    [selectedAnswerOptions]="selectedAnswerOptions().get(question.id!)!"
+                                    (selectedAnswerOptionsChange)="onSelectedAnswerOptionsChange(question.id!, $event)"
                                     [fnOnSelection]="onSelectionChanged.bind(this)"
-                                    [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                                    [showResult]="showingResult"
-                                    [submittedResult]="result"
-                                    [quizQuestions]="quizExercise.quizQuestions"
-                                    [forceSampleSolution]="mode === 'solution'"
+                                    [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
+                                    [showResult]="showingResult()"
+                                    [submittedResult]="result()"
+                                    [quizQuestions]="quizExercise().quizQuestions"
+                                    [forceSampleSolution]="mode() === 'solution'"
                                     [questionIndex]="index + 1"
-                                    [score]="questionScores[question.id!]"
+                                    [score]="questionScores()[question.id!]"
                                 />
                             }
                             <!-- TODO: Map vs Array consistency -->
@@ -197,14 +197,14 @@
                                 <jhi-drag-and-drop-question
                                     id="question{{ index }}"
                                     [question]="question"
-                                    [mappings]="dragAndDropMappings.get(question.id!)!"
-                                    (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
+                                    [mappings]="dragAndDropMappings().get(question.id!)!"
+                                    (mappingsChange)="onDragAndDropMappingsChange(question.id!, $event)"
                                     [onMappingUpdate]="onSelectionChanged.bind(this)"
-                                    [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                                    [showResult]="showingResult"
-                                    [forceSampleSolution]="mode === 'solution'"
+                                    [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
+                                    [showResult]="showingResult()"
+                                    [forceSampleSolution]="mode() === 'solution'"
                                     [questionIndex]="index + 1"
-                                    [score]="questionScores[question.id!]"
+                                    [score]="questionScores()[question.id!]"
                                 />
                             }
                             <!-- TODO: Map vs Array consistency -->
@@ -212,14 +212,14 @@
                                 <jhi-short-answer-question
                                     id="question{{ index }}"
                                     [question]="question"
-                                    [submittedTexts]="shortAnswerSubmittedTexts.get(question.id!)!"
-                                    (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
+                                    [submittedTexts]="shortAnswerSubmittedTexts().get(question.id!)!"
+                                    (submittedTextsChange)="onShortAnswerSubmittedTextsChange(question.id!, $event)"
                                     [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
-                                    [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                                    [showResult]="showingResult"
-                                    [forceSampleSolution]="mode === 'solution'"
+                                    [clickDisabled]="submission().submitted || remainingTimeSeconds() < 0"
+                                    [showResult]="showingResult()"
+                                    [forceSampleSolution]="mode() === 'solution'"
                                     [questionIndex]="index + 1"
-                                    [score]="questionScores[question.id!]"
+                                    [score]="questionScores()[question.id!]"
                                 />
                             }
                         </div>
@@ -228,29 +228,31 @@
                 <!-- END QUESTION SECTION -->
             </div>
             <div class="row sticky-bottom mb-0 mt-auto">
-                @if (mode === 'live') {
+                @if (mode() === 'live') {
                     <hr class="mb-0" />
                     <div class="container d-flex fs-small align-items-center justify-content-between module-bg mb-n3 py-2">
-                        @if (!showingResult) {
-                            @if (!waitingForQuizStart) {
+                        @if (!showingResult()) {
+                            @if (!waitingForQuizStart()) {
                                 <div>
-                                    <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
-                                        @if (submission.submitted) {
+                                    <span ngbTooltip="{{ submission().submissionDate | artemisDate: 'long' : true }}" placement="right auto">
+                                        @if (submission().submitted) {
                                             <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                         } @else {
                                             <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                         }
-                                        <!-- Only display save and submission hint without time stamps for mobile -->
+                                        <!-- Only display save and submission() hint without time stamps for mobile -->
                                         @if (!isMobile()) {
-                                            @if (justSaved) {
+                                            @if (justSaved()) {
                                                 <span jhiTranslate="justNow"></span>
                                             } @else {
-                                                <span>{{ lastSavedTimeText !== '' ? lastSavedTimeText : ('artemisApp.quizExercise.lastSavedTimeNever' | artemisTranslate) }}</span>
+                                                <span>{{
+                                                    lastSavedTimeText() !== '' ? lastSavedTimeText() : ('artemisApp.quizExercise.lastSavedTimeNever' | artemisTranslate)
+                                                }}</span>
                                             }
                                         }
                                     </span>
                                 </div>
-                            } @else if (quizExercise.remainingNumberOfAttempts !== 0) {
+                            } @else if (quizExercise().remainingNumberOfAttempts !== 0) {
                                 <div>
                                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                                 </div>
@@ -258,14 +260,14 @@
                             <!-- CONNECTION STATUS -->
                             <div class="d-flex justify-content-end align-items-center flex-grow-1 gap-2">
                                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.autoSave"></div>
-                                @if (unsavedChanges) {
+                                @if (unsavedChanges()) {
                                     <span class="badge bg-warning fs-x-small" jhiTranslate="artemisApp.quizExercise.unsavedChanges"></span>
                                 }
                                 <jhi-connection-status class="connection-status-quiz" />
                             </div>
                         }
                         <!-- REFRESH BUTTON -->
-                        @if (!quizBatch?.started && !quizBatch?.startTime) {
+                        @if (!quizBatch()?.started && !quizBatch()?.startTime) {
                             <jhi-button
                                 class="ms-2"
                                 id="refresh-quiz"
@@ -273,7 +275,7 @@
                                 [btnSize]="ButtonSize.SMALL"
                                 [btnType]="ButtonType.PRIMARY"
                                 [title]="'artemisApp.exercise.refresh'"
-                                [disabled]="refreshingQuiz"
+                                [disabled]="refreshingQuiz()"
                                 [icon]="faSync"
                             />
                         }
@@ -282,61 +284,61 @@
             </div>
             <div>
                 <!-- OVERLAY SECTION -->
-                @if (!waitingForQuizStart && !showingResult && remainingTimeSeconds < 0 && !submission.submitted) {
+                @if (!waitingForQuizStart() && !showingResult() && remainingTimeSeconds() < 0 && !submission().submitted) {
                     @if (!hasAnyAnswer()) {
                         <div class="quiz-is-over-overlay alert alert-info">
                             <span jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
                         </div>
-                    } @else if (quizExercise?.quizMode === QuizMode.SYNCHRONIZED) {
+                    } @else if (quizExercise()?.quizMode === QuizMode.SYNCHRONIZED) {
                         <div class="quiz-is-over-overlay alert alert-info">
                             <span jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
                         </div>
                     }
                 }
-                @if (quizExercise?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart && !showingResult && submission.submitted) {
+                @if (quizExercise()?.quizMode === QuizMode.SYNCHRONIZED && !waitingForQuizStart() && !showingResult() && submission().submitted) {
                     <div class="quiz-submitted-overlay alert alert-success">
                         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
                     </div>
                 }
             </div>
-            @if (waitingForQuizStart) {
+            @if (waitingForQuizStart()) {
                 <div class="quiz-waiting-for-start-overlay alert alert-info">
-                    @if (quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
+                    @if (quizBatch() || quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
                         <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
-                        @if (startDate) {
+                        @if (startDate()) {
                             <div>
                                 <hr />
                                 <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
-                                <span class="text-bold">{{ timeUntilStart }}</span>
+                                <span class="text-bold">{{ timeUntilStart() }}</span>
                                 <br />
-                                <span>({{ quizExercise.releaseDate!.format('LT') }})</span>
+                                <span>({{ quizExercise().releaseDate!.format('LT') }})</span>
                             </div>
                         }
                     }
-                    @if (!quizBatch) {
-                        @if (quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
+                    @if (!quizBatch()) {
+                        @if (quizExercise().quizMode === QuizMode.BATCHED && (quizExercise().remainingNumberOfAttempts ?? 1) > 0) {
                             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
                             <div class="join-batch-row">
                                 <input id="join-patch-password" [(ngModel)]="password" (keyup.enter)="joinBatch()" />
                                 <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                             </div>
                         }
-                        @if (quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
+                        @if (quizExercise().quizMode === QuizMode.INDIVIDUAL && (quizExercise().remainingNumberOfAttempts ?? 1) > 0) {
                             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
                             <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
                         }
-                        @if (quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.remainingNumberOfAttempts === 0) {
-                            @if ((quizExercise.allowedNumberOfAttempts ?? 0) > 1) {
+                        @if (quizExercise().quizMode !== QuizMode.SYNCHRONIZED && quizExercise().remainingNumberOfAttempts === 0) {
+                            @if ((quizExercise().allowedNumberOfAttempts ?? 0) > 1) {
                                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts"></div>
                             }
-                            @if (quizExercise.allowedNumberOfAttempts === 1) {
+                            @if (quizExercise().allowedNumberOfAttempts === 1) {
                                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.alreadyAttempted"></div>
                             }
                         }
                     }
                 </div>
             }
-            <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
+            <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz()">
                 <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
             </div>
             <!-- END OVERLAY SECTION -->

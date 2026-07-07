@@ -71,20 +71,20 @@ export class DragAndDropQuestionComponent {
 
     forceSampleSolution = input<boolean>(false);
 
-    onMappingUpdate = input<any>();
+    onMappingUpdate = input<() => void>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     mappingsChange = output<DragAndDropMapping[]>();
 
     showingSampleSolution = signal(false);
-    renderedQuestion: RenderedQuizQuestionMarkDownElement;
+    readonly renderedQuestion = signal<RenderedQuizQuestionMarkDownElement>(undefined!);
     sampleSolutionMappings = new Array<DragAndDropMapping>();
-    dropAllowed = false;
-    correctAnswer: number;
-    incorrectLocationMappings: number;
-    mappedLocations: number;
+    readonly dropAllowed = signal(false);
+    readonly correctAnswer = signal<number>(undefined!);
+    readonly incorrectLocationMappings = signal<number>(undefined!);
+    readonly mappedLocations = signal<number>(undefined!);
 
-    loadingState = 'loading';
+    readonly loadingState = signal('loading');
 
     constructor() {
         effect(() => {
@@ -122,24 +122,25 @@ export class DragAndDropQuestionComponent {
 
     watchCollection() {
         // update html for text, hint and explanation for the question
-        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().explanation);
+        const renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().text);
+        renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().hint);
+        renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().explanation);
+        this.renderedQuestion.set(renderedQuestion);
     }
 
     /**
      * Handles drag-available UI
      */
     drag() {
-        this.dropAllowed = true;
+        this.dropAllowed.set(true);
     }
 
     /**
      * Handles drag-available UI
      */
     drop() {
-        this.dropAllowed = false;
+        this.dropAllowed.set(false);
     }
 
     /** Sets the view displayed to the user
@@ -147,15 +148,15 @@ export class DragAndDropQuestionComponent {
      *                          success: background picture for drag and drop question was loaded
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
-        this.loadingState = value;
+        this.loadingState.set(value);
     }
 
     /**
      * Prevent scrolling when dragging elements on mobile devices
-     * @param event
+     * @param event the native drag event emitted by the drop location element
      */
-    preventDefault(event: any) {
-        event.mouseEvent.preventDefault();
+    preventDefault(event: Event) {
+        event.preventDefault();
         return false;
     }
 
@@ -181,7 +182,7 @@ export class DragAndDropQuestionComponent {
             // remove existing mappings that contain the drop location or drag item and save their old partners
             let oldDragItem;
             let oldDropLocation;
-            this._mappings = this.mappings().filter(function (mapping) {
+            this._mappings = this.mappings().filter((mapping) => {
                 if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation)) {
                     oldDragItem = mapping.dragItem;
                     return false;
@@ -191,7 +192,7 @@ export class DragAndDropQuestionComponent {
                     return false;
                 }
                 return true;
-            }, this);
+            });
 
             // add new mapping
             this._mappings.push(new DragAndDropMapping(dragItem, dropLocation));
@@ -204,9 +205,9 @@ export class DragAndDropQuestionComponent {
         } else {
             const lengthBefore = this.mappings().length;
             // remove existing mapping that contains the drag item
-            this._mappings = this.mappings().filter(function (mapping) {
+            this._mappings = this.mappings().filter((mapping) => {
                 return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
-            }, this);
+            });
             if (this._mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
                 return;
@@ -269,9 +270,9 @@ export class DragAndDropQuestionComponent {
             return MappingResult.MAPPED_INCORRECT;
         }
         const validDragItems = this.dragAndDropQuestion()
-            .correctMappings!.filter(function (mapping) {
+            .correctMappings!.filter((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
-            }, this)
+            })
             .map(function (mapping) {
                 return mapping.dragItem;
             });
@@ -280,9 +281,9 @@ export class DragAndDropQuestionComponent {
         if (!selectedItem) {
             return validDragItems.length === 0 ? MappingResult.NOT_MAPPED : MappingResult.MAPPED_INCORRECT;
         } else {
-            return validDragItems.some(function (dragItem) {
+            return validDragItems.some((dragItem) => {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dragItem, selectedItem);
-            }, this)
+            })
                 ? MappingResult.MAPPED_CORRECT
                 : MappingResult.MAPPED_INCORRECT;
         }
@@ -338,11 +339,13 @@ export class DragAndDropQuestionComponent {
      */
     evaluateDropLocations(): void {
         if (this.dragAndDropQuestion().dropLocations) {
-            this.correctAnswer = this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length;
-            this.incorrectLocationMappings = this.dragAndDropQuestion().dropLocations!.filter(
-                (dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT,
-            ).length;
-            this.mappedLocations = this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
+            this.correctAnswer.set(
+                this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length,
+            );
+            this.incorrectLocationMappings.set(
+                this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT).length,
+            );
+            this.mappedLocations.set(this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length);
         }
     }
 }

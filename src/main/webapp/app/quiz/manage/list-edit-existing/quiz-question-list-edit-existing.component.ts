@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -15,11 +15,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
-import JSZip from 'jszip';
+import { strFromU8 } from 'fflate';
+import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum State {
     COURSE = 'Course',
@@ -42,7 +44,6 @@ export class QuizQuestionListEditExistingComponent {
     private examManagementService = inject(ExamManagementService);
     private quizExerciseService = inject(QuizExerciseService);
     private alertService = inject(AlertService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
     show = input<boolean>();
     courseId = input<number>();
@@ -57,37 +58,35 @@ export class QuizQuestionListEditExistingComponent {
     readonly State = State;
     readonly stateTexts = ['artemisApp.quizExercise.fromACourse', 'artemisApp.quizExercise.fromAnExam', 'artemisApp.quizExercise.fromAFile'];
 
-    currentState: State = State.COURSE;
+    readonly currentState = signal<State>(State.COURSE);
     selectedCourseId?: number;
     selectedExamId?: number;
-    courses: Course[] = [];
-    exams: Exam[] = [];
-    allExistingQuestions: QuizQuestion[] = [];
-    existingQuestions: QuizQuestion[] = [];
-    searchQueryText: string;
+    readonly courses = signal<Course[]>([]);
+    readonly exams = signal<Exam[]>([]);
+    readonly allExistingQuestions = signal<QuizQuestion[]>([]);
+    readonly existingQuestions = signal<QuizQuestion[]>([]);
+    searchQueryText?: string;
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
     shortAnswerFilterEnabled = true;
-    importFile?: File;
-    importFileName: string;
+    readonly importFile = signal<File | undefined>(undefined);
+    readonly importFileName = signal<string>('');
 
     constructor() {
         effect(() => {
             if (this.show()) {
                 this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
-                    this.courses = res.body!;
-                    this.changeDetectorRef.detectChanges();
+                    this.courses.set(res.body!);
                 });
                 this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((res: HttpResponse<Exam[]>) => {
-                    this.exams = res.body!;
-                    this.changeDetectorRef.detectChanges();
+                    this.exams.set(res.body!);
                 });
             }
         });
     }
 
     setCurrentState(state: State) {
-        this.currentState = state;
+        this.currentState.set(state);
     }
 
     /**
@@ -95,15 +94,16 @@ export class QuizQuestionListEditExistingComponent {
      * Populates list of quiz exercises for the selected course
      */
     onCourseSelect() {
-        this.allExistingQuestions = this.existingQuestions = [];
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
         if (!this.selectedCourseId) {
             return;
         }
-        const selectedCourse = this.courses.find((course) => course.id === Number(this.selectedCourseId))!;
+        const selectedCourse = this.courses().find((course) => course.id === Number(this.selectedCourseId))!;
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -115,19 +115,20 @@ export class QuizQuestionListEditExistingComponent {
      * Populates list of quiz exercises for the selected exam
      */
     onExamSelect(): void {
-        this.allExistingQuestions = this.existingQuestions = [];
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
         if (!this.selectedExamId) {
             return;
         }
 
         /** Search the selected exam by id in all available exams **/
-        const selectedExam = this.exams.find((exam) => exam.id === Number(this.selectedExamId))!;
+        const selectedExam = this.exams().find((exam) => exam.id === Number(this.selectedExamId))!;
 
         // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -138,45 +139,44 @@ export class QuizQuestionListEditExistingComponent {
      * Applies filter on questions shown in add existing questions view.
      */
     applyFilter() {
-        this.existingQuestions = [];
-        for (const question of this.allExistingQuestions) {
+        const existingQuestions: QuizQuestion[] = [];
+        for (const question of this.allExistingQuestions()) {
             if (!this.searchQueryText || this.searchQueryText === '' || question.title!.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
                 if (this.mcqFilterEnabled && question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    this.existingQuestions.push(question);
+                    existingQuestions.push(question);
                 }
                 if (this.dndFilterEnabled && question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.existingQuestions.push(question);
+                    existingQuestions.push(question);
                 }
                 if (this.shortAnswerFilterEnabled && question.type === QuizQuestionType.SHORT_ANSWER) {
-                    this.existingQuestions.push(question);
+                    existingQuestions.push(question);
                 }
             }
         }
-        this.changeDetectorRef.detectChanges();
+        this.existingQuestions.set(existingQuestions);
     }
 
     /**
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.importFile = fileList[0];
-            this.importFileName = this.importFile.name;
+    setImportFile(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList?.length) {
+            this.importFile.set(fileList[0]);
+            this.importFileName.set(fileList[0].name);
         }
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
      * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
-        if (!this.importFile) {
+        if (!this.importFile()) {
             return;
         }
 
-        const fileName = this.importFile.name;
+        const fileName = this.importFile()!.name;
         const fileExtension = fileName.split('.').last()?.toLowerCase();
 
         if (fileExtension === 'zip') {
@@ -188,33 +188,32 @@ export class QuizQuestionListEditExistingComponent {
     handleJsonFile() {
         const fileReader = this.generateFileReader();
         fileReader.onload = () => this.onFileLoadImport(fileReader);
-        fileReader.readAsText(this.importFile!);
+        fileReader.readAsText(this.importFile()!);
     }
 
     async handleZipFile() {
-        const jszip = new JSZip();
-
         try {
-            const zipContent = await jszip.loadAsync(this.importFile!);
-            const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'));
+            const zipEntries = await readZipEntries(this.importFile()!);
+            const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
+            if (jsonFiles.length === 0) {
+                throw new Error('No JSON file found in the ZIP archive.');
+            }
 
-            const images = await this.extractImagesFromZip(zipContent);
-            const jsonFile = zipContent.files[jsonFiles[0]];
-            const jsonContent = await jsonFile.async('string');
+            const images = this.extractImagesFromZip(zipEntries);
+            const jsonContent = strFromU8(zipEntries[jsonFiles[0]]);
             await this.processJsonContent(jsonContent, images);
         } catch (error) {
             alert('Import Quiz Failed! Invalid zip file.');
             return;
         }
     }
-    async extractImagesFromZip(zipContent: JSZip) {
+    extractImagesFromZip(zipEntries: ZipEntries): Map<string, File> {
         const images: Map<string, File> = new Map();
-        for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
+        for (const [fileName, data] of Object.entries(zipEntries)) {
             if (!fileName.endsWith('.json')) {
                 const lastDotIndex = fileName.lastIndexOf('.');
-                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
-                const imageData = await zipEntry.async('blob');
-                const imageFile = new File([imageData], fileName);
+                const fileNameNoExtension = lastDotIndex === -1 ? fileName : fileName.substring(0, lastDotIndex);
+                const imageFile = new File([data], fileName);
                 images.set(fileNameNoExtension, imageFile);
             }
         }
@@ -223,11 +222,11 @@ export class QuizQuestionListEditExistingComponent {
 
     async processJsonContent(jsonContent: string, images: Map<string, File> = new Map()) {
         try {
-            const questions = JSON.parse(jsonContent) as QuizQuestion[];
+            const questions = parseJson<QuizQuestion[]>(jsonContent);
             await this.addQuestions(questions, images);
             // Clearing html elements
-            this.importFile = undefined;
-            this.importFileName = '';
+            this.importFile.set(undefined);
+            this.importFileName.set('');
             const control = document.getElementById('importFileInput') as HTMLInputElement;
             if (control) {
                 control.value = '';
@@ -254,14 +253,15 @@ export class QuizQuestionListEditExistingComponent {
      */
     async addExistingQuestions() {
         const quizQuestions: QuizQuestion[] = [];
-        for (const question of this.existingQuestions) {
+        for (const question of this.existingQuestions()) {
             if (question.exportQuiz) {
                 quizQuestions.push(question);
             }
         }
         this.selectedCourseId = undefined;
         this.selectedExamId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
+        this.allExistingQuestions.set([]);
+        this.existingQuestions.set([]);
         await this.addQuestions(quizQuestions);
     }
 
@@ -321,13 +321,12 @@ export class QuizQuestionListEditExistingComponent {
                 if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
                     for (const question of quizExerciseResponse.quizQuestions) {
                         question.exercise = quizExercise;
-                        this.allExistingQuestions.push(question);
+                        this.allExistingQuestions.update((questions) => [...questions, question]);
                     }
                 }
                 this.applyFilter();
             });
         }
-        this.changeDetectorRef.detectChanges();
     }
 
     /**

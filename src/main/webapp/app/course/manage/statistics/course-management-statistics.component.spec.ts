@@ -13,7 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseManagementStatisticsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -39,7 +38,6 @@ describe('CourseManagementStatisticsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 123 }) },
                 provideHttpClient(),
-                provideNoopAnimationsForTests(),
             ],
         });
         await TestBed.compileComponents();

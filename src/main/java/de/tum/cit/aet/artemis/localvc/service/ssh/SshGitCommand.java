@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.localvc.service.ssh;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.MapEntryUtils;
@@ -106,7 +106,7 @@ public class SshGitCommand extends GitPackCommand {
                         String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
 
                         if (GenericUtils.isNotBlank(protocol)) {
-                            uploadPack.setExtraParameters(Collections.singleton(protocol));
+                            uploadPack.setExtraParameters(Set.of(protocol));
                         }
 
                         // Register pre-upload hook for Artemis-specific logic

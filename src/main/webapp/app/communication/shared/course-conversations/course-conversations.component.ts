@@ -1,7 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
-import { outputToObservable } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -63,9 +62,8 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
-import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -125,6 +123,9 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
+// The sidebar renders as a mobile overlay below Bootstrap `sm`; keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
+
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
@@ -136,7 +137,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FormsModule,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
-        NgClass,
         SidebarComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
@@ -165,49 +165,69 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
+    readonly isMobile = toSignal(this.breakpointObserver.observe(MOBILE_SIDEBAR_BREAKPOINT).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(MOBILE_SIDEBAR_BREAKPOINT),
+    });
 
     private ngUnsubscribe = new Subject<void>();
-    private closeSidebarEventSubscription: Subscription;
-    private openSidebarEventSubscription: Subscription;
-    private toggleSidebarEventSubscription: Subscription;
-    private reloadSidebarEventSubscription: Subscription;
+    private closeSidebarEventSubscription?: Subscription;
+    private openSidebarEventSubscription?: Subscription;
+    private toggleSidebarEventSubscription?: Subscription;
+    private reloadSidebarEventSubscription?: Subscription;
+    // Transient observers that watch for a post/reply to appear in the DOM. They self-disconnect on
+    // success and via a 5s timeout, but are stored here so ngOnDestroy can disconnect them if the
+    // component is torn down within that window.
+    private highlightPostObserver?: MutationObserver;
+    private highlightReplyObserver?: MutationObserver;
     course = signal<Course | undefined>(undefined);
-    isLoading = false;
-    isServiceSetUp = false;
+    readonly isLoading = signal(false);
+    readonly isServiceSetUp = signal(false);
     messagingEnabled = false;
-    postInThread?: Post;
+    readonly postInThread = signal<Post | undefined>(undefined);
     private pendingThreadPostId: number | undefined;
-    activeConversation?: ConversationDTO = undefined;
-    conversationsOfUser: ConversationDTO[] = [];
+    readonly activeConversation = signal<ConversationDTO | undefined>(undefined);
+    readonly conversationsOfUser = signal<ConversationDTO[]>([]);
     previousConversationBeforeSearch?: ConversationDTO;
     lastKnownConversationId?: number;
 
     conversationSelected = true;
-    sidebarData: SidebarData;
-    accordionConversationGroups: AccordionGroups;
-    sidebarConversations: SidebarCardElement[] = [];
-    isCollapsed = false;
-    focusPostId: number | undefined = undefined;
+    readonly sidebarData = signal<SidebarData>(undefined!);
+    readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
+    readonly sidebarConversations = signal<SidebarCardElement[]>([]);
+    readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
+    readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
-    openThreadOnFocus = false;
-    selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
-    showOnlyPinned = false;
-    pinnedCount: number = 0;
-    isManagementView = false;
+    readonly openThreadOnFocus = signal(false);
+    readonly selectedSavedPostStatus = signal<undefined | SavedPostStatus>(undefined);
+    readonly showOnlyPinned = signal(false);
+    readonly pinnedCount = signal(0);
+    readonly isManagementView = signal(false);
 
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
-    isCodeOfConductAccepted?: boolean;
-    isCodeOfConductPresented = false;
+    readonly isCodeOfConductAccepted = signal<boolean | undefined>(undefined);
+    readonly isCodeOfConductPresented = signal(false);
 
     courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
     globalSearchComponent = viewChild<ConversationGlobalSearchComponent>(ConversationGlobalSearchComponent);
 
-    courseWideSearchConfig: CourseWideSearchConfig;
+    // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
+    // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
+    // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!);
+    get courseWideSearchConfig(): CourseWideSearchConfig {
+        return this._courseWideSearchConfig();
+    }
+    set courseWideSearchConfig(value: CourseWideSearchConfig) {
+        this._courseWideSearchConfig.set(value);
+    }
+    private commitCourseWideSearchConfig(): void {
+        this._courseWideSearchConfig.update((config) => Object.assign(new CourseWideSearchConfig(), config));
+    }
 
     // Icons
     faPlus = faPlus;
@@ -218,7 +238,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly channelActions$ = output<ChannelAction>();
 
     private courseSidebarService = inject(CourseSidebarService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     getAsChannel = getAsChannelDTO;
 
@@ -227,25 +246,24 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (this.pendingThreadPostId && posts) {
                 const found = posts.find((post) => post.id === this.pendingThreadPostId);
                 if (found) {
-                    this.postInThread = found;
+                    this.postInThread.set(found);
                     this.pendingThreadPostId = undefined;
                 }
-            } else if (this.postInThread?.id && posts) {
-                this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
+            } else if (this.postInThread()?.id && posts) {
+                this.postInThread.set(posts.find((post) => post.id === this.postInThread()?.id));
             }
         });
     }
 
     togglePinnedView(): void {
-        this.showOnlyPinned = !this.showOnlyPinned;
+        this.showOnlyPinned.set(!this.showOnlyPinned());
     }
 
     onPinnedCountChanged(newCount: number): void {
-        this.pinnedCount = newCount;
-        if (this.pinnedCount == 0 && this.showOnlyPinned) {
-            this.showOnlyPinned = false;
+        this.pinnedCount.set(newCount);
+        if (this.pinnedCount() == 0 && this.showOnlyPinned()) {
+            this.showOnlyPinned.set(false);
         }
-        this.changeDetector.detectChanges();
     }
 
     private setupMetis() {
@@ -267,7 +285,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.course.set(this.getParentCourse());
-        this.isManagementView = this.router.url.includes('course-management');
+        this.isManagementView.set(this.router.url.includes('course-management'));
 
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.setIsCollapsed(true);
@@ -295,10 +313,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.courseSidebarService.openSidebar();
         }
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
-                this.course.set(this.metisConversationService.course!);
+                this.course.set(this.metisConversationService.course);
                 this.initializeCourseWideSearchConfig();
                 this.initializeSidebarAccordions();
                 this.setupMetis();
@@ -312,7 +330,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.updateQueryParameters();
                 this.prepareSidebarData();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
-                if (!this.isServiceSetUp) {
+                if (!this.isServiceSetUp()) {
                     outputToObservable(this.channelActions$)
                         .pipe(
                             debounceTime(500),
@@ -326,8 +344,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                             this.performChannelAction(channelAction);
                         });
                 }
-                this.isServiceSetUp = true;
-                this.isLoading = false;
+                this.isServiceSetUp.set(true);
+                this.isLoading.set(false);
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
@@ -352,11 +370,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.focusPostId) {
-                this.focusPostId = Number(queryParams.focusPostId);
-                this.scrollToAndHighlightPost(this.focusPostId);
+                this.focusPostId.set(Number(queryParams.focusPostId));
+                this.scrollToAndHighlightPost(this.focusPostId()!);
             }
             if (queryParams.openThreadOnFocus) {
-                this.openThreadOnFocus = queryParams.openThreadOnFocus;
+                this.openThreadOnFocus.set(queryParams.openThreadOnFocus);
             }
 
             // Process messageId BEFORE setting the active conversation.
@@ -368,16 +386,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 // Only create a bare post skeleton if we don't already have this post loaded.
                 // Re-setting postInThread to a bare object discards the full post data and
                 // causes updateQueryParameters to strip messageId from the URL.
-                if (this.postInThread?.id !== messageId) {
+                if (this.postInThread()?.id !== messageId) {
                     const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
                     this.pendingThreadPostId = messageId;
-                    this.postInThread = { id: messageId, conversation: { id: conversationId } } as Post;
+                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } });
                     // Immediately try to resolve the full post from already-loaded posts
                     this.metisService.posts.pipe(take(1)).subscribe((posts) => {
                         if (posts) {
                             const found = posts.find((post) => post.id === messageId);
                             if (found) {
-                                this.postInThread = found;
+                                this.postInThread.set(found);
                                 this.pendingThreadPostId = undefined;
                             }
                         }
@@ -389,7 +407,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 }
                 this.closeSidebarOnMobile();
             } else {
-                this.postInThread = undefined;
+                this.postInThread.set(undefined);
             }
 
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
@@ -400,7 +418,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         .map((status) => status.toString().toLowerCase())
                         .includes(queryParams.conversationId)
                 ) {
-                    this.selectedSavedPostStatus = toSavedPostStatus(queryParams.conversationId);
+                    this.selectedSavedPostStatus.set(toSavedPostStatus(queryParams.conversationId));
                 } else {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
@@ -414,21 +432,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.focusPostId = post.referencePostId;
-        this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
-        this.metisConversationService.setActiveConversation(post.conversation!.id!);
-        this.changeDetector.detectChanges();
+        this.focusPostId.set(post.referencePostId);
+        this.openThreadOnFocus.set((post.postingType as PostingType) === PostingType.ANSWER);
+        this.metisConversationService.setActiveConversation(post.conversation.id);
     }
 
     updateQueryParameters() {
         const queryParams: Record<string, string | number | undefined> = {
-            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+            conversationId: this.activeConversation()?.id ?? this.selectedSavedPostStatus()?.toLowerCase(),
         };
-        const threadBelongsToActiveConversation = this.postInThread?.id && this.postInThread.conversation?.id === this.activeConversation?.id;
+        const threadBelongsToActiveConversation = this.postInThread()?.id && this.postInThread()?.conversation?.id === this.activeConversation()?.id;
         if (threadBelongsToActiveConversation) {
-            queryParams.messageId = this.postInThread!.id;
+            queryParams.messageId = this.postInThread()!.id;
         }
-        this.router.navigate([], {
+        void this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams,
             replaceUrl: true,
@@ -442,12 +459,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.reloadSidebarEventSubscription?.unsubscribe();
+        this.highlightPostObserver?.disconnect();
+        this.highlightReplyObserver?.disconnect();
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
-            const previousConversation = this.activeConversation;
-            this.activeConversation = conversation;
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
+            const previousConversation = this.activeConversation();
+            this.activeConversation.set(conversation);
 
             if (conversation?.id) {
                 this.lastKnownConversationId = conversation.id;
@@ -462,19 +481,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToIsCodeOfConductAccepted() {
         this.metisConversationService.isCodeOfConductAccepted$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductAccepted: boolean) => {
-            this.isCodeOfConductAccepted = isCodeOfConductAccepted;
+            this.isCodeOfConductAccepted.set(isCodeOfConductAccepted);
         });
     }
 
     private subscribeToIsCodeOfConductPresented() {
         this.metisConversationService.isCodeOfConductPresented$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isCodeOfConductPresented: boolean) => {
-            this.isCodeOfConductPresented = isCodeOfConductPresented;
+            this.isCodeOfConductPresented.set(isCodeOfConductPresented);
         });
     }
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.conversationsOfUser = conversations ?? [];
+            this.conversationsOfUser.set(conversations ?? []);
         });
     }
 
@@ -493,13 +512,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
         this.courseWideSearchConfig.selectedAuthors = [];
         this.courseWideSearchConfig.selectedConversations = [];
+        this.commitCourseWideSearchConfig();
     }
 
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
-        this.accordionConversationGroups = this.messagingEnabled
-            ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } }
-            : DEFAULT_CHANNEL_GROUPS;
+        this.accordionConversationGroups.set(
+            this.messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS,
+        );
     }
 
     onSearch(searchInfo: ConversationGlobalSearchConfig) {
@@ -512,23 +532,25 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.selectedSavedPostStatus = undefined;
+        this.selectedSavedPostStatus.set(undefined);
         this.metisConversationService.setActiveConversation(undefined);
-        this.activeConversation = undefined;
+        this.activeConversation.set(undefined);
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
         this.courseWideSearch()?.onSearch();
     }
 
     onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
-        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation && !this.previousConversationBeforeSearch) {
-            this.previousConversationBeforeSearch = this.activeConversation;
+        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation() && !this.previousConversationBeforeSearch) {
+            this.previousConversationBeforeSearch = this.activeConversation();
         }
 
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.commitCourseWideSearchConfig();
         this.courseWideSearch()?.onSearchConfigSelectionChange();
     }
 
@@ -536,15 +558,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.searchTerm = '';
         this.courseWideSearchConfig.selectedConversations = [];
         this.courseWideSearchConfig.selectedAuthors = [];
+        this.commitCourseWideSearchConfig();
 
         if (this.previousConversationBeforeSearch?.id) {
             this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);
         } else if (this.lastKnownConversationId) {
             this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
         } else {
-            this.selectedSavedPostStatus = undefined;
+            this.selectedSavedPostStatus.set(undefined);
             this.metisConversationService.setActiveConversation(undefined);
-            this.activeConversation = undefined;
+            this.activeConversation.set(undefined);
             this.updateQueryParameters();
             this.courseWideSearch()?.onSearch();
         }
@@ -565,55 +588,58 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
-                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser);
-                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser, this.messagingEnabled);
-                this.accordionConversationGroups.recents.entityData = this.sidebarConversations?.filter((item) => item.isCurrent) || [];
+                this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(this.course()!, this.conversationsOfUser()));
+                this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, this.conversationsOfUser(), this.messagingEnabled));
+                this.accordionConversationGroups().recents.entityData = this.sidebarConversations()?.filter((item) => item.isCurrent) || [];
                 this.updateSidebarData();
             },
         });
     }
 
     updateSidebarData() {
-        this.sidebarData = {
+        this.sidebarData.set({
             groupByCategory: true,
             sidebarType: 'conversation',
             storageId: 'conversation',
-            groupedData: this.accordionConversationGroups,
-            ungroupedData: this.sidebarConversations,
+            groupedData: this.accordionConversationGroups(),
+            ungroupedData: this.sidebarConversations(),
             showAccordionLeadingIcon: true,
             messagingEnabled: isMessagingEnabled(this.course()),
             canCreateChannel: canCreateChannel(this.course()!),
-        };
+        });
     }
 
     // NOTE: conversationId can either be a number or a string according to SavedPostStatus (for saved post status)
     onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
-        this.focusPostId = undefined;
-        this.openThreadOnFocus = false;
+        this.focusPostId.set(undefined);
+        this.openThreadOnFocus.set(false);
         if (typeof conversationId === 'string') {
             if (
                 Object.values(SavedPostStatus)
                     .map((status) => status.toString().toLowerCase())
                     .includes(conversationId)
             ) {
-                this.selectedSavedPostStatus = conversationId.toUpperCase() as SavedPostStatus;
-                this.postInThread = undefined;
+                this.selectedSavedPostStatus.set(conversationId.toUpperCase() as SavedPostStatus);
+                this.postInThread.set(undefined);
                 this.metisConversationService.setActiveConversation(undefined);
-                this.activeConversation = undefined;
+                this.activeConversation.set(undefined);
                 this.updateQueryParameters();
                 this.metisService.resetCachedPosts();
-                this.changeDetector.detectChanges();
             }
         } else {
             conversationId = +conversationId;
-            this.selectedSavedPostStatus = undefined;
+            this.selectedSavedPostStatus.set(undefined);
             this.metisConversationService.setActiveConversation(conversationId);
         }
     }
 
     toggleSidebar() {
-        this.setIsCollapsed(!this.isCollapsed);
+        this.setIsCollapsed(!this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     closeSidebarOnMobile() {
@@ -623,8 +649,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     setIsCollapsed(value: boolean) {
-        this.isCollapsed = value;
-        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
+        this.isCollapsed.set(value);
+        this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed());
     }
 
     openCreateGroupChatDialog() {
@@ -736,19 +762,19 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     triggerSearchInConversation() {
-        if (this.globalSearchComponent() && this.activeConversation) {
-            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation);
+        if (this.globalSearchComponent() && this.activeConversation()) {
+            this.globalSearchComponent()!.focusWithSelectedConversation(this.activeConversation());
         }
     }
 
     openThread(postToOpen: Post | undefined) {
         this.selectionState.setOpenPostId(postToOpen?.id);
-        this.postInThread = postToOpen;
+        this.postInThread.set(postToOpen);
         this.pendingThreadPostId = undefined;
     }
 
     closeThread() {
-        this.postInThread = undefined;
+        this.postInThread.set(undefined);
         this.pendingThreadPostId = undefined;
         this.updateQueryParameters();
     }
@@ -770,11 +796,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         if (tryHighlight()) return;
 
+        this.highlightPostObserver?.disconnect();
         const observer = new MutationObserver(() => {
             if (tryHighlight()) {
                 observer.disconnect();
             }
         });
+        this.highlightPostObserver = observer;
         observer.observe(document.body, { childList: true, subtree: true });
         setTimeout(() => observer.disconnect(), 5000);
     }
@@ -790,6 +818,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
 
         // Watch for the element to appear in the DOM
+        this.highlightReplyObserver?.disconnect();
         const observer = new MutationObserver(() => {
             const element = document.getElementById(elementId);
             if (element) {
@@ -797,6 +826,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.highlightElement(element);
             }
         });
+        this.highlightReplyObserver = observer;
 
         observer.observe(document.body, { childList: true, subtree: true });
 
@@ -822,18 +852,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      */
     onTriggerNavigateToPost(post: Posting) {
         let id = (post as Post)?.conversation?.id;
-        this.focusPostId = post.id;
-        this.openThreadOnFocus = false;
+        this.focusPostId.set(post.id);
+        this.openThreadOnFocus.set(false);
         if (post.id === undefined) {
             return;
         } else if ((post as Post)?.conversation?.id === undefined) {
-            this.openThreadOnFocus = true;
+            this.openThreadOnFocus.set(true);
             id = (post as AnswerPost)?.post?.conversation?.id;
-            this.focusPostId = (post as AnswerPost)?.post?.id;
+            this.focusPostId.set((post as AnswerPost)?.post?.id);
         }
 
         this.metisConversationService.setActiveConversation(id);
-        this.changeDetector.detectChanges();
     }
     async enableCommunication(withMessaging = true) {
         const id = this.course()?.id;

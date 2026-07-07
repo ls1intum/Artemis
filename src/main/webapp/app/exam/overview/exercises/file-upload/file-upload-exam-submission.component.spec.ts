@@ -219,8 +219,8 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission().isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toBe('file1.png');
-            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submittedFileName()).toBe('file1.png');
+            expect(comp.submittedFileExtension()).toBe('png');
             expect(comp.submissionFile).toBeUndefined();
         });
     });
@@ -237,7 +237,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
@@ -266,7 +266,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 

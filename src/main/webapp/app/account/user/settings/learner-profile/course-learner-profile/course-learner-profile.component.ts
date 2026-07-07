@@ -32,7 +32,7 @@ export class CourseLearnerProfileComponent implements OnInit {
     activeCourseId: number | null = null;
 
     /** Flag indicating whether the profile editing is disabled */
-    disabled = true;
+    readonly disabled = signal<boolean>(true);
 
     /**
      * Options mapped from shared options with translated labels.
@@ -73,12 +73,12 @@ export class CourseLearnerProfileComponent implements OnInit {
 
         if (courseId === '-1') {
             this.activeCourseId = null;
-            this.disabled = true;
+            this.disabled.set(true);
             return;
         }
 
         this.activeCourseId = Number(courseId);
-        this.disabled = false;
+        this.disabled.set(false);
         this.loadProfileForCourse(this.activeCourseId);
     }
 

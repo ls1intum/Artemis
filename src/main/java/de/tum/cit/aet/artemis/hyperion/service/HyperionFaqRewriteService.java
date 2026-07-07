@@ -181,6 +181,6 @@ public class HyperionFaqRewriteService {
         if (faqs == null) {
             return List.of();
         }
-        return faqs.stream().map(f -> String.format("FAQ ID: %s, Title: %s, Answer: %s", f.id(), f.title(), f.answer())).toList();
+        return faqs.stream().map(f -> "FAQ ID: %s, Title: %s, Answer: %s".formatted(f.id(), f.title(), f.answer())).toList();
     }
 }

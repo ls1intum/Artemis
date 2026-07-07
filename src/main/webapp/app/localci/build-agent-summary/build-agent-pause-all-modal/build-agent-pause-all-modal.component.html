@@ -3,13 +3,13 @@
         <span jhiTranslate="artemisApp.buildAgents.pauseAllWarning"></span>
     </div>
 </div>
-<div class="d-flex justify-content-end gap-2 mt-3">
-    <button type="button" class="btn btn-secondary" (click)="cancel()">
+<div class="flex justify-end gap-2 mt-3">
+    <p-button type="button" severity="secondary" size="small" (onClick)="cancel()">
         <fa-icon [icon]="faTimes" />
-        <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
-    </button>
-    <button type="button" class="btn btn-danger" (click)="confirm()">
+        <span class="ms-1" jhiTranslate="artemisApp.buildQueue.filter.close"></span>
+    </p-button>
+    <p-button type="button" severity="danger" size="small" (onClick)="confirm()">
         <fa-icon [icon]="faPause" />
-        <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-    </button>
+        <span class="ms-1" jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
+    </p-button>
 </div>

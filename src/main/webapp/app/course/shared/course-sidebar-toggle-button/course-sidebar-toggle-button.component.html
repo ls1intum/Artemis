@@ -1,0 +1,19 @@
+<p-button
+    type="button"
+    [pTooltip]="'artemisApp.course.toggleSidebar' | artemisTranslate"
+    tooltipPosition="top"
+    size="small"
+    severity="secondary"
+    [class]="{ 'is-collapsed': isCollapsed(), 'is-communication-module': isCommunicationModule() }"
+    tooltipStyleClass="small-tooltip"
+    class="btn-sidebar-collapse rounded-3"
+    styleClass="tiny-icon-button"
+    [attr.aria-label]="'artemisApp.course.toggleSidebar' | artemisTranslate"
+    (click)="toggleSidebar.emit()"
+>
+    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="btn-sidebar-collapse-icon d-flex justify-content-center align-items-center" size="lg" />
+    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center" size="xs" />
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="d-flex justify-content-center align-items-center" size="xs" />
+    </div>
+</p-button>

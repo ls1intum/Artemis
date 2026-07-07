@@ -19,7 +19,6 @@ import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,6 +28,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
+import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('GenerateCompetenciesComponent', () => {
     setupTestBed({ zoneless: true });
@@ -134,7 +134,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         comp.getCompetencyRecommendations(courseDescription);
         const websocketMessage = {
-            stages: [{ state: IrisStageStateDTO.DONE }],
+            runState: IrisRunState.FINISHED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
@@ -172,7 +172,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         expect(comp.canDeactivate()).toBeTruthy();
 
-        comp.isLoading = true;
+        comp.isLoading.set(true);
         expect(comp.canDeactivate()).toBeFalsy();
 
         comp.submitted = true;
@@ -236,7 +236,7 @@ describe('GenerateCompetenciesComponent', () => {
         const successMock = vi.spyOn(alertService, 'success');
         comp.getCompetencyRecommendations('Cool course description');
         const websocketMessage = {
-            stages: [{ state: IrisStageStateDTO.DONE }],
+            runState: IrisRunState.FINISHED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
@@ -246,7 +246,7 @@ describe('GenerateCompetenciesComponent', () => {
         const warnMock = vi.spyOn(alertService, 'warning');
         comp.getCompetencyRecommendations('Cool course description');
         const errorMessage = {
-            stages: [{ state: IrisStageStateDTO.ERROR }],
+            runState: IrisRunState.FAILED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(errorMessage);
@@ -254,7 +254,7 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should not deactivate when loading', () => {
-        comp.isLoading = true;
+        comp.isLoading.set(true);
         const canDeactivate = comp.canDeactivate();
         expect(canDeactivate).toBeFalsy();
     });

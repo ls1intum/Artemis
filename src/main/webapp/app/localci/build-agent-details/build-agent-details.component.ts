@@ -7,7 +7,10 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { InputTextModule } from 'primeng/inputtext';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -46,7 +49,10 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
     imports: [
         FontAwesomeModule,
         RouterModule,
-        CommonModule,
+        ButtonModule,
+        TagModule,
+        MessageModule,
+        InputTextModule,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
@@ -82,7 +88,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningBuildJobs = signal<BuildJob[]>([]);
 
     /** Name of the build agent being viewed, extracted from route query params */
-    agentName: string;
+    readonly agentName = signal<string>(undefined!);
 
     /**
      * WebSocket subscription for agent details updates.
@@ -97,19 +103,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningJobsWebsocketSubscription?: Subscription;
 
     /** Subscription for initial running jobs REST API load */
-    runningJobsSubscription: Subscription;
+    runningJobsSubscription?: Subscription;
 
     /** Subscription for initial agent details REST API load */
-    agentDetailsSubscription: Subscription;
+    agentDetailsSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
-    buildDurationInterval: ReturnType<typeof setInterval>;
+    buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
 
     /** Subscription for route query parameter changes */
-    routeParamsSubscription: Subscription;
+    routeParamsSubscription!: Subscription; // set in ngOnInit()
 
     /** WebSocket channel for receiving agent-specific updates (constructed from base topic + agent name) */
-    agentDetailsWebsocketChannel: string;
+    agentDetailsWebsocketChannel!: string; // set in ngOnInit() before the websocket subscription reads it
 
     /** Base WebSocket topic for agent updates */
     readonly agentUpdatesChannel = '/topic/admin/build-agent';
@@ -139,7 +145,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     // Search and filter configuration
     /** Subscription for debounced search input handling */
-    searchSubscription: Subscription;
+    searchSubscription!: Subscription; // set in ngOnInit()
 
     /** Subject for triggering debounced search requests for finished build jobs */
     finishedJobsSearchTrigger = new Subject<void>();
@@ -151,7 +157,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     searchTerm?: string = undefined;
 
     /** Filter configuration for finished build jobs */
-    finishedBuildJobFilter: FinishedBuildJobFilter;
+    readonly finishedBuildJobFilter = signal<FinishedBuildJobFilter>(undefined!);
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
@@ -168,9 +174,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // Subscribe to route query params to get the agent name and initialize data loading
         this.routeParamsSubscription = this.route.queryParams.subscribe((params) => {
-            this.agentName = params['agentName'];
+            this.agentName.set(params['agentName']);
             // Construct the WebSocket channel by combining base topic with agent name
-            this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;
+            this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName();
             this.buildDurationInterval = setInterval(() => {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             }, 1000); // 1 second
@@ -225,7 +231,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         // Subscribe to all running jobs and filter to only show jobs for this agent
         this.runningJobsWebsocketSubscription = this.websocketService.subscribe<BuildJob[]>(this.runningBuildJobsChannel).subscribe((allRunningBuildJobs: BuildJob[]) => {
             // Filter to only include jobs running on this specific agent
-            const agentRunningJobs = allRunningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName);
+            const agentRunningJobs = allRunningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName());
             if (agentRunningJobs.length > 0) {
                 this.runningBuildJobs.set(this.updateBuildJobDuration(agentRunningJobs));
             } else {
@@ -247,7 +253,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     loadAgentData() {
         // Check if agentName looks like an address (e.g., [192.168.1.1]:5701 or [2001:db8::1]:5701)
         // If so, try to resolve it to the actual agent name first before loading data
-        if (looksLikeAddress(this.agentName)) {
+        if (looksLikeAddress(this.agentName())) {
             this.resolveAddressToNameThenLoadDetails();
         } else {
             this.loadRunningJobs();
@@ -261,7 +267,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      */
     private loadRunningJobs() {
         this.runningJobsSubscription?.unsubscribe();
-        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
+        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName()).subscribe((runningBuildJobs) => {
             this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
         });
     }
@@ -274,7 +280,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private resolveAddressToNameThenLoadDetails() {
         this.buildAgentsService.getBuildAgentSummary().subscribe({
             next: (agents) => {
-                const urlHost = extractHost(this.agentName);
+                const urlHost = extractHost(this.agentName());
                 // Try to find an online agent whose address host matches
                 const matchingAgent = agents.find((agent) => {
                     const agentAddress = agent.buildAgent?.memberAddress;
@@ -287,7 +293,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
                 if (matchingAgent?.buildAgent?.name) {
                     // Found a matching online agent - use its name instead of the address
-                    this.agentName = matchingAgent.buildAgent.name;
+                    this.agentName.set(matchingAgent.buildAgent.name);
                     this.resubscribeWebsocket();
                 }
                 // Now load running jobs and agent details with the resolved name
@@ -307,18 +313,18 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      */
     private loadAgentDetails() {
         this.agentDetailsSubscription?.unsubscribe();
-        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe({
+        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName()).subscribe({
             next: (buildAgent) => {
                 this.updateBuildAgent(buildAgent);
                 // If we queried by address but got a different name, update for correct WebSocket subscription
                 const actualName = buildAgent.buildAgent?.name;
-                if (actualName && this.agentName !== actualName) {
-                    this.agentName = actualName;
+                if (actualName && this.agentName() !== actualName) {
+                    this.agentName.set(actualName);
                     // Re-subscribe to the correct WebSocket channel
                     this.resubscribeWebsocket();
                 }
                 // Initialize filter with this agent's address to show only its finished jobs
-                this.finishedBuildJobFilter = new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress);
+                this.finishedBuildJobFilter.set(new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress));
                 this.loadFinishedBuildJobs();
             },
             error: (error: HttpErrorResponse) => {
@@ -331,7 +337,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 }
                 // Use the query param directly for filtering - it's likely the address when navigating from finished jobs
                 // When agent is offline, buildAgent() is empty, so use this.agentName instead
-                this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.agentName);
+                this.finishedBuildJobFilter.set(new FinishedBuildJobFilter(this.agentName()));
                 this.loadFinishedBuildJobs();
             },
         });
@@ -347,7 +353,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsWebsocketSubscription?.unsubscribe();
 
         // Update channel and re-subscribe
-        this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;
+        this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName();
         this.initWebsocketSubscription();
     }
 
@@ -463,13 +469,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             closeOnEscape: true,
             dismissableMask: true,
             data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter,
+                finishedBuildJobFilter: this.finishedBuildJobFilter(),
                 finishedBuildJobs: this.finishedBuildJobs(),
             },
         });
         dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
             if (result) {
-                this.finishedBuildJobFilter = result;
+                this.finishedBuildJobFilter.set(result);
                 this.loadFinishedBuildJobs();
             }
         });
@@ -532,7 +538,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 sortedColumn: this.predicate,
                 searchTerm: this.searchTerm || '',
             },
-            this.finishedBuildJobFilter,
+            this.finishedBuildJobFilter(),
         );
     }
 
@@ -583,6 +589,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * @param jobId The ID of the build job
      */
     navigateToJobDetail(jobId: string): void {
-        this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
+        void this.router.navigate(['/admin', 'build-overview', jobId, 'job-details']);
     }
 }

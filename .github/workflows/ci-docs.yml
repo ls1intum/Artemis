@@ -1,0 +1,57 @@
+name: Build Documentation
+
+on:
+  workflow_call:
+    inputs:
+      upload_pages_artifact:
+        description: 'Also upload the built site as a GitHub Pages artifact (set true by the deploy paths in ci.yml / deploy-documentation.yml). PR validation runs leave it false.'
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+# Workflow-level node pin is drift-checked by ci-workflows.yml.
+env:
+  node: 24
+
+jobs:
+  build:
+    name: Build Docusaurus site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        with:
+          package_json_file: documentation/package.json
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+          cache-dependency-path: documentation/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: pnpm install --frozen-lockfile
+
+      - name: Documentation Code Style
+        working-directory: documentation
+        run: pnpm run lint
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: pnpm run build
+
+      # Only on the deploy paths (develop push / manual redeploy); the deploy job consumes this.
+      # Uploading the artifact needs no extra permissions — `pages: write` lives on the deploy job.
+      - name: Upload Pages artifact
+        if: ${{ inputs.upload_pages_artifact }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: documentation/build

@@ -70,8 +70,8 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('1');
-        expect(component.courses).toHaveLength(3);
-        expect(component.courses[0].title).toBe('Course A');
+        expect(component.courses()).toHaveLength(3);
+        expect(component.courses()[0].title).toBe('Course A');
     });
 
     it('should set courses to empty array when clientId is null', async () => {
@@ -81,7 +81,7 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).not.toHaveBeenCalled();
-        expect(component.courses).toEqual([]);
+        expect(component.courses()).toEqual([]);
     });
 
     it('should handle error when loading courses fails', async () => {
@@ -114,6 +114,6 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('registration-123');
-        expect(component.courses).toEqual(mockCourses);
+        expect(component.courses()).toEqual(mockCourses);
     });
 });

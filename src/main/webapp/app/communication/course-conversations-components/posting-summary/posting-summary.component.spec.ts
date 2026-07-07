@@ -71,15 +71,15 @@ describe('PostingSummaryComponent', () => {
             fixture.detectChanges();
 
             // Assert
-            expect(component['isAnswerPost']).toBeFalsy();
-            expect(component['postingIsOfToday']).toBeTruthy();
+            expect(component['isAnswerPost']()).toBeFalsy();
+            expect(component['postingIsOfToday']()).toBeTruthy();
         });
 
         it('should handle undefined post', () => {
             fixture.componentRef.setInput('post', undefined);
             fixture.detectChanges();
 
-            expect(component['isAnswerPost']).toBeFalsy();
+            expect(component['isAnswerPost']()).toBeFalsy();
         });
     });
 
@@ -90,14 +90,14 @@ describe('PostingSummaryComponent', () => {
             fixture.componentRef.setInput('post', answerPost);
             fixture.detectChanges();
 
-            expect(component['isAnswerPost']).toBeTruthy();
+            expect(component['isAnswerPost']()).toBeTruthy();
         });
 
         it('should detect non-answer post', () => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
 
-            expect(component['isAnswerPost']).toBeFalsy();
+            expect(component['isAnswerPost']()).toBeFalsy();
         });
     });
 
@@ -108,7 +108,7 @@ describe('PostingSummaryComponent', () => {
             fixture.componentRef.setInput('post', todayPost);
             fixture.detectChanges();
 
-            expect(component['postingIsOfToday']).toBeTruthy();
+            expect(component['postingIsOfToday']()).toBeTruthy();
         });
 
         it('should detect post not from today', () => {
@@ -117,7 +117,7 @@ describe('PostingSummaryComponent', () => {
             fixture.componentRef.setInput('post', yesterdayPost);
             fixture.detectChanges();
 
-            expect(component['postingIsOfToday']).toBeFalsy();
+            expect(component['postingIsOfToday']()).toBeFalsy();
         });
     });
 

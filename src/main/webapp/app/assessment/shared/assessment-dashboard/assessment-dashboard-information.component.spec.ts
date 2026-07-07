@@ -54,10 +54,12 @@ describe('AssessmentDashboardInformationComponent', () => {
         fixture.componentRef.setInput('numberOfSubmissions', submissions);
         fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
 
-        expect(component.customColors()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
-        expect(component.customColors()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
+        expect(component.assessments()[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
+        expect(component.assessments()[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         expect(component.assessments()[0].value).toBe(600);
         expect(component.assessments()[1].value).toBe(150);
+        expect(component.chartData().labels).toEqual(['artemisApp.exerciseAssessmentDashboard.openAssessments', 'artemisApp.exerciseAssessmentDashboard.closedAssessments']);
+        expect(component.chartData().datasets[0].data).toEqual([600, 150]);
     });
 
     it('should set up links correctly', () => {

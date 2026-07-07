@@ -89,17 +89,17 @@ describe('QuizQuestionListEditComponent', () => {
 
     it('should toggle show hide existing questions flag', () => {
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBe(true);
+        expect(component.showExistingQuestions()).toBe(true);
         component.showHideExistingQuestions();
-        expect(component.showExistingQuestions).toBe(false);
+        expect(component.showExistingQuestions()).toBe(false);
     });
 
     it('should add existing quiz questions to quizQuestions and toggle show hide existing questions flag', () => {
         const question0 = new MultipleChoiceQuestion();
         const question1 = new ShortAnswerQuestion();
-        component.showExistingQuestions = true;
+        component.showExistingQuestions.set(true);
         component.handleExistingQuestionsAdded([question0, question1]);
-        expect(component.showExistingQuestions).toBe(false);
+        expect(component.showExistingQuestions()).toBe(false);
         expect(component.quizQuestions()).toHaveLength(2);
         expect(component.quizQuestions()[0]).toEqual(question0);
         expect(component.quizQuestions()[1]).toEqual(question1);

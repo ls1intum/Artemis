@@ -72,7 +72,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             });
 
             component.learnerProfile.set(mockProfile);
-            component.disabled = false;
+            component.disabled.set(false);
             component.feedbackDetail.set(newProfile.feedbackDetail);
             component.feedbackFormality.set(newProfile.feedbackFormality);
 
@@ -105,7 +105,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Set initial state
             component.learnerProfile.set(mockProfile);
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Set new values
             component.feedbackDetail.set(newProfile.feedbackDetail);
@@ -141,7 +141,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         beforeEach(() => {
             // Reset the component state
             component.learnerProfile.set(undefined);
-            component.disabled = true;
+            component.disabled.set(true);
             // Clear any existing mocks
             vi.restoreAllMocks();
         });
@@ -162,7 +162,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
-            expect(component.disabled).toBeTruthy();
+            expect(component.disabled()).toBeTruthy();
             expect(addAlertSpy).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'Http failure response for (unknown url): 500 Internal Server Error',
@@ -181,7 +181,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toBeUndefined();
-            expect(component.disabled).toBeTruthy();
+            expect(component.disabled()).toBeTruthy();
             expect(addAlertSpy).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
@@ -191,7 +191,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         it('should handle HTTP errors during profile update', async () => {
             // Arrange
             component.learnerProfile.set(mockProfile);
-            component.disabled = false;
+            component.disabled.set(false);
             const httpError = new HttpErrorResponse({
                 error: 'Update Failed',
                 status: 500,
@@ -206,7 +206,7 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             // Assert
             expect(component.learnerProfile()).toEqual(mockProfile); // Profile should remain unchanged
-            expect(component.disabled).toBeFalsy(); // Component should remain enabled
+            expect(component.disabled()).toBeFalsy(); // Component should remain enabled
             expect(addAlertSpy).toHaveBeenCalledWith({
                 type: AlertType.DANGER,
                 message: 'Http failure response for (unknown url): 500 Internal Server Error',
@@ -263,7 +263,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             });
 
             component.learnerProfile.set(mockProfile);
-            component.disabled = false;
+            component.disabled.set(false);
             component.feedbackDetail.set(newProfile.feedbackDetail);
             component.feedbackFormality.set(newProfile.feedbackFormality);
 
@@ -304,7 +304,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.feedbackDetail()).toBe(profile.feedbackDetail);
             expect(component.feedbackFormality()).toBe(profile.feedbackFormality);
-            expect(component.disabled).toBeFalsy();
+            expect(component.disabled()).toBeFalsy();
         });
     });
 
@@ -312,7 +312,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         it('should test onToggleChange with undefined profile', async () => {
             // Arrange
             component.learnerProfile.set(undefined);
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act
             await component.onToggleChange();
@@ -325,7 +325,7 @@ describe('FeedbackLearnerProfileComponent', () => {
         it('should test onToggleChange with null profile', async () => {
             // Arrange
             component.learnerProfile.set(null as any);
-            component.disabled = false;
+            component.disabled.set(false);
 
             // Act
             await component.onToggleChange();
@@ -337,11 +337,11 @@ describe('FeedbackLearnerProfileComponent', () => {
 
         it('should test component disabled state changes', () => {
             // Arrange & Act
-            component.disabled = false;
-            expect(component.disabled).toBeFalsy();
+            component.disabled.set(false);
+            expect(component.disabled()).toBeFalsy();
 
-            component.disabled = true;
-            expect(component.disabled).toBeTruthy();
+            component.disabled.set(true);
+            expect(component.disabled()).toBeTruthy();
         });
     });
 });

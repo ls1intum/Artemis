@@ -9,8 +9,8 @@ $gray-400: #ced4da;
 $gray-500: #adb5bd;
 $gray-600: #888;
 $gray-700: #444;
-$gray-800: #303030;
-$gray-900: #222;
+$gray-800: #22272e; /* cool-slate (h213 s12). Unifies the dark backdrop + $gray-800-derived surfaces with the navbar/module temperature */
+$gray-900: #1f242b; /* cool-slate (h213). Keeps gray-900-derived dark surfaces (text-exercise editor, Monaco suggest widget, link-item) on the slate family */
 $black: #000;
 
 $blue: #3e8acc;
@@ -25,6 +25,7 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+
 // On dark theme the primary is already on a dark surface; keep a slightly darker shade so that
 // the on-brand buttons remain crisp (contrast is driven mostly by lightness of --white here).
 $primary-dark: #2d6cae;
@@ -114,14 +115,19 @@ $table-striped-color: $body-color;
 $table-color: $body-color;
 
 // Global colors
-$artemis-dark: #353d47; // (not bootstrap)
+$artemis-dark: #353d47;
 $link-color: #3e8acc;
 
 // Border
 $border-color: lighten($body-bg, 10);
 
-// Base for dark spaces
-$neutral-dark: rgb(24, 26, 24); // (not bootstrap)
+/*
+ * Base for dark spaces — cool-slate (h214 s14 l10).
+ * This is the de-facto app-wide dark surface token (--module-bg, --card-bg, panels). Keeping it on the
+ * same hue as the navbar ($artemis-dark #353d47, h213) and varying only lightness via the lighten()
+ * steps below makes every dark surface one cohesive cool-slate family.
+ */
+$neutral-dark: #16191d;
 
 $neutral-dark-l-5: lighten($neutral-dark, 5%);
 $neutral-dark-l-10: lighten($neutral-dark, 10%);
@@ -202,7 +208,6 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #bbb;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -261,9 +266,6 @@ $fo-wrapper-background: $neutral-dark;
 $fo-container-box-icon-background: $neutral-dark-l-10;
 $fo-blue-font-color: #4188d3;
 $fo-box-overlay-background: $neutral-dark-l-5;
-
-// Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;
@@ -609,7 +611,7 @@ $apollon-grid: $neutral-dark-l-10;
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: darken($feedback-suggestions-primary, 50%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgb(182, 182, 182);
 $graph-grey: rgb(150, 150, 150);
 $graph-dark-blue: rgb(159, 186, 248);
@@ -619,6 +621,10 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
+
+// Chart text and grid line colors (consumed by chart.js via ChartColorService)
+$chart-text-color: #a0aabe;
+$chart-grid-color: #2f3646;
 
 // User-Management
 $user-management-background-color: rgba($white, 0.02);
@@ -642,6 +648,7 @@ $iris-label-color: $gray-500;
 $iris-accent-border-color: $gray-500;
 $iris-table-header-background: $neutral-dark-l-5;
 $iris-onboarding-backdrop: rgba($black, 0.5);
+$iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--black));
 
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
@@ -672,14 +679,14 @@ $calendar-day-badge-selected: $gray-700;
 $league-badge-bronze-color: #cd7f32;
 $league-badge-silver-color: #c0c0c0;
 $league-badge-gold-color: #ffd700;
-$league-badge-diamond-color: hsl(195, 60%, 60%);
-$league-badge-master-color: hsl(270, 60%, 60%);
+$league-badge-diamond-color: hsl(195deg, 60%, 60%);
+$league-badge-master-color: hsl(270deg, 60%, 60%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
 
 // Tutorial Groups
-$registration-suggestion-panel-bg: #18181b;
-$registration-suggestion-panel-selection-bg: #27272a;
+$registration-suggestion-panel-bg: $neutral-dark; /* track the slate surface family */
+$registration-suggestion-panel-selection-bg: $neutral-dark-l-10;
 
 // LLM Selection Popup
 $ai-modal-card-bg: $neutral-dark-l-10;

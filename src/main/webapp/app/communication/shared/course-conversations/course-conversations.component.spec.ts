@@ -99,7 +99,7 @@ examples.forEach((activeConversation) => {
                 breakpoints: { [Breakpoints.Handset]: false },
             });
 
-            queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
+            queryParamsSubject = new BehaviorSubject<Params>({});
 
             TestBed.configureTestingModule({
                 imports: [
@@ -223,14 +223,14 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
-            postsSubject = new BehaviorSubject([]);
+            postsSubject = new BehaviorSubject<Post[]>([]);
             vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
             vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
             setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');
             acceptCodeOfConductSpy = vi.spyOn(metisConversationService, 'acceptCodeOfConduct');
             vi.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             dialogService = TestBed.inject(DialogService);
-            component.sidebarConversations = [];
+            component.sidebarConversations.set([]);
 
             vi.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
                 {
@@ -273,10 +273,29 @@ examples.forEach((activeConversation) => {
 
         it('should have service set up', () => {
             fixture.detectChanges();
-            expect(component.isServiceSetUp).toBe(true);
-            expect(component.isLoading).toBe(false);
-            expect(component.conversationsOfUser).toHaveLength(1);
-            expect(component.activeConversation).toEqual(activeConversation);
+            expect(component.isServiceSetUp()).toBe(true);
+            expect(component.isLoading()).toBe(false);
+            expect(component.conversationsOfUser()).toHaveLength(1);
+            expect(component.activeConversation()).toEqual(activeConversation);
+        });
+
+        it('should store the highlight observers and disconnect them in ngOnDestroy', () => {
+            // Trigger both highlight helpers for elements that do not exist yet, so each creates and stores a MutationObserver.
+            component['scrollToAndHighlightPost'](999999);
+            component['scrollToAndHighlightReply'](999998);
+
+            const postObserver = component['highlightPostObserver'];
+            const replyObserver = component['highlightReplyObserver'];
+            expect(postObserver).toBeDefined();
+            expect(replyObserver).toBeDefined();
+
+            const postDisconnectSpy = vi.spyOn(postObserver!, 'disconnect');
+            const replyDisconnectSpy = vi.spyOn(replyObserver!, 'disconnect');
+
+            component.ngOnDestroy();
+
+            expect(postDisconnectSpy).toHaveBeenCalled();
+            expect(replyDisconnectSpy).toHaveBeenCalled();
         });
 
         describe('Dialog Opening', () => {
@@ -320,12 +339,12 @@ examples.forEach((activeConversation) => {
 
         it('should update thread in post', () => {
             fixture.detectChanges();
-            component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
+            component.postInThread.set({ id: 1, content: 'loremIpsum' } as Post);
             fixture.changeDetectorRef.detectChanges();
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
             vi.advanceTimersByTime(0);
-            expect(component.postInThread).toEqual(updatedPost);
+            expect(component.postInThread()).toEqual(updatedPost);
         });
 
         it('should set active conversation depending on the query param', () => {
@@ -383,22 +402,22 @@ examples.forEach((activeConversation) => {
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
             component.toggleSidebar();
-            expect(component.isCollapsed).toBe(true);
+            expect(component.isCollapsed()).toBe(true);
 
             component.toggleSidebar();
-            expect(component.isCollapsed).toBe(false);
+            expect(component.isCollapsed()).toBe(false);
         });
 
         it('should toggle isCollapsed when service emits corresponding event', () => {
             fixture.detectChanges();
             courseSidebarService.openSidebar();
-            expect(component.isCollapsed).toBe(true);
+            expect(component.isCollapsed()).toBe(true);
 
             courseSidebarService.closeSidebar();
-            expect(component.isCollapsed).toBe(false);
+            expect(component.isCollapsed()).toBe(false);
 
             courseSidebarService.toggleSidebar();
-            expect(component.isCollapsed).toBe(true);
+            expect(component.isCollapsed()).toBe(true);
         });
 
         it('should reload sidebar when reloadSidebar$ event is emitted', () => {
@@ -458,11 +477,11 @@ examples.forEach((activeConversation) => {
         });
 
         it('should toggle sidebar visibility based on isCollapsed property', () => {
-            component.isCollapsed = false;
+            component.isCollapsed.set(false);
             fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
 
-            component.isCollapsed = true;
+            component.isCollapsed.set(true);
             fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
         });
@@ -539,7 +558,7 @@ examples.forEach((activeConversation) => {
                 (metisConversationService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
 
                 component.prepareSidebarData();
-                const recentsGroup = component.accordionConversationGroups.recents;
+                const recentsGroup = component.accordionConversationGroups().recents;
                 expect(recentsGroup).toBeDefined();
                 expect(recentsGroup.entityData).toHaveLength(1);
                 expect(recentsGroup.entityData[0].isCurrent).toBe(true);
@@ -557,7 +576,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
+                expect(component['selectedSavedPostStatus']()).toBe(SavedPostStatus.ARCHIVED);
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
             });
 
@@ -582,7 +601,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['focusPostId']).toBe(456);
+                expect(component['focusPostId']()).toBe(456);
             });
 
             it('should handle openThreadOnFocus parameter', () => {
@@ -593,7 +612,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['openThreadOnFocus']).toBe('true');
+                expect(component['openThreadOnFocus']()).toBe('true');
             });
 
             it('should handle messageId parameter', () => {
@@ -604,7 +623,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['postInThread']).toEqual({ id: 789, conversation: { id: undefined } });
+                expect(component['postInThread']()).toEqual({ id: 789, conversation: { id: undefined } });
             });
 
             it('should clear postInThread when no messageId is present', () => {
@@ -613,7 +632,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['postInThread']).toBeUndefined();
+                expect(component['postInThread']()).toBeUndefined();
             });
 
             it('should handle multiple query parameters together', () => {
@@ -627,10 +646,10 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
-                expect(component['focusPostId']).toBe(456);
-                expect(component['openThreadOnFocus']).toBe('true');
-                expect(component['postInThread']).toEqual({ id: 789, conversation: { id: undefined } });
+                expect(component['selectedSavedPostStatus']()).toBe(SavedPostStatus.ARCHIVED);
+                expect(component['focusPostId']()).toBe(456);
+                expect(component['openThreadOnFocus']()).toBe('true');
+                expect(component['postInThread']()).toEqual({ id: 789, conversation: { id: undefined } });
             });
         });
 
@@ -648,8 +667,8 @@ examples.forEach((activeConversation) => {
 
                 component.onNavigateToPost(answerPost);
 
-                expect(component['focusPostId']).toBe(123);
-                expect(component['openThreadOnFocus']).toBe(true);
+                expect(component['focusPostId']()).toBe(123);
+                expect(component['openThreadOnFocus']()).toBe(true);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
             });
 
@@ -664,8 +683,8 @@ examples.forEach((activeConversation) => {
 
                 component.onNavigateToPost(questionPost);
 
-                expect(component['focusPostId']).toBe(123);
-                expect(component['openThreadOnFocus']).toBe(false);
+                expect(component['focusPostId']()).toBe(123);
+                expect(component['openThreadOnFocus']()).toBe(false);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
             });
 
@@ -711,7 +730,7 @@ examples.forEach((activeConversation) => {
             it('should handle numeric conversationId', () => {
                 fixture.detectChanges();
                 component.onConversationSelected(123);
-                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(component.selectedSavedPostStatus()).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
             });
 
@@ -719,10 +738,10 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 const validStatus = SavedPostStatus.ARCHIVED.toString().toLowerCase();
                 component.onConversationSelected(validStatus);
-                expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
-                expect(component.postInThread).toBeUndefined();
+                expect(component.selectedSavedPostStatus()).toBe(SavedPostStatus.ARCHIVED);
+                expect(component.postInThread()).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
-                expect(component.activeConversation).toBeUndefined();
+                expect(component.activeConversation()).toBeUndefined();
             });
 
             it('should ignore invalid string conversationId', () => {
@@ -731,42 +750,42 @@ examples.forEach((activeConversation) => {
                 setActiveConversationSpy.mockClear();
                 component.onConversationSelected(invalidStatus);
                 vi.advanceTimersByTime(0);
-                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(component.selectedSavedPostStatus()).toBeUndefined();
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
                 vi.clearAllTimers();
             });
 
             it('should toggle the value of showOnlyPinned', () => {
-                expect(component.showOnlyPinned).toBe(false);
+                expect(component.showOnlyPinned()).toBe(false);
 
                 component.togglePinnedView();
-                expect(component.showOnlyPinned).toBe(true);
+                expect(component.showOnlyPinned()).toBe(true);
 
                 component.togglePinnedView();
-                expect(component.showOnlyPinned).toBe(false);
+                expect(component.showOnlyPinned()).toBe(false);
             });
 
             it('should update pinnedCount when onPinnedCountChanged is called', () => {
                 const newPinnedCount = 5;
 
                 component.onPinnedCountChanged(newPinnedCount);
-                expect(component.pinnedCount).toBe(newPinnedCount);
+                expect(component.pinnedCount()).toBe(newPinnedCount);
             });
 
             it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
-                component.showOnlyPinned = true;
+                component.showOnlyPinned.set(true);
                 component.onPinnedCountChanged(0);
-                expect(component.showOnlyPinned).toBe(false);
+                expect(component.showOnlyPinned()).toBe(false);
             });
 
             it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
-                component.showOnlyPinned = true;
+                component.showOnlyPinned.set(true);
                 component.onPinnedCountChanged(5);
-                expect(component.showOnlyPinned).toBe(true);
+                expect(component.showOnlyPinned()).toBe(true);
 
-                component.showOnlyPinned = false;
+                component.showOnlyPinned.set(false);
                 component.onPinnedCountChanged(10);
-                expect(component.showOnlyPinned).toBe(false);
+                expect(component.showOnlyPinned()).toBe(false);
             });
         });
 
@@ -785,8 +804,8 @@ examples.forEach((activeConversation) => {
 
                 component.onTriggerNavigateToPost(post);
 
-                expect(component.focusPostId).toBeUndefined();
-                expect(component.openThreadOnFocus).toBeFalsy();
+                expect(component.focusPostId()).toBeUndefined();
+                expect(component.openThreadOnFocus()).toBeFalsy();
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
             });
 
@@ -798,7 +817,7 @@ examples.forEach((activeConversation) => {
                 } as Posting;
 
                 component.onTriggerNavigateToPost(post);
-                expect(component.openThreadOnFocus).toBe(true);
+                expect(component.openThreadOnFocus()).toBe(true);
             });
 
             it('should set openThreadOnFocus = false if postingType is POST (question post)', () => {
@@ -809,7 +828,7 @@ examples.forEach((activeConversation) => {
                 } as Posting;
 
                 component.onTriggerNavigateToPost(post);
-                expect(component.openThreadOnFocus).toBe(false);
+                expect(component.openThreadOnFocus()).toBe(false);
             });
 
             it('should call setActiveConversation if conversation.id is defined', () => {
@@ -846,8 +865,8 @@ examples.forEach((activeConversation) => {
 
                 component.onTriggerNavigateToPost(post);
 
-                expect(component.focusPostId).toBe(10);
-                expect(component.openThreadOnFocus).toBe(false);
+                expect(component.focusPostId()).toBe(10);
+                expect(component.openThreadOnFocus()).toBe(false);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
@@ -861,7 +880,7 @@ examples.forEach((activeConversation) => {
 
             it('should clear search config and restore previous conversation when X is clicked', () => {
                 const previousConversation = { id: 42, type: 'channel' } as ConversationDTO;
-                component.activeConversation = previousConversation;
+                component.activeConversation.set(previousConversation);
                 component.lastKnownConversationId = 42;
 
                 component.courseWideSearchConfig.searchTerm = 'test search';
@@ -919,8 +938,8 @@ examples.forEach((activeConversation) => {
                 expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
 
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
-                expect(component.activeConversation).toBeUndefined();
-                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(component.activeConversation()).toBeUndefined();
+                expect(component.selectedSavedPostStatus()).toBeUndefined();
                 expect(updateQueryParamsSpy).toHaveBeenCalled();
                 expect(courseWideSearchMock.onSearch).toHaveBeenCalled();
             });
@@ -937,7 +956,7 @@ examples.forEach((activeConversation) => {
 
             it('should save active conversation only once when search starts', () => {
                 const conversation = { id: 50, type: 'channel' } as ConversationDTO;
-                component.activeConversation = conversation;
+                component.activeConversation.set(conversation);
                 component.previousConversationBeforeSearch = undefined;
 
                 // First selection - should save
@@ -951,7 +970,7 @@ examples.forEach((activeConversation) => {
 
                 // Second selection - should NOT overwrite
                 const anotherConversation = { id: 60, type: 'channel' } as ConversationDTO;
-                component.activeConversation = anotherConversation;
+                component.activeConversation.set(anotherConversation);
 
                 component.onSelectionChange({
                     searchTerm: '',
@@ -964,7 +983,7 @@ examples.forEach((activeConversation) => {
 
             it('should not save conversation when no filters are active', () => {
                 const conversation = { id: 70, type: 'channel' } as ConversationDTO;
-                component.activeConversation = conversation;
+                component.activeConversation.set(conversation);
                 component.previousConversationBeforeSearch = undefined;
 
                 component.onSelectionChange({
@@ -984,6 +1003,14 @@ examples.forEach((activeConversation) => {
 
                 expect(closeSidebarSpy).toHaveBeenCalled();
             });
+        });
+
+        it('should update the page title signal via setPageTitle', () => {
+            expect(component.pageTitle()).toBe('');
+
+            component.setPageTitle('overview.communication');
+
+            expect(component.pageTitle()).toBe('overview.communication');
         });
     });
 });

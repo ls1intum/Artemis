@@ -35,19 +35,19 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.competencyToCreate.masteryThreshold = masteryThreshold;
         this.competencyToCreate.optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.competencyService
-            .create(this.competencyToCreate!, this.courseId)
+            .create(this.competencyToCreate, this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: () => {
                     // currently at /course-management/{courseId}/competency-management/create, going back to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

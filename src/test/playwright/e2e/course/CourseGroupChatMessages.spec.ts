@@ -91,6 +91,13 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
         test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Tutors should be able to add a user to group chat', async ({ login, courseMessages, page }) => {
+            // This test chains ~6 sequential multi-node UI operations (open conversation, open the
+            // add-users modal, search + select a user, submit, re-open the conversation, assert the
+            // member count). Each already waits/retries correctly, but under heavy multi-node load
+            // their combined worst-case wall-clock occasionally exceeds the 60s default budget (the
+            // user search and conversation activation are the slow contributors). Triple the budget
+            // so the happy path has headroom instead of racing the test deadline mid-operation.
+            test.slow();
             await login(tutor);
             await courseMessages.openConversation(course2.id!, groupChat.id!);
             await courseMessages.addUserToGroupChatButton();
@@ -103,6 +110,9 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
         });
 
         test('Students should be able to add a user to group chat', async ({ login, courseMessages, page }) => {
+            // Same multi-node operation chain as the "Tutors" case above — triple the default budget so
+            // the cumulative worst-case latency of the sequential steps does not race the test deadline.
+            test.slow();
             await login(studentTwo);
             await courseMessages.openConversation(course2.id!, groupChat.id!);
             await courseMessages.addUserToGroupChatButton();
@@ -179,7 +189,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Edit Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             const newMessage = 'Edited Text';
             await courseMessages.editMessage(message.id!, newMessage);
@@ -191,7 +201,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Delete Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible({ timeout: 20000 });

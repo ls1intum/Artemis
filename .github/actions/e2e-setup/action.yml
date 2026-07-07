@@ -3,42 +3,31 @@ description: 'Common setup steps for E2E test jobs'
 
 inputs:
   workflow-run-id:
-    description: 'The triggering workflow run ID'
-    required: true
-  workflow-head-branch:
-    description: 'The branch being tested'
-    required: true
-  workflow-head-sha:
-    description: 'The commit SHA'
+    description: 'Run ID that holds the `docker-tag` artifact (the umbrella run id under workflow_call).'
     required: true
   github-token:
-    description: 'Token for downloading artifacts'
+    description: 'Token for the cross-job artifact download.'
     required: true
-  artifact-name-suffix:
-    description: 'Optional suffix for workflow context artifact (e.g., "phase1")'
-    required: false
-    default: ''
   test-notice:
-    description: 'Optional notice message about test selection'
+    description: 'Optional human-readable notice describing the test selection (logged for the run).'
     required: false
     default: ''
 
 runs:
   using: 'composite'
   steps:
-    - name: Log triggering workflow info
-      shell: bash
-      run: |
-        echo "TRIGGERING_WORKFLOW_RUN_ID=${{ inputs.workflow-run-id }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ inputs.workflow-head-branch }}"
-        echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ inputs.workflow-head-sha }}"
-
     - name: Add link to triggering workflow
       shell: bash
+      env:
+        RUN_ID: ${{ inputs.workflow-run-id }}
+        REPO: ${{ github.repository }}
+        # `test-notice` is composed from determine-relevant-tests.sh output; route through
+        # env to keep its content out of shell-injection paths.
+        NOTICE: ${{ inputs.test-notice }}
       run: |
-        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ inputs.workflow-run-id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}"
-        if [ -n "${{ inputs.test-notice }}" ]; then
-          echo "::notice title=Test Selection::${{ inputs.test-notice }}"
+        echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #$RUN_ID - View it at https://github.com/$REPO/actions/runs/$RUN_ID"
+        if [ -n "$NOTICE" ]; then
+          echo "::notice title=Test Selection::$NOTICE"
         fi
 
     - name: Download Docker tag
@@ -53,18 +42,21 @@ runs:
       run: |
         if [ -f "docker-tag.txt" ]; then
           ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
-          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+          # Defense-in-depth: the tag is a machine-generated docker/metadata-action slug, but it
+          # flows into $GITHUB_ENV and a later `docker pull`, so reject anything outside the Docker
+          # tag charset before trusting it — matching the release-tag validation in ci-build.yml.
+          case "$ARTEMIS_DOCKER_TAG" in
+            ""|*[!A-Za-z0-9._-]*)
+              echo "::error::Refusing invalid Docker tag from build artifact: '${ARTEMIS_DOCKER_TAG}'"
+              exit 1
+              ;;
+          esac
+          echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> "$GITHUB_ENV"
           echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
         else
           echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
           exit 1
         fi
-
-    - name: Make scripts executable
-      shell: bash
-      run: |
-        chmod +x .ci/E2E-tests/cleanup.sh
-        chmod +x .ci/E2E-tests/execute.sh
 
     - name: Run cleanup script (before E2E)
       shell: bash
@@ -73,10 +65,8 @@ runs:
     - name: Clean old test results
       shell: bash
       run: |
-        echo "Cleaning up old test results from previous runs..."
-        rm -rf src/test/playwright/test-reports/*.xml || true
-        rm -rf src/test/playwright/test-reports/monocart-report-* || true
-        rm -rf src/test/playwright/test-reports/client-coverage || true
-        rm -f src/test/playwright/test-reports/.reporter-failed || true
-        ls -la src/test/playwright/test-reports/ 2>/dev/null || echo "test-reports directory does not exist yet"
-        echo "Test results cleanup complete"
+        # `rm -rf`/`rm -f` of non-existent paths exit 0; no fallback needed.
+        rm -rf src/test/playwright/test-reports/*.xml \
+               src/test/playwright/test-reports/monocart-report-* \
+               src/test/playwright/test-reports/client-coverage \
+               src/test/playwright/test-reports/.reporter-failed

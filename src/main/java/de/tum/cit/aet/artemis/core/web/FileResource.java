@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
-import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -457,7 +456,7 @@ public class FileResource {
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
         List<Attachment> lectureAttachments = api.findAllByLectureId(lectureId);
-        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(getBaseName(attachmentName))).findAny()
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getName().equals(FilenameUtils.getBaseName(attachmentName))).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentName));
 
         // get the course for a lecture attachment
@@ -696,7 +695,7 @@ public class FileResource {
      * @return derived download filename
      */
     private static Optional<String> retrieveDownloadFilename(Attachment attachment) {
-        return Optional.of(attachment.getName() + "." + getExtension(attachment.getLink()));
+        return Optional.of(attachment.getName() + "." + FilenameUtils.getExtension(attachment.getLink()));
     }
 
     /**

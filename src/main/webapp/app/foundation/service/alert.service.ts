@@ -1,4 +1,4 @@
-import { Injectable, NgZone, SecurityContext, inject } from '@angular/core';
+import { Injectable, SecurityContext, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -10,21 +10,24 @@ import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriang
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-export class AlertType {
-    public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
-    public static readonly DANGER = new AlertType(faExclamationCircle, 'danger', 'btn-danger');
-    public static readonly WARNING = new AlertType(faExclamationTriangle, 'warning', 'btn-warning');
-    public static readonly INFO = new AlertType(faInfoCircle, 'info', 'btn-info');
+/** PrimeNG `p-button` severities used by alert action buttons. */
+export type AlertButtonSeverity = 'success' | 'danger' | 'warn' | 'info';
 
-    private constructor(icon: IconDefinition, containerClassName: string, buttonClassName: string) {
+export class AlertType {
+    public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'success');
+    public static readonly DANGER = new AlertType(faExclamationCircle, 'danger', 'danger');
+    public static readonly WARNING = new AlertType(faExclamationTriangle, 'warning', 'warn');
+    public static readonly INFO = new AlertType(faInfoCircle, 'info', 'info');
+
+    private constructor(icon: IconDefinition, containerClassName: string, buttonSeverity: AlertButtonSeverity) {
         this.icon = icon;
         this.containerClassName = containerClassName;
-        this.buttonClassName = buttonClassName;
+        this.buttonSeverity = buttonSeverity;
     }
 
     public readonly icon: IconDefinition;
     public readonly containerClassName: string;
-    public readonly buttonClassName: string;
+    public readonly buttonSeverity: AlertButtonSeverity;
 }
 
 interface AlertBase {
@@ -58,10 +61,11 @@ const DEFAULT_DISMISSIBLE = true;
 })
 export class AlertService {
     private sanitizer = inject(DomSanitizer);
-    private ngZone = inject(NgZone);
     private translateService = inject(TranslateService);
 
-    private alerts: AlertInternal[] = [];
+    // Signal-backed so the alert overlay re-renders under zoneless change detection when alerts are
+    // added or auto-dismissed (e.g. from the setTimeout below or async HTTP error handlers).
+    readonly alerts = signal<AlertInternal[]>([]);
 
     errorListener: Subscription;
     httpErrorListener: Subscription;
@@ -77,8 +81,8 @@ export class AlertService {
             this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);
         });
 
-        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
-            const httpErrorResponse: HttpErrorResponse = response.content;
+        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: EventWithContent<unknown> | string) => {
+            const httpErrorResponse = (response as EventWithContent<HttpErrorResponse>).content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
@@ -139,11 +143,11 @@ export class AlertService {
     }
 
     closeAll(): void {
-        [...this.alerts].forEach((alert) => alert.close());
+        [...this.alerts()].forEach((alert) => alert.close());
     }
 
     get(): Alert[] {
-        return this.alerts;
+        return this.alerts();
     }
 
     /**
@@ -162,7 +166,16 @@ export class AlertService {
             onClose: alert.onClose,
             dismissible: alert.dismissible,
             isOpen: false,
-        } as AlertInternal;
+            close: () => {
+                alertInternal.isOpen = false;
+                if (this.alerts().includes(alertInternal)) {
+                    this.alerts.update((alerts) => alerts.filter((existingAlert) => existingAlert !== alertInternal));
+                    if (alertInternal.onClose) {
+                        alertInternal.onClose(alertInternal);
+                    }
+                }
+            },
+        };
 
         if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
             // in case a translation key is defined, we use it to create the message
@@ -195,16 +208,6 @@ export class AlertService {
         alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
         alertInternal.timeout = alertInternal.timeout ?? DEFAULT_TIMEOUT;
         alertInternal.dismissible = alertInternal.dismissible ?? DEFAULT_DISMISSIBLE;
-        alertInternal.close = () => {
-            alertInternal.isOpen = false;
-            const alertIndex = this.alerts.indexOf(alertInternal);
-            if (alertIndex >= 0) {
-                this.alerts.splice(alertIndex, 1);
-                if (alertInternal.onClose) {
-                    alertInternal.onClose(alertInternal);
-                }
-            }
-        };
         if (alertInternal.action) {
             alertInternal.action = {
                 label: this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '',
@@ -219,25 +222,19 @@ export class AlertService {
             // Due to duplicate alerts spawned by the global http error interceptor and some components,
             // we prevent more than one alert with the same content to be spawned within 50 milliseconds.
             // If such an alert already exists, we return the old one instead.
-            const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts.find(
-                (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt!, 'ms')) <= 50,
+            const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts().find(
+                (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt, 'ms')) <= 50,
             );
             if (olderAlertWithIdenticalContent) {
                 return olderAlertWithIdenticalContent;
             }
 
-            this.alerts.unshift(alertInternal);
+            this.alerts.update((alerts) => [alertInternal, ...alerts]);
 
             if (alertInternal.timeout > 0) {
-                // Workaround protractor waiting for setTimeout.
-                // Reference https://www.protractortest.org/#/timeouts
-                this.ngZone.runOutsideAngular(() => {
-                    setTimeout(() => {
-                        this.ngZone.run(() => {
-                            alertInternal.close();
-                        });
-                    }, alertInternal.timeout);
-                });
+                setTimeout(() => {
+                    alertInternal.close();
+                }, alertInternal.timeout);
             }
         }
 
@@ -276,9 +273,11 @@ export class AlertService {
         });
     }
 
-    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+        // Some callers forward a server error field that is typed `any`, so it may not actually be a string at
+        // runtime; coerce defensively before display.
         if (message && typeof message !== 'string') {
-            message = '' + message;
+            message = String(message);
         }
         this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
     }

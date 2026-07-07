@@ -34,10 +34,10 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     readonly tutorialGroupsConfiguration = input.required<TutorialGroupsConfiguration>();
     readonly course = input.required<Course>();
 
-    isLoading = false;
+    readonly isLoading = signal<boolean>(false);
 
     ngUnsubscribe = new Subject<void>();
-    formData: TutorialGroupFreePeriodFormData;
+    readonly formData = signal<TutorialGroupFreePeriodFormData>(undefined!);
 
     /**
      * Opens the dialog and sets up the form data based on the tutorial group free period, course, and tutorial groups configuration.
@@ -56,7 +56,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod);
         const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(freePeriod);
 
-        this.formData = {
+        const formData: TutorialGroupFreePeriodFormData = {
             startDate: freePeriod.start?.tz(courseValue.timeZone).toDate(),
             endDate: isFreePeriod ? freePeriod.end?.tz(courseValue.timeZone).toDate() : undefined,
             startTime: isFreePeriodWithinDay ? freePeriod.start?.tz(courseValue.timeZone).toDate() : undefined,
@@ -67,14 +67,15 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         if (isFreePeriodWithinDay) {
             const tutorialGroupFreePeriodStart = freePeriod.start;
             const tutorialGroupFreePeriodEnd = freePeriod.end;
-            if (this.formData.startTime && tutorialGroupFreePeriodStart) {
-                this.formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(courseValue.timeZone).hour());
+            if (formData.startTime && tutorialGroupFreePeriodStart) {
+                formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(courseValue.timeZone).hour());
             }
-            if (this.formData.endTime && tutorialGroupFreePeriodEnd) {
-                this.formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(courseValue.timeZone).hour());
+            if (formData.endTime && tutorialGroupFreePeriodEnd) {
+                formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(courseValue.timeZone).hour());
             }
         }
 
+        this.formData.set(formData);
         this.dialogVisible.set(true);
     }
 
@@ -90,12 +91,12 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         tutorialGroupFreePeriodDto.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         tutorialGroupFreePeriodDto.reason = reason;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.tutorialGroupFreePeriodService
             .update(this.course().id!, this.tutorialGroupsConfiguration().id!, this.tutorialGroupFreePeriod().id!, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )

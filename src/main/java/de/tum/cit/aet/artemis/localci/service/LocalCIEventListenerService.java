@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEn
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryUpdatedEvent;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapListener;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -289,7 +290,7 @@ public class LocalCIEventListenerService {
         }
         int failures = buildAgentInformation.buildAgentDetails() != null ? buildAgentInformation.buildAgentDetails().consecutiveBuildFailures()
                 : buildAgentInformation.pauseAfterConsecutiveBuildFailures();
-        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name(), failures);
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(MailRecipientDTO.from(admin.get()), buildAgentInformation.buildAgent().name(), failures);
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,

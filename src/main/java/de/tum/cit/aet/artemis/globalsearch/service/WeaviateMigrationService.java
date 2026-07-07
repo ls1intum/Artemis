@@ -32,15 +32,16 @@ import io.weaviate.client6.v1.api.collections.VectorConfig;
  * The service distinguishes three startup scenarios:
  * <ol>
  * <li><b>Fresh install</b> — no version collection and no legacy collections exist →
- * version is set to {@link #LATEST_VERSION}, no migrations run.</li>
+ * version is set to {@link #latestVersion}, no migrations run.</li>
  * <li><b>Upgrade from v0</b> — no version collection but the legacy {@code Exercises}
  * collection exists → version starts at 0, all migrations run.</li>
  * <li><b>Upgrade from vN</b> — version collection exists → stored version is read,
  * only migrations with {@code targetVersion > storedVersion} run.</li>
  * </ol>
  * <p>
- * Called by {@link WeaviateService#initializeCollections()} after all data collections
- * have been created so migration code can safely write to the target collections.
+ * Invoked by {@link WeaviateMigrationStartupService} on a background thread on the scheduling node, after all data
+ * collections have been created by {@link WeaviateService#initializeCollections()}, so migration code can safely
+ * write to the target collections.
  */
 @Lazy
 @Service
@@ -66,15 +67,16 @@ public class WeaviateMigrationService {
     private static final String VERSION_OBJECT_UUID = "00000000-0000-0000-0000-000000000001";
 
     /**
-     * All registered migrations in ascending target-version order.
-     * To add a new migration, append it to this list.
+     * All registered migrations in ascending target-version order, built in the constructor so each migration can be
+     * wired with its dependencies (the V0→V1 migration loads exercises from the database). To add a new migration,
+     * append it to this list.
      */
-    static final List<WeaviateMigration> MIGRATIONS = List.of(new V0ToV1Migration());
+    private final List<WeaviateMigration> migrations;
 
     /**
-     * The schema version that corresponds to the current codebase.
+     * The schema version that corresponds to the current codebase ({@code migrations.getLast().targetVersion()}).
      */
-    static final int LATEST_VERSION = MIGRATIONS.getLast().targetVersion();
+    private final int latestVersion;
 
     private final WeaviateClient client;
 
@@ -88,18 +90,22 @@ public class WeaviateMigrationService {
      *
      * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
      */
-    public WeaviateMigrationService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment) {
+    public WeaviateMigrationService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
+            ExerciseSearchableEntityLoadService exerciseLoadService) {
         this.client = clientOptional.orElse(null);
         boolean isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
         }
         this.collectionPrefix = properties.collectionPrefix();
+        this.migrations = List.of(new V0ToV1Migration(exerciseLoadService));
+        this.latestVersion = migrations.getLast().targetVersion();
     }
 
     /**
-     * Runs all pending migrations. Must be called after all data collections have been
-     * created by {@link WeaviateService#initializeCollections()}.
+     * Runs all pending migrations. Must be called after all data collections have been created by
+     * {@link WeaviateService#initializeCollections()}. Invoked from {@link WeaviateMigrationStartupService} on a
+     * background thread on the scheduling node.
      *
      * @throws WeaviateException if any migration fails (non-recoverable)
      */
@@ -108,15 +114,15 @@ public class WeaviateMigrationService {
             ensureVersionCollectionExists();
             int currentVersion = detectCurrentVersion();
 
-            if (currentVersion >= LATEST_VERSION) {
+            if (currentVersion >= latestVersion) {
                 log.debug("Weaviate schema is up-to-date (version {})", currentVersion);
                 return;
             }
 
-            int pendingCount = (int) MIGRATIONS.stream().filter(migration -> migration.targetVersion() > currentVersion).count();
-            log.info("Weaviate schema version is {}, latest is {}. Running {} pending migration(s)...", currentVersion, LATEST_VERSION, pendingCount);
+            int pendingCount = (int) migrations.stream().filter(migration -> migration.targetVersion() > currentVersion).count();
+            log.info("Weaviate schema version is {}, latest is {}. Running {} pending migration(s)...", currentVersion, latestVersion, pendingCount);
 
-            for (WeaviateMigration migration : MIGRATIONS) {
+            for (WeaviateMigration migration : migrations) {
                 if (migration.targetVersion() <= currentVersion) {
                     continue;
                 }
@@ -126,7 +132,7 @@ public class WeaviateMigrationService {
                 log.info("Migration v{} → v{} completed successfully", migration.targetVersion() - 1, migration.targetVersion());
             }
 
-            log.info("All Weaviate migrations completed. Schema is now at version {}", LATEST_VERSION);
+            log.info("All Weaviate migrations completed. Schema is now at version {}", latestVersion);
         }
         catch (Exception exception) {
             log.error("Weaviate migration failed: {}. Search may return incomplete results until entities are re-indexed.", exception.getMessage(), exception);
@@ -139,7 +145,7 @@ public class WeaviateMigrationService {
      * <ul>
      * <li>If the version collection has an object → return the stored version.</li>
      * <li>If empty and a legacy v0 collection exists → return 0 (needs migration).</li>
-     * <li>If empty and no legacy collections → fresh install, store and return {@link #LATEST_VERSION}.</li>
+     * <li>If empty and no legacy collections → fresh install, store and return {@link #latestVersion}.</li>
      * </ul>
      */
     private int detectCurrentVersion() throws IOException {
@@ -160,9 +166,9 @@ public class WeaviateMigrationService {
             return 0;
         }
 
-        log.info("Fresh Weaviate installation detected, setting schema version to {}", LATEST_VERSION);
-        storeVersion(LATEST_VERSION);
-        return LATEST_VERSION;
+        log.info("Fresh Weaviate installation detected, setting schema version to {}", latestVersion);
+        storeVersion(latestVersion);
+        return latestVersion;
     }
 
     /**

@@ -35,11 +35,11 @@
         [showEditorInstructions]="showEditorInstructions()"
         [isProblemStatementVisible]="isProblemStatementVisible()"
         [unsavedFiles]="unsavedFiles | keys"
-        [errorFiles]="errorFiles"
+        [errorFiles]="errorFiles()"
         [editorState]="editorState"
         [isTutorAssessment]="isTutorAssessment()"
         [highlightFileChanges]="highlightFileChanges()"
-        [fileBadges]="fileBadges"
+        [fileBadges]="fileBadges()"
         [allowHiddenFiles]="allowHiddenFiles()"
         [fileSyncService]="fileSyncService()"
         [showHeader]="showNavbar()"
@@ -54,7 +54,6 @@
         <jhi-code-editor-instructions
             [hidden]="!shouldShowProblemStatement()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
             [disableCollapse]="true"
             [isEditor]="true"
@@ -78,7 +77,7 @@
             [selectedRepository]="selectedRepository()"
             [selectedAuxiliaryRepositoryId]="selectedAuxiliaryRepositoryId()"
             [fileSyncService]="fileSyncService()"
-            [buildAnnotations]="annotations"
+            [buildAnnotations]="annotations()"
             [sessionId]="participation()?.id ?? 'test'"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
             (onFileContentChange)="onFileContentChange($event)"
@@ -98,7 +97,6 @@
         <jhi-code-editor-instructions
             [class.d-none]="!showEditorInstructions()"
             (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
             [isAssessmentMode]="isTutorAssessment()"
         >
             <ng-content select="[editorSidebar]" />

@@ -3,15 +3,15 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (courseContext.isAtLeastInstructor) {
+                    @if (courseContext()?.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises())" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises())" [ngModel]="allChecked()" />
                         </th>
                     }
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (courseContext.presentationScore) {
+                    @if (courseContext()?.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -24,14 +24,14 @@
             <tbody class="markdown-preview">
                 @for (fileUploadExercise of filteredFileUploadExercises(); track trackId($index, fileUploadExercise)) {
                     <tr id="exercise-card-{{ fileUploadExercise.id }}">
-                        @if (courseContext.isAtLeastInstructor) {
+                        @if (courseContext()?.isAtLeastInstructor) {
                             <td class="d-md-table-cell">
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(fileUploadExercise)" [ngModel]="isExerciseSelected(fileUploadExercise)" />
                             </td>
                         }
                         <td>
                             @if (fileUploadExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
+                                <a [routerLink]="['/course-management', courseId(), 'file-upload-exercises', fileUploadExercise.id]">
                                     {{ fileUploadExercise.title }}
                                 </a>
                             } @else {
@@ -81,7 +81,7 @@
                                 }
                             </div>
                         </td>
-                        @if (courseContext.presentationScore) {
+                        @if (courseContext()?.presentationScore) {
                             <td>{{ fileUploadExercise.presentationScoreEnabled }}</td>
                         }
                         <td>{{ fileUploadExercise.filePattern }}</td>
@@ -90,7 +90,7 @@
                             <div class="btn-group flex-btn-group-container">
                                 @if (fileUploadExercise.isAtLeastTutor) {
                                     <a
-                                        [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'participations']"
+                                        [routerLink]="['/course-management', courseId(), 'file-upload-exercises', fileUploadExercise.id, 'participations']"
                                         class="btn btn-primary btn-sm me-1"
                                     >
                                         <fa-icon [icon]="farListAlt" />
@@ -98,19 +98,22 @@
                                     </a>
                                 }
                                 @if (fileUploadExercise.isAtLeastTutor) {
-                                    <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'scores']" class="btn btn-info btn-sm me-1">
+                                    <a [routerLink]="['/course-management', courseId(), 'file-upload-exercises', fileUploadExercise.id, 'scores']" class="btn btn-info btn-sm me-1">
                                         <fa-icon [icon]="faTable" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
                                     </a>
                                 }
                                 @if (fileUploadExercise.teamMode && fileUploadExercise.isAtLeastTutor) {
-                                    <a [routerLink]="['/course-management', courseId, 'exercises', fileUploadExercise.id, 'teams']" class="btn btn-primary btn-sm me-1">
+                                    <a [routerLink]="['/course-management', courseId(), 'exercises', fileUploadExercise.id, 'teams']" class="btn btn-primary btn-sm me-1">
                                         <fa-icon [icon]="faUsers" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams"></span>
                                     </a>
                                 }
                                 @if (fileUploadExercise.isAtLeastEditor) {
-                                    <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id, 'edit']" class="btn btn-warning btn-sm me-1">
+                                    <a
+                                        [routerLink]="['/course-management', courseId(), 'file-upload-exercises', fileUploadExercise.id, 'edit']"
+                                        class="btn btn-warning btn-sm me-1"
+                                    >
                                         <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
@@ -125,8 +128,8 @@
                                         entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                         [fetchEntitySummary]="fetchExerciseDeletionSummary(fileUploadExercise)"
                                         [translateValues]="{
-                                            courseTitle: courseContext.title,
-                                            courseType: courseContext.testCourse
+                                            courseTitle: courseContext()?.title,
+                                            courseType: courseContext()?.testCourse
                                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                         }"
@@ -142,20 +145,20 @@
                 }
             </tbody>
         </table>
-        @if (selectedExercises.length > 0) {
+        @if (selectedExercises().length > 0) {
             <div>
-                @if (courseContext.isAtLeastInstructor) {
+                @if (courseContext()?.isAtLeastInstructor) {
                     <button
                         jhiDeleteButton
                         [entityTitle]="'Delete All File Upload Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
                         [translateValues]="{
-                            courseTitle: courseContext.title,
-                            courseType: courseContext.testCourse
+                            courseTitle: courseContext()?.title,
+                            courseType: courseContext()?.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"
-                        (delete)="deleteMultipleExercises(selectedExercises, fileUploadExerciseService)"
+                        (delete)="deleteMultipleExercises(selectedExercises(), fileUploadExerciseService)"
                         [dialogError]="dialogError$"
                         id="delete-all-file-upload"
                         class="mb-1"

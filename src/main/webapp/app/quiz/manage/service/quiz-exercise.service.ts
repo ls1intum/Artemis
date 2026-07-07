@@ -9,7 +9,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { FileService } from 'app/foundation/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
@@ -35,7 +35,7 @@ export class QuizExerciseService {
      */
     create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = convertQuizExerciseToCreationDTO(copy);
 
@@ -71,7 +71,7 @@ export class QuizExerciseService {
     import(adaptedSourceQuizExercise: QuizExercise, files: Map<string, Blob>) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const formData = new FormData();
         formData.append('exercise', objectToJsonBlob(copy));
@@ -91,10 +91,10 @@ export class QuizExerciseService {
      * @param files the files that should be uploaded
      * @param req Additional parameters that should be passed to the server when updating the exercise
      */
-    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: any): Observable<EntityResponseType> {
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: { notificationText?: string }): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = toQuizExerciseUpdateDTO(copy);
         const formData = new FormData();
@@ -258,7 +258,7 @@ export class QuizExerciseService {
      * @param fileName name of the output zip file
      */
     exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
-        const zip: JSZip = new JSZip();
+        const zip: ZipBuilder = new ZipBuilder();
         const filePromises: Promise<void | File>[] = [];
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
@@ -272,7 +272,7 @@ export class QuizExerciseService {
                 if ((question as DragAndDropQuestion).dragItems) {
                     (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            const filePath = dragItem.pictureFilePath!;
+                            const filePath = dragItem.pictureFilePath;
                             const fileNameExtension = filePath.split('.').last();
                             filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, filePath));
                         }
@@ -300,10 +300,10 @@ export class QuizExerciseService {
     /**
      * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
      * @param fileName the name of the file to be zipped
-     * @param zip a JSZip instance
+     * @param zip a ZipBuilder instance
      * @param filePath the internal path of the file to be fetched
      */
-    async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
+    async fetchFilePromise(fileName: string, zip: ZipBuilder, filePath: string) {
         return this.fileService
             .getFile(filePath)
             .then((fileResult) => {

@@ -7,7 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -228,23 +227,23 @@ public class BuildJobGitService extends AbstractGitService {
 
                 @Override
                 public List<String> getValues(String key) {
-                    return Collections.emptyList();
+                    return List.of();
                 }
 
                 @Override
                 public Map<String, String> getOptions() {
                     log.debug("getOptions: {}:{}", hostName, port);
                     if (hostName.equals(gitUri.getHost())) {
-                        return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                        return Map.of(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
                     }
                     else {
-                        return Collections.emptyMap();
+                        return Map.of();
                     }
                 }
 
                 @Override
                 public Map<String, List<String>> getMultiValuedOptions() {
-                    return Collections.emptyMap();
+                    return Map.of();
                 }
             };
         }

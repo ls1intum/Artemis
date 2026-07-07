@@ -27,7 +27,10 @@
                             @for (fieldSeparator of CsvFieldSeparator | keyvalue; track fieldSeparator) {
                                 <div
                                     class="btn"
-                                    [ngClass]="{ 'btn-primary': options.fieldSeparator === fieldSeparator.value, 'btn-default': options.fieldSeparator !== fieldSeparator.value }"
+                                    [ngClass]="{
+                                        'btn-primary': options().fieldSeparator === fieldSeparator.value,
+                                        'btn-default': options().fieldSeparator !== fieldSeparator.value,
+                                    }"
                                     (click)="setCsvFieldSeparator(fieldSeparator.value)"
                                 >
                                     {{ 'export.csvFile.fieldSeparator.' + fieldSeparator.key.toLowerCase() | artemisTranslate }}
@@ -43,7 +46,7 @@
                             @for (quoteString of CsvQuoteStrings | keyvalue; track quoteString) {
                                 <div
                                     class="btn"
-                                    [ngClass]="{ 'btn-primary': options.quoteCharacter === quoteString.value, 'btn-default': options.quoteCharacter !== quoteString.value }"
+                                    [ngClass]="{ 'btn-primary': options().quoteCharacter === quoteString.value, 'btn-default': options().quoteCharacter !== quoteString.value }"
                                     (click)="setCsvQuoteString(quoteString.value)"
                                 >
                                     {{ 'export.csvFile.quoteStrings.' + quoteString.key.toLowerCase() | artemisTranslate }}
@@ -59,7 +62,7 @@
                             @for (separator of CsvDecimalSeparator | keyvalue; track separator) {
                                 <div
                                     class="btn"
-                                    [ngClass]="{ 'btn-primary': options.decimalSeparator === separator.value, 'btn-default': options.decimalSeparator !== separator.value }"
+                                    [ngClass]="{ 'btn-primary': options().decimalSeparator === separator.value, 'btn-default': options().decimalSeparator !== separator.value }"
                                     (click)="setCsvDecimalSeparator(separator.value)"
                                 >
                                     {{ 'export.csvFile.decimalSeparator.' + separator.key.toLowerCase() | artemisTranslate }}

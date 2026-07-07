@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, model, untracked } from '@angular/core';
+import { Component, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
@@ -20,8 +20,8 @@ export class CoursePrerequisitesModalComponent {
     readonly visible = model<boolean>(false);
     readonly courseId = input.required<number>();
 
-    isLoading = false;
-    prerequisites: Prerequisite[] = [];
+    readonly isLoading = signal(false);
+    readonly prerequisites = signal<Prerequisite[]>([]);
 
     constructor() {
         effect(() => {
@@ -36,17 +36,17 @@ export class CoursePrerequisitesModalComponent {
      * Displays an error alert if it fails
      */
     loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.prerequisiteService
             .getAllForCourse(this.courseId())
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (prerequisites) => {
-                    this.prerequisites = prerequisites.body ?? [];
+                    this.prerequisites.set(prerequisites.body ?? []);
                 },
                 error: (error: string) => {
                     this.alertService.error(error);

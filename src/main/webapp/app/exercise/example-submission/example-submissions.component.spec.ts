@@ -79,12 +79,12 @@ describe('Example Submission Component', () => {
     it('should initialize the component', () => {
         component.ngOnInit();
 
-        expect(component.exercise).toBeDefined();
+        expect(component.exercise()).toBeDefined();
     });
 
     it('should delete an example submission', () => {
-        component.exercise = exercise;
-        component.createdExampleAssessment = [false, false];
+        component.exercise.set(exercise);
+        component.createdExampleAssessment.set([false, false]);
         const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteExampleSubmission(0);
@@ -94,8 +94,8 @@ describe('Example Submission Component', () => {
     });
 
     it('should catch an error on delete', () => {
-        component.exercise = exercise;
-        component.createdExampleAssessment = [false, false];
+        component.exercise.set(exercise);
+        component.createdExampleAssessment.set([false, false]);
         vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(throwError(() => ({ status: 500 })));
 
         const alertServiceSpy = vi.spyOn(alertService, 'error');
@@ -117,15 +117,15 @@ describe('Example Submission Component', () => {
 
         const getSubmissionSizeSpy = vi.spyOn(exampleSubmissionService, 'getSubmissionSize');
 
-        component.exercise = exercise;
+        component.exercise.set(exercise);
         component.ngOnInit();
-        expect(component.exercise.exampleSubmissions).toBeDefined();
-        expect(component.exercise.exampleSubmissions![0].submission?.submissionSize).toBe(2);
+        expect(component.exercise().exampleSubmissions).toBeDefined();
+        expect(component.exercise().exampleSubmissions![0].submission?.submissionSize).toBe(2);
         expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
     });
 
     it('should not import when the import dialog closes without a submission', () => {
-        component.exercise = exercise;
+        component.exercise.set(exercise);
         const importStub = vi.spyOn(exampleSubmissionService, 'import').mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.openImportModal();
@@ -136,7 +136,7 @@ describe('Example Submission Component', () => {
     });
 
     it('should close the import dialog on component destroy', () => {
-        component.exercise = exercise;
+        component.exercise.set(exercise);
 
         component.openImportModal();
         component.ngOnDestroy();

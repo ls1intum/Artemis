@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -409,7 +408,7 @@ public class CourseCompetencyService {
                 lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
             }
             else {
-                lectureUnit.setCompletedUsers(Collections.emptySet());
+                lectureUnit.setCompletedUsers(Set.of());
             }
         });
 
@@ -433,7 +432,7 @@ public class CourseCompetencyService {
                 competency.setUserProgress(Set.of(progress.get(competency.getId())));
             }
             else {
-                competency.setUserProgress(Collections.emptySet());
+                competency.setUserProgress(Set.of());
             }
         });
 

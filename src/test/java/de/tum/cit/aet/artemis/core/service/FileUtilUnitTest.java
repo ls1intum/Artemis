@@ -167,7 +167,7 @@ class FileUtilUnitTest {
     void replacePlaceHolder() throws IOException {
         copyFile("pom.xml", "pom.xml");
         File pomXml = exportTestRootPath.resolve("pom.xml").toFile();
-        String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+        String fileContent = Files.readString(pomXml.toPath(), Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
 
@@ -175,7 +175,7 @@ class FileUtilUnitTest {
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
         FileUtil.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements);
-        fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+        fileContent = Files.readString(pomXml.toPath(), Charset.defaultCharset());
 
         assertThat(fileContent).doesNotContain("${exerciseName}").contains("SomeCoolExerciseName");
     }
@@ -184,7 +184,7 @@ class FileUtilUnitTest {
     void replacePlaceHolderIgnoreNames() throws IOException {
         copyFile("pom.xml", "pom.xml");
         File pomXml = exportTestRootPath.resolve("pom.xml").toFile();
-        String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+        String fileContent = Files.readString(pomXml.toPath(), Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
 
@@ -192,7 +192,7 @@ class FileUtilUnitTest {
         replacements.put("${exerciseName}", "SomeCoolExerciseName");
 
         FileUtil.replaceVariablesInFileRecursive(pomXml.getParentFile().toPath(), replacements, List.of("pom.xml"));
-        fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
+        fileContent = Files.readString(pomXml.toPath(), Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
     }
@@ -223,7 +223,7 @@ class FileUtilUnitTest {
 
         Path newPath = FileUtil.copyExistingFileToTarget(filePath, newFolder, FilePathType.COURSE_ICON);
         assertThat(newPath).isNotNull();
-        assertThat(FileUtils.readFileToString(newPath.toFile(), StandardCharsets.UTF_8)).isEqualTo(payload);
+        assertThat(Files.readString(newPath, StandardCharsets.UTF_8)).isEqualTo(payload);
     }
 
     @Test

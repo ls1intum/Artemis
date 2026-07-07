@@ -101,24 +101,10 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @throws IOException     If setting up the base template files fails due to file I/O.
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
-     */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
-        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
-    }
-
-    /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
-     * exercise.
-     *
-     * @param programmingExercise the programming exercise that should be set up
-     * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
-     * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }

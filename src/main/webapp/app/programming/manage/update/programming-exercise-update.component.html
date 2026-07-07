@@ -15,12 +15,12 @@
             <jhi-programming-exercise-info
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isExamMode]="isExamMode"
+                [isExamMode]="isExamMode()"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [importOptions]="importOptions"
                 [isSimpleMode]="isSimpleMode()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-                [courseId]="courseId"
+                [courseId]="courseId()"
                 [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
             />
             <hr class="mb-5" />
@@ -60,15 +60,15 @@
                 [importOptions]="importOptions"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
-                <jhi-feature-overlay [enabled]="plagiarismEnabled" placement="right">
+            @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
+                <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
                 </jhi-feature-overlay>
             }
             <jhi-form-footer
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
-                [isSaving]="isSaving"
+                [isSaving]="isSaving()"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
                 [showGenerateWithAi]="showGenerateWithAi()"
                 [(notificationText)]="notificationText"

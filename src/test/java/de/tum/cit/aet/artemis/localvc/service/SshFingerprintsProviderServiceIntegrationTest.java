@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -59,7 +59,7 @@ class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegr
         @Test
         void returnFingerprints() throws GeneralSecurityException, IOException {
             expectedFingerprints.put("RSA", expectedFingerprint);
-            doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(Set.of(testKeyPair)).when(keyPairProvider).loadKeys(null);
             doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
             fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);
 
@@ -80,7 +80,7 @@ class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegr
 
         @Test
         void shouldThrowBadRequestExceptionWhenLoadKeysThrowsIOException() throws GeneralSecurityException, IOException {
-            doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
+            doReturn(Set.of(testKeyPair)).when(keyPairProvider).loadKeys(null);
             doThrow(new IOException()).when(keyPairProvider).loadKeys(null);
             doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
             fingerprintsProviderService = new SshFingerprintsProviderService(sshServer);

@@ -86,8 +86,8 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.actionLink).toBe(deepLinkUri);
-        expect(component.isLinking).toBe(true);
+        expect(component.actionLink()).toBe(deepLinkUri);
+        expect(component.isLinking()).toBe(true);
     });
 
     it('should not auto-submit form if parameters are missing', async () => {
@@ -97,7 +97,7 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.isLinking).toBe(false);
+        expect(component.isLinking()).toBe(false);
         expect(autoSubmitSpy).not.toHaveBeenCalled();
     });
 
@@ -118,7 +118,7 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.isLinking).toBe(false);
+        expect(component.isLinking()).toBe(false);
     });
 
     it('should set isLinking to false when id is missing', async () => {
@@ -138,7 +138,7 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.isLinking).toBe(false);
+        expect(component.isLinking()).toBe(false);
     });
 
     it('should set isLinking to false when deepLinkUri is missing', async () => {
@@ -158,7 +158,7 @@ describe('Lti13SelectContentComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.isLinking).toBe(false);
+        expect(component.isLinking()).toBe(false);
     });
 
     it('should update form values correctly', () => {
@@ -179,7 +179,7 @@ describe('Lti13SelectContentComponent', () => {
 
         expect(component.jwt).toBe('test_jwt');
         expect(component.id).toBe('test_id');
-        expect(component.actionLink).toBe('http://test.com/link');
+        expect(component.actionLink()).toBe('http://test.com/link');
     });
 
     it('should sanitize deepLinkUri correctly', () => {
@@ -198,8 +198,8 @@ describe('Lti13SelectContentComponent', () => {
 
         component.updateFormValues();
 
-        expect(component.actionLink).toBe('http://safe-url.com/path');
-        expect(component.isLinking).toBe(true);
+        expect(component.actionLink()).toBe('http://safe-url.com/path');
+        expect(component.isLinking()).toBe(true);
     });
 
     it('should handle empty deepLinkUri', () => {
@@ -218,8 +218,8 @@ describe('Lti13SelectContentComponent', () => {
 
         component.updateFormValues();
 
-        expect(component.actionLink).toBe('');
-        expect(component.isLinking).toBe(false);
+        expect(component.actionLink()).toBe('');
+        expect(component.isLinking()).toBe(false);
     });
 
     it('should call autoSubmitForm when all parameters are present', async () => {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subscription } from 'rxjs';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
@@ -11,6 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Component that displays real-time notification popups.
@@ -19,7 +20,7 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
-    imports: [CourseNotificationComponent, CommonModule, FaIconComponent],
+    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule],
     templateUrl: './course-notification-popup-overlay.component.html',
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
 })
@@ -32,10 +33,10 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     private readonly route = inject(ActivatedRoute);
     private readonly communicationState = inject(ConversationSelectionState);
 
-    protected notifications: CourseNotification[] = [];
-    protected isExpanded: boolean = false;
+    protected readonly notifications = signal<CourseNotification[]>([]);
+    protected readonly isExpanded = signal(false);
 
-    private courseNotificationWebsocketSubscription: Subscription;
+    private courseNotificationWebsocketSubscription?: Subscription;
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -43,7 +44,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
-            if (this.notifications.findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
+            if (this.notifications().findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
                 return;
             }
 
@@ -53,7 +54,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
                 return;
             }
 
-            this.notifications.push(notification);
+            this.notifications.update((notifications) => [...notifications, notification]);
 
             setTimeout(() => {
                 this.removeNotification(notification.notificationId!);
@@ -62,7 +63,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     }
 
     ngOnDestroy(): void {
-        this.courseNotificationWebsocketSubscription.unsubscribe();
+        this.courseNotificationWebsocketSubscription?.unsubscribe();
     }
 
     /**
@@ -72,14 +73,14 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * @param notificationId - The ID of the notification to remove
      */
     removeNotification(notificationId: number): void {
-        const indexToRemove = this.notifications.findIndex((notification) => notification.notificationId === notificationId);
+        const indexToRemove = this.notifications().findIndex((notification) => notification.notificationId === notificationId);
 
         if (indexToRemove !== -1) {
-            this.notifications.splice(indexToRemove, 1);
+            this.notifications.update((notifications) => notifications.filter((_, index) => index !== indexToRemove));
         }
 
-        if (this.notifications.length === 0) {
-            this.isExpanded = false;
+        if (this.notifications().length === 0) {
+            this.isExpanded.set(false);
         }
     }
 
@@ -147,11 +148,11 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * Expands the overlay if it's not already expanded and there are multiple notifications.
      */
     overlayClicked() {
-        if (this.isExpanded || this.notifications.length <= 1) {
+        if (this.isExpanded() || this.notifications().length <= 1) {
             return;
         }
 
-        this.isExpanded = true;
+        this.isExpanded.set(true);
     }
 
     /**
@@ -160,13 +161,13 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * conflicts with the overlay click handler.
      */
     collapseOverlayClicked() {
-        if (!this.isExpanded) {
+        if (!this.isExpanded()) {
             return;
         }
 
         // To avoid overlap with the overlayClicked function, we do this on the next tick
         setTimeout(() => {
-            this.isExpanded = false;
+            this.isExpanded.set(false);
         });
     }
 
@@ -174,13 +175,13 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
      * Clears all currently visible notifications and marks them as seen.
      */
     clearAllNotifications() {
-        if (!this.isExpanded) {
+        if (!this.isExpanded()) {
             return;
         }
 
         const notificationCourseMap: Record<string, Array<CourseNotification>> = {};
 
-        this.notifications.forEach((notification) => {
+        this.notifications().forEach((notification) => {
             if (!notificationCourseMap[notification.courseId!]) {
                 notificationCourseMap[notification.courseId!] = [notification];
             } else {
@@ -205,8 +206,8 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
         // To avoid overlap with the overlayClicked function, we do this on the next tick
         setTimeout(() => {
-            this.notifications = [];
-            this.isExpanded = false;
+            this.notifications.set([]);
+            this.isExpanded.set(false);
         });
     }
 }

@@ -61,12 +61,12 @@ describe('CodeEditorStudentContainerComponent', () => {
         comp.ngOnInit();
 
         expect(getParticipationSubmissionCountSpy).toHaveBeenCalledOnce();
-        expect(comp.numberOfSubmissionsForSubmissionPolicy).toBe(5);
+        expect(comp.numberOfSubmissionsForSubmissionPolicy()).toBe(5);
     });
 
     it.each([undefined, { active: false } as SubmissionPolicy])(
         'should not calculate the number of submissions for no or inactive submission policy',
-        (submissionPolicy: SubmissionPolicy) => {
+        (submissionPolicy: SubmissionPolicy | undefined) => {
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
             vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
             const getParticipationSubmissionCountSpy = vi.spyOn(submissionPolicyService, 'getParticipationSubmissionCount');

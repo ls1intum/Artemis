@@ -29,7 +29,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     readonly freePeriodCreated = output<void>();
 
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
-    isLoading = false;
+    readonly isLoading = signal(false);
 
     readonly tutorialGroupConfigurationId = input.required<number>();
     readonly course = input.required<Course>();
@@ -50,12 +50,12 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         this.tutorialGroupFreePeriodToCreate.reason = reason;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.tutorialGroupFreePeriodService
             .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )

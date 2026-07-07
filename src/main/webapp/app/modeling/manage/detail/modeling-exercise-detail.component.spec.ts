@@ -108,10 +108,10 @@ describe('ModelingExercise Management Detail Component', () => {
         // THEN
         expect(findStub).toHaveBeenCalledOnce();
         expect(statisticsServiceStub).toHaveBeenCalledOnce();
-        expect(comp.modelingExercise).toEqual(modelingExercise);
-        expect(comp.doughnutStats.participationsInPercent).toBe(100);
-        expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-        expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+        expect(comp.modelingExercise()).toEqual(modelingExercise);
+        expect(comp.doughnutStats().participationsInPercent).toBe(100);
+        expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+        expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         await fixture.whenStable();
         expect(comp.exampleSolutionUML).toEqual(model);
@@ -146,8 +146,8 @@ describe('ModelingExercise Management Detail Component', () => {
             comp.ngOnInit();
             await fixture.whenStable();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeDefined();
@@ -170,8 +170,8 @@ describe('ModelingExercise Management Detail Component', () => {
             comp.ngOnInit();
             await fixture.whenStable();
 
-            expect(comp.detailOverviewSections).toBeDefined();
-            const problemSection = comp.detailOverviewSections.find((section) => section.headline === 'artemisApp.exercise.sections.problem');
+            expect(comp.detailOverviewSections()).toBeDefined();
+            const problemSection = comp.detailOverviewSections().find((section) => section.headline === 'artemisApp.exercise.sections.problem');
             expect(problemSection).toBeDefined();
             const competencyDetail = problemSection?.details.find((detail) => detail && 'title' in detail && detail.title === 'artemisApp.competency.link.title');
             expect(competencyDetail).toBeUndefined();

@@ -1,17 +1,17 @@
-@if (internalTextExercises() && filteredTextExercises.length > 0) {
+@if (internalTextExercises() && filteredTextExercises().length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (courseContext.isAtLeastInstructor) {
+                    @if (courseContext()?.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(internalTextExercises())" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(internalTextExercises())" [ngModel]="allChecked()" />
                         </th>
                     }
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (courseContext.presentationScore) {
+                    @if (courseContext()?.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -21,16 +21,16 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                @for (textExercise of filteredTextExercises; track trackId($index, textExercise)) {
+                @for (textExercise of filteredTextExercises(); track trackId($index, textExercise)) {
                     <tr id="exercise-card-{{ textExercise.id }}">
-                        @if (courseContext.isAtLeastInstructor) {
+                        @if (courseContext()?.isAtLeastInstructor) {
                             <td class="d-md-table-cell">
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(textExercise)" [ngModel]="isExerciseSelected(textExercise)" />
                             </td>
                         }
                         <td>
                             @if (textExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', courseContext.id, 'text-exercises', textExercise.id]">{{ textExercise.title }}</a>
+                                <a [routerLink]="['/course-management', courseContext()?.id, 'text-exercises', textExercise.id]">{{ textExercise.title }}</a>
                             } @else {
                                 {{ textExercise.title }}
                             }
@@ -78,31 +78,31 @@
                                 }
                             </div>
                         </td>
-                        @if (courseContext.presentationScore) {
+                        @if (courseContext()?.presentationScore) {
                             <td>{{ textExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="textExercise" /></td>
                         <td class="text-end" style="white-space: nowrap">
-                            <jhi-text-exercise-row-buttons [courseId]="courseId" [course]="courseContext" [exercise]="textExercise" />
+                            <jhi-text-exercise-row-buttons [courseId]="courseId()" [course]="courseContext()" [exercise]="textExercise" />
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
-        @if (selectedExercises.length > 0) {
+        @if (selectedExercises().length > 0) {
             <div>
-                @if (courseContext.isAtLeastInstructor) {
+                @if (courseContext()?.isAtLeastInstructor) {
                     <button
                         jhiDeleteButton
                         [entityTitle]="'Delete All Text Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
                         [translateValues]="{
-                            courseTitle: courseContext.title,
-                            courseType: courseContext.testCourse
+                            courseTitle: courseContext()?.title,
+                            courseType: courseContext()?.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"
-                        (delete)="deleteMultipleExercises(selectedExercises, textExerciseService)"
+                        (delete)="deleteMultipleExercises(selectedExercises(), textExerciseService)"
                         [dialogError]="dialogError$"
                         id="delete-all-text"
                         class="mb-1"

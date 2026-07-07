@@ -374,11 +374,16 @@ launch_node() {
         export ARTEMIS_BUILDLOGSPATH="$ARTEMIS_DATA_DIR/build-logs"
         export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$ARTEMIS_DATA_DIR/local-vcs-repos"
 
+        # Run the JVM in UTC to match production servers (which run UTC) and the app's own
+        # hibernate.jdbc.time_zone=UTC. On a developer machine in a non-UTC zone (e.g. CEST) the
+        # default JVM zone otherwise shifts ZonedDateTime values by the offset on DB round-trips,
+        # pushing date-gated logic — such as a programming exercise's "Run Tests after Due Date"
+        # date — hours into the future and breaking date-sensitive E2E tests only locally.
         if [ "$DEBUG" = true ]; then
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" 2>&1 | tee "$log_file"
         else
-            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 \
+            exec java -Xmx2g -XX:+UseG1GC -Dfile.encoding=UTF-8 -Duser.timezone=UTC \
                  -jar "$WAR_FILE" > "$log_file" 2>&1
         fi
     ) &
@@ -506,11 +511,16 @@ fi
 echo ""
 echo -e "${BLUE}Step 6: Running Playwright tests...${NC}"
 
-# IPv4 explicit. macOS resolves `localhost` to `::1` first, but Docker publishes 443 only on
-# IPv4 (no `::` binding). Under parallel test load this manifested as ECONNREFUSED on ::1:443
-# and ECONNRESET cascades — the slow runner does not hit this because Playwright lives inside
-# a container on the docker bridge and reaches nginx via `https://artemis-nginx`.
-export BASE_URL="https://127.0.0.1"
+# WebAuthn/passkey requires a domain-name origin: the nodes derive their Relying Party ID from
+# SERVER_URL (https://localhost, see docker/artemis/config/prod-multinode-fast.env), so the browser
+# origin must also be https://localhost. An IP literal like 127.0.0.1 is rejected as an RP ID and
+# breaks every passkey test (passkey data is replicated over Hazelcast, so this is real multi-node
+# coverage we want). We still avoid the historical ::1-under-load ECONNREFUSED cascade — macOS
+# resolves `localhost` to `::1` first but Docker publishes 443 on IPv4 — by mapping localhost ->
+# 127.0.0.1 inside the browser (PW_BROWSER_HOST_RESOLVER_RULES). Connections stay on the IPv4 port
+# Docker publishes while the origin/RP ID remains a valid domain.
+export BASE_URL="https://localhost"
+export PW_BROWSER_HOST_RESOLVER_RULES="MAP localhost 127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
 export ADMIN_USERNAME="artemis_admin"
 export ADMIN_PASSWORD="artemis_admin"

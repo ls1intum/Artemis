@@ -1,14 +1,14 @@
-@if (irisEnabled) {
+@if (irisEnabled()) {
     <div class="iris-suggestion">
         <div class="iris-suggestion-field">
-            @if (suggestion) {
+            @if (suggestion(); as suggestion) {
                 <div class="iris-suggestion-wrapper">
                     <div class="iris-text-content">
                         <div class="iris-logo">
                             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
                             <span class="fw-semibold">Iris-Suggestion:</span>
                         </div>
-                        @for (content of suggestion?.content; track content.id) {
+                        @for (content of suggestion.content; track content.id) {
                             <div>
                                 @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
                                     <div [innerHTML]="line" class="iris-suggestion-text"></div>
@@ -20,17 +20,17 @@
                         </div>
                     </div>
                     <div class="iris-suggestion-buttons">
-                        @if (upDisabled && irisIsActive) {
+                        @if (upDisabled() && irisIsActive()) {
                             <jhi-button id="search-submit" class="ms-1" [icon]="faArrowsRotate" (onClick)="userRequestedNewSuggestion()" />
                         } @else {
-                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled" />
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled()" />
                         }
-                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowDown" (onClick)="switchSuggestion(false)" [disabled]="downDisabled" />
+                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowDown" (onClick)="switchSuggestion(false)" [disabled]="downDisabled()" />
                     </div>
                 </div>
             } @else {
-                @if (irisIsActive) {
-                    @if (error) {
+                @if (irisIsActive()) {
+                    @if (error(); as error) {
                         <div class="iris-suggestion-text">
                             {{ error }}
                         </div>

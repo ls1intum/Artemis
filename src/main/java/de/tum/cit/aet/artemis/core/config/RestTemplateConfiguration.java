@@ -44,6 +44,12 @@ public class RestTemplateConfiguration {
 
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
 
+    // The Hermes health check pings /api/health, which must fail fast: it blocks the Actuator /health endpoint
+    // and every metrics scrape, so a hung relay must not tie up those threads for the full short timeout.
+    private static final int HERMES_HEALTH_CONNECTION_TIMEOUT = 3 * 1000;
+
+    private static final int HERMES_HEALTH_READ_TIMEOUT = 3 * 1000;
+
     @Bean
     @Profile(PROFILE_JENKINS)
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
@@ -104,7 +110,8 @@ public class RestTemplateConfiguration {
 
     @Bean
     public RestTemplate shortTimeoutHermesRestTemplate() {
-        return createShortTimeoutRestTemplate();
+        final var requestFactory = getSimpleClientHttpRequestFactory(HERMES_HEALTH_READ_TIMEOUT, HERMES_HEALTH_CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
     }
 
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.

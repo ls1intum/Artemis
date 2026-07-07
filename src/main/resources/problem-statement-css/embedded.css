@@ -109,8 +109,20 @@ body.artemis-ssr-body {
     color: var(--secondary, #6c757d);
 }
 
+.artemis-task-no-result-text {
+    font-weight: 400;
+    font-size: 0.9em;
+    margin-left: 4px;
+    color: var(--secondary, #6c757d);
+}
+
+.artemis-task:not([data-feedback]) {
+    cursor: default;
+}
+
 i.fa.artemis-icon-success,
-i.fa.artemis-icon-fail {
+i.fa.artemis-icon-fail,
+i.fa.artemis-icon-no-result {
     display: inline-block;
     width: 1em;
     height: 1em;
@@ -125,6 +137,10 @@ i.fa.artemis-icon-success {
 
 i.fa.artemis-icon-fail {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%23dc3545'/%3E%3Cpath d='M5.5 5.5l5 5M10.5 5.5l-5 5' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+}
+
+i.fa.artemis-icon-no-result {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%236c757d'/%3E%3Ccircle cx='8' cy='8' r='2.5' fill='%23fff'/%3E%3C/svg%3E");
 }
 
 .markdown-alert {

@@ -74,9 +74,9 @@ describe('CourseRegistrationDetailComponent', () => {
         component.ngOnInit();
         await fixture.whenStable();
 
-        expect(component.course).toBeDefined();
-        expect(component.course?.id).toBe(course1.id);
-        expect(component.course?.title).toBe(course1.title);
+        expect(component.course()).toBeDefined();
+        expect(component.course()?.id).toBe(course1.id);
+        expect(component.course()?.title).toBe(course1.title);
     });
 
     it('should have a function isCourseFullyAccessible that returns true if the for-dashboard endpoint returns a 200', async () => {

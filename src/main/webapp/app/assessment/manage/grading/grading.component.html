@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center">
     <h2>
-        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-        {{ isExam ? exam?.title : course?.title }}
+        {{ isExam() ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+        {{ isExam() ? exam()?.title : course()?.title }}
     </h2>
     <jhi-documentation-button [type]="documentationType" />
 </div>
@@ -23,18 +23,18 @@
     </div>
     <div class="dropdown-container">
         <div class="form-group">
-            <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
-            @if (!isExam) {
+            <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
+            @if (!isExam()) {
                 <jhi-help-icon text="artemisApp.course.maxPoints.info" />
             }
-            @if (isExam) {
+            @if (isExam()) {
                 <fa-icon [icon]="faExclamationTriangle" class="text-warning" [ngbTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" container="body" />
             }
-            <input type="number" class="form-control" [(ngModel)]="maxPoints" min="1" (change)="onChangeMaxPoints(maxPoints)" />
+            <input type="number" class="form-control" [ngModel]="maxPoints()" (ngModelChange)="maxPoints.set($event)" min="1" (change)="onChangeMaxPoints(maxPoints())" />
         </div>
         <div class="form-group">
             <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title"></span>
-            <select class="form-select" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
+            <select class="form-select" [formField]="gradingForm.gradeType" (change)="deleteGradeNames()" title="grade type">
                 <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade"></option>
                 <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus"></option>
             </select>
@@ -49,7 +49,7 @@
         <div class="form-group">
             @if (gradingScale.gradeType === GradeType.GRADE) {
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
-                <select class="form-select" title="first passing grade" [(ngModel)]="firstPassingGrade">
+                <select class="form-select" title="first passing grade" [ngModel]="firstPassingGrade()" (ngModelChange)="firstPassingGrade.set($event)">
                     @for (gradeStep of gradeStepsWithNonemptyNames(); track gradeStep) {
                         <option [ngValue]="gradeStep.gradeName">
                             {{ gradeStep.gradeName }}
@@ -59,7 +59,7 @@
             }
         </div>
     </div>
-    <jhi-grading-presentations [gradingScale]="gradingScale" [presentationsConfig]="presentationsConfig" (presentationsConfigChange)="onPresentationsConfigChange($event)" />
+    <jhi-grading-presentations [gradingScale]="gradingScale" [presentationsConfig]="presentationsConfig()" (presentationsConfigChange)="onPresentationsConfigChange($event)" />
 </div>
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">
@@ -128,7 +128,7 @@
                             <td>&mdash;</td>
                             <td>
                                 <input
-                                    [(ngModel)]="gradingScale.plagiarismGrade"
+                                    [formField]="gradingForm.plagiarismGrade"
                                     type="text"
                                     [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_PLAGIARISM_GRADE }"
                                 />
@@ -145,14 +145,14 @@
                             <td>&mdash;</td>
                             <td>
                                 <input
-                                    [(ngModel)]="gradingScale.noParticipationGrade"
+                                    [formField]="gradingForm.noParticipationGrade"
                                     type="text"
                                     [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE }"
                                 />
                             </td>
                             <td></td>
                         </tr>
-                        @for (gradeStep of gradingScale.gradeSteps; track gradeStep; let i = $index; let last = $last) {
+                        @for (gradeStep of gradeStepsModel().gradeSteps; track $index; let i = $index; let last = $last) {
                             <tr class="grading-scale-table-row">
                                 @if (last) {
                                     <td>
@@ -179,8 +179,8 @@
                                                 step="0.5"
                                                 min="0.5"
                                                 (change)="setPointsInterval(i, $any($event.target).valueAsNumber)"
-                                                [required]="maxPoints !== undefined && maxPoints > 0"
-                                                [disabled]="maxPoints === undefined || maxPoints <= 0"
+                                                [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                                [disabled]="maxPoints() === undefined || maxPoints()! <= 0"
                                             />
                                         </td>
                                     }
@@ -193,12 +193,12 @@
                                 </td>
                                 @if (gradingScale.gradeType !== GradeType.BONUS) {
                                     <td>
-                                        <input [(ngModel)]="gradeStep.gradeName" type="text" required />
+                                        <input [formField]="gradingForm.gradeSteps[i].gradeName" type="text" />
                                     </td>
                                 }
                                 @if (gradingScale.gradeType === GradeType.BONUS) {
                                     <td>
-                                        <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
+                                        <input [formField]="gradingForm.gradeSteps[i].gradeName" type="text" inputmode="numeric" placeholder="0" />
                                     </td>
                                 }
                                 <td>
@@ -219,10 +219,10 @@
                 </button>
             </div>
             <div>
-                <button (click)="save()" [disabled]="isLoading || !validGradeSteps() || !validPresentationsConfig()" class="btn btn-primary mr-1 mb-1" type="button">
+                <button (click)="save()" [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig()" class="btn btn-primary mr-1 mb-1" type="button">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save"></span>
                 </button>
-                @if (existingGradingScale) {
+                @if (existingGradingScale()) {
                     <button
                         class="mb-1"
                         jhiDeleteButton
@@ -231,7 +231,7 @@
                         deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
                         (delete)="delete()"
                         [dialogError]="dialogError$"
-                        [disabled]="isLoading"
+                        [disabled]="isLoading()"
                     >
                         <fa-icon [icon]="faTimes" />
                     </button>
@@ -242,11 +242,11 @@
                         <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
                     </div>
                 }
-                @if (invalidGradeStepsMessage) {
+                @if (invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
                     <div class="alert alert-warning mt-3">
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span>
-                            {{ invalidGradeStepsMessage }}
+                            {{ invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
                         </span>
                     </div>
                 }
@@ -292,7 +292,7 @@
                             <td>&mdash;</td>
                             <td>
                                 <input
-                                    [(ngModel)]="gradingScale.plagiarismGrade"
+                                    [formField]="gradingForm.plagiarismGrade"
                                     type="text"
                                     [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_PLAGIARISM_GRADE }"
                                 />
@@ -310,51 +310,51 @@
                             <td>&mdash;</td>
                             <td>
                                 <input
-                                    [(ngModel)]="gradingScale.noParticipationGrade"
+                                    [formField]="gradingForm.noParticipationGrade"
                                     type="text"
                                     [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE }"
                                 />
                             </td>
                             <td></td>
                         </tr>
-                        @for (gradeStep of gradingScale.gradeSteps; track gradeStep; let i = $index) {
+                        @for (gradeStep of gradeStepsModel().gradeSteps; track $index; let i = $index) {
                             <tr class="grading-scale-table-row">
                                 <td>
-                                    <input [(ngModel)]="gradeStep.lowerBoundPercentage" type="number" step="0.5" min="0" required (change)="setPoints(gradeStep, true)" />
+                                    <input [formField]="gradingForm.gradeSteps[i].lowerBoundPercentage" type="number" step="0.5" (change)="onDetailedPercentageChanged(i, true)" />
                                 </td>
                                 <td>
                                     <input
-                                        [(ngModel)]="gradeStep.lowerBoundPoints"
+                                        [value]="gradeStep.lowerBoundPoints"
                                         type="number"
                                         step="0.5"
                                         min="0"
-                                        [required]="maxPoints !== undefined && maxPoints > 0"
-                                        [disabled]="maxPoints === undefined || maxPoints <= 0"
-                                        (change)="setPercentage(gradeStep, true)"
+                                        [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                        [disabled]="!maxPointsValid()"
+                                        (change)="onDetailedPointsInput(i, true, $any($event.target).valueAsNumber)"
                                     />
                                 </td>
                                 <td>
-                                    <input [(ngModel)]="gradeStep.upperBoundPercentage" type="number" step="0.5" min="0" required (change)="setPoints(gradeStep, false)" />
+                                    <input [formField]="gradingForm.gradeSteps[i].upperBoundPercentage" type="number" step="0.5" (change)="onDetailedPercentageChanged(i, false)" />
                                 </td>
                                 <td>
                                     <input
-                                        [(ngModel)]="gradeStep.upperBoundPoints"
+                                        [value]="gradeStep.upperBoundPoints"
                                         type="number"
                                         step="0.5"
                                         min="0"
-                                        [required]="maxPoints !== undefined && maxPoints > 0"
-                                        [disabled]="maxPoints === undefined || maxPoints <= 0"
-                                        (change)="setPercentage(gradeStep, false)"
+                                        [required]="maxPoints() !== undefined && maxPoints()! > 0"
+                                        [disabled]="!maxPointsValid()"
+                                        (change)="onDetailedPointsInput(i, false, $any($event.target).valueAsNumber)"
                                     />
                                 </td>
                                 @if (gradingScale.gradeType !== GradeType.BONUS) {
                                     <td>
-                                        <input [(ngModel)]="gradeStep.gradeName" type="text" required />
+                                        <input [formField]="gradingForm.gradeSteps[i].gradeName" type="text" />
                                     </td>
                                 }
                                 @if (gradingScale.gradeType === GradeType.BONUS) {
                                     <td>
-                                        <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
+                                        <input [formField]="gradingForm.gradeSteps[i].gradeName" type="text" inputmode="numeric" placeholder="0" />
                                     </td>
                                 }
                                 <td>
@@ -375,10 +375,10 @@
                 </button>
             </div>
             <div>
-                <button (click)="save()" [disabled]="isLoading || !validGradeSteps() || !validPresentationsConfig()" class="btn btn-primary mr-1 mb-1" type="button">
+                <button (click)="save()" [disabled]="isLoading() || gradingForm().invalid() || !validPresentationsConfig()" class="btn btn-primary mr-1 mb-1" type="button">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save"></span>
                 </button>
-                @if (existingGradingScale) {
+                @if (existingGradingScale()) {
                     <button
                         class="mb-1"
                         jhiDeleteButton
@@ -387,7 +387,7 @@
                         deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
                         (delete)="delete()"
                         [dialogError]="dialogError$"
-                        [disabled]="isLoading"
+                        [disabled]="isLoading()"
                     >
                         <fa-icon [icon]="faTimes" />
                     </button>
@@ -398,11 +398,11 @@
                         <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
                     </div>
                 }
-                @if (invalidGradeStepsMessage) {
+                @if (invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
                     <div class="alert alert-warning mt-3">
                         <fa-icon [icon]="faExclamationTriangle" />
                         <span>
-                            {{ invalidGradeStepsMessage }}
+                            {{ invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}
                         </span>
                     </div>
                 }

@@ -94,7 +94,7 @@ describe('RatingComponent', () => {
     it('should create new local rating', () => {
         ratingComponent.ngOnInit();
 
-        expect(ratingComponent.rating).toBe(0);
+        expect(ratingComponent.rating()).toBe(0);
     });
 
     it('should set rating received from server', () => {
@@ -102,7 +102,7 @@ describe('RatingComponent', () => {
 
         ratingComponent.ngOnInit();
 
-        expect(ratingComponent.rating).toBe(1);
+        expect(ratingComponent.rating()).toBe(1);
     });
 
     it('should call loadRating on ngOnInit', () => {
@@ -122,7 +122,7 @@ describe('RatingComponent', () => {
         ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
-        expect(ratingComponent.rating).toBeUndefined();
+        expect(ratingComponent.rating()).toBeUndefined();
     });
 
     it('should call loadRating when result changes', () => {
@@ -133,7 +133,7 @@ describe('RatingComponent', () => {
         ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
-        expect(ratingComponent.rating).toBe(2);
+        expect(ratingComponent.rating()).toBe(2);
     });
 
     it('should not call loadRating if result ID remains the same', () => {
@@ -146,19 +146,19 @@ describe('RatingComponent', () => {
         ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 90 } as Result, { id: 90 } as Result, false) });
 
         expect(loadRatingSpy).toHaveBeenCalledTimes(1);
-        expect(ratingComponent.rating).toBe(2);
+        expect(ratingComponent.rating()).toBe(2);
     });
 
     describe('OnRate', () => {
         beforeEach(() => {
-            ratingComponent.rating = 0;
+            ratingComponent.rating.set(0);
             ratingComponentFixture.componentRef.setInput('result', { id: 89 } as Result);
             vi.spyOn(ratingService, 'createRating');
             vi.spyOn(ratingService, 'updateRating');
         });
 
         it('should return', () => {
-            ratingComponent.disableRating = true;
+            ratingComponent.disableRating.set(true);
 
             ratingComponent.onRate({
                 oldValue: 0,
@@ -177,11 +177,11 @@ describe('RatingComponent', () => {
 
             expect(ratingService.createRating).toHaveBeenCalledTimes(1);
             expect(ratingService.updateRating).not.toHaveBeenCalled();
-            expect(ratingComponent.rating).toBe(2);
+            expect(ratingComponent.rating()).toBe(2);
         });
 
         it('should update rating', () => {
-            ratingComponent.rating = 1;
+            ratingComponent.rating.set(1);
 
             ratingComponent.onRate({
                 oldValue: 1,
@@ -190,7 +190,7 @@ describe('RatingComponent', () => {
 
             expect(ratingService.updateRating).toHaveBeenCalledTimes(1);
             expect(ratingService.createRating).not.toHaveBeenCalled();
-            expect(ratingComponent.rating).toBe(2);
+            expect(ratingComponent.rating()).toBe(2);
         });
     });
 });

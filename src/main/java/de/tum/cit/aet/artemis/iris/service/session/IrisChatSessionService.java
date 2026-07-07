@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -129,9 +131,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
             IrisChatPipelineExecutionService chatPipelineExecutionService, UserRepository userRepository, CourseNotificationService courseNotificationService,
-            IrisSessionPresenceService irisSessionPresenceService) {
+            IrisSessionPresenceService irisSessionPresenceService, PyrisJobService pyrisJobService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
-                irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
+                irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -153,12 +155,12 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     @Override
     public void sendOverWebsocket(IrisChatSession session, IrisMessage message) {
-        irisChatWebsocketService.sendMessage(session, message, null);
+        irisChatWebsocketService.sendMessage(session, message, null, null);
     }
 
     @Override
     public void requestAndHandleResponse(IrisChatSession session) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), Map.of(), List.of());
     }
 
     /**
@@ -231,14 +233,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
-     * Sends all messages of the session to the LLM with optional uncommitted file changes.
-     * Only applicable for programming exercise sessions.
+     * Sends all messages of the session to the LLM with optional uncommitted file changes and optional context information.
      *
      * @param session          The chat session
      * @param uncommittedFiles The uncommitted files from the client
+     * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
      */
-    public void requestAndHandleResponseWithUncommittedChanges(IrisChatSession session, Map<String, String> uncommittedFiles) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
+    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context);
     }
 
     // -------------------------------------------------------------------------
@@ -358,7 +360,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
         CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings),
-                Optional.of(submission), Map.of())).exceptionally(e -> {
+                Optional.of(submission), Map.of(), List.of())).exceptionally(e -> {
                     log.error("Error while sending build failed message to Iris for session {}", session.getId(), e);
                     return null;
                 });
@@ -389,7 +391,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
-                        Optional.of(settings), Optional.of(latestSubmission), Map.of())).exceptionally(e -> {
+                        Optional.of(settings), Optional.of(latestSubmission), Map.of(), List.of())).exceptionally(e -> {
                             log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
                             return null;
                         });

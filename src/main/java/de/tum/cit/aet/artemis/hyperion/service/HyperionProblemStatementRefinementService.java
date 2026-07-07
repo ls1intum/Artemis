@@ -236,14 +236,14 @@ public class HyperionProblemStatementRefinementService {
         if (singleLine) {
             if (request.hasColumnRange()) {
                 String selectedText = extractSelectedText(request, lines);
-                return String.format("Line %d, columns %d-%d (modify ONLY the text: \"%s\")", request.startLine(), request.startColumn(), request.endColumn() - 1, selectedText);
+                return "Line %d, columns %d-%d (modify ONLY the text: \"%s\")".formatted(request.startLine(), request.startColumn(), request.endColumn() - 1, selectedText);
             }
             return "Line " + request.startLine();
         }
         else {
             if (request.hasColumnRange()) {
                 String selectedText = extractSelectedText(request, lines);
-                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")", request.startLine(), request.endLine(),
+                return "Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")".formatted(request.startLine(), request.endLine(),
                         request.startColumn(), request.startLine(), request.endColumn() - 1, request.endLine(), selectedText);
             }
             return "Lines " + request.startLine() + "-" + request.endLine();
@@ -287,7 +287,7 @@ public class HyperionProblemStatementRefinementService {
             String text = line.substring(startCol, endCol);
             return truncateForDisplay(text);
         }
-        throw new BadRequestAlertException(String.format("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d", startCol, endCol, line.length()),
+        throw new BadRequestAlertException("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d".formatted(startCol, endCol, line.length()),
                 "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 

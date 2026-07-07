@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -7,9 +7,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-page-ribbon',
     template: `
         <div class="box">
-            @if (ribbonEnv) {
+            @if (ribbonEnv()) {
                 <div class="ribbon ribbon-top-left ribbon-rotate">
-                    <span jhiTranslate="global.ribbon.{{ ribbonEnv }}">{{ ribbonEnv }}</span>
+                    <span jhiTranslate="global.ribbon.{{ ribbonEnv() }}">{{ ribbonEnv() }}</span>
                 </div>
             }
         </div>
@@ -20,14 +20,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class PageRibbonComponent implements OnInit {
     private profileService = inject(ProfileService);
 
-    ribbonEnv: string;
+    readonly ribbonEnv = signal<string>(undefined!);
 
     ngOnInit() {
         if (this.profileService.isDevelopment()) {
-            this.ribbonEnv = PROFILE_DEV;
+            this.ribbonEnv.set(PROFILE_DEV);
         }
         if (this.profileService.isProduction() && this.profileService.isTestServer()) {
-            this.ribbonEnv = PROFILE_TEST;
+            this.ribbonEnv.set(PROFILE_TEST);
         }
     }
 }

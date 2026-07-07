@@ -20,6 +20,7 @@
             "casesTrimmed": "Only 100 cases with the highest similarity are shown!",
             "generateJplagReport": "Generate JPlag Report",
             "noFileSelected": "No file selected",
+            "synchronizeFiles": "Synchronize the file selection across both submissions while navigating",
             "binaryFileNotRendered": "Binary file not rendered.",
             "cannotLoadFiles": "Cannot load the submission due to an invalid repository state.",
             "noFilesFound": "No files found",

@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
@@ -32,7 +33,7 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
             useExisting: ConfirmEntityNameComponent,
         },
     ],
-    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent],
+    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent, InputTextModule],
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);
@@ -41,8 +42,9 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     confirmationText = input<string>('');
     entityName = input<string>('');
 
-    control: FormControl<string>;
+    control!: FormControl<string>; // built in ngOnInit()
 
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- ControlValueAccessor callback invoked as a (blur) event handler, not rendered state; reassigned by Angular forms via registerOnTouched()
     onTouched = () => {};
 
     private onChangeSubs: Subscription[] = [];

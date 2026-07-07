@@ -32,7 +32,8 @@
                         id="text-editor"
                         class="text-editor-textarea"
                         [maxLength]="maxCharacterCount"
-                        [(ngModel)]="answer"
+                        [ngModel]="answer()"
+                        (ngModelChange)="answer.set($event)"
                         [readOnly]="readonly() || !studentSubmission()"
                         [disabled]="readonly() || !studentSubmission()"
                         (keydown.tab)="onTextEditorTab(textEditor, $event)"
@@ -50,9 +51,9 @@
             @if (exercise()) {
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
-            @if (problemStatementHtml) {
+            @if (problemStatementHtml()) {
                 <p class="markdown-preview mb-3">
-                    <span [innerHTML]="problemStatementHtml"></span>
+                    <span [innerHTML]="problemStatementHtml()"></span>
                 </p>
             }
         </ng-container>

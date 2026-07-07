@@ -156,10 +156,10 @@ describe('NotificationSettingsComponent', () => {
         component['info'] = mockInfo;
         component.initializeValues();
 
-        expect(component['isLoading']).toBe(false);
-        expect(component['selectableSettingPresets']).toEqual(mockPresets);
-        expect(component['selectedSettingPreset']).toEqual(mockPresets[0]);
-        expect(component['notificationSpecifications']).toHaveLength(1);
+        expect(component['isLoading']()).toBe(false);
+        expect(component['selectableSettingPresets']()).toEqual(mockPresets);
+        expect(component['selectedSettingPreset']()).toEqual(mockPresets[0]);
+        expect(component['notificationSpecifications']()).toHaveLength(1);
     });
 
     it('should update selected preset when presetSelected is called', () => {
@@ -169,7 +169,7 @@ describe('NotificationSettingsComponent', () => {
 
         component.presetSelected(2);
 
-        expect(component['selectedSettingPreset']).toEqual(mockPresets[1]);
+        expect(component['selectedSettingPreset']()).toEqual(mockPresets[1]);
         expect(courseNotificationSettingServiceMock.setSettingPreset).toHaveBeenCalledWith(courseId, 2, mockPresets[1]);
     });
 
@@ -186,7 +186,7 @@ describe('NotificationSettingsComponent', () => {
 
         component.optionChanged(mockSpecification);
 
-        expect(component['selectedSettingPreset']).toBeUndefined();
+        expect(component['selectedSettingPreset']()).toBeUndefined();
         expect(courseNotificationSettingServiceMock.setSettingSpecification).toHaveBeenCalledWith(courseId, mockSpecification, mockPresets[0]);
     });
 
@@ -194,7 +194,7 @@ describe('NotificationSettingsComponent', () => {
         component['settingInfo'] = mockSettingInfo;
         component['info'] = mockInfo;
         component.initializeValues();
-        component['isLoading'] = false;
+        component['isLoading'].set(false);
         fixture.detectChanges();
 
         const presetPicker = fixture.debugElement.query(By.directive(CourseNotificationPresetPickerComponent));
@@ -208,13 +208,13 @@ describe('NotificationSettingsComponent', () => {
         component['settingInfo'] = mockSettingInfo;
         component['info'] = mockInfo;
         component.initializeValues();
-        component['isLoading'] = false;
+        component['isLoading'].set(false);
         fixture.detectChanges();
 
         const specificationCards = fixture.debugElement.queryAll(By.directive(CourseNotificationSettingSpecificationCardComponent));
         expect(specificationCards).toHaveLength(1);
 
-        expect(specificationCards[0].componentInstance.settingSpecification).toEqual(component['notificationSpecifications'][0]);
+        expect(specificationCards[0].componentInstance.settingSpecification).toEqual(component['notificationSpecifications']()[0]);
     });
 
     it('should correctly update specifications from notification map', () => {
@@ -233,10 +233,10 @@ describe('NotificationSettingsComponent', () => {
 
         component['updateSpecificationArrayByNotificationMap'](testMap, true);
 
-        expect(component['notificationSpecifications']).toHaveLength(1);
-        expect(component['notificationSpecifications'][0].identifier).toBe('newPostNotification');
-        expect(component['notificationSpecifications'][0].typeId).toBe(1);
-        expect(component['notificationSpecifications'][0].channelSetting).toEqual(testMap['newPostNotification']);
+        expect(component['notificationSpecifications']()).toHaveLength(1);
+        expect(component['notificationSpecifications']()[0].identifier).toBe('newPostNotification');
+        expect(component['notificationSpecifications']()[0].typeId).toBe(1);
+        expect(component['notificationSpecifications']()[0].channelSetting).toEqual(testMap['newPostNotification']);
 
         const testMapWithIds: CourseNotificationSettingsMap = {
             '1': {
@@ -248,9 +248,9 @@ describe('NotificationSettingsComponent', () => {
 
         component['updateSpecificationArrayByNotificationMap'](testMapWithIds, false);
 
-        expect(component['notificationSpecifications']).toHaveLength(1);
-        expect(component['notificationSpecifications'][0].identifier).toBe('newPostNotification');
-        expect(component['notificationSpecifications'][0].typeId).toBe(1);
-        expect(component['notificationSpecifications'][0].channelSetting).toEqual(testMapWithIds['1']);
+        expect(component['notificationSpecifications']()).toHaveLength(1);
+        expect(component['notificationSpecifications']()[0].identifier).toBe('newPostNotification');
+        expect(component['notificationSpecifications']()[0].typeId).toBe(1);
+        expect(component['notificationSpecifications']()[0].channelSetting).toEqual(testMapWithIds['1']);
     });
 });

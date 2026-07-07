@@ -26,6 +26,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
     setupTestBed({ zoneless: true });
@@ -101,8 +102,8 @@ describe('Edit Course LTI Configuration Component', () => {
         it('should load course with online course configuration', () => {
             comp.ngOnInit();
 
-            expect(comp.course).toEqual(course);
-            expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
+            expect(comp.course()).toEqual(course);
+            expect(comp.onlineCourseConfiguration()).toEqual(course.onlineCourseConfiguration);
             expect(comp.onlineCourseConfigurationForm.get(['id'])?.value).toBe(onlineCourseConfiguration.id);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
             expect(comp.onlineCourseConfigurationForm.get(['requireExistingUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
@@ -147,7 +148,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
             comp.setPlatform(platform);
 
-            expect(comp.onlineCourseConfiguration.ltiPlatformConfiguration).toEqual(platform);
+            expect(comp.onlineCourseConfiguration().ltiPlatformConfiguration).toEqual(platform);
             expect(comp.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.value).toEqual(platform);
         });
 
@@ -197,6 +198,18 @@ describe('Edit Course LTI Configuration Component', () => {
                     sort: ['id', 'asc'],
                 },
             });
+        });
+    });
+
+    describe('onPageChange', () => {
+        it('should convert the 0-indexed paginator page to the 1-indexed page and transition', () => {
+            fixture.detectChanges();
+            const transitionSpy = vi.spyOn(comp, 'transition').mockImplementation(() => {});
+
+            comp.onPageChange({ page: 2 } as PaginatorState);
+
+            expect(comp.page()).toBe(3);
+            expect(transitionSpy).toHaveBeenCalledOnce();
         });
     });
 

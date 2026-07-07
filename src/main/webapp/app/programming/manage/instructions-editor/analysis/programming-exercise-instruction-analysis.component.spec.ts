@@ -88,9 +88,9 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             vi.advanceTimersByTime(500);
 
             // check first analysis
-            expect(comp.missingTestCases).toEqual(missingTestCases);
-            expect(comp.invalidTestCases).toEqual(invalidTestCases);
-            expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
+            expect(comp.missingTestCases()).toEqual(missingTestCases);
+            expect(comp.invalidTestCases()).toEqual(invalidTestCases);
+            expect(comp.repeatedTestCases()).toEqual(repeatedTestCases);
 
             // Use a different problem statement to trigger analysis again
             // (distinctUntilChanged skips identical problem statements)
@@ -101,9 +101,9 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             fixture.detectChanges();
 
             // Check internal state of the component.
-            expect(comp.missingTestCases).toEqual(missingTestCases);
-            expect(comp.invalidTestCases).toEqual(invalidTestCases);
-            expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
+            expect(comp.missingTestCases()).toEqual(missingTestCases);
+            expect(comp.invalidTestCases()).toEqual(invalidTestCases);
+            expect(comp.repeatedTestCases()).toEqual(repeatedTestCases);
 
             // Check that an event with the updated analysis is emitted.
             // We expect two calls, once in ngOnInit and once on the input change (with different problem statements)
@@ -131,9 +131,9 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 fixture.detectChanges();
 
                 expect(debugElement.nativeElement.innerHtml).toBeUndefined();
-                expect(comp.missingTestCases).toEqual([]);
-                expect(comp.invalidTestCases).toEqual([]);
-                expect(comp.repeatedTestCases).toEqual([]);
+                expect(comp.missingTestCases()).toEqual([]);
+                expect(comp.invalidTestCases()).toEqual([]);
+                expect(comp.repeatedTestCases()).toEqual([]);
             });
 
             it('should render warnings on missing, invalid and repeated test cases', () => {
@@ -161,9 +161,9 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
                 expect(debugElement.nativeElement.innerHtml).toBeUndefined();
                 expect(debugElement.query(By.css('fa-icon'))).not.toBeNull();
-                expect(comp.missingTestCases).toEqual(missingTestCases);
-                expect(comp.invalidTestCases).toEqual(invalidTestCases);
-                expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
+                expect(comp.missingTestCases()).toEqual(missingTestCases);
+                expect(comp.invalidTestCases()).toEqual(invalidTestCases);
+                expect(comp.repeatedTestCases()).toEqual(repeatedTestCases);
             });
         });
     });

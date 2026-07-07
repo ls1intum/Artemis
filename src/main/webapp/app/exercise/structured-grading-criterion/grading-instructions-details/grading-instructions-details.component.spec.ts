@@ -72,7 +72,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             // WHEN
             component.ngOnInit();
             // THEN
-            expect(component.markdownEditorText).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
+            expect(component.markdownEditorText()).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
         });
     });
 
@@ -128,7 +128,7 @@ describe('GradingInstructionsDetailsComponent', () => {
     it('should change grading criteria title', () => {
         exercise.gradingCriteria = [gradingCriterion];
         const event = { target: { value: 'changed Title' } };
-        component.onCriterionTitleChange(event, gradingCriterion);
+        component.onCriterionTitleChange(event as unknown as Event, gradingCriterion);
         fixture.changeDetectorRef.detectChanges();
 
         expect(exercise.gradingCriteria[0].title).toEqual(event.target.value);

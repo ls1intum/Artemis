@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
-import { setMonacoEditorContentByLocator } from '../../utils';
+import { fillDateTimePicker, setMonacoEditorContentByLocator } from '../../utils';
 import { Commands } from '../../commands';
 
 /**
@@ -140,7 +140,7 @@ export class LectureManagementPage {
     async addTextUnit(name: string, text: string, releaseDate = dayjs()) {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
-        await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
+        await fillDateTimePicker(this.page.locator('#pick-releaseDate #date-input-field'), releaseDate);
         // Use the specific container for the content Monaco editor
         const contentField = this.page.locator('#content');
         await setMonacoEditorContentByLocator(this.page, contentField, text);

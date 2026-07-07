@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -20,8 +20,8 @@ export class AssessmentWarningComponent {
     readonly exercise = input.required<Exercise>();
     readonly submissions = input<Submission[]>([]);
 
-    isBeforeExerciseDueDate = false;
-    showWarning = false;
+    readonly isBeforeExerciseDueDate = signal<boolean>(false);
+    readonly showWarning = signal<boolean>(false);
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -33,11 +33,11 @@ export class AssessmentWarningComponent {
             this.submissions();
             if (exercise.dueDate) {
                 const now = dayjs();
-                this.isBeforeExerciseDueDate = now.isBefore(exercise.dueDate);
-                this.showWarning = now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests;
+                this.isBeforeExerciseDueDate.set(now.isBefore(exercise.dueDate));
+                this.showWarning.set(now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests);
             } else {
-                this.isBeforeExerciseDueDate = false;
-                this.showWarning = false;
+                this.isBeforeExerciseDueDate.set(false);
+                this.showWarning.set(false);
             }
         });
     }

@@ -6,11 +6,13 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 
 /**
  * An IrisMessage represents a single message in an IrisSession.
@@ -76,6 +79,16 @@ public class IrisMessage extends DomainObject {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
+
+    @Nullable
+    @Lob
+    @Convert(converter = IrisMessageToolActivityConverter.class)
+    @Column(name = "tool_activity")
+    private List<PyrisActivityDTO> toolActivity;
+
+    @Nullable
+    @Column(name = "intermediate")
+    private Boolean intermediate;
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
@@ -154,6 +167,24 @@ public class IrisMessage extends DomainObject {
         this.createdMemories = createdMemories;
     }
 
+    @Nullable
+    public List<PyrisActivityDTO> getToolActivity() {
+        return toolActivity;
+    }
+
+    public void setToolActivity(@Nullable List<PyrisActivityDTO> toolActivity) {
+        this.toolActivity = toolActivity;
+    }
+
+    @Nullable
+    public Boolean getIntermediate() {
+        return intermediate;
+    }
+
+    public void setIntermediate(@Nullable Boolean intermediate) {
+        this.intermediate = intermediate;
+    }
+
     @JsonProperty
     public Integer getMessageDifferentiator() {
         return messageDifferentiator;
@@ -167,6 +198,6 @@ public class IrisMessage extends DomainObject {
     @Override
     public String toString() {
         return "IrisMessage{" + "id=" + getId() + ", session=" + session + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + ", content=" + content
-                + ", messageDifferentiator=" + messageDifferentiator + '}';
+                + ", toolActivity=" + toolActivity + ", intermediate=" + intermediate + ", messageDifferentiator=" + messageDifferentiator + '}';
     }
 }

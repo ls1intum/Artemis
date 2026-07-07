@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -53,7 +53,7 @@ export class ChatHistoryItemComponent {
 
     // Built fresh on each toggle so the label always reflects the current language,
     // and the PrimeNG popup Menu (appendTo="body") receives up-to-date items.
-    menuItems: MenuItem[] = [];
+    readonly menuItems = signal<MenuItem[]>([]);
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());
@@ -65,13 +65,13 @@ export class ChatHistoryItemComponent {
 
     onMenuToggle(event: Event): void {
         event.stopPropagation();
-        this.menuItems = [
+        this.menuItems.set([
             {
                 label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
                 styleClass: 'danger',
                 command: () => this.onDeleteClick(),
             },
-        ];
+        ]);
         this.contextMenu()?.toggle(event);
     }
 

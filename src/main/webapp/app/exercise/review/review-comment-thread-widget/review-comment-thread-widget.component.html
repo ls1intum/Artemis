@@ -90,7 +90,7 @@
                             [popup]="true"
                             appendTo="body"
                             styleClass="monaco-review-comment-menu-overlay"
-                            [model]="isUserComment(commentVm.comment) ? userCommentMenuItems : nonUserCommentMenuItems"
+                            [model]="isUserComment(commentVm.comment) ? userCommentMenuItems() : nonUserCommentMenuItems()"
                         >
                             <ng-template #item let-item>
                                 <button
@@ -229,7 +229,7 @@
                             {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                         }
                     </button>
-                    @if (resolveGroupMenuItems.length > 0) {
+                    @if (resolveGroupMenuItems().length > 0) {
                         <button
                             pButton
                             type="button"
@@ -242,7 +242,7 @@
                         >
                             <fa-icon [icon]="faChevronDown" />
                         </button>
-                        <p-menu #resolveGroupMenu [popup]="true" appendTo="body" styleClass="monaco-review-comment-menu-overlay" [model]="resolveGroupMenuItems">
+                        <p-menu #resolveGroupMenu [popup]="true" appendTo="body" styleClass="monaco-review-comment-menu-overlay" [model]="resolveGroupMenuItems()">
                             <ng-template #item let-item>
                                 <button
                                     pButton

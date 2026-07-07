@@ -18,7 +18,7 @@
             ></span>
         </h5>
     </ng-template>
-    @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && isSingleChoice) {
+    @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && isSingleChoice()) {
         <div class="modal-body">
             <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoiceExplanation"></span>
@@ -53,7 +53,7 @@
             </div>
         </div>
     }
-    @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && !isSingleChoice) {
+    @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && !isSingleChoice()) {
         <div class="modal-body">
             <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
             <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
@@ -84,8 +84,8 @@
                                     paramInTotalRightOptions: this.inTotalSelectedRightOptions,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    wrongOption: this.wrongOption,
-                                    rightOption: this.rightOption,
+                                    wrongOption: this.wrongOption(),
+                                    rightOption: this.rightOption(),
                                 }"
                             ></span
                         ></span>
@@ -118,8 +118,8 @@
                                     paramRightMapping: this.correctlyMappedDragAndDropItems(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightMap: this.rightMap,
-                                    wrongMap: this.wrongMap,
+                                    rightMap: this.rightMap(),
+                                    wrongMap: this.wrongMap(),
                                 }"
                             ></span
                         ></span>
@@ -152,8 +152,8 @@
                                     paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightGap: this.rightGap,
-                                    wrongGap: this.wrongGap,
+                                    rightGap: this.rightGap(),
+                                    wrongGap: this.wrongGap(),
                                 }"
                             ></span
                         ></span>
@@ -197,8 +197,8 @@
                                     paramInTotalRightOptions: this.inTotalSelectedRightOptions,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    wrongOption: this.wrongOption,
-                                    rightOption: this.rightOption,
+                                    wrongOption: this.wrongOption(),
+                                    rightOption: this.rightOption(),
                                 }"
                             ></p>
                             <b
@@ -223,8 +223,8 @@
                                     paramInTotalRightOptions: this.inTotalSelectedRightOptions,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    wrongOption: this.wrongOption,
-                                    rightOption: this.rightOption,
+                                    wrongOption: this.wrongOption(),
+                                    rightOption: this.rightOption(),
                                 }"
                             ></p>
                             <b
@@ -265,8 +265,8 @@
                                     paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightMap: this.rightMap,
-                                    wrongMap: this.wrongMap,
+                                    rightMap: this.rightMap(),
+                                    wrongMap: this.wrongMap(),
                                 }"
                             ></p>
                             <b
@@ -288,8 +288,8 @@
                                     paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightMap: this.rightMap,
-                                    wrongMap: this.wrongMap,
+                                    rightMap: this.rightMap(),
+                                    wrongMap: this.wrongMap(),
                                 }"
                             ></p>
                             <b
@@ -330,8 +330,8 @@
                                     paramCount: this.shortAnswerSpots,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightGap: this.rightGap,
-                                    wrongGap: this.wrongGap,
+                                    rightGap: this.rightGap(),
+                                    wrongGap: this.wrongGap(),
                                 }"
                             ></p>
                             <b
@@ -354,8 +354,8 @@
                                     paramCount: this.shortAnswerSpots,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightGap: this.rightGap,
-                                    wrongGap: this.wrongGap,
+                                    rightGap: this.rightGap(),
+                                    wrongGap: this.wrongGap(),
                                 }"
                             ></p>
                             <b
@@ -407,8 +407,8 @@
                                     paramInTotalRightOptions: this.inTotalSelectedRightOptions,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    wrongOption: this.wrongOption,
-                                    rightOption: this.rightOption,
+                                    wrongOption: this.wrongOption(),
+                                    rightOption: this.rightOption(),
                                 }"
                             ></p>
                             <b>+ {{ this.inTotalSelectedRightOptions }}*{{ this.question().points }} /{{ this.multipleChoiceAnswerOptions }} = {{ this.score() }}</b>
@@ -430,8 +430,8 @@
                                     paramInTotalRightOptions: this.inTotalSelectedRightOptions,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    wrongOption: this.wrongOption,
-                                    rightOption: this.rightOption,
+                                    wrongOption: this.wrongOption(),
+                                    rightOption: this.rightOption(),
                                 }"
                             ></p>
                             <b>+ {{ this.inTotalSelectedRightOptions }}*{{ this.question().points }} /{{ this.multipleChoiceAnswerOptions }} = 0 </b>
@@ -467,8 +467,8 @@
                                     paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightMap: this.rightMap,
-                                    wrongMap: this.wrongMap,
+                                    rightMap: this.rightMap(),
+                                    wrongMap: this.wrongMap(),
                                 }"
                             ></p>
                             <b>+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question().points }}/{{ this.mappedLocations() }} = {{ this.score() }}</b>
@@ -487,8 +487,8 @@
                                     paramDragAndDropElementsCount: this.mappedLocations(),
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightMap: this.rightMap,
-                                    wrongMap: this.wrongMap,
+                                    rightMap: this.rightMap(),
+                                    wrongMap: this.wrongMap(),
                                 }"
                             ></p>
                             <b>+ {{ this.correctlyMappedDragAndDropItems() }}*{{ this.question().points }}/{{ this.mappedLocations() }} = 0 </b>
@@ -525,8 +525,8 @@
                                     paramCount: this.shortAnswerSpots,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightGap: this.rightGap,
-                                    wrongGap: this.wrongGap,
+                                    rightGap: this.rightGap(),
+                                    wrongGap: this.wrongGap(),
                                 }"
                             ></p>
                             <b>+ {{ this.shortAnswerCorrectAnswers }}*{{ this.question().points }}/{{ this.shortAnswerSpots }} = {{ this.score() }}</b>
@@ -545,8 +545,8 @@
                                     paramCount: this.shortAnswerSpots,
                                     paramPoint: this.scorePoint,
                                     paramScorePoint: this.questionPoint,
-                                    rightGap: this.rightGap,
-                                    wrongGap: this.wrongGap,
+                                    rightGap: this.rightGap(),
+                                    wrongGap: this.wrongGap(),
                                 }"
                             ></p>
                             <b>+ {{ this.shortAnswerCorrectAnswers }}*{{ this.question().points }}/{{ this.shortAnswerSpots }} = 0 </b>

@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,8 +22,11 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -98,6 +103,11 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
         plagiarismSubmissionB2.setSubmissionId(submission3.getId());
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
         plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
+        var plagiarismMatch = new PlagiarismMatch();
+        plagiarismMatch.setStartA(1);
+        plagiarismMatch.setStartB(2);
+        plagiarismMatch.setLength(3);
+        plagiarismComparison2.setMatches(Set.of(plagiarismMatch));
         plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
     }
 
@@ -165,9 +175,19 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         var comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+        assertThat(List.of(comparison.submissionA().studentLogin(), comparison.submissionB().studentLogin())).as("should anonymize plagiarism comparison")
+                .containsExactlyInAnyOrder("Your submission", "Other submission");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPlagiarismComparisonsForSplitView_studentWithNullSubmissionLogin_forbidden() throws Exception {
+        plagiarismComparison1.getSubmissionA().setStudentLogin(null);
+        plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+
+        request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.FORBIDDEN,
                 plagiarismComparison1.getClass());
-        assertThat(comparison.getSubmissionA().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
-        assertThat(comparison.getSubmissionB().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
     }
 
     @Test
@@ -181,19 +201,57 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        PlagiarismComparison comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view",
-                HttpStatus.OK, plagiarismComparison1.getClass());
-        assertThat(comparison).isEqualTo(plagiarismComparison1);
-        assertThat(comparison.getPlagiarismResult()).isNull();
-        assertThat(comparison.getSubmissionA()).isEqualTo(plagiarismComparison1.getSubmissionA());
-        assertThat(comparison.getSubmissionB()).isEqualTo(plagiarismComparison1.getSubmissionB());
-        assertThat(comparison.getSimilarity()).isEqualTo(plagiarismComparison1.getSimilarity());
-        assertThat(comparison.getStatus()).isEqualTo(plagiarismComparison1.getStatus());
-        assertThat(comparison.getMatches()).isEqualTo(plagiarismComparison1.getMatches());
+        PlagiarismComparisonDTO comparison = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+        assertThat(comparison.id()).isEqualTo(plagiarismComparison1.getId());
+        assertThat(comparison.submissionA().id()).isEqualTo(plagiarismComparison1.getSubmissionA().getId());
+        assertThat(comparison.submissionB().id()).isEqualTo(plagiarismComparison1.getSubmissionB().getId());
+        assertThat(comparison.similarity()).isEqualTo(plagiarismComparison1.getSimilarity());
+        assertThat(comparison.status()).isEqualTo(plagiarismComparison1.getStatus());
+        assertThat(comparison.matches()).as("should omit empty plagiarism matches").isNull();
 
-        // Important: make sure those additional information is hidden
-        assertThat(comparison.getSubmissionA().getPlagiarismCase()).isNull();
-        assertThat(comparison.getSubmissionB().getPlagiarismCase()).isNull();
+        PlagiarismComparisonDTO comparisonWithMatches = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+        assertThat(comparisonWithMatches.matches()).as("should include plagiarism matches").singleElement().satisfies(match -> {
+            assertThat(match.startA()).isEqualTo(1);
+            assertThat(match.startB()).isEqualTo(2);
+            assertThat(match.length()).isEqualTo(3);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetPlagiarismComparisonsForSplitView_multipleMatchesDoesNotDuplicateElements() throws Exception {
+        var submissionA = plagiarismComparison2.getSubmissionA();
+        submissionA.setElements(List.of(createSubmissionElement(submissionA, 1), createSubmissionElement(submissionA, 2)));
+        var submissionB = plagiarismComparison2.getSubmissionB();
+        submissionB.setElements(List.of(createSubmissionElement(submissionB, 1), createSubmissionElement(submissionB, 2), createSubmissionElement(submissionB, 3)));
+
+        var secondMatch = new PlagiarismMatch();
+        secondMatch.setStartA(4);
+        secondMatch.setStartB(5);
+        secondMatch.setLength(6);
+        plagiarismComparison2.setMatches(Set.of(plagiarismComparison2.getMatches().iterator().next(), secondMatch));
+        plagiarismComparisonRepository.saveAndFlush(plagiarismComparison2);
+
+        PlagiarismComparisonDTO comparison = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+
+        assertThat(comparison.submissionA().elements()).hasSize(2);
+        assertThat(comparison.submissionB().elements()).hasSize(3);
+        assertThat(comparison.matches()).hasSize(2);
+    }
+
+    private PlagiarismSubmissionElement createSubmissionElement(PlagiarismSubmission submission, int column) {
+        var element = new PlagiarismSubmissionElement();
+        element.setPlagiarismSubmission(submission);
+        element.setColumn(column);
+        element.setLine(1);
+        element.setLength(1);
+        return element;
     }
 
     @Test

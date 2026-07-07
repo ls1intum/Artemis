@@ -131,7 +131,7 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.userAuthorityIcon).toEqual(param.expectedIcon);
+        expect(component.userAuthorityIcon()).toEqual(param.expectedIcon);
     });
 
     it.each`
@@ -145,16 +145,16 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.userAuthorityTooltip).toEqual(param.expectedTooltip);
+        expect(component.userAuthorityTooltip()).toEqual(param.expectedTooltip);
     });
 
     it('should set isAuthorOfPosting correctly when user is the author', () => {
-        const authorPost = { ...metisPostLectureUser1, author: component.currentUser } as Post;
+        const authorPost = { ...metisPostLectureUser1, author: component.currentUser() } as Post;
         fixture.componentRef.setInput('posting', authorPost);
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.isAuthorOfPosting).toBe(true);
+        expect(component.isAuthorOfPosting()).toBe(true);
     });
 
     it('should handle undefined posting gracefully', () => {

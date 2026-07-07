@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingE
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -111,7 +110,7 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
-            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+            return new SearchResultPageDTO<>(List.of(), 0);
         }
         String searchTerm = search.getSearchTerm();
         PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
@@ -132,7 +131,7 @@ public class ProgrammingExerciseService {
     public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
-            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+            return new SearchResultPageDTO<>(List.of(), 0);
         }
         String searchTerm = search.getSearchTerm();
         PageRequest pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
@@ -242,7 +241,7 @@ public class ProgrammingExerciseService {
     public List<ProgrammingExercise> findByCourseIdWithCategoriesLatestSubmissionResultForTemplateAndSolutionParticipation(long courseId) {
         List<ProgrammingExercise> programmingExercisesWithCategories = programmingExerciseRepository.findAllWithCategoriesByCourseId(courseId);
         if (programmingExercisesWithCategories.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         Set<Long> exerciseIds = programmingExercisesWithCategories.stream().map(ProgrammingExercise::getId).collect(Collectors.toSet());
@@ -289,7 +288,7 @@ public class ProgrammingExerciseService {
             Submission submission = submissions.iterator().next();
             Result res = latestResultsForSolutionSubmissions.get(submission.getId());
             if (res != null) {
-                submission.setResults(Collections.singletonList(res));
+                submission.setResults(List.of(res));
             }
         }
     }

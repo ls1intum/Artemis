@@ -8,7 +8,7 @@ export const programmingExerciseParticipationRoute: Routes = [
         loadComponent: () => import('./code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.programmingExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
     },

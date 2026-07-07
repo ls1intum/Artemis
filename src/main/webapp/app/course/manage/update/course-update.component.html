@@ -3,7 +3,7 @@
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="container headline">
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
-                @if (croppedImage) {
+                @if (croppedImage(); as croppedImage) {
                     <div class="position-relative">
                         <jhi-image class="secured-image" [src]="croppedImage" />
 
@@ -16,7 +16,7 @@
                         </button>
                     </div>
                 }
-                @if (!croppedImage) {
+                @if (!croppedImage()) {
                     <div id="no-image-placeholder" class="no-image clickable me-2 lh-sm" (click)="triggerFileInput()">
                         <div class="h3 my-0 font-weight-bold">+</div>
                         <div class="small" jhiTranslate="artemisApp.course.imageCropper.uploadTitle"></div>
@@ -92,11 +92,11 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
                     <textarea id="field_description" class="form-control" rows="2" formControlName="description"></textarea>
                 </div>
-                @if (isAdmin) {
+                @if (isAdmin()) {
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
                         <div class="btn-group d-flex flex-wrap">
-                            @for (organization of courseOrganizations; track organization) {
+                            @for (organization of courseOrganizations(); track organization) {
                                 <div>
                                     <h5>
                                         <span class="badge bg-primary font-weight-normal m-2 ps-2">
@@ -218,7 +218,7 @@
                     <div class="form-check nested-form-group-head">
                         <input
                             type="checkbox"
-                            [checked]="customizeGroupNames"
+                            [checked]="customizeGroupNames()"
                             (change)="changeCustomizeGroupNames()"
                             class="form-check-input"
                             name="customizeGroupNamesEnabled"
@@ -228,7 +228,7 @@
                         <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"></label>
                         <fa-icon [icon]="faExclamationTriangle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
                     </div>
-                    @if (customizeGroupNames) {
+                    @if (customizeGroupNames()) {
                         <div>
                             <div class="nested-form-group">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName"></label>
@@ -260,7 +260,7 @@
                         type="checkbox"
                         class="form-check-input"
                         name="complaintsEnabled"
-                        [checked]="complaintsEnabled"
+                        [checked]="complaintsEnabled()"
                         id="field_maxComplaintSettingEnabled"
                         (change)="changeComplaintsEnabled()"
                         formControlName="complaintsEnabled"
@@ -268,7 +268,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.complaintsEnabled.description' | artemisTranslate }}" />
                 </div>
-                @if (complaintsEnabled) {
+                @if (complaintsEnabled()) {
                     <div>
                         <div class="row nested-form-group">
                             <div class="col-md">
@@ -332,7 +332,7 @@
                         type="checkbox"
                         class="form-check-input"
                         name="requestMoreFeedbackEnabled"
-                        [checked]="requestMoreFeedbackEnabled"
+                        [checked]="requestMoreFeedbackEnabled()"
                         id="field_maxRequestMoreFeedbackSettingEnabled"
                         (change)="changeRequestMoreFeedbackEnabled()"
                         formControlName="requestMoreFeedbackEnabled"
@@ -340,7 +340,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate }}" />
                 </div>
-                @if (requestMoreFeedbackEnabled) {
+                @if (requestMoreFeedbackEnabled()) {
                     <div class="nested-form-group last">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title" for="field_maxRequestMoreFeedbackTimeDays"></label>
                         <fa-icon
@@ -362,7 +362,7 @@
                 <hr />
                 <h4 class="form-group" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.title"></h4>
                 <span class="d-block form-text mb-3" jhiTranslate="artemisApp.course.form.sections.additionalFeatures.info"></span>
-                <jhi-feature-overlay [enabled]="atlasEnabled">
+                <jhi-feature-overlay [enabled]="atlasEnabled()">
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" name="learningPathsEnabled" id="field_learningPathsEnabled" formControlName="learningPathsEnabled" />
@@ -371,7 +371,7 @@
                         </div>
                     </div>
                 </jhi-feature-overlay>
-                @if (isAdmin) {
+                @if (isAdmin()) {
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
                         <div class="form-check">
                             <input
@@ -386,7 +386,7 @@
                         </div>
                     </div>
                 }
-                @if (isAdmin && isAthenaEnabled) {
+                @if (isAdmin() && isAthenaEnabled()) {
                     <div class="form-group form-check">
                         <input
                             type="checkbox"
@@ -443,7 +443,7 @@
                 <!-- Section: Enrollment -->
                 <hr />
                 <h4 jhiTranslate="artemisApp.course.form.sections.enrollment"></h4>
-                @if (ltiEnabled && !course.enrollmentEnabled) {
+                @if (ltiEnabled() && !course.enrollmentEnabled) {
                     <div class="form-check">
                         <input
                             type="checkbox"
@@ -555,7 +555,7 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl" />
                 }
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration" class="btn btn-primary ms-2">
+                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving() || !isValidConfiguration" class="btn btn-primary ms-2">
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </ng-template>

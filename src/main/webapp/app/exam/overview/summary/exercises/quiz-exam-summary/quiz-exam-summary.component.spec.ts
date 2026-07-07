@@ -105,11 +105,11 @@ describe('QuizExamSummaryComponent', () => {
     it('should initialize the solution dictionaries correctly', () => {
         fixture.componentRef.setInput('submission', submissionWithAnswers);
         fixture.detectChanges();
-        expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
+        expect(component.selectedAnswerOptions().get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);
-        expect(component.dragAndDropMappings.get(2)![0]).toEqual(correctDragAndDropMapping);
+        expect(component.dragAndDropMappings().get(2)![0]).toEqual(correctDragAndDropMapping);
         expect(component.getScoreForQuizQuestion(2)).toBe(1);
-        expect(component.shortAnswerSubmittedTexts.get(3)![0]).toEqual(shortAnswerSubmittedText);
+        expect(component.shortAnswerSubmittedTexts().get(3)![0]).toEqual(shortAnswerSubmittedText);
         expect(component.getScoreForQuizQuestion(3)).toBe(1);
     });
 });

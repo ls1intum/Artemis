@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -333,7 +332,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(Collections.emptyList());
+                fileUploadSubmission.setResults(List.of());
             }
         }
 

@@ -28,11 +28,11 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
         }
     }
 
-    async rejectComplaint(response: string, examMode: boolean) {
-        return await super.rejectComplaint(response, examMode, ExerciseType.FILE_UPLOAD);
+    async rejectComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
+        return await super.rejectComplaint(response, examMode, ExerciseType.FILE_UPLOAD, complaintExerciseTitle);
     }
 
-    async acceptComplaint(response: string, examMode: boolean) {
-        return await super.acceptComplaint(response, examMode, ExerciseType.FILE_UPLOAD);
+    async acceptComplaint(response: string, examMode: boolean, complaintExerciseTitle?: string) {
+        return await super.acceptComplaint(response, examMode, ExerciseType.FILE_UPLOAD, complaintExerciseTitle);
     }
 }
