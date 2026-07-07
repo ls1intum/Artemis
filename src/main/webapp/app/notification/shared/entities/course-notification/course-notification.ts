@@ -40,3 +40,27 @@ export class CourseNotification {
         this.relativeWebAppUrl = relativeWebAppUrl;
     }
 }
+
+/**
+ * Resolves a numeric enum member from the enum NAME the server sends over the wire.
+ *
+ * {@link CourseNotificationCategory} and {@link CourseNotificationViewingStatus} are numeric enums, but
+ * Jackson serializes them by constant name (e.g. "GENERAL", "SEEN"). The raw notification therefore carries
+ * a string in `category`/`status` even though the model types them as the enum. This performs the
+ * name → numeric-member reverse lookup, returning `undefined` for an unknown or missing name instead of
+ * fabricating an invalid enum value.
+ *
+ * @param enumObject the numeric enum object (e.g. {@link CourseNotificationCategory})
+ * @param name the value received from the server (a constant name at runtime), or `undefined`
+ */
+export function courseNotificationEnumValueFromName<E extends number>(enumObject: { [key: string]: E | string }, name: string | E | undefined): E | undefined {
+    if (name === undefined) {
+        return undefined;
+    }
+    // Idempotent: an already-resolved numeric member is returned as-is (a valid member has a reverse-mapped name string).
+    if (typeof name === 'number') {
+        return typeof enumObject[name] === 'string' ? name : undefined;
+    }
+    const member = enumObject[name];
+    return typeof member === 'number' ? member : undefined;
+}

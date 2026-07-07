@@ -84,10 +84,10 @@ public final class CustomFeedbackParser {
      */
     private static void validateCustomFeedback(final String fileName, final CustomFeedback feedback) throws InvalidPropertiesFormatException {
         if (feedback.name() == null || feedback.name().trim().isEmpty()) {
-            throw new InvalidPropertiesFormatException(String.format("Custom feedback from file %s needs to have a name attribute.", fileName));
+            throw new InvalidPropertiesFormatException("Custom feedback from file %s needs to have a name attribute.".formatted(fileName));
         }
         if (!feedback.successful() && (feedback.message() == null || feedback.message().trim().isEmpty())) {
-            throw new InvalidPropertiesFormatException(String.format("Custom non-success feedback from file %s needs to have a message", fileName));
+            throw new InvalidPropertiesFormatException("Custom non-success feedback from file %s needs to have a message".formatted(fileName));
         }
     }
 }

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -205,7 +204,7 @@ public class ParticipationDeletionService {
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Collections.emptyList());
+            submission.setResults(List.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }

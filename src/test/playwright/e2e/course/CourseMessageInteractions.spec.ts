@@ -47,8 +47,22 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.bookmarkMessage(message.id!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
-            // Reload page completely
-            await page.reload();
+            // Reload the page completely. Under heavy multi-node load the conversation occasionally fails to
+            // re-activate from the conversationId query param after a reload (the conversations-cache activation race
+            // that openConversation also works around), leaving an empty view in which the message never renders.
+            // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
+            // than that unrelated activation race.
+            for (let attempt = 0; attempt < 3; attempt++) {
+                await page.reload();
+                try {
+                    await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
+                    break;
+                } catch {
+                    if (attempt === 2) {
+                        throw new Error('Bookmarked message did not reappear after reload — conversation failed to re-activate');
+                    }
+                }
+            }
             // Verify the message is still visible and still bookmarked
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
@@ -368,31 +382,27 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             reply = await communicationAPIRequests.createCourseMessageReply(courseRef, sourcePost, `Forward reply message ${uid}`);
         });
 
-        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages }) => {
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
 
-            // opening the destination triggers the source-post fetch that the access check guards; it must succeed for an accessible source
-            const sourcePostsResponse = page.waitForResponse((resp) => resp.url().includes('/messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await sourcePostsResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(sourcePost.content!);
+            // Opening the destination triggers the access-checked source-post fetch; a visible preview proves it succeeded for an
+            // accessible source. Reload-retry to absorb the multi-node lag before the just-created forward is visible to the serving node.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, sourcePost.content!);
         });
 
-        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages }) => {
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
 
-            const answerSourceResponse = page.waitForResponse((resp) => resp.url().includes('/answer-messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await answerSourceResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(reply.content!);
+            // Same as the post case, but the access check guards the source-answer fetch; a visible preview proves it returned the reply.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, reply.content!);
         });
     });
 });

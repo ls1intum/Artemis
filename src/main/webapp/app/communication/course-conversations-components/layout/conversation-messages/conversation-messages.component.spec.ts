@@ -27,7 +27,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -671,10 +671,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should return true if at least one unread post is visible', () => {
-            const mockPostId = 1;
+            const mockPostId: number = 1;
             component.unreadPosts = [{ id: mockPostId } as any];
 
-            vi.spyOn(component as any, 'isPostVisible').mockImplementation((id: number) => id === mockPostId);
+            vi.spyOn(component as any, 'isPostVisible').mockImplementation((...args: unknown[]) => args[0] === mockPostId);
 
             const result = (component as any).isAnyUnreadPostVisible();
             expect(result).toBe(true);

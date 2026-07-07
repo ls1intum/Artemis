@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultT
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.Strings;
@@ -412,7 +411,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
-                List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
+                List.of("test1", "test2", "test3"), List.of(), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
@@ -422,7 +421,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         // resultNotification with changed commit hash
         participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var updatedResultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
-                List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
+                List.of("test1", "test2", "test3"), List.of(), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         resultRequestBody = convertBuildResultToJsonObject(updatedResultNotification);
         result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();

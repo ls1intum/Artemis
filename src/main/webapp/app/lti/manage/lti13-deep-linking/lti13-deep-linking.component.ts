@@ -52,7 +52,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faWrench = faWrench;
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly exercises = signal<Exercise[]>([]);
     readonly lectures = signal<Lecture[]>([]);
     selectedExercises?: Set<number> = new Set();
@@ -89,7 +89,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 return;
             }
 
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 if (user) {
                     this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
                         if (findWithExercisesResult?.body) {
@@ -116,7 +116,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * @param currentLink The current URL to return to after login.
      */
     redirectUserToLoginThenTargetLink(currentLink: string): void {
-        this.router.navigate(['/sign-in']).then(() => {
+        void this.router.navigate(['/sign-in']).then(() => {
             this.accountService
                 .getAuthenticationState()
                 .pipe(filter(Boolean), take(1))

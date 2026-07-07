@@ -119,7 +119,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             this.activeConversation.set(conversation);
             const activeConversationAsChannel = getAsChannelDTO(conversation);
             this.activeConversationAsChannel.set(activeConversationAsChannel);

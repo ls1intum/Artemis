@@ -7,6 +7,7 @@ import { adminDataExportsRoute } from 'app/admin/admin-data-exports/admin-data-e
 import { adminSbomRoute } from 'app/admin/admin-sbom/admin-sbom.route';
 
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
@@ -178,6 +179,15 @@ const childRoutes: Routes = [
             authorities: IS_AT_LEAST_SUPER_ADMIN,
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
         },
+    },
+    {
+        path: 'iris-dashboard',
+        loadComponent: () => import('app/admin/iris-dashboard/iris-dashboard.component').then((m) => m.IrisDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.irisDashboard.title',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+        canActivate: [IrisGuard],
     },
     ...organizationMgmtRoute,
     ...userManagementRoute,

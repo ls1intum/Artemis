@@ -1,11 +1,11 @@
 import { PlagiarismSubmissionElement } from './PlagiarismSubmissionElement';
-import { PlagiarismComparison } from './PlagiarismComparison';
+import { PlagiarismComparisonSummary } from './PlagiarismComparison';
 
 /**
  * Each `PlagiarismSubmission` refers to a submission that has been compared during plagiarism detection.
  * It contains fundamental information independent of the exercise type or algorithm used.
  */
-export class PlagiarismSubmission {
+export interface PlagiarismSubmission {
     /**
      * ID of the submission.
      */
@@ -36,10 +36,10 @@ export class PlagiarismSubmission {
     /**
      * Result score of the related submission.
      */
-    score: number;
+    score?: number;
 
     /**
      * Comparison of the submission.
      */
-    plagiarismComparison: PlagiarismComparison;
+    plagiarismComparison?: PlagiarismComparisonSummary;
 }

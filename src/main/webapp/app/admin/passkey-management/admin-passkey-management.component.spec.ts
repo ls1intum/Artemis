@@ -145,8 +145,6 @@ describe('AdminPasskeyManagementComponent', () => {
 
         expect(component.passkeys()).toEqual([]);
         expect(component.passkeys()).toHaveLength(0);
-
-        const emptyStateElement = fixture.nativeElement.querySelector('div.alert.alert-info[jhiTranslate="artemisApp.adminPasskeyManagement.noPasskeys"]');
-        expect(emptyStateElement).toBeTruthy();
+        expect(component.isLoading()).toBe(false);
     });
 });

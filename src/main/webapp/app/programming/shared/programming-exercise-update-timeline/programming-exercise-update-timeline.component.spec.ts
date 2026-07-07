@@ -7,7 +7,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -39,7 +38,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     beforeEach(() => {
         activatedRouteUrlSubject = new BehaviorSubject<UrlSegment[]>([{ path: 'programming-exercises' }] as UrlSegment[]);
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, ProgrammingExerciseUpdateTimelineComponent],
+            imports: [ProgrammingExerciseUpdateTimelineComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -546,7 +545,9 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.assessmentType()).toBe(AssessmentType.AUTOMATIC);
         expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.allowComplaintsForAutomaticAssessments()).toBe(false);
+        // Switching to automatic assessment must preserve the user's complaint-on-automatic choice (issue #13070);
+        // only fields that are meaningless in automatic mode (assessment due date, feedback suggestion module) reset.
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
         expect(component.feedbackSuggestionModule()).toBeUndefined();
     });
 
@@ -612,6 +613,16 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         checkbox.click();
         fixture.detectChanges();
 
+        expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
+    });
+
+    it('should preserve a persisted allowComplaintsForAutomaticAssessments on load for automatic assessment (issue #13070)', () => {
+        exercise.allowComplaintsForAutomaticAssessments = true;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        createTestComponent();
+
+        // The on-load effect must not reset the persisted value in AUTOMATIC mode, otherwise the setting is lost
+        // (saved as false) every time the exercise editor is opened.
         expect(component.allowComplaintsForAutomaticAssessments()).toBe(true);
     });
 

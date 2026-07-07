@@ -300,7 +300,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attachmentVideoUnitList).isEqualTo(attachmentVideoUnits);
 
         // first unit
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnitList.getFirst().getAttachment().getLink());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnitList.getFirst().getAttachment().getLink());
         byte[] fileBytesFirst = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {
@@ -310,7 +310,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
         // second unit
         String attachmentPathSecondUnit = attachmentVideoUnitList.get(1).getAttachment().getLink();
-        String attachmentRequestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentPathSecondUnit);
+        String attachmentRequestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentPathSecondUnit);
         byte[] fileBytesSecond = request.get(attachmentRequestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesSecond)) {

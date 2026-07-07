@@ -132,16 +132,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly documentationType: DocumentationType = 'StudentStatistics';
 
-    courseId: number;
-    private courseExercises: Exercise[];
+    courseId!: number; // set in ngOnInit() from route params
+    private courseExercises: Exercise[] = [];
     private paramSubscription?: Subscription;
-    private courseUpdatesSubscription: Subscription;
-    private translateSubscription: Subscription;
+    private courseUpdatesSubscription?: Subscription;
+    private translateSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
-    private courseExercisesNotIncludedInScore: Exercise[];
-    private courseExercisesFilteredByCategories: Exercise[];
+    private courseExercisesNotIncludedInScore: Exercise[] = [];
+    private courseExercisesFilteredByCategories: Exercise[] = [];
     readonly currentlyHidingNotIncludedInScoreExercises = signal<boolean>(false);
     readonly filteredExerciseIDs = signal<number[]>([]);
 
@@ -238,14 +238,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly doughnutOptions = computed(() =>
         doughnutChartOptions({
             legend: false,
-            tooltip: { label: (item) => `${this.translateService.instant(item.label)}: ${item.parsed}` },
+            tooltip: {
+                title: (items) => this.translateService.instant(items[0]?.label ?? ''),
+                label: (item) => `${item.parsed}`,
+            },
         }),
     );
 
     readonly groupChartData = computed(() => {
         const dataPerGroup = new Map<ExerciseType, ChartData<'bar', number[], string>>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
-            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(exerciseGroup as unknown as ChartMultiSeriesEntry[], this.barColors()));
+            // Adapt each NgxExercise to a ChartMultiSeriesEntry: its title is optional, so fall back to an empty
+            // label (the stacked-bar adapter requires a string name); series is already structurally compatible.
+            const entries: ChartMultiSeriesEntry[] = exerciseGroup.map((ngxExercise) => ({
+                name: ngxExercise.name ?? '',
+                series: ngxExercise.series,
+            }));
+            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(entries, this.barColors()));
         }
         return dataPerGroup;
     });
@@ -278,10 +287,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     faClipboard = faClipboard;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    private readonly controls = viewChild.required<TemplateRef<any>>('controls');
+    private readonly controls = viewChild.required<TemplateRef<unknown>>('controls');
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
+        subject: new Subject<TemplateRef<unknown>>(),
     };
 
     ngOnInit() {
@@ -393,7 +402,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         if (participation.id && results.length) {
                             const participationResult: ParticipationResultDTO | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
-                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, course);
+                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score, course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
                                 const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100, course);
                                 const missedScore = roundValueSpecifiedByCourseSettings(100 - cappedParticipationScore, course);
@@ -411,7 +420,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         } else {
                             if (
                                 participation.initializationState === InitializationState.FINISHED &&
-                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate!))
+                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate))
                             ) {
                                 // 4 = NOT_GRADED
                                 series[4].value = 100;
@@ -748,7 +757,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param event the event that is fired by p-chart
      * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: any, exerciseType: ExerciseType) {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0], exerciseType: ExerciseType) {
         const chartData = this.groupChartData().get(exerciseType);
         if (!chartData) {
             return;

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -6,14 +6,16 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -43,7 +45,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview/course-overview.scss'],
-    imports: [NgClass, SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent {
     private courseStorageService = inject(CourseStorageService);
@@ -55,6 +57,7 @@ export class CourseExercisesComponent {
     private exerciseService = inject(ExerciseService);
     private sessionStorageService = inject(SessionStorageService);
     private destroyRef = inject(DestroyRef);
+    private changeDetectorRef = inject(ChangeDetectorRef);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -67,22 +70,22 @@ export class CourseExercisesComponent {
     private readonly _isShownViaLti = signal(false);
     private readonly _isMultiLaunch = signal(false);
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
+    private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
+    readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
 
-    readonly course = computed(() => this._course());
-    readonly courseId = computed(() => this._courseId());
-    readonly sortedExercises = computed(() => this._sortedExercises());
-    readonly exerciseSelected = computed(() => this._exerciseSelected());
-    readonly accordionExerciseGroups = computed(() => this._accordionExerciseGroups());
-    readonly sidebarData = computed(() => this._sidebarData());
-    readonly sidebarExercises = computed(() => this._sidebarExercises());
-    // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
-    get isCollapsed(): boolean {
-        return this._isCollapsed();
-    }
-    readonly isShownViaLti = computed(() => this._isShownViaLti());
-    readonly isMultiLaunch = computed(() => this._isMultiLaunch());
-    readonly multiLaunchExerciseIDs = computed(() => this._multiLaunchExerciseIDs());
+    readonly course = this._course.asReadonly();
+    readonly courseId = this._courseId.asReadonly();
+    readonly sortedExercises = this._sortedExercises.asReadonly();
+    readonly exerciseSelected = this._exerciseSelected.asReadonly();
+    readonly accordionExerciseGroups = this._accordionExerciseGroups.asReadonly();
+    readonly sidebarData = this._sidebarData.asReadonly();
+    readonly sidebarExercises = this._sidebarExercises.asReadonly();
+
+    readonly isCollapsed = this._isCollapsed.asReadonly();
+    readonly isShownViaLti = this._isShownViaLti.asReadonly();
+    readonly isMultiLaunch = this._isMultiLaunch.asReadonly();
+    readonly multiLaunchExerciseIDs = this._multiLaunchExerciseIDs.asReadonly();
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -108,6 +111,10 @@ export class CourseExercisesComponent {
         this.ltiService.isMultiLaunch$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isMultiLaunch) => {
             this._isMultiLaunch.set(isMultiLaunch);
         });
+
+        effect(() => {
+            this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
+        });
     }
 
     private initializeAfterCourseIdSet(): void {
@@ -124,6 +131,12 @@ export class CourseExercisesComponent {
                 this._course.set(course);
                 this.prepareSidebarData();
                 this.onCourseLoad();
+                // This update can arrive from an async, non-template-event source (e.g. a started exercise's
+                // participation propagated into the cached course while the student is navigating to the code editor).
+                // Under zoneless change detection that signal write does not reliably schedule a render in time, so the
+                // sidebar card could stay at "Not yet started" until an unrelated event ticked CD. Explicitly mark for
+                // check so the live re-map paints immediately.
+                this.changeDetectorRef.markForCheck();
             });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
@@ -146,9 +159,9 @@ export class CourseExercisesComponent {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
         }
@@ -157,6 +170,10 @@ export class CourseExercisesComponent {
     toggleSidebar() {
         this._isCollapsed.update((value) => !value);
         this.courseOverviewService.setSidebarCollapseState('exercise', this._isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     getLastSelectedExercise(): string | undefined {
@@ -209,9 +226,16 @@ export class CourseExercisesComponent {
     }
 
     onSubRouteDeactivate() {
+        this._activeExerciseDetails.set(undefined);
         if (this.route.firstChild) {
             return;
         }
         this.navigateToExercise();
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseExerciseDetailsComponent) {
+            this._activeExerciseDetails.set(componentRef);
+        }
     }
 }

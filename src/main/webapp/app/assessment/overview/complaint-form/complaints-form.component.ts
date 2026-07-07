@@ -29,7 +29,7 @@ export class ComplaintsFormComponent implements OnInit {
     readonly isCurrentUserSubmissionAuthor = input(false);
     readonly onSubmit = output<void>();
     maxComplaintsPerCourse = 1;
-    maxComplaintTextLimit: number;
+    maxComplaintTextLimit = 0;
     complaintText?: string;
     course?: Course;
 
@@ -59,8 +59,8 @@ export class ComplaintsFormComponent implements OnInit {
         complaintRequest.examId = this.examId();
 
         // TODO: Rethink global client error handling and adapt this line accordingly
-        if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText!.length) {
-            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.maxComplaintTextLimit! });
+        if (complaintRequest.complaintText !== undefined && this.maxComplaintTextLimit < complaintRequest.complaintText.length) {
+            this.alertService.error('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: this.maxComplaintTextLimit });
             return;
         }
 

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -11,7 +13,14 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
  * @param selection           the selection between cloud or local LLMs
  * @param artemisBaseUrl      the base URL of the Artemis instance
  * @param variant             the variant of the pipeline to execute
+ * @param supportLevel        the instructional support level ("low" / "moderate" / "high")
+ * @param streamResponse      whether Pyris should send partial response updates during execution
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisPipelineExecutionSettingsDTO(String authenticationToken, AiSelectionDecision selection, String artemisBaseUrl, String variant) {
+public record PyrisPipelineExecutionSettingsDTO(String authenticationToken, AiSelectionDecision selection, String artemisBaseUrl, String variant, String supportLevel,
+        @Nullable Boolean streamResponse) {
+
+    public PyrisPipelineExecutionSettingsDTO(String authenticationToken, AiSelectionDecision selection, String artemisBaseUrl, String variant, String supportLevel) {
+        this(authenticationToken, selection, artemisBaseUrl, variant, supportLevel, null);
+    }
 }

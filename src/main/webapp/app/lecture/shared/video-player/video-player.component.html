@@ -1,9 +1,22 @@
-<div class="video-wrapper" #videoWrapper>
-    <div class="video-column" #videoColumn>
+<div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
+    <div
+        class="video-column"
+        #videoColumn
+        jhiResizable
+        [resizableEdges]="{ right: '.resizer-handle' }"
+        [resizableConstraints]="resizableConstraints"
+        [resizableApplyInlineSize]="false"
+        [resizableHandleOutsideHost]="true"
+        (resizeStart)="onResizeStart()"
+        (resizeMove)="onVideoColumnResize($event)"
+        (resizeEnd)="onResizeEnd()"
+    >
         <!-- Native HTML5 video element for hls.js -->
         <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
     </div>
 
+    <!-- Resizer divider sits between the video and transcript columns (not over the video), matching the previous
+         interact.js layout. The directive resolves this sibling handle through resizableHandleOutsideHost. -->
     <button
         type="button"
         class="resizer-handle"

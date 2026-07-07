@@ -15,7 +15,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
-import { NgbDate, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -141,7 +141,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
-    courseRepository: CourseManagementService;
+    courseRepository!: CourseManagementService; // aliased to the injected courseService in ngOnInit()
     notificationText?: string;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -150,15 +150,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exams: Exam[] = [];
 
     courses: Course[] = [];
-    quizExercises: QuizExercise[];
-    allExistingQuestions: QuizQuestion[];
-    existingQuestions: QuizQuestion[];
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: QuizQuestion[] = [];
+    existingQuestions: QuizQuestion[] = [];
     importFile?: File;
-    importFileName: string;
-    searchQueryText: string;
-    dndFilterEnabled: boolean;
-    mcqFilterEnabled: boolean;
-    shortAnswerFilterEnabled: boolean;
+    importFileName = '';
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -188,7 +188,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faFloppyDisk = faFloppyDisk;
     faCircleNotch = faCircleNotch;
 
-    readonly QuizMode = QuizMode;
+    override readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
 
     readonly quizModeOptions = computed(() => {
@@ -235,8 +235,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         ];
     });
 
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    override readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    override readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     readonly defaultSecondLayerDialogOptions = {
         width: '40rem',
@@ -495,12 +495,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizExercise()?.quizBatches?.forEach((batch) => {
             // validate release < start and start + duration > due
             const startTime = dayjs(batch.startTime);
-            const endTime = startTime.add(dayjs.duration(this.duration.minutes, 'minutes')).add(dayjs.duration(this.duration.seconds, 'seconds'));
+            const endTime = startTime.add(dayjs.duration(this.quizExercise().duration ?? 0, 'seconds'));
             batch.startTimeError = startTime.isBefore(this.quizExercise().releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
     }
 
-    cacheValidation() {
+    override cacheValidation() {
         if (this.quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
             this.quizExercise().dueDate = undefined; // Due date is calculated on server side
             if (this.scheduleQuizStart) {
@@ -581,18 +581,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
         return true;
     }
-
-    /**
-     * @desc Callback for datepicker to decide whether given date should be disabled
-     * All dates which are in the past (< today) are disabled
-     */
-    isDateInPast = (date: NgbDate, current: { month: number }) =>
-        current.month < dayjs().month() + 1 ||
-        dayjs()
-            .year(date.year)
-            .month(date.month - 1)
-            .date(date.day)
-            .isBefore(dayjs());
 
     /**
      * Iterates over the questions of the quizExercise and calculates the sum of all question scores
@@ -688,7 +676,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving.set(true);
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise().id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
@@ -824,9 +812,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     onDurationChange(): void {
         if (!this.isExamMode()) {
-            const duration = dayjs.duration(this.duration.minutes, 'minutes').add(this.duration.seconds, 'seconds');
-            this.quizExercise().duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
-            this.updateDuration();
+            const duration = dayjs
+                .duration(this.duration.hours ?? 0, 'hours')
+                .add(this.duration.minutes ?? 0, 'minutes')
+                .add(this.duration.seconds ?? 0, 'seconds');
+            this.quizExercise().duration = Math.max(round(duration.asSeconds()), 0);
             this.cacheValidation();
         } else if (this.quizExercise().releaseDate && this.quizExercise().dueDate) {
             const duration = dayjs(this.quizExercise().dueDate).diff(this.quizExercise().releaseDate, 's');
@@ -840,10 +830,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Update ui to current value of duration
      */
     updateDuration(): void {
-        const duration = dayjs.duration(this.quizExercise().duration!, 'seconds');
+        const duration = dayjs.duration(Math.max(this.quizExercise().duration ?? 0, 0), 'seconds');
         // when input fields are empty do not update their values
+        if (this.duration.hours !== undefined) {
+            this.duration.hours = Math.floor(duration.asHours());
+        }
         if (this.duration.minutes !== undefined) {
-            this.duration.minutes = 60 * duration.hours() + duration.minutes();
+            this.duration.minutes = duration.minutes();
         }
         if (this.duration.seconds !== undefined) {
             this.duration.seconds = duration.seconds();
@@ -892,7 +885,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    computeInvalidReasons(): ValidationReason[] {
+    override computeInvalidReasons(): ValidationReason[] {
         const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise()) {
             return [];

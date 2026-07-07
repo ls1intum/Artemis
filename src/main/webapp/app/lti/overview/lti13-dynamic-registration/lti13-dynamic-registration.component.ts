@@ -12,7 +12,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private http = inject(HttpClient);
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly isRegistering = signal(true);
     readonly registeredSuccessfully = signal(false);
 

@@ -9,7 +9,6 @@
  * NOTE: All tests run in zoneless mode - do not import zone.js
  */
 import '@angular/compiler';
-import '@angular/localize/init';
 import '@analogjs/vitest-angular/setup-snapshots';
 // Mock the canvas 2D context in jsdom (used by the PDF preview and Apollon diagram specs).
 import 'vitest-canvas-mock';
@@ -88,7 +87,9 @@ if (typeof Element.prototype.matches === 'undefined') {
     Element.prototype.matches = function (selector: string): boolean {
         const matches = (this.ownerDocument || document).querySelectorAll(selector);
         let i = matches.length;
-        while (--i >= 0 && matches.item(i) !== this) {}
+        while (--i >= 0 && matches.item(i) !== this) {
+            // no body: the loop condition walks i back to the matching element
+        }
         return i > -1;
     };
 }

@@ -3,6 +3,7 @@
         @for (informationBoxItem of informationBoxItems(); track $index) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
                 <div
+                    data-testid="result-history-trigger"
                     [attr.role]="sortedHistoryResults().length ? 'button' : undefined"
                     [attr.tabindex]="sortedHistoryResults().length ? 0 : undefined"
                     [attr.aria-disabled]="!sortedHistoryResults().length"

@@ -13,7 +13,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import '@angular/localize/init';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
@@ -284,20 +283,6 @@ describe('SystemNotificationManagementComponent', () => {
             const result = component.sort();
 
             expect(result).toEqual(['id,asc']);
-        });
-    });
-
-    describe('trackIdentity', () => {
-        it('should return notification id', () => {
-            const notification = { id: 5 } as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(5);
-        });
-
-        it('should return -1 when id is undefined', () => {
-            const notification = {} as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(-1);
         });
     });
 

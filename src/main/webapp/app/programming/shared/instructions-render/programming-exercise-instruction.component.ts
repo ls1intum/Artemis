@@ -111,9 +111,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    markdownExtensions: PluginSimple[];
-    private injectableContentFoundSubscription: Subscription;
-    private generateHtmlSubscription: Subscription;
+    markdownExtensions?: PluginSimple[];
+    private injectableContentFoundSubscription?: Subscription;
+    private generateHtmlSubscription?: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
 
     private problemStatementUpdateSubject = new Subject<void>();
@@ -190,7 +190,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         if (participationChanged || generateHtmlEventsChanged) {
             if (this.generateHtmlSubscription) {
                 this.generateHtmlSubscription.unsubscribe();
-                this.generateHtmlSubscription = undefined!;
+                this.generateHtmlSubscription = undefined;
             }
             const generateHtmlEvents = this.generateHtmlEvents();
             if (generateHtmlEvents) {
@@ -286,7 +286,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id!)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -299,12 +299,16 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     /**
      * Render the markdown into html.
+     *
+     * @param force when true, re-render even if the problem statement is unchanged (bypasses the live-preview
+     *     optimization). Used when the rendered output must be rebuilt regardless of the problem statement, e.g. when an
+     *     exam exercise becomes visible again and its asynchronously injected PlantUML diagrams must be re-injected.
      */
-    updateMarkdown() {
+    updateMarkdown(force = false) {
         const exercise = this.exercise();
         // Skip re-render if problem statement hasn't changed (optimization for live preview)
         const currentProblemStatement = exercise?.problemStatement?.trim();
-        if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
+        if (!force && currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
             return;
         }
         this.lastRenderedProblemStatement = currentProblemStatement;
@@ -321,6 +325,24 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
+    }
+
+    /**
+     * Forces a re-render of the problem statement, bypassing the "unchanged problem statement" optimization in
+     * {@link updateMarkdown}.
+     *
+     * In exam mode an exercise's change detection is detached while it is hidden. If a render runs during that time
+     * (for example because the student rapidly switches between exercises before the asynchronous PlantUML/task
+     * injection has settled), the injection can target stale or detached DOM and the rendered diagram is lost. Calling
+     * this once the exercise becomes visible again re-runs the render and injection against the live DOM, reliably
+     * restoring the PlantUML diagrams.
+     *
+     * Uses the explicit force flag rather than resetting {@link lastRenderedProblemStatement}, so it re-renders even
+     * when the problem statement is undefined/empty (in that case resetting to undefined would still equal the current
+     * value and the optimization would wrongly skip the re-render).
+     */
+    forceReRenderProblemStatement() {
+        this.updateMarkdown(true);
     }
 
     /**
@@ -369,7 +391,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     loadLatestResult(): Observable<Result | undefined> {
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
-            mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+            mergeMap((latestResult: Result | undefined) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
     }
 
@@ -380,10 +402,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = this.participation();
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id, result).pipe(
             map((res) => res && res.body),
-            map((feedbacks: Feedback[]) => {
-                result.feedbacks = feedbacks;
+            map((feedbacks: Feedback[] | null) => {
+                result.feedbacks = feedbacks ?? undefined;
                 return result;
             }),
             catchError(() => of(result)),
@@ -398,8 +420,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
             examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
-            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
+            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions ?? []);
+            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions ?? []);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
@@ -408,7 +430,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             this.scheduleContentInjection(true);
         } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement, this.markdownExtensions ?? []);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
             this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
@@ -450,7 +472,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             return;
         } else {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(markdownWithoutTasks as string, 'text/html');
+            const doc = parser.parseFromString(markdownWithoutTasks, 'text/html');
             const tables = doc.querySelectorAll('table');
 
             tables.forEach((table) => {

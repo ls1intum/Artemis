@@ -149,9 +149,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         const course = this.course();
         const exercise = this.exercise();
         if (!this.isExamExercise()) {
-            this.router.navigateByUrl(`/course-management/${course.id}/exercises`);
+            void this.router.navigateByUrl(`/course-management/${course.id}/exercises`);
         } else {
-            this.router.navigateByUrl(`/course-management/${course.id}/exams/${exercise.exerciseGroup?.exam?.id}/exercise-groups`);
+            void this.router.navigateByUrl(`/course-management/${course.id}/exams/${exercise.exerciseGroup?.exam?.id}/exercise-groups`);
         }
     }
 

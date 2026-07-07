@@ -1,36 +1,37 @@
-<mat-form-field class="category-chip-list" appearance="outline">
-    <mat-chip-grid #chipList aria-label="Category selection">
-        @for (category of selectedCategoryItems(); track category) {
-            <mat-chip-row (removed)="onItemRemove(category)" class="category-chip">
-                <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
-                    <span class="category-name" (click)="openColorSelector($event, category)">
-                        {{ category.category }}
-                    </span>
-                    <button matChipRemove class="remove-button">
-                        <fa-icon [icon]="faTimes" class="category-chip-remove" />
-                    </button>
-                </div>
-            </mat-chip-row>
-        }
-        <input
-            id="field_categories"
-            [hidden]="selectedCategoryItems().length >= MAX_CATEGORIES"
-            class="category-chip-input"
-            #categoryInput
-            [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
-            [formControl]="categoryCtrl"
-            [matAutocomplete]="auto"
-            [matChipInputFor]="chipList"
-            [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-            (matChipInputTokenEnd)="onItemAdd($event)"
-        />
-    </mat-chip-grid>
-    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
-        @for (category of uniqueCategoriesForAutocomplete | async; track category) {
-            <mat-option [value]="category" class="tag-option">
-                {{ category }}
-            </mat-option>
-        }
-    </mat-autocomplete>
-</mat-form-field>
+<p-autoComplete
+    class="category-chip-list"
+    inputId="field_categories"
+    [ngModel]="selectedCategoryLabels()"
+    [multiple]="true"
+    [unique]="true"
+    [suggestions]="categorySuggestions()"
+    [completeOnFocus]="true"
+    [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
+    (completeMethod)="onComplete($event)"
+    (onSelect)="onItemSelect($event)"
+    (onUnselect)="onItemUnselect($event)"
+    (keydown)="onSeparatorKeydown($event)"
+>
+    <!-- Colored chip token for each selected category: label + remove icon share one colored pill -->
+    <ng-template #selecteditem let-label>
+        <div class="custom-tag" [style.backgroundColor]="colorFor(label)">
+            <span class="category-name" (click)="openColorSelectorForLabel($event, label)">
+                {{ label }}
+            </span>
+            <button
+                type="button"
+                class="category-chip-remove"
+                [attr.aria-label]="('entity.action.remove' | artemisTranslate) + ' ' + label"
+                [title]="('entity.action.remove' | artemisTranslate) + ' ' + label"
+                (click)="removeChip(label, $event)"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+    </ng-template>
+    <!-- PrimeNG's default per-chip remove icon is hidden via CSS (.p-chip-remove-icon); the remove control lives inside .custom-tag above -->
+    <ng-template #item let-category>
+        <span class="tag-option">{{ category }}</span>
+    </ng-template>
+</p-autoComplete>
 <jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)" />

@@ -1,7 +1,6 @@
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/account/user/user.model';
 
@@ -38,7 +37,7 @@ export function mapResponseToPost(dto: PlagiarismPostCreationResponseDtoModel): 
         plagiarismCase: {
             id: dto.plagiarismCase.id,
             verdict: dto.plagiarismCase.verdict,
-            student: dto.plagiarismCase.studentId ? ({ id: dto.plagiarismCase.studentId } as User) : undefined,
-        } as PlagiarismCase,
-    } as Post;
+            student: dto.plagiarismCase.studentId ? { id: dto.plagiarismCase.studentId } : undefined,
+        },
+    };
 }

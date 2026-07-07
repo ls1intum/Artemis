@@ -27,17 +27,12 @@
                             "crypto",
                             "dayjs/locale/de",
                             "dompurify",
-                            "emoji-js",
-                            "export-to-csv",
-                            "graphemer",
                             "hoist-non-react-statics",
                             "interactjs",
                             "is-mobile",
-                            "jszip",
                             "localforage",
-                            "markdown-it-highlightjs",
-                            "papaparse",
                             "pako",
+                            "papaparse",
                             "pepjs",
                             "prop-types",
                             "react",
@@ -61,7 +56,7 @@
                         },
                         "index": "src/main/webapp/index.html",
                         "browser": "src/main/webapp/app/app.main.ts",
-                        "polyfills": ["@angular/localize/init"],
+                        "polyfills": [],
                         "tsConfig": "tsconfig.json",
                         "inlineStyleLanguage": "scss",
                         "stylePreprocessorOptions": {
@@ -100,13 +95,14 @@
                                 "output": "vs"
                             },
                             {
-                                "glob": "**/*",
-                                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
-                                "output": "assets/ngx-extended-pdf-viewer"
+                                "glob": "pdfium.wasm",
+                                "input": "./node_modules/@embedpdf/pdfium/dist",
+                                "output": "assets/embedpdf"
                             }
                         ],
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
+                            "src/main/webapp/tailwind.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",

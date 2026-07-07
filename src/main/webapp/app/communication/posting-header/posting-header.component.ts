@@ -39,8 +39,8 @@ export class PostingHeaderComponent implements OnInit {
     isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
 
-    isAtLeastInstructorInCourse: boolean;
-    isAtLeastTutorInCourse: boolean;
+    isAtLeastInstructorInCourse = false;
+    isAtLeastTutorInCourse = false;
     readonly isAuthorOfPosting = signal(false);
     readonly postingIsOfToday = signal(false);
     readonly todayFlag = signal<string | undefined>(undefined);
@@ -90,7 +90,7 @@ export class PostingHeaderComponent implements OnInit {
         this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     this.setUserProperties();
                 }),

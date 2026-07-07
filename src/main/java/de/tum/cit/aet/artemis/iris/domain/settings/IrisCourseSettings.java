@@ -19,16 +19,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
-        @Valid @Nullable IrisRateLimitConfiguration rateLimit) implements Serializable {
+        IrisSupportLevel supportLevel, @Valid @Nullable IrisRateLimitConfiguration rateLimit) implements Serializable {
 
-    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null);
+    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
 
     @JsonCreator
     public IrisCourseSettings(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
-            @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit) {
+            @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("supportLevel") @Nullable IrisSupportLevel supportLevel,
+            @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit) {
         this.enabled = enabled;
         this.customInstructions = sanitizeCustomInstructions(customInstructions);
         this.variant = Objects.requireNonNullElse(variant, IrisPipelineVariant.DEFAULT);
+        this.supportLevel = Objects.requireNonNullElse(supportLevel, IrisSupportLevel.MODERATE);
         this.rateLimit = rateLimit; // null = use defaults, non-null = explicit override (even if values are null = unlimited)
     }
 
@@ -50,11 +52,12 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
      * @param enabled            desired enabled flag
      * @param customInstructions optional custom instructions
      * @param variant            desired variant (defaults to {@link IrisPipelineVariant#DEFAULT})
+     * @param supportLevel       desired instructional support level (defaults to {@link IrisSupportLevel#MODERATE})
      * @param rateLimit          optional rate limit overrides
      * @return sanitized instance
      */
-    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
+    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant, @Nullable IrisSupportLevel supportLevel,
             @Nullable IrisRateLimitConfiguration rateLimit) {
-        return new IrisCourseSettings(enabled, customInstructions, variant, rateLimit);
+        return new IrisCourseSettings(enabled, customInstructions, variant, supportLevel, rateLimit);
     }
 }

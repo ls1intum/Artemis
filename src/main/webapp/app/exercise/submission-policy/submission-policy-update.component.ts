@@ -103,19 +103,19 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
 
     readonly submissionPolicyTypeChange = output<void>();
 
-    form: FormGroup;
+    form!: FormGroup; // built in ngOnInit() before the reactive form template renders
 
     readonly selectedSubmissionPolicyType = signal<SubmissionPolicyType>(undefined!);
 
-    isSubmissionPenaltyPolicy: boolean;
-    isLockRepositoryPolicy: boolean;
+    isSubmissionPenaltyPolicy = false;
+    isLockRepositoryPolicy = false;
     readonly isNonePolicy = signal(false);
 
     // This is used to ensure that only integers [1-500] can be used as input for the submission limit.
     submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$';
 
-    submissionLimitControl: FormControl;
-    exceedingPenaltyControl: FormControl;
+    submissionLimitControl!: FormControl; // resolved from the form in ngOnInit() before the reactive form template renders
+    exceedingPenaltyControl!: FormControl; // resolved from the form in ngOnInit() before the reactive form template renders
 
     // penalty can be any (point) number greater than 0
     exceedingPenaltyPattern = RegExp('^0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*$');
@@ -176,7 +176,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             if (programmingExercise.submissionPolicy) {
                 newPolicy.id = programmingExercise.submissionPolicy.id;
                 newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy!.submissionLimit;
+                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
 
                 if (programmingExercise.submissionPolicy?.exceedingPenalty) {
                     newPolicy.exceedingPenalty = programmingExercise.submissionPolicy?.exceedingPenalty;
@@ -193,7 +193,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
         this.submissionPolicyTypeChange.emit();
-        return submissionPolicyType!;
+        return submissionPolicyType;
     }
 
     /**

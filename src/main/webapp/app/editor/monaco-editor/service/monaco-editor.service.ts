@@ -16,15 +16,15 @@ export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = this.themeService.currentTheme;
 
-    private lightTheme: MonacoEditorTheme;
-    private darkTheme: MonacoEditorTheme;
+    private lightTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
+    private darkTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
 
     constructor() {
         this.registerCustomThemes();
         this.registerCustomMarkdownLanguage();
 
         // Expose Monaco globally for testing frameworks like Playwright
-        (window as any).monaco = monaco;
+        (window as Window & { monaco?: typeof monaco }).monaco = monaco;
 
         effect(() => {
             this.applyTheme(this.currentTheme());

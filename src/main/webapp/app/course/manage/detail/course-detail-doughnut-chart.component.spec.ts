@@ -105,4 +105,11 @@ describe('CourseDetailDoughnutChartComponent', () => {
         expect(component.doughnutChartTitle()).toBe('');
         expect(component.titleLink()).toBeUndefined();
     });
+
+    it('should show only the value in the tooltip body', () => {
+        fixture.detectChanges();
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.label({ parsed: 20 })).toBe('20');
+    });
 });

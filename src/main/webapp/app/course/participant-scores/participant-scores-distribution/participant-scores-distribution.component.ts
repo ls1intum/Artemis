@@ -373,7 +373,7 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     /**
      * Re-emits chart bar clicks in the shape previously provided by ngx-charts.
      */
-    onChartSelect(event: any): void {
+    onChartSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         if (selected?.label !== undefined && selected.value !== undefined) {
             this.onSelect.emit({ name: selected.label, value: selected.value, label: selected.label });

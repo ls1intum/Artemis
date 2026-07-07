@@ -15,7 +15,7 @@ import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -37,7 +37,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly openThread = output<Post>();
 
-    course: Course;
+    course?: Course;
     currentPostContextFilter?: PostContextFilter;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
@@ -60,10 +60,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     totalNumberOfPosts = 0;
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
-    previousScrollDistanceFromTop: number;
+    previousScrollDistanceFromTop = 0;
     page = 1;
 
-    formGroup: FormGroup;
+    formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
 
     getAsChannel = getAsChannelDTO;
 
@@ -231,11 +231,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 }
 
 export class CourseWideSearchConfig {
-    searchTerm: string;
-    selectedConversations: ConversationDTO[];
-    selectedAuthors: UserPublicInfoDTO[];
-    filterToCourseWide: boolean;
-    filterToUnresolved: boolean;
-    filterToAnsweredOrReacted: boolean;
-    sortingOrder: SortDirection;
+    searchTerm = '';
+    selectedConversations: ConversationDTO[] = [];
+    selectedAuthors: UserPublicInfoDTO[] = [];
+    filterToCourseWide = false;
+    filterToUnresolved = false;
+    filterToAnsweredOrReacted = false;
+    sortingOrder = SortDirection.ASCENDING;
 }

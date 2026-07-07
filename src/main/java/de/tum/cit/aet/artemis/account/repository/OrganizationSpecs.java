@@ -1,22 +1,30 @@
 package de.tum.cit.aet.artemis.account.repository;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.Organization_;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.Course_;
 
@@ -156,6 +164,131 @@ public class OrganizationSpecs {
         return (root, query, builder) -> {
             Join<Course, Organization> orgJoin = root.join(Course_.ORGANIZATIONS, JoinType.INNER);
             return getCoursePredicate(builder, root, orgJoin, organizationId, searchTerm);
+        };
+    }
+
+    /**
+     * Applies sorting for the organization list view as a {@code CriteriaQuery.orderBy()} side effect.
+     * <p>
+     * For {@code numberOfUsers} / {@code numberOfCourses} when {@code withCounts} is {@code true},
+     * correlated subqueries start from the owning side ({@link User} / {@link Course}) because
+     * {@link Organization} intentionally has no inverse-side collections.
+     *
+     * @param sortedColumn the column key from the UI; unrecognised values fall back to id
+     * @param sortOrder    ascending or descending; {@code null} is treated as ascending
+     * @param withCounts   whether counts are loaded for this request (affects count-column sort)
+     * @return specification that sets ORDER BY as a side effect and returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<Organization> orderedForOrganizations(@Nullable String sortedColumn, @Nullable SortingOrder sortOrder, boolean withCounts) {
+        return (root, query, builder) -> {
+            if (query == null || Long.class.equals(query.getResultType())) {
+                return null;
+            }
+            boolean asc = sortOrder != SortingOrder.DESCENDING;
+            List<Order> orders = new ArrayList<>();
+
+            Expression<?> sortExpr = switch (sortedColumn != null ? sortedColumn : "") {
+                case "name" -> root.get(Organization_.NAME);
+                case "shortName" -> root.get(Organization_.SHORT_NAME);
+                case "emailPattern" -> root.get(Organization_.EMAIL_PATTERN);
+                case "numberOfUsers" -> {
+                    if (withCounts) {
+                        Subquery<Long> sub = query.subquery(Long.class);
+                        Root<User> userRoot = sub.from(User.class);
+                        Join<User, Organization> userOrgJoin = userRoot.join(User_.ORGANIZATIONS, JoinType.INNER);
+                        sub.select(builder.count(userRoot.get(User_.ID)));
+                        sub.where(builder.equal(userOrgJoin.get(Organization_.ID), root.get(Organization_.ID)));
+                        yield sub;
+                    }
+                    yield root.get(Organization_.ID);
+                }
+                case "numberOfCourses" -> {
+                    if (withCounts) {
+                        Subquery<Long> sub = query.subquery(Long.class);
+                        Root<Course> courseRoot = sub.from(Course.class);
+                        Join<Course, Organization> courseOrgJoin = courseRoot.join(Course_.ORGANIZATIONS, JoinType.INNER);
+                        sub.select(builder.count(courseRoot.get(DomainObject_.ID)));
+                        sub.where(builder.equal(courseOrgJoin.get(Organization_.ID), root.get(Organization_.ID)));
+                        yield sub;
+                    }
+                    yield root.get(Organization_.ID);
+                }
+                case "id" -> root.get(Organization_.ID);
+                default -> root.get(Organization_.ID);
+            };
+
+            orders.add(asc ? builder.asc(sortExpr) : builder.desc(sortExpr));
+            orders.add(builder.asc(root.get(Organization_.ID)));
+            query.orderBy(orders);
+            return null;
+        };
+    }
+
+    /**
+     * Applies sorting for the member list view as a {@code CriteriaQuery.orderBy()} side effect.
+     * Sorting by {@code name} uses {@code CONCAT(firstName, ' ', lastName)} as a single expression
+     * for correct full-name ordering.
+     *
+     * @param sortedColumn the column key from the UI; unrecognised values fall back to id
+     * @param sortOrder    ascending or descending; {@code null} is treated as ascending
+     * @return specification that sets ORDER BY as a side effect and returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<User> orderedForMembers(@Nullable String sortedColumn, @Nullable SortingOrder sortOrder) {
+        return (root, query, builder) -> {
+            if (query == null || Long.class.equals(query.getResultType())) {
+                return null;
+            }
+            boolean asc = sortOrder != SortingOrder.DESCENDING;
+            List<Order> orders = new ArrayList<>();
+
+            switch (sortedColumn != null ? sortedColumn : "") {
+                case "login" -> orders.add(asc ? builder.asc(root.get(User_.LOGIN)) : builder.desc(root.get(User_.LOGIN)));
+                case "name" -> {
+                    Expression<String> nameExpr = builder.concat(builder.concat(builder.coalesce(root.get(User_.FIRST_NAME), ""), " "),
+                            builder.coalesce(root.get(User_.LAST_NAME), ""));
+                    orders.add(asc ? builder.asc(nameExpr) : builder.desc(nameExpr));
+                }
+                case "email" -> orders.add(asc ? builder.asc(root.get(User_.EMAIL)) : builder.desc(root.get(User_.EMAIL)));
+                case "id" -> orders.add(asc ? builder.asc(root.get(User_.ID)) : builder.desc(root.get(User_.ID)));
+                default -> {
+                    /* fall through to tiebreaker */ }
+            }
+
+            orders.add(builder.asc(root.get(User_.ID)));
+            query.orderBy(orders);
+            return null;
+        };
+    }
+
+    /**
+     * Applies sorting for the course list view as a {@code CriteriaQuery.orderBy()} side effect.
+     *
+     * @param sortedColumn the column key from the UI; unrecognised values fall back to id
+     * @param sortOrder    ascending or descending; {@code null} is treated as ascending
+     * @return specification that sets ORDER BY as a side effect and returns {@code null} as predicate
+     */
+    @NonNull
+    public static Specification<Course> orderedForCourses(@Nullable String sortedColumn, @Nullable SortingOrder sortOrder) {
+        return (root, query, builder) -> {
+            if (query == null || Long.class.equals(query.getResultType())) {
+                return null;
+            }
+            boolean asc = sortOrder != SortingOrder.DESCENDING;
+            List<Order> orders = new ArrayList<>();
+
+            Expression<?> sortExpr = switch (sortedColumn != null ? sortedColumn : "") {
+                case "title" -> root.get(Course_.TITLE);
+                case "shortName" -> root.get(Course_.SHORT_NAME);
+                case "id" -> root.get(DomainObject_.ID);
+                default -> root.get(DomainObject_.ID);
+            };
+
+            orders.add(asc ? builder.asc(sortExpr) : builder.desc(sortExpr));
+            orders.add(builder.asc(root.get(DomainObject_.ID)));
+            query.orderBy(orders);
+            return null;
         };
     }
 }

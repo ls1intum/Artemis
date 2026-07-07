@@ -1,34 +1,7 @@
-<div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed() }">
+<div class="mt-2 sidebar-container d-flex h-100 justify-content-between flex-column" [class]="{ collapsed: isNavbarCollapsed() }">
     <div>
-        <!-- Course Icon + Title -->
-        <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course()?.title">
-            <div ngbDropdown container="body" class="d-flex">
-                @if (course()) {
-                    @if (courses()?.length) {
-                        <div ngbDropdownToggle class="pointer">
-                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIconPath, courseTitle: course()?.title }" />
-                        </div>
-                    } @else {
-                        <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIconPath, courseTitle: course()?.title }" />
-                    }
-                }
-
-                <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
-                    @for (courseItem of courses() ?? []; track courseItem.id) {
-                        <button ngbDropdownItem (click)="switchCourse.emit(courseItem)" class="d-flex align-items-center py-1 px-2">
-                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: courseItem.courseIconPath, courseTitle: courseItem.title }" />
-                            <div class="h6 fw-normal mb-0 course-title text-wrap">{{ courseItem?.title }}</div>
-                        </button>
-                    }
-                </div>
-            </div>
-            @if (!isNavbarCollapsed()) {
-                <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course()?.title }}</div>
-            }
-        </div>
         <!-- NavItems -->
         <div>
-            <hr class="mt-0" />
             <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
                 @for (sidebarItem of sidebarItemsTop(); track sidebarItem.routerLink) {
                     <li class="nav-item" [hidden]="sidebarItem.hidden">
@@ -153,18 +126,6 @@
     </div>
 
     <!-- TEMPLATES -->
-    <ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
-        @if (courseImage) {
-            <div class="d-flex align-items-center justify-content-center">
-                <jhi-image [src]="courseImage" />
-            </div>
-        } @else {
-            <div class="course-circle d-flex align-items-center justify-content-center">
-                <span class="fs-4">{{ courseTitle | slice: 0 : 1 }}</span>
-            </div>
-        }
-    </ng-template>
-
     <ng-template #navIconAndText let-sidebarItem>
         @if (sidebarItem.icon) {
             <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" [style.color]="sidebarItem.iconColor" />

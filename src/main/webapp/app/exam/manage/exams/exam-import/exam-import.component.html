@@ -75,16 +75,7 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [ellipses]="true"
-                    [boundaryLinks]="true"
-                    [collectionSize]="total()"
-                    [(page)]="state.page"
-                    [pageSize]="state.pageSize"
-                    (pageChange)="onPageChange($event)"
-                />
+                <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
             </div>
         </div>
     }
@@ -100,7 +91,7 @@
                         <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
                     }
                 </div>
-                <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" />
+                <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
             <div class="modal-footer">
                 <jhi-button
@@ -113,3 +104,5 @@
         }
     }
 </form>
+
+<jhi-exam-import-progress-dialog />

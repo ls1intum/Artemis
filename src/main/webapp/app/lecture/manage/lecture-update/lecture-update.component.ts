@@ -95,7 +95,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     formStatusBar = viewChild(FormStatusBarComponent);
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
-    lectureOnInit: Lecture;
+    lectureOnInit!: Lecture; // set in ngOnInit() (and re-cloned on save success)
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
     readonly isSaving = signal<boolean>(undefined!);
@@ -103,7 +103,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     readonly processUnitMode = signal<boolean>(undefined!);
     readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
-    file: File;
+    file?: File;
     readonly fileName = signal<string>(undefined!);
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
@@ -147,14 +147,12 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             this.updateFormStatusBar();
         });
 
-        effect(
-            function scrollToLastSectionAfterLectureCreation() {
-                if (this.unitSection() && this.isNewlyCreatedExercise) {
-                    this.isNewlyCreatedExercise = false;
-                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            if (this.unitSection() && this.isNewlyCreatedExercise) {
+                this.isNewlyCreatedExercise = false;
+                this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.sections.period');
+            }
+        });
 
         effect(() => {
             if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {
@@ -317,18 +315,18 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         this.isSaving.set(false);
 
         if (!lecture.course?.id) {
-            captureException('Lecture has no course id: ' + lecture);
+            captureException('Lecture has no course id: ' + lecture.id);
             return;
         }
 
         if (this.processUnitMode()) {
             this.isProcessing.set(false);
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName() },
             });
         } else if (this.isEditMode()) {
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
             // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
@@ -337,7 +335,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
 
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
+            void this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
             this.shouldDisplayDismissWarning = true;
         }
 
