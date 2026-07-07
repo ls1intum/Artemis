@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -12,6 +14,15 @@ import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MAX_PACKAGE_NAME_LENGTH } from 'app/foundation/constants/input.constants';
+
+/**
+ * Typed view onto the `packageNameField` viewChild signal so the spec can stub it directly
+ * instead of depending on real NgModel validity timing in the zoneless test environment.
+ */
+type LanguageInternals = ProgrammingExerciseLanguageComponent & {
+    packageNameField: Signal<NgModel | undefined>;
+};
+const internals = (c: ProgrammingExerciseLanguageComponent): LanguageInternals => c as LanguageInternals;
 
 describe('ProgrammingExerciseLanguageComponent', () => {
     setupTestBed({ zoneless: true });
@@ -83,6 +94,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
+        vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: false } as NgModel);
         expect(comp.isPackageNameValid()).toBe(false);
     });
 
@@ -93,7 +105,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
-        fixture.detectChanges(); // second pass needed for NgModel viewChild to initialize and validate
+        vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: true } as NgModel);
         expect(comp.isPackageNameValid()).toBe(true);
     });
 });
