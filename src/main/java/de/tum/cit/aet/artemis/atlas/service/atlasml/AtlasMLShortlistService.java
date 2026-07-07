@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.atlas.service.atlasml;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -18,6 +20,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
+import de.tum.cit.aet.artemis.atlas.service.util.AtlasPromptSanitizer;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
@@ -56,8 +59,6 @@ public class AtlasMLShortlistService {
     private static final int COMPETENCY_TITLE_MAX = 200;
 
     private static final int COMPETENCY_DESCRIPTION_MAX = 500;
-
-    private static final String TRUNCATION_MARKER = " …[truncated]";
 
     /** Fence delimiters used by {@code orchestrator_execute_prompt.st}; literal occurrences in AtlasML data are neutralized. */
     private static final String USER_DATA_BEGIN = "<<<USER_DATA>>>";
@@ -104,30 +105,37 @@ public class AtlasMLShortlistService {
             return shortlists;
         }
         int budget = properties.maxAtlasMLCallsPerRun();
-        int used = 0;
-        for (int i = 0; i < extracts.size(); i++) {
-            ExerciseExtract extract = extracts.get(i);
-            if (extract.description() == null || extract.description().isBlank()) {
-                continue;
-            }
-            if (used >= budget) {
-                log.info("AtlasML shortlist budget of {} call(s) exhausted for course {}; skipped {} remaining exercise(s)", budget, courseId, extracts.size() - i);
-                break;
-            }
-            used++;
-            try {
-                // Short-timeout variant: this is an advisory best-effort signal, so it must not hold the per-course
-                // orchestration run lock on a slow/unreachable AtlasML (standard timeouts are 30s/60s).
-                SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetenciesWithShortTimeout(new SuggestCompetencyRequestDTO(extract.description(), courseId));
-                if (response != null && response.competencies() != null && !response.competencies().isEmpty()) {
-                    shortlists.put(extract.exerciseId(), response.competencies());
-                }
-            }
-            catch (Exception ex) {
-                log.debug("AtlasML similarity suggestion failed for exercise {} in course {}: {}", extract.exerciseId(), courseId, ex.getMessage());
+        // Blank descriptions never trigger a call and so don't count against the budget; keep only queryable extracts,
+        // then deterministically retain the first N eligible ones so a budget cut always drops the tail.
+        List<ExerciseExtract> eligible = extracts.stream().filter(extract -> extract.description() != null && !extract.description().isBlank()).toList();
+        if (eligible.size() > budget) {
+            log.info("AtlasML shortlist budget of {} call(s) exhausted for course {}; skipped {} remaining exercise(s)", budget, courseId, eligible.size() - budget);
+            eligible = eligible.subList(0, budget);
+        }
+        // Fan out the blocking short-timeout calls over the common ForkJoinPool so the worst-case lock hold is one
+        // short timeout, not budget × timeout. The stream is ordered, so encounter order (the AtlasML ranking input
+        // order) is preserved even under parallel execution; the LinkedHashMap then fixes deterministic output order.
+        eligible.parallelStream().map(extract -> fetchOne(courseId, extract)).filter(Objects::nonNull).forEachOrdered(entry -> shortlists.put(entry.getKey(), entry.getValue()));
+        return shortlists;
+    }
+
+    /**
+     * Fetches AtlasML's ranked candidates for one exercise, returning {@code null} when the call fails or yields no
+     * candidates. Isolates per-exercise failures (best-effort) so one bad call cannot fail the run or hide the rest.
+     */
+    private @Nullable Entry<Long, List<AtlasMLCompetencyDTO>> fetchOne(long courseId, ExerciseExtract extract) {
+        try {
+            // Short-timeout variant: this is an advisory best-effort signal, so it must not hold the per-course
+            // orchestration run lock on a slow/unreachable AtlasML (standard timeouts are 30s/60s).
+            SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetenciesWithShortTimeout(new SuggestCompetencyRequestDTO(extract.description(), courseId));
+            if (response != null && response.competencies() != null && !response.competencies().isEmpty()) {
+                return Map.entry(extract.exerciseId(), response.competencies());
             }
         }
-        return shortlists;
+        catch (Exception ex) {
+            log.debug("AtlasML similarity suggestion failed for exercise {} in course {}: {}", extract.exerciseId(), courseId, ex.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -177,22 +185,9 @@ public class AtlasMLShortlistService {
     /**
      * Neutralizes instructor-authored AtlasML text before single-line prompt interpolation: replaces
      * zero-width / control characters with spaces, collapses runs of whitespace, neutralizes the
-     * user-data fence delimiters, and hard-truncates at {@code maxChars}.
+     * user-data fence delimiters, and hard-truncates at {@code maxChars} (never mid surrogate pair).
      */
     private static String sanitize(@Nullable String raw, int maxChars) {
-        if (raw == null || raw.isBlank()) {
-            return "(untitled)";
-        }
-        String normalized = raw.replace('\u00A0', ' ').replace('\u200B', ' ').replace('\u200C', ' ').replace('\u200D', ' ').replace('\uFEFF', ' ');
-        normalized = normalized.replaceAll("\\p{Cntrl}", " ").replaceAll("\\s{2,}", " ").strip();
-        if (normalized.isEmpty()) {
-            return "(untitled)";
-        }
-        normalized = normalized.replace(USER_DATA_BEGIN, "<<<USER_DATA_LITERAL>>>").replace(USER_DATA_END, "<<<END_USER_DATA_LITERAL>>>");
-        if (normalized.length() > maxChars) {
-            int cut = Math.max(0, maxChars - TRUNCATION_MARKER.length());
-            normalized = normalized.substring(0, cut) + TRUNCATION_MARKER;
-        }
-        return normalized;
+        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, true, "(untitled)");
     }
 }

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
+import de.tum.cit.aet.artemis.atlas.service.util.AtlasPromptSanitizer;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
@@ -86,13 +87,6 @@ public class CompetencyOrchestrationService {
     private static final int LECTURE_UNIT_NAME_MAX = 200;
 
     private static final int TYPE_LABEL_MAX = 50;
-
-    private static final String TRUNCATION_MARKER = " …[truncated]";
-
-    /** Fence delimiters for untrusted data in {@code orchestrator_execute_prompt.st}; literal occurrences in user content are neutralized in {@link #sanitizeForPrompt}. */
-    private static final String USER_DATA_BEGIN = "<<<USER_DATA>>>";
-
-    private static final String USER_DATA_END = "<<<END_USER_DATA>>>";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -569,24 +563,11 @@ public class CompetencyOrchestrationService {
 
     /**
      * Neutralizes instructor text before prompt interpolation: strips control / zero-width
-     * characters, neutralizes the user-data fence delimiters, and hard-truncates at {@code maxChars}.
+     * characters, neutralizes the user-data fence delimiters, and hard-truncates at {@code maxChars}
+     * (never mid surrogate pair). Preserves {@code \n}/{@code \t} for the multi-line execute-prompt body.
      */
     static String sanitizeForPrompt(@Nullable String raw, int maxChars) {
-        if (raw == null || raw.isBlank()) {
-            return "(empty)";
-        }
-        String normalized = raw.replace('\u00A0', ' ').replace('\u200B', ' ').replace('\u200C', ' ').replace('\u200D', ' ').replace('\uFEFF', ' ');
-        normalized = normalized.replaceAll("[\\p{Cntrl}&&[^\\n\\t]]", "");
-        normalized = normalized.replaceAll("\\n{3,}", "\n\n").strip();
-        if (normalized.isEmpty()) {
-            return "(empty)";
-        }
-        normalized = normalized.replace(USER_DATA_BEGIN, "<<<USER_DATA_LITERAL>>>").replace(USER_DATA_END, "<<<END_USER_DATA_LITERAL>>>");
-        if (normalized.length() > maxChars) {
-            int cut = Math.max(0, maxChars - TRUNCATION_MARKER.length());
-            normalized = normalized.substring(0, cut) + TRUNCATION_MARKER;
-        }
-        return normalized;
+        return AtlasPromptSanitizer.sanitizeForPrompt(raw, maxChars, false, "(empty)");
     }
 
     private static String renderCompetencyIndex(CompetencyIndexResponseDTO index) {
