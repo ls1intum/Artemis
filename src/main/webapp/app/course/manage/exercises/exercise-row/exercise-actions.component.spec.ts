@@ -358,7 +358,7 @@ describe('ExerciseActionsComponent', () => {
                 [ExerciseType.MODELING]: modelingExerciseService,
             };
             const service = services[type] as { delete: (id: number) => unknown };
-            const deleteSpy = vi.spyOn(service, 'delete').mockReturnValue(of(undefined));
+            const deleteSpy = vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const exercise = textExercise({ id: 3, type });
             fixture.componentRef.setInput('exercise', exercise);
@@ -373,7 +373,7 @@ describe('ExerciseActionsComponent', () => {
         });
 
         it('deletes a programming exercise with the repo/build-plan flags', () => {
-            const deleteSpy = vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(undefined));
+            const deleteSpy = vi.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             fixture.componentRef.setInput('exercise', textExercise({ id: 4, type: ExerciseType.PROGRAMMING }));
 
             component['onDelete']({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
