@@ -472,8 +472,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.canAdaptWithFeedback()) {
             return;
         }
+        // Selecting the thread is a preview side effect: if the instructor cancels the dialog, undo it so a cancelled preview does not silently leave the thread selected for the
+        // next generation run. A thread the instructor had already selected stays selected.
+        const wasAlreadySelected = this.exerciseReviewCommentService.selectedFeedbackThreadIds().includes(threadId);
         this.exerciseReviewCommentService.selectThreadAsFeedback(threadId);
-        this.openAdaptDialog();
+        this.openAdaptDialog(wasAlreadySelected ? undefined : () => this.exerciseReviewCommentService.toggleThreadFeedbackSelection(threadId));
     }
 
     /**
@@ -481,7 +484,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * starts an {@code ADAPT} run for the selected feedback threads. Both the AI-menu item and the per-thread inline action route through here so the shared selection store stays the
      * single source of truth.
      */
-    protected openAdaptDialog(): void {
+    protected openAdaptDialog(onCancel?: () => void): void {
         if (!this.canAdaptWithFeedback()) {
             return;
         }
@@ -495,6 +498,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
         dialogRef?.onClose.pipe(take(1)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
             if (!result) {
+                onCancel?.();
                 return;
             }
             this.startAdaptation(result.instructions);

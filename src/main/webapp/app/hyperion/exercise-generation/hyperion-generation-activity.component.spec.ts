@@ -147,6 +147,11 @@ describe('HyperionGenerationActivityComponent', () => {
         const reasons = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-verdict-reasons"]');
         expect(reasons?.textContent).toContain('solution failed 1 test');
         expect(reasons?.textContent).toContain('no gradable test');
+        // The chips must state the actual outcome, not a fixed "Solution passes": a failed solution reads "solution failed" (not the accepted-state label), so colour is not the
+        // only signal (a11y). MockTranslateService renders the key, so assert the failed-state key is used and the passed-state key is not.
+        const text = fixture.nativeElement.textContent;
+        expect(text).toContain('verdict.solutionFailed');
+        expect(text).not.toContain('verdict.solutionPassed');
     });
 
     it('requests cancellation for the owner', () => {

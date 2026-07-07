@@ -29,8 +29,10 @@
                 "verdict": {
                     "accepted": "Accepted",
                     "rejected": "Rejected",
-                    "solution": "Solution passes",
-                    "template": "Template fails",
+                    "solutionPassed": "Solution passes",
+                    "solutionFailed": "Solution fails",
+                    "templateFailed": "Template fails",
+                    "templatePasses": "Template passes",
                     "tests": "tests"
                 }
             }

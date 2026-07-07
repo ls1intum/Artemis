@@ -29,8 +29,10 @@
                 "verdict": {
                     "accepted": "Akzeptiert",
                     "rejected": "Abgelehnt",
-                    "solution": "Musterlösung besteht",
-                    "template": "Vorlage schlägt fehl",
+                    "solutionPassed": "Musterlösung besteht",
+                    "solutionFailed": "Musterlösung schlägt fehl",
+                    "templateFailed": "Vorlage schlägt fehl",
+                    "templatePasses": "Vorlage besteht",
                     "tests": "Tests"
                 }
             }

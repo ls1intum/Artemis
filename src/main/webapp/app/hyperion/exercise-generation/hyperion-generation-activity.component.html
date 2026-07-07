@@ -32,10 +32,24 @@
                         ></span>
                     </p-tag>
                     <p-tag [severity]="currentVerdict.solutionPassed ? 'success' : 'danger'">
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.verdict.solution"></span>
+                        <fa-icon [icon]="currentVerdict.solutionPassed ? faCircleCheck : faCircleXmark" />
+                        <span
+                            [jhiTranslate]="
+                                currentVerdict.solutionPassed
+                                    ? 'artemisApp.hyperion.generationActivity.verdict.solutionPassed'
+                                    : 'artemisApp.hyperion.generationActivity.verdict.solutionFailed'
+                            "
+                        ></span>
                     </p-tag>
                     <p-tag [severity]="currentVerdict.templateFailed ? 'success' : 'danger'">
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.verdict.template"></span>
+                        <fa-icon [icon]="currentVerdict.templateFailed ? faCircleCheck : faCircleXmark" />
+                        <span
+                            [jhiTranslate]="
+                                currentVerdict.templateFailed
+                                    ? 'artemisApp.hyperion.generationActivity.verdict.templateFailed'
+                                    : 'artemisApp.hyperion.generationActivity.verdict.templatePasses'
+                            "
+                        ></span>
                     </p-tag>
                     <p-tag severity="secondary">{{ currentVerdict.testCount }} {{ 'artemisApp.hyperion.generationActivity.verdict.tests' | artemisTranslate }}</p-tag>
                     @if (!currentVerdict.accepted && currentVerdict.reasons?.length) {
