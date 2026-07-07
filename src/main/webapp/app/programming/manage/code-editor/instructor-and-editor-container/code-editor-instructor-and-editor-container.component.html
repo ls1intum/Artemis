@@ -37,6 +37,7 @@
             [allowHiddenFiles]="true"
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
+            [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback()"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"

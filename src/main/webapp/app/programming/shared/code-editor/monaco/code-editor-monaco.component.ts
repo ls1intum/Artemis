@@ -101,6 +101,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
+    /** Whether the per-thread "Adapt with feedback" action may be offered — host-gated to contexts where agentic adaptation is supported (Hyperion enabled AND the LocalCI backend). */
+    readonly adaptReviewCommentThreadEnabled = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();
     readonly secondaryHeader = input<boolean>(false);
@@ -849,9 +851,10 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                     thread.targetType === CommentThreadLocationType.TEST_REPO,
                 showAdaptAction: (thread) =>
-                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
-                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
-                    thread.targetType === CommentThreadLocationType.TEST_REPO,
+                    this.adaptReviewCommentThreadEnabled() &&
+                    (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                        thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                        thread.targetType === CommentThreadLocationType.TEST_REPO),
             });
         }
         return this.reviewCommentManager;
