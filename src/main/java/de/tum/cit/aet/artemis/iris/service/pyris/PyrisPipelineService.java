@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -42,7 +41,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -75,6 +75,9 @@ public class PyrisPipelineService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
+    @Value("${artemis.iris.response-streaming-enabled:true}")
+    private boolean responseStreamingEnabled;
+
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
@@ -92,8 +95,8 @@ public class PyrisPipelineService {
      * Executes a pipeline on Pyris, identified by the given name and variant.
      * The pipeline execution is tracked by a unique job token, which must be provided by the caller.
      * The caller must additionally provide a mapper function to create the concrete DTO type for this pipeline from the base DTO.
-     * The status of the pipeline execution is updated via a consumer that accepts a list of stages. This method will
-     * call the consumer with the initial stages of the pipeline execution. Later stages will be sent back from Pyris,
+     * The status of the pipeline execution is updated via a consumer that accepts run-state frames. This method will
+     * call the consumer with the initial running frame of the pipeline execution. Later states will be sent back from Pyris,
      * and need to be handled in the endpoint that receives the status updates.
      * <p>
      *
@@ -107,34 +110,30 @@ public class PyrisPipelineService {
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
     public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
-            Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
-        // Define the preparation stages of pipeline execution with their initial states
-        // There will be more stages added in Pyris later
-        var preparing = new PyrisStageDTO("artemisApp.iris.stages.thinking", 10, null, null, false, null);
-        var executing = new PyrisStageDTO("artemisApp.iris.stages.analyzing", 30, null, null, false, null);
-
-        // Send initial status update indicating that the preparation stage is in progress
-        statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
-
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel), List.of(preparing.done()));
-        var pipelineDto = dtoMapper.apply(baseDto);
+            Function<PyrisPipelineExecutionDTO, Object> dtoMapper, PipelineStatusUpdater statusUpdater) {
+        statusUpdater.accept(jobToken, PyrisRunState.RUNNING, null);
 
         try {
-            // Send a status update that preparation is done and pipeline execution is starting
-            statusUpdater.accept(List.of(preparing.done(), executing.inProgress()));
+            Boolean streamResponse = responseStreamingEnabled && "chat".equals(name) ? Boolean.TRUE : null;
+            var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel, streamResponse));
+            long dtoBuildStart = System.nanoTime();
+            var pipelineDto = dtoMapper.apply(baseDto);
+            log.info("Pyris {} pipeline DTO built in {} ms", name, (System.nanoTime() - dtoBuildStart) / 1_000_000);
 
             try {
                 // Execute the pipeline using the connector service
+                long requestStart = System.nanoTime();
                 pyrisConnectorService.executePipeline(name, pipelineDto, event);
+                log.debug("Pyris {} pipeline run request accepted in {} ms", name, (System.nanoTime() - requestStart) / 1_000_000);
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
-                statusUpdater.accept(List.of(preparing.done(), executing.error("artemisApp.iris.stages.error.internal")));
+                statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
-            statusUpdater.accept(List.of(preparing.error("artemisApp.iris.stages.error.internal"), executing.notStarted()));
+            statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
         }
     }
 
@@ -156,7 +155,7 @@ public class PyrisPipelineService {
         executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
-            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
         // @formatter:on
     }
 
@@ -207,13 +206,12 @@ public class PyrisPipelineService {
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
-                executionDto.initialStages(),
                 textExerciseDTO,
                 submissionDTO,
                 programmingExerciseDTO,
                 lectureId
             ),
-            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error)
         );
         // @formatter:on
     }
@@ -239,8 +237,7 @@ public class PyrisPipelineService {
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
     public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
-            PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO,
-            Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
+            PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, PipelineStatusUpdater statusUpdateConsumer) {
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
@@ -254,7 +251,6 @@ public class PyrisPipelineService {
                 post,
                 student,
                 executionDto.settings(),
-                executionDto.initialStages(),
                 programmingExerciseDTO,
                 textExerciseDTO,
                 lectureDTO
@@ -262,6 +258,12 @@ public class PyrisPipelineService {
             statusUpdateConsumer
         );
         // @formatter:on
+    }
+
+    @FunctionalInterface
+    public interface PipelineStatusUpdater {
+
+        void accept(String runId, PyrisRunState runState, PyrisStatusErrorDTO error);
     }
 
     /**
