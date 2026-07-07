@@ -1,8 +1,8 @@
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 
 @Directive({
     selector: '[jhiTranslate]',
 })
 export class MockJhiTranslateDirective {
-    @Input() jhiTranslate!: string;
+    jhiTranslate = input<string>();
 }
