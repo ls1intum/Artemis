@@ -76,7 +76,15 @@ export class HealthModalComponent {
         if (typeof value === 'object') {
             return JSON.stringify(value);
         }
-        return String(value);
+        // primitives keep the exact String() output (e.g. 'NaN', 'Infinity', 'undefined'); narrowing positively
+        // avoids no-base-to-string (String() is only ever applied to number/boolean/bigint here).
+        if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+            return String(value);
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        return 'undefined';
     }
 
     /**

@@ -17,7 +17,7 @@ import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-se
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.PREREQUISITE;
-    allowRelationImport = false;
+    override allowRelationImport = false;
 
     private readonly prerequisiteService = inject(PrerequisiteService);
 

@@ -18,7 +18,7 @@ import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-se
 })
 export class ImportCompetenciesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.COMPETENCY;
-    allowRelationImport = true;
+    override allowRelationImport = true;
 
     private readonly competencyService = inject(CompetencyService);
 

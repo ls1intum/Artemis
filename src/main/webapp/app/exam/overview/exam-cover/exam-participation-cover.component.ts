@@ -172,8 +172,13 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             this.isFetching.set(true);
             this.loadExamSubscription = this.examParticipationService
                 .loadStudentExamWithExercisesForConduction(this.exam().course!.id!, this.exam().id!, this.studentExam().id!)
-                .subscribe((studentExam: StudentExam) => {
+                .subscribe((studentExam: StudentExam | undefined) => {
+                    // Always clear the loading state so the start action recovers even when the load falls back to
+                    // local storage and yields no exam — otherwise `isFetching` would stay true and the button spins.
                     this.isFetching.set(false);
+                    if (!studentExam) {
+                        return;
+                    }
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam().course!.id!, this.exam().id!, studentExam);
                     if (this.hasStarted()) {
                         this.onExamStarted.emit(studentExam);

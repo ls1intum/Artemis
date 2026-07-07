@@ -174,6 +174,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
     private reloadSidebarEventSubscription: Subscription;
+    // Transient observers that watch for a post/reply to appear in the DOM. They self-disconnect on
+    // success and via a 5s timeout, but are stored here so ngOnDestroy can disconnect them if the
+    // component is torn down within that window.
+    private highlightPostObserver?: MutationObserver;
+    private highlightReplyObserver?: MutationObserver;
     course = signal<Course | undefined>(undefined);
     readonly isLoading = signal(false);
     readonly isServiceSetUp = signal(false);
@@ -454,10 +459,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.reloadSidebarEventSubscription?.unsubscribe();
+        this.highlightPostObserver?.disconnect();
+        this.highlightReplyObserver?.disconnect();
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             const previousConversation = this.activeConversation();
             this.activeConversation.set(conversation);
 
@@ -789,11 +796,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         if (tryHighlight()) return;
 
+        this.highlightPostObserver?.disconnect();
         const observer = new MutationObserver(() => {
             if (tryHighlight()) {
                 observer.disconnect();
             }
         });
+        this.highlightPostObserver = observer;
         observer.observe(document.body, { childList: true, subtree: true });
         setTimeout(() => observer.disconnect(), 5000);
     }
@@ -809,6 +818,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
 
         // Watch for the element to appear in the DOM
+        this.highlightReplyObserver?.disconnect();
         const observer = new MutationObserver(() => {
             const element = document.getElementById(elementId);
             if (element) {
@@ -816,6 +826,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.highlightElement(element);
             }
         });
+        this.highlightReplyObserver = observer;
 
         observer.observe(document.body, { childList: true, subtree: true });
 

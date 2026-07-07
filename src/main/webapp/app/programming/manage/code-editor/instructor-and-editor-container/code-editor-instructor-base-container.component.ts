@@ -216,13 +216,18 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * @param preferredParticipationId
      */
     private getNextAvailableParticipation(preferredParticipationId: number): Participation | undefined {
+        type ProgrammingParticipation = TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
         const availableParticipations = [
             this.exercise.templateParticipation,
             this.exercise.solutionParticipation,
-            this.exercise.studentParticipations && this.exercise.studentParticipations.length ? this.exercise.studentParticipations[0] : undefined,
-        ].filter(Boolean);
-        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingExerciseStudentParticipation) => id === preferredParticipationId);
-        return [selectedParticipation, ...availableParticipations].filter(Boolean).find(({ repositoryUri }: ProgrammingExerciseStudentParticipation) => !!repositoryUri);
+            this.exercise.studentParticipations && this.exercise.studentParticipations.length
+                ? (this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation)
+                : undefined,
+        ].filter((participation): participation is ProgrammingParticipation => participation != undefined);
+        const selectedParticipation = availableParticipations.find(({ id }: ProgrammingParticipation) => id === preferredParticipationId);
+        return [selectedParticipation, ...availableParticipations]
+            .filter((participation): participation is ProgrammingParticipation => participation != undefined)
+            .find(({ repositoryUri }: ProgrammingParticipation) => !!repositoryUri);
     }
 
     /**
@@ -476,7 +481,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.currentFileBinding = undefined;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
-            const replacedText = this.normalizeLineEndings(replacedState.text.toString());
+            const replacedText = this.normalizeLineEndings(replacedState.text.toJSON());
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createFileBinding(replacedState, model, editorInstance);

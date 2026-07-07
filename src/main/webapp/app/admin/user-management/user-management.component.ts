@@ -294,7 +294,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: keyof Filter) => type[filter] as E) // type assertion
+                  .map((filter: string) => type[filter as keyof Filter] as E) // type assertion
                   .filter(Boolean)
             : [];
         return new Set<E>(tempInStorage);
