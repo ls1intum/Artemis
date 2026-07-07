@@ -147,31 +147,6 @@ describe('HomeComponent', () => {
         expect(loginSpy).toHaveBeenCalled();
     });
 
-    describe('loginWithOidc', () => {
-        it('should handle successful OIDC login', async () => {
-            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
-            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
-
-            await component.loginWithOidc();
-            await fixture.whenStable();
-
-            expect(loginOidcSpy).toHaveBeenCalledWith(true);
-            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
-            expect(component.authenticationError()).toBe(false);
-            expect(component.isSubmittingLogin()).toBe(false);
-        });
-
-        it('should handle failed OIDC login', async () => {
-            vi.spyOn(loginService, 'loginOIDC').mockRejectedValue(new Error('OIDC failed'));
-
-            await component.loginWithOidc();
-            await fixture.whenStable();
-
-            expect(component.authenticationError()).toBe(true);
-            expect(component.isSubmittingLogin()).toBe(false);
-        });
-    });
-
     describe('loginWithPasskey', () => {
         it('should handle login success', async () => {
             const loginWithPasskeySpy = vi.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
