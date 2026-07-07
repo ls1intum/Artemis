@@ -42,7 +42,14 @@ run_playwright() {
     local test_type="$1"
     shift
 
-    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@"
+    # Raise the runner heap headroom: the single "run all" CI job executes the whole ~316-test suite in
+    # one Playwright process, and its per-run accumulation (results, coverage, attachments) hit the old
+    # 6144 MB cap mid-run and OOM'd a worker ("Reached heap limit — JavaScript heap out of memory"),
+    # which spuriously failed the tests it was running. We APPEND the flag rather than rely on a default:
+    # the root .npmrc sets `node-options=--max-old-space-size=6144`, which pnpm injects into NODE_OPTIONS,
+    # so a `${NODE_OPTIONS:-…}` fallback would never fire. Node applies the LAST --max-old-space-size, so
+    # appending 8192 raises the cap for this invocation only, without touching the global .npmrc value.
+    NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=8192" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@"
     local exit_code=$?
 
     if [ $exit_code -ne 0 ]; then

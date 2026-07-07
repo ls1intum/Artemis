@@ -878,3 +878,21 @@ jobs:
                 issue_number: prNumber, body,
               });
             }
+
+      # Reflect the real E2E outcome in this job's conclusion. Every step above runs with always() /
+      # continue-on-error so the commit status and PR comment always post — but that also left this job
+      # (and therefore the reusable-workflow `e2e` conclusion that Helios and the check list read) GREEN
+      # even when tests failed, so the E2E badge could show green while tests were red. Fail here on a
+      # non-success outcome so the E2E check tells the truth. This is ADVISORY: `e2e` is deliberately
+      # excluded from `all-required-ci-passed`'s `needs` in ci.yml, so a red E2E result does NOT block
+      # merging — it only makes the badge/check reflect reality.
+      - name: Reflect E2E outcome in job status
+        if: always()
+        env:
+          E2E_STATUS: ${{ steps.overall-status.outputs.status }}
+        run: |
+          if [ "$E2E_STATUS" != "success" ]; then
+            echo "::error::E2E overall status is '$E2E_STATUS' — failing the E2E check so it reflects the real result (advisory: does not block the required merge gate)."
+            exit 1
+          fi
+          echo "E2E overall status is success."
