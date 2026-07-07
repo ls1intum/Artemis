@@ -1,4 +1,4 @@
-export class TutorEffort {
+export interface TutorEffort {
     courseId: number;
     exerciseId: number;
     numberOfSubmissionsAssessed: number;

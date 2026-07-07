@@ -41,7 +41,7 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     confirmationText = input<string>('');
     entityName = input<string>('');
 
-    control: FormControl<string>;
+    control!: FormControl<string>; // built in ngOnInit()
 
     // eslint-disable-next-line localRules/prefer-signal-template-state -- ControlValueAccessor callback invoked as a (blur) event handler, not rendered state; reassigned by Angular forms via registerOnTouched()
     onTouched = () => {};

@@ -32,11 +32,11 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     label: string[] = [];
     backgroundColor: string[] = [];
-    ratedAverage: number;
-    unratedAverage: number;
+    ratedAverage = 0;
+    unratedAverage = 0;
 
-    maxScore: number;
-    websocketChannelForData: string;
+    maxScore!: number; // set in loadQuizSuccess() via calculateMaxScore() before loadData() reads it
+    websocketChannelForData!: string; // set in ngOnInit() from the route params
     private websocketSubscription?: Subscription;
 
     // Icons

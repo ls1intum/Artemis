@@ -46,14 +46,14 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly question = signal<QuizQuestion>(undefined!);
-    quizPointStatistic: QuizPointStatistic;
-    questionStatistic: MultipleChoiceQuestionStatistic;
-    questionIdParam: number;
+    quizPointStatistic?: QuizPointStatistic;
+    questionStatistic?: MultipleChoiceQuestionStatistic;
+    questionIdParam!: number; // set in ngOnInit() from the route params before loadQuiz() reads it
     // timer
     readonly waitingForQuizStart = signal(false);
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: ReturnType<typeof setInterval>;
+    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() before ngOnDestroy() clears it
 
     // Icons
     farListAlt = faListAlt;

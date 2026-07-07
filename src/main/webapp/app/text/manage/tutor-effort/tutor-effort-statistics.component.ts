@@ -41,10 +41,10 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     readonly numberOfSubmissions = signal<number>(undefined!);
     readonly totalTimeSpent = signal<number>(undefined!);
     readonly averageTimeSpent = signal<number>(undefined!);
-    currentExerciseId: number;
-    currentCourseId: number;
+    currentExerciseId!: number; // set in ngOnInit() from the route params before loadTutorEfforts() reads it
+    currentCourseId!: number; // set in ngOnInit() from the route params before loadTutorEfforts() reads it
     readonly numberOfTutorsInvolvedInCourse = signal<number>(undefined!);
-    effortDistribution: number[];
+    effortDistribution: number[] = [];
     readonly yScaleMax = signal(10);
     readonly medianValue = signal<number>(undefined!);
 

@@ -81,7 +81,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     set exam(value: Exam) {
         this._exam.set(value);
     }
-    course: Course;
+    course!: Course; // set in ngOnInit() from route data
     readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);

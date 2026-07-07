@@ -7,7 +7,7 @@ import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared
  * Mirrors the server IrisChatWebsocketDTO record.
  * This is the wire format for status updates sent over the Iris chat WebSocket.
  */
-export class IrisChatWebsocketDTO {
+export interface IrisChatWebsocketDTO {
     type: IrisChatWebsocketPayloadType;
     message?: IrisMessageResponseDTO;
     runState?: IrisRunState;

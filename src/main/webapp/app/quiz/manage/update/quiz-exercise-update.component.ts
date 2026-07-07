@@ -141,7 +141,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
-    courseRepository: CourseManagementService;
+    courseRepository!: CourseManagementService; // aliased to the injected courseService in ngOnInit()
     notificationText?: string;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -150,15 +150,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exams: Exam[] = [];
 
     courses: Course[] = [];
-    quizExercises: QuizExercise[];
-    allExistingQuestions: QuizQuestion[];
-    existingQuestions: QuizQuestion[];
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: QuizQuestion[] = [];
+    existingQuestions: QuizQuestion[] = [];
     importFile?: File;
-    importFileName: string;
-    searchQueryText: string;
-    dndFilterEnabled: boolean;
-    mcqFilterEnabled: boolean;
-    shortAnswerFilterEnabled: boolean;
+    importFileName = '';
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
 
     /** Duration object **/
     duration = new Duration(0, 0);

@@ -48,7 +48,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';
-    protected courseId: number;
+    protected courseId!: number; // set in ngOnInit() from the route paramMap
     protected sources: Source[] = [];
     protected readonly isLoading = signal(false);
     protected isSubmitted = false;

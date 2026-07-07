@@ -68,7 +68,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     submissionService = inject(SubmissionService);
 
-    text: string;
+    text?: string;
     readonly participation = signal<StudentParticipation>(undefined!);
     readonly submission = signal<FileUploadSubmission | undefined>(undefined);
     unassessedSubmission?: FileUploadSubmission;
@@ -76,7 +76,7 @@ export class FileUploadAssessmentComponent implements OnInit {
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     readonly exercise = signal<FileUploadExercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    exerciseId: number;
+    exerciseId!: number; // set in ngOnInit() from route params
     readonly totalScore = signal(0);
     readonly assessmentsAreValid = signal<boolean>(undefined!);
     readonly invalidError = signal<string | undefined>(undefined);
@@ -85,20 +85,20 @@ export class FileUploadAssessmentComponent implements OnInit {
     readonly complaint = signal<Complaint>(undefined!);
     ComplaintType = ComplaintType;
     notFound = false;
-    userId: number;
+    userId?: number;
     readonly isLoading = signal(true);
     readonly isTestRun = signal(false);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
-    resultId: number;
+    resultId!: number; // set in ngOnInit() from route params
     examId = 0;
-    exerciseGroupId: number;
+    exerciseGroupId?: number;
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
     highlightDifferences = false;
 
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string; // set in constructor from a synchronous translate subscription
 
     // Icons
     farListAlt = faListAlt;
