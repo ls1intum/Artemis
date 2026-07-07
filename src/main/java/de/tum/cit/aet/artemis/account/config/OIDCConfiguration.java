@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.account.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -31,8 +29,6 @@ import de.tum.cit.aet.artemis.account.security.OIDCService;
 @Lazy
 @Conditional(OIDCEnabled.class)
 public class OIDCConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(OIDCConfiguration.class);
 
     private final OIDCService oidcService;
 
@@ -119,7 +115,6 @@ public class OIDCConfiguration {
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
                 .failureHandler((request, response, exception) -> {
-                    log.error("{}", exception.getMessage());
                     exception.printStackTrace();
                 })
             );
