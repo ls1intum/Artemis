@@ -15,7 +15,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { consistencyIssueContentOf, sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { consistencyIssueContentOf, sortCommentsByCreatedDateThenId, threadLocationLabel } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
@@ -121,7 +121,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
                 continue;
             }
 
-            const locationLabel = this.getThreadLocationLabel(groupedThread);
+            const locationLabel = threadLocationLabel(groupedThread, this.translateService);
             if (!locationLabel) {
                 continue;
             }
@@ -465,42 +465,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly hideOpenMenus = (): void => {
         this.hideAllCommentMenus();
     };
-
-    private getThreadLocationLabel(thread: CommentThread): string | undefined {
-        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
-        if (!lineNumber || lineNumber < 1) {
-            return undefined;
-        }
-
-        const repositoryLabel = this.getRepositoryLabel(thread.targetType);
-        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return `${repositoryLabel}:${lineNumber}`;
-        }
-
-        const filePath = thread.filePath ?? thread.initialFilePath;
-        if (!filePath) {
-            return undefined;
-        }
-
-        return `${repositoryLabel}: ${filePath}:${lineNumber}`;
-    }
-
-    private getRepositoryLabel(targetType: CommentThreadLocationType): string {
-        switch (targetType) {
-            case CommentThreadLocationType.PROBLEM_STATEMENT:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.problemStatement');
-            case CommentThreadLocationType.TEMPLATE_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.template');
-            case CommentThreadLocationType.SOLUTION_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.solution');
-            case CommentThreadLocationType.TEST_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.tests');
-            case CommentThreadLocationType.AUXILIARY_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.auxiliary');
-            default:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
-        }
-    }
 
     private getInlineFixDiffFileName(thread: CommentThread): string {
         if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
