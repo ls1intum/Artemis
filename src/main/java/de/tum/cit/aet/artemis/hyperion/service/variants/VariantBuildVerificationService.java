@@ -225,6 +225,13 @@ public class VariantBuildVerificationService {
     private static final int MAX_BUILD_LOG_LENGTH = 10_000;
 
     /**
+     * Section header that introduces the raw build logs inside {@link #describeBuildResult(Result)} output.
+     * Exposed so consumers that surface a finding to instructors (not to the agent) can cut the message at
+     * this marker — the logs are a repair signal for the LLM, not warning-list content.
+     */
+    public static final String BUILD_LOGS_SECTION = "\n\nBuild logs:\n";
+
+    /**
      * Renders a build result as the structured failure description fed back into the agent loop: build logs
      * (compiler output) plus a per-test PASSED/FAILED summary with assertion messages ("closed-loop repair on real
      * signals", variants plan Sections 2.5 and 7).
@@ -241,9 +248,9 @@ public class VariantBuildVerificationService {
         String scoreLine = "Score: " + (result.getScore() != null ? result.getScore() + "%" : "unknown")
                 + (result.getTestCaseCount() != null ? " (" + result.getPassedTestCaseCount() + "/" + result.getTestCaseCount() + " tests passed)" : "");
         if (testFeedback.isBlank()) {
-            return scoreLine + "\n\nBuild logs:\n" + buildLogs;
+            return scoreLine + BUILD_LOGS_SECTION + buildLogs;
         }
-        return scoreLine + "\n\nTest results:\n" + testFeedback + "\n\nBuild logs:\n" + buildLogs;
+        return scoreLine + "\n\nTest results:\n" + testFeedback + BUILD_LOGS_SECTION + buildLogs;
     }
 
     private String extractBuildLogs(Result result) {

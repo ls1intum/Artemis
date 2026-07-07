@@ -151,7 +151,7 @@ public class ExerciseVariantGenerationPipeline {
             jobService.updatePhase(jobId, VariantJobPhase.FINALIZING);
             List<String> warnings = new ArrayList<>();
             if (!report.passed()) {
-                report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + finding.message()));
+                report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + summarizeFindingForWarning(finding.message())));
             }
             try {
                 adapters.finalizeVariant(variant, job.getRequest());
@@ -431,6 +431,21 @@ public class ExerciseVariantGenerationPipeline {
         StringBuilder builder = new StringBuilder();
         report.findings().forEach(finding -> builder.append("[").append(finding.gate()).append("] ").append(finding.message()).append('\n'));
         return truncate(builder.toString());
+    }
+
+    /**
+     * Warnings render as a flat list in the modal's result step, but a build-gate finding message carries
+     * the full build logs (the agent's repair signal, up to ~10k chars). Cut the message at the build-log
+     * section and cap the rest — the complete finding stays inspectable in the VERIFYING step output.
+     */
+    private static String summarizeFindingForWarning(String message) {
+        if (message == null) {
+            return "";
+        }
+        int buildLogsIndex = message.indexOf(VariantBuildVerificationService.BUILD_LOGS_SECTION);
+        String summary = buildLogsIndex >= 0 ? message.substring(0, buildLogsIndex) + "\n(build logs omitted — see the verification step log)" : message;
+        final int maxLength = 1500;
+        return summary.length() <= maxLength ? summary : summary.substring(0, maxLength) + " […]";
     }
 
     private static String truncate(String text) {

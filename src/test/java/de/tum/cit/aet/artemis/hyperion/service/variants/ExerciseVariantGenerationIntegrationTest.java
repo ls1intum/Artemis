@@ -349,15 +349,22 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void shouldKeepDraftWithWarningsWhenVerificationBudgetIsExhausted() throws Exception {
-        // Agent rounds change nothing; the critique soft gate reports the same finding on every pass.
-        ScriptedModel script = scriptChatModel(PLAN_JSON, tools -> "no changes applied", List.of("The requested domain change was not applied"));
+        // Agent rounds change nothing; the critique soft gate reports the same finding on every pass. The
+        // finding carries a build-log section (like the programming build gate's findings): the warning list
+        // must get the summarized form — logs cut at the marker — while the full text stays in the VERIFYING
+        // step output for inspection.
+        String buildLogs = "compiler output line\n".repeat(200);
+        ScriptedModel script = scriptChatModel(PLAN_JSON, tools -> "no changes applied",
+                List.of("The requested domain change was not applied" + VariantBuildVerificationService.BUILD_LOGS_SECTION + buildLogs));
 
         String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
 
         // Budget exhausted with red gates → flagged draft, never silent deletion (plan Sections 1 and 2.6).
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.DRAFT_WITH_WARNINGS);
-        assertThat(job.getWarnings()).isNotEmpty().anySatisfy(warning -> assertThat(warning).contains("QUIZ_CRITIQUE"));
+        assertThat(job.getWarnings()).isNotEmpty().anySatisfy(warning -> assertThat(warning).contains("QUIZ_CRITIQUE").contains("The requested domain change was not applied")
+                .contains("build logs omitted").doesNotContain("compiler output line"));
+        assertThat(job.getStepOutputs().get(VariantJobPhase.VERIFYING).detail()).contains("compiler output line");
         assertThat(script.agentRounds()).hasValue(3);
         assertThat(job.getStepOutputs()).containsKey(VariantJobPhase.REPAIRING);
         // The draft is kept for the instructor to repair in the editor.
