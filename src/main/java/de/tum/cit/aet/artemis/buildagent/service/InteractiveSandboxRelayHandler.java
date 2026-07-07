@@ -45,8 +45,11 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  * {@link SandboxOpRequest#targetAgentShortName()} acts on it. The work itself ({@code docker exec}, image pull, archive copy) never runs on the topic-listener thread — that thread
  * only hands the request to a small worker pool, so no heavy work runs on the distributed event thread.
  * <p>
- * Handling is idempotent per correlation id: a redelivered broadcast is dropped rather than performed twice. A per-agent session semaphore caps how many concurrent generation
- * sessions this agent will host so a generation cannot silently starve CI capacity; the permit is released on {@code DESTROY}.
+ * Handling is idempotent per correlation id: a redelivered broadcast is dropped rather than performed twice. Hosting is opt-in per agent:
+ * {@code max-concurrent-generation-sessions}
+ * defaults to {@code 0} (the agent hosts nothing and does not even subscribe), a paused agent refuses new sessions, and a per-agent semaphore caps concurrent sessions — so
+ * generation
+ * never silently competes with CI or exam builds on an agent an operator did not deliberately dedicate to it. The permit is released on {@code DESTROY}.
  *
  * @see RemoteInteractiveSandboxClient the core-node client whose requests this handler serves
  * @see InteractiveSandboxService the local implementation that actually performs each operation
@@ -62,14 +65,20 @@ public class InteractiveSandboxRelayHandler {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    /** Consulted so a paused/draining agent sheds generation load too: pausing a build agent stops it accepting new sessions, not just new CI build jobs. */
+    private final SharedQueueProcessingService sharedQueueProcessingService;
+
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
     /**
-     * Maximum number of concurrent interactive sandbox sessions this agent will host. A session is long-lived (several minutes), so this per-agent limit is a coarse guard that
-     * keeps generation from monopolizing the agent; it is decoupled from the build-job scheduler's thread-pool accounting.
+     * Maximum number of concurrent interactive sandbox sessions this agent will host, on top of its CI build jobs. A session is a long-lived (several-minute), CI-sized container,
+     * so
+     * hosting one adds real CPU/memory/Docker load that the build-job scheduler does not account for. It therefore defaults to {@code 0}: an agent hosts generation only when an
+     * operator explicitly opts it in, so enabling Hyperion never silently adds load to exam-critical build agents. Set a positive value on the spare agents you dedicate to
+     * generation; {@code 0} means this agent never hosts a relayed session (the relay listener is not even registered).
      */
-    @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:1}")
+    @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:0}")
     private int maxConcurrentSessions;
 
     /**
@@ -99,9 +108,11 @@ public class InteractiveSandboxRelayHandler {
 
     private ExecutorService workerExecutor;
 
-    public InteractiveSandboxRelayHandler(InteractiveSandboxService interactiveSandboxService, DistributedDataAccessService distributedDataAccessService) {
+    public InteractiveSandboxRelayHandler(InteractiveSandboxService interactiveSandboxService, DistributedDataAccessService distributedDataAccessService,
+            @Lazy SharedQueueProcessingService sharedQueueProcessingService) {
         this.interactiveSandboxService = interactiveSandboxService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.sharedQueueProcessingService = sharedQueueProcessingService;
     }
 
     /**
@@ -109,8 +120,14 @@ public class InteractiveSandboxRelayHandler {
      */
     @PostConstruct
     public void registerRequestListener() {
-        this.sessionPermits = new Semaphore(Math.max(1, maxConcurrentSessions));
-        this.workerExecutor = Executors.newFixedThreadPool(Math.max(1, maxConcurrentSessions) + 1, namedDaemonThreadFactory());
+        // Opt-in placement: an agent with the cap at 0 never hosts a relayed generation session, so it adds no generation load to CI/exam builds. Do not even subscribe.
+        if (maxConcurrentSessions <= 0) {
+            log.info("Interactive sandbox relay hosting disabled on build agent '{}' (max-concurrent-generation-sessions=0); it will not host generation sessions.",
+                    buildAgentShortName);
+            return;
+        }
+        this.sessionPermits = new Semaphore(maxConcurrentSessions);
+        this.workerExecutor = Executors.newFixedThreadPool(maxConcurrentSessions + 1, namedDaemonThreadFactory());
         this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
         this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
         this.requestListenerId = requestsTopic.addMessageListener(request -> {
@@ -186,6 +203,12 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleCreate(SandboxOpRequest request) {
+        // Drain guard: a paused agent (manual drain or auto-paused after failures) must not take on a new long-lived session, mirroring how pause stops new CI build jobs.
+        // In-flight
+        // sessions keep running (EXEC/COPY/DESTROY stay ungated) so an active generation can finish and tear down cleanly.
+        if (sharedQueueProcessingService.isPaused()) {
+            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' is paused and is not accepting new interactive sandbox sessions.");
+        }
         // Capacity guard: refuse rather than silently starve CI when this agent is already at its session cap.
         if (!sessionPermits.tryAcquire()) {
             return SandboxOpResponse.failure(request.correlationId(),

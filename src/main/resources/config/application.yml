@@ -125,6 +125,14 @@ artemis:
             # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
             short-name: "artemis-build-agent-1"
             display-name: "Artemis Build Agent 1"
+            # Hyperion agentic exercise generation hosts a long-lived, CI-sized Docker sandbox on a build agent (relayed from a core node).
+            # This caps how many such sessions THIS agent will host, on top of its CI build jobs. It defaults to 0 (opt-in): enabling Hyperion
+            # never adds generation load to exam-critical agents. Set it > 0 only on spare agents you dedicate to generation; 0 = never host.
+            max-concurrent-generation-sessions: 0
+            # Safety net: an orphaned generation sandbox container (its owning run died) is reaped after this many minutes.
+            generation-container-expiry-minutes: 90
+            # How often the orphaned-container reaper runs.
+            generation-cleanup-schedule-minutes: 15
 
     compatible-versions:
       android:

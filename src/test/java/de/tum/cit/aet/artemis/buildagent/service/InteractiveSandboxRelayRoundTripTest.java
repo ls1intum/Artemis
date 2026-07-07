@@ -65,6 +65,8 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private InteractiveSandboxRelayHandler handler;
 
+    private SharedQueueProcessingService queueProcessingService;
+
     private LocalTopic<SandboxOpRequest> requestsTopic;
 
     @BeforeEach
@@ -87,7 +89,8 @@ class InteractiveSandboxRelayRoundTripTest {
         client = new RemoteInteractiveSandboxClient(clientAccess);
         client.registerResponseListener();
 
-        handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess);
+        queueProcessingService = mock(SharedQueueProcessingService.class);
+        handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, queueProcessingService);
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxConcurrentSessions", 2);
         handler.registerRequestListener();
@@ -241,6 +244,29 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void pausedAgent_refusesNewSession() {
+        when(queueProcessingService.isPaused()).thenReturn(true);
+
+        // A paused (draining) agent must refuse a new session so pausing sheds generation load too, not just new CI build jobs — and it must not start a container.
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpec("some-image", null))).withMessageContaining("paused");
+        verify(localSandbox, never()).createSession(any());
+    }
+
+    @Test
+    void generationHostingDisabled_whenCapIsZero_doesNotEvenSubscribe() {
+        // Opt-in placement: an agent with the cap at 0 never hosts a session, so it must not subscribe to the request topic or allocate a worker pool.
+        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(localSandbox, mock(DistributedDataAccessService.class), queueProcessingService);
+        ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
+        ReflectionTestUtils.setField(disabled, "maxConcurrentSessions", 0);
+
+        disabled.registerRequestListener();
+
+        assertThat(ReflectionTestUtils.getField(disabled, "requestListenerId")).isNull();
+        assertThat(ReflectionTestUtils.getField(disabled, "sessionPermits")).isNull();
+        assertThat(ReflectionTestUtils.getField(disabled, "workerExecutor")).isNull();
+    }
+
+    @Test
     void redundantDestroy_releasesPermitExactlyOnce() {
         try (RelayHarness harness = newHarness(1)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
@@ -289,7 +315,7 @@ class InteractiveSandboxRelayRoundTripTest {
         RemoteInteractiveSandboxClient client = new RemoteInteractiveSandboxClient(clientAccess);
         client.registerResponseListener();
 
-        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess);
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, mock(SharedQueueProcessingService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxConcurrentSessions);
         handler.registerRequestListener();

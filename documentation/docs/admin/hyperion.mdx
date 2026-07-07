@@ -204,7 +204,30 @@ management:
 2. Log in as an instructor and open the programming exercise problem statement editor. New Hyperion actions appear in the markdown editor toolbar (rewrite and consistency check).
 3. Run a consistency check to ensure the LLM call succeeds. Inspect the server logs for `Hyperion` entries if the request fails; misconfigured credentials and missing network egress are the most common causes.
 
+## Build-agent placement (multi-node)
+
+Agentic exercise generation runs the agent's work inside a **hardened, CI-sized Docker sandbox on a LocalCI build agent** — the same hosts that run student and exam builds. A generation session is long-lived (several minutes) and consumes real CPU, memory, and Docker resources for its whole duration.
+
+To keep generation from ever competing with exam builds by accident, **hosting is opt-in per build agent and off by default**:
+
+```yaml
+artemis:
+  continuous-integration:
+    build-agent:
+      # 0 = this agent never hosts a generation sandbox (default). Set > 0 only on agents you dedicate to generation.
+      max-concurrent-generation-sessions: 0
+```
+
+<Callout variant={CalloutVariant.warning}>
+    Leave <code>max-concurrent-generation-sessions</code> at <strong>0</strong> on every exam-critical build agent. Enable it (a small positive number) only on spare agents you are comfortable dedicating to generation. On a single-node integrated deployment (core + build agent on one host) the co-located node runs generation directly, so set the value there if you use the feature.
+</Callout>
+
+Additional controls:
+- **Pausing a build agent** (from the LocalCI build-agent admin page) now also stops it accepting **new** generation sessions, so you can drain an agent before maintenance or an exam. In-flight sessions finish and tear down cleanly.
+- Orphaned sandbox containers are reaped automatically after `generation-container-expiry-minutes` (default 90).
+
 ## Operational considerations
 
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the full problem statement, so costs scale with exercise size.
 - **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production.
+- **Exam safety:** Because generation shares build-agent hosts with exam builds, keep `max-concurrent-generation-sessions` at 0 on exam agents (see *Build-agent placement*).
