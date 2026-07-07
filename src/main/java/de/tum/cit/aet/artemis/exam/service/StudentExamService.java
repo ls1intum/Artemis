@@ -821,6 +821,18 @@ public class StudentExamService {
     }
 
     /**
+     * Starts all the exercises only for a specific list of student exams.
+     *
+     * @param studentExams the student exams for which to start exercises
+     */
+    public void startExercisesForStudentExams(List<StudentExam> studentExams) {
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        for (var studentExam : studentExams) {
+            setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true);
+        }
+    }
+
+    /**
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
