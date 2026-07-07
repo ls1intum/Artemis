@@ -119,7 +119,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
-    breadcrumbSubscriptions: Subscription[];
+    breadcrumbSubscriptions: Subscription[] = [];
     readonly isCollapsed = signal<boolean>(undefined!);
     readonly iconsMovedToMenu = signal<boolean>(undefined!);
     readonly isNavbarNavVertical = signal<boolean>(undefined!);
@@ -128,7 +128,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     atlasEnabled = false;
     examEnabled = false;
     localCIActive = false;
-    ltiEnabled: boolean;
+    ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
     readonly agentName = signal<string | undefined>(undefined);
@@ -149,12 +149,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     lectureTitle = signal<string | undefined>(undefined);
     examTitle = signal<string | undefined>(undefined);
 
-    private standardizedCompetencySubscription: Subscription;
-    private globalSearchSubscription: Subscription;
-    private authStateSubscription: Subscription;
-    private routerEventSubscription: Subscription;
-    private queryParamsSubscription: Subscription;
-    private examStartedSubscription: Subscription;
+    // Assigned lazily in ngOnInit()/route handlers (some only when a feature is active) and torn down defensively
+    // in ngOnDestroy(), so they are genuinely optional rather than definitely assigned.
+    private standardizedCompetencySubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private authStateSubscription?: Subscription;
+    private routerEventSubscription?: Subscription;
+    private queryParamsSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -1053,8 +1055,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 }
 
+/** Instantiated via `new Breadcrumb()` and populated field-by-field in setBreadcrumb(), hence the definite-assignment (!) markers. */
 class Breadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }

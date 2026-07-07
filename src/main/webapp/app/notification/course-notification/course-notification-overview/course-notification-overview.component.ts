@@ -66,7 +66,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     protected readonly isShown = signal(false);
     protected selectedCategory = CourseNotificationCategory.GENERAL;
-    protected notifications: CourseNotification[];
+    protected notifications?: CourseNotification[];
     protected readonly notificationsForSelectedCategory = signal<CourseNotification[]>([]);
     protected readonly courseNotificationCount = signal<number>(0);
     protected queryStartSize: number = 0;

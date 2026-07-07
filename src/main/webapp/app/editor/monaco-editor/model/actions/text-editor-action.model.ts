@@ -12,9 +12,10 @@ import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actio
 import { WritableSignal } from '@angular/core';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
+/** Instantiated (subclassed) and populated after construction; the definite-assignment (!) marker below is set later. */
 export abstract class TextEditorAction implements Disposable {
     id: string;
-    label: string;
+    label!: string; // assigned in register() via translateService.instant() before the label is read
     translationKey: string;
     keybindings?: TextEditorKeybinding[];
     icon?: IconDefinition;
@@ -354,5 +355,6 @@ export abstract class TextEditorAction implements Disposable {
 
 /**
  * Class representing actions for styling text, e.g. bold or italic.
+ * Instantiated (subclassed) and populated after construction, inheriting the definite-assignment (!) fields of the base class.
  */
 export abstract class TextStyleTextEditorAction extends TextEditorAction {}

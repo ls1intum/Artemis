@@ -30,7 +30,7 @@ export class CourseNotificationPresetPickerComponent {
     protected readonly farEyeSlash = faEyeSlash;
     protected readonly faCheck = faCheck;
 
-    private recentlySelectedTimeout: NodeJS.Timeout;
+    private recentlySelectedTimeout?: NodeJS.Timeout;
     // `isRecentlySelected` is flipped back to false inside a setTimeout callback, and the lang key derives
     // from a signal input; both are read in the template, so they must be reactive under zoneless.
     protected readonly isRecentlySelected = signal(false);

@@ -72,11 +72,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
     protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
 
-    private toggleSidebarEventSubscription: Subscription;
-    private teamAssignmentUpdateListener: Subscription;
-    private quizExercisesChannel: string;
+    private toggleSidebarEventSubscription?: Subscription;
+    private teamAssignmentUpdateListener?: Subscription;
+    private quizExercisesChannel?: string;
     private quizExercisesSubscription?: Subscription;
-    private examStartedSubscription: Subscription;
+    private examStartedSubscription?: Subscription;
 
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);

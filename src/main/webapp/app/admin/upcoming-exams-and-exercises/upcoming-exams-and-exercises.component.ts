@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,6 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { TableModule } from 'primeng/table';
+import { Tag } from 'primeng/tag';
 
 /**
  * Admin component for viewing upcoming exams and exercises across all courses.
@@ -18,8 +20,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
-    styles: ['.table {table-layout: fixed}'],
-    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective, TableModule, Tag],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);
@@ -45,13 +47,5 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
         this.examManagementService.findAllCurrentAndUpcomingExams().subscribe((res: HttpResponse<Exam[]>) => {
             this.upcomingExams.set(res.body ?? []);
         });
-    }
-
-    trackByExercise(_index: number, item: Exercise) {
-        return `${item.course?.id}_${item.id}`;
-    }
-
-    trackByExam(_index: number, item: Exam) {
-        return `${item.course?.id}_${item.id}`;
     }
 }

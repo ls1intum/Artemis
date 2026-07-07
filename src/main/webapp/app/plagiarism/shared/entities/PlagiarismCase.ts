@@ -3,57 +3,57 @@ import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismS
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-export class PlagiarismCase {
-    public id: number;
-    public exercise?: PlagiarismCaseExercise;
-    public post?: PlagiarismCasePostSummary;
-    public plagiarismSubmissions?: PlagiarismSubmission[];
-    public plagiarismSubmissionCount?: number;
-    public student?: PlagiarismCaseUser;
-    public verdict?: PlagiarismVerdict;
-    public verdictDate?: dayjs.Dayjs;
-    public verdictMessage?: string;
-    public verdictBy?: PlagiarismCaseUser;
-    public verdictPointDeduction?: number;
-    public createdByContinuousPlagiarismControl?: boolean;
-    public hasStudentAnswer?: boolean;
+export interface PlagiarismCase {
+    id: number;
+    exercise?: PlagiarismCaseExercise;
+    post?: PlagiarismCasePostSummary;
+    plagiarismSubmissions?: PlagiarismSubmission[];
+    plagiarismSubmissionCount?: number;
+    student?: PlagiarismCaseUser;
+    verdict?: PlagiarismVerdict;
+    verdictDate?: dayjs.Dayjs;
+    verdictMessage?: string;
+    verdictBy?: PlagiarismCaseUser;
+    verdictPointDeduction?: number;
+    createdByContinuousPlagiarismControl?: boolean;
+    hasStudentAnswer?: boolean;
 }
 
-export class PlagiarismCaseDTO {
-    public id: number;
-    public verdict?: PlagiarismVerdict;
-    public studentId?: number;
+export interface PlagiarismCaseDTO {
+    id: number;
+    verdict?: PlagiarismVerdict;
+    studentId?: number;
 }
 
-export class PlagiarismCaseUser {
-    public id?: number;
-    public login?: string;
-    public name?: string;
-    public visibleRegistrationNumber?: string;
+export interface PlagiarismCaseUser {
+    id?: number;
+    login?: string;
+    name?: string;
+    visibleRegistrationNumber?: string;
 }
 
-export class PlagiarismCaseExercise {
-    public id?: number;
-    public title?: string;
-    public shortName?: string;
-    public type?: ExerciseType;
-    public dueDate?: dayjs.Dayjs;
-    public courseId?: number;
-    public courseTitle?: string;
-    public examId?: number;
-    public examTitle?: string;
-    public continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod?: number;
+export interface PlagiarismCaseExercise {
+    id?: number;
+    title?: string;
+    shortName?: string;
+    type?: ExerciseType;
+    dueDate?: dayjs.Dayjs;
+    courseId?: number;
+    courseTitle?: string;
+    examId?: number;
+    examTitle?: string;
+    continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod?: number;
 }
 
-export class PlagiarismCasePostSummary {
-    public id?: number;
-    public creationDate?: dayjs.Dayjs;
+export interface PlagiarismCasePostSummary {
+    id?: number;
+    creationDate?: dayjs.Dayjs;
 }
 
-export class PlagiarismCaseVerdictResponse {
-    public verdict?: PlagiarismVerdict;
-    public verdictDate?: dayjs.Dayjs;
-    public verdictMessage?: string;
-    public verdictBy?: PlagiarismCaseUser;
-    public verdictPointDeduction?: number;
+export interface PlagiarismCaseVerdictResponse {
+    verdict?: PlagiarismVerdict;
+    verdictDate?: dayjs.Dayjs;
+    verdictMessage?: string;
+    verdictBy?: PlagiarismCaseUser;
+    verdictPointDeduction?: number;
 }

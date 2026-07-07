@@ -75,9 +75,9 @@ import { LoginService } from 'app/core/login/login.service';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 class MockBreadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }
 
 describe('NavbarComponent', () => {

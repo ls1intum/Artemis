@@ -1,9 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { SortService } from 'app/foundation/service/sort.service';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -12,13 +11,17 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TableModule } from 'primeng/table';
+import { SortEvent } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -30,26 +33,29 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
+        ArtemisTranslatePipe,
+        TooltipModule,
         TabsModule,
         HelpIconComponent,
         CopyToClipboardButtonComponent,
         RouterLink,
         FaIconComponent,
-        SortDirective,
-        SortByDirective,
         DeleteButtonDirective,
         ItemCountComponent,
         PaginatorModule,
+        TableModule,
+        ButtonModule,
+        MessageModule,
         AdminTitleBarTitleDirective,
     ],
 })
 export class LtiConfigurationComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly ltiConfigurationService = inject(LtiConfigurationService);
-    private readonly sortService = inject(SortService);
     private readonly alertService = inject(AlertService);
     private readonly activatedRoute = inject(ActivatedRoute);
 
@@ -70,10 +76,7 @@ export class LtiConfigurationComponent implements OnInit {
     /** Total items count */
     readonly totalItems = signal(0);
 
-    protected readonly faSort = faSort;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
-    protected readonly faWrench = faWrench;
-    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPencil = faPencil;
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
 
@@ -169,13 +172,14 @@ export class LtiConfigurationComponent implements OnInit {
         return LTI_URLS.LTI13_LOGIN_REDIRECT_PROXY_PATH; // Needs to match uri in CustomLti13Configurer
     }
 
-    /**
-     * Sorts the `platforms` array by the current `predicate` in ascending/descending order.
-     */
-    sortRows() {
-        const platformsCopy = [...this.platforms()];
-        this.sortService.sortByProperty(platformsCopy, this.predicate(), !this.ascending());
-        this.platforms.set(platformsCopy);
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
+    onTableSort(event: SortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.predicate.set(event.field);
+        this.ascending.set((event.order ?? 1) === 1);
+        this.transition();
     }
 
     /**
