@@ -43,10 +43,10 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
-    lectureId: number;
-    courseId: number;
+    lectureId!: number; // set in constructor from route params
+    courseId!: number; // set in constructor from route params
     readonly isLoading = signal(false);
-    isProcessingMode: boolean;
+    isProcessingMode = false;
     readonly units = signal<LectureUnitDTOS[]>([]);
     readonly numberOfPages = signal<number>(undefined!);
     faSave = faSave;
@@ -58,12 +58,12 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
     readonly invalidUnitTableMessage = signal<string | undefined>(undefined);
     //Comma-seperated keyphrases used to detect slides to be removed
-    keyphrases: string;
+    keyphrases = '';
     private search = new Subject<void>();
     readonly removedSlidesNumbers = signal<number[]>([]);
 
     file: File;
-    filename: string;
+    filename!: string; // set asynchronously after the slides upload completes, before subsequent reads
     //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentVideoUnitResource.java
     readonly MINUTES_UNTIL_DELETION = 29;
 

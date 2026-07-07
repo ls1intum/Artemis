@@ -67,9 +67,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readonly isNewSubmission = signal(false);
     readonly assessmentMode = signal(false);
-    exerciseId: number;
+    exerciseId!: number; // set in ngOnInit() from route paramMap
     readonly exampleSubmission = signal<ExampleSubmission>(undefined!);
-    modelingSubmission: ModelingSubmission;
+    modelingSubmission!: ModelingSubmission; // set in loadAll()/create/update flows before it is read
     readonly umlModel = signal<UMLModel>(undefined!);
     readonly explanationText = signal<string>(undefined!);
     feedbackChanged = false;
@@ -82,7 +82,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readonly readOnly = signal<boolean>(undefined!);
     readonly toComplete = signal<boolean>(undefined!);
     readonly assessmentExplanation = signal<string>(undefined!);
-    isExamMode: boolean;
+    isExamMode = false;
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
 
@@ -109,7 +109,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         },
     ];
 
-    private exampleSubmissionId: number;
+    private exampleSubmissionId!: number; // set in ngOnInit() from route paramMap
     referencedFeedback = signal<Feedback[]>([]);
     unreferencedFeedback = signal<Feedback[]>([]);
 

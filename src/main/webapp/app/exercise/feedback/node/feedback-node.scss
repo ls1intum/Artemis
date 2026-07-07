@@ -1,28 +1,23 @@
-.feedback-item {
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        gap: 2rem;
-    }
-
-    &__category {
-        margin-bottom: 0;
-        font-size: var(--bs-body-font-size);
-        font-weight: bold;
-    }
-}
-
+/*
+ * Background color of the collapsible feedback-group header. The variant class is composed dynamically in
+ * the template from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so the color cannot be
+ * expressed as a static Tailwind utility (e.g. `bg-state-success`) on the element — it must be resolved in
+ * SCSS from the runtime-selected variant. Values map to the state tokens (`--success`/`--info`/`--warning`/`--danger`).
+ */
 .feedback-group {
-    display: flex;
-    border-radius: 0.15rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
+    &--success {
+        background-color: var(--success);
+    }
 
-    &__left {
-        display: flex;
-        align-items: center;
+    &--info {
+        background-color: var(--info);
+    }
+
+    &--warning {
+        background-color: var(--warning);
+    }
+
+    &--danger {
+        background-color: var(--danger);
     }
 }

@@ -139,8 +139,8 @@ export class TeamService implements ITeamService, OnDestroy {
 
     // Team Assignment Update Stream
     private teamAssignmentUpdates$?: Observable<TeamAssignmentPayload>;
-    private teamAssignmentUpdatesResolver: () => void;
-    private authenticationStateSubscriber: Subscription;
+    private teamAssignmentUpdatesResolver!: () => void; // assigned in teamAssignmentUpdates getter before the websocket callback invokes it
+    private authenticationStateSubscriber!: Subscription; // assigned in teamAssignmentUpdates getter before the auth-state callback unsubscribes it
     private websocketStatusSubscription?: Subscription;
 
     ngOnDestroy(): void {

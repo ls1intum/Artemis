@@ -11,6 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Component that displays real-time notification popups.
@@ -19,7 +20,7 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
  */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
-    imports: [CourseNotificationComponent, CommonModule, FaIconComponent],
+    imports: [CourseNotificationComponent, CommonModule, FaIconComponent, ButtonModule],
     templateUrl: './course-notification-popup-overlay.component.html',
     styleUrls: ['./course-notification-popup-overlay.component.scss'],
 })
@@ -35,7 +36,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     protected readonly notifications = signal<CourseNotification[]>([]);
     protected readonly isExpanded = signal(false);
 
-    private courseNotificationWebsocketSubscription: Subscription;
+    private courseNotificationWebsocketSubscription?: Subscription;
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -62,7 +63,7 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
     }
 
     ngOnDestroy(): void {
-        this.courseNotificationWebsocketSubscription.unsubscribe();
+        this.courseNotificationWebsocketSubscription?.unsubscribe();
     }
 
     /**

@@ -85,14 +85,14 @@ test.describe('Date-time picker', { tag: '@fast' }, () => {
         await typeRawText(input, 'notadate');
         await expect(input).toHaveValue('notadate');
         await expect(wrapper.locator('.p-datepicker')).toHaveClass(/p-invalid/);
-        await expect(wrapper.locator('.invalid-feedback').first()).toBeVisible();
+        await expect(wrapper.locator('[data-testid="date-picker-validation-message"]').first()).toBeVisible();
 
         // 5) Recovery: typing a valid date again clears the invalid state
         const recoveredDate = dayjs().add(1, 'year').month(5).date(1).hour(9).minute(45); // 01.06.<next year> 09:45
         await fillDateTimePicker(input, recoveredDate, 'DD.MM.YYYY HH:mm');
         await expect(input).toHaveValue(recoveredDate.format('DD.MM.YYYY HH:mm'));
         await expect(wrapper.locator('.p-datepicker')).not.toHaveClass(/p-invalid/);
-        await expect(wrapper.locator('.invalid-feedback')).toHaveCount(0);
+        await expect(wrapper.locator('[data-testid="date-picker-validation-message"]')).toHaveCount(0);
 
         // 6) The clear (×) button empties the field
         await wrapper.locator('.p-datepicker-clear-icon').click();
@@ -129,7 +129,7 @@ test.describe('Date-time picker', { tag: '@fast' }, () => {
         // 4) Unparseable text is flagged invalid and kept verbatim
         await typeRawText(input, 'xx.yy.zzzz');
         await expect(input).toHaveValue('xx.yy.zzzz');
-        await expect(wrapper.locator('.invalid-feedback').first()).toBeVisible();
+        await expect(wrapper.locator('[data-testid="date-picker-validation-message"]').first()).toBeVisible();
 
         // 5) Restoring a valid value and clearing it empties the field
         await fillDateTimePicker(input, typedDate, 'DD.MM.YYYY');

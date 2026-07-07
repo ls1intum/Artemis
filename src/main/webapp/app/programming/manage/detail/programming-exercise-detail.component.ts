@@ -164,9 +164,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         lineChangesLoading: false,
     };
 
-    courseId: number;
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
-    formattedGradingInstructions: SafeHtml;
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
@@ -188,9 +188,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
-    private templateAndSolutionParticipationSubscription: Subscription;
-    private exerciseStatisticsSubscription: Subscription;
-    private sharingEnabledSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();

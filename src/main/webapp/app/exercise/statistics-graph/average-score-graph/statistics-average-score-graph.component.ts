@@ -86,8 +86,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly dataLabelsPlugin = [ChartDataLabels];
 
     // for filtering
-    exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[];
-    currentlyDisplayableExercises: CourseManagementStatisticsModel[];
+    exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[] = [];
+    currentlyDisplayableExercises: CourseManagementStatisticsModel[] = [];
     displayColorMap = new Map<PerformanceInterval, string>();
     numberOfSelectedIntervals = 3;
 
@@ -98,8 +98,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly BEST_CLASS = 'best-color';
     readonly MAX_SPAN_SIZE = 10; // The maximum amount of exercises displayable in one scope
 
-    weakestThirdUpperBoundary: number;
-    bestThirdLowerBoundary: number;
+    weakestThirdUpperBoundary!: number; // set in setUpColorDistribution() via ngOnInit before any chart interaction reads it
+    bestThirdLowerBoundary!: number; // set in setUpColorDistribution() via ngOnInit before any chart interaction reads it
 
     // Left arrow -> decrease, right arrow -> increase
     readonly currentPeriod = signal(0);
