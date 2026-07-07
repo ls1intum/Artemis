@@ -33,11 +33,11 @@ export class TeamExerciseSearchComponent {
     readonly searchFailed = output<boolean>();
     readonly searchNoResults = output<string | undefined>();
 
-    exercise: Exercise;
+    exercise?: Exercise;
     exerciseOptions: Exercise[] = [];
     exerciseOptionsLoaded = false;
 
-    inputDisplayValue: string;
+    inputDisplayValue = '';
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);

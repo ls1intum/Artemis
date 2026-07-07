@@ -34,12 +34,12 @@ export class ExamAssessmentButtonsComponent implements OnInit {
 
     readonly courseId = signal<number>(undefined!);
     readonly examId = signal<number>(undefined!);
-    studentExams: StudentExam[];
+    studentExams: StudentExam[] = [];
     // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
     readonly course = signal<Course | undefined>(undefined);
     readonly exam = signal<Exam | undefined>(undefined);
 
-    paramSub: Subscription;
+    paramSub?: Subscription;
     readonly isLoading = signal(false);
     readonly isEvaluatingQuizExercises = signal(false);
     readonly isAssessingUnsubmittedExams = signal(false);

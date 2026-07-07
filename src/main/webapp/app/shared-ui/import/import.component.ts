@@ -44,8 +44,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     };
 
     // These two attributes should be set when using the common template (import.component.html)
-    entityName: string;
-    columns: Column<T>[];
+    entityName!: string; // set by concrete subclasses before the shared template reads it
+    columns!: Column<T>[]; // set by concrete subclasses before the shared template reads it
 
     // Keep the inherited `[disabledIds]` binding while preserving the mutable compatibility field used by legacy subclasses.
     // eslint-disable-next-line @angular-eslint/no-input-rename

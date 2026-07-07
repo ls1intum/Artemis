@@ -43,7 +43,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
     currentlyLoadedPosts: Post[] = [];
     postingContentParts = signal<PostingContentPart[]>([]);
 
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
 
     // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
     private readonly ATTACHMENT_DIR = 'api/core/files/attachments/';

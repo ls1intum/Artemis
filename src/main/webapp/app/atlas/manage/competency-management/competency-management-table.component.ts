@@ -62,7 +62,7 @@ export class CompetencyManagementTableComponent {
     competencyDeleted = output<number>();
     competenciesAdded = output<CourseCompetency[]>();
 
-    service: CompetencyService | PrerequisiteService;
+    service!: CompetencyService | PrerequisiteService; // set by the constructor effect (runs on first CD) before any event handler reads it
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 

@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/foundation/model/base-entity';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Bonus implements BaseEntity {
     public id?: number;
     public bonusStrategy?: BonusStrategy;
@@ -16,6 +17,7 @@ export enum BonusStrategy {
     POINTS = 'POINTS',
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class BonusExample {
     public examGrade?: number | string;
     public bonusGrade?: number;
@@ -29,22 +31,22 @@ export class BonusExample {
     ) {}
 }
 
-export class BonusResult {
-    public bonusStrategy?: BonusStrategy;
-    public bonusFromTitle?: string;
-    public studentPointsOfBonusSource?: number | undefined;
-    public bonusGrade?: number | string;
-    public finalPoints?: number;
-    public finalGrade?: number | string;
-    public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
-    public achievedPresentationScore?: number;
-    public presentationScoreThreshold?: number;
+export interface BonusResult {
+    bonusStrategy?: BonusStrategy;
+    bonusFromTitle?: string;
+    studentPointsOfBonusSource?: number | undefined;
+    bonusGrade?: number | string;
+    finalPoints?: number;
+    finalGrade?: number | string;
+    mostSeverePlagiarismVerdict?: PlagiarismVerdict;
+    achievedPresentationScore?: number;
+    presentationScoreThreshold?: number;
 }
 
-export class BonusDTO {
-    public id: number;
-    public sourceGradingScaleId: number;
-    public weight?: number;
+export interface BonusDTO {
+    id: number;
+    sourceGradingScaleId: number;
+    weight?: number;
 }
 
 /**

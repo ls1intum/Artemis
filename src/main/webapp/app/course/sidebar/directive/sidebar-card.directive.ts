@@ -18,7 +18,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
 
     readonly onUpdateSidebar = output<void>();
 
-    private componentRef: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
+    private componentRef?: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
     private updateSubscription?: OutputRefSubscription;
 
     constructor() {

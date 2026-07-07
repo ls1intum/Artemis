@@ -11,8 +11,8 @@ import { DomainChange } from 'app/programming/shared/code-editor/model/code-edit
 export abstract class DomainDependentService implements OnDestroy {
     private domainService = inject(DomainService);
 
-    protected domain: DomainChange;
-    protected domainChangeSubscription: Subscription;
+    protected domain!: DomainChange; // set in setDomain() from the domain-change subscription before any read
+    protected domainChangeSubscription?: Subscription;
 
     /**
      * Initializes a domain subscription.

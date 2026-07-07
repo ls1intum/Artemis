@@ -57,8 +57,8 @@ export class MetisConversationService implements OnDestroy {
     private activeConversationSubscription?: Subscription;
     private conversationMembershipSubscription?: Subscription;
 
-    private userId: number;
-    private _courseId: number;
+    private userId!: number; // set in constructor from accountService.identity()
+    private _courseId!: number; // set in setUpConversationService() before any read
 
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 

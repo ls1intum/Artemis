@@ -427,6 +427,11 @@ export async function addE2EInitScript(page: Page) {
  * @param droppable - Locator of the element to be dropped on.
  */
 export async function drag(page: Page, draggable: Locator, droppable: Locator) {
+    // The droppable of a drag-and-drop quiz is sized relative to its background image, which loads
+    // asynchronously. Until that image has loaded the droppable is zero-sized, which Playwright
+    // treats as not visible, so boundingBox() returns null and the drag coordinates below would be
+    // computed from `null`. Wait for the element to be visible (a non-empty box) before reading it.
+    await droppable.waitFor({ state: 'visible', timeout: 15_000 });
     const box = (await droppable.boundingBox())!;
     // By hovering over the droppable element, we ensure it's not hidden by any other element.
     await droppable.hover();

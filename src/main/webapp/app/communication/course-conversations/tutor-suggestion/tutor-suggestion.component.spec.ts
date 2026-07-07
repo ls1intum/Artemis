@@ -265,10 +265,10 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
         component.ngOnInit();
-        const irisUnsubSpy = vi.spyOn(component['irisSettingsSubscription'], 'unsubscribe');
-        const msgUnsubSpy = vi.spyOn(component['messagesSubscription'], 'unsubscribe');
-        const errorUnsubSpy = vi.spyOn(component['errorSubscription'], 'unsubscribe');
-        const tutorSuggestionUnsubSpy = vi.spyOn(component['tutorSuggestionSubscription'], 'unsubscribe');
+        const irisUnsubSpy = vi.spyOn(component['irisSettingsSubscription']!, 'unsubscribe');
+        const msgUnsubSpy = vi.spyOn(component['messagesSubscription']!, 'unsubscribe');
+        const errorUnsubSpy = vi.spyOn(component['errorSubscription']!, 'unsubscribe');
+        const tutorSuggestionUnsubSpy = vi.spyOn(component['tutorSuggestionSubscription']!, 'unsubscribe');
 
         component.ngOnDestroy();
 

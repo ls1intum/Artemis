@@ -18,7 +18,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
     private injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
 
     // The currently displayed alert
-    private alert: Alert;
+    private alert?: Alert;
     // Indicates whether we ever saw an outdated state since last reload
     private hasSeenOutdatedInThisSession = false;
 
