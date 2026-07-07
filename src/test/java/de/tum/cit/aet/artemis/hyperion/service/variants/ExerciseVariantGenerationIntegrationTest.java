@@ -1,39 +1,488 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
-/**
- * Integration tests for the variant-generation pipeline (plan Section 10, "Server integration tests").
- * Established Hyperion test pattern: JUnit + Testcontainers/PostgreSQL + MOCKED ChatClient — see the
- * HyperionCodeGeneration*Test classes for base-class reuse and ChatClient mocking.
- */
-class ExerciseVariantGenerationIntegrationTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
-    // TODO (Sonnet): Extend the appropriate Hyperion/module integration base class (mirror
-    // HyperionCodeGenerationResourceTest) and implement, per plan Section 10:
-    //
-    // 1. Pipeline phase transitions incl. failure paths:
-    // - happy path ANALYZING → ... → COMPLETED with a mocked ChatClient returning a canned ChangePlan and
-    // canned tool calls (Section 2.7.2 state diagram is the spec).
-    // - malformed planner output → 2 re-prompts → FAILED (Section 6 row 2).
-    // - budget exhausted with red gates → DRAFT_WITH_WARNINGS, variant kept + warnings attached (Section 2.6).
-    //
-    // 2. Cooperative cancellation:
-    // - flag set during TRANSFORMING is honored at the next boundary, provisioned clone is deleted, job →
-    // CANCELLED, CANCELLED event published (Section 5.2).
-    // - DELETE on a job in FINALIZING/terminal → 409 (Section 5.2).
-    //
-    // 3. Provisioning collision retry: pre-create an exercise with the colliding short name/project key; assert
-    // the -V2 suffix retry succeeds and checkIfProjectExists was re-run (Section 6 row 1).
-    //
-    // 4. Scripted agent-loop runs: mock ChatClient returns canned tool calls (applyEdit/runBuild sequences);
-    // assert repo edits land in the variant's repos and builds are triggered (Section 10).
-    //
-    // 5. Quiz adapter round-trip: generate a quiz variant with canned updateQuestion calls; assert
-    // QuizExercise.isValid() on the result (Section 10).
-    //
-    // 6. REST layer: per-user scoping of variant-jobs endpoints (foreign job → 404), 400 on no-intent request,
-    // 400 on unsupported exercise type; several jobs for the SAME exercise can run simultaneously (parallel
-    // variant generation is an explicit requirement — there is deliberately no per-exercise dedup).
-    //
-    // 7. Exam placement: source in an exam exercise group → variant lands in the SAME exam exercise group;
-    // non-exam exercise with SAME_EXAM_GROUP placement → 400 (Section 5.5).
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDetailDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantJobStartDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+
+/**
+ * Integration tests for the variant-generation pipeline (plan Section 10, "Server integration tests"):
+ * real Spring context, real database, real Hazelcast job map, real quiz adapters/toolset — only the
+ * {@code ChatModel} behind Hyperion's {@code ChatClient} is mocked (the established Hyperion test pattern,
+ * see {@code HyperionQuizQuestionGenerationResourceTest}).
+ *
+ * The agent loop hands its toolset to Spring AI, whose internal tool-execution loop never runs against a
+ * fully mocked model. The mock therefore drives the tools itself: the scripted {@code call(Prompt)} answer
+ * pulls the {@link ToolCallback}s off the prompt's {@link ToolCallingChatOptions} and invokes them with
+ * canned arguments — so the REAL tool implementations run against the REAL provisioned variant (stub item
+ * "scripted agent-loop runs").
+ *
+ * The quiz pipeline is the vehicle for all pipeline-level tests; the programming pipeline's CI-backed
+ * verify path (runBuild, build verification, collision retry) needs real local CI builds and stays a
+ * manual / E2E concern (see the commit's next steps).
+ */
+class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "exvariantgen";
+
+    private static final String EDITOR_LOGIN = TEST_PREFIX + "editor1";
+
+    private static final String PLANNED_TITLE = "Cargo Bay Inventory Quiz";
+
+    private static final String REWRITTEN_QUESTION_TITLE = "Cargo bay manifest check";
+
+    private static final String PLAN_JSON = """
+            {
+              "variantTitle": "%s",
+              "problemStatement": "Check the cargo bay inventory of the space station.",
+              "intendedChanges": ["Re-theme question 0 from generic knowledge to cargo bay inventory"],
+              "invariants": ["Keep scoring types and points of all questions"]
+            }
+            """.formatted(PLANNED_TITLE);
+
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private ExerciseVariantJobService jobService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    private Course course;
+
+    private QuizExercise sourceQuiz;
+
+    /** Raw results of the scripted tool calls — assertion failures show the real tool-level error. */
+    private final List<String> toolTranscript = new CopyOnWriteArrayList<>();
+
+    @BeforeEach
+    void setupTestData() {
+        // The base class stubs the mocked model's options as plain ChatOptions — but tool callbacks only
+        // survive into the Prompt when options.mutate() yields a ToolCallingChatOptions.Builder (see
+        // DefaultChatClientUtils), as it does for every real chat model. Re-stub AFTER the base @BeforeEach.
+        when(azureOpenAiChatModel.getDefaultOptions()).thenReturn(ToolCallingChatOptions.builder().build());
+        when(azureOpenAiChatModel.getOptions()).thenReturn(ToolCallingChatOptions.builder().build());
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 2, 1);
+        course = courseUtilService.addEmptyCourse();
+        sourceQuiz = createMcSaQuiz(course);
+        toolTranscript.clear();
+    }
+
+    @AfterEach
+    void resetChatModelMock() {
+        reset(azureOpenAiChatModel);
+    }
+
+    /**
+     * MC + SA questions only: the factory's drag-and-drop question references image files that do not exist
+     * on disk, which would fail {@code validateQuizExerciseFiles} in VERIFYING and the DnD file copy during
+     * provisioning — DnD coverage belongs to the E2E tests where real files exist.
+     */
+    private QuizExercise createMcSaQuiz(Course course) {
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL, course);
+        quiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
+        quiz.setMaxPoints(quiz.getOverallQuizPoints());
+        return quizExerciseRepository.save(quiz);
+    }
+
+    // --- Scripted ChatModel -----------------------------------------------------------------------------
+
+    private record ScriptedModel(AtomicInteger planningCalls, AtomicInteger agentRounds, AtomicInteger critiqueCalls, AtomicInteger failureSummaryCalls) {
+
+        ScriptedModel() {
+            this(new AtomicInteger(), new AtomicInteger(), new AtomicInteger(), new AtomicInteger());
+        }
+    }
+
+    /**
+     * Installs the scripted answer for every LLM call of a run. Calls are classified exactly the way the
+     * pipeline builds them: agent rounds carry tool callbacks, all other calls are told apart by their fixed
+     * user-message text.
+     *
+     * @param planningResponse the raw planner output (valid or deliberately malformed)
+     * @param agentBehavior    invoked with the round's tool callbacks; returns the round's final text
+     * @param critiqueFindings findings the quiz critique soft gate reports on every verification pass
+     */
+    private ScriptedModel scriptChatModel(String planningResponse, Function<List<ToolCallback>, String> agentBehavior, List<String> critiqueFindings) {
+        ScriptedModel script = new ScriptedModel();
+        doAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            List<ToolCallback> tools = toolCallbacksOf(prompt);
+            if (!tools.isEmpty()) {
+                script.agentRounds().incrementAndGet();
+                return textResponse(agentBehavior.apply(tools));
+            }
+            String userText = lastUserMessage(prompt);
+            if (userText.contains("Produce the change plan")) {
+                script.planningCalls().incrementAndGet();
+                // Usage metadata only here: asserts the token accounting path without inflating other calls.
+                return textResponseWithUsage(planningResponse);
+            }
+            if (userText.contains("Review the variant quiz")) {
+                script.critiqueCalls().incrementAndGet();
+                ObjectNode critique = objectMapper.createObjectNode();
+                ArrayNode findings = critique.putArray("findings");
+                critiqueFindings.forEach(findings::add);
+                return textResponse(critique.toString());
+            }
+            if (userText.contains("Write the summary for the instructor")) {
+                script.failureSummaryCalls().incrementAndGet();
+                return textResponse("AI post-mortem: the source exercise is untouched; retry with a simpler request.");
+            }
+            return textResponse("ok");
+        }).when(azureOpenAiChatModel).call(any(Prompt.class));
+        return script;
+    }
+
+    private static List<ToolCallback> toolCallbacksOf(Prompt prompt) {
+        if (prompt.getOptions() instanceof ToolCallingChatOptions toolOptions && toolOptions.getToolCallbacks() != null) {
+            return toolOptions.getToolCallbacks();
+        }
+        return List.of();
+    }
+
+    private static String lastUserMessage(Prompt prompt) {
+        return prompt.getInstructions().stream().filter(UserMessage.class::isInstance).reduce((first, second) -> second).map(message -> ((UserMessage) message).getText())
+                .orElse("");
+    }
+
+    private static ChatResponse textResponse(String text) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(text))));
+    }
+
+    private static ChatResponse textResponseWithUsage(String text) {
+        return new ChatResponse(List.of(new Generation(new AssistantMessage(text))), ChatResponseMetadata.builder().usage(new DefaultUsage(100, 20)).build());
+    }
+
+    /**
+     * The canned happy-path agent round (stub item "scripted agent-loop runs", quiz analog of "repo edits
+     * land"): read the questions through the real getQuestions tool, re-title question 0, write it back
+     * through the real updateQuestion tool, and finish.
+     */
+    private String applyRetitleEdit(List<ToolCallback> tools) {
+        try {
+            String questionsJson = callTool(tools, "getQuestions", objectMapper.createObjectNode().toString());
+            ArrayNode questions = (ArrayNode) objectMapper.readTree(questionsJson);
+            ObjectNode question = (ObjectNode) questions.get(0);
+            question.put("title", REWRITTEN_QUESTION_TITLE);
+            ObjectNode updateArguments = objectMapper.createObjectNode().put("index", 0).put("questionJson", question.toString());
+            String updateResult = callTool(tools, "updateQuestion", updateArguments.toString());
+            toolTranscript.add("updateQuestion: " + updateResult);
+            callTool(tools, "finish", objectMapper.createObjectNode().put("summary", "Re-themed question 0 to the cargo bay domain").toString());
+            return "done";
+        }
+        catch (Exception e) {
+            toolTranscript.add("agent scripting failed: " + e);
+            return "agent scripting failed: " + e.getMessage();
+        }
+    }
+
+    private static String callTool(List<ToolCallback> tools, String name, String jsonArguments) {
+        ToolCallback tool = tools.stream().filter(callback -> callback.getToolDefinition().name().equals(name)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tool " + name + " is not part of the round's toolset"));
+        return tool.call(jsonArguments);
+    }
+
+    // --- Helpers ----------------------------------------------------------------------------------------
+
+    private static VariantGenerationRequestDTO domainChangeRequest(VariantPlacementDTO placement) {
+        return new VariantGenerationRequestDTO(null, "space station cargo bay", null, placement);
+    }
+
+    private static VariantPlacementDTO standalonePlacement() {
+        return new VariantPlacementDTO(VariantPlacementDTO.PlacementType.STANDALONE, null, null);
+    }
+
+    private String startJob(long exerciseId, VariantGenerationRequestDTO requestDto) throws Exception {
+        VariantJobStartDTO start = request.postWithResponseBody("/api/hyperion/exercises/" + exerciseId + "/generate-variant", requestDto, VariantJobStartDTO.class, HttpStatus.OK);
+        assertThat(start.jobId()).isNotBlank();
+        return start.jobId();
+    }
+
+    private VariantJob awaitTerminal(String jobId, String login) {
+        await().atMost(Duration.ofSeconds(60)).until(() -> jobService.getJob(jobId, login).map(job -> job.getPhase().isTerminal()).orElse(false));
+        return jobService.getJob(jobId, login).orElseThrow();
+    }
+
+    // --- Happy path + job endpoints (stub items 1, 5, 6) -------------------------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldGenerateStandaloneQuizVariantEndToEnd() throws Exception {
+        ScriptedModel script = scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        assertThat(job.getWarnings()).isEmpty();
+        assertThat(job.getVariantExerciseTitle()).isEqualTo(PLANNED_TITLE);
+        assertThat(script.planningCalls()).hasValue(1);
+        assertThat(script.agentRounds()).hasValue(1);
+        assertThat(script.critiqueCalls()).hasValue(1);
+        // Planning reported usage metadata (100 + 20 tokens) — the accounting must land on the job record.
+        assertThat(job.getTotalTokensUsed()).isGreaterThanOrEqualTo(120);
+
+        // The clone is a real, valid quiz whose scripted edit landed; the source is untouched.
+        // Tool results come back JSON-encoded from ToolCallback.call, hence contains() instead of startsWith().
+        assertThat(toolTranscript).anySatisfy(entry -> assertThat(entry).contains("Question 0 updated"));
+        assertThat(job.getVariantExerciseId()).isNotNull().isNotEqualTo(sourceQuiz.getId());
+        QuizExercise variant = quizExerciseRepository.findByIdWithQuestionsElseThrow(job.getVariantExerciseId());
+        assertThat(variant.getTitle()).isEqualTo(PLANNED_TITLE);
+        assertThat(variant.isValid()).isTrue();
+        assertThat(variant.getQuizQuestions().getFirst().getTitle()).isEqualTo(REWRITTEN_QUESTION_TITLE);
+        QuizExercise source = quizExerciseRepository.findByIdWithQuestionsElseThrow(sourceQuiz.getId());
+        assertThat(source.getQuizQuestions().getFirst().getTitle()).isNotEqualTo(REWRITTEN_QUESTION_TITLE);
+
+        // Every pipeline phase recorded its step output (the modal's expandable panels).
+        assertThat(job.getStepOutputs()).containsKeys(VariantJobPhase.ANALYZING, VariantJobPhase.PLANNING, VariantJobPhase.PROVISIONING, VariantJobPhase.TRANSFORMING,
+                VariantJobPhase.VERIFYING);
+        assertThat(job.getStepOutputs().get(VariantJobPhase.TRANSFORMING).summary()).contains("Agent round 1");
+
+        // Tray list + monitor-modal detail endpoints see the finished job incl. the original request.
+        List<VariantJobDTO> jobs = request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class);
+        assertThat(jobs).anySatisfy(entry -> {
+            assertThat(entry.jobId()).isEqualTo(jobId);
+            assertThat(entry.variantExerciseTitle()).isEqualTo(PLANNED_TITLE);
+        });
+        VariantJobDetailDTO detail = request.get("/api/hyperion/variant-jobs/" + jobId, HttpStatus.OK, VariantJobDetailDTO.class);
+        assertThat(detail.request().domainText()).isEqualTo("space station cargo bay");
+        assertThat(detail.stepOutputs()).containsKey(VariantJobPhase.PLANNING);
+
+        // Terminal jobs can no longer be cancelled (plan Section 5.2).
+        request.delete("/api/hyperion/variant-jobs/" + jobId, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldRunTwoJobsForTheSameExerciseInParallel() throws Exception {
+        scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
+
+        String firstJobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        String secondJobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        assertThat(firstJobId).isNotEqualTo(secondJobId);
+
+        VariantJob firstJob = awaitTerminal(firstJobId, EDITOR_LOGIN);
+        VariantJob secondJob = awaitTerminal(secondJobId, EDITOR_LOGIN);
+        assertThat(firstJob.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        assertThat(secondJob.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        assertThat(firstJob.getVariantExerciseId()).isNotEqualTo(secondJob.getVariantExerciseId());
+    }
+
+    // --- Failure paths (stub item 1) ----------------------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldFailAfterRepromptsWhenPlannerOutputStaysMalformed() throws Exception {
+        ScriptedModel script = scriptChatModel("this is not a change plan", tools -> "unused", List.of());
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.FAILED);
+        assertThat(job.getFailedInPhase()).isEqualTo(VariantJobPhase.PLANNING);
+        assertThat(job.getFailureDetail()).contains("PLANNING");
+        // 1 initial + 2 re-prompts (plan Section 6, row 2), then the failure-summary call.
+        assertThat(script.planningCalls()).hasValue(3);
+        assertThat(script.failureSummaryCalls()).hasValue(1);
+        assertThat(job.getInstructorSummary()).contains("AI post-mortem");
+        // Nothing was provisioned, so there is no clone to link or clean up.
+        assertThat(job.getVariantExerciseId()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldKeepDraftWithWarningsWhenVerificationBudgetIsExhausted() throws Exception {
+        // Agent rounds change nothing; the critique soft gate reports the same finding on every pass.
+        ScriptedModel script = scriptChatModel(PLAN_JSON, tools -> "no changes applied", List.of("The requested domain change was not applied"));
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        // Budget exhausted with red gates → flagged draft, never silent deletion (plan Sections 1 and 2.6).
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.DRAFT_WITH_WARNINGS);
+        assertThat(job.getWarnings()).isNotEmpty().anySatisfy(warning -> assertThat(warning).contains("QUIZ_CRITIQUE"));
+        assertThat(script.agentRounds()).hasValue(3);
+        assertThat(job.getStepOutputs()).containsKey(VariantJobPhase.REPAIRING);
+        // The draft is kept for the instructor to repair in the editor.
+        assertThat(job.getVariantExerciseId()).isNotNull();
+        assertThat(quizExerciseRepository.findById(job.getVariantExerciseId())).isPresent();
+    }
+
+    // --- Cooperative cancellation (stub item 2) -----------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldHonorCancellationAtThePhaseBoundaryAndDeleteTheClone() throws Exception {
+        AtomicReference<Long> provisionedExerciseId = new AtomicReference<>();
+        // The agent round sets the cancel flag mid-TRANSFORMING (through the same service the DELETE endpoint
+        // uses); the pipeline must honor it at the next phase boundary — before VERIFYING.
+        scriptChatModel(PLAN_JSON, tools -> {
+            VariantJob runningJob = jobService.getJobsOfUser(EDITOR_LOGIN).stream().filter(job -> !job.getPhase().isTerminal()).findFirst().orElseThrow();
+            provisionedExerciseId.set(runningJob.getVariantExerciseId());
+            jobService.requestCancel(runningJob.getJobId(), EDITOR_LOGIN);
+            return "round interrupted by cancellation";
+        }, List.of());
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.CANCELLED);
+        // The provisioned clone was deleted on the same cleanup path as hard failures (plan Section 6).
+        assertThat(job.getVariantExerciseId()).isNull();
+        assertThat(provisionedExerciseId.get()).isNotNull();
+        await().atMost(Duration.ofSeconds(30)).until(() -> quizExerciseRepository.findById(provisionedExerciseId.get()).isEmpty());
+    }
+
+    // --- REST validation + per-user scoping (stub item 6) -------------------------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldRejectInvalidGenerationRequests() throws Exception {
+        // No intent on any dimension.
+        request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
+                new VariantGenerationRequestDTO(null, null, null, standalonePlacement()), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+        // SAME_EXAM_GROUP is only valid for exam exercises.
+        request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
+                domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP, null, null)), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+        // EXISTING_GROUP without a group id.
+        request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
+                domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.EXISTING_GROUP, null, null)), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+
+        // Unsupported exercise type (no text adapters registered).
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
+                course);
+        textExercise = exerciseRepository.save(textExercise);
+        request.postWithResponseBody("/api/hyperion/exercises/" + textExercise.getId() + "/generate-variant", domainChangeRequest(standalonePlacement()), VariantJobStartDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor2", roles = "EDITOR")
+    void shouldHideForeignJobsFromOtherUsers() throws Exception {
+        // A job of editor1, created directly on the job map (no pipeline run needed for scoping checks).
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob foreignJob = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+
+        // Foreign job detail is 404 — indistinguishable from an unknown job so ids cannot be probed.
+        request.get("/api/hyperion/variant-jobs/" + foreignJob.getJobId(), HttpStatus.NOT_FOUND, VariantJobDetailDTO.class);
+        List<VariantJobDTO> jobs = request.getList("/api/hyperion/variant-jobs", HttpStatus.OK, VariantJobDTO.class);
+        assertThat(jobs).noneSatisfy(entry -> assertThat(entry.jobId()).isEqualTo(foreignJob.getJobId()));
+    }
+
+    // --- Placement (stub item 7 + NEW_GROUP) ---------------------------------------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldPlaceVariantIntoNewVariantGroup() throws Exception {
+        scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
+        VariantPlacementDTO placement = new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null,
+                new CreateExerciseVariantGroupDTO("Cargo bay variants", 10.0, null, null, null, null, null, null));
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(placement));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        List<ExerciseVariantGroupDTO> groups = request.getList("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups", HttpStatus.OK,
+                ExerciseVariantGroupDTO.class);
+        assertThat(groups).anySatisfy(group -> {
+            assertThat(group.title()).isEqualTo("Cargo bay variants");
+            assertThat(group.exerciseIds()).contains(job.getVariantExerciseId());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldPlaceExamVariantInTheSourcesExamExerciseGroup() throws Exception {
+        Exam exam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
+        ExamFactory.generateExerciseGroup(true, exam);
+        exam = examRepository.save(exam);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        QuizExercise examQuiz = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
+        examQuiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        examQuiz.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
+        examQuiz = quizExerciseRepository.save(examQuiz);
+        scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of());
+
+        String jobId = startJob(examQuiz.getId(), domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP, null, null)));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        QuizExercise variant = quizExerciseRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(job.getVariantExerciseId()).orElseThrow();
+        assertThat(variant.isExamExercise()).isTrue();
+        assertThat(variant.getExerciseGroup().getId()).isEqualTo(exerciseGroup.getId());
+    }
+
+    // --- Component sanity: DTO mapping (kept close to the pipeline tests) ----------------------------------
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldExposeStepOutputsAndRequestOnTheDetailDTO() {
+        var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
+        VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
+        jobService.recordChangePlan(job.getJobId(), new ChangePlan(PLANNED_TITLE, "statement", List.of("change"), List.of("invariant")));
+        jobService.recordStepOutput(job.getJobId(), VariantJobPhase.PLANNING, new StepOutput("summary", "detail", java.time.Instant.now()));
+
+        VariantJobDetailDTO detail = VariantJobDetailDTO.of(jobService.getJob(job.getJobId(), EDITOR_LOGIN).orElseThrow());
+        assertThat(detail.job().variantExerciseTitle()).isEqualTo(PLANNED_TITLE);
+        assertThat(detail.request().placement().type()).isEqualTo(VariantPlacementDTO.PlacementType.STANDALONE);
+        assertThat(detail.stepOutputs()).containsEntry(VariantJobPhase.PLANNING, new VariantJobDetailDTO.StepOutputDTO("summary", "detail"));
+        assertThat(Map.copyOf(detail.stepOutputs())).hasSize(1);
+    }
 }

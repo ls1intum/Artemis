@@ -92,7 +92,8 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         }
         context.append("\nQuestions (JSON, editor format):\n");
         try {
-            context.append(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(quiz.getQuizQuestions()));
+            // Declared-type serialization keeps the "type" discriminator (see QuizVariantTools.serializeQuestions).
+            context.append(QuizVariantTools.serializeQuestions(objectMapper, quiz.getQuizQuestions()));
         }
         catch (Exception e) {
             throw new IllegalStateException("Could not serialize the quiz questions of exercise " + source.getId(), e);

@@ -15,6 +15,8 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -97,7 +99,7 @@ class QuizVariantTools implements VariantToolset {
         }
         try {
             QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
-            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(quiz.getQuizQuestions());
+            return serializeQuestions(objectMapper, quiz.getQuizQuestions());
         }
         catch (Exception e) {
             return "Error: could not read the quiz questions: " + e.getMessage();
@@ -196,6 +198,16 @@ class QuizVariantTools implements VariantToolset {
     public String finish(@ToolParam(description = "a short summary of the changes made in this round") String summary) {
         this.finishSummary = summary;
         return "Summary recorded. You are done with this round.";
+    }
+
+    /**
+     * Serializes questions with the DECLARED {@code List<QuizQuestion>} type: {@code writeValueAsString}'s
+     * erased runtime type makes Jackson skip the {@code @JsonTypeInfo} discriminator, so the emitted JSON
+     * would lack exactly the {@code "type"} field {@link #updateQuestion} requires the model to echo back.
+     */
+    static String serializeQuestions(ObjectMapper objectMapper, List<QuizQuestion> questions) throws JsonProcessingException {
+        return objectMapper.writerWithDefaultPrettyPrinter().forType(new TypeReference<List<QuizQuestion>>() {
+        }).writeValueAsString(questions);
     }
 
     /**
