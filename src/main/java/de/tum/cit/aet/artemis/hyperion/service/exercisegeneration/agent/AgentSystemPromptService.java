@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class AgentSystemPromptService {
 
     private final SandboxBuildCommandService sandboxBuildCommandService;

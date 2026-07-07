@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class SpecFidelityCriticService {
 
     private static final Logger log = LoggerFactory.getLogger(SpecFidelityCriticService.class);

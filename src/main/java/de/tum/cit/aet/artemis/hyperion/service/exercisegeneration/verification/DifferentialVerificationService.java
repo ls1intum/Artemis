@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
  */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class DifferentialVerificationService {
 
     private static final Logger log = LoggerFactory.getLogger(DifferentialVerificationService.class);

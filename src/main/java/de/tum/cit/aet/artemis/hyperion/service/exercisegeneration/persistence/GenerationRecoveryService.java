@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ReviewThreadSyncDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationRecoveryService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationRecoveryService.class);

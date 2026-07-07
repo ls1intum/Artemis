@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
  */
 @Lazy
 @Service
-@Conditional(HyperionEnabled.class)
+@Conditional(HyperionExerciseGenerationEnabled.class)
 public class SandboxBuildCommandService {
 
     private static final Logger log = LoggerFactory.getLogger(SandboxBuildCommandService.class);
