@@ -962,8 +962,8 @@ public class ExamResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
-        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
-            throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
+        if (examRegistrationService.isStaffMemberOfCourse(course, student)) {
+            throw new AccessForbiddenAlertException("You cannot register course staff or administrators to exams.", ENTITY_NAME, "cannotRegisterStaff");
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
