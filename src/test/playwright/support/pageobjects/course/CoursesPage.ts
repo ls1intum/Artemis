@@ -21,7 +21,10 @@ export class CoursesPage {
         // then hang until the whole (multi-minute) test budget is exhausted — which is exactly how the
         // team git-submission test timed out. Bound the wait and fall back to an explicit navigation so
         // the test recovers instead of stalling. Mirrors CourseManagementPage.openCourse.
-        const expectedUrl = /\/courses\/\d+\/exercises/;
+        // Scope the match to the course we actually clicked. A broad /\/courses\/\d+\/exercises/ would
+        // also "settle" if a stale/wrong-card click under load landed on a different course's exercises
+        // page, silently continuing on the wrong course instead of triggering the goto fallback.
+        const expectedUrl = new RegExp(`/courses/${courseId}/exercises`);
         const settled = await this.page
             .waitForURL(expectedUrl, { timeout: 15000 })
             .then(() => true)
