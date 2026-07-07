@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,8 +67,32 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
+    /**
+     * Wall-clock of the last operation driven against each live session, keyed by container id. {@link InteractiveSandboxReaperService} reads this to tell a long-but-healthy
+     * session apart from a genuine orphan: Docker labels are immutable once a container is created, so a daemon-side "last activity" stamp is impossible, and this in-JVM registry
+     * is the cheapest lock-free equivalent. Every session on this agent is driven through this bean (directly when co-located, via {@link InteractiveSandboxRelayHandler}
+     * otherwise), so the registry sees all activity. A container absent from the map — e.g. one left behind by a previous agent process — has no known activity, and the reaper
+     * falls back to its creation time so genuine orphans are still collected.
+     */
+    private final Map<String, Instant> lastActivityByContainerId = new ConcurrentHashMap<>();
+
     public InteractiveSandboxService(BuildAgentConfiguration buildAgentConfiguration) {
         this.buildAgentConfiguration = buildAgentConfiguration;
+    }
+
+    /** Stamps the given session as active now, so the reaper does not mistake a long-running healthy session for an orphan. */
+    void markActive(String containerId) {
+        lastActivityByContainerId.put(containerId, Instant.now());
+    }
+
+    /** The wall-clock of the last recorded activity for the given container, or empty if this process never drove it (the reaper then falls back to creation time). */
+    Optional<Instant> lastActivity(String containerId) {
+        return Optional.ofNullable(lastActivityByContainerId.get(containerId));
+    }
+
+    /** Drops the activity entry for a session that has been (or is about to be) removed, bounding the registry to sessions still alive on this agent. */
+    void forgetActivity(String containerId) {
+        lastActivityByContainerId.remove(containerId);
     }
 
     @Override
@@ -86,6 +114,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
                 startCommand.exec();
             }
+            markActive(containerId);
             log.info("Started interactive sandbox session {} (container {})", containerName, containerId);
             return containerId;
         }
@@ -108,6 +137,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     @Override
     public SandboxExecResult exec(String sessionId, Duration timeout, String... command) {
+        markActive(sessionId);
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var execCreateCommand = dockerClient.execCreateCmd(sessionId).withAttachStdout(true).withAttachStderr(true).withCmd(command)) {
             ExecCreateCmdResponse execCreateResponse = execCreateCommand.exec();
@@ -178,6 +208,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 return new SandboxExecResult(exitCode, truncateTail(stdout.toString()), truncateTail(stderr.toString()), false);
             }
             finally {
+                // Re-stamp on completion so a single long op (e.g. a ~10-min verify build) refreshes activity at its end, not only its start, keeping the reaper's idle window
+                // measured from when work actually stopped.
+                markActive(sessionId);
                 // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.
                 closeQuietly(callback);
             }
@@ -186,6 +219,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     @Override
     public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
+        markActive(sessionId);
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var copyCommand = dockerClient.copyArchiveToContainerCmd(sessionId).withTarInputStream(tarArchive).withRemotePath(destinationPath)) {
             copyCommand.exec();
@@ -194,6 +228,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     @Override
     public TarArchiveInputStream copyOut(String sessionId, String path) {
+        markActive(sessionId);
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var copyCommand = dockerClient.copyArchiveFromContainerCmd(sessionId, path)) {
             InputStream archiveStream = copyCommand.exec();
@@ -209,6 +244,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     @Override
     public void destroySession(String sessionId) {
+        forgetActivity(sessionId);
         if (!buildAgentConfiguration.isDockerAvailable()) {
             return;
         }

@@ -93,7 +93,7 @@ public class GenerationPersistenceService {
                 exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService, TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
     }
 
-    // Package-private so tests can inject a shrunken sync wait and exercise the baseline-settle logic without sleeping for seconds.
+    // Package-private so tests can inject a shrunken sync wait and exercise the settle logic without sleeping for seconds.
     GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingExerciseCreationUpdateService creationUpdateService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
@@ -124,6 +124,9 @@ public class GenerationPersistenceService {
     private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
+
+    /** Consecutive equal test-case-count polls that mark the asynchronous re-sync as settled (one confirming re-read after a stable read). */
+    private static final int REQUIRED_SETTLE_POLLS = 2;
 
     /**
      * The result of persisting a non-accepted recovery draft.
@@ -316,10 +319,8 @@ public class GenerationPersistenceService {
      */
     private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash) {
         if (testsCommitHash != null) {
-            // Snapshot the count BEFORE triggering so zeroWeightBuildGateTestCases can wait past a stale/partial set for the complete sync.
-            int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
             triggerTestsBuild(exercise, testsCommitHash);
-            zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
+            zeroWeightBuildGateTestCases(exercise.getId());
         }
         try {
             exerciseVersionService.createExerciseVersion(exercise, user);
@@ -485,23 +486,14 @@ public class GenerationPersistenceService {
     /**
      * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them
      * ({@link BuildGateTestNames}) but production grades every case, so without this a student submitting the untouched template would score above 0%. Waits (bounded) for the
-     * complete set, then zero-weights the build gates to match the oracle. Best-effort, idempotent, a no-op for languages without build-gate cases.
+     * freshly triggered tests-build to finish re-syncing, then zero-weights the build gates to match the oracle. Best-effort, idempotent, a no-op for languages without build-gate
+     * cases.
      *
-     * @param exerciseId               the generated exercise whose build-gate test cases should be excluded from grading
-     * @param testCaseCountBeforeBuild the test-case count observed before the tests-build was triggered (the stale/partial baseline to wait past)
+     * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
      */
-    private void zeroWeightBuildGateTestCases(long exerciseId, int testCaseCountBeforeBuild) {
+    private void zeroWeightBuildGateTestCases(long exerciseId) {
         try {
-            long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
-            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exerciseId);
-            // Wait for the complete re-sync: the count must move off the pre-build baseline (setup may have left a partial set) AND then settle, so a gate that appears only in the
-            // full sync is not missed.
-            int previousCount = -1;
-            while (System.nanoTime() < deadline && (testCases.size() == testCaseCountBeforeBuild || testCases.size() != previousCount)) {
-                previousCount = testCases.size();
-                Thread.sleep(testCaseSyncPoll.toMillis());
-                testCases = testCaseRepository.findByExerciseId(exerciseId);
-            }
+            Set<ProgrammingExerciseTestCase> testCases = awaitSettledTestCaseSet(exerciseId);
             List<ProgrammingExerciseTestCase> buildGates = testCases.stream()
                     .filter(testCase -> BuildGateTestNames.isBuildGate(testCase.getTestName()) && testCase.getWeight() != null && testCase.getWeight() != 0.0).toList();
             if (buildGates.isEmpty()) {
@@ -518,6 +510,36 @@ public class GenerationPersistenceService {
         catch (RuntimeException e) {
             log.warn("Could not adjust build-gate test-case grading for generated exercise {} (a C/C++ template may grade >0% until reconfigured): {}", exerciseId, e.getMessage());
         }
+    }
+
+    /**
+     * Waits (bounded by {@link #testCaseSyncTimeout}) for the tests-build triggered by {@link #triggerTestsBuild} to finish re-syncing the exercise's test cases, returning the
+     * settled set. The build syncs cases asynchronously, so the sync is treated as complete once the case count is observed unchanged across {@link #REQUIRED_SETTLE_POLLS}
+     * consecutive polls. Keying on settle rather than on a delta from the pre-build count is deliberate: a re-sync that lands on the same number of cases — common for an adapt or
+     * revert that keeps the same tests — settles at the pre-build count, which a delta-keyed wait would mistake for "not synced yet" and spin the full timeout on the persist
+     * thread
+     * while the user waits.
+     *
+     * @param exerciseId the exercise whose test-case set to await
+     * @return the test-case set once its count has settled, or the last set read when the timeout was reached first
+     */
+    private Set<ProgrammingExerciseTestCase> awaitSettledTestCaseSet(long exerciseId) throws InterruptedException {
+        long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exerciseId);
+        int previousCount = testCases.size();
+        int stableObservations = 1;
+        while (System.nanoTime() < deadline && stableObservations < REQUIRED_SETTLE_POLLS) {
+            Thread.sleep(testCaseSyncPoll.toMillis());
+            testCases = testCaseRepository.findByExerciseId(exerciseId);
+            if (testCases.size() == previousCount) {
+                stableObservations++;
+            }
+            else {
+                previousCount = testCases.size();
+                stableObservations = 1;
+            }
+        }
+        return testCases;
     }
 
     /**

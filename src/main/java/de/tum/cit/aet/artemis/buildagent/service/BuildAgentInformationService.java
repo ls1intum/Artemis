@@ -152,6 +152,19 @@ public class BuildAgentInformationService {
     }
 
     /**
+     * Re-publishes this agent's information after a change that is unrelated to build-job outcomes (currently: an interactive-sandbox generation session was created or destroyed,
+     * which moves the session count) without disturbing the consecutive-failure bookkeeping. The failure count and the self-paused-due-to-failures status are read back from the
+     * currently stored info and preserved, because {@link #updateLocalBuildAgentInformation(boolean)} passes {@code consecutiveFailures = 0} and would otherwise reset the
+     * displayed
+     * count to zero on every session create/destroy, hiding a genuinely failing agent.
+     *
+     * @param isPaused whether the build agent is currently paused (the live pause state from the queue processor)
+     */
+    public void refreshLocalBuildAgentInformationPreservingFailures(boolean isPaused) {
+        updateLocalBuildAgentInformationWithRecentJob(null, isPaused, false, DEFAULT_CONSECUTIVE_FAILURES, true);
+    }
+
+    /**
      * Updates the local build agent information with the most recent build job.
      * Uses the build agent's short name as the map key for stable identification,
      * since the Hazelcast member address may change after initial client connection.
@@ -162,6 +175,16 @@ public class BuildAgentInformationService {
      * @param consecutiveFailures   number of consecutive build failures on the build agent
      */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+        updateLocalBuildAgentInformationWithRecentJob(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures, false);
+    }
+
+    /**
+     * @param preserveConsecutiveFailures when {@code true}, the {@code isPausedDueToFailures} / {@code consecutiveFailures} arguments are ignored and the values already stored for
+     *                                        this agent are re-published instead, so a refresh triggered by an unrelated change (e.g. a generation-session count change) does not
+     *                                        clobber the failure bookkeeping owned by the build-job path.
+     */
+    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveConsecutiveFailures) {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
             log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
@@ -181,7 +204,8 @@ public class BuildAgentInformationService {
             distributedDataAccessService.getDistributedBuildAgentInformation().lock(agentKey);
             try {
                 // Add/update
-                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+                BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures,
+                        preserveConsecutiveFailures);
 
                 log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
                         info.buildAgent().memberAddress(), info.buildAgent().displayName());
@@ -204,7 +228,8 @@ public class BuildAgentInformationService {
         }
     }
 
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
+    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
+            boolean preserveConsecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
         // use ephemeral ports that can change, causing memberAddress filtering to fail
@@ -216,9 +241,14 @@ public class BuildAgentInformationService {
         BuildAgentStatus status;
         // Use buildAgentShortName as key since that's what we use to store the agent info
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
+        // Read the failure bookkeeping (from within the map lock held by the caller) when a refresh must not clobber it, so a session create/destroy leaves the count untouched.
+        boolean effectivePausedDueToFailures = preserveConsecutiveFailures ? (agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED) : isPausedDueToFailures;
+        int effectiveConsecutiveFailures = preserveConsecutiveFailures
+                ? (agent != null && agent.buildAgentDetails() != null ? agent.buildAgentDetails().consecutiveBuildFailures() : 0)
+                : consecutiveFailures;
         if (isPaused) {
             boolean isAlreadySelfPaused = agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED;
-            status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
+            status = (effectivePausedDueToFailures || isAlreadySelfPaused) ? BuildAgentStatus.SELF_PAUSED : BuildAgentStatus.PAUSED;
         }
         else {
             status = hasJobs ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
@@ -227,7 +257,7 @@ public class BuildAgentInformationService {
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
+        BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, effectiveConsecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,

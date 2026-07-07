@@ -60,6 +60,8 @@ public class DistributedDataAccessService {
 
     private DistributedTopic<SandboxOpResponse> hyperionSandboxResponsesTopic;
 
+    private DistributedMap<String, byte[]> hyperionSandboxPayloads;
+
     public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
         this.distributedDataProvider = distributedDataProvider.orElseThrow(
                 () -> new IllegalStateException("DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile"));
@@ -346,6 +348,23 @@ public class DistributedDataAccessService {
             this.hyperionSandboxResponsesTopic = this.distributedDataProvider.getTopic("hyperion-sandbox-responses");
         }
         return this.hyperionSandboxResponsesTopic;
+    }
+
+    /**
+     * Keyed staging area for the large tar payloads of interactive-sandbox {@code COPY_IN} / {@code COPY_OUT} operations, keyed by the operation's correlation id. The bytes are
+     * kept off the broadcast request/response topics on purpose: a topic message is delivered to and deserialized by every subscribed member, so routing a 32&nbsp;MB blob through
+     * a
+     * topic would fan it out N&times; on the distributed event threads. Staging it here instead means only the one node that owns the correlation id ever fetches the payload — the
+     * sender writes the entry, the single recipient reads and removes it, and the sender defensively removes it again if the recipient never consumed it (dropped duplicate, dead
+     * agent, timeout). The map is initialized lazily the first time this method is called if it is still null.
+     *
+     * @return the distributed map staging interactive-sandbox copy payloads by correlation id
+     */
+    public DistributedMap<String, byte[]> getHyperionSandboxPayloads() {
+        if (this.hyperionSandboxPayloads == null) {
+            this.hyperionSandboxPayloads = this.distributedDataProvider.getMap("hyperion-sandbox-payloads");
+        }
+        return this.hyperionSandboxPayloads;
     }
 
     /**

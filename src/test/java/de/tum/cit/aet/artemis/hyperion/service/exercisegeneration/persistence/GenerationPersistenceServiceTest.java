@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -17,9 +18,11 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,13 +97,12 @@ class GenerationPersistenceServiceTest {
         exerciseVersionService = mock(ExerciseVersionService.class);
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         programmingExerciseRepositoryService = mock(ProgrammingExerciseRepositoryService.class);
-        // The build-gate adjustment waits for the freshly triggered tests-build to re-sync the COMPLETE set: it captures a pre-build baseline and waits for the count to move off
-        // it
-        // and settle. Return empty first (baseline) then a single non-build-gate case, so the wait settles at once and zero-weights nothing in these generic tests.
+        // The build-gate adjustment waits for the freshly triggered tests-build to re-sync the test cases, treating the sync as done once the case count settles across consecutive
+        // polls. Return empty first then a single non-build-gate case, so the count settles quickly and zero-weights nothing in these generic tests.
         ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(), Set.of(behaviourCase));
-        // Inject a shrunken test-case-sync wait so the baseline-settle logic runs without sleeping for seconds.
+        // Inject a shrunken test-case-sync wait so the settle logic runs without sleeping for seconds.
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
                 creationUpdateService, exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService, Duration.ofSeconds(2), Duration.ofMillis(5));
 
@@ -191,7 +193,7 @@ class GenerationPersistenceServiceTest {
         // report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
-        // Empty baseline, then the full synced set: the wait must move off the baseline and settle before zero-weighting, mirroring the real stale-partial-then-complete sync.
+        // Empty first, then the full synced set: the wait settles once the count stops changing before zero-weighting, mirroring the real stale-then-complete sync.
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(buildGate, behaviour));
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
@@ -214,7 +216,8 @@ class GenerationPersistenceServiceTest {
         ProgrammingExerciseTestCase compileSort = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
         // The real failure mode: an exercise-setup build leaves a STALE PARTIAL set ({configure}); the freshly triggered tests-build then syncs the
-        // COMPLETE set a few polls later. Acting on the partial set would MISS CompileSort. Baseline {} -> partial {configure} -> complete {configure, compileSort, behaviour}.
+        // COMPLETE set a few polls later. Acting on the partial set would MISS CompileSort. Empty {} -> partial {configure} -> complete {configure, compileSort, behaviour}
+        // (settles).
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(configure), Set.of(configure, compileSort, behaviour));
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
@@ -225,6 +228,66 @@ class GenerationPersistenceServiceTest {
         assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
         assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
+    }
+
+    @Test
+    void persist_reSyncedCountEqualsPreBuildCount_settlesAndReturnsPromptly_insteadOfSpinningTheFullTimeout() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        // A LARGE sync timeout with a tiny poll: the earlier delta-keyed wait ("loop while size == the pre-build count") never terminated early whenever the re-synced count
+        // equalled the pre-build count — the common adapt/revert case that keeps the same number of tests — so it spun the whole timeout on the persist thread while the user saw
+        // "saving". The settle-keyed wait must instead return as soon as the count is observed stable.
+        GenerationPersistenceService promptService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
+                continuousIntegrationTriggerService, programmingSubmissionService, creationUpdateService, exerciseVersionService, testCaseRepository,
+                programmingExerciseRepositoryService, Duration.ofSeconds(10), Duration.ofMillis(5));
+
+        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
+        // The count is stable from the first read and never moves off it: the re-sync produced the same number of cases the pre-build set had.
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
+
+        long startNanos = System.nanoTime();
+        promptService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+
+        // It still settled on the same-count set and zero-weighted the gate (parity with the oracle is preserved)...
+        assertThat(buildGate.getWeight()).as("build gate zero-weighted even though the count never moved off the pre-build value").isEqualTo(0.0);
+        // ...and returned in a couple of settle polls rather than spinning the full 10s timeout (a stalling delta-keyed wait would poll ~2000 times / take ~10s).
+        assertThat(elapsed).as("did not spin the full sync timeout on a same-count re-sync").isLessThan(Duration.ofSeconds(2));
+        verify(testCaseRepository, atMost(4)).findByExerciseId(1L);
+    }
+
+    @Test
+    void persist_countNeverSettles_respectsTheDeadline_ratherThanHangingOrExitingEarly() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+
+        Duration timeout = Duration.ofMillis(80);
+        GenerationPersistenceService boundedService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
+                continuousIntegrationTriggerService, programmingSubmissionService, creationUpdateService, exerciseVersionService, testCaseRepository,
+                programmingExerciseRepositoryService, timeout, Duration.ofMillis(5));
+
+        // A pathological re-sync whose count keeps growing and never stabilises: the settle wait must fall back to the bounded deadline rather than looping forever or acting on
+        // the
+        // first still-changing read.
+        AtomicInteger polls = new AtomicInteger();
+        when(testCaseRepository.findByExerciseId(1L)).thenAnswer(invocation -> {
+            int size = polls.incrementAndGet();
+            Set<ProgrammingExerciseTestCase> growing = new HashSet<>();
+            for (int i = 0; i < size; i++) {
+                growing.add(new ProgrammingExerciseTestCase().testName("behaviour-" + i).weight(1.0));
+            }
+            return growing;
+        });
+
+        long startNanos = System.nanoTime();
+        boundedService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+
+        // It terminated (never hangs) and only after honouring the deadline — it kept polling rather than exiting early on a set that was still changing.
+        assertThat(elapsed).as("terminated at the bounded deadline, did not hang").isLessThan(Duration.ofSeconds(5));
+        assertThat(polls.get()).as("kept polling until the deadline rather than exiting on the first unsettled read").isGreaterThan(1);
     }
 
     @Test

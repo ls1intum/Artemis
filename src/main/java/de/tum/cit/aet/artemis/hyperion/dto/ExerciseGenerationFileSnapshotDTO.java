@@ -66,8 +66,11 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
     public static ExerciseGenerationFileSnapshotDTO of(String path, String action, String fullContent, int turn) {
         byte[] fullBytes = fullContent.getBytes(StandardCharsets.UTF_8);
         boolean truncated = fullBytes.length > MAX_CONTENT_BYTES;
-        // Truncate on a UTF-8 byte boundary via a fresh decode of the head bytes so the streamed content never contains a broken trailing multi-byte sequence.
-        String content = truncated ? new String(fullBytes, 0, MAX_CONTENT_BYTES, StandardCharsets.UTF_8) : fullContent;
+        // Cut on a UTF-8 CODE-POINT boundary at or below the byte cap. Slicing at a fixed byte offset can split a multi-byte code point; decoding that head with the default
+        // REPLACE
+        // action would substitute a 3-byte U+FFFD for the 1-2 lost bytes, pushing the re-encoded content BACK OVER the byte cap and injecting a character absent from the original.
+        // Backing off to the last complete code point keeps the streamed content a valid, faithful prefix strictly within MAX_CONTENT_BYTES.
+        String content = truncated ? new String(fullBytes, 0, codePointBoundaryAtOrBelow(fullBytes, MAX_CONTENT_BYTES), StandardCharsets.UTF_8) : fullContent;
         return new ExerciseGenerationFileSnapshotDTO(TYPE, path, repositoryBucket(path), action, content, sha256Hex(fullBytes), fullBytes.length, truncated, turn, Instant.now());
     }
 
@@ -88,6 +91,22 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
             return "tests";
         }
         return "other";
+    }
+
+    /**
+     * The largest offset {@code <= cap} that lands on a UTF-8 code-point boundary in {@code bytes}. Walks back over any trailing continuation bytes ({@code 10xxxxxx}) so the head
+     * {@code bytes[0, offset)} is always a complete, self-contained UTF-8 prefix (a code point is at most four bytes, so this backs off at most three).
+     *
+     * @param bytes the full UTF-8 content
+     * @param cap   the byte cap (assumed {@code < bytes.length}; the caller only truncates when the content exceeds the cap)
+     * @return the code-point-aligned offset at or below {@code cap}
+     */
+    private static int codePointBoundaryAtOrBelow(byte[] bytes, int cap) {
+        int offset = cap;
+        while (offset > 0 && (bytes[offset] & 0xC0) == 0x80) {
+            offset--;
+        }
+        return offset;
     }
 
     private static String sha256Hex(byte[] bytes) {

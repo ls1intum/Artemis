@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -48,15 +50,61 @@ public final class BinaryContent {
             }
         }
         // A strict UTF-8 decode of the leading window: a malformed/unmappable sequence throws, which marks the content binary. We decode only the window (not the whole file) so a
-        // large text file is cheap to classify; a multi-byte sequence straddling the window boundary is the only edge, and a NUL-free, otherwise-UTF-8 file is text regardless.
+        // large text file is cheap to classify. When the window is full the file continues past it, so a multi-byte code point can straddle the SNIFF_LIMIT boundary and leave a
+        // TRUNCATED (not malformed) trailing sequence; decoding that as final input would falsely REPORT it as malformed and drop a genuine text file. Trim any such truncated tail
+        // to the last complete code-point boundary before the strict decode so only a genuinely-invalid sequence marks the content binary.
+        int decodeLength = completeCodePointLength(bytes, limit);
         var decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
         try {
-            decoder.decode(java.nio.ByteBuffer.wrap(bytes, 0, limit));
+            decoder.decode(ByteBuffer.wrap(bytes, 0, decodeLength));
             return false;
         }
-        catch (java.nio.charset.CharacterCodingException e) {
+        catch (CharacterCodingException e) {
             return true;
         }
+    }
+
+    /**
+     * The length of the leading window to decode strictly, backing off a multi-byte UTF-8 sequence truncated by the window boundary. Only relevant when the window is FULL
+     * ({@code limit == SNIFF_LIMIT}) because then the file continues past it and the final bytes may be an incomplete-but-valid code point; a partial window from a small whole
+     * file
+     * is decoded as-is so genuine trailing garbage is still caught. At most three trailing continuation bytes are walked back (a UTF-8 sequence is 4 bytes); a run of continuation
+     * bytes with no lead, or an already-complete sequence, is left in place for the strict decoder to judge.
+     */
+    private static int completeCodePointLength(byte[] bytes, int limit) {
+        if (limit < SNIFF_LIMIT) {
+            return limit;
+        }
+        int i = limit - 1;
+        int walked = 0;
+        while (i >= 0 && (bytes[i] & 0xC0) == 0x80 && walked < 3) {
+            i--;
+            walked++;
+        }
+        if (i < 0) {
+            return limit;
+        }
+        int lead = bytes[i] & 0xFF;
+        int expected;
+        if (lead < 0x80) {
+            expected = 1;
+        }
+        else if ((lead & 0xE0) == 0xC0) {
+            expected = 2;
+        }
+        else if ((lead & 0xF0) == 0xE0) {
+            expected = 3;
+        }
+        else if ((lead & 0xF8) == 0xF0) {
+            expected = 4;
+        }
+        else {
+            // Not a valid lead byte (e.g. a stray continuation run) — let the strict decode judge the full window rather than hiding a real defect.
+            return limit;
+        }
+        int have = limit - i;
+        // Only a genuinely truncated tail is trimmed; a complete (or over-long) sequence stays so the strict decode validates it.
+        return have < expected ? i : limit;
     }
 
     /**

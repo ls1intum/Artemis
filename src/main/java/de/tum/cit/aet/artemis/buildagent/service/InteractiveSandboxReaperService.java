@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -25,9 +26,13 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 /**
  * Reaps orphaned interactive sandbox containers, i.e. those named with the {@link InteractiveSandboxService#SANDBOX_CONTAINER_PREFIX} prefix.
  * <p>
- * This is a dedicated counterpart to the CI build-container cleanup in {@link BuildAgentDockerService#cleanUpContainers()}: a sandbox session legitimately runs for several minutes
- * (far longer than a CI build), so it needs its own, longer expiry threshold, and the CI reaper's prefix never matches a sandbox container. A container is only removed once it is
- * older than the configured threshold, so a session in progress is never reaped. On agent restart the first sweep removes any sandbox container left behind by a previous process.
+ * This is a dedicated counterpart to the CI build-container cleanup in {@link BuildAgentDockerService#cleanUpContainers()}: a sandbox session legitimately runs for a long time
+ * (far longer than a CI build), so it needs its own, longer threshold, and the CI reaper's prefix never matches a sandbox container.
+ * <p>
+ * Reaping is by <em>inactivity</em>, not age: an agentic session can accumulate more than an hour of healthy wall-clock (many turns, each up to a multi-minute build or verify),
+ * which age-based reaping would kill mid-run and break the next {@code exec}. {@link InteractiveSandboxService} refreshes a per-container last-activity stamp on every operation
+ * (create, exec, copy), and a container is removed only once it has been idle past the threshold. A container with no known activity — one left behind by a previous agent
+ * process — falls back to its creation time, so genuine orphans are still collected on the first sweep after an agent restart.
  *
  * @see BuildAgentDockerService#cleanUpContainers()
  * @see InteractiveSandboxService
@@ -41,11 +46,13 @@ public class InteractiveSandboxReaperService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
+    private final InteractiveSandboxService interactiveSandboxService;
+
     private final TaskScheduler taskScheduler;
 
     /**
-     * Sandbox containers older than this (by creation time) are considered orphaned. The threshold must exceed the maximum wall-clock of a live session (the agent turns plus the
-     * two verification builds) so an in-progress session is never reaped.
+     * A sandbox container idle (no operation) for longer than this is considered orphaned. The threshold need only exceed the longest single operation an agent can drive (a
+     * multi-minute build or verify), not the whole session wall-clock, because any activity refreshes the stamp — so a healthy but hours-long session is never reaped.
      */
     @Value("${artemis.continuous-integration.build-agent.generation-container-expiry-minutes:90}")
     private int sandboxContainerExpiryMinutes;
@@ -53,8 +60,10 @@ public class InteractiveSandboxReaperService {
     @Value("${artemis.continuous-integration.build-agent.generation-cleanup-schedule-minutes:15}")
     private int sandboxCleanupScheduleMinutes;
 
-    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, @Lazy InteractiveSandboxService interactiveSandboxService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
+        this.interactiveSandboxService = interactiveSandboxService;
         this.taskScheduler = taskScheduler;
     }
 
@@ -66,7 +75,7 @@ public class InteractiveSandboxReaperService {
     }
 
     /**
-     * Removes sandbox containers older than the configured expiry threshold; younger ones may belong to a session still in progress and are left untouched.
+     * Removes sandbox containers idle longer than the configured threshold; recently-active ones belong to a session still in progress and are left untouched.
      */
     public void reapOrphanedSessions() {
         if (!buildAgentConfiguration.isDockerAvailable()) {
@@ -76,14 +85,14 @@ public class InteractiveSandboxReaperService {
 
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         long now = Instant.now().getEpochSecond();
-        long ageThreshold = sandboxContainerExpiryMinutes * 60L;
+        long idleThreshold = sandboxContainerExpiryMinutes * 60L;
 
         List<Container> orphanedSandboxContainers;
         try {
             orphanedSandboxContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
                     .filter(container -> container.getNames() != null && container.getNames().length > 0
                             && container.getNames()[0].startsWith("/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX))
-                    .filter(container -> (now - container.getCreated()) > ageThreshold).toList();
+                    .filter(container -> (now - lastActivityEpochSecond(container)) > idleThreshold).toList();
         }
         catch (Exception ex) {
             if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -101,10 +110,20 @@ public class InteractiveSandboxReaperService {
         for (Container container : orphanedSandboxContainers) {
             try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
                 removeCommand.exec();
+                interactiveSandboxService.forgetActivity(container.getId());
             }
             catch (Exception ex) {
                 log.warn("Failed to reap orphaned interactive sandbox container {}: {}", container.getId(), ex.getMessage());
             }
         }
+    }
+
+    /**
+     * The epoch-second of a container's last recorded activity, falling back to its creation time when this process has no activity record for it (e.g. a container left behind
+     * by a previous agent process). Reading the lock-free registry keeps the sweep cheap.
+     */
+    private long lastActivityEpochSecond(Container container) {
+        Optional<Instant> lastActivity = interactiveSandboxService.lastActivity(container.getId());
+        return lastActivity.map(Instant::getEpochSecond).orElseGet(container::getCreated);
     }
 }

@@ -30,7 +30,26 @@ public final class WorkspaceArchive {
 
     private static final int MODE_EXECUTABLE = 0755;
 
+    /** Per-file cap on read-back. Any single produced source file above this is pathological; 32 MiB matches {@link CollectedReports} and covers any legitimate source file. */
+    static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
+
+    /**
+     * Whole-archive cap on read-back, so a flood of files (each under the per-file cap) still cannot exhaust node memory when the whole copyOut tar is materialised into Strings.
+     */
+    static final long MAX_TOTAL_BYTES = 128L * 1024 * 1024;
+
     private WorkspaceArchive() {
+    }
+
+    /**
+     * Signals that a {@code copyOut} workspace archive contained an entry (or a total) exceeding the read-back byte caps. The caller treats this as a failed read-back and fails
+     * closed rather than materialising an unbounded String — a compromised or runaway agent writing a multi-GB file must not OOM the node.
+     */
+    public static final class OversizedWorkspaceEntryException extends RuntimeException {
+
+        OversizedWorkspaceEntryException(String message) {
+            super(message);
+        }
     }
 
     /**
@@ -108,6 +127,7 @@ public final class WorkspaceArchive {
         Map<String, String> result = new LinkedHashMap<>();
         TarArchiveEntry entry;
         String normalizedPrefix = prefixToStrip.isEmpty() || prefixToStrip.endsWith("/") ? prefixToStrip : prefixToStrip + "/";
+        long total = 0;
         while ((entry = tar.getNextEntry()) != null) {
             if (entry.isDirectory()) {
                 continue;
@@ -122,7 +142,20 @@ public final class WorkspaceArchive {
             if (name.isEmpty() || name.contains(".git/")) {
                 continue;
             }
+            // The copyOut tar is agent-controlled: bound reads by the header-declared size BEFORE materialising the body so a multi-GB entry is refused, not read into memory and
+            // OOM'd. The declared size can understate a hostile body, so re-check the actual byte count after reading and cap the running total across entries as well.
+            long declaredSize = entry.getSize();
+            if (declaredSize > MAX_FILE_BYTES) {
+                throw new OversizedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + entry.getName());
+            }
             byte[] bytes = tar.readAllBytes();
+            if (bytes.length > MAX_FILE_BYTES) {
+                throw new OversizedWorkspaceEntryException("Refusing an oversized workspace entry (" + bytes.length + " bytes): " + entry.getName());
+            }
+            total += bytes.length;
+            if (total > MAX_TOTAL_BYTES) {
+                throw new OversizedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
+            }
             // A binary file cannot be represented losslessly as a String; drop it so persist preserves the scaffolded original byte-exact instead of writing a mangled re-encode.
             if (BinaryContent.isBinary(bytes)) {
                 continue;

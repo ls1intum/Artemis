@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalTopic;
 
 /**
@@ -69,20 +71,26 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private LocalTopic<SandboxOpRequest> requestsTopic;
 
+    private DistributedDataAccessService clientAccess;
+
     @BeforeEach
     void setUp() {
-        // One shared request topic and one shared response topic stand in for the cluster-wide distributed topics; LocalTopic delivers synchronously in-JVM.
+        // One shared request topic and one shared response topic stand in for the cluster-wide distributed topics; LocalTopic delivers synchronously in-JVM. The keyed payload map
+        // is shared the same way: the sender stages the bytes under the correlation id and the single recipient removes them (copy-in: client→agent, copy-out: agent→client).
         requestsTopic = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responsesTopic = new LocalTopic<>();
+        LocalMap<String, byte[]> payloads = new LocalMap<>();
 
-        DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
+        clientAccess = mock(DistributedDataAccessService.class);
         when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
         when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
+        when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
         when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent(AGENT_SHORT_NAME, 0, 4)));
 
         DistributedDataAccessService handlerAccess = mock(DistributedDataAccessService.class);
         when(handlerAccess.getHyperionSandboxRequestsTopic()).thenReturn(requestsTopic);
         when(handlerAccess.getHyperionSandboxResponsesTopic()).thenReturn(responsesTopic);
+        when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
 
         localSandbox = mock(InteractiveSandboxService.class);
 
@@ -110,6 +118,32 @@ class InteractiveSandboxRelayRoundTripTest {
 
         // The handle pins the owning agent so every later op routes back to the same agent without any shared lookup state.
         assertThat(handle).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+    }
+
+    @Test
+    void createSession_failsOverToTheNextAgentWhenTheFirstIsUnreachable() {
+        // Two candidate agents, both hosting-enabled and equally idle, but only AGENT_SHORT_NAME has a live handler. The first (listed first, so tried first) never answers and
+        // times
+        // out; the client must fail over to the second and place the session there rather than surfacing the timeout as a failure.
+        ReflectionTestUtils.setField(client, "controlOpTimeout", Duration.ofMillis(300));
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("dead-agent-0", 0, 4), idleAgent(AGENT_SHORT_NAME, 0, 4)));
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+
+        String handle = client.createSession(new SandboxSessionSpec("some-image", null));
+
+        assertThat(handle).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
+    }
+
+    @Test
+    void createSession_throwsWhenNoAgentIsConfiguredToHostSessions() {
+        // Every agent has generation hosting disabled (max sessions 0): none is a candidate, so placement fails fast with an actionable message instead of broadcasting a request
+        // no
+        // agent will ever answer.
+        when(clientAccess.getBuildAgentInformation())
+                .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5701", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpec("some-image", null)))
+                .withMessageContaining("No build agent is configured to host");
     }
 
     @Test
@@ -284,6 +318,57 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
                     .withMessageContaining("session capacity");
         }
+    }
+
+    @Test
+    void createSession_failsOverToTheNextAgent_whenTheFirstDeclinesAtCapacity() {
+        // Two agents both ADVERTISE generation headroom (the info map is momentarily stale), but the first is actually at its permit cap when the CREATE lands. The client must
+        // fail
+        // over to the second agent and succeed there, not surface the first's capacity refusal or hang until the control-op timeout.
+        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalMap<String, byte[]> payloads = new LocalMap<>();
+        DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
+        when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("agent-1", 0, 4), idleAgent("agent-2", 0, 4)));
+        RemoteInteractiveSandboxClient failoverClient = new RemoteInteractiveSandboxClient(clientAccess);
+        failoverClient.registerResponseListener();
+
+        InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
+        // Drain agent-1's single permit so its CREATE handler declines with the capacity marker (as if a concurrent session already holds it).
+        ((Semaphore) ReflectionTestUtils.getField(handler1, "sessionPermits")).acquireUninterruptibly();
+        InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
+        when(sandbox2.createSession(any())).thenReturn("container-2");
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+
+        try {
+            String handle = failoverClient.createSession(new SandboxSessionSpec("some-image", null));
+            assertThat(handle).isEqualTo("agent-2::container-2");
+            verify(sandbox1, never()).createSession(any());
+        }
+        finally {
+            handler1.shutdown();
+            handler2.shutdown();
+            failoverClient.removeResponseListener();
+        }
+    }
+
+    /** A relay handler on caller-provided SHARED in-JVM topics, so a test can run several agents against one topic pair (e.g. to exercise create failover across agents). */
+    private static InteractiveSandboxRelayHandler sharedHandler(String shortName, int maxSessions, LocalTopic<SandboxOpRequest> requests, LocalTopic<SandboxOpResponse> responses,
+            LocalMap<String, byte[]> payloads, InteractiveSandboxService sandbox) {
+        DistributedDataAccessService access = mock(DistributedDataAccessService.class);
+        when(access.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(access.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(access.getHyperionSandboxPayloads()).thenReturn(payloads);
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(sandbox, access, mock(SharedQueueProcessingService.class), new GenerationSessionState(),
+                mock(BuildAgentInformationService.class));
+        ReflectionTestUtils.setField(handler, "buildAgentShortName", shortName);
+        ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxSessions);
+        handler.registerRequestListener();
+        return handler;
     }
 
     /**

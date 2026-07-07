@@ -73,6 +73,41 @@ class ExerciseGenerationDtoTest {
     }
 
     @Test
+    void fileSnapshot_truncatesMultibyteContentOnACodePointBoundaryWithinTheByteCap() {
+        // MAX_CONTENT_BYTES is a BYTE budget. A naive byte-offset cut can split a multi-byte code point; decoding that head with the default REPLACE action would substitute a
+        // 3-byte U+FFFD for the 1-2 lost bytes, pushing the re-encoded content BACK OVER the cap and injecting a character absent from the original. Truncation must land on a
+        // code-point boundary: valid UTF-8, no injected replacement char, and strictly within the byte cap.
+        String head = "a".repeat(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES - 2);
+        String fullContent = head + "😀".repeat(100); // a 4-byte emoji straddles the byte cap (its lead byte sits at MAX_CONTENT_BYTES - 2)
+
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, fullContent, 0);
+
+        assertThat(snapshot.truncated()).isTrue();
+        byte[] contentBytes = snapshot.content().getBytes(StandardCharsets.UTF_8);
+        // Within the byte cap: no byte-budget overflow from an injected replacement character.
+        assertThat(contentBytes.length).isLessThanOrEqualTo(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES);
+        // A faithful, valid-UTF-8 prefix of the original: no U+FFFD, no mid-codepoint split (re-encoding round-trips byte-identically).
+        assertThat(snapshot.content()).doesNotContain("\uFFFD").isEqualTo(fullContent.substring(0, snapshot.content().length()));
+        assertThat(new String(contentBytes, StandardCharsets.UTF_8)).isEqualTo(snapshot.content());
+        // The whole-file hash/size still describe the untruncated content so a client can detect change despite truncation.
+        assertThat(snapshot.bytes()).isEqualTo(fullContent.getBytes(StandardCharsets.UTF_8).length);
+        assertThat(snapshot.sha256()).isEqualTo(sha256Hex(fullContent));
+    }
+
+    @Test
+    void fileSnapshot_keepsAWholeCodePointThatEndsExactlyAtTheByteCap() {
+        // A multi-byte code point whose last byte lands exactly on the cap must be kept whole (not over-trimmed): the boundary back-off only trims a straddling code point.
+        String head = "a".repeat(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES - 4);
+        String fullContent = head + "😀".repeat(100); // first emoji occupies bytes [MAX-4, MAX): it ends exactly at the cap
+
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, fullContent, 0);
+
+        byte[] contentBytes = snapshot.content().getBytes(StandardCharsets.UTF_8);
+        assertThat(contentBytes).hasSize(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES);
+        assertThat(snapshot.content()).doesNotContain("\uFFFD").endsWith("😀");
+    }
+
+    @Test
     void fileSnapshot_serialisesWithTheFileSnapshotDiscriminatorSoItIsToldApartOnTheSharedTopic() throws Exception {
         ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/A.java", ExerciseGenerationFileSnapshotDTO.ACTION_CREATE, "x", 3);
 

@@ -61,6 +61,18 @@ public class InteractiveSandboxRelayHandler {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxRelayHandler.class);
 
+    /**
+     * Stable fragment embedded in the CREATE failure message when this agent declines because it is at its session capacity. The core client matches on it to fail a create over to
+     * another candidate agent rather than surface the refusal, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
+     */
+    static final String CAPACITY_REFUSAL_MARKER = "is at its interactive sandbox session capacity";
+
+    /**
+     * Stable fragment embedded in the CREATE failure message when this agent declines because it is paused/draining. The core client matches on it to fail a create over to another
+     * candidate agent, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
+     */
+    static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new interactive sandbox sessions";
+
     private final InteractiveSandboxService interactiveSandboxService;
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -218,12 +230,11 @@ public class InteractiveSandboxRelayHandler {
         // In-flight
         // sessions keep running (EXEC/COPY/DESTROY stay ungated) so an active generation can finish and tear down cleanly.
         if (sharedQueueProcessingService.isPaused()) {
-            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' is paused and is not accepting new interactive sandbox sessions.");
+            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
         }
         // Capacity guard: refuse rather than silently starve CI when this agent is already at its session cap.
         if (!sessionPermits.tryAcquire()) {
-            return SandboxOpResponse.failure(request.correlationId(),
-                    "Build agent '" + buildAgentShortName + "' is at its interactive sandbox session capacity (" + maxConcurrentSessions + ").");
+            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxConcurrentSessions + ").");
         }
         boolean created = false;
         try {
@@ -247,8 +258,15 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
-        // A COPY_IN request always carries a non-null (bounded) payload from the client's readBounded; a null here would surface as a caught NPE -> failure response.
-        try (InputStream tar = new ByteArrayInputStream(request.payload())) {
+        // The tar payload rides the keyed staging map, not the broadcast request itself, so only this (target) agent transfers the bytes. This worker is the sole reader and
+        // removes
+        // the entry on consumption; the client re-removes it defensively if we never got here.
+        byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().remove(request.correlationId());
+        if (payload == null) {
+            return SandboxOpResponse.failure(request.correlationId(),
+                    "Copy-in payload for correlation id " + request.correlationId() + " was not staged (already consumed or evicted).");
+        }
+        try (InputStream tar = new ByteArrayInputStream(payload)) {
             interactiveSandboxService.copyIn(request.sessionId(), request.workspacePath(), tar);
         }
         catch (IOException e) {
@@ -260,7 +278,11 @@ public class InteractiveSandboxRelayHandler {
     private SandboxOpResponse handleCopyOut(SandboxOpRequest request) {
         try (TarArchiveInputStream tar = interactiveSandboxService.copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
-            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId(), payload);
+            // Stage the repacked archive in the keyed map rather than on the response topic, so only the originating core node fetches the bytes instead of every response
+            // subscriber
+            // deserializing them on its event thread. The client reads and removes the entry.
+            distributedDataAccessService.getHyperionSandboxPayloads().put(request.correlationId(), payload);
+            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId(), null);
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
@@ -317,10 +339,14 @@ public class InteractiveSandboxRelayHandler {
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
 
-    /** Publishes the current session load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. */
+    /**
+     * Publishes the current session load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. Refreshes without
+     * touching the consecutive-failure bookkeeping: a session create/destroy is unrelated to build-job outcomes, so it must not reset the displayed failure count (which
+     * {@link BuildAgentInformationService#updateLocalBuildAgentInformation(boolean)} would).
+     */
     private void publishSessionState() {
         generationSessionState.update(ownedSessions.size(), maxConcurrentSessions);
-        buildAgentInformationService.updateLocalBuildAgentInformation(sharedQueueProcessingService.isPaused());
+        buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
     }
 
     private static ThreadFactory namedDaemonThreadFactory() {

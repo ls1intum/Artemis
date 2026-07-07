@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,6 +87,12 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      */
     private static final Duration CONTROL_OP_TIMEOUT = Duration.ofMinutes(5);
 
+    /**
+     * Wait budget for a single control operation (create attempt, copy, destroy). An instance field defaulting to {@link #CONTROL_OP_TIMEOUT} rather than a bare constant so a test
+     * can shorten it to exercise timeout-driven create failover without a real multi-minute wait; production never reassigns it.
+     */
+    private Duration controlOpTimeout = CONTROL_OP_TIMEOUT;
+
     private final DistributedDataAccessService distributedDataAccessService;
 
     /** Pending operations keyed by correlation id; completed by the response listener when the matching reply arrives. */
@@ -129,11 +135,90 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     @Override
     public String createSession(SandboxSessionSpec spec) {
-        String targetAgent = selectTargetAgent();
-        SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
-        SandboxOpResponse response = relay(request, CONTROL_OP_TIMEOUT);
-        // Encode the owning agent into the handle so every later op can route back to the same agent without any shared lookup state.
-        return targetAgent + SESSION_HANDLE_SEPARATOR + response.sessionId();
+        List<String> candidates = selectCandidateAgents();
+        if (candidates.isEmpty()) {
+            throw new LocalCIException(
+                    "No build agent is configured to host interactive sandbox sessions (set artemis.continuous-integration.build-agent.max-concurrent-generation-sessions > 0 on a spare agent).");
+        }
+        // Failover: try the least session-loaded agent first, then the next, skipping any that declines (at capacity, draining) or is unreachable (timeout). Bounded by the
+        // candidate
+        // count so a burst of concurrent creates contending for the same scarce permits spreads across agents instead of every loser eating a timeout or a hard failure.
+        List<String> declines = new ArrayList<>();
+        for (String targetAgent : candidates) {
+            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
+            CreateAttempt attempt = attemptCreate(request);
+            if (attempt.containerId() != null) {
+                // Encode the owning agent into the handle so every later op can route back to the same agent without any shared lookup state.
+                return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
+            }
+            declines.add(targetAgent + " (" + attempt.declineReason() + ")");
+        }
+        throw new LocalCIException("Could not place an interactive sandbox session on any of the " + candidates.size()
+                + " candidate build agent(s); all declined or were unreachable: " + String.join(", ", declines) + ".");
+    }
+
+    /**
+     * Outcome of a single CREATE attempt against one agent: either the created container id, or the reason the agent declined (so the caller can fail over to the next candidate).
+     *
+     * @param containerId   the created container id on success; {@code null} when the agent declined
+     * @param declineReason a short human-readable reason when {@code containerId} is {@code null}; {@code null} on success
+     */
+    private record CreateAttempt(String containerId, String declineReason) {
+
+        static CreateAttempt success(String containerId) {
+            return new CreateAttempt(containerId, null);
+        }
+
+        static CreateAttempt declined(String reason) {
+            return new CreateAttempt(null, reason);
+        }
+    }
+
+    /**
+     * Publishes one CREATE request and waits for the owning agent's reply. A placement refusal (at capacity, draining) or an unanswered request (dead/overwhelmed agent) is
+     * returned
+     * as a {@link CreateAttempt#declined} so the caller fails over to the next candidate; any other failure is deterministic (bad image, malformed spec) and would recur on every
+     * agent, so it is thrown immediately rather than wasting a control-op timeout per candidate.
+     *
+     * @param request the CREATE request to relay
+     * @return the attempt outcome (created container id, or a decline reason)
+     */
+    private CreateAttempt attemptCreate(SandboxOpRequest request) {
+        CompletableFuture<SandboxOpResponse> future = new CompletableFuture<>();
+        pendingOperations.put(request.correlationId(), future);
+        try {
+            distributedDataAccessService.getHyperionSandboxRequestsTopic().publish(request);
+            SandboxOpResponse response = future.get(controlOpTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (response.success()) {
+                return CreateAttempt.success(response.sessionId());
+            }
+            String error = response.errorMessage() == null ? "" : response.errorMessage();
+            if (error.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || error.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER)) {
+                return CreateAttempt.declined(error);
+            }
+            throw new LocalCIException("Remote sandbox operation CREATE failed on agent " + request.targetAgentShortName() + ": " + error);
+        }
+        catch (TimeoutException e) {
+            return CreateAttempt.declined("unreachable, timed out after " + controlOpTimeout.toSeconds() + "s");
+        }
+        catch (ExecutionException e) {
+            throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed", e.getCause());
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new LocalCIException("Interrupted while waiting for remote sandbox operation CREATE on agent " + request.targetAgentShortName(), e);
+        }
+        catch (LocalCIException e) {
+            // The !success branch above already threw a fully-formed exception; let it propagate rather than re-wrapping it as a publish failure.
+            throw e;
+        }
+        catch (RuntimeException e) {
+            // A publish failure (serialization, cluster down) hits every agent identically, so it is fatal to the whole create, not a per-agent decline.
+            throw new LocalCIException("Failed to publish remote sandbox operation CREATE to agent " + request.targetAgentShortName(), e);
+        }
+        finally {
+            pendingOperations.remove(request.correlationId());
+        }
     }
 
     @Override
@@ -150,18 +235,39 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         byte[] payload = readBounded(tarArchive);
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = SandboxOpRequest.copyIn(newCorrelationId(), targetAgent, containerId, payload, destinationPath);
-        relay(request, CONTROL_OP_TIMEOUT);
+        String correlationId = newCorrelationId();
+        // Stage the (up to 32 MB) tar in the keyed map instead of on the broadcast request, so only the target agent transfers the bytes rather than every subscriber deserializing
+        // them on its event thread.
+        distributedDataAccessService.getHyperionSandboxPayloads().put(correlationId, payload);
+        try {
+            SandboxOpRequest request = SandboxOpRequest.copyIn(correlationId, targetAgent, containerId, null, destinationPath);
+            relay(request, controlOpTimeout);
+        }
+        finally {
+            // The target worker removes the entry on consumption; this reclaims it if the agent never consumed it (dropped duplicate, dead agent, timeout).
+            distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
+        }
     }
 
     @Override
     public TarArchiveInputStream copyOut(String sessionId, String path) {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
-        SandboxOpRequest request = SandboxOpRequest.copyOut(newCorrelationId(), targetAgent, containerId, path);
-        SandboxOpResponse response = relay(request, CONTROL_OP_TIMEOUT);
-        // A successful COPY_OUT response always carries the repacked tar bytes (relay() throws on failure), so the payload is non-null here.
-        return new TarArchiveInputStream(new ByteArrayInputStream(response.payload()));
+        String correlationId = newCorrelationId();
+        SandboxOpRequest request = SandboxOpRequest.copyOut(correlationId, targetAgent, containerId, path);
+        try {
+            // relay() throws on failure, so on return the agent has staged the repacked tar in the keyed map (off the broadcast response path); this node is its only reader.
+            relay(request, controlOpTimeout);
+            byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().get(correlationId);
+            if (payload == null) {
+                throw new LocalCIException("Remote sandbox COPY_OUT on agent " + targetAgent + " reported success but staged no payload (evicted?).");
+            }
+            return new TarArchiveInputStream(new ByteArrayInputStream(payload));
+        }
+        finally {
+            // Always reclaim the staged entry, whether we just read it or relay failed before the agent could stage/we could read, so a large blob never lingers in the map.
+            distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
+        }
     }
 
     @Override
@@ -169,7 +275,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
         SandboxOpRequest request = SandboxOpRequest.destroy(newCorrelationId(), targetAgent, containerId);
-        relay(request, CONTROL_OP_TIMEOUT);
+        relay(request, controlOpTimeout);
     }
 
     /**
@@ -216,20 +322,19 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /**
-     * Picks a build agent to host a new session. Generation hosting is opt-in per agent ({@code max-concurrent-generation-sessions}, default 0), and an agent with the cap at 0
-     * never subscribes to the request topic — so selection MUST filter on generation-session headroom, not build-job headroom, or a CREATE routed to a non-hosting agent would hang
-     * unanswered until the control-op timeout. Among active, non-paused agents that host generation and have a free session permit, the least session-loaded is chosen; its short
-     * name is encoded into the session handle and pins all later operations to that agent.
+     * Orders the build agents eligible to host a new session, least session-loaded first, so {@link #createSession} can try them in turn and fail over. Generation hosting is
+     * opt-in
+     * per agent ({@code max-concurrent-generation-sessions}, default 0), and an agent with the cap at 0 never subscribes to the request topic — so selection MUST filter on
+     * generation-session headroom, not build-job headroom, or a CREATE routed to a non-hosting agent would hang unanswered until the control-op timeout. Only active, non-paused
+     * agents that host generation and still have a free session permit are included.
      *
-     * @return the short name of the selected agent
+     * @return the short names of the candidate agents, ascending by current session load
      */
-    private String selectTargetAgent() {
+    private List<String> selectCandidateAgents() {
         List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
-        Optional<BuildAgentInformation> target = agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
+        return agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
                 .filter(agent -> agent.maxNumberOfConcurrentGenerationSessions() > 0 && agent.numberOfCurrentGenerationSessions() < agent.maxNumberOfConcurrentGenerationSessions())
-                .min(Comparator.comparingInt(BuildAgentInformation::numberOfCurrentGenerationSessions));
-        return target.map(agent -> agent.buildAgent().name()).orElseThrow(() -> new LocalCIException(
-                "No build agent is configured to host interactive sandbox sessions (set artemis.continuous-integration.build-agent.max-concurrent-generation-sessions > 0 on a spare agent)."));
+                .sorted(Comparator.comparingInt(BuildAgentInformation::numberOfCurrentGenerationSessions)).map(agent -> agent.buildAgent().name()).toList();
     }
 
     private static String newCorrelationId() {

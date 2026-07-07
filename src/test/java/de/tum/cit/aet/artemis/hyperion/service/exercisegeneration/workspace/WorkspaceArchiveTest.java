@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -75,6 +78,31 @@ class WorkspaceArchiveTest {
             }
         }
         return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    @Test
+    void readTar_rejectsAnOversizedEntry_ratherThanMaterialisingItAndOoming() throws Exception {
+        // The copyOut tar is agent-controlled: a runaway or hostile agent writing a multi-GB file must be REFUSED on read-back, not read into a String and OOM the node. The
+        // header-declared size is honoured before the body is read, so the reject is cheap and never allocates the body.
+        long oversize = WorkspaceArchive.MAX_FILE_BYTES + 1;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
+            tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            TarArchiveEntry entry = new TarArchiveEntry("solution/Huge.java");
+            entry.setSize(oversize);
+            tarOut.putArchiveEntry(entry);
+            byte[] chunk = new byte[1024 * 1024];
+            long written = 0;
+            while (written < oversize) {
+                int n = (int) Math.min(chunk.length, oversize - written);
+                tarOut.write(chunk, 0, n);
+                written += n;
+            }
+            tarOut.closeArchiveEntry();
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertThatExceptionOfType(WorkspaceArchive.OversizedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+        }
     }
 
     @Test
