@@ -57,13 +57,15 @@ class HyperionWebsocketServiceTest {
     }
 
     @Test
-    void send_swallowsInterruptionWhileAwaitingDelivery() throws Exception {
+    void send_swallowsInterruptionButRestoresTheInterruptFlag() throws Exception {
         @SuppressWarnings("unchecked")
         CompletableFuture<Void> interrupting = mock(CompletableFuture.class);
         when(interrupting.get()).thenThrow(new InterruptedException("interrupted"));
         when(messagingService.sendMessageToUser(eq("instructor1"), anyString(), any())).thenReturn(interrupting);
 
-        // An InterruptedException raised while awaiting delivery must be caught inside send(), not propagated to the caller.
+        // An InterruptedException raised while awaiting delivery must be caught inside send() (not propagated), but the interrupt flag must be RESTORED so the caller's loop can
+        // still observe the interruption rather than losing it. Thread.interrupted() both asserts and clears the flag so it does not leak into the next test.
         assertThatCode(() -> service.send("instructor1", "jobs/x", "payload")).doesNotThrowAnyException();
+        assertThat(Thread.interrupted()).isTrue();
     }
 }

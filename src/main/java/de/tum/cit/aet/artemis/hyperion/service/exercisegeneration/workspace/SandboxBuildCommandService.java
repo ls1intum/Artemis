@@ -55,7 +55,9 @@ public class SandboxBuildCommandService {
     /** Absolute path of the pristine, verifier-controlled {@code verify.sh} (never the agent's {@code /workspace} copy). */
     public static final String PRISTINE_VERIFY_PATH = PRISTINE_VERIFY_DIR + "/" + VERIFY_SCRIPT_NAME;
 
-    /** Verifier-owned, agent-unreachable directory the script collects reports into and the verifier {@code copyOut}s from. */
+    /**
+     * Verifier-owned directory the script collects reports into and the verifier {@code copyOut}s from; wiped and rebuilt per authoritative run (see {@link #PRISTINE_VERIFY_DIR}).
+     */
     static final String REPORTS_DIR = PRISTINE_VERIFY_DIR + "/reports";
 
     /** Prefix of the non-authoritative liveness line {@code verify.sh} prints; the verdict is read from the collected files, not this line. */
