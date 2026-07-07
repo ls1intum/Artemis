@@ -157,7 +157,7 @@ export class ExerciseAPIRequests {
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
     async deleteProgrammingExercise(exerciseId: number) {
@@ -240,7 +240,7 @@ export class ExerciseAPIRequests {
             channelName: 'exercise-' + titleLowercase(title),
             ...this.toExerciseReference(body),
         };
-        return this.postTextExercise(textExercise);
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -268,7 +268,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
             ...this.toExerciseReference(body),
         };
-        return this.postTextExercise(textExercise);
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -280,6 +280,24 @@ export class ExerciseAPIRequests {
             return { courseId: body.course.id };
         }
         return { exerciseGroupId: body.exerciseGroup.id };
+    }
+
+    /**
+     * Ensures a freshly-created exam exercise carries the caller-known exercise group (including its `title`).
+     *
+     * The exercise-creation endpoints only receive a flat `exerciseGroupId` and echo back a partial
+     * `exerciseGroup` whose `title` is intermittently absent under load. Exam E2E tests navigate to
+     * exercises by that title (see ExamNavigationBar.openOrSaveExerciseByTitle), so a missing echo used
+     * to surface as a cryptic `getByText(undefined)` -> "Cannot read properties of undefined (reading
+     * 'unicode')" TypeError and produced correlated, hard-to-diagnose failures across the exam suite.
+     * Since the caller already holds the fully-populated group it created (id + title), prefer that over
+     * the server echo. No-op for course-based exercises, which have no exercise group.
+     */
+    private withKnownExerciseGroup<T extends { exerciseGroup?: ExerciseGroup }>(exercise: T, exerciseGroup?: ExerciseGroup): T {
+        if (exerciseGroup) {
+            exercise.exerciseGroup = { ...exercise.exerciseGroup, ...exerciseGroup };
+        }
+        return exercise;
     }
 
     /**
@@ -336,7 +354,7 @@ export class ExerciseAPIRequests {
         };
         const uploadExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -419,7 +437,7 @@ export class ExerciseAPIRequests {
             newModelingExercise = Object.assign({}, templateCopy, body);
         }
         const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -613,7 +631,7 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.post(url, {
             multipart: multipartData,
         });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**

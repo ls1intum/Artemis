@@ -10,7 +10,7 @@ import { vi } from 'vitest';
     imports: [StickyPopoverDirective],
 })
 class StickyPopoverComponent {
-    pattern: string;
+    pattern!: string;
 }
 
 describe('StickyPopoverDirective', () => {

@@ -24,7 +24,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     imports: [CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe, TranslateDirective, ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
-    private archiveCourseSubscription: Subscription;
+    private archiveCourseSubscription?: Subscription;
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
@@ -88,7 +88,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.archiveCourseSubscription.unsubscribe();
+        this.archiveCourseSubscription?.unsubscribe();
     }
 
     setSearchValue(searchValue: string): void {

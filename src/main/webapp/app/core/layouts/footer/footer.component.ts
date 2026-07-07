@@ -18,7 +18,7 @@ export class FooterComponent implements OnInit {
     readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';
     readonly FEEDBACK_URL = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
-    email: string;
+    email!: string; // set in ngOnInit() via the contact setter from profileInfo.contact
     readonly gitBranch = signal<string>(undefined!);
     readonly gitCommitId = signal<string>(undefined!);
     readonly gitTimestamp = signal<dayjs.Dayjs>(undefined!);

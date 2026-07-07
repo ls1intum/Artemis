@@ -19,7 +19,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     private participationId?: number;
     private exerciseId?: number;
     private isBuildingSubject = new Subject<boolean>();
-    private submissionSubscription: Subscription;
+    private submissionSubscription?: Subscription;
 
     constructor() {
         super();

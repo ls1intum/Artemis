@@ -45,7 +45,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
 
     readonly filteredExerciseIDs = input.required<number[]>();
 
-    courseId: number;
+    courseId!: number; // set in ngAfterViewInit() from the route params subscription before the chart data is loaded
     isLoading = false;
     exerciseScores: ExerciseScoresDTO[] = [];
     excludedExerciseScores: ExerciseScoresDTO[] = [];
@@ -61,9 +61,9 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     readonly chartEntries = signal<ChartMultiSeriesEntry[]>([]);
     readonly xAxisLabel = signal('');
     readonly yAxisLabel = signal('');
-    yourScoreLabel: string;
-    averageScoreLabel: string;
-    maximumScoreLabel: string;
+    yourScoreLabel = '';
+    averageScoreLabel = '';
+    maximumScoreLabel = '';
     readonly maxScale = signal(101);
 
     private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN]);

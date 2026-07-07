@@ -105,7 +105,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
     // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(ngModel)] two-way targets (e.g. [(ngModel)]="shortAnswerQuestion.title") and in-template property writes (e.g. (click)="shortAnswerQuestion.invalid = true") whose in-place mutations cannot be intercepted to commit a signal rebuild
-    shortAnswerQuestion: ShortAnswerQuestion;
+    shortAnswerQuestion!: ShortAnswerQuestion; // assigned in the constructor effect() once the question() input is present
 
     question = input<QuizQuestion>();
     questionIndex = input.required<number>();
@@ -136,7 +136,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     /** For visual mode **/
     readonly textParts = signal<(string | undefined)[][]>([]);
 
-    backupQuestion: ShortAnswerQuestion;
+    backupQuestion!: ShortAnswerQuestion; // set in the constructor effect() as a deep copy of the question input
 
     // Icons
     faBan = faBan;
