@@ -64,6 +64,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     credentials: Credentials;
     readonly isRegistrationEnabled = signal(false);
     readonly isPasswordLoginDisabled = signal(false);
+    readonly isOidcEnabled = signal(false);
     readonly isPasskeyEnabled = signal(false);
     readonly loading = signal(true);
     mainElementFocused = false;
@@ -183,6 +184,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (profileInfo.allowedLdapUsernamePattern) {
             this.usernameRegexPattern.set(new RegExp(profileInfo.allowedLdapUsernamePattern));
         }
+        if (profileInfo.activeProfiles) {
+            this.isOidcEnabled.set(profileInfo.activeProfiles.includes('oidc'));
+        }
         if (this.accountName() === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
             this.errorMessageUsername.set('home.errors.tumWarning');
@@ -241,6 +245,21 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
                 password: this.password,
                 rememberMe: this.rememberMe,
             })
+            .then(() => {
+                this.handleLoginSuccess();
+            })
+            .catch(() => {
+                this.authenticationError.set(true);
+            })
+            .finally(() => {
+                this.isSubmittingLogin.set(false);
+            });
+    }
+
+    loginWithOidc() {
+        this.isSubmittingLogin.set(true);
+        this.loginService
+            .loginOIDC(this.rememberMe)
             .then(() => {
                 this.handleLoginSuccess();
             })

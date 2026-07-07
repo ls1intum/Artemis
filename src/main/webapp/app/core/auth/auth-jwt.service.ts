@@ -15,6 +15,7 @@ export class Credentials {
 export interface IAuthServerProvider {
     login: (credentials: Credentials) => Observable<object>;
     loginSAML2: (rememberMe: boolean) => Observable<object>;
+    loginOIDC: (rememberMe: boolean) => Observable<object>;
     logout: () => Observable<object>;
     clearCaches: () => Observable<undefined>;
 }
@@ -31,6 +32,11 @@ export class AuthServerProvider implements IAuthServerProvider {
 
     loginSAML2(rememberMe: boolean): Observable<object> {
         return this.http.post('api/core/public/saml2', rememberMe.toString());
+    }
+
+    loginOIDC(rememberMe: boolean): Observable<object> {
+        window.location.href = window.location.origin + '/oauth2/authorization/oidc';
+        return of({});
     }
 
     logout(): Observable<object> {

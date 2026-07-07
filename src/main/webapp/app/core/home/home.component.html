@@ -123,6 +123,27 @@
                                 (onClick)="loginWithPasskey()"
                             />
                         }
+                        @if (isOidcEnabled()) {
+                            <div class="d-flex align-items-center my-3">
+                                <div class="flex-grow-1 border-top"></div>
+                                <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
+                                <div class="flex-grow-1 border-top"></div>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center"
+                                id="oidc-login-button"
+                                [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
+                                (click)="loginWithOidc()"
+                            >
+                                @if (isSubmittingLogin()) {
+                                    <span class="me-2"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                } @else {
+                                    <span class="me-2"><fa-icon [icon]="faKey" /></span>
+                                }
+                                <span>Sign in with Single Sign-on (OIDC)</span>
+                            </button>
+                        }
                     </div>
                     <div class="text-center">
                         @if (isRegistrationEnabled()) {
