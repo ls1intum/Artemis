@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @param exercises   the (slim) exercises of the group; only populated on list / import responses
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGroupDTO(Long id, @Nullable String title, @Nullable Boolean isMandatory, @Nullable ExamForExerciseGroupDTO exam,
+public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolean isMandatory, @Nullable ExamForExerciseGroupDTO exam,
         @Nullable List<ExerciseForExerciseGroupDTO> exercises) {
 
     /**
@@ -44,7 +44,7 @@ public record ExerciseGroupDTO(Long id, @Nullable String title, @Nullable Boolea
      * @param course   the (slim) course of the exam
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamForExerciseGroupDTO(Long id, Boolean testExam, @Nullable CourseForExerciseGroupDTO course) {
+    public record ExamForExerciseGroupDTO(long id, boolean testExam, @Nullable CourseForExerciseGroupDTO course) {
 
         /**
          * Builds the slim exam projection from an exam entity.
@@ -67,7 +67,7 @@ public record ExerciseGroupDTO(Long id, @Nullable String title, @Nullable Boolea
      * @param defaultProgrammingLanguage the course's default programming language
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseForExerciseGroupDTO(Long id, @Nullable ProgrammingLanguage defaultProgrammingLanguage) {
+    public record CourseForExerciseGroupDTO(long id, @Nullable ProgrammingLanguage defaultProgrammingLanguage) {
 
         /**
          * Builds the slim course projection from a course entity.
@@ -94,16 +94,18 @@ public record ExerciseGroupDTO(Long id, @Nullable String title, @Nullable Boolea
 
     /**
      * Builds a list / import response DTO: the embedded exercise summaries are populated (when the collection was
-     * hydrated) and the exam is omitted. The exercises are copied via {@link List#copyOf} only when initialized, never
-     * exposing a live Hibernate collection, matching today's wire where an uninitialized collection did not serialize.
+     * hydrated) and the exam is omitted. The exercises are mapped via {@link java.util.stream.Stream#toList()} only when
+     * initialized, never exposing a live Hibernate collection, matching today's wire where an uninitialized collection
+     * did not serialize.
      *
      * @param exerciseGroup the exercise group (with its exercises loaded)
      * @return the DTO with the embedded exercise summaries and no exam
      */
     public static ExerciseGroupDTO ofWithExercises(ExerciseGroup exerciseGroup) {
         List<ExerciseForExerciseGroupDTO> exerciseDTOs = null;
-        if (Hibernate.isInitialized(exerciseGroup.getExercises()) && exerciseGroup.getExercises() != null && !exerciseGroup.getExercises().isEmpty()) {
-            exerciseDTOs = exerciseGroup.getExercises().stream().map(ExerciseForExerciseGroupDTO::of).toList();
+        var exercises = exerciseGroup.getExercises();
+        if (Hibernate.isInitialized(exercises) && exercises != null && !exercises.isEmpty()) {
+            exerciseDTOs = exercises.stream().map(ExerciseForExerciseGroupDTO::of).toList();
         }
         return new ExerciseGroupDTO(exerciseGroup.getId(), exerciseGroup.getTitle(), exerciseGroup.getIsMandatory(), null, exerciseDTOs);
     }

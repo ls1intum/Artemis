@@ -23,7 +23,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * themselves (not their sub-relations), so those never appeared on the wire and the client reads them defensively with
  * optional chaining.
  *
+ * @param id                         the id of the exercise
  * @param type                       the exercise type discriminator (serialized as the lowercase value, e.g. "programming")
+ * @param title                      the exercise title
+ * @param maxPoints                  the maximum points achievable for the exercise
+ * @param bonusPoints                the bonus points achievable for the exercise
  * @param includedInOverallScore     whether the exercise counts towards the overall score
  * @param assessmentType             the assessment mode (automatic / semi-automatic / manual)
  * @param teamMode                   {@code true} if the exercise is a team exercise (always individual for exam exercises)
@@ -37,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param filePattern                the accepted file pattern (file-upload exercises only)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseForExerciseGroupDTO(Long id, ExerciseType type, @Nullable String title, @Nullable Double maxPoints, @Nullable Double bonusPoints,
+public record ExerciseForExerciseGroupDTO(long id, ExerciseType type, @Nullable String title, @Nullable Double maxPoints, @Nullable Double bonusPoints,
         @Nullable IncludedInOverallScore includedInOverallScore, @Nullable AssessmentType assessmentType, boolean teamMode, @Nullable Boolean testRunParticipationsExist,
         @Nullable String shortName, @Nullable String projectKey, @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOnlineIde,
         @Nullable DiagramType diagramType, @Nullable String filePattern) {

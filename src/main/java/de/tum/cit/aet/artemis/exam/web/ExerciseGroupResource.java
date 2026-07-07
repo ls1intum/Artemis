@@ -108,7 +108,7 @@ public class ExerciseGroupResource {
         }
 
         if (exerciseGroupCreateDTO.exam() == null) {
-            throw new ConflictException("The exercise group has to belong no an exam.", ENTITY_NAME, "missingExam");
+            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
         }
 
         if (!examId.equals(exerciseGroupCreateDTO.exam().id())) {
