@@ -170,9 +170,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newOption.setExplanation(originalOption.getExplanation());
             newOption.setIsCorrect(originalOption.isIsCorrect());
             newOption.setInvalid(originalOption.isInvalid());
-            newOption.setQuestion(copy);
             newAnswerOptions.add(newOption);
         }
+        // setAnswerOptions mints a fresh, question-scoped id for each option
         copy.setAnswerOptions(newAnswerOptions);
         return copy;
     }
@@ -203,8 +203,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", original.getId());
         }
 
-        // Copy drop locations
-        List<DropLocation> newDropLocations = new ArrayList<>();
+        // Copy drop locations (each gets a fresh, question-scoped id); order is preserved so index-based mapping copy below stays valid
         for (DropLocation originalLoc : original.getDropLocations()) {
             DropLocation newLoc = new DropLocation();
             newLoc.setPosX(originalLoc.getPosX());
@@ -212,24 +211,19 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newLoc.setWidth(originalLoc.getWidth());
             newLoc.setHeight(originalLoc.getHeight());
             newLoc.setInvalid(originalLoc.isInvalid());
-            newLoc.setQuestion(copy);
-            newLoc.setMappings(new HashSet<>());
-            newDropLocations.add(newLoc);
+            copy.addDropLocation(newLoc);
         }
-        copy.setDropLocations(newDropLocations);
 
-        // Copy drag items
-        List<DragItem> newDragItems = new ArrayList<>();
+        // Copy drag items (each gets a fresh, question-scoped id); order is preserved. The id must be minted (via addDragItem) before copying the picture file, since the new
+        // picture
+        // path embeds the drag item id.
         for (DragItem originalItem : original.getDragItems()) {
             DragItem newItem = new DragItem();
             newItem.setText(originalItem.getText());
             newItem.setInvalid(originalItem.isInvalid());
-            newItem.setQuestion(copy);
-            newItem.setMappings(new HashSet<>());
+            copy.addDragItem(newItem);
             copyDragItemFile(originalItem, newItem);
-            newDragItems.add(newItem);
         }
-        copy.setDragItems(newDragItems);
 
         // Copy correct mappings (must happen after drop locations and drag items are set)
         copyDragAndDropMappings(original, copy);
@@ -251,7 +245,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
-            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, null).toString());
+            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, target.getId()).toString());
         }
         else {
             target.setPictureFilePath(source.getPictureFilePath());
@@ -259,22 +253,20 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyDragAndDropMappings(DragAndDropQuestion source, DragAndDropQuestion target) {
-        Set<DragAndDropMapping> newMappings = new HashSet<>();
+        // The source mappings carry positional indices (derived from the source's ordered lists). Because the target's drop locations and drag items were copied in the same order,
+        // the index maps 1:1 to the target's freshly-created (id-bearing) components.
         for (DragAndDropMapping originalMapping : source.getCorrectMappings()) {
+            Integer dragItemIndex = originalMapping.getDragItemIndex();
+            Integer dropLocationIndex = originalMapping.getDropLocationIndex();
+            if (dragItemIndex == null || dropLocationIndex == null) {
+                continue;
+            }
             DragAndDropMapping newMapping = new DragAndDropMapping();
             newMapping.setInvalid(originalMapping.isInvalid());
-            newMapping.setDragItemIndex(originalMapping.getDragItemIndex());
-            newMapping.setDropLocationIndex(originalMapping.getDropLocationIndex());
-            newMapping.setQuestion(target);
-            if (originalMapping.getDragItemIndex() != null) {
-                newMapping.setDragItem(target.getDragItems().get(originalMapping.getDragItemIndex()));
-            }
-            if (originalMapping.getDropLocationIndex() != null) {
-                newMapping.setDropLocation(target.getDropLocations().get(originalMapping.getDropLocationIndex()));
-            }
-            newMappings.add(newMapping);
+            newMapping.setDragItem(target.getDragItems().get(dragItemIndex));
+            newMapping.setDropLocation(target.getDropLocations().get(dropLocationIndex));
+            target.addCorrectMapping(newMapping);
         }
-        target.setCorrectMappings(newMappings);
     }
 
     private ShortAnswerQuestion copyShortAnswerQuestion(ShortAnswerQuestion original) {
@@ -282,28 +274,28 @@ public class QuizExerciseImportService extends ExerciseImportService {
         copy.setSimilarityValue(original.getSimilarityValue());
         copy.setMatchLetterCase(original.getMatchLetterCase());
 
-        // Copy spots
+        // Copy spots (a fresh, question-scoped id is minted for each by setSpots)
         Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
         for (ShortAnswerSpot oldSpot : original.getSpots()) {
-            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot, copy);
+            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot);
             Long key = oldSpot.getId();
             spotMap.put(key, newSpot);
         }
         copy.setSpots(new ArrayList<>(spotMap.values()));
 
-        // Copy solutions
+        // Copy solutions (a fresh, question-scoped id is minted for each by setSolutions)
         Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
         for (ShortAnswerSolution oldSolution : original.getSolutions()) {
-            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution, copy);
+            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution);
             Long key = oldSolution.getId();
             solutionMap.put(key, newSolution);
         }
         copy.setSolutions(new ArrayList<>(solutionMap.values()));
 
-        // Copy correct mappings
+        // Copy correct mappings: the new spots/solutions already have minted ids, so setCorrectMappings can store them id-based (resolved against spotMap/solutionMap by old id)
         Set<ShortAnswerMapping> newMappings = new HashSet<>();
         for (ShortAnswerMapping oldMapping : original.getCorrectMappings()) {
-            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, copy, spotMap, solutionMap);
+            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, spotMap, solutionMap);
             newMappings.add(newMapping);
         }
         copy.setCorrectMappings(newMappings);
@@ -313,55 +305,43 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     /**
      * Creates a new ShortAnswerSpot instance based on the properties of the old spot.
-     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
      *
-     * @param oldSpot    the original ShortAnswerSpot to copy from
-     * @param saQuestion the short answer question to associate with the new spot
+     * @param oldSpot the original ShortAnswerSpot to copy from
      * @return the newly created ShortAnswerSpot
      */
-    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot, ShortAnswerQuestion saQuestion) {
+    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot) {
         ShortAnswerSpot newSpot = new ShortAnswerSpot();
         newSpot.setSpotNr(oldSpot.getSpotNr());
         newSpot.setWidth(oldSpot.getWidth());
         newSpot.setInvalid(oldSpot.isInvalid());
-        newSpot.setQuestion(saQuestion);
-        newSpot.setMappings(new HashSet<>());
         return newSpot;
     }
 
     /**
      * Creates a new ShortAnswerSolution instance based on the properties of the old solution.
-     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
      *
      * @param oldSolution the original ShortAnswerSolution to copy from
-     * @param saQuestion  the short answer question to associate with the new solution
      * @return the newly created ShortAnswerSolution
      */
-    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution, ShortAnswerQuestion saQuestion) {
+    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution) {
         ShortAnswerSolution newSolution = new ShortAnswerSolution();
         newSolution.setText(oldSolution.getText());
         newSolution.setInvalid(oldSolution.isInvalid());
-        newSolution.setQuestion(saQuestion);
-        newSolution.setMappings(new HashSet<>());
         return newSolution;
     }
 
     /**
      * Creates a new ShortAnswerMapping instance based on the properties of the old mapping.
-     * Copies the invalid flag, associates it with the given question, and links it to the corresponding
-     * new solution and spot using the provided maps if they exist.
+     * Copies the invalid flag and links it to the corresponding new solution and spot using the provided maps if they exist.
      *
      * @param oldMapping  the original ShortAnswerMapping to copy from
-     * @param saQuestion  the short answer question to associate with the new mapping
      * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
      * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
      * @return the newly created ShortAnswerMapping
      */
-    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap,
-            Map<Long, ShortAnswerSolution> solutionMap) {
+    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, Map<Long, ShortAnswerSpot> spotMap, Map<Long, ShortAnswerSolution> solutionMap) {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setInvalid(oldMapping.isInvalid());
-        newMapping.setQuestion(saQuestion);
 
         if (oldMapping.getSolution() != null) {
             Long solutionKey = oldMapping.getSolution().getId();

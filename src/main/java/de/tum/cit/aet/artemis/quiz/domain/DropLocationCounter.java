@@ -1,67 +1,61 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A DropLocationCounter.
+ * A DropLocationCounter counts, for one drop location of a {@link DragAndDropQuestion}, how often it was answered correctly (rated / unrated).
+ * <p>
+ * It is no longer a JPA entity in the {@code quiz_statistic_counter} table: drag-and-drop statistics counters are now stored as a JSON list on
+ * {@link DragAndDropQuestionStatistic} (the {@code quiz_statistic.counters} column). This eliminates the eager {@code @OneToMany} counter fan-out when loading a question
+ * statistic.
+ * It references its drop location by the drop location's question-scoped id.
  */
-@Entity
-@DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocationCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<DragAndDropQuestionStatistic, DropLocation, DragAndDropQuestion> {
+public class DropLocationCounter {
 
-    @ManyToOne
-    @JsonIgnore
-    private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
+    @JsonProperty("dropLocationId")
+    private Long dropLocationId;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
-    private DropLocation dropLocation;
+    @JsonProperty("ratedCounter")
+    private Integer ratedCounter = 0;
 
-    public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
-        return dragAndDropQuestionStatistic;
+    @JsonProperty("unRatedCounter")
+    private Integer unRatedCounter = 0;
+
+    public DropLocationCounter() {
     }
 
-    public void setDragAndDropQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
-        this.dragAndDropQuestionStatistic = dragAndDropQuestionStatistic;
+    public DropLocationCounter(Long dropLocationId) {
+        this.dropLocationId = dropLocationId;
     }
 
-    public DropLocation getDropLocation() {
-        return dropLocation;
+    public Long getDropLocationId() {
+        return dropLocationId;
     }
 
-    public void setDropLocation(DropLocation dropLocation) {
-        this.dropLocation = dropLocation;
+    public void setDropLocationId(Long dropLocationId) {
+        this.dropLocationId = dropLocationId;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
-        setDragAndDropQuestionStatistic(dragAndDropQuestionStatistic);
+    public Integer getRatedCounter() {
+        return ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public DropLocation getQuizQuestionComponent() {
-        return getDropLocation();
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionComponent(DropLocation dropLocation) {
-        setDropLocation(dropLocation);
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override
     public String toString() {
-        return "DropLocationCounter{" + "id=" + getId() + "}";
+        return "DropLocationCounter{" + "dropLocationId=" + dropLocationId + ", ratedCounter=" + ratedCounter + ", unRatedCounter=" + unRatedCounter + "}";
     }
 }

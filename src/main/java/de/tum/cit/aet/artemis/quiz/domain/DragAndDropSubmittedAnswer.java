@@ -1,53 +1,111 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 
 /**
  * A DragAndDropSubmittedAnswer.
+ * <p>
+ * The submitted drag-item/drop-location pairs are stored inside the {@code submitted_answer.selection} JSON column (as {@link DragAndDropMappingSelection} entries in a
+ * {@link DragAndDropSubmittedAnswerSelection}) instead of the former {@code @OneToMany} {@code drag_and_drop_mapping} rows. The public {@code getMappings()} /
+ * {@code setMappings()}
+ * accessors keep their original signatures and shape: they resolve the stored scalar ids against the owning question so the REST/websocket wire format (nested {@code dragItem} /
+ * {@code dropLocation} objects) is preserved for callers, DTOs and the raw exam conduction/submit endpoints.
  */
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
 
-    // NOTE: this relation cannot be bidirectional, because it would otherwise be ManyToMany.
-    // No @Cache here on purpose — same reason as MultipleChoiceSubmittedAnswer.selectedOptions (see #12574): NONSTRICT_READ_WRITE on an
-    // actively-mutated collection produced non-deterministic reads under concurrent autosave / evaluation activity on the clustered setup.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "submitted_answer_id")
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
+    private DragAndDropSubmittedAnswerSelection dndSelection() {
+        if (getSelection() instanceof DragAndDropSubmittedAnswerSelection dragAndDropSelection) {
+            return dragAndDropSelection;
+        }
+        DragAndDropSubmittedAnswerSelection created = new DragAndDropSubmittedAnswerSelection();
+        setSelection(created);
+        return created;
+    }
 
+    private DragAndDropQuestion dragAndDropQuestion() {
+        return getQuizQuestion() instanceof DragAndDropQuestion question ? question : null;
+    }
+
+    /**
+     * The submitted mappings resolved into object-based {@link DragAndDropMapping}s (with their drag item / drop location objects) against the owning question. Built on demand
+     * from
+     * the scalar-id selection stored in the JSON column. Mutating the returned set does not affect the stored selection — use {@link #addMappings} / {@link #removeMappings} /
+     * {@link #setMappings} instead.
+     *
+     * @return the resolved submitted mappings
+     */
     public Set<DragAndDropMapping> getMappings() {
-        return mappings;
+        Set<DragAndDropMapping> result = new HashSet<>();
+        if (!(getSelection() instanceof DragAndDropSubmittedAnswerSelection selection)) {
+            return result;
+        }
+        DragAndDropQuestion question = dragAndDropQuestion();
+        for (DragAndDropMappingSelection entry : selection.getMappings()) {
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            if (question != null) {
+                DragItem dragItem = question.findDragItemById(entry.dragItemId());
+                DropLocation dropLocation = question.findDropLocationById(entry.dropLocationId());
+                mapping.setDragItem(dragItem);
+                mapping.setDropLocation(dropLocation);
+                if (dragItem != null) {
+                    int index = question.getDragItems().indexOf(dragItem);
+                    mapping.setDragItemIndex(index >= 0 ? index : null);
+                }
+                if (dropLocation != null) {
+                    int index = question.getDropLocations().indexOf(dropLocation);
+                    mapping.setDropLocationIndex(index >= 0 ? index : null);
+                }
+            }
+            result.add(mapping);
+        }
+        return result;
     }
 
-    public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
-        this.mappings = dragAndDropMappings;
+    /**
+     * Replaces the submitted mappings, storing them as scalar id pairs in the JSON selection.
+     *
+     * @param mappings the object-based submitted mappings whose drag item / drop location ids are stored
+     */
+    public void setMappings(Set<DragAndDropMapping> mappings) {
+        List<DragAndDropMappingSelection> entries = new ArrayList<>();
+        if (mappings != null) {
+            for (DragAndDropMapping mapping : mappings) {
+                entries.add(new DragAndDropMappingSelection(idOf(mapping.getDragItem()), idOf(mapping.getDropLocation())));
+            }
+        }
+        dndSelection().setMappings(entries);
     }
 
-    public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping dragAndDropMapping) {
-        this.mappings.add(dragAndDropMapping);
-        dragAndDropMapping.setSubmittedAnswer(this);
+    public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping mapping) {
+        dndSelection().getMappings().add(new DragAndDropMappingSelection(idOf(mapping.getDragItem()), idOf(mapping.getDropLocation())));
         return this;
     }
 
-    public DragAndDropSubmittedAnswer removeMappings(DragAndDropMapping dragAndDropMapping) {
-        this.mappings.remove(dragAndDropMapping);
-        dragAndDropMapping.setSubmittedAnswer(null);
+    public DragAndDropSubmittedAnswer removeMappings(DragAndDropMapping mapping) {
+        Long dragItemId = idOf(mapping.getDragItem());
+        Long dropLocationId = idOf(mapping.getDropLocation());
+        dndSelection().getMappings().removeIf(entry -> Objects.equals(entry.dragItemId(), dragItemId) && Objects.equals(entry.dropLocationId(), dropLocationId));
         return this;
+    }
+
+    private static Long idOf(DomainObject component) {
+        return component != null ? component.getId() : null;
     }
 
     /**
@@ -57,52 +115,40 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
      * @return the selected drag item for the given drop location (may be null if no drag item was dropped on this drop location)
      */
     public DragItem getSelectedDragItemForDropLocation(DropLocation dropLocation) {
-        for (DragAndDropMapping mapping : mappings) {
-            if (mapping.getDropLocation().equals(dropLocation)) {
-                return mapping.getDragItem();
+        if (dropLocation == null || dropLocation.getId() == null || !(getSelection() instanceof DragAndDropSubmittedAnswerSelection selection)) {
+            return null;
+        }
+        DragAndDropQuestion question = dragAndDropQuestion();
+        if (question == null) {
+            return null;
+        }
+        for (DragAndDropMappingSelection entry : selection.getMappings()) {
+            if (dropLocation.getId().equals(entry.dropLocationId())) {
+                return question.findDragItemById(entry.dragItemId());
             }
         }
         return null;
     }
 
     /**
-     * Check if a dragItem or dropLocation were deleted and delete reference to in mappings
-     *
-     * @param question the changed question with the changed DragItems and DropLocations
-     */
-    private void checkAndDeleteMappings(DragAndDropQuestion question) {
-        if (question != null) {
-            // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
-            Set<DragAndDropMapping> selectedMappingsToDelete = new HashSet<>();
-            for (DragAndDropMapping mapping : this.getMappings()) {
-                if ((!question.getDragItems().contains(mapping.getDragItem())) || (!question.getDropLocations().contains(mapping.getDropLocation()))) {
-                    selectedMappingsToDelete.add(mapping);
-                }
-            }
-            for (DragAndDropMapping mappingToDelete : selectedMappingsToDelete) {
-                this.removeMappings(mappingToDelete);
-            }
-        }
-    }
-
-    /**
-     * Delete all references to question, dragItems and dropLocations if the question was changed
+     * Delete all references to quizQuestion, dragItems and dropLocations if the quiz was changed
      *
      * @param quizExercise the changed quizExercise-object
      */
     @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
-        // Delete all references to question, dropLocations and dragItem if the question was deleted
-        if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
+        // Delete all references if the question was deleted
+        if (getQuizQuestion() == null || !quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
             setQuizQuestion(null);
-            mappings = null;
+            setSelection(null);
+            return;
         }
-        else {
-            // find same quizQuestion in quizExercise
-            QuizQuestion quizQuestion = quizExercise.findQuestionById(getQuizQuestion().getId());
-
-            // Check if a dragItem or dropLocation was deleted and delete the mappings with it
-            checkAndDeleteMappings((DragAndDropQuestion) quizQuestion);
+        // Check if a dragItem or dropLocation was deleted and remove the affected submitted mappings
+        if (quizExercise.findQuestionById(getQuizQuestion().getId()) instanceof DragAndDropQuestion question
+                && getSelection() instanceof DragAndDropSubmittedAnswerSelection selection) {
+            Set<Long> dragItemIds = question.getDragItems().stream().map(DragItem::getId).collect(Collectors.toSet());
+            Set<Long> dropLocationIds = question.getDropLocations().stream().map(DropLocation::getId).collect(Collectors.toSet());
+            selection.getMappings().removeIf(entry -> !dragItemIds.contains(entry.dragItemId()) || !dropLocationIds.contains(entry.dropLocationId()));
         }
     }
 
@@ -111,8 +157,14 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
         return "DragAndDropSubmittedAnswer{" + "id=" + getId() + "}";
     }
 
+    /**
+     * @return the submitted mappings as a set of id-based {@link DnDMapping} value objects, used to compare submissions for content equality.
+     */
     public Set<DnDMapping> toDnDMapping() {
-        return getMappings().stream().map(mapping -> new DnDMapping(mapping.getDragItem().getId(), mapping.getDropLocation().getId())).collect(Collectors.toSet());
+        if (!(getSelection() instanceof DragAndDropSubmittedAnswerSelection selection)) {
+            return new HashSet<>();
+        }
+        return selection.getMappings().stream().filter(entry -> entry.dragItemId() != null && entry.dropLocationId() != null)
+                .map(entry -> new DnDMapping(entry.dragItemId(), entry.dropLocationId())).collect(Collectors.toSet());
     }
-
 }

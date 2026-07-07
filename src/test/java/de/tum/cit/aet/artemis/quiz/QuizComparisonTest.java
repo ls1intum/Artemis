@@ -200,42 +200,53 @@ class QuizComparisonTest {
                 DragItem dragItem1 = mapping1.getDragItem();
                 DropLocation dropLocation1 = mapping1.getDropLocation();
 
+                // getMappings() returns resolved copies; mutate the copies and persist them back via setMappings so the stored selection reflects the change
+                Set<DragAndDropMapping> workingMappings = new HashSet<>(dragAndDropMappings);
+
                 // change the drag item of one mapping
                 mapping1.setDragItem(mapping2.getDragItem());
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drag items switched
                 mapping2.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drag items
                 mapping2.setDragItem(mapping3.getDragItem());
                 mapping3.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDragItem(mapping2.getDragItem());
                 mapping2.setDragItem(mapping1.getDragItem());
                 mapping1.setDragItem(dragItem1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
                 // change the drop location of one mapping
                 mapping1.setDropLocation(mapping2.getDropLocation());
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // mapping 1 and 2 have their drop locations switched
                 mapping2.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // change all 3 drop locations
                 mapping2.setDropLocation(mapping3.getDropLocation());
                 mapping3.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isFalse();
 
                 // reset
                 mapping3.setDropLocation(mapping2.getDropLocation());
                 mapping2.setDropLocation(mapping1.getDropLocation());
                 mapping1.setDropLocation(dropLocation1);
+                changedSubmittedAnswer.setMappings(workingMappings);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
@@ -307,8 +318,10 @@ class QuizComparisonTest {
                 notSelectedOption.forEach(originalAnswer::addSelectedOptions);
                 assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
-                // reset submitted answers, compare with the unchanged original
+                // reset both submitted answers back to the original single selection and confirm they compare equal again
+                // (getSelectedOptions() returns a resolved copy, not a live view, so the earlier additions must be undone explicitly on both)
                 changedSubmittedAnswer.setSelectedOptions(answerOptions);
+                originalAnswer.setSelectedOptions(answerOptions);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }
@@ -599,10 +612,14 @@ class QuizComparisonTest {
                 }
             }
             case ShortAnswerQuestion shortAnswerQuestion -> {
+                // resolved mappings hold references to the very spot/solution objects whose ids are reassigned below
+                var mappings = shortAnswerQuestion.getCorrectMappings();
                 for (var spot : shortAnswerQuestion.getSpots()) {
                     spot.setId(id);
                     id++;
                 }
+                // re-store the mappings so their id-based content entries pick up the reassigned spot ids
+                shortAnswerQuestion.setCorrectMappings(mappings);
             }
             case MultipleChoiceQuestion multipleChoiceQuestion -> {
                 for (var answerOption : multipleChoiceQuestion.getAnswerOptions()) {

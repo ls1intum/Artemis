@@ -303,7 +303,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 if (dragItem.getPictureFilePath() == null) {
                     continue;
                 }
-                checkCreatedFile(dragItem.getPictureFilePath());
+                // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question); the client builds this from questionId + dragItemId
+                String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
+                checkCreatedFile("drag-and-drop/questions/%d/drag-items/%d/%s".formatted(question.getId(), dragItem.getId(), filename));
             }
         }
     }
@@ -1081,17 +1083,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
 
-            // add a solution with a mapping onto spot number 0
+            // add a solution with a mapping onto spot number 0 (addSolution mints a fresh question-scoped id so the mapping can reference it by id)
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
             newSolution.setText("text");
-            shortAnswerQuestion.getSolutions().add(newSolution);
+            shortAnswerQuestion.addSolution(newSolution);
             ShortAnswerMapping newMapping = new ShortAnswerMapping();
-            newMapping.setId(3L);
             newMapping.setInvalid(false);
-            newMapping.setShortAnswerSolutionIndex(2);
             newMapping.setSolution(newSolution);
             newMapping.setSpot(shortAnswerQuestion.getSpots().getFirst());
-            newMapping.setShortAnswerSpotIndex(0);
             shortAnswerQuestion.addCorrectMapping(newMapping);
             quizExercise.getQuizQuestions().remove(2);
             quizExercise.getQuizQuestions().add(shortAnswerQuestion);
@@ -2225,7 +2224,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         question.getAnswerOptions().getFirst().setExplanation("0".repeat(validityThreshold + 1));
 
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
+        // The explanation length limit is now enforced by @Size on the answer-option create DTO (the answer option is stored in the quiz_question.content JSON column, which has no
+        // per-field length constraint), so an over-long explanation is rejected as a 400 Bad Request rather than surfacing as a 500 from a database column-length violation.
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -2351,22 +2352,22 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(dropLocations.getFirst().getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.getFirst().getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.getFirst().getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.getFirst().getQuestion()).isNotNull();
+                assertThat(dropLocations.getFirst().getId()).isNotNull();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(1).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(1).getQuestion()).isNotNull();
+                assertThat(dropLocations.get(1).getId()).isNotNull();
                 assertThat(dropLocations.get(2).getPosX()).as("Pos X for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getPosY()).as("Pos Y for drop location is correct").isEqualTo(30);
                 assertThat(dropLocations.get(2).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(2).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(2).getQuestion()).isNotNull();
+                assertThat(dropLocations.get(2).getId()).isNotNull();
                 assertThat(dropLocations.get(3).getPosX()).as("Pos X for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getPosY()).as("Pos Y for drop location is correct").isEqualTo(40);
                 assertThat(dropLocations.get(3).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(3).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(3).getQuestion()).isNotNull();
+                assertThat(dropLocations.get(3).getId()).isNotNull();
 
                 List<DragItem> dragItems = dragAndDropQuestion.getDragItems();
                 assertThat(dragItems.getFirst().getText()).as("Text for drag item is correct").isEqualTo("D1");
@@ -2383,7 +2384,10 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        String requestUrlPath = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
+                        // drag-item images are served via a question-scoped URL (the drag item id is only unique within its question)
+                        String filename = dragItem.getPictureFilePath().substring(dragItem.getPictureFilePath().lastIndexOf('/') + 1);
+                        String requestUrlPath = "%sdrag-and-drop/questions/%d/drag-items/%d/%s".formatted(ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getId(), dragItem.getId(),
+                                filename);
                         assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
                     }
                 }
@@ -2562,21 +2566,18 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 assertThat(mcStatistic.getAnswerCounters()).isNotEmpty();
                 for (var counter : mcStatistic.getAnswerCounters()) {
                     log.debug("AnswerCounters: {}", counter.toString());
-                    log.debug("MultipleChoiceQuestionStatistic: {}", counter.getMultipleChoiceQuestionStatistic());
                 }
             }
             else if (statistic instanceof DragAndDropQuestionStatistic dndStatistic) {
                 assertThat(dndStatistic.getDropLocationCounters()).isNotEmpty();
                 for (var counter : dndStatistic.getDropLocationCounters()) {
                     log.debug("DropLocationCounters: {}", counter.toString());
-                    log.debug("DragAndDropQuestionStatistic: {}", counter.getDragAndDropQuestionStatistic());
                 }
             }
             else if (statistic instanceof ShortAnswerQuestionStatistic saStatistic) {
                 assertThat(saStatistic.getShortAnswerSpotCounters()).isNotEmpty();
                 for (var counter : saStatistic.getShortAnswerSpotCounters()) {
                     log.debug("ShortAnswerSpotCounters: {}", counter.toString());
-                    log.debug("ShortAnswerQuestionStatistic: {}", counter.getShortAnswerQuestionStatistic());
                 }
             }
         }

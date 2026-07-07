@@ -100,11 +100,9 @@ import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerMappingReE
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSolutionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSpotReEvaluateDTO;
-import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -151,11 +149,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
-            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            Optional<ExamDateApi> examDateApi) {
+        super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -352,11 +350,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * @return a map from DTO tempID to the newly created ShortAnswerSolution entities (for mapping resolution)
      */
-    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, ShortAnswerQuestion question) {
+        List<ShortAnswerSolution> originalSolution = question.getSolutions();
         boolean recalculationNecessary = false;
         Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
-        // Only map existing solutions (id != null); new solutions have id=null and are handled separately below
+        // ids of the solutions that already exist on the question; a DTO carrying an id not in this set is a newly added solution (client-minted, question-scoped id)
+        Set<Long> originalSolutionIds = originalSolution.stream().map(ShortAnswerSolution::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Only map existing solutions (id != null); new solutions (id=null with tempID, or an id not in originalSolutionIds) are handled separately below
         Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream().filter(dto -> dto.id() != null)
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
         for (ShortAnswerSolution originalSolutionItem : originalSolution) {
@@ -384,8 +385,18 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
-                originalSolution.add(newSolution);
+                // add via the question so a fresh, question-scoped id is minted (correct mappings resolve solutions by id)
+                question.addSolution(newSolution);
                 tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
+                recalculationNecessary = true;
+            }
+            else if (!originalSolutionIds.contains(solutionDTO.id())) {
+                // a newly added solution that already carries a client-minted, question-scoped id (kept as-is so its correct mappings resolve by that id)
+                ShortAnswerSolution newSolution = new ShortAnswerSolution();
+                newSolution.setId(solutionDTO.id());
+                newSolution.setText(solutionDTO.text());
+                newSolution.setInvalid(solutionDTO.invalid());
+                originalSolution.add(newSolution);
                 recalculationNecessary = true;
             }
         }
@@ -504,7 +515,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
-        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions());
+        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion);
         recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
         recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
 
@@ -760,10 +771,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     if (newPath == null) {
                         throw new IOException("Failed to copy existing drag item file to new location for path: " + oldPath);
                     }
-                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, dragItem.getId()).toString());
                 }
                 else {
-                    saveDndDragItemPicture(dragItem, fileMap, null);
+                    saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                 }
             }
         }
@@ -840,7 +851,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Set<String> dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap, null);
+                saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
             }
             else if (newDragItemPath != null) {
                 filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
@@ -929,12 +940,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Saves the picture of a drag item without saving the drag item itself
+     * Saves the picture of a drag item without saving the drag item itself. The drag item's (question-scoped) id is used in the stored public path; the drag-and-drop question id
+     * is
+     * added to the serving URL by the client / {@code FileResource}, since the drag item id is only unique within its question.
      *
      * @param dragItem the drag item
      * @param files    all provided files
-     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id
-     *                     for drag item images
+     * @param entityId the drag item id used in the stored file path
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());

@@ -11,6 +11,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -57,6 +59,14 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonIgnore
     private QuizSubmission submission;
 
+    // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection).
+    // @JsonIgnore because this is an internal storage representation: subclasses expose the selection through their existing getters (e.g. getMappings()),
+    // preserving the REST/websocket wire format. Only drag-and-drop uses it so far; multiple-choice/short-answer still use their relational collections until their slices.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "selection")
+    @JsonIgnore
+    private SubmittedAnswerSelection selection;
+
     public Double getScoreInPoints() {
         return scoreInPoints;
     }
@@ -79,6 +89,14 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     public void setSubmission(QuizSubmission quizSubmission) {
         this.submission = quizSubmission;
+    }
+
+    protected SubmittedAnswerSelection getSelection() {
+        return selection;
+    }
+
+    protected void setSelection(SubmittedAnswerSelection selection) {
+        this.selection = selection;
     }
 
     /**

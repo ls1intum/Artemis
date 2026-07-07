@@ -1,67 +1,60 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A ShortAnswerSpotCounter.
+ * A ShortAnswerSpotCounter counts, for one spot of a {@link ShortAnswerQuestion}, how often it was answered correctly (rated / unrated).
+ * <p>
+ * It is no longer a JPA entity in the {@code quiz_statistic_counter} table: short-answer statistics counters are now stored as a JSON list on {@link ShortAnswerQuestionStatistic}
+ * (the {@code quiz_statistic.counters} column). This eliminates the eager {@code @OneToMany} counter fan-out when loading a question statistic. It references its spot by the
+ * spot's question-scoped id. Mirrors {@link DropLocationCounter}.
  */
-@Entity
-@DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpotCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<ShortAnswerQuestionStatistic, ShortAnswerSpot, ShortAnswerQuestion> {
+public class ShortAnswerSpotCounter {
 
-    @ManyToOne
-    @JsonIgnore
-    private ShortAnswerQuestionStatistic shortAnswerQuestionStatistic;
+    @JsonProperty("spotId")
+    private Long spotId;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
-    private ShortAnswerSpot spot;
+    @JsonProperty("ratedCounter")
+    private Integer ratedCounter = 0;
 
-    public ShortAnswerSpot getSpot() {
-        return spot;
+    @JsonProperty("unRatedCounter")
+    private Integer unRatedCounter = 0;
+
+    public ShortAnswerSpotCounter() {
     }
 
-    public void setSpot(ShortAnswerSpot shortAnswerSpot) {
-        this.spot = shortAnswerSpot;
+    public ShortAnswerSpotCounter(Long spotId) {
+        this.spotId = spotId;
     }
 
-    public ShortAnswerQuestionStatistic getShortAnswerQuestionStatistic() {
-        return shortAnswerQuestionStatistic;
+    public Long getSpotId() {
+        return spotId;
     }
 
-    public void setShortAnswerQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
-        this.shortAnswerQuestionStatistic = shortAnswerQuestionStatistic;
+    public void setSpotId(Long spotId) {
+        this.spotId = spotId;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionStatistic(ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
-        setShortAnswerQuestionStatistic(shortAnswerQuestionStatistic);
+    public Integer getRatedCounter() {
+        return ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public ShortAnswerSpot getQuizQuestionComponent() {
-        return getSpot();
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionComponent(ShortAnswerSpot shortAnswerSpot) {
-        setSpot(shortAnswerSpot);
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override
     public String toString() {
-        return "ShortAnswerSpotCounter{" + "id=" + getId() + "}";
+        return "ShortAnswerSpotCounter{" + "spotId=" + spotId + ", ratedCounter=" + ratedCounter + ", unRatedCounter=" + unRatedCounter + "}";
     }
 }

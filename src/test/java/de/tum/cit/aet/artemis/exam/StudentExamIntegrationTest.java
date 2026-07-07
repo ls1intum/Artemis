@@ -1544,7 +1544,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
                 dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
-                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.addMappings(dndMapping);
                 submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
@@ -1553,8 +1553,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
                 shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
-                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
                 submittedAnswer.setQuizQuestion(shortAnswerQuestion);
+                submittedAnswer.addSubmittedTexts(shortAnswerSubmittedText);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
             else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
@@ -3209,8 +3209,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
 
             DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
-            changedAnswer.getMappings().add(changedMapping);
             changedAnswer.setQuizQuestion(dragAndDropQuestion);
+            changedAnswer.addMappings(changedMapping);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedMapping;
@@ -3222,8 +3222,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
 
             ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
-            changedAnswer.getSubmittedTexts().add(changedText);
             changedAnswer.setQuizQuestion(shortAnswerQuestion);
+            changedAnswer.addSubmittedTexts(changedText);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedText;

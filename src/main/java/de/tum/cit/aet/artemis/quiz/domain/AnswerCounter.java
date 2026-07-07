@@ -1,67 +1,60 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A AnswerCounter.
+ * An AnswerCounter counts, for one answer option of a {@link MultipleChoiceQuestion}, how often it was selected (rated / unrated).
+ * <p>
+ * It is no longer a JPA entity in the {@code quiz_statistic_counter} table: multiple-choice statistics counters are now stored as a JSON list on
+ * {@link MultipleChoiceQuestionStatistic} (the {@code quiz_statistic.counters} column). This eliminates the eager {@code @OneToMany} counter fan-out when loading a question
+ * statistic. It references its answer option by the option's question-scoped id. Mirrors {@link DropLocationCounter}.
  */
-@Entity
-@DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
+public class AnswerCounter {
 
-    @ManyToOne
-    @JsonIgnore
-    private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
+    @JsonProperty("answerId")
+    private Long answerId;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
-    private AnswerOption answer;
+    @JsonProperty("ratedCounter")
+    private Integer ratedCounter = 0;
 
-    public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
-        return multipleChoiceQuestionStatistic;
+    @JsonProperty("unRatedCounter")
+    private Integer unRatedCounter = 0;
+
+    public AnswerCounter() {
     }
 
-    public void setMultipleChoiceQuestionStatistic(MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) {
-        this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
+    public AnswerCounter(Long answerId) {
+        this.answerId = answerId;
     }
 
-    public AnswerOption getAnswer() {
-        return answer;
+    public Long getAnswerId() {
+        return answerId;
     }
 
-    public void setAnswer(AnswerOption answerOption) {
-        this.answer = answerOption;
+    public void setAnswerId(Long answerId) {
+        this.answerId = answerId;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
+    public Integer getRatedCounter() {
+        return ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public AnswerOption getQuizQuestionComponent() {
-        return getAnswer();
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
     }
 
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionComponent(AnswerOption answerOption) {
-        setAnswer(answerOption);
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override
     public String toString() {
-        return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";
+        return "AnswerCounter{" + "answerId=" + answerId + ", rated=" + ratedCounter + ", unrated=" + unRatedCounter + "}";
     }
 }
