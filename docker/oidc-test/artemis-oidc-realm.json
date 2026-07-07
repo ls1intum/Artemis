@@ -1,7 +1,7 @@
 {
   "id": "artemis-oidc",
   "realm": "artemis-oidc",
-  "displayName": "TUM Login mock for local development",
+  "displayName": "Identity Provider mock for local development",
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,
