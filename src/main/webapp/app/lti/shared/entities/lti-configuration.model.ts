@@ -1,12 +1,12 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
 
-export class LtiPlatformConfiguration implements BaseEntity {
-    public id?: number;
-    public registrationId?: string;
-    public originalUrl?: string;
-    public customName?: string;
-    public clientId: string;
-    public authorizationUri: string;
-    public jwkSetUri: string;
-    public tokenUri: string;
+export interface LtiPlatformConfiguration extends BaseEntity {
+    id?: number;
+    registrationId?: string;
+    originalUrl?: string;
+    customName?: string;
+    clientId: string;
+    authorizationUri: string;
+    jwkSetUri: string;
+    tokenUri: string;
 }

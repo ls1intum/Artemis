@@ -20,7 +20,7 @@ export class CourseDescriptionFormComponent implements OnInit {
     readonly placeholder = input('');
     readonly formSubmitted = output<string>();
 
-    form: FormGroup<{ courseDescription: FormControl<string | null> }>;
+    form!: FormGroup<{ courseDescription: FormControl<string | null> }>; // built in ngOnInit()
     readonly hasBeenSubmitted = signal(false);
 
     //icons

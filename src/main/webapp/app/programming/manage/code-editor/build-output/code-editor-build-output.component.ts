@@ -46,8 +46,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     readonly rawBuildLogs = signal(new BuildLogEntryArray());
     readonly result = signal<Result | undefined>(undefined);
 
-    private resultSubscription: Subscription;
-    private submissionSubscription: Subscription;
+    private resultSubscription?: Subscription;
+    private submissionSubscription?: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;

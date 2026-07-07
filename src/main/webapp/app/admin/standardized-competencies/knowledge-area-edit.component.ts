@@ -78,7 +78,7 @@ export class KnowledgeAreaEditComponent {
     readonly onClose = output<void>();
 
     /** The reactive form for editing knowledge area properties */
-    form: FormGroup<KnowledgeAreaForm>;
+    form!: FormGroup<KnowledgeAreaForm>; // initialized by the constructor effect() from the required knowledgeArea input
 
     /** Icons */
     protected readonly faPencil = faPencil;

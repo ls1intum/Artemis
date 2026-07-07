@@ -294,7 +294,13 @@ export default tseslint.config(
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-console': 'error',
-            'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
+            'no-restricted-globals': [
+                'error',
+                {
+                    name: 'globalThis',
+                    message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.',
+                },
+            ],
         },
     },
     // Require every Promise to be handled in production code. A floating Promise silently swallows rejections
@@ -410,7 +416,13 @@ export default tseslint.config(
     },
     {
         files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
+        plugins: {
+            localRules: localRulesPlugin,
+        },
         rules: {
+            // Legacy Angular decorators (@Input/@Output/@ViewChild/@ContentChild/...) are banned in test code too —
+            // test helpers, stubs, and mocks must use signal-based APIs (input()/output()/viewChild()/contentChild()).
+            'localRules/enforce-signal-apis': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
@@ -431,7 +443,11 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/**/mock-*.ts'],
+        // The client test infrastructure under src/test/javascript (helpers, stubs, mocks) is TypeScript and must be
+        // parsed so ESLint actually lints it — otherwise files match no parser config and are silently "File ignored".
+        // Together with the enforce-signal-apis rule in the block above and `pnpm lint` targeting src/test/javascript,
+        // this makes the legacy-decorator ban real for test code. Rules stay relaxed as befits test doubles.
+        files: ['src/test/javascript/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {

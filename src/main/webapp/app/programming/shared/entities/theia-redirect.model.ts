@@ -1,8 +1,8 @@
-export class TheiaRedirectProps {
-    public appDef: string;
-    public gitUri: string;
-    public gitUser?: string;
-    public gitMail?: string;
-    public artemisToken: string;
-    public artemisUrl: string;
+export interface TheiaRedirectProps {
+    appDef: string;
+    gitUri: string;
+    gitUser?: string;
+    gitMail?: string;
+    artemisToken: string;
+    artemisUrl: string;
 }

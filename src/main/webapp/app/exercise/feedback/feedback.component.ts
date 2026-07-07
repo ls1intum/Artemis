@@ -154,7 +154,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     readonly badge = signal<Badge | undefined>(undefined);
 
-    feedbackItemService: FeedbackItemService;
+    feedbackItemService!: FeedbackItemService; // set in ngOnInit() (selected based on exercise type)
     readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
     /**
      * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes

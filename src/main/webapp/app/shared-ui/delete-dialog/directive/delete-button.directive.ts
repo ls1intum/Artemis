@@ -32,6 +32,7 @@ export class DeleteButtonDirective implements OnInit {
     delete = output<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
+    // Optional (not `!`): unset for icon-only variants (PrimeNG path), where applyActionLabel guards each read.
     deleteTextSpan?: HTMLElement;
     private callerProvidedAriaLabel = false;
 

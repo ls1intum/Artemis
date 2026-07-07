@@ -9,10 +9,12 @@ export type OperationName =
     | 'deleteOldSubmissionVersions'
     | 'deleteOldFeedback';
 
+/** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
-    name: OperationName;
+    name!: OperationName;
+    // Optional (not `!`): clearing a picker sets these to undefined so validateDates can invalidate the row.
     deleteFrom: dayjs.Dayjs | undefined;
     deleteTo: dayjs.Dayjs | undefined;
     lastExecuted: dayjs.Dayjs | undefined;
-    datesValid: WritableSignal<boolean>;
+    datesValid!: WritableSignal<boolean>;
 }

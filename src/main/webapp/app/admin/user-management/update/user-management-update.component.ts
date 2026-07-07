@@ -135,13 +135,13 @@ export class UserManagementUpdateComponent implements OnInit {
     };
 
     /** The reactive form for editing user properties */
-    editForm: FormGroup;
+    editForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Original login for detecting changes */
     private oldLogin?: string;
 
     /** Whether Jenkins profile is active */
-    private isJenkins: boolean;
+    private isJenkins = false;
 
     /**
      * Initializes the component by loading user data, authorities, languages, and groups.

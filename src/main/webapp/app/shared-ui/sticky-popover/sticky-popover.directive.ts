@@ -12,9 +12,9 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
 
     override triggers: string;
     override container: string;
-    canClosePopover: boolean;
+    canClosePopover = false;
 
-    private closeTimeout: ReturnType<typeof setTimeout>;
+    private closeTimeout?: ReturnType<typeof setTimeout>;
     private clickInPopover = false;
 
     override toggle(): void {

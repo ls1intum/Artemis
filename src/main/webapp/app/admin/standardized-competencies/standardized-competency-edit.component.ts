@@ -93,7 +93,7 @@ export class StandardizedCompetencyEditComponent {
     readonly onClose = output<void>();
 
     /** The reactive form for editing competency properties */
-    protected form: FormGroup<StandardizedCompetencyForm>;
+    protected form!: FormGroup<StandardizedCompetencyForm>; // initialized by the constructor effect() from the required competency input
 
     /** Icons */
     protected readonly faPencil = faPencil;

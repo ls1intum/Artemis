@@ -92,7 +92,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     initialLoadSubscription?: Subscription;
 
     /** Current router URL used for navigation */
-    routerLink: string;
+    routerLink!: string; // set in ngOnInit() from router.url
 
     // Font Awesome icons for the UI
     protected readonly faTimes = faTimes;

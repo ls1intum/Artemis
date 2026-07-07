@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, contentChild, input } from '@angular/core';
 import { KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 @Component({
@@ -7,8 +7,8 @@ import { KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-compe
     standalone: true,
 })
 export class KnowledgeAreaTreeStubComponent {
-    @Input() dataSource: KnowledgeAreaTreeDataSource;
+    dataSource = input<KnowledgeAreaTreeDataSource>({ data: [] });
 
-    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
-    @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;
+    knowledgeAreaTemplate = contentChild<TemplateRef<any>>('knowledgeAreaTemplate');
+    competencyTemplate = contentChild<TemplateRef<any>>('competencyTemplate');
 }

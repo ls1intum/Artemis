@@ -30,8 +30,8 @@ export class StudentExamDetailTableRowComponent {
         [exerciseId: number]: number;
     }>();
 
-    courseId: number;
-    studentParticipation: StudentParticipation;
+    courseId!: number; // set via effect from the required course input
+    studentParticipation?: StudentParticipation;
     readonly submission = signal<Submission | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
     openingAssessmentEditorForNewSubmission = false;

@@ -51,7 +51,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     set complaintResponse(value: ComplaintResponse) {
         this._complaintResponse.set(value);
     }
-    complaintResponseUpdate: ComplaintResponseUpdateDTO;
+    complaintResponseUpdate!: ComplaintResponseUpdateDTO; // instantiated before use in each lock-refresh / resolve flow (ngOnInit and respondToComplaint)
     ComplaintType = ComplaintType;
     readonly isLoading = signal(false);
     readonly showLockDuration = signal(false);

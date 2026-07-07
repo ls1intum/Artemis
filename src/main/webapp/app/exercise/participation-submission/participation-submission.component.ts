@@ -72,7 +72,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly isLoading = signal(true);
     readonly resultIdToBuildJobIdMap = signal<{ [key: string]: string } | undefined>(undefined);
 
-    eventSubscriber: Subscription;
+    eventSubscriber?: Subscription;
 
     readonly faTrash = faTrash;
 

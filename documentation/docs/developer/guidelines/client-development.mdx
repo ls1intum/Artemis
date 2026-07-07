@@ -86,6 +86,7 @@ Key principles:
 - For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
 - Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
 - In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
+- Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -331,6 +332,51 @@ The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `comput
 
 Use **undefined**. **Never** use `null`.
 
+### TypeScript strict mode
+
+The client compiles with TypeScript [`"strict": true`](https://www.typescriptlang.org/tsconfig#strict) (plus `noImplicitReturns`, `noImplicitOverride`, `noUnusedLocals`, and `noFallthroughCasesInSwitch`). Among other things, `strict` enables `strictPropertyInitialization`, so every class field must be definitely assigned. When you add a field, resolve the initialization requirement **deliberately** — do not reflexively silence it with a definite-assignment assertion (`!`), which hides rather than answers the question of whether the field can be `undefined`.
+
+Pick the first option that fits:
+
+1. **Give it a real default** when one exists (preferred — it also removes latent `undefined` access):
+
+    ```ts
+    items: Foo[] = [];        // not: items!: Foo[];
+    isLoading = false;        // not: isLoading!: boolean;
+    counts = new Map<string, number>();
+    ```
+
+    Exception: if code relies on `if (this.items)` / `this.items?.` to mean "not loaded yet", defaulting to an empty array (which is truthy) changes that behavior — make it optional instead.
+
+2. **Make it optional (`?`)** when the field may legitimately be absent and its reads already tolerate `undefined`:
+
+    ```ts
+    private sub?: Subscription; // assigned in ngOnInit(), torn down with this.sub?.unsubscribe()
+    ```
+
+3. **Use a definite-assignment assertion (`!`) only when the value is guaranteed to be assigned before it is read** — by an Angular lifecycle hook, dependency injection, a required input, a `viewChild`, or a route resolver. Always add a short inline comment stating why:
+
+    ```ts
+    course!: Course; // set in ngOnInit() from the route data
+    @ViewChild(Editor) editor!: EditorComponent; // available after view init
+    ```
+
+    A bare `!` without a justifying comment is not acceptable.
+
+**DTO / model types.** A data-transfer object that is only ever populated by deserialization of a server response (never `new`-ed, no methods, no `instanceof` checks) should be declared as an `interface`, not a `class`. Interfaces carry no initialization requirement and model a server payload honestly:
+
+    ```ts
+    // Do
+    export interface GradeStepsDTO {
+        title: string;
+        gradeType: GradeType;
+        gradeSteps: GradeStepDTO[];
+        maxPoints?: number; // optional stays optional
+    }
+    ```
+
+    Model classes that are actually instantiated or carry behavior (methods, static factories) stay classes; their externally-populated fields use `!` together with a class-level comment noting the fields are assigned after construction.
+
 ### General Assumptions
 
 - Consider objects like Nodes, Symbols, etc. as immutable outside the component that created them. Do not change them.
@@ -402,14 +448,18 @@ Do this:
 
 {/* prettier-ignore */}
 ```html
-<fa-icon [icon]="'times'"></fa-icon>
-<span>Text</span>
+<fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
 ```
 
 Don't do one of these or any other combination of whitespaces:
 
 ```html
-<fa-icon [icon]="'times'"></fa-icon><span> Text</span>
+<fa-icon [icon]="'times'"></fa-icon><span>Text</span>
+
+<fa-icon [icon]="'times'"></fa-icon><span> Text</span> <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
+
+<fa-icon [icon]="'times'"></fa-icon>
+<span> Text</span>
 ```
 
 Ignoring this will lead to inconsistent spacing between icons and text.

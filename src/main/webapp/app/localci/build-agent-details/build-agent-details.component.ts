@@ -103,19 +103,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningJobsWebsocketSubscription?: Subscription;
 
     /** Subscription for initial running jobs REST API load */
-    runningJobsSubscription: Subscription;
+    runningJobsSubscription?: Subscription;
 
     /** Subscription for initial agent details REST API load */
-    agentDetailsSubscription: Subscription;
+    agentDetailsSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
-    buildDurationInterval: ReturnType<typeof setInterval>;
+    buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
 
     /** Subscription for route query parameter changes */
-    routeParamsSubscription: Subscription;
+    routeParamsSubscription!: Subscription; // set in ngOnInit()
 
     /** WebSocket channel for receiving agent-specific updates (constructed from base topic + agent name) */
-    agentDetailsWebsocketChannel: string;
+    agentDetailsWebsocketChannel!: string; // set in ngOnInit() before the websocket subscription reads it
 
     /** Base WebSocket topic for agent updates */
     readonly agentUpdatesChannel = '/topic/admin/build-agent';
@@ -145,7 +145,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     // Search and filter configuration
     /** Subscription for debounced search input handling */
-    searchSubscription: Subscription;
+    searchSubscription!: Subscription; // set in ngOnInit()
 
     /** Subject for triggering debounced search requests for finished build jobs */
     finishedJobsSearchTrigger = new Subject<void>();
