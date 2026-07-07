@@ -1,0 +1,153 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Quiz JSON Persistence Migration
+
+## Motivation
+
+A `QuizExercise` used to load its questions together with a fan-out of eager `@OneToMany` child tables: drop locations, drag items, answer options, short-answer spots / solutions / mappings, the submission selections, and the per-component statistics counters. Loading one quiz with many drag-and-drop questions produced a Cartesian-product join blow-up and, on the clustered deployment, a class of stale-collection / id-regeneration bugs (issues #12574, #12584).
+
+This migration **collapses each of those child tables into a single JSON column** on the row that owns it. There are exactly three new columns:
+
+| New column | Owner entity/table | Replaces |
+| --- | --- | --- |
+| `quiz_question.content` | every `QuizQuestion` | the question's authored "correct answer" child tables |
+| `submitted_answer.selection` | every `SubmittedAnswer` | the submission's selected-answer child tables / join table |
+| `quiz_statistic.counters` | each `QuizQuestionStatistic` | the per-component rows in `quiz_statistic_counter` |
+
+The child data is stored as plain POJOs serialized to JSON via Hibernate's native `@JdbcTypeCode(SqlTypes.JSON)` (the same mechanism already used by `QuizQuestionProgress.progress`, `ExamRoom.seats`, etc.). The public getters (`getDropLocations()`, `getAnswerOptions()`, `getSelectedOptions()`, `getSubmittedTexts()`, …) keep their exact signatures and resolve the JSON on access, so the REST/websocket wire format is unchanged.
+
+The migration lives in `src/main/resources/config/liquibase/changelog/20260707080319_changelog.xml`.
+
+## Overview: which table collapses into which column
+
+```
+quiz_question.content  (one JSON object per question, discriminated by "type")
+├── drag-and-drop   ← drop_location + drag_item + drag_and_drop_mapping (question-owned rows)
+├── short-answer    ← short_answer_spot + short_answer_solution + short_answer_mapping
+└── multiple-choice ← answer_option
+
+submitted_answer.selection  (one JSON object per submitted answer, discriminated by "type")
+├── drag-and-drop   ← drag_and_drop_mapping (submission-owned rows)
+├── short-answer    ← short_answer_submitted_text
+└── multiple-choice ← multiple_choice_submitted_answer_selected_options (join table)
+
+quiz_statistic.counters  (one JSON array per question statistic)
+├── drag-and-drop   ← quiz_statistic_counter rows, discriminator 'DD'
+├── short-answer    ← quiz_statistic_counter rows, discriminator 'SA'
+└── multiple-choice ← quiz_statistic_counter rows, discriminator 'AC'
+```
+
+Note that `drag_and_drop_mapping` was **dual-purpose**: it stored both a question's correct mappings (via `question_id`) and a submission's mappings (via `submitted_answer_id`). It is split — the question side goes into `content.correctMappings` (id-based, with its own id), the submission side into `selection.mappings` (identity-less value pairs).
+
+## JSON schemas
+
+Every stored object matches a POJO in `de.tum.cit.aet.artemis.quiz.domain`. The `content` and `selection` values are polymorphic and carry a `"type"` discriminator (`drag-and-drop` / `short-answer` / `multiple-choice`), matching the `@JsonTypeInfo` / `@JsonSubTypes` on `QuizQuestionContent` and `SubmittedAnswerSelection`. The `counters` value is a plain array (its type is fixed by the owning statistic subtype, so it needs no discriminator).
+
+Component ids inside the JSON are **question-scoped** (unique only within one question) and are the verbatim old primary keys after migration; new components get `max(existing ids)+1` minted server-side.
+
+### `quiz_question.content`
+
+```jsonc
+// drag-and-drop
+{ "type": "drag-and-drop",
+  "dropLocations":   [ { "id": 1, "posX": 10.0, "posY": 10.0, "width": 20.0, "height": 20.0, "invalid": false } ],
+  "dragItems":       [ { "id": 2, "pictureFilePath": null, "text": "A", "invalid": false } ],
+  "correctMappings": [ { "id": 3, "dragItemId": 2, "dropLocationId": 1, "invalid": false } ] }
+
+// short-answer
+{ "type": "short-answer",
+  "spots":           [ { "id": 1, "spotNr": 0, "width": 30, "invalid": false } ],
+  "solutions":       [ { "id": 2, "text": "is", "invalid": false } ],
+  "correctMappings": [ { "id": 3, "spotId": 1, "solutionId": 2, "invalid": false } ] }
+
+// multiple-choice
+{ "type": "multiple-choice",
+  "answerOptions":   [ { "id": 1, "text": "A", "hint": "h", "explanation": "e", "isCorrect": true, "invalid": false } ] }
+```
+
+### `submitted_answer.selection`
+
+```jsonc
+{ "type": "drag-and-drop",   "mappings":       [ { "dragItemId": 2, "dropLocationId": 1 } ] }
+{ "type": "short-answer",    "submittedTexts": [ { "spotId": 1, "text": "is", "isCorrect": true } ] }
+{ "type": "multiple-choice", "selectedOptionIds": [ 1, 4 ] }
+```
+
+### `quiz_statistic.counters`
+
+```jsonc
+// drag-and-drop statistic
+[ { "dropLocationId": 1, "ratedCounter": 5, "unRatedCounter": 2 } ]
+// short-answer statistic
+[ { "spotId": 1, "ratedCounter": 5, "unRatedCounter": 2 } ]
+// multiple-choice statistic
+[ { "answerId": 1, "ratedCounter": 5, "unRatedCounter": 2 } ]
+```
+
+## Migration steps
+
+The changelog runs three phases. The `content` / `selection` columns are added once (steps 1a–1d), the `counters` column once (steps 5a–5b); the per-type backfills reuse them.
+
+| Steps | What |
+| --- | --- |
+| 1a–1d | Add `quiz_question.content` and `submitted_answer.selection` (`jsonb` on PostgreSQL, `json` on MySQL/H2) |
+| 2, 3 | Backfill drag-and-drop `content` and `selection` |
+| 4 | Drop the drop-location counter FK + unique index on `quiz_statistic_counter` |
+| 5 | Add `quiz_statistic.counters` |
+| 6 | Backfill drag-and-drop `counters` |
+| 7–10 | Short-answer: drop spot-counter FK/index, backfill `content` / `selection` / `counters` |
+| 11–14 | Multiple-choice: drop answer-counter FK/index, backfill `content` / `selection` / `counters` |
+| 15–17 | **Cleanup (destructive):** delete dead counter rows, drop unused `quiz_statistic_counter` columns, drop the legacy tables |
+
+Each dialect has its own changeset: PostgreSQL uses `jsonb_build_object` / `jsonb_agg` (with `ORDER BY`), MySQL uses `JSON_OBJECT` / `JSON_ARRAYAGG`. Backfills are filtered by the row discriminator (`'DD'` / `'SA'` / `'MC'`) so each row gets exactly the right shape, and use `COALESCE(…, '[]')` so a question with no components still gets a valid (empty) array.
+
+## Cleanup: what is dropped and what is kept
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Steps 15–17 are destructive and irreversible.</strong> They delete the source rows and drop the legacy tables, so the JSON backfills become the single source of truth. Run the migration against a copy of the production database and verify a sample of migrated quizzes <em>before</em> the real cutover — especially on MySQL, where the backfill SQL is not covered by the test suite (see Caveats).
+</Callout>
+
+**Tables dropped (step 17)** — now fully represented in `content` / `selection`:
+
+`drag_and_drop_mapping`, `drag_item`, `drop_location`, `short_answer_mapping`, `short_answer_spot`, `short_answer_solution`, `short_answer_submitted_text`, `answer_option`, `multiple_choice_submitted_answer_selected_options`.
+
+They are dropped in dependency order (referencing tables first) so no foreign key blocks the drop. The foreign keys these tables held into `quiz_question` / `submitted_answer` are removed together with each table; the `quiz_statistic_counter` foreign keys into `drop_location` / `short_answer_spot` / `answer_option` were already removed in steps 4 / 7 / 11.
+
+**`quiz_statistic_counter` columns dropped (step 16)** — only ever used by the folded counter types:
+
+`drag_and_drop_question_statistic_id`, `short_answer_question_statistic_id`, `multiple_choice_question_statistic_id`, `drop_location_id`, `spot_id`, `answer_id`, plus their foreign keys and indexes.
+
+**Rows deleted (step 15):** `quiz_statistic_counter` rows with discriminator `'DD'`, `'SA'`, `'AC'`. Their data now lives in `quiz_statistic.counters`, and — because `DropLocationCounter` / `ShortAnswerSpotCounter` / `AnswerCounter` are no longer JPA entities — those discriminators no longer map to anything, so the rows must be removed before their columns are dropped.
+
+<Callout variant={CalloutVariant.info}>
+  <strong>`quiz_statistic` and `quiz_statistic_counter` are intentionally kept.</strong> `QuizPointStatistic` and its `PointCounter` (discriminator <code>'PC'</code>, columns <code>points</code> + <code>quiz_point_statistic_id</code>) are still relational — point statistics were <em>not</em> folded into JSON. After cleanup, <code>quiz_statistic_counter</code> holds only <code>'PC'</code> rows, and <code>quiz_statistic</code> holds the question statistics (with the new <code>counters</code> column) plus the point statistics.
+</Callout>
+
+## Correctness guarantees
+
+- **Keys match the POJOs.** Every backfilled JSON key equals the `@JsonProperty` / field name on the target POJO, and every POJO field is backfilled, so nothing is silently dropped on read (`FAIL_ON_UNKNOWN_PROPERTIES` is disabled globally, which makes key correctness critical).
+- **Ids are preserved.** Old primary keys become the question-scoped ids inside the JSON, so existing submissions (which reference drag items / spots / options by id) and statistics counters keep resolving after migration.
+- **Discriminator-scoped.** Each backfill only touches rows of its own question type, so the three subtypes that share `quiz_question` / `submitted_answer` / `quiz_statistic` never cross-contaminate.
+- **Validated on PostgreSQL.** The full changelog (backfills + cleanup) runs on every server-test context load against Testcontainers PostgreSQL, and the quiz + exam + statistics suites pass against the resulting schema.
+
+## Caveats
+
+- **MySQL is not covered by the test suite** (tests use PostgreSQL via Testcontainers). Two MySQL-specific behaviors to validate on a staging copy before cutover:
+  - *Booleans*: `x = TRUE` produces the JSON numbers `1` / `0` (not `true` / `false`). Jackson coerces them back to `Boolean` on read, so this is functionally correct, but the on-disk representation differs from PostgreSQL.
+  - *Ordering*: MySQL `JSON_ARRAYAGG` does not support `ORDER BY` and does not guarantee element order. This is irrelevant for drop locations / drag items / spots / solutions (matched by id or `spotNr`), but the authored **display order of multiple-choice answer options** may not be preserved on MySQL for non-randomized questions (scoring is unaffected; PostgreSQL preserves the order via `ORDER BY answer_options_order`).
+- **H2 is not backfilled.** The columns are added on H2, but there are no H2 backfill changesets — H2 is only used for ephemeral, freshly-created schemas that never contain pre-migration relational data.
+- **Irreversible.** Once step 17 drops the tables there is no rollback path for the child data; the JSON columns are authoritative.
+
+## Differences from the earlier `feature/quiz-json-migration` branch
+
+This migration is adapted from the abandoned `feature/quiz-json-migration` branch (`20240814091201_changelog.xml`), with the following intentional differences:
+
+| Aspect | Old branch | This migration |
+| --- | --- | --- |
+| Statistics location | folded **all** statistics, incl. point stats, into `quiz_question.statistics` + `quiz_exercise.statistics` (2 extra columns) | keeps point statistics relational; per-question counters go into `quiz_statistic.counters` (1 column) |
+| Tables fully removable | could drop `quiz_statistic` **and** `quiz_statistic_counter` entirely | keeps both (needed by `QuizPointStatistic` / `PointCounter`); drops only the folded rows/columns |
+| JSON keys | terse abbreviations (`locs`, `items`, `dlid`, `diid`, `txt`, `pr`/`pu`…) | descriptive names matching the POJO fields (`dropLocations`, `dragItemId`, `ratedCounter`…) |
+| Correct-mapping ids | not stored | stored (`id`), so re-evaluation can diff mappings by id |
+| Trailing-comma bug | present in the correct-mapping `JSON_OBJECT` / `json_build_object` (invalid SQL on both dialects) | fixed |
+| Table drops | present but **commented out** (never executed) | executed in steps 15–17 |
