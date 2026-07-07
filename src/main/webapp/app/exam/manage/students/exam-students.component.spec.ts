@@ -430,8 +430,8 @@ describe('ExamStudentsComponent', () => {
                 of(
                     new HttpResponse({
                         body: {
-                            notFoundStudents: [{ login: 'missing' }],
-                            rejectedStaffUsers: [{ login: 'staff' }],
+                            notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                            rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
                         },
                     }),
                 ),

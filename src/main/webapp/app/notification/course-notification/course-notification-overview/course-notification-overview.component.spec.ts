@@ -498,14 +498,14 @@ describe('CourseNotificationOverviewComponent', () => {
         it('should select a new preset when presetSelected is called', () => {
             componentAsAny.presetSelected(2);
 
-            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 2, mockNotificationSettingPresets[0]);
+            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 2, mockNotificationSettingPresets[1]);
             expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[1]);
         });
 
         it('should set the selected preset to undefined when custom settings are selected', () => {
             componentAsAny.presetSelected(0);
 
-            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 0, mockNotificationSettingPresets[0]);
+            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 0, undefined);
             expect(componentAsAny.selectedSettingPreset()).toBeUndefined();
         });
 

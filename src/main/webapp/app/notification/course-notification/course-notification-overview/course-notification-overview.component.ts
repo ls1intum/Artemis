@@ -278,9 +278,11 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * @param presetTypeId - The ID of the selected preset (0 for custom settings)
      */
     protected presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
+        const newPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId);
 
-        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, newPreset);
+
+        this.selectedSettingPreset.set(newPreset);
     }
 
     /**
