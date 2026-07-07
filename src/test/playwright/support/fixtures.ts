@@ -224,7 +224,10 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                     // stalls (an intermittent TLS/module-fetch failure behind the multi-node HTTPS LB)
                     // the `load` event may never fire, and waiting on it would hang the navigation until
                     // the per-test timeout. The `#account-menu` wait below is the real recovery signal.
-                    await page.reload({ waitUntil: 'domcontentloaded' });
+                    // Catch a throwing reload (a transient navigation abort / "frame was detached" can
+                    // make reload() itself reject) so it counts as a failed attempt and the loop keeps
+                    // retrying, instead of escaping to the outer catch and skipping the remaining tries.
+                    await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
                     attached = await page
                         .locator('#account-menu')
                         .waitFor({ state: 'attached', timeout: 10_000 })
