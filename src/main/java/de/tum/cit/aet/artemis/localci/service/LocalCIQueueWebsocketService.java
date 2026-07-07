@@ -161,8 +161,9 @@ public class LocalCIQueueWebsocketService {
         var filteredBuildAgentSummary = new ArrayList<BuildAgentInformation>(); // make list mutable in case it is not
         for (BuildAgentInformation agent : buildAgentSummary) {
             var runningJobs = removeUnnecessaryInformation(agent.runningBuildJobs());
-            filteredBuildAgentSummary.add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
-                    agent.status(), null, null, agent.pauseAfterConsecutiveBuildFailures()));
+            filteredBuildAgentSummary
+                    .add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs, agent.status(), null,
+                            null, agent.pauseAfterConsecutiveBuildFailures(), agent.numberOfCurrentGenerationSessions(), agent.maxNumberOfConcurrentGenerationSessions()));
         }
         return filteredBuildAgentSummary;
     }

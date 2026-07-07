@@ -8,6 +8,7 @@
             "memberAddress": "Member Address",
             "maxNumberOfConcurrentBuildJobs": "Max",
             "numberOfCurrentBuildJobs": "Current",
+            "generationSessions": "AI Sessions",
             "runningBuildJobs": "Running Build Jobs",
             "status": "Status",
             "startDate": "Start Date",

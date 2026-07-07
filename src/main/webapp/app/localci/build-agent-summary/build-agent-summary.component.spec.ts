@@ -102,6 +102,8 @@ describe('BuildAgentSummaryComponent', () => {
             buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
+            numberOfCurrentGenerationSessions: 1,
+            maxNumberOfConcurrentGenerationSessions: 3,
             status: BuildAgentStatus.ACTIVE,
         },
         {
@@ -153,6 +155,17 @@ describe('BuildAgentSummaryComponent', () => {
         expect(mockBuildAgentsService.getBuildAgentSummary).toHaveBeenCalled();
         expect(component.buildAgents()).toEqual(mockBuildAgents);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
+    });
+
+    it('should render the active/max generation-session count per agent', () => {
+        mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        const text = fixture.nativeElement.textContent;
+        // Agent 1 hosts 1 of 3 generation sessions; agent 2 has no session fields, so it renders the opt-out default 0 / 0.
+        expect(text).toContain('1 / 3');
+        expect(text).toContain('0 / 0');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {

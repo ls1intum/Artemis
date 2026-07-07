@@ -8,6 +8,7 @@
             "memberAddress": "Agentenadresse",
             "maxNumberOfConcurrentBuildJobs": "Max",
             "numberOfCurrentBuildJobs": "Aktuell",
+            "generationSessions": "KI-Sitzungen",
             "runningBuildJobs": "Laufende Build Jobs",
             "status": "Status",
             "startDate": "Startdatum",

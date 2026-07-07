@@ -50,6 +50,11 @@
                     <span>{{ agent.maxNumberOfConcurrentBuildJobs }}</span>
                 </div>
                 <div>
+                    <span class="font-bold" jhiTranslate="artemisApp.buildAgents.generationSessions"></span>
+                    <span class="font-bold">:</span>
+                    <span>{{ agent.numberOfCurrentGenerationSessions ?? 0 }} / {{ agent.maxNumberOfConcurrentGenerationSessions ?? 0 }}</span>
+                </div>
+                <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
                     <span class="font-bold">:</span>
                     <span>{{ agent.buildAgentDetails?.gitRevision }}</span>

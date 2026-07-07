@@ -144,7 +144,13 @@ public class SpecFidelityCriticService {
 
     /**
      * As {@link #critique(String, String, List)}, but the token usage of the critic's single LLM call is reported to {@code usageSink} so it is counted against the generation run
-     * instead of going unrecorded. Pass {@code null} to skip token accounting (e.g. in isolated tests).
+     * instead of going unrecorded.
+     *
+     * @param brief            the instructor's brief to critique coverage against
+     * @param problemStatement the produced problem statement
+     * @param testNames        the task-bound test names produced for the exercise
+     * @param usageSink        receives the critic's {@code ChatResponse} for token accounting; {@code null} skips it (e.g. in isolated tests)
+     * @return the advisory spec-fidelity report (never affects acceptance)
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, @Nullable Consumer<ChatResponse> usageSink) {
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));

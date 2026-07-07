@@ -90,7 +90,7 @@ class InteractiveSandboxRelayRoundTripTest {
         client.registerResponseListener();
 
         queueProcessingService = mock(SharedQueueProcessingService.class);
-        handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, queueProcessingService);
+        handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, queueProcessingService, new GenerationSessionState(), mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxConcurrentSessions", 2);
         handler.registerRequestListener();
@@ -255,7 +255,8 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void generationHostingDisabled_whenCapIsZero_doesNotEvenSubscribe() {
         // Opt-in placement: an agent with the cap at 0 never hosts a session, so it must not subscribe to the request topic or allocate a worker pool.
-        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(localSandbox, mock(DistributedDataAccessService.class), queueProcessingService);
+        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(localSandbox, mock(DistributedDataAccessService.class), queueProcessingService,
+                new GenerationSessionState(), mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(disabled, "maxConcurrentSessions", 0);
 
@@ -315,7 +316,8 @@ class InteractiveSandboxRelayRoundTripTest {
         RemoteInteractiveSandboxClient client = new RemoteInteractiveSandboxClient(clientAccess);
         client.registerResponseListener();
 
-        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, mock(SharedQueueProcessingService.class));
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, mock(SharedQueueProcessingService.class),
+                new GenerationSessionState(), mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
         ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxConcurrentSessions);
         handler.registerRequestListener();
@@ -327,7 +329,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static BuildAgentInformation idleAgent(String name, int currentJobs, int maxJobs) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0);
+        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0);
     }
 
     private static byte[] tarWithSingleFile(String name, String content) {

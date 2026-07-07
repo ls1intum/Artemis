@@ -51,6 +51,8 @@ public class BuildAgentInformationService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final GenerationSessionState generationSessionState;
+
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
@@ -58,11 +60,12 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, GenerationSessionState generationSessionState) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.generationSessionState = generationSessionState;
     }
 
     /**
@@ -228,7 +231,7 @@ public class BuildAgentInformationService {
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs);
+                pauseAfterConsecutiveFailedJobs, generationSessionState.activeSessions(), generationSessionState.maxSessions());
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

@@ -68,6 +68,12 @@ public class InteractiveSandboxRelayHandler {
     /** Consulted so a paused/draining agent sheds generation load too: pausing a build agent stops it accepting new sessions, not just new CI build jobs. */
     private final SharedQueueProcessingService sharedQueueProcessingService;
 
+    /** Neutral seam this handler writes the current session load to, read back when the agent's info is assembled — so admins see generation load on the build-agent page. */
+    private final GenerationSessionState generationSessionState;
+
+    /** Triggered on session create/destroy so the broadcast agent info reflects the new session count promptly, not only on the next CI-driven refresh. */
+    private final BuildAgentInformationService buildAgentInformationService;
+
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
@@ -109,10 +115,13 @@ public class InteractiveSandboxRelayHandler {
     private ExecutorService workerExecutor;
 
     public InteractiveSandboxRelayHandler(InteractiveSandboxService interactiveSandboxService, DistributedDataAccessService distributedDataAccessService,
-            @Lazy SharedQueueProcessingService sharedQueueProcessingService) {
+            @Lazy SharedQueueProcessingService sharedQueueProcessingService, GenerationSessionState generationSessionState,
+            @Lazy BuildAgentInformationService buildAgentInformationService) {
         this.interactiveSandboxService = interactiveSandboxService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.sharedQueueProcessingService = sharedQueueProcessingService;
+        this.generationSessionState = generationSessionState;
+        this.buildAgentInformationService = buildAgentInformationService;
     }
 
     /**
@@ -128,6 +137,8 @@ public class InteractiveSandboxRelayHandler {
         }
         this.sessionPermits = new Semaphore(maxConcurrentSessions);
         this.workerExecutor = Executors.newFixedThreadPool(maxConcurrentSessions + 1, namedDaemonThreadFactory());
+        // Publish the cap (0 active) so admins see "0 / N" on an opted-in-but-idle agent, distinct from "0 / 0" on an agent that never hosts.
+        generationSessionState.update(0, maxConcurrentSessions);
         this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
         this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
         this.requestListenerId = requestsTopic.addMessageListener(request -> {
@@ -219,6 +230,7 @@ public class InteractiveSandboxRelayHandler {
             String containerId = interactiveSandboxService.createSession(request.sessionSpec());
             ownedSessions.add(containerId);
             created = true;
+            publishSessionState();
             return SandboxOpResponse.created(request.correlationId(), containerId);
         }
         finally {
@@ -299,9 +311,16 @@ public class InteractiveSandboxRelayHandler {
             // Release the session permit exactly once per owned session, even if the destroy was redundant.
             if (ownedSessions.remove(request.sessionId())) {
                 sessionPermits.release();
+                publishSessionState();
             }
         }
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+    }
+
+    /** Publishes the current session load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. */
+    private void publishSessionState() {
+        generationSessionState.update(ownedSessions.size(), maxConcurrentSessions);
+        buildAgentInformationService.updateLocalBuildAgentInformation(sharedQueueProcessingService.isPaused());
     }
 
     private static ThreadFactory namedDaemonThreadFactory() {
