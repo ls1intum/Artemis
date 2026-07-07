@@ -55,13 +55,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     readonly authenticationError = signal(false);
     readonly account = signal<User | undefined>(undefined);
-    password: string;
+    password = '';
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
     readonly needsToAcceptTerms = signal(false);
     userAcceptedTerms = false;
-    username: string;
-    credentials: Credentials;
+    username = '';
+    credentials?: Credentials;
     readonly isRegistrationEnabled = signal(false);
     readonly isPasswordLoginDisabled = signal(false);
     readonly isPasskeyEnabled = signal(false);

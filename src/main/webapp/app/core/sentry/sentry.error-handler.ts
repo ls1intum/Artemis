@@ -11,7 +11,7 @@ type Integration = ReturnType<typeof dedupeIntegration>;
 
 @Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
-    private environment: string;
+    private environment!: string; // assigned in initSentry() during app bootstrap before Sentry captures errors
     private localStorageService = inject(LocalStorageService);
 
     /**

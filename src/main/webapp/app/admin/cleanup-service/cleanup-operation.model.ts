@@ -9,10 +9,11 @@ export type OperationName =
     | 'deleteOldSubmissionVersions'
     | 'deleteOldFeedback';
 
+/** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
-    name: OperationName;
-    deleteFrom: dayjs.Dayjs;
-    deleteTo: dayjs.Dayjs;
+    name!: OperationName;
+    deleteFrom!: dayjs.Dayjs;
+    deleteTo!: dayjs.Dayjs;
     lastExecuted: dayjs.Dayjs | undefined;
-    datesValid: WritableSignal<boolean>;
+    datesValid!: WritableSignal<boolean>;
 }

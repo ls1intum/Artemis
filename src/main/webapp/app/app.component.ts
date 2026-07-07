@@ -53,10 +53,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
 
     readonly globalSearchEnabled = signal(false);
-    private examStartedSubscription: Subscription;
-    private testRunSubscription: Subscription;
-    private ltiSubscription: Subscription;
-    private globalSearchSubscription: Subscription;
+    private examStartedSubscription?: Subscription;
+    private testRunSubscription?: Subscription;
+    private ltiSubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.

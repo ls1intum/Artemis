@@ -32,7 +32,7 @@ export class DeleteButtonDirective implements OnInit {
     delete = output<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
-    deleteTextSpan: HTMLElement;
+    deleteTextSpan!: HTMLElement; // created in ngOnInit() when renderButtonText() is true; only read within that same guard
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.

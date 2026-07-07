@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, contentChild, input } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 
@@ -8,8 +8,8 @@ import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/s
     standalone: true,
 })
 export class KnowledgeAreaTreeStubComponent {
-    @Input() nodes: TreeNode<KnowledgeAreaForTree | StandardizedCompetencyForTree>[] = [];
+    nodes = input<TreeNode<KnowledgeAreaForTree | StandardizedCompetencyForTree>[]>([]);
 
-    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
-    @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;
+    knowledgeAreaTemplate = contentChild<TemplateRef<any>>('knowledgeAreaTemplate');
+    competencyTemplate = contentChild<TemplateRef<any>>('competencyTemplate');
 }

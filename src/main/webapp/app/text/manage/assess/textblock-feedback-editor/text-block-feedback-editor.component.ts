@@ -55,7 +55,7 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     criteria = input<GradingCriterion[]>();
-    private textareaElement: HTMLTextAreaElement;
+    private textareaElement!: HTMLTextAreaElement; // set in ngAfterViewInit() from the required textareaRef viewChild
 
     // Expose to template
     protected readonly Feedback = Feedback;

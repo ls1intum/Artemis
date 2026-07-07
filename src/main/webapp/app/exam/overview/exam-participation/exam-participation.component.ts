@@ -151,7 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly attendanceChecked = signal(false);
 
     readonly examSummaryButtonSecondsLeft = signal(10);
-    examSummaryButtonTimer: ReturnType<typeof setInterval>;
+    examSummaryButtonTimer?: ReturnType<typeof setInterval>;
     readonly showExamSummary = signal(false);
 
     readonly exerciseIndex = signal(0);
@@ -181,7 +181,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // autoTimerInterval in seconds
     readonly autoSaveTimer = signal(0);
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
 
     private synchronizationAlert = new Subject<void>();
 
