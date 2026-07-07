@@ -15,12 +15,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -44,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
@@ -82,6 +89,9 @@ class GenerationOrchestrationServiceTest {
 
     private static final String SESSION_ID = "session-abc";
 
+    /** The fresh sandbox session the authoritative verification runs in (distinct from the agent-loop session). */
+    private static final String VERIFY_SESSION_ID = "verify-session-xyz";
+
     @BeforeEach
     void setUp() {
         sandbox = mock(InteractiveSandbox.class);
@@ -94,6 +104,8 @@ class GenerationOrchestrationServiceTest {
         jobService = mock(GenerationJobService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
+        // The authoritative verify copies the loop workspace into a fresh session; a valid (empty) tar keeps the copy step working for every verify-reaching test.
+        when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> emptyTar());
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         // Default to a successful, empty extraction (the verifier is mocked, so files are not inspected here).
         when(workspace.extractRepository(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
@@ -400,5 +412,100 @@ class GenerationOrchestrationServiceTest {
 
         String prepended = GenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
         assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
+    }
+
+    // --- Fresh-session authoritative verification (forgery concurrency gap)
+    // --------------------------------------------------------------------------------------------------------
+
+    /** A valid empty tar so the fresh-session workspace copy has something to read. */
+    private static TarArchiveInputStream emptyTar() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            // No entries: a valid, empty archive.
+            tar.finish();
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()));
+    }
+
+    /**
+     * The sole-acceptance verification runs in a FRESH sandbox session (a new container that never hosted the agent loop), against the produced tree copied over from the loop
+     * session, and that fresh session is always destroyed — so no agent-spawned process or planted file can follow the verdict.
+     */
+    @Test
+    void authoritativeVerify_runsInAFreshSession_copiesTheWorkspaceIn_andAlwaysDestroysIt() {
+        when(sandbox.createSession(any())).thenReturn(SESSION_ID, VERIFY_SESSION_ID);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+        }
+
+        // The authoritative verify decided on the FRESH session, never the agent-loop session.
+        verify(verifier).verify(eq(sandbox), eq(VERIFY_SESSION_ID), eq(exercise), any(VerificationRequest.class));
+        verify(verifier, never()).verify(eq(sandbox), eq(SESSION_ID), any(), any(VerificationRequest.class));
+        // The exact produced tree was copied from the loop session into the fresh session.
+        verify(sandbox).copyOut(SESSION_ID, GenerationWorkspaceService.WORKSPACE);
+        verify(sandbox).copyIn(eq(VERIFY_SESSION_ID), eq("/"), any());
+        // The fresh verification session is always torn down (the loop session stays open on the returned outcome and is destroyed by the caller's close()).
+        verify(sandbox).destroySession(VERIFY_SESSION_ID);
+    }
+
+    /**
+     * A BUDGET_EXHAUSTED loop is still verified authoritatively in a fresh session (fail-closed to not-accepted when the verifier rejects), and the fresh session is destroyed. The
+     * loop session is not torn down inside generate — the outcome carries it for the caller to close.
+     */
+    @Test
+    void budgetExhaustedLoop_stillRunsAuthoritativeFreshSessionVerify_andDestroysTheFreshSession() {
+        when(sandbox.createSession(any())).thenReturn(SESSION_ID, VERIFY_SESSION_ID);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
+                .thenReturn(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "ran out of turns"));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a graded test"));
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+            assertThat(outcome.isAccepted()).as("a rejected budget-exhausted run is not accepted").isFalse();
+        }
+
+        verify(verifier, atLeastOnce()).verify(eq(sandbox), eq(VERIFY_SESSION_ID), any(), any(VerificationRequest.class));
+        verify(sandbox, atLeastOnce()).destroySession(VERIFY_SESSION_ID);
+    }
+
+    // --- Reuse of verification-time extractions at persist (no double sandbox read)
+    // ------------------------------------------------------------------------------------------------
+
+    /**
+     * The files verification already extracted for its integrity gates ride the outcome, so persist reuses them: {@code producedFiles}/{@code producedProblemStatement} return the
+     * captured extraction and never trigger the lazy sandbox re-read. Each repository is extracted exactly once (during verification).
+     */
+    @Test
+    void acceptedOutcome_reusesVerificationExtractions_soPersistDoesNotReReadTheSandbox() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("tests/T.java", "t"), false));
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("template/M.java", "m"), false));
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("solution/S.java", "s"), false));
+        when(workspace.extractProblemStatement(sandbox, SESSION_ID)).thenReturn("# Title\n\nStatement");
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.isAccepted()).isTrue();
+            // What persist consumes — served from the captured verification-time extraction.
+            assertThat(outcome.producedFiles(RepositoryType.TESTS)).containsExactlyEntriesOf(Map.of("tests/T.java", "t"));
+            assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).containsExactlyEntriesOf(Map.of("template/M.java", "m"));
+            assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsExactlyEntriesOf(Map.of("solution/S.java", "s"));
+            assertThat(outcome.producedProblemStatement()).isEqualTo("# Title\n\nStatement");
+        }
+
+        // Each repo read back exactly once (for the integrity gates); the lazy re-read path is never taken.
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS);
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE);
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION);
+        verify(workspace, never()).extractRepositoryFiles(any(), anyString(), any());
     }
 }

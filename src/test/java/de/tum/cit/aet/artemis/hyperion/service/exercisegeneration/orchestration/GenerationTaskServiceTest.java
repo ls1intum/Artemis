@@ -90,7 +90,7 @@ class GenerationTaskServiceTest {
 
     /** Builds a run-completing outcome that holds the mock orchestrator + sandbox, so try-with-resources close() is observable as a destroyQuietly call. */
     private GenerationOutcome outcomeWith(AgentLoopResult.Status status, VerificationResult verification) {
-        return new GenerationOutcome(new AgentLoopResult(status, 5, "done"), verification, SESSION_ID, orchestrator, sandbox, SpecFidelityReport.empty());
+        return new GenerationOutcome(new AgentLoopResult(status, 5, "done"), verification, SESSION_ID, orchestrator, sandbox, Map.of(), "", SpecFidelityReport.empty());
     }
 
     private void run(GenerationMode mode, GenerationOutcome outcome) {
@@ -164,6 +164,22 @@ class GenerationTaskServiceTest {
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
         // Only when the draft persist itself fails does the run report PARTIAL (nothing durable saved; the instructor can retry).
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+    }
+
+    @Test
+    void budgetExhaustedNotAcceptedRun_savesDraftEmitsNeedsReview_andDestroysSession() {
+        when(recoveryService.recover(any(), any(), any(), anyString())).thenReturn(new GenerationRecoveryService.RecoveryResult(1, false, null));
+        // A budget-exhausted run is still verified: a rejected verdict flows through the recovery path exactly like a COMPLETED near-miss, never the clean persist.
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.BUDGET_EXHAUSTED, new VerificationResult(false, false, true, 3, List.of("template passed a graded test"))));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.verdict().accepted()).isFalse();
+        verify(persistenceService, never()).persist(any(), any(), any());
+        // The outcome is always closed → the sandbox is destroyed even on the budget-exhausted path, and the slot is cleared.
+        verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
 
     @Test

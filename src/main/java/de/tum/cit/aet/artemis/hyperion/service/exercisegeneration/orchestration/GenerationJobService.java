@@ -4,11 +4,11 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -61,8 +61,14 @@ public class GenerationJobService {
 
     private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
 
-    /** The latest whole-file snapshots per run, kept out of the replay transcript (latest-per-file only) so a reloading client can rehydrate the live editor preview. */
-    private static final String SNAPSHOT_MAP_NAME = "hyperion-exercise-generation-file-snapshots";
+    /**
+     * The per-file snapshot store: one {@link ExerciseGenerationFileSnapshotDTO} per {@code <exerciseId>::<path>} key (latest-per-file), so a write updates exactly that file's
+     * key instead of re-serializing the whole retained set. Kept out of the replay transcript so a reloading client can rehydrate the live editor preview without bloating it.
+     */
+    static final String SNAPSHOT_MAP_NAME = "hyperion-exercise-generation-file-snapshots";
+
+    /** The small ordered index (one {@link JobFileSnapshotIndex} per exercise) that owns the write order, the per-file cap, and the run-ownership guard for the snapshot store. */
+    static final String SNAPSHOT_INDEX_MAP_NAME = "hyperion-exercise-generation-file-snapshot-index";
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
@@ -78,7 +84,7 @@ public class GenerationJobService {
     private static final int MAX_RETAINED_EVENTS = 500;
 
     /** Cap on retained file snapshots per run (latest-per-file), so many distinct files cannot grow the distributed map without bound; the eldest file is dropped first. */
-    private static final int MAX_RETAINED_SNAPSHOT_FILES = 300;
+    static final int MAX_RETAINED_SNAPSHOT_FILES = 300;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -93,7 +99,9 @@ public class GenerationJobService {
 
     private IMap<String, JobTranscript> transcriptMap;
 
-    private IMap<String, JobFileSnapshots> snapshotMap;
+    private IMap<String, ExerciseGenerationFileSnapshotDTO> snapshotMap;
+
+    private IMap<String, JobFileSnapshotIndex> snapshotIndexMap;
 
     // Node-local interrupts held in-process because the hook closes over a live sandbox reference that exists only on the node running the job; other nodes rely on the Hazelcast
     // flag.
@@ -135,10 +143,15 @@ public class GenerationJobService {
         MapConfig transcriptMapConfig = hazelcastInstance.getConfig().getMapConfig(TRANSCRIPT_MAP_NAME);
         transcriptMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
         transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
-        // The snapshots outlive the slot on the same TTL as the transcript so a client reloading as the run finishes can still rehydrate the final preview.
+        // The per-file snapshot store and its ordered index are actively deleted at clearJob (see clearJob), so their TTL is only a crash safety net (a node dying without
+        // clearing). It matches the job-slot TTL so a long-running generation's live preview is never expired mid-run — a shorter TTL would silently drop the retained files while
+        // the run is still writing them.
         MapConfig snapshotMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_MAP_NAME);
-        snapshotMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
+        snapshotMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         snapshotMap = hazelcastInstance.getMap(SNAPSHOT_MAP_NAME);
+        MapConfig snapshotIndexMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_INDEX_MAP_NAME);
+        snapshotIndexMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
+        snapshotIndexMap = hazelcastInstance.getMap(SNAPSHOT_INDEX_MAP_NAME);
     }
 
     /**
@@ -158,11 +171,13 @@ public class GenerationJobService {
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
-        // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise).
+        // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise). With per-file keying a previous run's snapshots would
+        // otherwise linger under their own keys, so drop them explicitly before installing the empty index.
         JobTranscript transcript = new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false);
-        JobFileSnapshots snapshots = new JobFileSnapshots(jobId, user.getLogin(), new LinkedHashMap<>());
         transcriptMap.put(key, transcript);
-        snapshotMap.put(key, snapshots);
+        removeSnapshotFiles(exercise.getId(), snapshotIndexMap.get(key));
+        JobFileSnapshotIndex snapshotIndex = new JobFileSnapshotIndex(jobId, user.getLogin(), new ArrayList<>());
+        snapshotIndexMap.put(key, snapshotIndex);
         try {
             eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         }
@@ -172,7 +187,8 @@ public class GenerationJobService {
             // error the instructor can act on. Note: TaskRejectedException (thrown by ThreadPoolTaskExecutor) is a RejectedExecutionException subclass, so it is caught here too.
             jobMap.remove(key, newJob);
             transcriptMap.remove(key, transcript);
-            snapshotMap.remove(key, snapshots);
+            // Nothing was written to the per-file store yet (the run never started), so removing the just-installed index is enough to leave no retained state behind.
+            snapshotIndexMap.remove(key, snapshotIndex);
             log.warn("Exercise generation executor rejected job {} for exercise {}; released the slot", jobId, exercise.getId());
             throw new ConflictException("The system is currently busy with too many exercise generations. Please try again in a few minutes.", ENTITY_NAME,
                     "exerciseGenerationCapacityExceeded");
@@ -212,20 +228,27 @@ public class GenerationJobService {
      * @param snapshot   the whole-file snapshot to retain
      */
     public void recordSnapshot(long exerciseId, String jobId, ExerciseGenerationFileSnapshotDTO snapshot) {
-        snapshotMap.computeIfPresent(key(exerciseId), (k, snapshots) -> {
-            if (!snapshots.jobId().equals(jobId)) {
-                return snapshots;
-            }
-            LinkedHashMap<String, ExerciseGenerationFileSnapshotDTO> byPath = new LinkedHashMap<>(snapshots.snapshotsByPath());
-            // Replacing an existing path keeps its insertion position (latest-per-file); a new path beyond the cap evicts the eldest file so the map stays bounded.
-            if (!byPath.containsKey(snapshot.path()) && byPath.size() >= MAX_RETAINED_SNAPSHOT_FILES) {
-                Iterator<String> iterator = byPath.keySet().iterator();
-                iterator.next();
-                iterator.remove();
-            }
-            byPath.put(snapshot.path(), snapshot);
-            return new JobFileSnapshots(snapshots.jobId(), snapshots.userLogin(), byPath);
-        });
+        String exerciseKey = key(exerciseId);
+        JobFileSnapshotIndex index = snapshotIndexMap.get(exerciseKey);
+        if (index == null || !index.jobId().equals(jobId)) {
+            // No snapshot store for this run (never started, already cleared, or a stale/older run whose index was overwritten): drop the snapshot.
+            return;
+        }
+        // O(1) per write: store only this one file's snapshot under its own key, never re-serializing the other retained files. A repeat write to the same path overwrites its
+        // single key in place (latest-per-file), leaving the write order and the bounded index untouched — the whole point of the per-file keying.
+        snapshotMap.set(fileKey(exerciseId, snapshot.path()), snapshot);
+        if (index.orderedPaths().contains(snapshot.path())) {
+            return;
+        }
+        // A genuinely new path: append it to the small ordered index and, when over the cap, evict the eldest file (dropping its own per-file key too so the store stays bounded).
+        // The single writer per exercise (single-flight) makes this read-then-set race-free.
+        List<String> orderedPaths = new ArrayList<>(index.orderedPaths());
+        orderedPaths.add(snapshot.path());
+        while (orderedPaths.size() > MAX_RETAINED_SNAPSHOT_FILES) {
+            String evicted = orderedPaths.removeFirst();
+            snapshotMap.delete(fileKey(exerciseId, evicted));
+        }
+        snapshotIndexMap.set(exerciseKey, new JobFileSnapshotIndex(index.jobId(), index.userLogin(), orderedPaths));
     }
 
     /**
@@ -250,11 +273,24 @@ public class GenerationJobService {
      * Returns the latest snapshot per file for the given run, in write order, or an empty list if none are retained or they belong to a different run.
      */
     private List<ExerciseGenerationFileSnapshotDTO> latestSnapshotsFor(long exerciseId, String jobId) {
-        JobFileSnapshots snapshots = snapshotMap.get(key(exerciseId));
-        if (snapshots == null || !snapshots.jobId().equals(jobId)) {
+        JobFileSnapshotIndex index = snapshotIndexMap.get(key(exerciseId));
+        if (index == null || !index.jobId().equals(jobId)) {
             return List.of();
         }
-        return List.copyOf(snapshots.snapshotsByPath().values());
+        Set<String> keys = new LinkedHashSet<>();
+        for (String path : index.orderedPaths()) {
+            keys.add(fileKey(exerciseId, path));
+        }
+        // One batched read of just the retained files (bounded by the cap), then re-projected into write order.
+        Map<String, ExerciseGenerationFileSnapshotDTO> byKey = snapshotMap.getAll(keys);
+        List<ExerciseGenerationFileSnapshotDTO> snapshots = new ArrayList<>();
+        for (String path : index.orderedPaths()) {
+            ExerciseGenerationFileSnapshotDTO snapshot = byKey.get(fileKey(exerciseId, path));
+            if (snapshot != null) {
+                snapshots.add(snapshot);
+            }
+        }
+        return List.copyOf(snapshots);
     }
 
     /**
@@ -335,10 +371,33 @@ public class GenerationJobService {
                 (k, transcript) -> transcript.jobId().equals(jobId) && !transcript.done()
                         ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true)
                         : transcript);
+        // Delete every retained per-file snapshot key and the index (guarded by jobId so a newer run's store is never wiped by an older job's cleanup). Unlike the single-value
+        // store this had before, per-file keys multiply per run, so leaving them to the TTL alone would accumulate; the live preview is a during-run affordance, and a client
+        // reconnecting after the run reads the persisted repositories, not the snapshots.
+        JobFileSnapshotIndex snapshotIndex = snapshotIndexMap.get(key);
+        if (snapshotIndex != null && snapshotIndex.jobId().equals(jobId)) {
+            removeSnapshotFiles(exerciseId, snapshotIndex);
+            snapshotIndexMap.remove(key, snapshotIndex);
+        }
+    }
+
+    /** Deletes every retained per-file snapshot key listed by {@code index}; a {@code null} index (nothing retained) is a no-op. */
+    private void removeSnapshotFiles(long exerciseId, @Nullable JobFileSnapshotIndex index) {
+        if (index == null) {
+            return;
+        }
+        for (String path : index.orderedPaths()) {
+            snapshotMap.delete(fileKey(exerciseId, path));
+        }
     }
 
     private static String key(long exerciseId) {
         return String.valueOf(exerciseId);
+    }
+
+    /** The per-file snapshot map key for a file: the exercise id and the workspace-relative path, so each file occupies exactly one distributed-map entry. */
+    static String fileKey(long exerciseId, String path) {
+        return exerciseId + "::" + path;
     }
 
     /**
@@ -368,14 +427,16 @@ public class GenerationJobService {
     }
 
     /**
-     * The retained latest-per-file snapshots of a generation run, for rehydrating the live editor preview on reconnect. Kept separate from {@link JobTranscript} so the write
-     * stream never bloats the replay transcript.
+     * The small ordered index of a run's retained file snapshots. It holds only the write-ordered path list (bounded to {@link #MAX_RETAINED_SNAPSHOT_FILES}) plus the ownership
+     * guard; the whole-file snapshots themselves live one-per-key in the per-file snapshot map ({@code <exerciseId>::<path>}). Keeping the bulky content out of this value is what
+     * makes a write O(1) — it updates one file's key and, only for a genuinely new path, appends to this small list — instead of re-serializing the whole retained set on every
+     * write. Kept separate from {@link JobTranscript} so the write stream never bloats the replay transcript.
      *
-     * @param jobId           the job id
-     * @param userLogin       the owner's login (snapshots are private to the instructor who started the run)
-     * @param snapshotsByPath the latest snapshot per path, in write (insertion) order; bounded in size
+     * @param jobId        the job id (snapshots from a superseded run are ignored)
+     * @param userLogin    the owner's login (snapshots are private to the instructor who started the run)
+     * @param orderedPaths the retained file paths in write (insertion) order; bounded to {@link #MAX_RETAINED_SNAPSHOT_FILES}, eldest evicted first
      */
-    public record JobFileSnapshots(String jobId, String userLogin, Map<String, ExerciseGenerationFileSnapshotDTO> snapshotsByPath) implements Serializable {
+    public record JobFileSnapshotIndex(String jobId, String userLogin, List<String> orderedPaths) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

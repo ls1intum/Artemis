@@ -1,6 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +16,10 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,6 +175,10 @@ public class GenerationOrchestrationService {
             String currentPrompt = firstPrompt;
             AgentLoopResult loopResult = null;
             VerificationResult verification = null;
+            // The final attempt's produced files and problem statement ride the outcome so persist reuses them instead of re-reading the sandbox (verification already extracted
+            // them for the integrity gates). Overwritten each attempt so the outcome carries the last (accepted or exhausted) attempt's tree.
+            Map<RepositoryType, Map<String, String>> producedFilesByType = new EnumMap<>(RepositoryType.class);
+            String producedProblemStatement = "";
             // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
@@ -196,17 +209,27 @@ public class GenerationOrchestrationService {
                 GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS);
                 GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE);
                 GenerationWorkspaceService.RepositoryExtraction producedSolution = workspace.extractRepository(sandbox, sessionId, RepositoryType.SOLUTION);
+                // Capture this attempt's extraction so persist reuses it — the same full-repo read verification needs for the integrity gates, not a second sandbox round-trip.
+                producedFilesByType.put(RepositoryType.TESTS, producedTests.files());
+                producedFilesByType.put(RepositoryType.TEMPLATE, producedTemplate.files());
+                producedFilesByType.put(RepositoryType.SOLUTION, producedSolution.files());
+                producedProblemStatement = workspace.extractProblemStatement(sandbox, sessionId);
                 Set<String> extractionFailed = new LinkedHashSet<>();
                 addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
-                verification = verifier.verify(sandbox, sessionId, exercise, new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(),
-                        producedSolution.files(), extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability));
+                VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
+                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability);
+                // The sole-acceptance verification runs in a FRESH sandbox session against the exact produced tree, so no agent-spawned background process or file planted during
+                // the
+                // in-session loop can overwrite the pristine verify.sh or forge a report between seed and copyOut. The in-loop self-check (the agent's `verify` tool) stays
+                // in-session
+                // and advisory; only WHERE this authoritative verify runs changed — the differential logic is unchanged.
+                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest);
                 emit(progress, verification.report());
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
-                specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
-                        producedTests.files(), usageSink, progress);
+                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), usageSink, progress);
 
                 if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
@@ -218,7 +241,7 @@ public class GenerationOrchestrationService {
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
-            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, specFidelityReport);
+            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport);
         }
         catch (RuntimeException e) {
             // The caller gets no usable outcome to close, so tear down here.
@@ -346,6 +369,86 @@ public class GenerationOrchestrationService {
     private static Long courseIdOf(ProgrammingExercise exercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return course == null ? null : course.getId();
+    }
+
+    /**
+     * Runs the authoritative differential verification in a fresh sandbox session so it cannot be tampered with by anything the agent loop left behind in the in-session container.
+     * Creates a clean container, copies the exact produced {@code /workspace} tree into it, runs the pristine differential there, and always destroys it in the {@code finally} —
+     * so
+     * no agent-spawned process or planted file can follow the verdict. The differential logic itself is unchanged (same {@link DifferentialVerificationService#verify}).
+     *
+     * @param exercise      the exercise being verified (selects the container image and the per-language build recipe)
+     * @param sandbox       the sandbox instance (one per node; the fresh session is a new container on it)
+     * @param loopSessionId the agent-loop session whose produced {@code /workspace} tree is copied into the fresh session
+     * @param request       the produced artifacts and integrity-gate inputs to decide on
+     * @return the acceptance verdict from the fresh, untamperable session
+     */
+    private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request) {
+        String verifySessionId = null;
+        try {
+            verifySessionId = sandbox.createSession(workspace.sessionSpec(exercise));
+            copyWorkspaceInto(sandbox, loopSessionId, verifySessionId);
+            return verifier.verify(sandbox, verifySessionId, exercise, request);
+        }
+        finally {
+            // The fresh verification session is never returned to the caller, so it is torn down here on every path.
+            destroyQuietly(sandbox, verifySessionId);
+        }
+    }
+
+    /**
+     * Copies the entire {@code /workspace} tree from one session into another, preserving directories, symlinks, executable bits and binary content, so the fresh verification
+     * session holds the exact produced tree the loop session ended with (including the Gradle wrapper JAR a text-only extraction would drop).
+     */
+    private static void copyWorkspaceInto(InteractiveSandbox sandbox, String fromSessionId, String toSessionId) {
+        byte[] repacked;
+        try (TarArchiveInputStream tar = sandbox.copyOut(fromSessionId, GenerationWorkspaceService.WORKSPACE)) {
+            // copyOut prefixes entries with "workspace/", so copying the repacked archive in at "/" restores them under /workspace.
+            repacked = repackTar(tar);
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException("Could not copy the produced workspace into the fresh verification session", e);
+        }
+        sandbox.copyIn(toSessionId, "/", new ByteArrayInputStream(repacked));
+    }
+
+    /**
+     * Repacks a copied-out tar verbatim (names, modes, sizes, symlink targets and bytes) into a fresh archive that can be fed straight into {@code copyIn}. The decoding
+     * {@link TarArchiveInputStream} cannot be piped directly because reading it without {@code getNextEntry} yields no bytes.
+     */
+    private static byte[] repackTar(TarArchiveInputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            TarArchiveEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                String name = entry.getName();
+                if (entry.isSymbolicLink()) {
+                    TarArchiveEntry link = new TarArchiveEntry(name, TarConstants.LF_SYMLINK);
+                    link.setLinkName(entry.getLinkName());
+                    link.setMode(entry.getMode());
+                    tar.putArchiveEntry(link);
+                    tar.closeArchiveEntry();
+                }
+                else if (entry.isDirectory()) {
+                    TarArchiveEntry directory = new TarArchiveEntry(name.endsWith("/") ? name : name + "/");
+                    directory.setMode(entry.getMode());
+                    tar.putArchiveEntry(directory);
+                    tar.closeArchiveEntry();
+                }
+                else if (entry.isFile()) {
+                    byte[] content = in.readAllBytes();
+                    TarArchiveEntry copy = new TarArchiveEntry(name);
+                    copy.setMode(entry.getMode());
+                    copy.setSize(content.length);
+                    tar.putArchiveEntry(copy);
+                    tar.write(content);
+                    tar.closeArchiveEntry();
+                }
+                // Devices/FIFOs/other special entries never belong to a source tree and are skipped.
+            }
+        }
+        return out.toByteArray();
     }
 
     GenerationWorkspaceService workspace() {
