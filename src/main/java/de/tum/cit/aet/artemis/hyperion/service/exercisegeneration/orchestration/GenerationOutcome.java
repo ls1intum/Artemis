@@ -14,9 +14,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * The result of an agentic generation session, returned to the caller (the async task) so it can decide whether to persist and then close the session.
  * <p>
  * It is {@link AutoCloseable}: closing it destroys the underlying sandbox container. Verification already reads each repository's produced files (and the problem statement) out of
- * the session to run the integrity gates, so those extractions are captured on the outcome and reused at persist — no second full-repo read of the sandbox. Persist only runs on an
- * accepted (verified) outcome, which always populates the captures, so the accessors return the captured value directly (empty when absent); the outcome holds a reference back to
- * the orchestrator and the session id solely so {@link #close()} can destroy the sandbox container.
+ * the session to run the integrity gates, so those extractions are captured on the outcome and reused at persist — no second full-repo read of the sandbox. Persist only runs on a
+ * verified outcome (accepted in place, or rejected and persisted as a recovery draft), both of which populate the captures, so the accessors return the captured value directly
+ * (empty when absent); the outcome holds a reference back to the orchestrator and the session id solely so {@link #close()} can destroy the sandbox container.
  */
 public final class GenerationOutcome implements AutoCloseable {
 
@@ -119,9 +119,8 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * The produced files for a repository type — the extraction verification already performed and captured on this outcome. Only accepted (verified) outcomes are persisted, so
-     * the
-     * capture is always present for the repositories persist reads.
+     * The produced files for a repository type — the extraction verification already performed and captured on this outcome. Only verified outcomes are persisted (accepted, or
+     * rejected as a recovery draft), so the capture is always present for the repositories persist reads.
      *
      * @param repositoryType the repository whose produced files to read
      * @return the produced files (path to content), or an empty map if that repository produced none

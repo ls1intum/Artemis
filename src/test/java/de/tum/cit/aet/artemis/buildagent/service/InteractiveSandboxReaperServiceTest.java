@@ -1,13 +1,17 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.model.Container;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
 /**
  * Unit tests for the inactivity-based reaping contract: a long-lived but active session must survive, while a genuinely idle or orphaned container must be collected. Uses a real
@@ -35,6 +40,8 @@ class InteractiveSandboxReaperServiceTest {
 
     private InteractiveSandboxService interactiveSandboxService;
 
+    private InteractiveSandboxRelayHandler relayHandler;
+
     private InteractiveSandboxReaperService reaperService;
 
     @BeforeEach
@@ -45,8 +52,23 @@ class InteractiveSandboxReaperServiceTest {
         doReturn(dockerClient).when(buildAgentConfiguration).getDockerClient();
 
         interactiveSandboxService = new InteractiveSandboxService(buildAgentConfiguration);
-        reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, interactiveSandboxService, mock(TaskScheduler.class));
+        // A real relay handler holding the session permits, wired without registering its topic listener (no Docker/topics needed): the reaper only calls back into releaseIfOwned.
+        relayHandler = new InteractiveSandboxRelayHandler(interactiveSandboxService, mock(DistributedDataAccessService.class), mock(SharedQueueProcessingService.class),
+                new GenerationSessionState(), mock(BuildAgentInformationService.class));
+        ReflectionTestUtils.setField(relayHandler, "buildAgentShortName", "agent");
+        ReflectionTestUtils.setField(relayHandler, "maxConcurrentSessions", 2);
+        ReflectionTestUtils.setField(relayHandler, "sessionPermits", new Semaphore(2));
+        reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, interactiveSandboxService, relayHandler, mock(TaskScheduler.class));
         ReflectionTestUtils.setField(reaperService, "sandboxContainerExpiryMinutes", (int) EXPIRY_MINUTES);
+    }
+
+    private Semaphore sessionPermits() {
+        return (Semaphore) ReflectionTestUtils.getField(relayHandler, "sessionPermits");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> ownedSessions() {
+        return (Set<String>) ReflectionTestUtils.getField(relayHandler, "ownedSessions");
     }
 
     private Container sandboxContainer(String id, String shortName, long createdEpochSecond) {
@@ -129,5 +151,41 @@ class InteractiveSandboxReaperServiceTest {
         reaperService.reapOrphanedSessions();
 
         verify(dockerClient, never()).removeContainerCmd(anyString());
+    }
+
+    @Test
+    void shouldReleaseTheRelayPermitWhenReapingAnOwnedOrphanedSession() {
+        long createdLongAgo = Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS;
+        Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
+        givenContainers(orphanContainer);
+        // A relay session this agent still owns because its CREATE response (or DESTROY) was lost: the permit is held and the container is orphaned.
+        ownedSessions().add("orphan-id");
+        sessionPermits().acquireUninterruptibly();
+        assertThat(sessionPermits().availablePermits()).isEqualTo(1);
+
+        reaperService.reapOrphanedSessions();
+
+        verify(dockerClient).removeContainerCmd("orphan-id");
+        // Exactly one permit is reclaimed and the session is no longer tracked, so repeated orphaning cannot starve the agent of generation capacity.
+        assertThat(sessionPermits().availablePermits()).isEqualTo(2);
+        assertThat(ownedSessions()).doesNotContain("orphan-id");
+    }
+
+    @Test
+    void shouldNotReleaseAPermitWhenReapingAContainerItDoesNotOwn() {
+        long createdLongAgo = Instant.now().getEpochSecond() - OLDER_THAN_EXPIRY_SECONDS;
+        Container orphanContainer = sandboxContainer("orphan-id", "orphan", createdLongAgo);
+        givenContainers(orphanContainer);
+        // A permit held by a DIFFERENT live session; the reaped container is not one this handler owns, so reconciliation must release nothing — and stay idempotent across sweeps.
+        ownedSessions().add("other-live-session");
+        sessionPermits().acquireUninterruptibly();
+        assertThat(sessionPermits().availablePermits()).isEqualTo(1);
+
+        reaperService.reapOrphanedSessions();
+        reaperService.reapOrphanedSessions();
+
+        verify(dockerClient, times(2)).removeContainerCmd("orphan-id");
+        assertThat(sessionPermits().availablePermits()).isEqualTo(1);
+        assertThat(ownedSessions()).containsExactly("other-live-session");
     }
 }

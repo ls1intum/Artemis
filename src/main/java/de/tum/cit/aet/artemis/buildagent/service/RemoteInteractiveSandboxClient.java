@@ -263,7 +263,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         // them on its event thread.
         distributedDataAccessService.getHyperionSandboxPayloads().put(correlationId, payload);
         try {
-            SandboxOpRequest request = SandboxOpRequest.copyIn(correlationId, targetAgent, containerId, null, destinationPath);
+            SandboxOpRequest request = SandboxOpRequest.copyIn(correlationId, targetAgent, containerId, destinationPath);
             relay(request, controlOpTimeout);
         }
         finally {

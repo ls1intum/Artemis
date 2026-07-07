@@ -473,13 +473,10 @@ public class GitService extends AbstractGitService {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            // Commit on top of the current HEAD. We do NOT move the checked-out branch ref on the remote; we push the resulting commit to a distinct branch via an explicit
-            // refspec,
-            // so the default branch the working copy is on is never advanced on the remote.
             RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(false).setCommitter(name, email).call();
             log.debug("commitToIsolatedBranchAndPush -> Push {} to {}", repo.getLocalPath(), isolatedBranch);
             setRemoteUrl(repo);
-            // HEAD now points at the new commit; push it to refs/heads/<isolatedBranch> only. The default branch is left exactly where it was.
+            // Push only the new commit to refs/heads/<isolatedBranch> (see method contract): the remote default branch is never advanced.
             pushCommand(git).setRefSpecs(new RefSpec(commit.getName() + ":refs/heads/" + isolatedBranch)).call();
             return commit.getName();
         }

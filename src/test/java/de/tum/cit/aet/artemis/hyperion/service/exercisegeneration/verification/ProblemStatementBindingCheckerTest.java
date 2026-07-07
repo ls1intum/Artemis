@@ -83,7 +83,8 @@ class ProblemStatementBindingCheckerTest {
 
     @Test
     void unresolvedTaskBindings_failsOpenWhenTheNameSetIsShorterThanTheTestCount() {
-        // An incomplete/untrustworthy emitted name list must not be used to reject; the emitter-soundness gate handles that separately.
+        // An incomplete emitted name list must not be used to reject; in the live pipeline fromReports guarantees the set is complete (pinned by
+        // DifferentialVerificationServiceTest.buildSummary_fromReports_recordsACompleteSoundPerTestView), so this fail-open branch is a pure-function guard, not a runtime path.
         assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Sort](nothingMatches)\n", List.of("onlyOne"), 5, Set.of())).isEmpty();
     }
 

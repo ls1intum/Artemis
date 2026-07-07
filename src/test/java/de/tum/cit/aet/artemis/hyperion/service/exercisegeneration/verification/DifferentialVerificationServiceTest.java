@@ -604,7 +604,8 @@ class DifferentialVerificationServiceTest {
     void buildSummary_fromReports_recordsACompleteSoundPerTestView_thatTheFailOpenGatesRelyOn() {
         // The fail-open per-test gates rely on fromReports producing a complete, sound per-test view: every counted test is named and every failed test is a member of the full
         // set.
-        // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the hole the emitter-soundness gate closes.
+        // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the free-points hole: these fail-open per-test gates now rely on
+        // this invariant directly (the emitter-soundness gate that formerly enforced it was removed as redundant once fromReports was proven to keep the sets complete).
         var summary = DifferentialVerificationService.BuildSummary
                 .fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
                         ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);

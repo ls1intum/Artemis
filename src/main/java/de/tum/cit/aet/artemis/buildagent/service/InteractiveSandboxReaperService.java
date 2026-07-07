@@ -48,6 +48,14 @@ public class InteractiveSandboxReaperService {
 
     private final InteractiveSandboxService interactiveSandboxService;
 
+    /**
+     * The relay handler that owns the per-agent session permits. It is unconditionally present on a build-agent node (same {@link Profile}), so a plain dependency is correct; the
+     * reaper calls back into it to release the permit of any orphaned relay session it reaps, so lost CREATE responses / failovers / lost DESTROYs cannot slowly deplete the
+     * agent's
+     * generation-session capacity between restarts.
+     */
+    private final InteractiveSandboxRelayHandler relayHandler;
+
     private final TaskScheduler taskScheduler;
 
     /**
@@ -61,9 +69,10 @@ public class InteractiveSandboxReaperService {
     private int sandboxCleanupScheduleMinutes;
 
     public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, @Lazy InteractiveSandboxService interactiveSandboxService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+            @Lazy InteractiveSandboxRelayHandler relayHandler, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.interactiveSandboxService = interactiveSandboxService;
+        this.relayHandler = relayHandler;
         this.taskScheduler = taskScheduler;
     }
 
@@ -111,6 +120,8 @@ public class InteractiveSandboxReaperService {
             try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
                 removeCommand.exec();
                 interactiveSandboxService.forgetActivity(container.getId());
+                // Reclaim the relay session permit if this container was an orphaned relay session, so repeated orphaning cannot slowly starve the agent of generation capacity.
+                relayHandler.releaseIfOwned(container.getId());
             }
             catch (Exception ex) {
                 log.warn("Failed to reap orphaned interactive sandbox container {}: {}", container.getId(), ex.getMessage());

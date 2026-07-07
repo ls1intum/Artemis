@@ -112,9 +112,10 @@ public class InteractiveSandboxRelayHandler {
     private int maxConcurrentSessions;
 
     /**
-     * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. Known gap: if a CREATE succeeds but its response is lost in transit, the core client never learns
-     * the container id and can never issue DESTROY, so the permit stays held until this agent restarts. The reaper reclaims the orphaned container but not its permit; acceptable
-     * because agents restart routinely.
+     * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. If a CREATE succeeds but its response is lost in transit, the core client never learns the
+     * container
+     * id and can never issue DESTROY; the {@link InteractiveSandboxReaperService} reaps the orphaned container and calls back into {@link #releaseIfOwned(String)} to reclaim the
+     * held permit, so repeated orphaning cannot slowly starve the agent of session capacity between restarts.
      */
     private Semaphore sessionPermits;
 
@@ -322,7 +323,7 @@ public class InteractiveSandboxRelayHandler {
             // subscriber
             // deserializing them on its event thread. The client reads and removes the entry.
             distributedDataAccessService.getHyperionSandboxPayloads().put(request.correlationId(), payload);
-            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId(), null);
+            return SandboxOpResponse.copiedOut(request.correlationId(), request.sessionId());
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to buffer copy-out archive: " + e.getMessage());
@@ -377,6 +378,24 @@ public class InteractiveSandboxRelayHandler {
             }
         }
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+    }
+
+    /**
+     * Reconciles the session permit for a container the {@link InteractiveSandboxReaperService} force-removed out from under this handler. An orphaned container — a CREATE whose
+     * response was lost in transit (so the core client never learned the id and can never DESTROY it), a create that succeeded after the client already failed over, or a lost
+     * DESTROY — otherwise keeps its permit held until this agent restarts, so repeated orphaning would monotonically deplete {@link #sessionPermits} until the agent refuses all
+     * new
+     * sessions. This releases exactly one permit if and only if this handler currently owns the session, gated on the {@link #ownedSessions} removal — identical semantics to the
+     * DESTROY release path, so a foreign or already-reclaimed container reconciles nothing and repeated calls never over-release.
+     *
+     * @param containerId the container id of the reaped session (as this agent understands it)
+     */
+    void releaseIfOwned(String containerId) {
+        // Release the session permit exactly once per owned session, gated by the ownedSessions removal, exactly as handleDestroy does.
+        if (ownedSessions.remove(containerId)) {
+            sessionPermits.release();
+            publishSessionState();
+        }
     }
 
     /**
