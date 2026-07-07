@@ -443,6 +443,10 @@ public class CompetencyOrchestrationService {
      */
     private CompetencyOrchestrationResultDTO orchestrateBatch(List<Exercise> exercises, long courseId) {
         String systemPrompt;
+        // Ids dropped mid-run because their extraction threw. On FAILED the caller requeues the whole
+        // batch (skipped ids included); on SUCCESS/PARTIAL the caller keeps the drained bucket, so we
+        // must requeue exactly these here or their orchestration is lost until a fresh version event.
+        Set<Long> skipped = new LinkedHashSet<>();
         try {
             List<ExerciseChange> changes = new ArrayList<>();
             for (Exercise exercise : exercises) {
@@ -453,6 +457,7 @@ public class CompetencyOrchestrationService {
                 catch (Exception ex) {
                     // Isolate per-exercise failures (e.g. a quiz deleted mid-run whose refetch throws) so one bad entry
                     // does not drop the whole batch and burn the course's daily-run slot. The exercise is skipped this run.
+                    skipped.add(exercise.getId());
                     log.warn("Atlas orchestrator (batch) skipping exercise {} for course {}: {}", exercise.getId(), courseId, ex.getMessage(), ex);
                 }
             }
@@ -478,14 +483,35 @@ public class CompetencyOrchestrationService {
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) LLM call failed for course {} after applying {} action(s): {}", courseId, appliedActions.size(), ex.getMessage(), ex);
             if (appliedActions.isEmpty()) {
+                // FAILED: nothing committed — the caller requeues the whole batch, which already covers the skipped ids.
                 return CompetencyOrchestrationResultDTO.failed("Atlas orchestrator run failed.", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
             }
+            // PARTIAL: the caller must not requeue the batch (would re-apply committed mutations), so the skipped ids
+            // would otherwise be lost — requeue exactly them here (they had no mutation, so this is safe).
+            requeueSkippedExercises(courseId, skipped);
             return CompetencyOrchestrationResultDTO.partial("Atlas orchestrator run failed after applying " + appliedActions.size() + " action(s).", List.copyOf(appliedActions),
                     CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR);
         }
         log.info("Atlas orchestrator (batch) completed for course {} over {} exercise(s) with {} applied action(s)", courseId, exercises.size(), appliedActions.size());
+        // SUCCESS: the caller keeps the drained bucket, so requeue the ids skipped mid-run or their orchestration is lost.
+        requeueSkippedExercises(courseId, skipped);
         String summary = content.isBlank() ? "Atlas orchestrator run completed." : content;
         return CompetencyOrchestrationResultDTO.success(summary, List.copyOf(appliedActions));
+    }
+
+    /**
+     * Requeue exercise ids that were dropped mid-batch because their content extraction threw. Only
+     * called on the SUCCESS / PARTIAL paths, where the caller keeps the drained accumulator bucket;
+     * on FAILED the caller requeues the whole batch instead. The reservation is kept (a run did
+     * happen), so the per-course daily cap still bounds retries. Safe on PARTIAL: skipped ids never
+     * reached the prompt, so no mutation was committed for them.
+     */
+    private void requeueSkippedExercises(long courseId, Set<Long> skipped) {
+        if (skipped.isEmpty()) {
+            return;
+        }
+        log.info("Atlas orchestrator (batch) requeueing {} exercise(s) skipped mid-run for course {}: {}", skipped.size(), courseId, skipped);
+        contentChangeAccumulatorService.requeueAfterFailedRun(courseId, skipped);
     }
 
     /**

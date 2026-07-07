@@ -129,6 +129,17 @@ public class OrchestratorToolsService {
      */
     private static final int MAX_DESCRIPTION_LENGTH = 10_000;
 
+    /**
+     * Hard cap on the learning text returned by {@link #getExerciseContent}. Mirrors the
+     * {@code PROBLEM_STATEMENT_MAX} the batch path applies via {@code sanitizeForPrompt}, so a single
+     * oversized exercise (e.g. a quiz whose assembled questions + answers are large) cannot inflate
+     * per-call tokens now that this tool extracts real content for every exercise type. Title and
+     * metadata are left intact; only the learning text is truncated.
+     */
+    private static final int MAX_EXERCISE_CONTENT_LENGTH = 8_000;
+
+    private static final String CONTENT_TRUNCATION_MARKER = " …[truncated]";
+
     private final ObjectMapper objectMapper;
 
     private final CourseRepository courseRepository;
@@ -263,17 +274,32 @@ public class OrchestratorToolsService {
             return errorJson("Exercise " + exerciseId + " does not belong to the current course.");
         }
         try {
-            // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call and this tool is
-            // uncapped, so a repeated lookup would burn tokens unbounded. The raw problem statement is complete enough
-            // for the orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
+            // Skip the LLM flavor-strip on this read path: it costs an extra model round-trip per call, so a repeated
+            // lookup would burn tokens on the strip model. The raw problem statement is complete enough for the
+            // orchestrator to judge fit; the batch's system prompt already carries the stripped versions.
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise, false);
-            return toJson(extracted);
+            // Cap the learning text so one oversized exercise (e.g. a large quiz) cannot inflate per-call tokens.
+            return toJson(capLearningText(extracted));
         }
         catch (RuntimeException ex) {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
             log.warn("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return errorJson("Failed to extract content for exercise " + exerciseId + ".");
         }
+    }
+
+    /**
+     * Returns {@code extracted} with its learning text hard-truncated to {@link #MAX_EXERCISE_CONTENT_LENGTH}
+     * (title and metadata untouched). Returns the original DTO when the text is already within the cap.
+     */
+    private static ExtractedContentDTO capLearningText(ExtractedContentDTO extracted) {
+        String text = extracted.extractedLearningText();
+        if (text == null || text.length() <= MAX_EXERCISE_CONTENT_LENGTH) {
+            return extracted;
+        }
+        int cut = Math.max(0, MAX_EXERCISE_CONTENT_LENGTH - CONTENT_TRUNCATION_MARKER.length());
+        String capped = text.substring(0, cut) + CONTENT_TRUNCATION_MARKER;
+        return new ExtractedContentDTO(extracted.title(), capped, extracted.metadata());
     }
 
     // -----------------------------------------------------------------------------------------------

@@ -439,6 +439,41 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void runBatch_mixedBatchOneExtractionThrows_requeuesSkippedIdOnSuccess() {
+        // A quiz deleted mid-run fails extraction, but the programming exercise succeeds so the batch reaches SUCCESS.
+        // Because claimDueBatch already drained the bucket, the skipped id would be lost unless it is requeued here.
+        ProgrammingExercise healthy = courseExercise(10L);
+        QuizExercise doomedQuiz = quizExercise(12L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(healthy, doomedQuiz));
+        stubRunMap();
+        when(contentExtractionService.extractContent(healthy)).thenReturn(new ExtractedContentDTO("Survivor", "Survivor body", Map.of()));
+        when(contentExtractionService.extractContent(doomedQuiz)).thenThrow(new RuntimeException("quiz deleted mid-run"));
+        when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(toolCallbackFactory.createOrchestratorProvider()).thenReturn(mock(org.springframework.ai.tool.ToolCallbackProvider.class));
+
+        ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
+        ChatClient mockChatClient = mock(ChatClient.class);
+        ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
+        when(mockChatClient.prompt()).thenReturn(spec);
+        when(spec.system(anyString())).thenReturn(spec);
+        when(spec.user(anyString())).thenReturn(spec);
+        when(spec.options(any())).thenReturn(spec);
+        when(spec.toolContext(anyMap())).thenReturn(spec);
+        when(spec.toolCallbacks(any(org.springframework.ai.tool.ToolCallbackProvider.class))).thenReturn(spec);
+        ChatClient.CallResponseSpec callResponseSpec = mock(ChatClient.CallResponseSpec.class);
+        when(spec.call()).thenReturn(callResponseSpec);
+        when(callResponseSpec.chatResponse()).thenReturn(chatResponse);
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mockChatClient).runBatch(COURSE_ID, Set.of(10L, 12L));
+
+        assertThat(result.status()).isEqualTo(SUCCESS);
+        // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
     void runBatch_allExercisesExtractionThrow_returnsInternalErrorWithoutDrivingLlm() {
         // When every exercise in the batch fails extraction, the run must short-circuit to INTERNAL_ERROR
         // before fetching the competency index or rendering the prompt — never touching the LLM — so an

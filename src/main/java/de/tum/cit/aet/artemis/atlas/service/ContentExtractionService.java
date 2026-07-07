@@ -57,8 +57,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * <p>
  * To add a new learning object type:
  * <ol>
- * <li>Add an {@code instanceof} branch in {@link #extractContent(LearningObject, boolean)} for the
- * new {@code LearningObject} subtype</li>
+ * <li>Add a {@code case} branch to the pattern-matching {@code switch} in
+ * {@link #extractContent(LearningObject, boolean)} for the new {@code LearningObject} subtype</li>
  * <li>Create a private {@code extractFrom*()} method accepting the concrete type</li>
  * <li>Always set {@code exerciseType} in metadata (for exercises {@link #baseMetadata(Exercise)}
  * derives it from {@code Exercise#getExerciseType()}) or an equivalent type discriminator for
