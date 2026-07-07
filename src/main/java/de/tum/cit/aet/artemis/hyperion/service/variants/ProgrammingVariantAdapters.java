@@ -163,7 +163,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public VerificationReport verify(Exercise variant, ChangePlan plan) {
+    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 

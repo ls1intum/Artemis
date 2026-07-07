@@ -23,7 +23,8 @@
                 "draftWithWarnings": "Die Variante wurde als markierter Entwurf behalten — überprüfe und repariere sie im Editor.",
                 "aiDisclaimer": "KI-generierte Inhalte können Fehler enthalten. Überprüfe Problemstellung, Testfälle und Lösung sorgfältig vor der Veröffentlichung.",
                 "openInEditor": "Im Editor öffnen",
-                "close": "Schließen"
+                "close": "Schließen",
+                "tokensUsed": "{{ tokens }} Tokens verbraucht"
             },
             "phase": {
                 "ANALYZING": "Analysiere Ausgangsübung",

@@ -23,7 +23,8 @@
                 "draftWithWarnings": "The variant was kept as a flagged draft — review and repair it in the editor.",
                 "aiDisclaimer": "AI-generated content may contain errors. Review the problem statement, test cases, and solution carefully before publishing.",
                 "openInEditor": "Open in Editor",
-                "close": "Close"
+                "close": "Close",
+                "tokensUsed": "{{ tokens }} tokens used"
             },
             "phase": {
                 "ANALYZING": "Analyzing source exercise",

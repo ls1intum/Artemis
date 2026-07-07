@@ -24,6 +24,7 @@ export interface VariantJob {
     variantExerciseId?: number;
     variantExerciseTitle?: string;
     warnings?: Array<string>;
+    totalTokensUsed?: number;
     startedAt?: string;
     finishedAt?: string;
 }

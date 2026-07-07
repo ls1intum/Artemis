@@ -10,6 +10,7 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -17,6 +18,10 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -42,6 +47,9 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
 
     private static final Logger log = LoggerFactory.getLogger(QuizVariantAdapters.class);
 
+    /** Pipeline id for token-usage traces of the critique soft gate (plan Section 7 telemetry). */
+    private static final String CRITIQUE_PIPELINE_ID = "exercise-variant-critique";
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -56,12 +64,16 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     @Nullable
     private final ChatClient chatClient;
 
     public QuizVariantAdapters(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
             VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
-            @Nullable ChatClient chatClient) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseService = quizExerciseService;
@@ -69,6 +81,8 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         this.jobService = jobService;
         this.objectMapper = objectMapper;
         this.templateService = templateService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
         this.chatClient = chatClient;
     }
 
@@ -148,7 +162,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     }
 
     @Override
-    public VerificationReport verify(Exercise variant, ChangePlan plan) {
+    public VerificationReport verify(Exercise variant, ChangePlan plan, VariantJob job) {
         QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(variant.getId());
         List<VerificationReport.VerificationFinding> findings = new ArrayList<>();
 
@@ -183,7 +197,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
         // plan faithfulness, invariants, distractor plausibility. Runs ONLY when the deterministic gates above
         // passed (they are authoritative); critique errors never fail verification on their own.
         if (findings.isEmpty()) {
-            findings.addAll(critique(quiz, plan));
+            findings.addAll(critique(quiz, plan, job));
         }
         return new VerificationReport(findings.isEmpty(), List.copyOf(findings));
     }
@@ -192,7 +206,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     record CritiqueReport(List<String> findings) {
     }
 
-    private List<VerificationReport.VerificationFinding> critique(QuizExercise quiz, ChangePlan plan) {
+    private List<VerificationReport.VerificationFinding> critique(QuizExercise quiz, ChangePlan plan, VariantJob job) {
         if (chatClient == null) {
             log.debug("Skipping quiz variant critique for exercise {}: AI chat client is not configured", quiz.getId());
             return List.of();
@@ -201,8 +215,9 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
             String systemPrompt = templateService.render("prompts/hyperion/variants/critique_quiz_system.st",
                     Map.of("changePlan", renderPlanContract(plan), "variantContext", renderContext(quiz)));
             var outputConverter = new BeanOutputConverter<>(CritiqueReport.class);
-            String response = chatClient.prompt().system(systemPrompt).user("Review the variant quiz." + "\n\n" + outputConverter.getFormat()).call().content();
-            CritiqueReport report = outputConverter.convert(response);
+            ChatResponse chatResponse = chatClient.prompt().system(systemPrompt).user("Review the variant quiz." + "\n\n" + outputConverter.getFormat()).call().chatResponse();
+            trackCritiqueTokenUsage(quiz, job, chatResponse);
+            CritiqueReport report = outputConverter.convert(LLMTokenUsageService.extractResponseText(chatResponse));
             if (report == null || report.findings() == null) {
                 return List.of();
             }
@@ -213,6 +228,17 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
             // The soft gate must never block a structurally valid variant on infrastructure/parsing errors.
             log.warn("Quiz variant critique failed for exercise {} — skipping the soft gate: {}", quiz.getId(), e.getMessage());
             return List.of();
+        }
+    }
+
+    /** Token accounting for the critique pass (plan Section 7 telemetry) — same wiring as the pipeline's calls. */
+    private void trackCritiqueTokenUsage(QuizExercise quiz, VariantJob job, ChatResponse chatResponse) {
+        Long userId = userRepository.findOneByLogin(job.getInitiatorLogin()).map(User::getId).orElse(null);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, CRITIQUE_PIPELINE_ID,
+                builder -> builder.withExercise(quiz.getId()).withUser(userId));
+        if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null
+                && chatResponse.getMetadata().getUsage().getTotalTokens() != null) {
+            jobService.addTokensUsed(job.getJobId(), chatResponse.getMetadata().getUsage().getTotalTokens());
         }
     }
 

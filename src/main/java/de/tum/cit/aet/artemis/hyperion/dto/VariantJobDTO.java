@@ -29,13 +29,15 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  *                                 CANCELLED (clone cleaned up, no link, Section 5.4)
  * @param variantExerciseTitle planned variant title — the "source → variant" display; available from PLANNING on (todo-c)
  * @param warnings             non-empty for DRAFT_WITH_WARNINGS (warning badge)
+ * @param totalTokensUsed      accumulated LLM tokens across planning, agent rounds, and the critique gate
+ *                                 (plan Section 7 telemetry) — null until the first call reported usage
  * @param startedAt            job start
  * @param finishedAt           terminal timestamp, null while running
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record VariantJobDTO(String jobId, Long sourceExerciseId, Long courseId, String sourceExerciseTitle, ExerciseType exerciseType, VariantJobPhase phase,
         VariantJobPhase failedInPhase, String failureDetail, String instructorSummary, Integer attempt, Integer maxAttempts, Long variantExerciseId, String variantExerciseTitle,
-        List<String> warnings, Instant startedAt, Instant finishedAt) implements Serializable {
+        List<String> warnings, Long totalTokensUsed, Instant startedAt, Instant finishedAt) implements Serializable {
 
     /**
      * Maps the Hazelcast job record to the tray view.
@@ -46,6 +48,6 @@ public record VariantJobDTO(String jobId, Long sourceExerciseId, Long courseId, 
     public static VariantJobDTO of(VariantJob job) {
         return new VariantJobDTO(job.getJobId(), job.getSourceExerciseId(), job.getCourseId(), job.getSourceExerciseTitle(), job.getExerciseType(), job.getPhase(),
                 job.getFailedInPhase(), job.getFailureDetail(), job.getInstructorSummary(), job.getAttempt(), job.getMaxAttempts(), job.getVariantExerciseId(),
-                job.getVariantExerciseTitle(), job.getWarnings(), job.getStartedAt(), job.getFinishedAt());
+                job.getVariantExerciseTitle(), job.getWarnings(), job.getTotalTokensUsed() > 0 ? job.getTotalTokensUsed() : null, job.getStartedAt(), job.getFinishedAt());
     }
 }

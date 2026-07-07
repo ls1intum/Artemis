@@ -437,7 +437,14 @@
     <ng-template #stepSummary>
         @if (recordedStepOutputs().length > 0) {
             <div class="step-summary mb-3" data-testid="variant-wizard-summary">
-                <div class="step-summary__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.summaryTitle' | artemisTranslate }}</div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="step-summary__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.summaryTitle' | artemisTranslate }}</div>
+                    @if (totalTokensUsed(); as tokens) {
+                        <span class="info-chip" data-testid="variant-wizard-tokens-used">{{
+                            'artemisApp.exerciseVariantGeneration.wizard.tokensUsed' | artemisTranslate: { tokens: tokens }
+                        }}</span>
+                    }
+                </div>
                 @for (entry of recordedStepOutputs(); track entry.phase) {
                     <div class="step-summary__entry">
                         <span class="fw-semibold">{{ 'artemisApp.exerciseVariantGeneration.phase.' + entry.phase | artemisTranslate }}</span>

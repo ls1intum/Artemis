@@ -135,6 +135,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly variantTitle = signal<string | undefined>(undefined);
     /** The original generation request, fetched with the job detail (monitor mode / live refresh). */
     readonly monitorRequest = signal<VariantGenerationRequest | undefined>(undefined);
+    /** Accumulated LLM tokens (planning + agent rounds + critique) — telemetry chip on the result view. */
+    readonly totalTokensUsed = signal<number | undefined>(undefined);
     readonly generatedVariant = signal<Exercise | undefined>(undefined);
 
     /**
@@ -496,6 +498,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.instructorSummary.set(detail.job?.instructorSummary);
                 this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());
                 this.monitorRequest.set(detail.request ?? this.monitorRequest());
+                this.totalTokensUsed.set(detail.job?.totalTokensUsed ?? this.totalTokensUsed());
                 if (this.jobPhase() === 'FAILED') {
                     this.showResult(detail.job?.variantExerciseId);
                 }
@@ -540,6 +543,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                 this.monitorExerciseType.set(job?.exerciseType as ExerciseType | undefined);
                 this.variantTitle.set(job?.variantExerciseTitle);
                 this.monitorRequest.set(detail.request);
+                this.totalTokensUsed.set(job?.totalTokensUsed);
                 if (isTerminalVariantPhase(job?.phase)) {
                     this.jobId.set(jobId);
                     this.jobPhase.set(job!.phase!);
@@ -588,6 +592,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.monitorExerciseType.set(undefined);
         this.variantTitle.set(undefined);
         this.monitorRequest.set(undefined);
+        this.totalTokensUsed.set(undefined);
         this.generatedVariant.set(undefined);
     }
 

@@ -213,7 +213,7 @@ public class ExerciseVariantGenerationPipeline {
 
             checkCancelled(jobId);
             jobService.updatePhase(jobId, VariantJobPhase.VERIFYING);
-            report = runPhase(VariantJobPhase.VERIFYING, () -> adapters.verify(variant, plan));
+            report = runPhase(VariantJobPhase.VERIFYING, () -> adapters.verify(variant, plan, job));
             jobService.recordStepOutput(jobId, VariantJobPhase.VERIFYING,
                     new StepOutput(report.passed() ? "All gates green" : report.findings().size() + " finding(s) — attempt " + attempt + "/" + MAX_VERIFY_ATTEMPTS,
                             renderReport(report), Instant.now()));
