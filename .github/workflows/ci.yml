@@ -400,7 +400,6 @@ jobs:
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
       contents: read
-      statuses: write
       pull-requests: write
       actions: read
     with:

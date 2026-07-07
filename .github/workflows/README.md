@@ -62,11 +62,15 @@ failure from being buried behind the multi-minute test jobs; the Java analyses a
 half of a symmetric `quality` stage, alongside the client checks.
 
 Two jobs are deliberately **advisory** (not in the gate's `needs:`). They run for signal and
-post their own status, but never block merge:
+red the run on a genuine failure, but never block merge:
 
 - **`e2e`.** E2E takes up to ~2 hours (the gate must not wait on it) and is flaky enough that
-  requiring it would block good PRs on noise. Once it is stabilised behind a merge queue (the
-  `merge_group` trigger is already wired), it can move into the gate.
+  requiring it would block good PRs on noise. It is advisory like `codeql`: a real (non-flaky)
+  regression fails the job and reds the run, but a run whose only failures are known-flaky is
+  exonerated and passes green — the real-vs-flaky split is decided against Helios history in
+  `classify-failures.js`, and the per-test detail (with ✅/⚪/❌ per phase) lives in the E2E PR
+  comment. Once it is stabilised behind a merge queue (the `merge_group` trigger is already
+  wired), it can move into the gate.
 - **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
   advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
   so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
