@@ -21,6 +21,10 @@ Hyperion extends Artemis with AI-assisted authoring features for programming exe
 - Network access to an LLM provider that is supported by Spring AI (for example OpenAI or Azure OpenAI).
 - A valid API key for the chosen provider.
 
+<Callout variant={CalloutVariant.warning}>
+    <strong>Agentic whole-exercise generation and adaptation require the integrated LocalCI/LocalVC lifecycle (the <code>localci</code> profile).</strong> They drive a hardened sandbox on a LocalCI build agent, persist through LocalVC with a LocalCI trigger, and verify with the production LocalCI test/SCA parsers, so they are automatically disabled on Jenkins deployments (the endpoints are not registered and the client hides the entry points). The other Hyperion features — consistency check and problem-statement rewriting — do not depend on LocalCI and work under any supported CI backend.
+</Callout>
+
 ## Enable the Hyperion module
 
 Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion.enabled` property in the configuration that the server reads on startup (for example `application-prod.yml`).
