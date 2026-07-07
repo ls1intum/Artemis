@@ -571,4 +571,77 @@ describe('VideoPlayerComponent', () => {
             expect(setSignalSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('Context provider methods', () => {
+        it('getCurrentTime: returns current time from video element', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            videoElement.currentTime = 42.5;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBe(42.5);
+        });
+
+        it('getCurrentTime: returns undefined when videoRef is not available', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBeUndefined();
+        });
+
+        it('hasBeenPlayed: returns true when video has played ranges', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            // Mock played TimeRanges
+            Object.defineProperty(videoElement, 'played', {
+                value: {
+                    length: 1,
+                    start: (index: number) => 0,
+                    end: (index: number) => 10,
+                },
+                configurable: true,
+            });
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(true);
+        });
+
+        it('hasBeenPlayed: returns false when video has not been played', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            // Mock empty played TimeRanges
+            Object.defineProperty(videoElement, 'played', {
+                value: {
+                    length: 0,
+                    start: (index: number) => 0,
+                    end: (index: number) => 0,
+                },
+                configurable: true,
+            });
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
+        });
+
+        it('hasBeenPlayed: returns false when videoRef is not available', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
+        });
+    });
 });

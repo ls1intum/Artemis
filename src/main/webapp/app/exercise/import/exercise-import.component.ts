@@ -51,7 +51,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly isCourseFilter = signal(true);
     readonly isExamFilter = signal(true);
 
-    titleKey: string;
+    titleKey?: string;
 
     constructor() {
         // The exercise import component does not know yet which paging service to use
@@ -60,7 +60,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         super(undefined);
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         const exerciseType = this.selectedExerciseType();
         if (!exerciseType) {
             return;
@@ -94,11 +94,11 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
             case ExerciseType.FILE_UPLOAD:
                 return this.injector.get(FileUploadExercisePagingService);
             default:
-                throw new Error('Unsupported exercise type: ' + exerciseType);
+                throw new Error('Unsupported exercise type: ' + String(exerciseType));
         }
     }
 
-    protected createOptions(): object {
+    protected override createOptions(): object {
         return { isCourseFilter: this.isCourseFilter(), isExamFilter: this.isExamFilter(), programmingLanguage: this.selectedProgrammingLanguage() };
     }
 
@@ -139,6 +139,6 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
+        return exercise;
     }
 }

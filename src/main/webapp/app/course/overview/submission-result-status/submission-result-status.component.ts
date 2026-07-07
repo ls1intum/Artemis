@@ -56,7 +56,7 @@ export class SubmissionResultStatusComponent {
         if (exercise?.type !== ExerciseType.QUIZ) {
             return false;
         }
-        return ArtemisQuizService.notStarted(exercise as QuizExercise);
+        return ArtemisQuizService.notStarted(exercise);
     });
 
     readonly quizBatchStarted = computed(() => {
@@ -81,7 +81,7 @@ export class SubmissionResultStatusComponent {
         const studentParticipation = this.studentParticipation();
 
         if (exercise?.type === ExerciseType.QUIZ) {
-            return ArtemisQuizService.isUninitialized(exercise as QuizExercise);
+            return ArtemisQuizService.isUninitialized(exercise);
         }
         return !this.afterDueDate() && !studentParticipation;
     });

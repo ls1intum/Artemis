@@ -67,7 +67,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faChevronRight = faChevronRight;
 
     readonly isCollapsed = signal(false);
-    exerciseId: string;
+    exerciseId?: string;
     // Bumped whenever submission sync state is mutated in place (async callbacks) so the pure
     // template methods below re-evaluate under zoneless change detection.
     private readonly syncStateVersion = signal(0);
@@ -208,7 +208,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
-            const programmingExercise = exercise as ProgrammingExercise;
+            const programmingExercise = exercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
         }
         return false;

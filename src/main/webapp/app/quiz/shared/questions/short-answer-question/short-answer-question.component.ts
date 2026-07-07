@@ -42,7 +42,7 @@ export class ShortAnswerQuestionComponent {
     questionIndex = input<number>(0);
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
-    fnOnSubmittedTextUpdate = input<any>();
+    fnOnSubmittedTextUpdate = input<() => void>();
 
     submittedTextsChange = output<ShortAnswerSubmittedText[]>();
 
@@ -101,10 +101,10 @@ export class ShortAnswerQuestionComponent {
         for (const textpart of this.textParts()) {
             let j = 0;
             for (const element of textpart) {
-                if (this.shortAnswerQuestionUtil.isInputField(element!)) {
+                if (this.shortAnswerQuestionUtil.isInputField(element)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id)).value;
-                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion());
+                    submittedText.text = (document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id) as HTMLInputElement).value;
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.shortAnswerQuestion());
                     updated.push(submittedText);
                 }
                 j++;

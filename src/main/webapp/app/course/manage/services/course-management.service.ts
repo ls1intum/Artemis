@@ -36,27 +36,30 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CourseGradeInformationDTO {
-    gradeScores: GradeScoreDTO[];
-    students: StudentGradeDTO[];
+    gradeScores!: GradeScoreDTO[];
+    students!: StudentGradeDTO[];
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class StudentGradeDTO {
-    id: number;
-    login: string;
-    firstName: string;
-    lastName: string;
-    name: string;
+    id!: number;
+    login!: string;
+    firstName!: string;
+    lastName!: string;
+    name!: string;
     registrationNumber?: string;
-    email: string;
+    email!: string;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class GradeScoreDTO {
-    participationId: number;
-    userId: number;
-    exerciseId: number;
-    score: number;
-    presentationScore: number;
+    participationId!: number;
+    userId!: number;
+    exerciseId!: number;
+    score!: number;
+    presentationScore!: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -225,7 +228,7 @@ export class CourseManagementService implements OnDestroy {
                     const courses: Course[] = [];
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
-                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
 
                             // Setting the helper attribute in the course so we can use it in the course overview guard.
                             courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
@@ -256,7 +259,7 @@ export class CourseManagementService implements OnDestroy {
                 if (res.body) {
                     const courseForDashboardDTO: CourseForDashboardDTO = res.body;
                     if (courseForDashboardDTO.course.id) {
-                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
 
                         // Setting the helper attribute in the course so we can use it in the course overview guard.
                         courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
@@ -269,7 +272,7 @@ export class CourseManagementService implements OnDestroy {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined, true)),
         );
     }
 
@@ -393,7 +396,7 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses together with user stats using a GET request
      * @param req
      */
-    getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
+    getWithUserStats(req?: Record<string, string | number | boolean>): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
@@ -407,7 +410,7 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses for the overview using a GET request
      * @param req a dictionary which is sent as request option along the REST call
      */
-    getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
+    getCourseOverview(req?: Record<string, string | number | boolean>): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         return this.http.get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' }).pipe(

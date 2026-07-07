@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
+import { IrisMessageContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 @Component({
     selector: 'jhi-lecture-chatbot',
@@ -8,7 +9,13 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         @if (lectureId()) {
-            <jhi-iris-base-chatbot [showDeclineButton]="false" [isChatHistoryAvailable]="false" [layout]="'widget'" />
+            <jhi-iris-base-chatbot
+                [showDeclineButton]="false"
+                [isChatHistoryAvailable]="false"
+                [layout]="'widget'"
+                [aboutIrisDialogTransport]="'dynamic'"
+                [contextProvider]="contextProvider()"
+            />
         }
     `,
     styles: [
@@ -31,6 +38,15 @@ export class LectureChatbotComponent {
 
     /** Lecture identifier used to scope chatbot requests to the current lecture context. */
     readonly lectureId = input<number>();
+
+    /** Context provider for collecting context from all visible lecture units. */
+    readonly contextsProvider = input<LectureContextsProvider | undefined>(undefined);
+
+    /** Computed context provider function for the base chatbot */
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => {
+        const provider = this.contextsProvider();
+        return provider ? () => provider.getVisibleContexts() : undefined;
+    });
 
     constructor() {
         // Keep chat service mode aligned with the currently displayed lecture.

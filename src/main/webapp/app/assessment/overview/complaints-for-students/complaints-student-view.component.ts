@@ -43,7 +43,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
-    submission: Submission;
+    submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
     // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
     readonly complaint = signal<Complaint | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -78,7 +78,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
                 });
             }
             this.loadPotentialComplaint();
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 if (user?.id) {
                     const participationValue = this.participation();
                     if (participationValue?.student) {
@@ -103,7 +103,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()!));
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));
             });
     }
 

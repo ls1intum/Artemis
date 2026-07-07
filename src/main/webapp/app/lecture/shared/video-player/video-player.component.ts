@@ -253,7 +253,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
-        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
         if (!transcriptColumnEl) {
             return;
         }
@@ -323,6 +323,23 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         const clamped = Number.isFinite(duration) ? Math.max(0, seconds) : seconds;
         videoElement.currentTime = clamped;
         this.updateCurrentSegment(clamped);
+    }
+
+    /**
+     * Returns the current playback time in seconds, or undefined if no video is loaded.
+     */
+    getCurrentTime(): number | undefined {
+        const videoElement = this.videoRef()?.nativeElement;
+        return videoElement?.currentTime;
+    }
+
+    /**
+     * Returns whether the video has been played at least once (not just showing thumbnail).
+     * Uses the played TimeRanges property which is only populated when actual playback occurred.
+     */
+    hasBeenPlayed(): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
+        return videoElement ? videoElement.played.length > 0 : false;
     }
 
     /**

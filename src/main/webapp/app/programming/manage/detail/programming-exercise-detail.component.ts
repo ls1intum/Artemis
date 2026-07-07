@@ -164,9 +164,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         lineChangesLoading: false,
     };
 
-    courseId: number;
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
-    formattedGradingInstructions: SafeHtml;
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
@@ -188,9 +188,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
-    private templateAndSolutionParticipationSubscription: Subscription;
-    private exerciseStatisticsSubscription: Subscription;
-    private sharingEnabledSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -329,7 +329,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
             });
 
-        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
         });
     }
@@ -776,9 +776,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
 
                 if (!this.isExamExercise()) {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
                 } else {
-                    this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

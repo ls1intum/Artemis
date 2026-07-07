@@ -9,7 +9,6 @@ import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
     CourseCompetency,
-    CourseCompetencyImportOptionsDTO,
     CourseCompetencyProgress,
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
@@ -164,7 +163,7 @@ export class CourseCompetencyService {
                     importRelations: importRelations,
                     importExercises: false,
                     importLectures: false,
-                } as CourseCompetencyImportOptionsDTO,
+                },
                 { observe: 'response' },
             )
             .pipe(

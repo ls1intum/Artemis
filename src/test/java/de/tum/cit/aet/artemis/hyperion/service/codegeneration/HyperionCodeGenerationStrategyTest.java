@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -69,7 +68,7 @@ class HyperionCodeGenerationServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from both getters.
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
@@ -90,15 +89,17 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).path()).isEqualTo("Sort.java");
-        assertThat(result.get(1).path()).isEqualTo("SortTest.java");
+        assertThat(result.getFiles()).hasSize(2);
+        assertThat(result.getFiles().get(0).path()).isEqualTo("Sort.java");
+        assertThat(result.getFiles().get(1).path()).isEqualTo("SortTest.java");
 
-        // Base orchestration triggers planning + final logic stage once for this test strategy.
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        // Base orchestration triggers every generation stage once.
+        verify(chatModel, times(4)).call(any(Prompt.class));
         verify(templates).renderObject(eq("test-plan-template"), anyMap());
+        verify(templates).renderObject(eq("test-structure-template"), anyMap());
+        verify(templates).renderObject(eq("test-headers-template"), anyMap());
         verify(templates).renderObject(eq("test-logic-template"), anyMap());
     }
 
@@ -107,10 +108,33 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
 
-        assertThat(result).hasSize(1);
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        assertThat(result.getFiles()).hasSize(1);
+        verify(chatModel, times(4)).call(any(Prompt.class));
+    }
+
+    @Test
+    void generateCode_withDeletedFiles_returnsDeletionPaths() throws Exception {
+        String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"src/Sort.java\",\"content\":\"class Sort {}\"}],\"deletedFiles\":[\"src/OldSort.java\"]}";
+        setupMockTemplateAndChatResponses(coreLogicJson);
+
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+
+        assertThat(result.getFiles()).hasSize(1);
+        assertThat(result.getDeletedFiles()).containsExactly("src/OldSort.java");
+    }
+
+    @Test
+    void generateCode_withDeletedFilesFromIntermediateStage_returnsDeletionPaths() throws Exception {
+        String fileStructureJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"src/Sort.java\",\"content\":\"class Sort {}\"}],\"deletedFiles\":[\"src/OldSort.java\"]}";
+        String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"src/Sort.java\",\"content\":\"class Sort {}\"}]}";
+        setupMockTemplateAndChatResponses(fileStructureJson, coreLogicJson);
+
+        CodeGenerationResponseDTO result = strategy.generateCode(user, exercise, 1L, null, "repo structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues");
+
+        assertThat(result.getFiles()).hasSize(1);
+        assertThat(result.getDeletedFiles()).containsExactly("src/OldSort.java");
     }
 
     @Test
@@ -441,12 +465,20 @@ class HyperionCodeGenerationServiceTest {
     }
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {
+        setupMockTemplateAndChatResponses("{\"solutionPlan\":\"plan\",\"files\":[]}", finalResponse);
+    }
+
+    private void setupMockTemplateAndChatResponses(String fileStructureResponse, String finalResponse) {
         String planResponse = "{\"solutionPlan\":\"Generated plan\",\"files\":[]}";
+        String headersResponse = "{\"solutionPlan\":\"plan\",\"files\":[]}";
 
         when(templates.renderObject(eq("test-plan-template"), anyMap())).thenReturn("rendered plan");
+        when(templates.renderObject(eq("test-structure-template"), anyMap())).thenReturn("rendered structure");
+        when(templates.renderObject(eq("test-headers-template"), anyMap())).thenReturn("rendered headers");
         when(templates.renderObject(eq("test-logic-template"), anyMap())).thenReturn("rendered logic");
 
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(finalResponse));
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(fileStructureResponse))
+                .thenReturn(createChatResponse(headersResponse)).thenReturn(createChatResponse(finalResponse));
     }
 
     private ChatResponse createChatResponse(String content) {
@@ -491,14 +523,14 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }

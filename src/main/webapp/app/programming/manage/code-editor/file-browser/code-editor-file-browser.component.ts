@@ -52,7 +52,7 @@ import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services
 
 export type InteractableEvent = {
     // Click event object; contains target information (used to blur the clicked header)
-    event: any;
+    event: MouseEvent;
     // Whether the collapsed element collapses horizontally (true) or vertically (false)
     horizontal: boolean;
 };
@@ -176,11 +176,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     // Tuple: [filePath, fileType]
     readonly creatingFile = signal<[string, FileType] | undefined>(undefined);
 
-    // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
-    treeViewMaxHeight: 5000;
+    // On develop this was a value-less type annotation (`treeViewMaxHeight: 5000`), i.e. undefined at runtime, so the
+    // intended 5000 cap was never actually applied to the [maxHeight] binding. Kept undefined-at-runtime here (via the
+    // definite-assignment marker) to preserve that exact behavior; actually applying the cap is a follow-up change.
+    treeViewMaxHeight!: number;
 
-    gitConflictState: GitConflictState;
-    conflictSubscription: Subscription;
+    gitConflictState?: GitConflictState;
+    conflictSubscription?: Subscription;
 
     // Icons
     faPlus = faPlus;
@@ -431,7 +433,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * @param tree {array of objects} Current tree structure
      * @param folder {string} Folder name
      */
-    buildTree(files: string[], tree?: FileTreeItem[], folder?: File | string) {
+    buildTree(files: string[], tree?: FileTreeItem[], folder?: string) {
         /**
          * Initialize tree if empty
          */
@@ -497,7 +499,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return { ...node, children: node.children.map(this.compressTree.bind(this)) };
+            return { ...node, children: (node.children as FileTreeItem[]).map(this.compressTree.bind(this)) };
         }
         // If the node has no children, there is nothing to compress.
         else {
@@ -509,7 +511,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         this.collapsed.update((value) => !value);
         this.onToggleCollapse.emit({ event, horizontal: true });
     }
@@ -519,8 +521,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * and emit the changes to the parent.
      * After rename the state is exited.
      **/
-    onRenameFile(event: any) {
-        const newFileNamePath = event as string;
+    onRenameFile(event: string) {
+        const newFileNamePath = event;
         // Take the actual file name if the packages are collapsed, otherwise take the name directly
         const newFileName = newFileNamePath.split('/').pop() || newFileNamePath;
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
@@ -528,9 +530,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
             return;
         }
         const [filePath, , fileType] = this.renamingFile()!;
-        let newFilePath: any = filePath.split('/');
-        newFilePath[newFilePath.length - 1] = newFileName;
-        newFilePath = newFilePath.join('/');
+        const newFilePathSegments = filePath.split('/');
+        newFilePathSegments[newFilePathSegments.length - 1] = newFileName;
+        const newFilePath = newFilePathSegments.join('/');
 
         if (Object.keys(this.repositoryFiles()).includes(newFilePath)) {
             this.onError.emit('fileExists');

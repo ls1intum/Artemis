@@ -2,6 +2,8 @@ import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal 
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
@@ -27,7 +29,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -80,24 +82,25 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.noUsersFoundError.set(undefined);
     }
 
-    async onCSVFileSelect(event: any) {
-        if (event.target.files.length > 0) {
+    async onCSVFileSelect(event: Event) {
+        const input = event.target as HTMLInputElement;
+        if (input.files && input.files.length > 0) {
             this.resetDialog();
-            const file = event.target.files[0];
+            const file = input.files[0];
             this.isParsing.set(true);
             try {
                 if (this.examUserMode()) {
                     const result = await readExamUserDTOsFromCSVFile(file);
                     if (!result.ok) {
                         this.validationError.set(result.invalidRowIndices.join(', '));
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
                     const examUsers = result.examUsers;
                     if (examUsers.length === 0) {
                         this.noUsersFoundError.set(true);
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
@@ -106,14 +109,14 @@ export class UsersImportDialogComponent implements OnDestroy {
                     const result = await readStudentDTOsFromCSVFile(file);
                     if (!result.ok) {
                         this.validationError.set(result.invalidRowIndices.join(', '));
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
                     const students = result.students;
                     if (students.length === 0) {
                         this.noUsersFoundError.set(true);
-                        event.target.value = '';
+                        input.value = '';
                         return;
                     }
 
@@ -121,7 +124,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 }
             } catch {
                 this.alertService.error('artemisApp.importUsers.genericErrorMessage');
-                event.target.value = '';
+                input.value = '';
             } finally {
                 this.isParsing.set(false);
             }

@@ -1,22 +1,23 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS, CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
-import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
@@ -29,32 +30,29 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
+import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
+
+/**
+ * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
+ * method or as a boolean property. Returns undefined if the component does not provide the information.
+ */
+function readComponentCollapsed(componentRef: unknown): boolean | undefined {
+    if (typeof componentRef !== 'object' || !componentRef) {
+        return undefined;
+    }
+    const isCollapsed = (componentRef as { isCollapsed?: (() => boolean) | boolean }).isCollapsed;
+    return typeof isCollapsed === 'function' ? isCollapsed.call(componentRef) : isCollapsed;
+}
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [
-        NgClass,
-        RouterOutlet,
-        NgTemplateOutlet,
-        FaIconComponent,
-        TranslateDirective,
-        CourseNotificationOverviewComponent,
-        CourseTitleBarComponent,
-        CourseSidebarComponent,
-        CourseNotificationPresetPickerComponent,
-        CourseUnenrollmentModalComponent,
-    ],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, TranslateDirective, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -66,24 +64,22 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
-    protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
-    protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+    private accountService = inject(AccountService);
+    private courseOverviewGuard = inject(CourseOverviewGuard);
+    private courseTitleBarService = inject(CourseTitleBarService);
 
-    private toggleSidebarEventSubscription: Subscription;
-    private teamAssignmentUpdateListener: Subscription;
-    private quizExercisesChannel: string;
+    // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
+    protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
+
+    private toggleSidebarEventSubscription?: Subscription;
+    private teamAssignmentUpdateListener?: Subscription;
+    private quizExercisesChannel?: string;
     private quizExercisesSubscription?: Subscription;
-    private examStartedSubscription: Subscription;
-
-    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
-    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
-    private info?: CourseNotificationInfo;
-    private settingInfo?: CourseNotificationSettingInfo;
+    private examStartedSubscription?: Subscription;
 
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
-    showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
         | CourseExercisesComponent
         | CourseLecturesComponent
@@ -94,7 +90,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
     // Icons
     faTimes = faTimes;
@@ -103,43 +98,31 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
-    faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
 
-    async ngOnInit() {
+    override async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => {
                 const componentRef = this.activatedComponentReference();
-                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
                 return componentCollapsed ?? !value;
             });
         });
 
-        this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
+        this.subscription = this.route?.params.subscribe((params: Params) => {
             const id = Number(params.courseId);
+            const previousCourseId = this.courseId();
             this.courseId.set(id);
-
-            this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
-                if (settingInfo) {
-                    this.settingInfo = settingInfo;
-
-                    if (this.info) {
-                        this.initializeCourseNotificationValues();
-                    }
-                }
-            });
-
-            this.courseNotificationService.getInfo().subscribe((info) => {
-                if (info.body) {
-                    this.info = info.body;
-
-                    if (this.settingInfo) {
-                        this.initializeCourseNotificationValues();
-                    }
-                }
-            });
+            // In-place navigation to a different course (without destroying this container) must reload the course
+            if (previousCourseId && previousCourseId !== id) {
+                this.courseStorageService.clearFullyLoaded(previousCourseId);
+                this.loadCourseSubscription?.unsubscribe();
+                this.loadCourseSubscription = this.loadCourse().subscribe({
+                    next: () => this.sidebarItems.set(this.getSidebarItems()),
+                });
+            }
         });
         await super.ngOnInit();
 
@@ -149,33 +132,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         this.courseActionItems.set(this.getCourseActionItems());
         const componentRef = this.activatedComponentReference();
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
-    }
-
-    /**
-     * Initializes component values once both settingInfo and info are available.
-     * Sets up selectable presets, and the currently selected preset.
-     */
-    private initializeCourseNotificationValues() {
-        this.selectableSettingPresets.set(this.info!.presets);
-
-        this.selectedSettingPreset.set(
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
-        );
-    }
-
-    /**
-     * Handles selection of a notification preset.
-     *
-     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
-     */
-    presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
-
-        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
     handleCourseIdChange(courseId: number): void {
@@ -188,13 +148,29 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and competencies
+     * Fetches the course from the server including all exercises, lectures, exams and competencies.
+     * This is the only place that issues the (expensive) for-dashboard call when navigating into a course;
+     * the {@link CourseOverviewGuard} reuses the stored result instead of fetching itself.
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
-        const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
+        const courseId = this.courseId();
+        const storedCourse = this.courseStorageService.getCourse(courseId);
+        if (!refresh && storedCourse && this.courseStorageService.isCourseFullyLoaded(courseId)) {
+            // The CourseOverviewGuard already loaded and stored the full course before activating the route, so reuse it
+            // instead of issuing a second for-dashboard call (load once). Re-check access for the target child route,
+            // because on an in-place course switch the guard is not re-evaluated.
+            this.checkChildRouteAccess(storedCourse);
+            this.course.set(storedCourse);
+            this.refreshingCourse.set(false);
+            return of(undefined);
+        }
+        const observable = this.courseManagementService.findOneForDashboard(courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
+                    // Unguarded routes and in-place switches reach loadCourse without the guard having decided; re-check
+                    // the target child route now that the course is loaded so an inaccessible tab is redirected away.
+                    this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
                 }
 
@@ -237,7 +213,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         return !!this.route.snapshot.firstChild?.data?.hasSidebar;
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
@@ -250,13 +226,18 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.activatedComponentReference.set(componentRef);
         }
 
-        if (componentRef instanceof CourseExercisesComponent) {
+        if (
+            componentRef instanceof CourseExercisesComponent ||
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        ) {
             componentRef.setPageTitle(this.pageTitle());
         }
 
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = readComponentCollapsed(componentRef);
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
-        this.getShowRefreshButton();
     }
 
     handleToggleSidebar(): void {
@@ -265,12 +246,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
+        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : childRouteComponent!.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed);
-    }
-
-    getShowRefreshButton(): void {
-        this.showRefreshButton.set(this.route.snapshot.firstChild?.data?.showRefreshButton ?? false);
     }
 
     getSidebarItems(): SidebarItem[] {
@@ -457,8 +434,31 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
     }
 
-    ngOnDestroy() {
+    /**
+     * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
+     * This complements the {@link CourseOverviewGuard}: the guard decides on the first navigation into a course, but it is
+     * not re-evaluated on an in-place course switch (different courseId without re-creating this container), so the access
+     * check for the new target route has to run here once the course has been (re)loaded.
+     */
+    private checkChildRouteAccess(course: Course): void {
+        const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
+        // Only re-check routes that the CourseOverviewGuard actually protects: other child routes
+        // (e.g. settings, statistics, calendar) have no access rule and must not be redirected
+        if (!childPath || !COURSE_OVERVIEW_GUARDED_ROUTE_PATHS.has(childPath)) {
+            return;
+        }
+        // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
+        const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
+        // handleReturn navigates away synchronously when access is denied; subscribe to make the consumption explicit
+        this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
+    }
+
+    override ngOnDestroy() {
         super.ngOnDestroy();
+        // Clear the fully-loaded marker so the next visit re-fetches fresh course data from the server
+        // instead of reusing a potentially stale cached course. Within the current visit, tab switches
+        // still skip the duplicate findOneForDashboard call because the marker remains set until destroy.
+        this.courseStorageService.clearFullyLoaded(this.courseId());
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }

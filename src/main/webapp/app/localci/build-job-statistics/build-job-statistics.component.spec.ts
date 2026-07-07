@@ -1,5 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -306,13 +312,11 @@ describe('BuildJobStatisticsComponent', () => {
         };
         mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of(initialStats));
 
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         component.ngOnInit();
         component.incrementStatisticsByStatus('UNKNOWN_STATUS');
 
         expect(component.buildJobStatistics().totalBuilds).toBe(10);
-        expect(consoleSpy).toHaveBeenCalledWith('Unknown build job status received: UNKNOWN_STATUS');
-        consoleSpy.mockRestore();
+        expect(vi.mocked(captureException)).toHaveBeenCalledWith(new Error('Unknown build job status received: UNKNOWN_STATUS'));
     });
 
     it('should not increment statistics when status is undefined', () => {

@@ -5,6 +5,7 @@ import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { signal } from '@angular/core';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { Authority } from 'app/foundation/constants/authority.constants';
 
 export class MockAccountService implements IAccountService {
     userIdentity = signal<User | undefined>(undefined);
@@ -12,15 +13,15 @@ export class MockAccountService implements IAccountService {
     identity = () => Promise.resolve({ id: 99, login: 'admin' } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
     setPrefilledUsername = (username: string) => ({});
-    hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
-    hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
+    hasAnyAuthority = (authorities: readonly Authority[]) => Promise.resolve(true);
+    hasAnyAuthorityDirect = (authorities: readonly Authority[]) => authorities.length !== 0;
     getAuthenticationState: () => Observable<User | undefined> = () => of({ id: 99 } as User);
     authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);
-    isAtLeastTutor = () => this.hasAnyAuthorityDirect(['ROLE_TUTOR']);
+    isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastEditorInCourse = (course?: Course) => course?.isAtLeastEditor ?? false;
     isAtLeastInstructorInCourse = (course?: Course) => course?.isAtLeastInstructor ?? false;
