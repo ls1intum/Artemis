@@ -22,13 +22,18 @@ class BuildGateTestNamesTest {
 
     @ParameterizedTest(name = "\"{0}\" is NOT a build gate")
     @ValueSource(strings = { "sort-test.stack_empty_initially", "TestCatch2", "testPushPop", "compiles_an_empty_program", "buildsTheList", "configures_nothing", "push_then_pop",
-            "sort-test.size_tracks_elements", "GBS-Tester-1.36.TestSortAscending" })
+            "sort-test.size_tracks_elements", "GBS-Tester-1.36.TestSortAscending",
+            // JVM camelCase behaviour tests whose gate word is lowercase must never be mistaken for the PascalCase C/C++ gates (regression for the false-positive that
+            // zero-weighted
+            // real Java tests): the gate word here is lowercase (buildGraph…, compileExpression, configureRoutes), unlike CompileSort/BuildTests.
+            "buildGraphFromEdges", "compileExpression", "configureRoutes", "SomeTest.buildAdjacencyList" })
     void rejectsBehaviourTests(String name) {
         assertThat(BuildGateTestNames.isBuildGate(name)).as(name).isFalse();
     }
 
     @Test
-    void nullIsNotABuildGate() {
+    void nullOrEmptyIsNotABuildGate() {
         assertThat(BuildGateTestNames.isBuildGate(null)).isFalse();
+        assertThat(BuildGateTestNames.isBuildGate("")).isFalse();
     }
 }

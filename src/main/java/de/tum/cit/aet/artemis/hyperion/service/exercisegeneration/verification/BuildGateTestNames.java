@@ -49,8 +49,10 @@ public final class BuildGateTestNames {
             return true;
         }
         for (String prefix : PREFIXES) {
-            // Require an uppercase target after the gate word so a behaviour test like "compiles_an_empty_program" is never a false positive.
-            if (lower.startsWith(prefix) && token.length() > prefix.length() && Character.isUpperCase(token.charAt(prefix.length()))) {
+            // The C/C++ FACT harness emits PascalCase gates (CompileSort, ConfigureDebug, BuildTests): the gate word AND its target are both capitalized. Requiring both — an
+            // uppercase first char and an uppercase target after the gate word — keeps a JVM camelCase behaviour test (e.g. buildGraphFromEdges, compileExpression) from ever being
+            // mistaken for a build gate, while still catching the PascalCase C/C++ gates. A snake_case behaviour test (compiles_an_empty_program) also never matches.
+            if (lower.startsWith(prefix) && token.length() > prefix.length() && Character.isUpperCase(token.charAt(0)) && Character.isUpperCase(token.charAt(prefix.length()))) {
                 return true;
             }
         }

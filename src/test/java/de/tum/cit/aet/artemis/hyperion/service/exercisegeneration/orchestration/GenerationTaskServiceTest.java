@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.V
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * Unit test for {@link GenerationTaskService}'s terminal-state contract (the class javadoc's guarantee): every path ends in exactly one distinct terminal event — {@code SUCCESS}
@@ -56,7 +56,7 @@ class GenerationTaskServiceTest {
 
     private GenerationJobService jobService;
 
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private ExerciseAdaptationRevertService adaptationRevertService;
 
@@ -75,7 +75,7 @@ class GenerationTaskServiceTest {
         recoveryService = mock(GenerationRecoveryService.class);
         websocket = mock(HyperionWebsocketService.class);
         jobService = mock(GenerationJobService.class);
-        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
+        programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         adaptationRevertService = mock(ExerciseAdaptationRevertService.class);
         sandbox = mock(InteractiveSandbox.class);
 

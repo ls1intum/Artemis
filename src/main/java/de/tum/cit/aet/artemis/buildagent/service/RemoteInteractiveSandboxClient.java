@@ -216,18 +216,20 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /**
-     * Picks a build agent to own a new session: an active, non-paused agent with spare build capacity, preferring the least-loaded one so a generation session does not pile onto a
-     * busy agent. The chosen short name is encoded into the session handle and pins all later operations to that agent.
+     * Picks a build agent to host a new session. Generation hosting is opt-in per agent ({@code max-concurrent-generation-sessions}, default 0), and an agent with the cap at 0
+     * never subscribes to the request topic — so selection MUST filter on generation-session headroom, not build-job headroom, or a CREATE routed to a non-hosting agent would hang
+     * unanswered until the control-op timeout. Among active, non-paused agents that host generation and have a free session permit, the least session-loaded is chosen; its short
+     * name is encoded into the session handle and pins all later operations to that agent.
      *
      * @return the short name of the selected agent
      */
     private String selectTargetAgent() {
         List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
         Optional<BuildAgentInformation> target = agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
-                .filter(agent -> agent.numberOfCurrentBuildJobs() < agent.maxNumberOfConcurrentBuildJobs())
-                .min(Comparator.comparingInt(BuildAgentInformation::numberOfCurrentBuildJobs));
-        return target.map(agent -> agent.buildAgent().name())
-                .orElseThrow(() -> new LocalCIException("No build agent with spare capacity is available to host an interactive sandbox session."));
+                .filter(agent -> agent.maxNumberOfConcurrentGenerationSessions() > 0 && agent.numberOfCurrentGenerationSessions() < agent.maxNumberOfConcurrentGenerationSessions())
+                .min(Comparator.comparingInt(BuildAgentInformation::numberOfCurrentGenerationSessions));
+        return target.map(agent -> agent.buildAgent().name()).orElseThrow(() -> new LocalCIException(
+                "No build agent is configured to host interactive sandbox sessions (set artemis.continuous-integration.build-agent.max-concurrent-generation-sessions > 0 on a spare agent)."));
     }
 
     private static String newCorrelationId() {

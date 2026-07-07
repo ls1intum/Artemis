@@ -329,7 +329,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static BuildAgentInformation idleAgent(String name, int currentJobs, int maxJobs) {
-        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0);
+        return new BuildAgentInformation(new BuildAgentDTO(name, "127.0.0.1:5701", name), maxJobs, currentJobs, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 2);
     }
 
     private static byte[] tarWithSingleFile(String name, String content) {
