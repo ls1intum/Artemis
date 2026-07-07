@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.RepositoryDTO;
 
@@ -102,8 +104,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
             String testHash = triggeredByPushTo == RepositoryType.TESTS && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri());
+            String testCheckoutPath = RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(participation.getProgrammingExercise().getProgrammingLanguage());
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, testCheckoutPath, null);
 
             // Hades should use a Bash script
             ScriptType scriptType = ScriptType.SHELL;
@@ -138,18 +141,29 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     }
 
     private String buildScript(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
-        List<String> phaseScripts = new ArrayList<>();
-        for (BuildPhaseDTO phase : activePhases) {
-            if (phase.script() != null && !phase.script().isBlank()) {
-                phaseScripts.add(phase.script().strip());
-            }
-        }
-
-        String commands = String.join(" && ", phaseScripts);
-        String result = "set -e && cd " + HADES_WORKING_DIRECTORY + (commands.isEmpty() ? "" : " && " + commands);
-
+        String result = computeBuildScript(activePhases);
         return buildScriptProviderService.replacePlaceholders(result, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());
+    }
+
+    private static String computeBuildScript(List<BuildPhaseDTO> activePhases) {
+        List<BuildPhaseDTO> nonForceRunPhases = new ArrayList<>();
+        List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
+        for (BuildPhaseDTO phase : activePhases) {
+            if (phase.script() == null || phase.script().isBlank()) {
+                continue;
+            }
+            (phase.forceRun() ? forceRunPhases : nonForceRunPhases).add(phase);
+        }
+
+        String nonForceRunCommands = nonForceRunPhases.stream().map(phase -> phase.script().strip()).collect(Collectors.joining(" && "));
+
+        if (forceRunPhases.isEmpty()) {
+            return "set -e && cd " + HADES_WORKING_DIRECTORY + (nonForceRunCommands.isEmpty() ? "" : " && " + nonForceRunCommands);
+        }
+
+        String forceRunCommands = forceRunPhases.stream().map(phase -> phase.script().strip()).collect(Collectors.joining("\n"));
+        return "cd " + HADES_WORKING_DIRECTORY + "\n( set -e\n" + nonForceRunCommands + "\n)\nbuild_exit_code=$?\n" + forceRunCommands + "\nexit ${build_exit_code}";
     }
 
     private List<BuildPhaseDTO> resolveActivePhases(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation,

@@ -167,10 +167,12 @@ public class HadesService implements StatelessCIService {
         cloneMetadata.put("HADES_TEST_USERNAME", username);
         cloneMetadata.put("HADES_TEST_PASSWORD", password);
         cloneMetadata.put("HADES_TEST_URL", buildTriggerRequestDTO.testRepository().url());
-        cloneMetadata.put("HADES_TEST_PATH", hadesTestPath);
+        String testCheckoutPath = buildTriggerRequestDTO.testRepository().cloneLocation();
+        cloneMetadata.put("HADES_TEST_PATH", testCheckoutPath == null || testCheckoutPath.isBlank() ? hadesTestPath : "./" + testCheckoutPath);
         cloneMetadata.put("HADES_TEST_ORDER", testOrder);
         cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", username);
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", password);
+
         cloneMetadata.put("HADES_ASSIGNMENT_URL", buildTriggerRequestDTO.exerciseRepository().url());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentPath);
         cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
