@@ -25,7 +25,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     readonly problemStatementAnalysis = output<ProblemStatementAnalysis>();
     // Subject now carries the problem statement for distinctUntilChanged comparison
     delayedAnalysisSubject = new Subject<string>();
-    analysisSubscription: Subscription;
+    analysisSubscription!: Subscription; // set in ngOnInit(), before ngOnDestroy() reads it
 
     readonly invalidTestCases = signal<string[]>([]);
     readonly missingTestCases = signal<string[]>([]);

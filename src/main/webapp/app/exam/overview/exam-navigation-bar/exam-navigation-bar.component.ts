@@ -60,7 +60,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     readonly icon = signal<IconProp>(faCheck);
 
-    subscriptionToLiveExamExerciseUpdates: Subscription;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
     faBars = faBars;

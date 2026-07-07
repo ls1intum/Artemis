@@ -32,7 +32,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     profileService = inject(ProfileService);
     router = inject(Router);
 
-    private conversationServiceSubscription: Subscription;
+    private conversationServiceSubscription?: Subscription;
     private settingsSubscription: Subscription | undefined;
     private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
     channelSubTypeReferenceRouterLink = '';

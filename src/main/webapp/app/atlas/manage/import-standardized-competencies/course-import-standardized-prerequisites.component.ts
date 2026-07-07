@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -24,7 +24,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         KnowledgeAreaTreeComponent,
         FaIconComponent,
         FormsModule,
-        NgbTooltipModule,
+        TooltipModule,
         HtmlForMarkdownPipe,
         ButtonComponent,
         DocumentationButtonComponent,

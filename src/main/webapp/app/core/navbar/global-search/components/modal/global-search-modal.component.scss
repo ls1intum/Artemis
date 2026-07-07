@@ -15,7 +15,7 @@
     outline: none;
 
     &::placeholder {
-        color: var(--bs-secondary);
+        color: var(--p-text-muted-color);
         opacity: 0.6;
     }
 }

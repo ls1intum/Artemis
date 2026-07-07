@@ -69,7 +69,7 @@ describe('DeleteDialogComponent', () => {
 
         expect(comp.entityTitle()).toBe('title');
         expect(comp.deleteQuestion()).toBe('artemisApp.exercise.delete.question');
-        expect(comp.warningTextColor).toBe('text-danger');
+        expect(comp.warningTextColor).toBe('text-state-danger');
         expect(comp.useFaCheckIcon()).toBe(false);
 
         // Check that clear method calls dialogRef.close

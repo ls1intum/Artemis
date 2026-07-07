@@ -93,8 +93,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly lectureUnits = signal<LectureUnit[]>([]);
     readonly hasPdfLectureUnit = signal(false);
     readonly irisSettings = signal<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
-    paramsSubscription: Subscription;
-    courseParamsSubscription: Subscription;
+    paramsSubscription?: Subscription;
+    courseParamsSubscription?: Subscription;
     irisEnabled = false;
     readonly informationBoxData = signal<InformationBox[]>([]);
 
