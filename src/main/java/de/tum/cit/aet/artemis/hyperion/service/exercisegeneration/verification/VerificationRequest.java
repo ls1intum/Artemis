@@ -7,8 +7,7 @@ import java.util.Set;
  * The produced artifacts and integrity-gate inputs the post-loop {@link DifferentialVerificationService#verify} decides on, bundled so the "what to verify" travels as one value
  * next to the "where to run it" ({@code sandbox}, {@code sessionId}, {@code exercise}) the verifier keeps as separate arguments.
  * <p>
- * These are exactly the sandbox-free inputs the in-loop self-check cannot supply: the read-back repository files and the seed snapshot the agent loop lacks mid-session. Grouping
- * them keeps the differential ({@code sandbox}/{@code sessionId}/{@code exercise}) distinct from the gate evidence and removes the long positional argument list at the call site.
+ * These are exactly the sandbox-free inputs the in-loop self-check cannot supply: the read-back repository files and the seed snapshot the agent loop lacks mid-session.
  *
  * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability gate
  * @param producedTestsFiles           tests-repo files read back after generation; compared against the seed snapshot for the harness-immutability gate

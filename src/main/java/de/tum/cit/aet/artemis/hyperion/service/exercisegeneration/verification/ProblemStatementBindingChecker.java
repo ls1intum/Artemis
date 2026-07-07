@@ -15,9 +15,8 @@ import java.util.stream.Collectors;
  * actual test names), never the build summaries or parsers.
  * <p>
  * A problem-statement task binding has the shape {@code [task][Some title](testA,testB)}: the parenthesised, comma-separated names bind graded tests to a student-facing checklist.
- * The checks here surface, respectively, whether any binding is present, which binding-shaped lines use the wrong keyword, which bound names resolve to no real test, and which
- * student-facing prose leaks grader mechanics. The gates and messages live in {@link DifferentialVerificationService}, which consumes these lists; this class owns only the parsing
- * and detection. Static and side-effect-free so it is unit-testable without Docker, mirroring {@link ExerciseIntegrityGate}.
+ * The gates and rejection messages live in {@link DifferentialVerificationService}, which consumes these lists; this class owns only the parsing and detection. Static and
+ * side-effect-free so it is unit-testable without Docker, mirroring {@link ExerciseIntegrityGate}.
  */
 final class ProblemStatementBindingChecker {
 

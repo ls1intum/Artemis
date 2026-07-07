@@ -119,7 +119,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
             // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command completed. The callback owns the HTTP stream to the
-            // daemon from the SHARED docker client pool; it must be closed on every exit path (especially the timeout branch, where onComplete never fires) or the connection
+            // daemon from the shared docker client pool; it must be closed on every exit path (especially the timeout branch, where onComplete never fires) or the connection
             // leaks.
             ResultCallback.Adapter<Frame> callback = dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 

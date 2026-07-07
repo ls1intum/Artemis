@@ -109,9 +109,8 @@ public class AgentLoopRunner {
 
     /**
      * Bounded attempts for a single model call before giving up. Only <em>transient</em> failures (see {@link #isRetryable}) and empty responses consume attempts: a fresh sample
-     * of
-     * a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. This is the loop's own
-     * bound; Spring AI 2.0's {@code OpenAiChatModel} carries no {@code RetryTemplate}, so {@code spring.ai.retry.*} is inert for chat and does not layer on top of this ladder.
+     * of a transient blip usually succeeds, so one should not abort a whole generation. Deterministic 4xx rejections do not retry at all — they fail fast. The {@code ChatModel}
+     * applies no {@code RetryTemplate}, so this ladder is the sole retry for the agent's chat calls.
      */
     private static final int MODEL_CALL_ATTEMPTS = 6;
 
@@ -191,7 +190,7 @@ public class AgentLoopRunner {
         ToolCallbackProvider provider = MethodToolCallbackProvider.builder().toolObjects(tools).build();
         ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
-        // Spring AI 2.0 never auto-executes tools, so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
+        // The ChatModel does not auto-execute tools on call(), so the response carries raw tool calls this loop executes explicitly via toolCallingManager.executeToolCalls(...).
         // Build OpenAiChatOptions (not a generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the runtime options to OpenAiChatOptions, so a
         // DefaultToolCallingChatOptions throws ClassCastException. The model and per-turn max_tokens cap are pinned explicitly (see configuredModel()/configuredTurnMaxTokens()).
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder().toolCallbacks(toolCallbacks).maxTokens(configuredTurnMaxTokens());

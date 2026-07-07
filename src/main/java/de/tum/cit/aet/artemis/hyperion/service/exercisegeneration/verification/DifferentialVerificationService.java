@@ -363,16 +363,12 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The template gate: the template must compile and run the same tests as the solution but fail at least half of the GRADABLE ones (a near-complete template is not a real
-     * starting point; {@code tests()==0} means it did not compile). Appends a rejection reason to {@code reasons} otherwise.
-     * <p>
-     * The threshold and the actual-failure count both exclude the build/compile/configure gate tests ({@link BuildGateTestNames}) — they legitimately pass on both the solution and
-     * the template, so counting them in the denominator would false-reject a compile-heavy exercise (e.g. the C/C++ FACT harness with 4 gate tests + 2 behaviour tests: half of 6
-     * is
-     * 3, but the template can only ever fail the 2 behaviour tests). This "not nearly-complete" heuristic is a strict subset of {@link #checkNoGradableTestPassesTemplate}, which
-     * requires EVERY gradable test to fail on the template; it is kept as a cheaper, human-readable early signal computed over the same gradable population, and can never
-     * contradict
-     * that stronger gate.
+     * The template gate: the template must compile and run the same tests as the solution but fail at least half of the gradable ones (a near-complete template is not a real
+     * starting point; {@code tests()==0} means it did not compile). Both the threshold and the failure count exclude the build/compile/configure gate tests
+     * ({@link BuildGateTestNames}) — they legitimately pass on both repos, so counting them would false-reject a compile-heavy exercise (e.g. 4 gate tests + 2 behaviour tests:
+     * half
+     * of 6 is 3, but only the 2 behaviour tests can fail). A subset of {@link #checkNoGradableTestPassesTemplate} (which requires every gradable test to fail) — a cheaper early
+     * signal that can never contradict it. Appends a rejection reason otherwise.
      *
      * @param solution the solution build summary (its test count is the reference)
      */
