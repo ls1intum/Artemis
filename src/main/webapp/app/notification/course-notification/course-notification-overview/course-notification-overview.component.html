@@ -22,10 +22,12 @@
                 }
                 <button
                     pButton
-                    outlined
+                    severity="secondary"
+                    [outlined]="true"
                     size="small"
                     [routerLink]="['/courses', courseId(), 'settings']"
                     [pTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    (click)="closeOverlay()"
                 >
                     <fa-icon [icon]="faCog" />
                 </button>

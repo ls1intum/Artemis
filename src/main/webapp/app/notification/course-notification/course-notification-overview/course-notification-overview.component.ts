@@ -174,6 +174,16 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     }
 
     /**
+     * Closes the notification overlay and marks visible notifications as seen on the client.
+     */
+    protected closeOverlay() {
+        if (this.isShown()) {
+            this.isShown.set(false);
+            this.updateCurrentCategoryNotificationsToSeenOnClient();
+        }
+    }
+
+    /**
      * Toggles the visibility of the notification overlay.
      * When shown, may trigger loading of additional notifications.
      * When hidden, marks visible notifications as seen.

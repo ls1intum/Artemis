@@ -407,6 +407,16 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(overlay.classes['is-shown']).toBe(true);
     });
 
+    it('should close overlay when navigating to settings', () => {
+        componentAsAny.isShown.set(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+
+        componentAsAny.closeOverlay();
+
+        expect(componentAsAny.isShown()).toBe(false);
+        expect(updateSpy).toHaveBeenCalledOnce();
+    });
+
     it('should display loading indicator when isLoading is true', () => {
         componentAsAny.isLoading.set(true);
 
