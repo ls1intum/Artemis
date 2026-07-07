@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.search;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +19,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(10) int limit, PyrisPipelineExecutionSettingsDTO settings,
-        @JsonProperty("initialStages") List<PyrisStageDTO> initialStages, @JsonProperty("accessContext") PyrisAccessContextDTO accessContext,
-        @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
+        @JsonProperty("accessContext") PyrisAccessContextDTO accessContext, @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
 }

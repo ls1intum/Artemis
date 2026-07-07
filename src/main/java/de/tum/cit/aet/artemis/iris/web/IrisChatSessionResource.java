@@ -280,8 +280,8 @@ public class IrisChatSessionResource {
         // Re-fetch once more to get the fully-persisted session for WebSocket routing
         session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
 
-        irisChatWebsocketService.sendMessage(session, savedUserMsg, null);
-        irisChatWebsocketService.sendMessage(session, savedLlmMsg, null);
+        irisChatWebsocketService.sendMessage(session, savedUserMsg, null, null);
+        irisChatWebsocketService.sendMessage(session, savedLlmMsg, null, null);
 
         return ResponseEntity.ok().build();
     }

@@ -236,7 +236,7 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue());
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext, prefetchedEntities);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, prefetchedEntities);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
