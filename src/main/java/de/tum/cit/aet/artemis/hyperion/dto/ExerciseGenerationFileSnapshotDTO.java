@@ -29,7 +29,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param turn      the agent turn on which the write happened (best-effort telemetry; {@code 0} if unknown)
  * @param timestamp the moment the snapshot was produced
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+// NON_NULL, not NON_EMPTY: an empty file must still serialize content:"" so a reconnecting client distinguishes an empty file from an absent field and rehydrates the preview.
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
 public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
         @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket: solution, template, tests or other") String repo,

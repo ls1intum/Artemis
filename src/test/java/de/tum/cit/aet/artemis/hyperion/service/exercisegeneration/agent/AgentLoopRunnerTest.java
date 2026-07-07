@@ -201,6 +201,29 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_interruptedDuringEmptyResponseBackoff_reportsError() {
+        ChatModel chatModel = mock(ChatModel.class);
+        // A cancel lands while the empty-response re-sample is backing off: the interrupt must surface as ERROR, not be papered over by handing the benign empty response to the
+        // loop as a COMPLETED. Symmetric with the error-retry path, which also bails to ERROR on a mid-backoff interrupt.
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            return textResponse("");
+        });
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(50L, 50L); // non-zero so the backoff actually sleeps and observes the interrupt
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class)); // the interrupt stops the re-sample ladder instead of returning the empty response as a completion
+        // The interrupt flag was restored by the backoff (honouring the interrupt); clear it here so it does not leak into other tests.
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @Test
     void agentLoop_givesUpAfterAllSixAttemptsFail_andReportsError() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 500"));

@@ -206,7 +206,7 @@ class GenerationJobServiceTest {
             jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/File" + i + ".java", "body " + i));
         }
         // Each distinct file occupies its own entry — the whole set is NOT a single re-serialized value.
-        assertThat(perFileMap.size()).isEqualTo(fileCount);
+        assertThat((Map<String, ExerciseGenerationFileSnapshotDTO>) perFileMap).hasSize(fileCount);
 
         // Every write produced exactly one ADD event, each on that file's own distinct key (proving a write touches ONE key, not the whole set).
         String[] expectedKeys = new String[fileCount];
@@ -242,7 +242,7 @@ class GenerationJobServiceTest {
         }
 
         // The per-file store is bounded to the cap; the eldest 50 files (and their keys) were evicted.
-        assertThat(perFileSnapshotMap().size()).isEqualTo(GenerationJobService.MAX_RETAINED_SNAPSHOT_FILES);
+        assertThat((Map<String, ExerciseGenerationFileSnapshotDTO>) perFileSnapshotMap()).hasSize(GenerationJobService.MAX_RETAINED_SNAPSHOT_FILES);
         assertThat(perFileEntries()).doesNotContainKey(GenerationJobService.fileKey(exerciseId, "tests/File0.java"));
 
         List<ExerciseGenerationFileSnapshotDTO> replay = jobService.getStatus(owner, exercise(exerciseId)).orElseThrow().fileSnapshots();
@@ -260,7 +260,7 @@ class GenerationJobServiceTest {
         String jobId = jobService.startJob(owner, exercise(exerciseId), "go", GenerationMode.GENERATE);
         jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/A.java", "a"));
         jobService.recordSnapshot(exerciseId, jobId, snapshot("template/B.java", "b"));
-        assertThat(perFileSnapshotMap().size()).isEqualTo(2);
+        assertThat((Map<String, ExerciseGenerationFileSnapshotDTO>) perFileSnapshotMap()).hasSize(2);
 
         jobService.clearJob(exerciseId, jobId);
 

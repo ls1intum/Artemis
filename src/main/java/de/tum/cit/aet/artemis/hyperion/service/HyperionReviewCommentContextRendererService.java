@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,21 +186,32 @@ public class HyperionReviewCommentContextRendererService {
             return serializePayload(payload, exerciseId);
         }
 
+        payload.put("threads", serializeSelectedThreads(exerciseId, threadIds, thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated()));
+        return serializePayload(payload, exerciseId);
+    }
+
+    /**
+     * Normalises the selected thread ids (deduplicated, capped at {@link #MAX_SELECTED_FEEDBACK_THREADS}, order preserved), loads their comment threads, keeps only those the
+     * {@code activeFilter} admits, and serializes each in selection order until the global comment budget is exhausted. Shared by the per-repository code-generation and the
+     * whole-exercise adapt renderers, which differ only in that filter and how they wrap the result.
+     *
+     * @param exerciseId   the exercise id
+     * @param threadIds    the explicitly selected review-thread ids
+     * @param activeFilter which loaded threads to include (e.g. matching a target repository type, and always unresolved/not-outdated)
+     * @return the serialized threads in selection order, or an empty list when none of the selected ids resolves to an included thread
+     */
+    private List<Map<String, Object>> serializeSelectedThreads(long exerciseId, Collection<Long> threadIds, Predicate<CommentThread> activeFilter) {
         List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FEEDBACK_THREADS).toList();
         if (orderedThreadIds.isEmpty()) {
-            payload.put("threads", List.of());
-            return serializePayload(payload, exerciseId);
+            return List.of();
         }
-
         Map<Long, Integer> threadOrder = new LinkedHashMap<>();
         for (int index = 0; index < orderedThreadIds.size(); index++) {
             threadOrder.put(orderedThreadIds.get(index), index);
         }
-
         RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
-        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
-                .filter(thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated())
+        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream().filter(activeFilter)
                 .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
         for (CommentThread thread : selectedThreads) {
             if (remainingSerializedComments.exhausted()) {
@@ -210,9 +222,7 @@ public class HyperionReviewCommentContextRendererService {
                 serializedThreads.add(serializedThread);
             }
         }
-
-        payload.put("threads", serializedThreads);
-        return serializePayload(payload, exerciseId);
+        return serializedThreads;
     }
 
     /**
@@ -229,28 +239,7 @@ public class HyperionReviewCommentContextRendererService {
         if (threadIds == null || threadIds.isEmpty()) {
             return "";
         }
-        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FEEDBACK_THREADS).toList();
-        if (orderedThreadIds.isEmpty()) {
-            return "";
-        }
-        Map<Long, Integer> threadOrder = new LinkedHashMap<>();
-        for (int index = 0; index < orderedThreadIds.size(); index++) {
-            threadOrder.put(orderedThreadIds.get(index), index);
-        }
-        RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
-        List<Map<String, Object>> serializedThreads = new ArrayList<>();
-        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
-                .filter(thread -> !thread.isResolved() && !thread.isOutdated()).sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE)))
-                .toList();
-        for (CommentThread thread : selectedThreads) {
-            if (remainingSerializedComments.exhausted()) {
-                break;
-            }
-            Map<String, Object> serializedThread = serializeSelectedFeedbackThread(thread, remainingSerializedComments);
-            if (serializedThread != null) {
-                serializedThreads.add(serializedThread);
-            }
-        }
+        List<Map<String, Object>> serializedThreads = serializeSelectedThreads(exerciseId, threadIds, thread -> !thread.isResolved() && !thread.isOutdated());
         if (serializedThreads.isEmpty()) {
             return "";
         }

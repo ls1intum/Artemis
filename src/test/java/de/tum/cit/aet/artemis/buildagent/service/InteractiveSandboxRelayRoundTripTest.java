@@ -30,6 +30,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
+
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
@@ -348,6 +351,79 @@ class InteractiveSandboxRelayRoundTripTest {
             String handle = failoverClient.createSession(new SandboxSessionSpec("some-image", null));
             assertThat(handle).isEqualTo("agent-2::container-2");
             verify(sandbox1, never()).createSession(any());
+        }
+        finally {
+            handler1.shutdown();
+            handler2.shutdown();
+            failoverClient.removeResponseListener();
+        }
+    }
+
+    @Test
+    void createSession_failsOverToTheNextAgent_whenTheFirstHitsATransientDockerError() {
+        // agent-1's Docker throws a transient/agent-local error (a 5xx daemon hiccup) when the container is created; another healthy agent may well succeed, so the handler tags
+        // the
+        // failure retryable and the client fails over to agent-2 and places the session there — rather than aborting the whole (expensive) generation on one agent's blip.
+        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalMap<String, byte[]> payloads = new LocalMap<>();
+        DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
+        when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("agent-1", 0, 4), idleAgent("agent-2", 0, 4)));
+        RemoteInteractiveSandboxClient failoverClient = new RemoteInteractiveSandboxClient(clientAccess);
+        failoverClient.registerResponseListener();
+
+        InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
+        when(sandbox1.createSession(any())).thenThrow(new DockerException("daemon momentarily overloaded", 500));
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
+        InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
+        when(sandbox2.createSession(any())).thenReturn("container-2");
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+
+        try {
+            String handle = failoverClient.createSession(new SandboxSessionSpec("some-image", null));
+            assertThat(handle).isEqualTo("agent-2::container-2");
+            // agent-1 really attempted the create (unlike the capacity-decline case, where the guard short-circuits before createSession) — this proves a transient runtime
+            // failure,
+            // not just a pre-create refusal, drives the failover.
+            verify(sandbox1).createSession(any());
+        }
+        finally {
+            handler1.shutdown();
+            handler2.shutdown();
+            failoverClient.removeResponseListener();
+        }
+    }
+
+    @Test
+    void createSession_failsFast_whenTheFirstHitsADeterministicDockerError() {
+        // agent-1's Docker rejects the create with a deterministic 4xx (a missing image, 404) — the same spec would fail identically on every candidate, so the client must surface
+        // it
+        // immediately rather than storm agent-2 with a retry doomed to fail the same way.
+        LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
+        LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
+        LocalMap<String, byte[]> payloads = new LocalMap<>();
+        DistributedDataAccessService clientAccess = mock(DistributedDataAccessService.class);
+        when(clientAccess.getHyperionSandboxRequestsTopic()).thenReturn(requests);
+        when(clientAccess.getHyperionSandboxResponsesTopic()).thenReturn(responses);
+        when(clientAccess.getHyperionSandboxPayloads()).thenReturn(payloads);
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List.of(idleAgent("agent-1", 0, 4), idleAgent("agent-2", 0, 4)));
+        RemoteInteractiveSandboxClient failoverClient = new RemoteInteractiveSandboxClient(clientAccess);
+        failoverClient.registerResponseListener();
+
+        InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
+        when(sandbox1.createSession(any())).thenThrow(new NotFoundException("no such image: bogus-image"));
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
+        InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+
+        try {
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(new SandboxSessionSpec("bogus-image", null)))
+                    .withMessageContaining("no such image");
+            // The deterministic failure aborted the create on the first agent; agent-2 was never asked to try the doomed spec.
+            verify(sandbox2, never()).createSession(any());
         }
         finally {
             handler1.shutdown();

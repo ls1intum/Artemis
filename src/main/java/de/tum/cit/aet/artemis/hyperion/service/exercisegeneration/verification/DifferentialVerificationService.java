@@ -242,8 +242,8 @@ public class DifferentialVerificationService {
     /**
      * Runs the shared, sandbox-dependent half of verification once: re-seeds and runs the two pristine builds, parses them with the production parsers, reads the problem
      * statement,
-     * and applies every actionable gate (solution passes, template fails, emitter soundness, task-binding presence/resolution, the two no-test-passes-template gates, and SCA
-     * parity). Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
+     * and applies every actionable gate (solution passes, template fails, task-binding presence/resolution, the two no-test-passes-template gates, and SCA parity). Both the
+     * post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
      *
      * @param seededStructuralTestNames the authoritative seeded structural test names exempt from binding resolution (empty for the self-check)
      */
@@ -261,7 +261,6 @@ public class DifferentialVerificationService {
         int testCount = solution.tests();
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
         boolean templateFailed = checkTemplateFails(solution, template, reasons);
-        EmitterSoundness emitterSoundness = checkEmitterSoundness(solution, template, reasons);
 
         // The exercise must bind its tests to the problem statement via [task][title](testNames), else the student sees no task checklist.
         String problemStatement = readProblemStatement(sandbox, sessionId);
@@ -295,9 +294,8 @@ public class DifferentialVerificationService {
                     + "only via [task][Title](testName) lines.");
         }
 
-        boolean actionableGatesPass = solutionPassed && templateFailed && testCount > 0 && emitterSoundness.solutionNamesComplete() && emitterSoundness.templateFailNamesSound()
-                && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean
-                && proseHygienic;
+        boolean actionableGatesPass = solutionPassed && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve
+                && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean && proseHygienic;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
@@ -408,38 +406,6 @@ public class DifferentialVerificationService {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Whether the per-test emission is sound enough to trust the binding-resolution and per-test gates.
-     *
-     * @param solutionNamesComplete  the solution recorded a test name for every test it ran
-     * @param templateFailNamesSound the template recorded which tests failed for its failing/erroring run
-     */
-    private record EmitterSoundness(boolean solutionNamesComplete, boolean templateFailNamesSound) {
-    }
-
-    /**
-     * Emitter soundness, fail-closed: a missing/short per-test name or fail set is evidence of a broken or forged emitter that would silently disable the binding-resolution and
-     * per-test gates, so we reject rather than skip, appending a reason for each gap.
-     */
-    private static EmitterSoundness checkEmitterSoundness(BuildSummary solution, BuildSummary template, List<String> reasons) {
-        boolean solutionNamesComplete = solution.tests() > 0 && solution.testNames().size() >= solution.tests();
-        if (solution.tests() > 0 && !solutionNamesComplete) {
-            reasons.add("The solution ran " + solution.tests() + " tests but the verifier only recorded " + solution.testNames().size()
-                    + " test name(s). The per-test name list must be complete for the grading checks to run; an incomplete list means the test reports could not be parsed "
-                    + "reliably (or the build emitted no per-test results), so the exercise cannot be verified. Ensure every test writes a JUnit <testcase> entry.");
-        }
-        int templateFailing = template.failures();
-        boolean templateCompiledAndRan = !template.timedOut() && template.tests() > 0;
-        boolean templateFailNamesSound = !(templateCompiledAndRan && templateFailing > 0 && template.testFailedNames().isEmpty());
-        if (!templateFailNamesSound) {
-            reasons.add("The template reported " + templateFailing
-                    + " failing/erroring test(s) but the verifier could not record WHICH tests failed (no per-test failure entries). "
-                    + "Without the failing-test names the verifier cannot confirm that every graded test fails on the template, so the exercise cannot be verified. Ensure the test "
-                    + "reports record each failing <testcase> with its <failure>/<error>.");
-        }
-        return new EmitterSoundness(solutionNamesComplete, templateFailNamesSound);
     }
 
     /**

@@ -140,9 +140,9 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             throw new LocalCIException(
                     "No build agent is configured to host interactive sandbox sessions (set artemis.continuous-integration.build-agent.max-concurrent-generation-sessions > 0 on a spare agent).");
         }
-        // Failover: try the least session-loaded agent first, then the next, skipping any that declines (at capacity, draining) or is unreachable (timeout). Bounded by the
-        // candidate
-        // count so a burst of concurrent creates contending for the same scarce permits spreads across agents instead of every loser eating a timeout or a hard failure.
+        // Failover: try the least session-loaded agent first, then the next, skipping any that declines (at capacity, draining, or a transient/agent-local Docker error) or is
+        // unreachable (timeout); a deterministic failure (bad image, malformed spec) throws immediately from attemptCreate rather than storming every candidate. Bounded by the
+        // candidate count so a burst of concurrent creates contending for the same scarce permits spreads across agents instead of every loser eating a timeout or a hard failure.
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
             SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
@@ -175,10 +175,14 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /**
-     * Publishes one CREATE request and waits for the owning agent's reply. A placement refusal (at capacity, draining) or an unanswered request (dead/overwhelmed agent) is
-     * returned
-     * as a {@link CreateAttempt#declined} so the caller fails over to the next candidate; any other failure is deterministic (bad image, malformed spec) and would recur on every
-     * agent, so it is thrown immediately rather than wasting a control-op timeout per candidate.
+     * Publishes one CREATE request and waits for the owning agent's reply. An agent-specific decline — a placement refusal (at capacity, draining) or a transient/agent-local
+     * Docker
+     * failure (daemon hiccup, image-pull blip, Docker down on that agent), each tagged by the handler with a stable marker — is returned as a {@link CreateAttempt#declined} so the
+     * caller fails over to the next candidate: an error reply comes back fast (unlike an unreachable-agent timeout), so retrying elsewhere costs a round-trip, not a wasted
+     * control-op
+     * timeout. A genuinely deterministic failure (bad image reference, malformed spec) recurs identically on every candidate, so it is thrown immediately rather than fanned out
+     * across every agent as a pointless retry storm. An unanswered request (dead/overwhelmed agent) times out and is also treated as a decline. Only a publish-side failure
+     * (serialization, cluster down), which hits every agent identically, is thrown immediately.
      *
      * @param request the CREATE request to relay
      * @return the attempt outcome (created container id, or a decline reason)
@@ -192,11 +196,15 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             if (response.success()) {
                 return CreateAttempt.success(response.sessionId());
             }
-            String error = response.errorMessage() == null ? "" : response.errorMessage();
-            if (error.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || error.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER)) {
-                return CreateAttempt.declined(error);
+            String errorMessage = response.errorMessage() == null ? "" : response.errorMessage();
+            // Fail over only on an agent-specific decline the owning agent tagged: at capacity, draining, or a transient/agent-local Docker error. A deterministic failure (bad
+            // image
+            // reference, malformed spec) recurs identically on every candidate, so surface it immediately instead of storming all N agents with a retry that will fail the same
+            // way.
+            if (isFailoverDecline(errorMessage)) {
+                return CreateAttempt.declined(errorMessage);
             }
-            throw new LocalCIException("Remote sandbox operation CREATE failed on agent " + request.targetAgentShortName() + ": " + error);
+            throw new LocalCIException("Remote sandbox operation CREATE on agent " + request.targetAgentShortName() + " failed: " + errorMessage);
         }
         catch (TimeoutException e) {
             return CreateAttempt.declined("unreachable, timed out after " + controlOpTimeout.toSeconds() + "s");
@@ -209,7 +217,8 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             throw new LocalCIException("Interrupted while waiting for remote sandbox operation CREATE on agent " + request.targetAgentShortName(), e);
         }
         catch (LocalCIException e) {
-            // The !success branch above already threw a fully-formed exception; let it propagate rather than re-wrapping it as a publish failure.
+            // A deterministic create failure was already surfaced as a fully-formed session-fatal exception above; let it propagate rather than re-wrapping it as a publish
+            // failure.
             throw e;
         }
         catch (RuntimeException e) {
@@ -219,6 +228,20 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         finally {
             pendingOperations.remove(request.correlationId());
         }
+    }
+
+    /**
+     * Whether a CREATE failure reply from an agent is an agent-specific decline the client should fail over from (try the next candidate), rather than a deterministic failure it
+     * should surface immediately. Matches the stable markers the {@link InteractiveSandboxRelayHandler} embeds for a capacity refusal, a draining refusal, or a
+     * transient/agent-local
+     * Docker error; any other failure (bad image reference, malformed spec) recurs identically on every agent and so is not a failover case.
+     *
+     * @param errorMessage the agent's failure message
+     * @return {@code true} if the client should fail over to the next candidate agent; {@code false} if the failure is deterministic and should surface immediately
+     */
+    private static boolean isFailoverDecline(String errorMessage) {
+        return errorMessage.contains(InteractiveSandboxRelayHandler.CAPACITY_REFUSAL_MARKER) || errorMessage.contains(InteractiveSandboxRelayHandler.DRAINING_REFUSAL_MARKER)
+                || errorMessage.contains(InteractiveSandboxRelayHandler.RETRYABLE_REFUSAL_MARKER);
     }
 
     @Override

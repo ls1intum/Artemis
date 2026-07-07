@@ -42,12 +42,13 @@ public final class WorkspaceArchive {
     }
 
     /**
-     * Signals that a {@code copyOut} workspace archive contained an entry (or a total) exceeding the read-back byte caps. The caller treats this as a failed read-back and fails
-     * closed rather than materialising an unbounded String — a compromised or runaway agent writing a multi-GB file must not OOM the node.
+     * Signals that a {@code copyOut} workspace archive contained a rejected entry: one exceeding the read-back byte caps (a runaway agent writing a multi-GB file must not OOM the
+     * node), a symbolic/hard link, or a path that escapes the archive root ({@code ..}/absolute — the produced map feeds a git commit, so an escaping path must never reach the
+     * write). The caller treats this as a failed read-back and fails closed rather than materialising the archive.
      */
-    public static final class OversizedWorkspaceEntryException extends RuntimeException {
+    public static final class RejectedWorkspaceEntryException extends RuntimeException {
 
-        OversizedWorkspaceEntryException(String message) {
+        RejectedWorkspaceEntryException(String message) {
             super(message);
         }
     }
@@ -132,12 +133,21 @@ public final class WorkspaceArchive {
             if (entry.isDirectory()) {
                 continue;
             }
+            // The copyOut tar is agent-controlled. A symbolic or hard link could redirect a read to a file outside the workspace; reject it (mirrors CollectedReports.read on the
+            // verifier's report archive). commons-compress's isFile() is true for FIFO/device entries, so link entries are rejected explicitly by their link flags.
+            if (entry.isSymbolicLink() || entry.isLink()) {
+                throw new RejectedWorkspaceEntryException("Refusing a linked workspace entry from the copyOut archive: " + entry.getName());
+            }
             String name = entry.getName();
             if (name.startsWith("./")) {
                 name = name.substring(2);
             }
             if (!normalizedPrefix.isEmpty() && name.startsWith(normalizedPrefix)) {
                 name = name.substring(normalizedPrefix.length());
+            }
+            // No path escape: the produced map is keyed by this path and later written into a git repo, so an absolute or ..-traversing path must never reach the commit.
+            if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + entry.getName());
             }
             if (name.isEmpty() || name.contains(".git/")) {
                 continue;
@@ -146,15 +156,15 @@ public final class WorkspaceArchive {
             // OOM'd. The declared size can understate a hostile body, so re-check the actual byte count after reading and cap the running total across entries as well.
             long declaredSize = entry.getSize();
             if (declaredSize > MAX_FILE_BYTES) {
-                throw new OversizedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + entry.getName());
             }
             byte[] bytes = tar.readAllBytes();
             if (bytes.length > MAX_FILE_BYTES) {
-                throw new OversizedWorkspaceEntryException("Refusing an oversized workspace entry (" + bytes.length + " bytes): " + entry.getName());
+                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + bytes.length + " bytes): " + entry.getName());
             }
             total += bytes.length;
             if (total > MAX_TOTAL_BYTES) {
-                throw new OversizedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
+                throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
             }
             // A binary file cannot be represented losslessly as a String; drop it so persist preserves the scaffolded original byte-exact instead of writing a mangled re-encode.
             if (BinaryContent.isBinary(bytes)) {

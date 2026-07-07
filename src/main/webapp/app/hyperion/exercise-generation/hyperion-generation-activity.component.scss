@@ -1,11 +1,11 @@
 .hyperion-activity {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--bs-border-color, #dee2e6);
+    border: 1px solid var(--p-content-border-color);
     border-radius: 0.5rem;
     overflow: hidden;
     margin-bottom: 0.75rem;
-    background: var(--bs-body-bg, #fff);
+    background: var(--p-content-background);
 }
 
 .hyperion-activity-header {
@@ -14,7 +14,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    border-bottom: 1px solid var(--p-content-border-color);
     flex-wrap: wrap;
 }
 
@@ -38,7 +38,7 @@
     margin: 0.2rem 0 0;
     padding-left: 1.1rem;
     font-size: 0.78rem;
-    color: var(--bs-danger, #dc3545);
+    color: var(--color-state-danger);
 }
 
 .hyperion-activity-body {
@@ -51,7 +51,7 @@
     display: flex;
     flex-direction: column;
     width: 16rem;
-    border-right: 1px solid var(--bs-border-color, #dee2e6);
+    border-right: 1px solid var(--p-content-border-color);
     overflow-y: auto;
 }
 
@@ -82,11 +82,11 @@
     cursor: pointer;
 
     &:hover {
-        background: var(--bs-secondary-bg, #f1f3f5);
+        background: var(--p-content-hover-background);
     }
 
     &.active {
-        background: var(--bs-primary-bg-subtle, #cfe2ff);
+        background: var(--p-highlight-background);
     }
 }
 
@@ -106,7 +106,7 @@
     list-style: none;
     margin: 0;
     padding: 0.4rem 0.6rem;
-    border-top: 1px solid var(--bs-border-color, #dee2e6);
+    border-top: 1px solid var(--p-content-border-color);
     font-size: 0.78rem;
 
     li {
@@ -134,7 +134,7 @@
     justify-content: space-between;
     gap: 0.5rem;
     padding: 0.35rem 0.6rem;
-    border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+    border-bottom: 1px solid var(--p-content-border-color);
     font-size: 0.8rem;
 }
 
@@ -142,7 +142,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-family: var(--bs-font-monospace, monospace);
+    font-family: var(--artemis-font-family-monospace, monospace);
 }
 
 .hyperion-activity-preview-controls {
@@ -158,11 +158,11 @@
 }
 
 ::ng-deep .hyperion-snapshot-changed-line {
-    background: rgba(46, 160, 67, 0.14);
+    background: color-mix(in srgb, var(--color-state-success) 14%, transparent);
 }
 
 ::ng-deep .hyperion-snapshot-changed-gutter {
-    background: rgba(46, 160, 67, 0.6);
+    background: color-mix(in srgb, var(--color-state-success) 60%, transparent);
     // Monaco inline-styles the gutter decoration width, so !important is required to override it.
     width: 3px !important;
     margin-left: 3px;

@@ -31,6 +31,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import com.github.dockerjava.api.exception.DockerException;
+
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
@@ -72,6 +74,16 @@ public class InteractiveSandboxRelayHandler {
      * candidate agent, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
      */
     static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new interactive sandbox sessions";
+
+    /**
+     * Stable fragment embedded in the CREATE failure message when this agent's create failed for a transient, agent-local reason (Docker daemon overload, an image-pull network
+     * blip,
+     * this agent's Docker momentarily unavailable) rather than a deterministic one (bad image reference, malformed spec). The core client matches on it to fail such a create over
+     * to
+     * another candidate agent — exactly like a capacity/draining decline — instead of surfacing it as fatal, so keep it in sync between the message here and
+     * {@link RemoteInteractiveSandboxClient}. Deterministic failures stay untagged so they surface fast rather than storming every candidate with a retry that fails identically.
+     */
+    static final String RETRYABLE_REFUSAL_MARKER = "encountered a transient error creating an interactive sandbox session";
 
     private final InteractiveSandboxService interactiveSandboxService;
 
@@ -244,12 +256,40 @@ public class InteractiveSandboxRelayHandler {
             publishSessionState();
             return SandboxOpResponse.created(request.correlationId(), containerId);
         }
+        catch (RuntimeException e) {
+            // Classify the failure so the core client can decide whether to fail over. A transient, agent-local Docker error (daemon overload, image-pull network blip, Docker down
+            // on this agent) may well succeed on another healthy agent, so tag it with RETRYABLE_REFUSAL_MARKER to fail it over like a capacity decline. A deterministic error (bad
+            // image reference, malformed spec) recurs identically on every agent, so leave it untagged and let the client surface it fast rather than storm every candidate.
+            if (isTransientDockerFailure(e)) {
+                return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + RETRYABLE_REFUSAL_MARKER + ": " + e.getMessage());
+            }
+            return SandboxOpResponse.failure(request.correlationId(), e.getMessage());
+        }
         finally {
             // Release the permit if the container never came up, so a failed create does not leak capacity.
             if (!created) {
                 sessionPermits.release();
             }
         }
+    }
+
+    /**
+     * Whether a CREATE failure is transient/agent-local (worth failing over to another agent) rather than deterministic (recurs identically on every agent). A Docker 4xx anywhere
+     * in
+     * the cause chain — a missing image (404), a malformed spec (400), an auth failure (401/403) — is deterministic; anything else (a 5xx daemon error, a connection failure, or
+     * this
+     * agent's Docker being unavailable) is agent-local and may succeed elsewhere, so the caller tags it retryable.
+     *
+     * @param failure the exception thrown by the local create
+     * @return {@code true} if the failure should be tagged retryable so the core client fails it over; {@code false} if it is deterministic and should surface fast
+     */
+    private static boolean isTransientDockerFailure(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (current instanceof DockerException dockerException && dockerException.getHttpStatus() >= 400 && dockerException.getHttpStatus() < 500) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {

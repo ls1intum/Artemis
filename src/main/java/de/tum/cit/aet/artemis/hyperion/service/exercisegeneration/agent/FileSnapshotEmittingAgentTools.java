@@ -77,6 +77,9 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
         if (isSuccess(result)) {
             String safe = SandboxAgentTools.workspaceRelativePath(path);
             if (safe != null) {
+                // create vs edit is decided from this run's own write cache, so the first write of a path in an ADAPT run (where the file already exists on disk) is labelled
+                // create.
+                // This is a cosmetic live-preview label only — never persisted and irrelevant to correctness — so it is not worth a per-write sandbox stat to disambiguate.
                 String action = latestContentByPath.containsKey(safe) ? ExerciseGenerationFileSnapshotDTO.ACTION_EDIT : ExerciseGenerationFileSnapshotDTO.ACTION_CREATE;
                 emit(safe, action, content);
             }

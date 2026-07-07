@@ -261,7 +261,7 @@ public final class ExerciseIntegrityGate {
         Set<String> baseline = new HashSet<>();
         for (String name : baselineGradedTestNames) {
             if (name != null) {
-                String normalized = normalizeTestName(name);
+                String normalized = ProblemStatementBindingChecker.normalizeTestName(name);
                 if (!normalized.isEmpty()) {
                     baseline.add(normalized);
                 }
@@ -274,7 +274,7 @@ public final class ExerciseIntegrityGate {
         if (producedSolutionTestNames != null) {
             for (String name : producedSolutionTestNames) {
                 if (name != null) {
-                    produced.add(normalizeTestName(name));
+                    produced.add(ProblemStatementBindingChecker.normalizeTestName(name));
                 }
             }
         }
@@ -286,15 +286,6 @@ public final class ExerciseIntegrityGate {
         return List.of("this adapt retained NONE of the exercise's " + baseline.size() + " previously-graded test(s) (e.g. " + sampleNames(baseline)
                 + "), so the graded coverage was wiped and rebuilt from scratch — that is a from-scratch regeneration masquerading as an adapt, not a refinement of the existing "
                 + "exercise. Keep and adjust the existing graded tests (retain at least the ones still relevant) instead of deleting them all and authoring a brand-new suite.");
-    }
-
-    /** Normalizes a test name for retention comparison: trims and drops a trailing {@code ()}, so {@code testFoo} and {@code testFoo()} compare equal (as Artemis treats them). */
-    private static String normalizeTestName(String name) {
-        String normalized = name.trim();
-        if (normalized.endsWith("()")) {
-            normalized = normalized.substring(0, normalized.length() - 2).trim();
-        }
-        return normalized;
     }
 
     /** A short, deterministic sample of names for a rejection message, sorted and capped so a large baseline suite never floods the reason text. */

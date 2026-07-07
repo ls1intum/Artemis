@@ -421,7 +421,9 @@ public class AgentLoopRunner {
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "Model returned an empty response; retrying.");
                     if (!backOffBeforeRetry(attempt, turn)) {
-                        return lastEmptyResponse;
+                        // Interrupted mid-backoff: surface cancellation as ERROR (null), symmetric with the error path below — do not hand a benign empty response to the loop as a
+                        // completion.
+                        return null;
                     }
                 }
             }

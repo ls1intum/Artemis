@@ -45,8 +45,11 @@ public class HyperionAsyncConfiguration {
     @Bean(name = "hyperionGenerationExecutor")
     public Executor hyperionGenerationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        // A ThreadPoolExecutor only grows past the core size once the queue is full, so with a 64-deep backlog the effective concurrency IS the core size. Keep core and max equal
+        // to
+        // make the node's concurrent-generation bound honest — a larger max would be dead config that never activates until 64 runs are already queued.
         executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(8);
+        executor.setMaxPoolSize(2);
         executor.setQueueCapacity(64);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");

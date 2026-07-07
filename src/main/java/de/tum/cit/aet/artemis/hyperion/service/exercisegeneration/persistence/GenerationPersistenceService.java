@@ -10,6 +10,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
@@ -77,6 +80,8 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
+    private final ResultRepository resultRepository;
+
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final Duration testCaseSyncTimeout;
@@ -87,17 +92,17 @@ public class GenerationPersistenceService {
     public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseCreationUpdateService creationUpdateService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, creationUpdateService,
-                exerciseVersionService, testCaseRepository, programmingExerciseRepositoryService, TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
+                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepositoryService, TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
     }
 
-    // Package-private so tests can inject a shrunken sync wait and exercise the settle logic without sleeping for seconds.
+    // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
     GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingExerciseCreationUpdateService creationUpdateService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
+            ResultRepository resultRepository, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -107,6 +112,7 @@ public class GenerationPersistenceService {
         this.creationUpdateService = creationUpdateService;
         this.exerciseVersionService = exerciseVersionService;
         this.testCaseRepository = testCaseRepository;
+        this.resultRepository = resultRepository;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.testCaseSyncTimeout = testCaseSyncTimeout;
         this.testCaseSyncPoll = testCaseSyncPoll;
@@ -125,8 +131,8 @@ public class GenerationPersistenceService {
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
-    /** Consecutive equal test-case-count polls that mark the asynchronous re-sync as settled (one confirming re-read after a stable read). */
-    private static final int REQUIRED_SETTLE_POLLS = 2;
+    /** Unicode dashes U+2010..U+2015 the model leaks into prose/source; precompiled since {@link #normalizeTypography} runs once per produced file per persist. */
+    private static final Pattern UNICODE_DASHES = Pattern.compile("[‐-―]");
 
     /**
      * The result of persisting a non-accepted recovery draft.
@@ -319,8 +325,8 @@ public class GenerationPersistenceService {
      */
     private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash) {
         if (testsCommitHash != null) {
-            triggerTestsBuild(exercise, testsCommitHash);
-            zeroWeightBuildGateTestCases(exercise.getId());
+            TestsBuildSignal signal = triggerTestsBuild(exercise, testsCommitHash);
+            zeroWeightBuildGateTestCases(exercise.getId(), signal);
         }
         try {
             exerciseVersionService.createExerciseVersion(exercise, user);
@@ -469,17 +475,30 @@ public class GenerationPersistenceService {
         }
     }
 
-    private void triggerTestsBuild(ProgrammingExercise exercise, String commitHash) {
+    /**
+     * The pre-trigger baseline needed to detect that the {@link #triggerTestsBuild triggered} tests-build has finished processing: the solution participation and the id of its
+     * latest result before the build ran. {@code baselineLatestResultId} is {@code null} when no earlier result existed; {@code null} signal means the trigger itself failed.
+     */
+    private record TestsBuildSignal(long solutionParticipationId, Long baselineLatestResultId) {
+    }
+
+    private TestsBuildSignal triggerTestsBuild(ProgrammingExercise exercise, String commitHash) {
         try {
             ProgrammingExerciseParticipation solutionParticipation = participationService.retrieveSolutionParticipation(exercise);
+            long solutionParticipationId = solutionParticipation.getId();
+            // Capture the latest result BEFORE triggering so the wait keys on a strictly newer result than any pre-existing (e.g. exercise-setup) build, not on the case count.
+            Long baselineLatestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(solutionParticipationId).map(Result::getId).orElse(null);
             programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
             continuousIntegrationTriggerService.triggerBuild(solutionParticipation, commitHash, RepositoryType.TESTS);
+            return new TestsBuildSignal(solutionParticipationId, baselineLatestResultId);
         }
         catch (ContinuousIntegrationException e) {
             log.warn("Failed to trigger the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
         }
         catch (RuntimeException e) {
             log.warn("Unexpected error triggering the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
         }
     }
 
@@ -490,10 +509,11 @@ public class GenerationPersistenceService {
      * cases.
      *
      * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
+     * @param signal     the pre-trigger baseline identifying the triggered build to wait for; {@code null} when the trigger failed (acts on the current set)
      */
-    private void zeroWeightBuildGateTestCases(long exerciseId) {
+    private void zeroWeightBuildGateTestCases(long exerciseId, TestsBuildSignal signal) {
         try {
-            Set<ProgrammingExerciseTestCase> testCases = awaitSettledTestCaseSet(exerciseId);
+            Set<ProgrammingExerciseTestCase> testCases = signal == null ? testCaseRepository.findByExerciseId(exerciseId) : awaitBuildProcessedTestCaseSet(exerciseId, signal);
             List<ProgrammingExerciseTestCase> buildGates = testCases.stream()
                     .filter(testCase -> BuildGateTestNames.isBuildGate(testCase.getTestName()) && testCase.getWeight() != null && testCase.getWeight() != 0.0).toList();
             if (buildGates.isEmpty()) {
@@ -513,33 +533,36 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Waits (bounded by {@link #testCaseSyncTimeout}) for the tests-build triggered by {@link #triggerTestsBuild} to finish re-syncing the exercise's test cases, returning the
-     * settled set. The build syncs cases asynchronously, so the sync is treated as complete once the case count is observed unchanged across {@link #REQUIRED_SETTLE_POLLS}
-     * consecutive polls. Keying on settle rather than on a delta from the pre-build count is deliberate: a re-sync that lands on the same number of cases — common for an adapt or
-     * revert that keeps the same tests — settles at the pre-build count, which a delta-keyed wait would mistake for "not synced yet" and spin the full timeout on the persist
-     * thread
-     * while the user waits.
+     * Waits (bounded by {@link #testCaseSyncTimeout}) for the tests-build triggered by {@link #triggerTestsBuild} to finish processing, then returns the re-synced test-case set.
+     * The
+     * wait keys on a strictly newer solution result than the pre-trigger baseline rather than on the test-case count: the grading pipeline saves the freshly re-synced cases
+     * ({@code saveAll}) strictly before it saves the build's result, so a newer result guarantees the complete set is already committed. This is authoritative for both a fresh
+     * generation (where the count grows as build-gate cases appear) and an adapt/revert that lands on the same count — a count-settle heuristic cannot tell the latter apart from
+     * "not synced yet" and would either race on the stale pre-build set or spin the full timeout. A failed build still saves a result, so the wait also ends promptly on failure.
      *
      * @param exerciseId the exercise whose test-case set to await
-     * @return the test-case set once its count has settled, or the last set read when the timeout was reached first
+     * @param signal     the pre-trigger baseline (solution participation and its latest result id) identifying the build to wait for
+     * @return the test-case set once the triggered build's result is visible, or the last set read when the timeout was reached first
      */
-    private Set<ProgrammingExerciseTestCase> awaitSettledTestCaseSet(long exerciseId) throws InterruptedException {
+    private Set<ProgrammingExerciseTestCase> awaitBuildProcessedTestCaseSet(long exerciseId, TestsBuildSignal signal) throws InterruptedException {
         long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exerciseId);
-        int previousCount = testCases.size();
-        int stableObservations = 1;
-        while (System.nanoTime() < deadline && stableObservations < REQUIRED_SETTLE_POLLS) {
+        while (System.nanoTime() < deadline) {
+            Long latestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(signal.solutionParticipationId()).map(Result::getId).orElse(null);
+            if (isNewerResult(latestResultId, signal.baselineLatestResultId())) {
+                return testCaseRepository.findByExerciseId(exerciseId);
+            }
             Thread.sleep(testCaseSyncPoll.toMillis());
-            testCases = testCaseRepository.findByExerciseId(exerciseId);
-            if (testCases.size() == previousCount) {
-                stableObservations++;
-            }
-            else {
-                previousCount = testCases.size();
-                stableObservations = 1;
-            }
         }
-        return testCases;
+        log.warn("Timed out waiting for the tests-build result of generated exercise {}; a build-gate case may keep its weight until reconfigured", exerciseId);
+        return testCaseRepository.findByExerciseId(exerciseId);
+    }
+
+    /**
+     * True once the solution participation has a result newer than the pre-trigger baseline (any result when there was none before). Result ids are monotonic, so id order
+     * suffices.
+     */
+    private static boolean isNewerResult(Long latestResultId, Long baselineLatestResultId) {
+        return latestResultId != null && (baselineLatestResultId == null || latestResultId > baselineLatestResultId);
     }
 
     /**
@@ -551,7 +574,7 @@ public class GenerationPersistenceService {
      * @return the text normalised to ASCII
      */
     static String normalizeTypography(String text) {
-        return text.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'').replace('\u201C', '"')
+        return UNICODE_DASHES.matcher(text).replaceAll("-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'').replace('\u201C', '"')
                 .replace('\u201D', '"').replace("\u2026", "...");
     }
 

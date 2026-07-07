@@ -101,7 +101,39 @@ class WorkspaceArchiveTest {
             tarOut.closeArchiveEntry();
         }
         try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
-            assertThatExceptionOfType(WorkspaceArchive.OversizedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+        }
+    }
+
+    @Test
+    void readTar_rejectsASymlinkEntry_soAReadCannotBeRedirectedOutsideTheWorkspace() throws Exception {
+        // The copyOut tar is agent-controlled: a symlink entry could redirect a read to a file outside the workspace on extraction, so it is refused by its link flag on read-back.
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
+            TarArchiveEntry link = new TarArchiveEntry("solution/passwd", TarArchiveEntry.LF_SYMLINK);
+            link.setLinkName("/etc/passwd");
+            tarOut.putArchiveEntry(link);
+            tarOut.closeArchiveEntry();
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+        }
+    }
+
+    @Test
+    void readTar_rejectsAPathTraversingEntry_soNoAbsoluteOrDotDotPathReachesTheCommit() throws Exception {
+        // The produced map is keyed by the entry path and later written into a git repo, so a ..-traversing path must never be accepted (it would escape the repository root).
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
+            TarArchiveEntry entry = new TarArchiveEntry("solution/../../evil.java");
+            byte[] body = "x".getBytes(StandardCharsets.UTF_8);
+            entry.setSize(body.length);
+            tarOut.putArchiveEntry(entry);
+            tarOut.write(body);
+            tarOut.closeArchiveEntry();
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
         }
     }
 

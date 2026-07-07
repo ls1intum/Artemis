@@ -214,7 +214,15 @@ public class SandboxBuildCommandService {
      * build dir) mirrors how real CI resets the working directory before every phase.
      */
     private static String buildPhaseSection(List<String> phases) {
-        return phases.stream().map(phase -> "run_phase '" + phase.replace("'", "'\\''") + "'").collect(Collectors.joining("\n"));
+        return phases.stream().map(phase -> "run_phase '" + singleQuote(phase) + "'").collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Escapes embedded single quotes so a value survives verbatim inside a single-quoted POSIX shell word (the {@code '\''} close-reopen idiom). Used everywhere a
+     * possibly-instructor-configured value (a phase body, a report glob, an SCA file name) is interpolated into a single-quoted shell token, so an embedded quote cannot break out.
+     */
+    private static String singleQuote(String value) {
+        return value.replace("'", "'\\''");
     }
 
     /**
@@ -246,7 +254,7 @@ public class SandboxBuildCommandService {
                 normalized = normalized.startsWith("./") ? normalized.substring(2) : normalized.substring(1);
             }
             if (!normalized.isBlank()) {
-                tokens.add("-path '*/" + normalized + "'");
+                tokens.add("-path '*/" + singleQuote(normalized) + "'");
             }
         }
         return String.join(" -o ", tokens);
@@ -259,7 +267,7 @@ public class SandboxBuildCommandService {
         Set<String> tokens = new LinkedHashSet<>();
         for (String fileName : scaReportFiles) {
             if (fileName != null && !fileName.isBlank()) {
-                tokens.add("-name '" + fileName + "'");
+                tokens.add("-name '" + singleQuote(fileName) + "'");
             }
         }
         return String.join(" -o ", tokens);

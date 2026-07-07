@@ -15,8 +15,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Unit test for the three exercise-generation wire DTOs. It pins the behaviour the client and the reconnect/replay path depend on: the file-snapshot factory's repository
- * classification, whole-content hashing, and byte-boundary truncation; the event factories' terminal shape; and the {@code @JsonInclude(NON_EMPTY)} contract that keeps empty
- * optional fields off the wire. The wire shape is asserted by serialising with a real Jackson mapper (matching production), not by reading getters.
+ * classification, whole-content hashing, and byte-boundary truncation; the event factories' terminal shape; and the {@code @JsonInclude} contract on each DTO (the event/verdict
+ * DTOs use {@code NON_EMPTY} to keep empty optional fields off the wire; the file snapshot uses {@code NON_NULL} so an empty file still serialises {@code content:""}). The wire
+ * shape is asserted by serialising with a real Jackson mapper (matching production), not by reading getters.
  */
 class ExerciseGenerationDtoTest {
 

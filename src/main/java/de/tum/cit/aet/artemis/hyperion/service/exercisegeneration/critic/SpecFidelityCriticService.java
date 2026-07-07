@@ -130,15 +130,16 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Critiques one produced exercise against the instructor brief. Runs the deterministic mechanics-leak pass and the single bounded LLM coverage pass and returns their combined
-     * findings. Never throws: any failure of the LLM pass yields no coverage findings (the mechanics-leak findings, being model-free, are unaffected).
+     * Test seam: the usage-sink-free form of {@link #critique(String, String, List, Consumer)}. Production always supplies a sink (to count the critic's tokens against the run),
+     * so
+     * this overload is package-private and exists only for the unit tests that assert findings in isolation.
      *
      * @param brief            the instructor's instruction for this run (the generation brief or the adapt feedback)
      * @param problemStatement the produced student-facing problem statement
      * @param testNames        the exact test identifiers the produced suite contains (as the runner writes them); may be empty
      * @return the advisory report (possibly empty); never {@code null}
      */
-    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
+    SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
         return critique(brief, problemStatement, testNames, null);
     }
 

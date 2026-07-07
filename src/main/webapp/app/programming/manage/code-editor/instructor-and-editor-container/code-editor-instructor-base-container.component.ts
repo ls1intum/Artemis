@@ -239,7 +239,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribeDomainChange()
             .pipe(
                 filter((domain) => !!domain),
-                map((domain) => domain),
                 tap(([domainType, domainValue]) => {
                     this.applyDomainChange(domainType, domainValue);
                 }),
