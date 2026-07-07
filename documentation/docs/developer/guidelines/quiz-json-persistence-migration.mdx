@@ -85,6 +85,53 @@ Component ids inside the JSON are **question-scoped** (unique only within one qu
 [ { "answerId": 1, "ratedCounter": 5, "unRatedCounter": 2 } ]
 ```
 
+## Field-level mapping reference
+
+Every old column and where it lands. `content` / `selection` are on the question / submitted-answer row (keyed by the old `question_id` / `submitted_answer_id`, which is why those FK columns are not carried into the JSON — the containment replaces them). `[]` denotes an array element.
+
+### Drag-and-drop
+
+| Old column | New location |
+| --- | --- |
+| `drop_location.id` | `content.dropLocations[].id` |
+| `drop_location.pos_x` / `pos_y` / `width` / `height` | `content.dropLocations[].posX` / `posY` / `width` / `height` |
+| `drop_location.invalid` | `content.dropLocations[].invalid` |
+| `drag_item.id` | `content.dragItems[].id` |
+| `drag_item.picture_file_path` | `content.dragItems[].pictureFilePath` |
+| `drag_item.text` | `content.dragItems[].text` |
+| `drag_item.invalid` | `content.dragItems[].invalid` |
+| `drag_and_drop_mapping.{id, drag_item_id, drop_location_id, invalid}` **where `question_id` is set** | `content.correctMappings[].{id, dragItemId, dropLocationId, invalid}` |
+| `drag_and_drop_mapping.{drag_item_id, drop_location_id}` **where `submitted_answer_id` is set** | `selection.mappings[].{dragItemId, dropLocationId}` (no id — submission mappings have no identity) |
+| `quiz_statistic_counter.{drop_location_id, rated_counter, un_rated_counter}` (discriminator `DD`) | `quiz_statistic.counters[].{dropLocationId, ratedCounter, unRatedCounter}` |
+
+### Short-answer
+
+| Old column | New location |
+| --- | --- |
+| `short_answer_spot.{id, spot_nr, width, invalid}` | `content.spots[].{id, spotNr, width, invalid}` |
+| `short_answer_solution.{id, text, invalid}` | `content.solutions[].{id, text, invalid}` |
+| `short_answer_mapping.{id, spot_id, solution_id, invalid}` | `content.correctMappings[].{id, spotId, solutionId, invalid}` |
+| `short_answer_submitted_text.{spot_id, text, is_correct}` | `selection.submittedTexts[].{spotId, text, isCorrect}` (row `id` dropped — no identity) |
+| `quiz_statistic_counter.{spot_id, rated_counter, un_rated_counter}` (discriminator `SA`) | `quiz_statistic.counters[].{spotId, ratedCounter, unRatedCounter}` |
+
+### Multiple-choice
+
+| Old column | New location |
+| --- | --- |
+| `answer_option.{id, text, hint, explanation, is_correct, invalid}` | `content.answerOptions[].{id, text, hint, explanation, isCorrect, invalid}` |
+| `multiple_choice_submitted_answer_selected_options.selected_options_id` | `selection.selectedOptionIds[]` |
+| `quiz_statistic_counter.{answer_id, rated_counter, un_rated_counter}` (discriminator `AC`) | `quiz_statistic.counters[].{answerId, ratedCounter, unRatedCounter}` |
+
+### Not carried over (intentionally dropped)
+
+| Old column(s) | Why |
+| --- | --- |
+| `*.question_id` / `submitted_answer_id` / `multiple_choice_submitted_answers_id` FKs | Replaced by JSON containment in the owning row |
+| `drop_locations_order`, `drag_items_order`, `spots_order`, `solutions_order`, `answer_options_order` | Array element order encodes it (preserved via `ORDER BY` on PostgreSQL; see the MySQL ordering caveat) |
+| `short_answer_mapping.correct_mappings_order` | Correct mappings are an unordered set (matched by id) |
+| `short_answer_submitted_text.id` | Submitted texts have no identity in the new model |
+| `quiz_statistic_counter.{drag_and_drop_question_statistic_id, short_answer_question_statistic_id, multiple_choice_question_statistic_id}` | Statistic ownership is by containment in `quiz_statistic.counters`; these columns are dropped (only `quiz_point_statistic_id` remains, for `PointCounter`) |
+
 ## Migration steps
 
 The changelog runs three phases. The `content` / `selection` columns are added once (steps 1a–1d), the `counters` column once (steps 5a–5b); the per-type backfills reuse them.
