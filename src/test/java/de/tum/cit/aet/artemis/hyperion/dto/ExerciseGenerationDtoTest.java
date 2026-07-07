@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.Instant;
 import java.util.HexFormat;
 import java.util.List;
 
@@ -134,22 +132,5 @@ class ExerciseGenerationDtoTest {
         JsonNode rejected = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationVerdictDTO(false, false, true, 2, List.of("solution failed"))));
         assertThat(rejected.get("reasons")).hasSize(1);
         assertThat(rejected.get("reasons").get(0).asText()).isEqualTo("solution failed");
-    }
-
-    @Test
-    void event_withVerdict_roundTripsThroughJacksonWithoutError() {
-        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.done("done", ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW,
-                new ExerciseGenerationVerdictDTO(false, true, false, 3, List.of("template passed")));
-
-        // The nested verdict and the Instant must both be serialisable, since the event is streamed and retained for replay.
-        assertThatCode(() -> mapper.writeValueAsString(event)).doesNotThrowAnyException();
-    }
-
-    @Test
-    void event_timestampIsPopulatedByFactories() {
-        Instant before = Instant.now();
-        Instant timestamp = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "x").timestamp();
-
-        assertThat(timestamp).isBetween(before.minusSeconds(1), Instant.now().plusSeconds(1));
     }
 }

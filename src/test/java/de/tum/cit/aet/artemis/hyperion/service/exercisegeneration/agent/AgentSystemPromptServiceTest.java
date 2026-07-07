@@ -201,7 +201,7 @@ class AgentSystemPromptServiceTest {
         // The agent hallucinated an apply_patch tool (and a silent bash apply_patch no-op corrupted its file-state model); the prompt must name the exact tool set and rule out
         // apply_patch in both tool-call and bash forms.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        // Contract: the exact tool set is enumerated, apply_patch is ruled out, and re-reading unchanged files is forbidden. One apply_patch marker (was two on the same rule).
+        // Contract: the exact tool set is enumerated, apply_patch is ruled out, and re-reading unchanged files is forbidden. One apply_patch marker.
         assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit").contains("Never call apply_patch")
                 .contains("do NOT re-read a file whose contents you have already seen");
     }
@@ -222,7 +222,7 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void build_encodesProblemStatementQualityRules() {
-        // One marker per DISTINCT problem-statement-quality rule (down from a 10-phrase snapshot). Cut only the same-rule redundancy/examples: "within 1e-6" (same float rule as
+        // One marker per DISTINCT problem-statement-quality rule. Cut only the same-rule redundancy/examples: "within 1e-6" (same float rule as
         // "exact equality"), "Design note (not graded)" (same complexity rule), "CONCRETE FENCED trace" (same worked-example rule). The load-bearing pin is the `[task]` spelling
         // contract; the rest prove each rule is present without freezing its wording. Single varargs assertion so a failure names every missing marker, not just the first.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));

@@ -213,7 +213,7 @@ class GenerationPersistenceServiceTest {
         ProgrammingExerciseTestCase configure = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.TestConfigure").weight(1.0);
         ProgrammingExerciseTestCase compileSort = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
-        // The real failure mode (the live 9.1%-template bug): an exercise-setup build leaves a STALE PARTIAL set ({configure}); the freshly triggered tests-build then syncs the
+        // The real failure mode: an exercise-setup build leaves a STALE PARTIAL set ({configure}); the freshly triggered tests-build then syncs the
         // COMPLETE set a few polls later. Acting on the partial set would MISS CompileSort. Baseline {} -> partial {configure} -> complete {configure, compileSort, behaviour}.
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(), Set.of(configure), Set.of(configure, compileSort, behaviour));
 
@@ -478,7 +478,7 @@ class GenerationPersistenceServiceTest {
     void persist_normalizesTypographyInGeneratedSourceFiles_soNoUnicodeDashLeaksIntoCommittedCode() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        // The exact leak the ego-death audit found: a non-breaking hyphen (U+2011) in a comment AND in a live exception message a student can trigger.
+        // The exact leak to guard against: a non-breaking hyphen (U+2011) in a comment AND in a live exception message a student can trigger.
         String dirty = "public class X {\n    // ensures the value is non‑negative\n    String message() { return \"size must be non‑negative\"; }\n}\n";
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("X.java", dirty), Map.of("Test.java", "x"), ""));

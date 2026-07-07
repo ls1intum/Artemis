@@ -248,7 +248,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void messageless_flagsAWhollyBareJvmTestFile() {
-        // The ego-death case: every assertion is a bare value/throws check, so a failing student sees only "expected 600 but was 500".
+        // Every assertion is a bare value/throws check, so a failing student sees only "expected 600 but was 500".
         String bare = "class FSSizeCalculatorTest {\n  @Test void calc() { assertEquals(600L, new FSSizeCalculator().calculateSize(root)); }\n"
                 + "  @Test void nul() { assertThrows(IllegalArgumentException.class, () -> new FSSizeCalculator().calculateSize(null)); }\n}";
         var findings = detector().detectMessagelessAssertions(ProgrammingLanguage.JAVA, Map.of("test/FSSizeCalculatorTest.java", bare));

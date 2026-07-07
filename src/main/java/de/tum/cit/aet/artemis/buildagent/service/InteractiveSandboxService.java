@@ -213,13 +213,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             return;
         }
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        // Signal the idle-loop entrypoint to exit gracefully, then force-remove in case the container is unresponsive.
-        try {
-            exec(sessionId, Duration.ofSeconds(5), "touch", STOP_SENTINEL);
-        }
-        catch (RuntimeException e) {
-            log.debug("Could not write stop sentinel for sandbox session {} (will force-remove): {}", sessionId, e.getMessage());
-        }
+        // Force-remove directly: the container holds no state worth flushing (it only ran untrusted generated code) and withForce SIGKILLs it regardless — a graceful stop-sentinel
+        // touch would only add a synchronous exec round-trip (and a stall on a wedged container) for no behavioural gain.
         try (final var removeCommand = dockerClient.removeContainerCmd(sessionId).withForce(true)) {
             removeCommand.exec();
         }

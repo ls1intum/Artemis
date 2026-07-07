@@ -611,7 +611,6 @@ class DifferentialVerificationServiceTest {
         assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
         assertThat(summary.testNames()).containsExactlyInAnyOrder("passes_a", "fails_b", "passes_c");
         assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
-        assertThat(summary.testNames()).as("every failing-test name is also in the full set").containsAll(summary.testFailedNames());
     }
 
     // Strict per-test soundness gate: every [task]-bound test the solution passes must fail on the template, even when the count gate passes — a test the template accidentally
