@@ -52,7 +52,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faWrench = faWrench;
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly exercises = signal<Exercise[]>([]);
     readonly lectures = signal<Lecture[]>([]);
     selectedExercises?: Set<number> = new Set();

@@ -36,7 +36,7 @@ export class QuizExerciseExportComponent implements OnInit {
     private dialogRef = inject(DynamicDialogRef, { optional: true });
 
     readonly questions = signal<QuizQuestion[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly course = signal<Course | undefined>(undefined);
     readonly isLoading = signal(false);
 

@@ -34,7 +34,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     currentUser?: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
-    websocketTopic: string;
+    websocketTopic!: string; // set in setupOnlineTeamStudentsReceiver() (from ngOnInit) before any read
     private websocketSubscription?: Subscription;
     private typingSubscription?: Subscription;
 

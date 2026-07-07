@@ -30,7 +30,7 @@ export class ExerciseStatisticsComponent implements OnInit {
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.ACTIVE_TUTORS, Graphs.CREATED_RESULTS, Graphs.CREATED_FEEDBACKS];
     readonly currentSpan = signal<SpanType>(SpanType.WEEK);
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
-    paramSub: Subscription;
+    paramSub?: Subscription;
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
