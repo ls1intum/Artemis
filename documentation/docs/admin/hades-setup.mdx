@@ -1,0 +1,58 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Hades Setup
+
+This section describes how to set up a programming exercise environment based on [Hades](https://github.com/ls1intum/hades), a containerized build
+orchestrator that Artemis can use as an alternative Continuous Integration system, activated via the `hades` Spring profile.
+
+Unlike the [Integrated Code Lifecycle](/admin/production-setup/integrated-code-lifecycle-setup) (Local CI) or [Jenkins](/admin/jenkins-localvc), the Hades
+scheduler and its result adapter (`hades-artemis-adapter`) run as separate services outside of this repository. Artemis only triggers builds on Hades and
+receives the resulting test outcome back; it does not manage the Hades scheduler or its build agents itself.
+
+<Callout variant={CalloutVariant.warning}>
+    The Hades integration is under active development. Check the linked repositories for the current state before relying on this in production.
+</Callout>
+
+---
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/install) (required by the Hades scheduler to run build containers)
+- A running Hades scheduler instance — see the [Hades repository](https://github.com/ls1intum/hades) for setup instructions
+- A running `hades-artemis-adapter` instance — see the [adapter repository](https://github.com/ls1intum/hades-artemis-adapter) for setup instructions
+
+---
+
+## Artemis Configuration
+
+The `hades` profile is configured in `src/main/resources/config/application-hades.yml`:
+
+```yaml
+artemis:
+  continuous-integration:
+    url: http://localhost:8081 # Hades scheduler URL
+    hades:
+      images:
+        clone-image: ghcr.io/ls1intum/hades/hades-clone-container:latest
+        result-parser-image: ghcr.io/ls1intum/hades/junit-result-parser:latest
+      adapter:
+        endpoint: http://host.docker.internal:8083/adapter/test-results
+      auth-key: # Set this in production environment
+```
+
+- `url` — where the Hades scheduler is reachable. Adjust the host/port to match your Hades scheduler deployment.
+- `hades.images.*` — the container images used for the pipeline steps that clone repositories and parse test results. These are public images maintained by the Hades project; you usually don't need to change them.
+- `hades.adapter.endpoint` — where the `hades-artemis-adapter` is reachable from inside the build containers. `host.docker.internal` lets containers managed by the Hades scheduler reach back out to the Docker host; adjust if the adapter runs elsewhere. The adapter receives parsed test results, combines them with the build logs, and forwards the combined result to Artemis' own result-ingestion endpoint.
+- `hades.auth-key` — Basic Auth password Artemis sends to the Hades scheduler (username `hades`). Must match the credential configured on the Hades scheduler side; set a strong value in production.
+
+You also still need `artemis.version-control` (LocalVC) configured, since builds are triggered against exercise repositories hosted there — see the
+`version-control` section in [Jenkins and LocalVC Setup](/admin/jenkins-localvc#artemis-configuration) for the relevant fields.
+
+In addition, you have to start Artemis with the profiles `hades` and `localvc` so that the correct adapters will be used, e.g.:
+
+```
+--spring.profiles.active=dev,core,localvc,hades,artemis,scheduling
+```
+
+Please read the [Server Setup](/developer/setup#server-setup) guide for more details.

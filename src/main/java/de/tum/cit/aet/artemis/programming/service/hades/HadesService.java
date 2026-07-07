@@ -95,10 +95,8 @@ public class HadesService implements StatelessCIService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // For stateless CI, we cannot track individual build statuses by participation, look at StatelessJenkinsCIService for complete breakdown.
-        // Hades currently supports running, succeeded and failed.
+        // Hades is a stateless CI system, so we cannot track individual build statuses by participation.
         log.debug("getBuildStatus called for participation {}, but stateless CI doesn't track individual build statuses", participation.getId());
-        // Return INACTIVE for now.
         return BuildStatus.INACTIVE;
     }
 

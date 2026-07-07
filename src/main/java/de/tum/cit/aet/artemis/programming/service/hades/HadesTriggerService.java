@@ -138,17 +138,15 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     }
 
     private String buildScript(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
-        StringBuilder script = new StringBuilder("set -e && cd ").append(HADES_WORKING_DIRECTORY).append(" && ");
+        List<String> phaseScripts = new ArrayList<>();
         for (BuildPhaseDTO phase : activePhases) {
             if (phase.script() != null && !phase.script().isBlank()) {
-                script.append(phase.script().strip()).append(" && ");
+                phaseScripts.add(phase.script().strip());
             }
         }
 
-        String result = script.toString();
-        if (result.endsWith(" && ")) {
-            result = result.substring(0, result.length() - 4);
-        }
+        String commands = String.join(" && ", phaseScripts);
+        String result = "set -e && cd " + HADES_WORKING_DIRECTORY + (commands.isEmpty() ? "" : " && " + commands);
 
         return buildScriptProviderService.replacePlaceholders(result, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());

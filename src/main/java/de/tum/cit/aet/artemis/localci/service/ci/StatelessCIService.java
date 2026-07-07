@@ -45,6 +45,8 @@ public interface StatelessCIService {
      * @return the UUID of the triggered build
      * @throws ContinuousIntegrationException if the request to the CI failed.
      */
+    // TODO: Remove this default once Jenkins is migrated to StatelessCIService; unify/clean up StatelessCIService and
+    // ContinuousIntegrationService as discussed in #11127.
     default UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
         throw new UnsupportedOperationException("build(BuildTriggerRequestDTO) is not supported by this CI system");
     }

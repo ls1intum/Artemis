@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         'scaling',
         'user-registration',
         'jenkins-localvc',
+        'hades-setup',
         'saml2-login-registration',
         'troubleshooting',
         'database-tips',

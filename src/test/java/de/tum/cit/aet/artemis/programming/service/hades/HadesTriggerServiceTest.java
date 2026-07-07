@@ -116,21 +116,27 @@ class HadesTriggerServiceTest {
         void triggerBuild_withCommitHashAndNullTriggeredBy_usesHashForAssignment() throws ContinuousIntegrationException {
             // when triggeredByPushTo=null and commitHash is set, assignment hash comes from commitHash directly (no git call)
             when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("test-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
 
             hadesTriggerService.triggerBuild(participation, "commit-abc", null);
 
-            verify(hadesService).build(any());
+            verify(hadesService).build(captor.capture());
             verify(gitService, never()).getLastCommitHash(exerciseRepoUri);
+            assertThat(captor.getValue().exerciseRepository().commitHash()).isEqualTo("commit-abc");
+            assertThat(captor.getValue().testRepository().commitHash()).isEqualTo("test-hash");
         }
 
         @Test
         void triggerBuild_withTestsRepositoryTrigger_usesCommitHashForTest() throws ContinuousIntegrationException {
             // when triggeredByPushTo=TESTS and commitHash is set, test hash comes from commitHash directly
             when(gitService.getLastCommitHash(exerciseRepoUri)).thenReturn("assign-hash");
+            ArgumentCaptor<BuildTriggerRequestDTO> captor = ArgumentCaptor.forClass(BuildTriggerRequestDTO.class);
 
             hadesTriggerService.triggerBuild(participation, "test-commit-abc", RepositoryType.TESTS);
 
-            verify(hadesService).build(any());
+            verify(hadesService).build(captor.capture());
+            assertThat(captor.getValue().testRepository().commitHash()).isEqualTo("test-commit-abc");
+            assertThat(captor.getValue().exerciseRepository().commitHash()).isEqualTo("assign-hash");
         }
 
         @Test
