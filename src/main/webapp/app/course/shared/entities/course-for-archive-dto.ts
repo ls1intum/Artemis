@@ -1,4 +1,4 @@
-export class CourseForArchiveDTO {
+export interface CourseForArchiveDTO {
     id: number;
     title: string;
     semester: string;

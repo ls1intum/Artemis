@@ -57,8 +57,8 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     readonly submittedFileName = signal<string | undefined>(undefined);
     readonly submittedFileExtension = signal<string | undefined>(undefined);
-    participation: StudentParticipation;
-    result: Result;
+    participation?: StudentParticipation;
+    result?: Result;
     submissionFile?: File;
 
     readonly ButtonType = ButtonType;

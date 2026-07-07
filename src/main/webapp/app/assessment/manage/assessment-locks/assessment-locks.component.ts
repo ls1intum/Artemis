@@ -37,9 +37,9 @@ export class AssessmentLocksComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
-    course: Course;
+    course?: Course;
     readonly courseId = signal<number>(undefined!);
-    tutorId: number;
+    tutorId!: number; // set in ngOnInit() from route query params
     examId?: number;
     readonly showAll = signal(false);
     exercises: Exercise[] = [];
@@ -47,7 +47,7 @@ export class AssessmentLocksComponent implements OnInit {
     // Locked submissions load asynchronously and the exam branch flips showAll — signals so they render under zoneless.
     readonly submissions = signal<Submission[]>([]);
 
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string; // set in constructor from a translation lookup before any assessment can be cancelled
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
