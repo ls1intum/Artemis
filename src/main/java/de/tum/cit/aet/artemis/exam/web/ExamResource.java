@@ -140,6 +140,11 @@ public class ExamResource {
 
     private static final String ENTITY_NAME = "exam";
 
+    /**
+     * Maximum exam title length. Must stay consistent with the varchar(255) exam.title database column and the client-side EXAM_TITLE_MAX_LENGTH.
+     */
+    private static final int MAX_EXAM_TITLE_LENGTH = 255;
+
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -459,6 +464,7 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
+        checkExamTitleLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
@@ -480,6 +486,17 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Checks that the exam title does not exceed the database column limit. The client caps this too, but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTitleLengthElseThrow(Exam exam) {
+        if (exam.getTitle() != null && exam.getTitle().length() > MAX_EXAM_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + MAX_EXAM_TITLE_LENGTH + " characters.", ENTITY_NAME, "examTitleTooLong");
         }
     }
 
