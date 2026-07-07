@@ -6,12 +6,13 @@ import { map } from 'rxjs/operators';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
- * Corresponds to ExerciseScoresDTO.java on the server
+ * Corresponds to ExerciseScoresDTO.java on the server.
+ * Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) marker.
  */
 export class ExerciseScoresDTO {
     public exerciseId?: number;
     public exerciseTitle?: string;
-    public exerciseType: ExerciseType;
+    public exerciseType!: ExerciseType; // populated from server data after construction
     public releaseDate?: dayjs.Dayjs;
     public scoreOfStudent?: number;
     public averageScoreAchieved?: number;

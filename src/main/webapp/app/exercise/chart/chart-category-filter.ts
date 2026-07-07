@@ -8,10 +8,10 @@ type CategoryFilterOperatingType = CourseManagementStatisticsModel | Exercise;
 
 @Injectable({ providedIn: 'root' })
 export class ChartCategoryFilter extends ChartFilter {
-    exerciseCategories: Set<string>;
+    exerciseCategories = new Set<string>();
     allCategoriesSelected = true;
     includeExercisesWithNoCategory = true;
-    exercisesWithoutCategoriesPresent: boolean;
+    exercisesWithoutCategoriesPresent = false;
 
     /**
      * Collects all categories from the provided exercises

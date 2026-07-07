@@ -16,8 +16,8 @@ export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = this.themeService.currentTheme;
 
-    private lightTheme: MonacoEditorTheme;
-    private darkTheme: MonacoEditorTheme;
+    private lightTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
+    private darkTheme!: MonacoEditorTheme; // assigned in registerCustomThemes(), called from the constructor
 
     constructor() {
         this.registerCustomThemes();

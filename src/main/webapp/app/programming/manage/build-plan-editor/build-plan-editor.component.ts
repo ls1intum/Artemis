@@ -36,7 +36,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     readonly isLoading = signal(false);
 
     readonly loadingResults = signal(true);
-    exerciseId: number;
+    exerciseId!: number; // set in ngOnInit()'s async participation load before submit() reads it
     readonly programmingExercise = signal<ProgrammingExercise | undefined>(undefined);
     readonly buildPlan = signal<BuildPlan | undefined>(undefined);
 

@@ -21,8 +21,8 @@ export class Lti13SelectContentComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private sanitizer = inject(DomSanitizer);
 
-    jwt: string;
-    id: string;
+    jwt = '';
+    id = '';
     readonly actionLink = signal<string>(undefined!);
     readonly isLinking = signal(true);
 

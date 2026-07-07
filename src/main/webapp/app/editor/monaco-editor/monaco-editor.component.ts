@@ -87,16 +87,16 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly CUSTOM_BACKSPACE_ACTION_ID = 'artemis-grapheme-backspace';
 
     /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
-    private _editor: monaco.editor.IStandaloneCodeEditor;
+    private _editor!: monaco.editor.IStandaloneCodeEditor; // assigned in initializeMonacoEditor(), called from the constructor
     /** The diff editor instance — lazily created when entering diff mode, disposed when leaving it. */
     private _diffEditor?: monaco.editor.IStandaloneDiffEditor;
 
     /** Adapter wrapping the currently active editor for {@link TextEditorAction} registration. Recreated on editor context switches. */
-    private textEditorAdapter: MonacoTextEditorAdapter;
+    private textEditorAdapter!: MonacoTextEditorAdapter; // assigned in setActiveEditorContext(), first called from ngOnInit()
     /** Container element for the primary editor — created in the constructor and never replaced. */
-    private monacoEditorContainerElement: HTMLElement;
+    private monacoEditorContainerElement!: HTMLElement; // assigned in initializeMonacoEditor(), called from the constructor
     /** Container element for the diff editor — created in the constructor and never replaced. */
-    private diffEditorContainerElement: HTMLElement;
+    private diffEditorContainerElement!: HTMLElement; // assigned in initializeDiffEditorContainer(), called from the constructor
 
     /*
      * Elements, models, and actions of the editor.

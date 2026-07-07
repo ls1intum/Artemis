@@ -1,4 +1,4 @@
-export class CourseManagementDetailViewDto {
+export interface CourseManagementDetailViewDto {
     // Total Assessment
     currentPercentageAssessments: number;
     currentAbsoluteAssessments: number;

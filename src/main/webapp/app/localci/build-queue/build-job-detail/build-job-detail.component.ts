@@ -19,6 +19,9 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
@@ -29,7 +32,19 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
     templateUrl: './build-job-detail.component.html',
     styleUrl: './build-job-detail.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FaIconComponent, ArtemisDatePipe, NgClass, RouterLink, ResultComponent, AdminTitleBarTitleDirective, HelpIconComponent],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        NgClass,
+        RouterLink,
+        ResultComponent,
+        AdminTitleBarTitleDirective,
+        HelpIconComponent,
+        ButtonModule,
+        TagModule,
+        MessageModule,
+    ],
 })
 export class BuildJobDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
