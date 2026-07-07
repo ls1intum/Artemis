@@ -13,7 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
-    HyperionFileSnapshot,
+    ExerciseGenerationFileSnapshot,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationMode,
@@ -27,7 +27,7 @@ const TERMINAL_EVENT_TYPES = new Set<HyperionGenerationEvent['type']>(['DONE', '
 
 interface RepoFileGroup {
     repo: HyperionSnapshotRepo;
-    files: HyperionFileSnapshot[];
+    files: ExerciseGenerationFileSnapshot[];
 }
 
 /**
@@ -56,7 +56,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly mode = signal<HyperionGenerationMode | undefined>(undefined);
     readonly running = signal<boolean>(false);
     readonly events = signal<HyperionGenerationEvent[]>([]);
-    readonly snapshots = signal<HyperionFileSnapshot[]>([]);
+    readonly snapshots = signal<ExerciseGenerationFileSnapshot[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
 
     readonly follow = signal<boolean>(true);
@@ -85,7 +85,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     });
 
     /** The file currently shown in the preview: the pinned file, otherwise the most-recently-written file while following. */
-    readonly activeSnapshot = computed<HyperionFileSnapshot | undefined>(() => {
+    readonly activeSnapshot = computed<ExerciseGenerationFileSnapshot | undefined>(() => {
         const files = this.snapshots();
         const targetPath = this.follow() ? this.lastWrittenPath() : this.pinnedPath();
         return files.find((file) => file.path === targetPath) ?? (this.follow() ? files.at(-1) : undefined);
@@ -255,7 +255,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
     }
 
-    private upsertSnapshot(snapshot: HyperionFileSnapshot): void {
+    private upsertSnapshot(snapshot: ExerciseGenerationFileSnapshot): void {
         this.lastWrittenPath.set(snapshot.path);
         this.snapshots.update((list) => {
             const index = list.findIndex((file) => file.path === snapshot.path);
@@ -279,7 +279,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     }
 
     /** Cosmetic gutter hint marking lines that changed versus the previous streamed content of this file. Heuristic (line-set membership), so moved/duplicate lines can be missed. */
-    private applyDiffDecorations(editor: MonacoEditorComponent, snapshot: HyperionFileSnapshot): void {
+    private applyDiffDecorations(editor: MonacoEditorComponent, snapshot: ExerciseGenerationFileSnapshot): void {
         const previous = this.previousContentByPath.get(snapshot.path);
         this.previousContentByPath.set(snapshot.path, snapshot.content);
         this.changedLineDecorations?.clear();

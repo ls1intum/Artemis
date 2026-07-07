@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -56,7 +56,7 @@ class HyperionExerciseGenerationResourceTest {
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
-    private ExerciseGenerationJobService jobService;
+    private GenerationJobService jobService;
 
     @Mock
     private AgentSystemPromptService agentSystemPromptService;

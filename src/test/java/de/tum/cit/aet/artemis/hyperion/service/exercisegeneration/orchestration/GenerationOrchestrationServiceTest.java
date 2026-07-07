@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * Unit tests for the orchestrator's verifier-feedback retry loop. All collaborators are Mockito mocks, so the loop's control flow (retry on rejection, stop on acceptance, bound on
  * attempts, cancellation short-circuit, session teardown on error) is exercised deterministically with no Docker, LLM, or Hazelcast.
  */
-class ExerciseGenerationOrchestrationServiceTest {
+class GenerationOrchestrationServiceTest {
 
     private static final int MAX_GENERATION_ATTEMPTS = 3;
 
@@ -70,9 +70,9 @@ class ExerciseGenerationOrchestrationServiceTest {
 
     private AgentSystemPromptService systemPromptService;
 
-    private ExerciseGenerationJobService jobService;
+    private GenerationJobService jobService;
 
-    private ExerciseGenerationOrchestrationService service;
+    private GenerationOrchestrationService service;
 
     private ProgrammingExercise exercise;
 
@@ -91,7 +91,7 @@ class ExerciseGenerationOrchestrationServiceTest {
         systemPromptService = mock(AgentSystemPromptService.class);
         structuralOracleSeeder = mock(StructuralOracleSeedingService.class);
         specFidelityCritic = mock(SpecFidelityCriticService.class);
-        jobService = mock(ExerciseGenerationJobService.class);
+        jobService = mock(GenerationJobService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
@@ -118,9 +118,9 @@ class ExerciseGenerationOrchestrationServiceTest {
     }
 
     /** Builds the orchestration service with all collaborators mocked and the sandbox/test-case repository present. */
-    private ExerciseGenerationOrchestrationService newService() {
-        return new ExerciseGenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder,
-                specFidelityCritic, jobService, Optional.of(testCaseRepository), 100);
+    private GenerationOrchestrationService newService() {
+        return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
+                jobService, Optional.of(testCaseRepository), 100);
     }
 
     private static AgentLoopResult completed() {
@@ -349,8 +349,8 @@ class ExerciseGenerationOrchestrationServiceTest {
     /** Unit-level check of the [task]-binding test-name extractor: dedup, trim, encounter order; empty for a blank statement. */
     @Test
     void extractTaskBoundTestNames_dedupesAndTrims() {
-        assertThat(ExerciseGenerationOrchestrationService.extractTaskBoundTestNames("")).isEmpty();
-        assertThat(ExerciseGenerationOrchestrationService.extractTaskBoundTestNames("[task][A]( t1 , t2 )\n[task][B](t2,t3)")).containsExactly("t1", "t2", "t3");
+        assertThat(GenerationOrchestrationService.extractTaskBoundTestNames("")).isEmpty();
+        assertThat(GenerationOrchestrationService.extractTaskBoundTestNames("[task][A]( t1 , t2 )\n[task][B](t2,t3)")).containsExactly("t1", "t2", "t3");
     }
 
     // --- Turn-0 workspace layout seeding (Fix #2) ----------------------------------------------------------------------------------------------------------------------------
@@ -394,11 +394,11 @@ class ExerciseGenerationOrchestrationServiceTest {
     /** Unit-level check of the prepend helper: a layout block is delimited and the brief preserved; an empty/blank layout returns the brief unchanged. */
     @Test
     void prependWorkspaceLayout_delimitsLayoutAndPreservesBrief() {
-        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout("", "BRIEF")).isEqualTo("BRIEF");
-        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout("   ", "BRIEF")).isEqualTo("BRIEF");
-        assertThat(ExerciseGenerationOrchestrationService.prependWorkspaceLayout(null, "BRIEF")).isEqualTo("BRIEF");
+        assertThat(GenerationOrchestrationService.prependWorkspaceLayout("", "BRIEF")).isEqualTo("BRIEF");
+        assertThat(GenerationOrchestrationService.prependWorkspaceLayout("   ", "BRIEF")).isEqualTo("BRIEF");
+        assertThat(GenerationOrchestrationService.prependWorkspaceLayout(null, "BRIEF")).isEqualTo("BRIEF");
 
-        String prepended = ExerciseGenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
+        String prepended = GenerationOrchestrationService.prependWorkspaceLayout("LAYOUT", "BRIEF");
         assertThat(prepended).isEqualTo("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===\nLAYOUT\n=== END INITIAL WORKSPACE ===\n\nBRIEF");
     }
 }

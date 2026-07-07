@@ -37,9 +37,9 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -51,9 +51,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class ExerciseGenerationJobService {
+public class GenerationJobService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationJobService.class);
+    private static final Logger log = LoggerFactory.getLogger(GenerationJobService.class);
 
     private static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
 
@@ -99,7 +99,7 @@ public class ExerciseGenerationJobService {
     // flag.
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
-    public ExerciseGenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
+    public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
             LLMTokenUsageService llmTokenUsageService) {
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
@@ -164,7 +164,7 @@ public class ExerciseGenerationJobService {
         transcriptMap.put(key, transcript);
         snapshotMap.put(key, snapshots);
         try {
-            eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
+            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         }
         catch (RejectedExecutionException e) {
             // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained
@@ -211,12 +211,12 @@ public class ExerciseGenerationJobService {
      * @param jobId      the job id; the snapshot is dropped if it does not match the retained store (a stale/older run)
      * @param snapshot   the whole-file snapshot to retain
      */
-    public void recordSnapshot(long exerciseId, String jobId, HyperionFileSnapshotDTO snapshot) {
+    public void recordSnapshot(long exerciseId, String jobId, ExerciseGenerationFileSnapshotDTO snapshot) {
         snapshotMap.computeIfPresent(key(exerciseId), (k, snapshots) -> {
             if (!snapshots.jobId().equals(jobId)) {
                 return snapshots;
             }
-            LinkedHashMap<String, HyperionFileSnapshotDTO> byPath = new LinkedHashMap<>(snapshots.snapshotsByPath());
+            LinkedHashMap<String, ExerciseGenerationFileSnapshotDTO> byPath = new LinkedHashMap<>(snapshots.snapshotsByPath());
             // Replacing an existing path keeps its insertion position (latest-per-file); a new path beyond the cap evicts the eldest file so the map stays bounded.
             if (!byPath.containsKey(snapshot.path()) && byPath.size() >= MAX_RETAINED_SNAPSHOT_FILES) {
                 Iterator<String> iterator = byPath.keySet().iterator();
@@ -249,7 +249,7 @@ public class ExerciseGenerationJobService {
     /**
      * Returns the latest snapshot per file for the given run, in write order, or an empty list if none are retained or they belong to a different run.
      */
-    private List<HyperionFileSnapshotDTO> latestSnapshotsFor(long exerciseId, String jobId) {
+    private List<ExerciseGenerationFileSnapshotDTO> latestSnapshotsFor(long exerciseId, String jobId) {
         JobFileSnapshots snapshots = snapshotMap.get(key(exerciseId));
         if (snapshots == null || !snapshots.jobId().equals(jobId)) {
             return List.of();
@@ -375,7 +375,7 @@ public class ExerciseGenerationJobService {
      * @param userLogin       the owner's login (snapshots are private to the instructor who started the run)
      * @param snapshotsByPath the latest snapshot per path, in write (insertion) order; bounded in size
      */
-    public record JobFileSnapshots(String jobId, String userLogin, Map<String, HyperionFileSnapshotDTO> snapshotsByPath) implements Serializable {
+    public record JobFileSnapshots(String jobId, String userLogin, Map<String, ExerciseGenerationFileSnapshotDTO> snapshotsByPath) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

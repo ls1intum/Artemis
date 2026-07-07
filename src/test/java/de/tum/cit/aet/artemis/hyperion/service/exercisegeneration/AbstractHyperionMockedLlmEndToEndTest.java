@@ -19,7 +19,7 @@ import com.github.dockerjava.api.DockerClient;
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationOrchestrationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOrchestrationService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultListenerService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultProcessingService;
@@ -44,7 +44,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
     private static final String JAVA_BUILD_IMAGE = "ls1tum/artemis-maven-template:java17-25";
 
     @Autowired
-    protected ExerciseGenerationOrchestrationService orchestrator;
+    protected GenerationOrchestrationService orchestrator;
 
     @Autowired
     protected ProgrammingExerciseCreationUpdateService creationService;

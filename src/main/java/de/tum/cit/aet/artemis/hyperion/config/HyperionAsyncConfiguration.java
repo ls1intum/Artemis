@@ -39,7 +39,7 @@ public class HyperionAsyncConfiguration {
     }
 
     /**
-     * @return the bounded executor that runs {@code ExerciseGenerationTaskService.runAsync}. Per-exercise single-flight already bounds duplicate work; this bounds total
+     * @return the bounded executor that runs {@code GenerationTaskService.runAsync}. Per-exercise single-flight already bounds duplicate work; this bounds total
      *         concurrent generations on a node and keeps them off the shared task executor.
      */
     @Bean(name = "hyperionGenerationExecutor")

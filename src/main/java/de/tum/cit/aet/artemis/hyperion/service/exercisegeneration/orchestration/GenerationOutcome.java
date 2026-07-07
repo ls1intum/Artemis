@@ -27,7 +27,7 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String sessionId;
 
     @Nullable
-    private final ExerciseGenerationOrchestrationService orchestrator;
+    private final GenerationOrchestrationService orchestrator;
 
     @Nullable
     private final InteractiveSandbox sandbox;
@@ -41,8 +41,8 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     private final SpecFidelityReport specFidelityReport;
 
-    GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId,
-            @Nullable ExerciseGenerationOrchestrationService orchestrator, @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport) {
+    GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
+            @Nullable InteractiveSandbox sandbox, SpecFidelityReport specFidelityReport) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;

@@ -1,6 +1,6 @@
 /**
  * Client-side types for the live agentic exercise-generation stream. Progress events and whole-file snapshots share one per-user websocket topic and are told apart by their
- * {@link HyperionFileSnapshot.type} discriminator ({@code 'FILE_SNAPSHOT'}), so both flow through a single subscription.
+ * {@link ExerciseGenerationFileSnapshot.type} discriminator ({@code 'FILE_SNAPSHOT'}), so both flow through a single subscription.
  */
 
 export type HyperionGenerationEventType = 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
@@ -28,7 +28,7 @@ export interface HyperionGenerationEvent {
 }
 
 /** A whole-file snapshot streamed while the agent writes the repositories, for the live editor preview. */
-export interface HyperionFileSnapshot {
+export interface ExerciseGenerationFileSnapshot {
     type: 'FILE_SNAPSHOT';
     path: string;
     repo: HyperionSnapshotRepo;
@@ -42,10 +42,10 @@ export interface HyperionFileSnapshot {
 }
 
 /** Either kind of message delivered on the shared topic. */
-export type HyperionGenerationMessage = HyperionGenerationEvent | HyperionFileSnapshot;
+export type HyperionGenerationMessage = HyperionGenerationEvent | ExerciseGenerationFileSnapshot;
 
 /** Narrows a stream message to a file snapshot. */
-export function isFileSnapshot(message: HyperionGenerationMessage): message is HyperionFileSnapshot {
+export function isFileSnapshot(message: HyperionGenerationMessage): message is ExerciseGenerationFileSnapshot {
     return message.type === 'FILE_SNAPSHOT';
 }
 
@@ -56,7 +56,7 @@ export interface HyperionGenerationStatus {
     /** The explicit run intent, so a reconnecting client restores the correct header label and the revert affordance without inferring it. Absent on runs started before this field existed. */
     mode?: HyperionGenerationMode;
     events: HyperionGenerationEvent[];
-    fileSnapshots?: HyperionFileSnapshot[];
+    fileSnapshots?: ExerciseGenerationFileSnapshot[];
 }
 
 /** The explicit intent of a run, mirroring the server {@code GenerationMode}. Chosen by the client, never inferred from the exercise's contents. */

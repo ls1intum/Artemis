@@ -15,5 +15,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
-        List<HyperionFileSnapshotDTO> fileSnapshots) {
+        List<ExerciseGenerationFileSnapshotDTO> fileSnapshots) {
 }

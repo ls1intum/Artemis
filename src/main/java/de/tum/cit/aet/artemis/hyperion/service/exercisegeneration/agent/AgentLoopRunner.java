@@ -171,7 +171,7 @@ public class AgentLoopRunner {
      * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn,
      * so a
      * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. The caller owns prompt abort of a long-running tool: it registers a
-     * cancel hook (see {@code ExerciseGenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
+     * cancel hook (see {@code GenerationJobService#registerCancelHook}) that tears down the sandbox session, which makes the in-flight tool call fail fast.
      *
      * @param systemPrompt the system prompt describing the task and the available tools
      * @param userPrompt   the initial user instruction

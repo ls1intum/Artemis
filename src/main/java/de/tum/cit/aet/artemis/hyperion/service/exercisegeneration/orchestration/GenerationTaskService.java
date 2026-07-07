@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRecoveryService;
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
  * <p>
- * It owns the end-to-end flow: drive the {@link ExerciseGenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
+ * It owns the end-to-end flow: drive the {@link GenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
  * clean, verified exercise; and when it does not accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist the best-effort draft and
  * surface
  * every verification finding as review comments so a near-miss is recoverable instead of discarded.
@@ -42,13 +42,13 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class ExerciseGenerationTaskService {
+public class GenerationTaskService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationTaskService.class);
+    private static final Logger log = LoggerFactory.getLogger(GenerationTaskService.class);
 
     private static final String TOPIC_PREFIX = "exercise-generation/jobs/";
 
-    private final ExerciseGenerationOrchestrationService orchestrator;
+    private final GenerationOrchestrationService orchestrator;
 
     private final GenerationPersistenceService persistenceService;
 
@@ -56,15 +56,15 @@ public class ExerciseGenerationTaskService {
 
     private final HyperionWebsocketService websocket;
 
-    private final ExerciseGenerationJobService jobService;
+    private final GenerationJobService jobService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ExerciseAdaptationRevertService adaptationRevertService;
 
-    public ExerciseGenerationTaskService(ExerciseGenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService,
-            GenerationRecoveryService recoveryService, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseAdaptationRevertService adaptationRevertService) {
+    public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationRecoveryService recoveryService,
+            HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExerciseAdaptationRevertService adaptationRevertService) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.recoveryService = recoveryService;
@@ -75,14 +75,14 @@ public class ExerciseGenerationTaskService {
     }
 
     /**
-     * Runs one generation/adaptation session, triggered by the {@link ExerciseGenerationStartedEvent} the job service publishes. Runs on the dedicated generation executor (via
+     * Runs one generation/adaptation session, triggered by the {@link GenerationStartedEvent} the job service publishes. Runs on the dedicated generation executor (via
      * {@link Async}) so it returns the request thread immediately.
      *
      * @param event the start event carrying the job id, requesting user, target exercise, and prompt
      */
     @Async("hyperionGenerationExecutor")
     @EventListener
-    public void runAsync(ExerciseGenerationStartedEvent event) {
+    public void runAsync(GenerationStartedEvent event) {
         String jobId = event.jobId();
         User user = event.user();
         String userPrompt = event.userPrompt();
@@ -94,7 +94,7 @@ public class ExerciseGenerationTaskService {
         // Whole-file snapshots are streamed to the owner on the same per-user topic as the progress events (told apart by their FILE_SNAPSHOT type) and retained latest-per-file
         // for
         // reconnect — kept out of the replay transcript so the write stream cannot bloat it.
-        Consumer<HyperionFileSnapshotDTO> fileSnapshotSink = snapshot -> {
+        Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink = snapshot -> {
             jobService.recordSnapshot(exerciseId, jobId, snapshot);
             websocket.send(login, topic, snapshot);
         };

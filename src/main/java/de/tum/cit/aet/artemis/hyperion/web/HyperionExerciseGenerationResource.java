@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -56,7 +56,7 @@ public class HyperionExerciseGenerationResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ExerciseGenerationJobService jobService;
+    private final GenerationJobService jobService;
 
     private final AgentSystemPromptService agentSystemPromptService;
 
@@ -64,7 +64,7 @@ public class HyperionExerciseGenerationResource {
 
     private final ExerciseAdaptationRevertService adaptationRevertService;
 
-    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseGenerationJobService jobService,
+    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationJobService jobService,
             AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
             ExerciseAdaptationRevertService adaptationRevertService) {
         this.userRepository = userRepository;

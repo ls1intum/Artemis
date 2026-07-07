@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
-import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 
 /**
  * A thin decorator around {@link SandboxAgentTools} that re-exposes the same {@code @Tool} surface but, whenever {@code write_file} or {@code edit_file} succeeds, emits a
- * whole-file {@link HyperionFileSnapshotDTO} to the given sink for live streaming to the triggering instructor.
+ * whole-file {@link ExerciseGenerationFileSnapshotDTO} to the given sink for live streaming to the triggering instructor.
  * <p>
  * It never touches the tool bodies (read/bash/verify/submit are pure delegations, and the write paths emit only on success). The whole file content is already in memory:
  * {@code write_file} receives it as an argument, and {@code edit_file} reconstructs it from the last snapshot for that path (falling back to a single read only on a cache miss),
@@ -37,7 +37,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
 
     private final SandboxAgentTools delegate;
 
-    private final Consumer<HyperionFileSnapshotDTO> snapshotSink;
+    private final Consumer<ExerciseGenerationFileSnapshotDTO> snapshotSink;
 
     /** The last full content streamed per (normalised) path, so an {@code edit_file} can rebuild the whole file without a sandbox read and identical writes can be coalesced. */
     private final Map<String, String> latestContentByPath = new LinkedHashMap<>();
@@ -48,7 +48,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
      * @param delegate     the underlying tools that actually operate on the sandbox
      * @param snapshotSink receives a whole-file snapshot on every successful write; must not be {@code null}
      */
-    public FileSnapshotEmittingAgentTools(SandboxAgentTools delegate, Consumer<HyperionFileSnapshotDTO> snapshotSink) {
+    public FileSnapshotEmittingAgentTools(SandboxAgentTools delegate, Consumer<ExerciseGenerationFileSnapshotDTO> snapshotSink) {
         this.delegate = delegate;
         this.snapshotSink = snapshotSink;
     }
@@ -77,7 +77,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
         if (isSuccess(result)) {
             String safe = SandboxAgentTools.workspaceRelativePath(path);
             if (safe != null) {
-                String action = latestContentByPath.containsKey(safe) ? HyperionFileSnapshotDTO.ACTION_EDIT : HyperionFileSnapshotDTO.ACTION_CREATE;
+                String action = latestContentByPath.containsKey(safe) ? ExerciseGenerationFileSnapshotDTO.ACTION_EDIT : ExerciseGenerationFileSnapshotDTO.ACTION_CREATE;
                 emit(safe, action, content);
             }
         }
@@ -102,7 +102,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
                 String content = reconstructEditedContent(path, safe, oldText, newText);
                 // Skip the snapshot when the fallback read failed: a delegate read can return an "ERROR: ..." sentinel, which must never be cached or streamed as file content.
                 if (content != null) {
-                    emit(safe, HyperionFileSnapshotDTO.ACTION_EDIT, content);
+                    emit(safe, ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, content);
                 }
             }
         }
@@ -159,7 +159,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
         }
         latestContentByPath.put(safe, content);
         try {
-            snapshotSink.accept(HyperionFileSnapshotDTO.of(safe, action, content, currentTurn));
+            snapshotSink.accept(ExerciseGenerationFileSnapshotDTO.of(safe, action, content, currentTurn));
         }
         catch (RuntimeException e) {
             log.warn("Failed to stream file snapshot for '{}': {}", safe, e.getMessage());

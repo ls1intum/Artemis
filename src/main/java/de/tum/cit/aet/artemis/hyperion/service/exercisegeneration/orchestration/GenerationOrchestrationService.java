@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
@@ -52,9 +52,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 @Lazy
 @Service
 @Conditional(HyperionEnabled.class)
-public class ExerciseGenerationOrchestrationService {
+public class GenerationOrchestrationService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationOrchestrationService.class);
+    private static final Logger log = LoggerFactory.getLogger(GenerationOrchestrationService.class);
 
     /**
      * Hard cap on agent turns per attempt ({@code artemis.hyperion.agent.max-turns}); generous so slow multi-file languages finish in one attempt, still bounded against runaways.
@@ -83,15 +83,15 @@ public class ExerciseGenerationOrchestrationService {
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
     // poll.
-    private final ExerciseGenerationJobService jobService;
+    private final GenerationJobService jobService;
 
     // Source of the pre-adapt graded test names (the adapt total-wipe gate's baseline). Optional because it is a core-profile repository, absent on a build-agent-only node; when
     // absent the baseline is empty and the total-wipe gate stays inert (fail-open), consistent with every other doubt-on-read-back gate.
     private final Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository;
 
-    public ExerciseGenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
+    public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
-            SpecFidelityCriticService specFidelityCritic, ExerciseGenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
+            SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
             @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
@@ -127,7 +127,7 @@ public class ExerciseGenerationOrchestrationService {
      * @return the outcome including the verification verdict and the produced files
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable Consumer<HyperionFileSnapshotDTO> fileSnapshotSink) {
+            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink) {
         // ADAPT re-runs against the seeded live repositories, so a feedback item may legitimately add or adjust a test; the tests-repo harness-immutability gate is relaxed for it
         // (the differential oracle remains the backstop). GENERATE keeps every gate enforced.
         boolean relaxTestsRepoImmutability = mode == GenerationMode.ADAPT;

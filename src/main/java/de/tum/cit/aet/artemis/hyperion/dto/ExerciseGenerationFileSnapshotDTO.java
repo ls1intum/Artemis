@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
-public record HyperionFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
+public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
         @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket: solution, template, tests or other") String repo,
         @Schema(description = "Whether the file was created or edited: create or edit") String action,
         @Schema(description = "The whole current file content (capped)") String content, @Schema(description = "SHA-256 hex digest of the full content") String sha256,
@@ -63,12 +63,12 @@ public record HyperionFileSnapshotDTO(@Schema(description = "Constant discrimina
      * @param turn        the agent turn the write happened on ({@code 0} if unknown)
      * @return the snapshot ready to stream and retain
      */
-    public static HyperionFileSnapshotDTO of(String path, String action, String fullContent, int turn) {
+    public static ExerciseGenerationFileSnapshotDTO of(String path, String action, String fullContent, int turn) {
         byte[] fullBytes = fullContent.getBytes(StandardCharsets.UTF_8);
         boolean truncated = fullBytes.length > MAX_CONTENT_BYTES;
         // Truncate on a UTF-8 byte boundary via a fresh decode of the head bytes so the streamed content never contains a broken trailing multi-byte sequence.
         String content = truncated ? new String(fullBytes, 0, MAX_CONTENT_BYTES, StandardCharsets.UTF_8) : fullContent;
-        return new HyperionFileSnapshotDTO(TYPE, path, repositoryBucket(path), action, content, sha256Hex(fullBytes), fullBytes.length, truncated, turn, Instant.now());
+        return new ExerciseGenerationFileSnapshotDTO(TYPE, path, repositoryBucket(path), action, content, sha256Hex(fullBytes), fullBytes.length, truncated, turn, Instant.now());
     }
 
     /**

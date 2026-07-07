@@ -26,14 +26,14 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Unit test for {@link ExerciseGenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants against a real isolated embedded Hazelcast
+ * Unit test for {@link GenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants against a real isolated embedded Hazelcast
  * instance, so it also exercises the same {@code Serializable} default serialization the distributed map uses in production.
  */
-class ExerciseGenerationJobServiceTest {
+class GenerationJobServiceTest {
 
     private HazelcastInstance hazelcastInstance;
 
-    private ExerciseGenerationJobService jobService;
+    private GenerationJobService jobService;
 
     @BeforeEach
     void setUp() {
@@ -45,7 +45,7 @@ class ExerciseGenerationJobServiceTest {
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
         // No-op publisher: the test needs only the slot/transcript side effects, not the run. Token usage is exercised elsewhere, so a mock sink source suffices here.
-        jobService = new ExerciseGenerationJobService(hazelcastInstance, event -> {
+        jobService = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class));
         jobService.init();
     }
@@ -174,7 +174,7 @@ class ExerciseGenerationJobServiceTest {
                 throw new TaskRejectedException("hyperionGenerationExecutor is saturated");
             }
         };
-        ExerciseGenerationJobService service = new ExerciseGenerationJobService(hazelcastInstance, rejectingPublisher, mock(LLMTokenUsageService.class));
+        GenerationJobService service = new GenerationJobService(hazelcastInstance, rejectingPublisher, mock(LLMTokenUsageService.class));
         service.init();
 
         ProgrammingExercise exercise = exercise(77L);

@@ -10,7 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
-import { HyperionFileSnapshot, HyperionGenerationMessage, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationFileSnapshot, HyperionGenerationMessage, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 // A lightweight fake so the read-only preview does not instantiate the real Monaco editor in jsdom. It provides the MonacoEditorComponent DI token so the component's
 // viewChild(MonacoEditorComponent) RESOLVES to it, exercising the security-critical render effect: we can then assert that snapshot content routes to the text-only
@@ -55,7 +55,7 @@ class MockService {
     }
 }
 
-function snapshot(path: string, action: 'create' | 'edit', content: string): HyperionFileSnapshot {
+function snapshot(path: string, action: 'create' | 'edit', content: string): ExerciseGenerationFileSnapshot {
     const repo = path.startsWith('solution/') ? 'solution' : path.startsWith('template/') ? 'template' : path.startsWith('tests/') ? 'tests' : 'other';
     return { type: 'FILE_SNAPSHOT', path, repo, action, content, sha256: 'x', bytes: content.length, truncated: false, turn: 1 };
 }
