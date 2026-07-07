@@ -111,6 +111,9 @@ class IrisStruggleInterventionDecisionTest {
     // job in Pull (Less): an above-threshold active decision must be deterministically capped to ambient (spec §4/§10)
     private final StruggleInterventionJob pullJob = new StruggleInterventionJob("tp", 7L, 42L, 3L, null, null, null, null, "pull");
 
+    // consented follow-up: must deliver an active bubble even below threshold and even in pull
+    private final StruggleInterventionJob helpRequestPullJob = new StruggleInterventionJob("th", 7L, 42L, 3L, "help_request", "ep-hr", null, null, "pull");
+
     @BeforeEach
     void setUp() {
         user = new User();
@@ -266,6 +269,45 @@ class IrisStruggleInterventionDecisionTest {
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action()) && Objects.equals(e.episodeId(), "ep-123")));
+    }
+
+    @Test
+    void helpRequest_belowThreshold_stillPersistsAndPushesActive() {
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(556L);
+            return m;
+        });
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Try the empty-list case.", "active", 0.3, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        service.handleDecision(helpRequestPullJob, update);
+        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
+        verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action()) && Objects.equals(e.messageId(), 556L)));
+    }
+
+    @Test
+    void helpRequest_ambientAction_isCoercedToActiveBubble() {
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(557L);
+            return m;
+        });
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("One notch further.", "ambient", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        service.handleDecision(helpRequestPullJob, update);
+        verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action())));
+    }
+
+    @Test
+    void helpRequest_silentFromPyris_staysSilent() {
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "silent", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null);
+        service.handleDecision(helpRequestPullJob, update);
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
     }
 
     private IrisChatSession exerciseSession(long entityId) {

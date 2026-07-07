@@ -238,12 +238,23 @@ public class IrisStruggleInterventionService {
         var user = userRepository.findByIdElseThrow(job.userId());
         var action = statusUpdate.action();
         var confidence = statusUpdate.confidence();
+        boolean helpRequest = "help_request".equals(job.intent());
         boolean belowThreshold = confidence == null || confidence < confidenceThreshold;   // fail-closed on null
-        String finalAction = ("silent".equals(action) || belowThreshold) ? "silent" : action;
-        // Pull (Less, spec §4/§10): the hard guarantee that Iris never actively pushes a banner in Pull is enforced
-        // HERE, deterministically -- not left to the Pyris prompt. Cap an above-threshold active down to ambient.
-        if ("pull".equals(job.proactivityMode()) && "active".equals(finalAction)) {
+        // A consented help_request bypasses the confidence gate (an invited hint must reach the student);
+        // an unsolicited decide still downgrades below threshold.
+        boolean forceSilent = "silent".equals(action) || (belowThreshold && !helpRequest);
+        String finalAction = forceSilent ? "silent" : action;
+        // Pull (Less): unsolicited active is capped to ambient. A consented help_request is exempt.
+        if ("pull".equals(job.proactivityMode()) && "active".equals(finalAction) && !helpRequest) {
             finalAction = "ambient";
+        }
+        // A consented, non-silent help_request is always delivered as a persisted bubble, even if Pyris
+        // returned "ambient" (the student explicitly asked; no quiet-park semantics on this path).
+        if (helpRequest && !"silent".equals(finalAction)) {
+            finalAction = "active";
+        }
+        if (helpRequest && belowThreshold) {
+            log.info("help_request delivering below-threshold hint exercise={} user={} confidence={}", job.exerciseId(), job.userId(), confidence);
         }
         log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
 
