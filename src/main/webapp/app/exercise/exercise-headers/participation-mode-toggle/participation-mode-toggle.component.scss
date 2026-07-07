@@ -30,7 +30,7 @@ $graded-color: #28a745;
             color: white;
         }
 
-        // Non-interactive badge shown when only a single participation mode exists: keep the default cursor
+        /* Single-mode badge is non-interactive */
         &--static {
             cursor: default;
         }
