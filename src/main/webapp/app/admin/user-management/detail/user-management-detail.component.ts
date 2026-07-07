@@ -1,9 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
-import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faPencil } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
@@ -17,7 +19,19 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-user-management-detail',
     templateUrl: './user-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, ArtemisTranslatePipe, ProfilePictureComponent, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        RouterOutlet,
+        TagModule,
+        ButtonModule,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ProfilePictureComponent,
+        AdminTitleBarTitleDirective,
+    ],
 })
 export class UserManagementDetailComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
@@ -26,7 +40,7 @@ export class UserManagementDetailComponent implements OnInit {
     readonly user = signal<User | undefined>(undefined);
 
     /** Icons */
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
 
     /** Utility function to add public file prefix to image URLs */
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

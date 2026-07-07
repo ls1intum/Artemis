@@ -65,7 +65,7 @@ export class QuizQuestionListEditExistingComponent {
     readonly exams = signal<Exam[]>([]);
     readonly allExistingQuestions = signal<QuizQuestion[]>([]);
     readonly existingQuestions = signal<QuizQuestion[]>([]);
-    searchQueryText: string;
+    searchQueryText?: string;
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
     shortAnswerFilterEnabled = true;

@@ -371,7 +371,7 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
         // Inline code snippets embedded in the example reply (via <code> tags
         // in the translation, rendered with [innerHTML]).
         code {
-            font-family: var(--bs-font-monospace);
+            font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
             font-size: 0.85em;
             background: var(--iris-accent-background);
             color: var(--body-color);

@@ -75,7 +75,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly formattedGeneralInformation = signal<SafeHtml | undefined>(undefined);
     readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
 
-    interval: number;
+    interval?: number;
     readonly waitingForExamStart = signal(false);
     readonly isFetching = signal(false);
     loadExamSubscription?: Subscription;

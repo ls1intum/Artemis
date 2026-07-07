@@ -21,10 +21,10 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     private readonly lineHeight: string;
     private readonly display: string;
     private fitTextParent: HTMLElement;
-    private fitTextMinFontSize: number;
-    private fitTextMaxFontSize: number;
+    private fitTextMinFontSize!: number; // set in ngOnInit() before any font-size calculation
+    private fitTextMaxFontSize!: number; // set in ngOnInit() before any font-size calculation
     private calcSize = 10;
-    private resizeTimeout: NodeJS.Timeout;
+    private resizeTimeout?: NodeJS.Timeout;
 
     private isFirstCompression = true;
     private isFirstInnerHTML = true;

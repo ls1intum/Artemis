@@ -78,7 +78,7 @@ export class SidebarComponent implements OnDestroy {
      *  the user applies exercise filters, without mutating the parent-owned input. */
     readonly sidebarDataInternal = signal<SidebarData>({ groupByCategory: false });
 
-    exerciseId: string;
+    exerciseId?: string;
 
     paramSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;

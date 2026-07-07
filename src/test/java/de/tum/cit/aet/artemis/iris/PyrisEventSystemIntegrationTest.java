@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -46,6 +48,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
@@ -69,6 +73,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisChatSessionUtilService irisChatSessionUtilService;
+
+    @Autowired
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private ProgrammingExercise exercise;
 
@@ -165,6 +172,39 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         return createSubmission(studentParticipation, 0, true);
     }
 
+    /**
+     * Creates a failing submission with real build log entries, then reloads it the same way the event thread would see
+     * it: {@code results} eagerly fetched, but {@code buildLogEntries} left as an uninitialized lazy proxy, detached from
+     * any Hibernate session. Reproduces the off-session state that {@link NewResultEvent}s carry across the
+     * {@code CompletableFuture.runAsync} boundary in {@code IrisChatSessionService}.
+     */
+    private Result createFailingSubmissionWithLazyBuildLogEntries(ProgrammingExerciseStudentParticipation studentParticipation) {
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setBuildFailed(true);
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission = submissionRepository.saveAndFlush(submission);
+
+        List<BuildLogEntry> logs = new ArrayList<>();
+        logs.add(new BuildLogEntry(ZonedDateTime.now(), "compilation failed: cannot find symbol", submission));
+        submission.setBuildLogEntries(logs);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ParticipationFactory.generateResult(true, 0);
+        result.setSubmission(submission);
+        result.setExerciseId(studentParticipation.getExercise().getId());
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        submission.addResult(result);
+        submissionRepository.saveAndFlush(submission);
+        result = resultRepository.save(result);
+
+        ProgrammingSubmission detachedSubmission = programmingSubmissionRepository.findProgrammingSubmissionById(submission.getId()).orElseThrow();
+        result.setSubmission(detachedSubmission);
+        return result;
+    }
+
     private ProgrammingExerciseStudentParticipation createTeamParticipation(User owner) {
         var team = teamUtilService.addTeamForExercise(exercise, owner);
         var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
@@ -206,6 +246,29 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         Result result = createFailingSubmission(studentParticipation);
         irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+
+        var event = new NewResultEvent(result);
+        pyrisEventService.trigger(event);
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(
+                () -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldFireBuildFailedEventWhenBuildLogEntriesAreNotEagerlyFetched() {
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        Result result = createFailingSubmissionWithLazyBuildLogEntries(studentParticipation);
+        irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
+            assertThat(dto.programmingExerciseSubmission()).isNotNull();
+            assertThat(dto.programmingExerciseSubmission().buildLogEntries()).extracting(PyrisBuildLogEntryDTO::message).containsExactly("compilation failed: cannot find symbol");
             pipelineDone.set(true);
         });
 
