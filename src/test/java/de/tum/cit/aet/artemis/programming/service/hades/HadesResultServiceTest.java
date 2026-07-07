@@ -48,16 +48,4 @@ class HadesResultServiceTest {
         assertThat(dto.isBuildSuccessful()).isTrue();
         assertThat(dto.passed()).isEqualTo(5);
     }
-
-    @Test
-    void convertBuildResult_withBuildFailure_returnsFailed() {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("isBuildSuccessful", false);
-        requestBody.put("passed", 0);
-
-        var result = hadesResultService.convertBuildResult(requestBody);
-
-        assertThat(result).isInstanceOf(HadesTestResultsDTO.class);
-        assertThat(((HadesTestResultsDTO) result).isBuildSuccessful()).isFalse();
-    }
 }

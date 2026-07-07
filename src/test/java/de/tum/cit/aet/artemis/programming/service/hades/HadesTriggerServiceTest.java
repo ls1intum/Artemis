@@ -249,16 +249,16 @@ class HadesTriggerServiceTest {
         }
 
         @Test
-        void getBuildScript_chainsActivePhaseScriptsWithAnd() {
-            var compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
-            var test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, null);
-            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(compile, test));
-            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(compile, test), participation)).thenReturn(List.of(compile, test));
+        void getBuildScript_resetsWorkingDirectoryBetweenPhasesSoRelativeCdDoesNotLeak() {
+            var structural = new BuildPhaseDTO("structural", "cd \"structural\" && mvn test", BuildPhaseCondition.ALWAYS, false, null);
+            var behavior = new BuildPhaseDTO("behavior", "cd \"behavior\" && mvn test", BuildPhaseCondition.ALWAYS, false, null);
+            when(buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise)).thenReturn(List.of(structural, behavior));
+            when(buildPhaseEvaluationService.determineActiveBuildPhases(List.of(structural, behavior), participation)).thenReturn(List.of(structural, behavior));
             when(buildScriptProviderService.replacePlaceholders(any(), any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             String script = hadesTriggerService.getBuildScript(buildConfig, participation, exercise);
 
-            assertThat(script).isEqualTo("set -e && cd /shared && mvn compile && mvn test");
+            assertThat(script).isEqualTo("set -e && cd /shared && cd \"structural\" && mvn test && cd /shared && cd \"behavior\" && mvn test");
         }
     }
 }

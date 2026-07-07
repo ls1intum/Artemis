@@ -156,14 +156,18 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             (phase.forceRun() ? forceRunPhases : nonForceRunPhases).add(phase);
         }
 
-        String nonForceRunCommands = nonForceRunPhases.stream().map(phase -> phase.script().strip()).collect(Collectors.joining(" && "));
+        String nonForceRunCommands = nonForceRunPhases.stream().map(HadesTriggerService::resetToWorkingDirectory).collect(Collectors.joining(" && "));
 
         if (forceRunPhases.isEmpty()) {
-            return "set -e && cd " + HADES_WORKING_DIRECTORY + (nonForceRunCommands.isEmpty() ? "" : " && " + nonForceRunCommands);
+            return "set -e && " + (nonForceRunCommands.isEmpty() ? "cd " + HADES_WORKING_DIRECTORY : nonForceRunCommands);
         }
 
-        String forceRunCommands = forceRunPhases.stream().map(phase -> phase.script().strip()).collect(Collectors.joining("\n"));
-        return "cd " + HADES_WORKING_DIRECTORY + "\n( set -e\n" + nonForceRunCommands + "\n)\nbuild_exit_code=$?\n" + forceRunCommands + "\nexit ${build_exit_code}";
+        String forceRunCommands = forceRunPhases.stream().map(HadesTriggerService::resetToWorkingDirectory).collect(Collectors.joining("\n"));
+        return "( set -e\n" + nonForceRunCommands + "\n)\nbuild_exit_code=$?\n" + forceRunCommands + "\nexit ${build_exit_code}";
+    }
+
+    private static String resetToWorkingDirectory(BuildPhaseDTO phase) {
+        return "cd " + HADES_WORKING_DIRECTORY + " && " + phase.script().strip();
     }
 
     private List<BuildPhaseDTO> resolveActivePhases(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation,
