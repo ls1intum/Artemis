@@ -175,6 +175,16 @@ $overlay-offset-top: 2.8rem;
     margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
+    padding: 0 !important;
+    color: var(--link-color) !important;
+    text-decoration: underline;
+    font-weight: 400;
+
+    &:hover,
+    &:focus {
+        color: var(--link-color) !important;
+        text-decoration: underline;
+    }
 }
 
 .course-notification-overview-category {

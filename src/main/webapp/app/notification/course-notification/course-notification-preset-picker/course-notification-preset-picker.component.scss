@@ -2,6 +2,8 @@
     & .dropdown-menu {
         padding: 0;
         max-width: 30rem;
+        border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     & .dropdown-item {
@@ -14,6 +16,7 @@
     border-bottom: 1px solid var(--gray-300);
     cursor: pointer;
     position: relative;
+    line-height: 1.4;
 }
 
 .course-notification-preset-picker-item:last-child {
@@ -28,7 +31,12 @@
 }
 
 .course-notification-preset-picker-item-description {
+    display: block;
+    margin-top: 0.25rem;
     color: var(--secondary);
+    font-size: 0.85em;
+    font-style: italic;
+    line-height: 1.35;
 }
 
 .course-notification-preset-picker-item:hover,
@@ -86,8 +94,8 @@
         max-width: 20rem;
         max-height: 22rem;
         overflow-y: auto;
-        font-size: 0.8rem;
-        line-height: 1;
+        font-size: 0.875rem;
+        line-height: 1.4;
     }
 
     & .dropdown-item {
@@ -95,6 +103,6 @@
     }
 
     & .course-notification-preset-picker-item {
-        padding: 0.5rem 0.75rem;
+        padding: 0.75rem 1rem;
     }
 }
