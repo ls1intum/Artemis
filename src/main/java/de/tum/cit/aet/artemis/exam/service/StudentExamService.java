@@ -828,7 +828,12 @@ public class StudentExamService {
     public void startExercisesForStudentExams(List<StudentExam> studentExams) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         for (var studentExam : studentExams) {
-            setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true);
+            try {
+                setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true);
+            }
+            catch (Exception ex) {
+                log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), ex);
+            }
         }
     }
 
