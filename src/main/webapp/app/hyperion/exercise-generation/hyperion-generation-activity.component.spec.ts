@@ -242,4 +242,60 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(editor.changeModel).toHaveBeenLastCalledWith('solution/A.java', 'line1\nCHANGED');
         expect(editor.createDecorationsCollection).toHaveBeenCalledTimes(1);
     });
+
+    it('stops the running indicator when the live stream errors', () => {
+        // A dropped websocket (stream error, not a terminal event) must clear the running flag, or the spinner sticks forever after a disconnect.
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        const component = fixture.componentInstance;
+        expect(component.running()).toBe(true);
+
+        service.stream$.error(new Error('ws dropped'));
+        expect(component.running()).toBe(false);
+    });
+
+    it('stops running on a CANCELLED terminal event from the stream', () => {
+        // CANCELLED is a terminal stream event (distinct from the cancel button just requesting it): it stops the run and offers no revert.
+        const fixture = createWith({ jobId: 'j1', running: true, mode: 'ADAPT', events: [], fileSnapshots: [] });
+        const component = fixture.componentInstance;
+
+        service.stream$.next({ type: 'CANCELLED', message: 'Cancelled by user' });
+        expect(component.running()).toBe(false);
+        expect(component.verdict()).toBeUndefined();
+        expect(component.canRevert()).toBe(false);
+    });
+
+    it('does not let a late status response clobber a freshly attached live run', () => {
+        // Reconnect race: a status fetch is in flight when the user starts a new run on the same surface. attachToJob bumps the load token, so the
+        // late status of the previous (stale) job must be ignored rather than overwrite the live run the user just started.
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = () => pendingStatus.asObservable();
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        component.attachToJob('live', 'GENERATE');
+        expect(component.jobId()).toBe('live');
+        expect(component.running()).toBe(true);
+
+        pendingStatus.next(new HttpResponse<HyperionGenerationStatus>({ body: { jobId: 'stale', running: false, events: [], fileSnapshots: [] } }));
+        expect(component.jobId()).toBe('live');
+        expect(component.running()).toBe(true);
+    });
+
+    it('resets and self-hides when the exercise is cleared', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: false,
+            events: [{ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } }],
+            fileSnapshots: [snapshot('solution/A.java', 'create', 'a')],
+        });
+        const component = fixture.componentInstance;
+        expect(component.visible()).toBe(true);
+
+        fixture.componentRef.setInput('exerciseId', undefined);
+        fixture.detectChanges();
+        expect(component.visible()).toBe(false);
+        expect(component.jobId()).toBeUndefined();
+        expect(component.snapshots()).toHaveLength(0);
+        expect(component.verdict()).toBeUndefined();
+    });
 });

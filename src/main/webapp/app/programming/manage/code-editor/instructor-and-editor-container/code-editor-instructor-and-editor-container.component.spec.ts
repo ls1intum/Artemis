@@ -26,6 +26,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -2325,8 +2326,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             { provide: DialogService, useValue: { open: dialogOpen } },
         ]);
 
-        // Hyperion must be enabled at construction (read once in the AI-operations helper) so the adapt gate opens.
-        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        // Hyperion must be enabled AND LocalCI active at construction (both read once in the AI-operations helper) so the adapt gate opens: the adapt affordance is whole-exercise
+        // generation, which the server gates to LocalCI, so canAdaptWithFeedback() now also requires the localci profile.
+        const adaptProfileService = TestBed.inject(ProfileService);
+        vi.spyOn(adaptProfileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(adaptProfileService, 'isProfileActive').mockImplementation((profile: string) => profile === PROFILE_LOCALCI);
 
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
@@ -2386,5 +2390,29 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).toHaveBeenCalledOnce();
         expect(attachToJob).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.adaptStartFailed');
+    });
+
+    it('does NOT offer or dispatch adapt under Jenkins (localci profile inactive), even with Hyperion enabled', () => {
+        // Task A: whole-exercise generation/adaptation is LocalCI-only. With Hyperion enabled but the localci profile inactive (a Jenkins deployment), the adapt gate must stay closed
+        // so no ADAPT run can be started, while the plain (non-CI) Hyperion problem-statement features remain available.
+        const jenkinsProfileService = TestBed.inject(ProfileService);
+        vi.spyOn(jenkinsProfileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(jenkinsProfileService, 'isProfileActive').mockReturnValue(false);
+
+        const jenkinsFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        const jenkinsComp = jenkinsFixture.componentInstance;
+        jenkinsComp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
+        const jenkinsAttach = vi.fn();
+        (jenkinsComp as any).generationActivity = () => ({ attachToJob: jenkinsAttach });
+
+        expect((jenkinsComp as any).hyperionEnabled).toBe(true);
+        expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
+        expect((jenkinsComp as any).canAdaptWithFeedback()).toBe(false);
+        expect((jenkinsComp as any).showGenerationActivity()).toBe(false);
+
+        (jenkinsComp as any).openAdaptDialog();
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(jenkinsAttach).not.toHaveBeenCalled();
+        jenkinsFixture.destroy();
     });
 });

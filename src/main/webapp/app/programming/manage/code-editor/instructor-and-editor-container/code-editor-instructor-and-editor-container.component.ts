@@ -252,6 +252,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly isAiApplying = this.aiOps.isAiApplying;
     readonly showDiff = this.aiOps.showDiff;
     readonly hyperionEnabled = this.aiOps.hyperionEnabled;
+    readonly hyperionGenerationSupported = this.aiOps.hyperionGenerationSupported;
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
 
@@ -447,11 +448,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Returns whether the owner-only live "Generation activity" drawer should be shown: Hyperion is enabled, the exercise is loaded, the user is at least an editor, and the
-     * language is supported by agentic generation (Java-only for now). The drawer self-hides further when no run is active/retained.
+     * Returns whether the owner-only live "Generation activity" drawer should be shown: agentic whole-exercise generation is supported (Hyperion enabled AND the integrated LocalCI
+     * backend active — the server disables the generation endpoints under Jenkins), the exercise is loaded, the user is at least an editor, and the language is supported by agentic
+     * generation (Java-only for now). The drawer self-hides further when no run is active/retained.
      */
     protected showGenerationActivity(): boolean {
-        return this.hyperionEnabled && !!this.exercise?.id && (this.exercise?.isAtLeastEditor ?? false) && this.canGenerateCode();
+        return this.hyperionGenerationSupported && !!this.exercise?.id && (this.exercise?.isAtLeastEditor ?? false) && this.canGenerateCode();
     }
 
     /**

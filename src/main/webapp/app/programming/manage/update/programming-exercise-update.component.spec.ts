@@ -510,6 +510,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
+            comp.localCiEnabledForAi.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
@@ -530,11 +531,27 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             comp.programmingExercise = entity;
             comp.hyperionEnabled = true;
+            comp.localCiEnabledForAi.set(true);
             comp.isImportFromExistingExercise = false;
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should NOT show under Jenkins (localci inactive), even with hyperion enabled and java', () => {
+            // Task A: the "Generate entire exercise" affordance is whole-exercise agentic generation, which the server gates to LocalCI, so the client hides it under Jenkins.
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.localCiEnabledForAi.set(false);
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.showGenerateWithAi()).toBe(false);
         });
     });
 

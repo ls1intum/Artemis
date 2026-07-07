@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH, PROMPT_LENGTH_WARNING_THRESHOLD, isTemplateOrEmpty } from 'app/programming/manage/shared/problem-statement.utils';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 
 /**
  * Callback interface that consumers implement to propagate state changes
@@ -65,8 +65,15 @@ export class ProblemStatementAiOperationsHelper {
     /** Tracks the current problem statement content for shouldShowGenerateButton. */
     readonly currentProblemStatement = signal('');
 
-    /** Whether the Hyperion module feature is active. */
+    /** Whether the Hyperion module feature is active. Gates the non-CI features (problem-statement drafting/refinement/consistency), which work under any CI backend. */
     readonly hyperionEnabled: boolean;
+
+    /**
+     * Whether the agentic whole-exercise generation/adaptation affordances may be offered. These need the integrated LocalCI/LocalVC lifecycle, so the server disables the
+     * generation endpoints unless the `localci` profile is active; the client mirrors that by requiring both Hyperion and LocalCI. This gates ONLY whole-exercise generation, never
+     * the plain problem-statement AI features which keep running under Jenkins.
+     */
+    readonly hyperionGenerationSupported: boolean;
 
     /** Whether to show the "Generate" button (true) or the "Refine" button (false). */
     readonly shouldShowGenerateButton: Signal<boolean>;
@@ -84,6 +91,7 @@ export class ProblemStatementAiOperationsHelper {
         private readonly injector: Injector,
     ) {
         this.hyperionEnabled = profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        this.hyperionGenerationSupported = this.hyperionEnabled && profileService.isProfileActive(PROFILE_LOCALCI);
         this.isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
         this.shouldShowGenerateButton = computed(() => isTemplateOrEmpty(this.currentProblemStatement(), this.templateProblemStatement(), this.templateLoaded()));
     }

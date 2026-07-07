@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -57,7 +58,7 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  */
 @Lazy
 @Component
-@Profile(PROFILE_CORE + " & !" + PROFILE_BUILDAGENT)
+@Profile(PROFILE_CORE + " & !" + PROFILE_BUILDAGENT + " & " + PROFILE_LOCALCI)
 public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteInteractiveSandboxClient.class);

@@ -259,6 +259,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
+    /** Whether the integrated LocalCI backend is active. Agentic whole-exercise generation needs it (the server disables the generate endpoint under Jenkins), so it also gates the "Generate entire exercise" affordance. */
+    localCiEnabledForAi = signal<boolean>(false);
 
     public get hyperionEnabled(): boolean {
         return this._hyperionEnabled;
@@ -310,6 +312,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
+            this.localCiEnabledForAi() &&
             this.programmingExerciseIdForAi() === undefined &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
@@ -629,6 +632,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.isLocalCIEnabled = true;
             this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
+        this.localCiEnabledForAi.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
