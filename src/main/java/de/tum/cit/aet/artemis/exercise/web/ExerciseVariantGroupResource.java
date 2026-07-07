@@ -132,10 +132,27 @@ public class ExerciseVariantGroupResource {
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
         updateDTO.applyTo(group);
         group.validateDates();
+        // Apply the group timeline to every member and validate the result BEFORE persisting anything: a timeline valid
+        // at group level can still be rejected by a member (the group's example-solution-date rule is looser), so a bad
+        // request must fail with 400 without mutating the stored group or exercise dates.
+        List<Exercise> nonProgrammingExercises = new ArrayList<>();
+        List<ProgrammingExercise> programmingExercises = new ArrayList<>();
+        group.getExercises().forEach(exercise -> {
+            applyGroupTimeline(group, exercise);
+            validateDatesIfPossible(exercise);
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                programmingExercises.add(programmingExercise);
+            }
+            else {
+                nonProgrammingExercises.add(exercise);
+            }
+        });
+        // All members validated: persist the group and the member updates, keeping every member's dates in sync.
         exerciseVariantGroupRepository.save(group);
-        // Variants share the group's timeline. Keep every member exercise's own dates in sync with the (possibly changed)
-        // group dates so they stay consistent wherever an exercise's dates are read (exercise lists, calendar, grading).
-        applyGroupTimelineToExercises(group);
+        exerciseRepository.saveAll(nonProgrammingExercises);
+        // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so they go
+        // through the dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
+        programmingExercises.forEach(programmingExercise -> updateProgrammingExerciseTimeline(programmingExercise, group));
         // Build the response from the loaded entity (its exercises were fetched); the save() return value is a re-merged
         // instance whose lazy exercises collection cannot initialize once the session is closed (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
@@ -249,32 +266,6 @@ public class ExerciseVariantGroupResource {
         validateDatesIfPossible(exercise);
         exerciseRepository.save(exercise);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Copies the group's shared timeline onto every member exercise and persists them, keeping the variants' own dates in
-     * sync with the group.
-     *
-     * @param group the group whose (already fetched) member exercises should adopt its timeline
-     */
-    private void applyGroupTimelineToExercises(ExerciseVariantGroup group) {
-        List<Exercise> nonProgrammingExercises = new ArrayList<>();
-        group.getExercises().forEach(exercise -> {
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                // Programming timeline changes must recompute the build-and-test date and reschedule build/test
-                // operations, so they go through the dedicated programming update flow (which reloads the exercise and
-                // saves it itself) rather than a plain saveAll of the partially loaded, fetch-joined member entities.
-                updateProgrammingExerciseTimeline(programmingExercise, group);
-            }
-            else {
-                applyGroupTimeline(group, exercise);
-                // Fail loudly (400) if the group's new timeline produces an invalid combination for a member exercise,
-                // instead of silently persisting dates that the exercise's own update endpoint would have rejected.
-                validateDatesIfPossible(exercise);
-                nonProgrammingExercises.add(exercise);
-            }
-        });
-        exerciseRepository.saveAll(nonProgrammingExercises);
     }
 
     /**

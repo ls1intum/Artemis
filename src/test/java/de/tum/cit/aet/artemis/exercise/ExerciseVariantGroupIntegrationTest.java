@@ -310,6 +310,35 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupToMemberInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, release, null, due, null, null, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.OK);
+        // Snapshot the group's stored timeline after the member joined, to prove the rejected update leaves it untouched.
+        ExerciseVariantGroupDTO before = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
+
+        // Valid at group level (exampleSolution >= release), but the member text exercise (INCLUDED_COMPLETELY) requires
+        // exampleSolution >= dueDate, so applying this timeline to the member must fail with 400 before anything is saved.
+        ZonedDateTime exampleSolutionBeforeDue = ZonedDateTime.now().plusDays(3).truncatedTo(ChronoUnit.MILLIS);
+        UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Loop variants", 100.0, release, null, due, null, exampleSolutionBeforeDue,
+                null);
+        request.put(groupsUrl() + "/" + created.id(), invalidUpdate, HttpStatus.BAD_REQUEST);
+
+        // The rejected update changed neither the stored group dates nor the member exercise's dates.
+        ExerciseVariantGroupDTO after = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
+        assertThat(after.releaseDate().toInstant()).isEqualTo(before.releaseDate().toInstant());
+        assertThat(after.dueDate().toInstant()).isEqualTo(before.dueDate().toInstant());
+        assertThat(after.exampleSolutionPublicationDate()).isNull();
+        Exercise reloaded = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(reloaded.getDueDate().toInstant()).isEqualTo(due.toInstant());
+        assertThat(reloaded.getExampleSolutionPublicationDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testAssignExerciseFromAnotherCourseBadRequest() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();
         Course otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise("Other");
