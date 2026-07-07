@@ -35,16 +35,16 @@ on:
         required: false
     outputs:
       e2e_result:
-        description: 'Aggregated REAL E2E status (success|failure|error). The caller `e2e` job
-          result is always success on a test-only failure (E2E is advisory); read this output
-          for the honest outcome.'
+        description: 'Aggregated REAL E2E status (success|failure|error). report-results also fails
+          its own job on a non-success outcome, so the caller `e2e` job result now mirrors this;
+          this output remains the explicit machine-readable value the CI summary renders.'
         value: ${{ jobs.report-results.outputs.status }}
 
 permissions: {}  # default-deny; each job grants only what it needs
 
 env:
-  # Commit-status context shown on the PR. Advisory only — branch protection requires the
-  # `All required CI Passed` gate, not this status.
+  # Commit-status context shown on the PR. This raw status is informational; branch protection keys
+  # on the `All required CI Passed` gate — which now includes the `e2e` job — not on this status.
   STATUS_CONTEXT: 'End-to-End (E2E) Tests'
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ inputs.commit_sha }}"
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -769,13 +769,13 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
-  # Aggregates the phase results into a single commit status — a human-readable progress
-  # signal for the long E2E run. The required merge gate is `all-required-ci-passed` in ci.yml,
-  # which deliberately does NOT need this job, so E2E stays advisory and never blocks merging.
-  # The test steps are continue-on-error, so the honest outcome is computed into the `status`
-  # output (→ ci-e2e's `e2e_result`); the final step then fails this job when that outcome is not
-  # success, so the `e2e` conclusion Helios and the check list read reflects reality (red on any
-  # test failure) — advisory, not merge-blocking.
+  # Aggregates the phase results into a single commit status — a human-readable progress signal for
+  # the long E2E run. The test steps are continue-on-error, so the honest outcome is computed into
+  # the `status` output (→ ci-e2e's `e2e_result`); the final step then fails THIS job when that
+  # outcome is not success. That failure propagates to the caller `e2e` job, which ci.yml now
+  # includes in the `all-required-ci-passed` gate — so a genuine E2E failure (a test failing all its
+  # retries) blocks merging, while flaky-recovered runs (Playwright exits 0) stay green. Helios and
+  # the GitHub check list read the same `e2e` conclusion, so both reflect reality.
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
@@ -940,16 +940,16 @@ jobs:
       # continue-on-error so the commit status and PR comment always post — but that also left this job
       # (and therefore the reusable-workflow `e2e` conclusion that Helios and the check list read) GREEN
       # even when tests failed, so the E2E badge could show green while tests were red. Fail here on a
-      # non-success outcome so the E2E check tells the truth. This is ADVISORY: `e2e` is deliberately
-      # excluded from `all-required-ci-passed`'s `needs` in ci.yml, so a red E2E result does NOT block
-      # merging — it only makes the badge/check reflect reality.
+      # non-success outcome so the E2E check tells the truth. `e2e` is included in
+      # `all-required-ci-passed`'s `needs` in ci.yml, so this failure blocks merging when a test fails
+      # all its retries; a flaky-recovered run exits 0 (success) and does not.
       - name: Reflect E2E outcome in job status
         if: always()
         env:
           E2E_STATUS: ${{ steps.overall-status.outputs.status }}
         run: |
           if [ "$E2E_STATUS" != "success" ]; then
-            echo "::error::E2E overall status is '$E2E_STATUS' — failing the E2E check so it reflects the real result (advisory: does not block the required merge gate)."
+            echo "::error::E2E overall status is '$E2E_STATUS' — failing the E2E check so it reflects the real result and blocks the required merge gate."
             exit 1
           fi
           echo "E2E overall status is success."

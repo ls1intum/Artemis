@@ -388,11 +388,12 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # Advisory — not in the required gate. Depends on `build` for the Docker image, not on
-  # `test`, so a flaky unit-test run never blocks it; runs only when `build` succeeded
-  # (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they cannot
-  # push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
-  # fail at setup with no image to pull.
+  # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
+  # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
+  # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
+  # succeeded (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they
+  # cannot push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
+  # fail at setup with no image to pull — the gate accepts that skip as a pass on forks.
   e2e:
     name: E2E
     needs: [detect-changes, build]
