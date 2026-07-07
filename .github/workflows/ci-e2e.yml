@@ -496,6 +496,7 @@ jobs:
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
       tests: ${{ steps.run-tests-all-pr.outcome }}
+      counts: ${{ steps.e2e-counts-all-pr.outputs.counts }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
@@ -534,6 +535,25 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
         run: .ci/E2E-tests/execute.sh postgres-localci playwright
+
+      - name: Read E2E counts
+        id: e2e-counts-all-pr
+        if: ${{ !cancelled() }}
+        shell: bash
+        # run-tests.sh writes Playwright's own pass/flaky/fail counts here (JUnit cannot express flaky).
+        # Expose them as "passed flaky failed" so report-overall-status can show them in the E2E status.
+        run: |
+          counts_file="src/test/playwright/test-reports/e2e-counts.env"
+          if [ -f "$counts_file" ]; then
+            passed=$(grep -oE '^E2E_PASSED=[0-9]+' "$counts_file" | cut -d= -f2)
+            flaky=$(grep -oE '^E2E_FLAKY=[0-9]+' "$counts_file" | cut -d= -f2)
+            failed=$(grep -oE '^E2E_FAILED=[0-9]+' "$counts_file" | cut -d= -f2)
+            echo "counts=${passed:-0} ${flaky:-0} ${failed:-0}" >> "$GITHUB_OUTPUT"
+            echo "E2E counts: ${passed:-0} passed, ${flaky:-0} flaky, ${failed:-0} failed"
+          else
+            echo "counts=" >> "$GITHUB_OUTPUT"
+            echo "No e2e-counts.env found."
+          fi
 
       - name: Calculate wall-clock duration
         id: wall-clock
@@ -671,6 +691,7 @@ jobs:
       actions: read
     outputs:
       tests: ${{ steps.run-tests-all-non-pr.outcome }}
+      counts: ${{ steps.e2e-counts-all-non-pr.outputs.counts }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
@@ -703,6 +724,25 @@ jobs:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: .ci/E2E-tests/execute.sh multi-node playwright
 
+      - name: Read E2E counts
+        id: e2e-counts-all-non-pr
+        if: ${{ !cancelled() }}
+        shell: bash
+        # run-tests.sh writes Playwright's own pass/flaky/fail counts here (JUnit cannot express flaky).
+        # Expose them as "passed flaky failed" so report-overall-status can show them in the E2E status.
+        run: |
+          counts_file="src/test/playwright/test-reports/e2e-counts.env"
+          if [ -f "$counts_file" ]; then
+            passed=$(grep -oE '^E2E_PASSED=[0-9]+' "$counts_file" | cut -d= -f2)
+            flaky=$(grep -oE '^E2E_FLAKY=[0-9]+' "$counts_file" | cut -d= -f2)
+            failed=$(grep -oE '^E2E_FAILED=[0-9]+' "$counts_file" | cut -d= -f2)
+            echo "counts=${passed:-0} ${flaky:-0} ${failed:-0}" >> "$GITHUB_OUTPUT"
+            echo "E2E counts: ${passed:-0} passed, ${flaky:-0} flaky, ${failed:-0} failed"
+          else
+            echo "counts=" >> "$GITHUB_OUTPUT"
+            echo "No e2e-counts.env found."
+          fi
+
       - name: E2E Teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
@@ -730,10 +770,12 @@ jobs:
           report_paths: 'all-test-results/results.xml'
 
   # Aggregates the phase results into a single commit status — a human-readable progress
-  # signal for the long E2E run. The required merge gate is `all-required-ci-passed` in ci.yml.
-  # This job never fails on a test outcome (test steps are continue-on-error); the honest
-  # result is exposed via the `status` output (→ ci-e2e's `e2e_result`). Only infra failures,
-  # which fail a phase job upstream, turn the run red.
+  # signal for the long E2E run. The required merge gate is `all-required-ci-passed` in ci.yml,
+  # which deliberately does NOT need this job, so E2E stays advisory and never blocks merging.
+  # The test steps are continue-on-error, so the honest outcome is computed into the `status`
+  # output (→ ci-e2e's `e2e_result`); the final step then fails this job when that outcome is not
+  # success, so the `e2e` conclusion Helios and the check list read reflects reality (red on any
+  # test failure) — advisory, not merge-blocking.
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
@@ -757,6 +799,9 @@ jobs:
           REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
           ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
           ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
+          # Playwright's own "passed flaky failed" tally from whichever run-all variant executed.
+          ALL_PR_COUNTS: ${{ needs.run-e2e-all-pr.outputs.counts }}
+          ALL_NON_PR_COUNTS: ${{ needs.run-e2e-all-non-pr.outputs.counts }}
         run: |
           set -Eeuo pipefail
           # Pick the first non-skipped result across the four E2E variants. Any
@@ -775,11 +820,23 @@ jobs:
             esac
           done
           echo "status=$status" >> "$GITHUB_OUTPUT"
+
+          # Fold Playwright's pass/flaky/fail tally into the description so the status reads e.g.
+          # "312 passed, 3 flaky, 0 failed". `counts` is "passed flaky failed" from the run-all job
+          # that executed (empty on the phased path or a pure infra error → generic message).
+          counts="$ALL_PR_COUNTS"
+          if [ -z "$counts" ]; then counts="$ALL_NON_PR_COUNTS"; fi
+          counts_msg=""
+          if [ -n "$counts" ]; then
+            set -- $counts
+            counts_msg="${1:-0} passed, ${2:-0} flaky, ${3:-0} failed"
+          fi
           case "$status" in
-            success) echo "description=E2E tests passed" >> "$GITHUB_OUTPUT" ;;
-            failure) echo "description=E2E tests failed" >> "$GITHUB_OUTPUT" ;;
-            *)       echo "description=E2E tests encountered an error" >> "$GITHUB_OUTPUT" ;;
+            success) description="${counts_msg:-E2E tests passed}" ;;
+            failure) if [ -n "$counts_msg" ]; then description="E2E tests failed: ${counts_msg}"; else description="E2E tests failed"; fi ;;
+            *)       description="E2E tests encountered an error" ;;
           esac
+          echo "description=$description" >> "$GITHUB_OUTPUT"
 
       # Sparse-checkout the local composite actions used in the steps below — needed on
       # both PR and non-PR runs (status update is non-PR-safe; find-e2e-comment only fires
