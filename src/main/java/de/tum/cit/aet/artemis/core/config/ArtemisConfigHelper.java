@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROP
 import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LDAP_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.LTI_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.OIDC_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
@@ -216,6 +217,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isSaml2Enabled(Environment environment) {
         return getPropertyOrExitArtemis(SAML2_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if OIDC-based single sign-on is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if OIDC is enabled, false otherwise
+     */
+    public boolean isOIDCEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(OIDC_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**
