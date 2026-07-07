@@ -11,13 +11,18 @@
     </changeSet>
 
     <changeSet id="20260702150000-2-backfill-schedule-on-working-time-event" author="krusche">
-        <!-- Backfill existing working time events (discriminator 'W') with their exam's current start/end date so the
-             client can rely on both fields always being present on a WorkingTimeUpdateEvent (including replayed ones). -->
+        <!-- Backfill existing working time events (discriminator 'W') of real exams with their exam's current start/end
+             date so the client can rely on both fields being present on a replayed WorkingTimeUpdateEvent. Test exams are
+             excluded: their exam start/end dates are only the availability window, not a student's conduction window
+             (derived from the individual startedDate), so backfilling them would make a replayed event recompute the
+             timer from the wrong start (see #13071). This mirrors the runtime sender, which also omits the schedule for
+             test exams. -->
         <sql>
             UPDATE exam_live_event
             SET new_start_date = (SELECT start_date FROM exam WHERE exam.id = exam_live_event.exam_id),
                 new_end_date = (SELECT end_date FROM exam WHERE exam.id = exam_live_event.exam_id)
-            WHERE discriminator = 'W' AND new_start_date IS NULL;
+            WHERE discriminator = 'W' AND new_start_date IS NULL
+                AND EXISTS (SELECT 1 FROM exam WHERE exam.id = exam_live_event.exam_id AND exam.test_exam = FALSE);
         </sql>
     </changeSet>
 </databaseChangeLog>

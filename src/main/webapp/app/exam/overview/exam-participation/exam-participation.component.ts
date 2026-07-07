@@ -756,12 +756,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Create new object to make change detection work, otherwise the date will not update
             this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
             this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-            // The event also carries the exam's (possibly changed) start/end date. Update the exam so the pre-start
-            // countdown and the start-based content visibility (isActive/isVisible) recompute, and derive the end
-            // date from the new start instead of the stale value captured when the subscription was created.
-            const newStartDate = event.newStartDate ?? startDate;
-            this.exam.set({ ...this.exam(), startDate: newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
-            this.individualStudentEndDate.set(dayjs(newStartDate).add(this.studentExam().workingTime!, 'seconds'));
+            // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
+            // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
+            // the schedule (the exam dates are only its availability window, not the student's conduction window), so
+            // the exam dates are left untouched and the end date is derived from the student's own start below.
+            if (event.newStartDate) {
+                this.exam.set({ ...this.exam(), startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+            }
+            // Derive the end date from the new start when present, otherwise from the start captured when the
+            // subscription was created (the exam start for real exams, the student's startedDate for test exams),
+            // instead of a stale value.
+            const effectiveStartDate = event.newStartDate ?? startDate;
+            this.individualStudentEndDate.set(dayjs(effectiveStartDate).add(this.studentExam().workingTime!, 'seconds'));
             this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
             this.liveEventsService.acknowledgeEvent(event, false);
         });

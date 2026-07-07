@@ -120,15 +120,20 @@ public class ExamLiveEventsService {
         event.setCourseWide(courseWide);
 
         // Include the current exam schedule so a conducting student can refresh the pre-start countdown and the
-        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes. An
-        // exam a student is conducting always has both dates set; the null checks are defensive and the client treats
-        // the dates as optional accordingly.
+        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes.
+        // Only for real exams: for a test exam the exam's start/end dates are merely the availability window, not the
+        // student's conduction window (which the client derives from their individual startedDate), so sending them
+        // would make the client recompute the countdown from the wrong start. Leaving them unset keeps the test-exam
+        // client on its correct startedDate-based fallback. A real exam a student is conducting always has both dates
+        // set; the null checks are defensive and the client treats the dates as optional accordingly.
         var exam = studentExam.getExam();
-        if (exam.getStartDate() != null) {
-            event.setNewStartDate(exam.getStartDate().toInstant());
-        }
-        if (exam.getEndDate() != null) {
-            event.setNewEndDate(exam.getEndDate().toInstant());
+        if (!exam.isTestExam()) {
+            if (exam.getStartDate() != null) {
+                event.setNewStartDate(exam.getStartDate().toInstant());
+            }
+            if (exam.getEndDate() != null) {
+                event.setNewEndDate(exam.getEndDate().toInstant());
+            }
         }
 
         this.storeAndDistributeLiveExamEvent(event);
