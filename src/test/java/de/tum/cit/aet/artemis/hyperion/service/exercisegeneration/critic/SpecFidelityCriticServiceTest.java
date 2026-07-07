@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -72,6 +73,18 @@ class SpecFidelityCriticServiceTest {
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Count graphemes.", List.of("test_cjk", "test_emoji", "test_combining", "test_cafe"));
 
         assertThat(report.hasFindings()).isFalse();
+    }
+
+    /** The critic's own LLM call must report its token usage to the run's sink; without it the critic's spend goes entirely unrecorded. */
+    @Test
+    void criticLlmCall_reportsTokenUsageToTheSink() {
+        ChatResponse response = jsonResponse("{\"uncovered\":[]}");
+        SpecFidelityCriticService critic = criticReturning(response);
+        List<ChatResponse> tracked = new ArrayList<>();
+
+        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), tracked::add);
+
+        assertThat(tracked).containsExactly(response);
     }
 
     /** An error/edge behaviour described only in prose (no concrete fenced example) is reported as a MISSING_WORKED_EXAMPLE finding. */

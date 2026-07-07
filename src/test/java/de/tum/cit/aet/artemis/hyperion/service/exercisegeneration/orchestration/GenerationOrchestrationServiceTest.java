@@ -99,7 +99,7 @@ class GenerationOrchestrationServiceTest {
         when(workspace.extractRepository(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         // Default the advisory critic to no findings; specific tests override it.
-        when(specFidelityCritic.critique(any(), any(), any())).thenReturn(SpecFidelityReport.empty());
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         // renderForRetryPrompt is a pure renderer; delegate to the real impl so the retry prompt is folded exactly as in production.
         SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
@@ -286,7 +286,7 @@ class GenerationOrchestrationServiceTest {
     void criticFindings_neverFlipAcceptedToRejected() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any())).thenReturn(reportWith("CJK characters"));
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("CJK characters"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).as("an oracle-accepted exercise stays accepted regardless of critic findings").isTrue();
@@ -302,7 +302,7 @@ class GenerationOrchestrationServiceTest {
     void rejectedWithCriticFindings_foldsAdvisoryGapsIntoRetryPrompt() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a test"), accepted());
-        when(specFidelityCritic.critique(any(), any(), any())).thenReturn(reportWith("emoji"), SpecFidelityReport.empty());
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("emoji"), SpecFidelityReport.empty());
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome ignored = generate(() -> false)) {
@@ -319,7 +319,7 @@ class GenerationOrchestrationServiceTest {
     void criticThrows_runStillCompletesAndStaysAccepted() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any())).thenThrow(new RuntimeException("critic exploded"));
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenThrow(new RuntimeException("critic exploded"));
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).as("a critic failure never fails an oracle-accepted run").isTrue();
@@ -342,7 +342,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome ignored = generate(() -> false)) {
         }
 
-        verify(specFidelityCritic).critique(anyString(), anyString(), namesCaptor.capture());
+        verify(specFidelityCritic).critique(anyString(), anyString(), namesCaptor.capture(), any());
         assertThat(namesCaptor.getValue()).containsExactly("test_sort", "test_empty", "test_negative");
     }
 

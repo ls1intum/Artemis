@@ -204,9 +204,9 @@ public class GenerationOrchestrationService {
                         producedSolution.files(), extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability));
                 emit(progress, verification.report());
 
-                // Advisory critic against this attempt's artifacts; never touches `verification`.
+                // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
                 specFidelityReport = runSpecFidelityCritic(userPrompt, workspace.extractProblemStatement(sandbox, sessionId), exercise.getProgrammingLanguage(),
-                        producedTests.files(), progress);
+                        producedTests.files(), usageSink, progress);
 
                 if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
@@ -256,10 +256,10 @@ public class GenerationOrchestrationService {
      * @return the advisory report (possibly empty); never {@code null}
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language, Map<String, String> producedTests,
-            Consumer<String> progress) {
+            Consumer<ChatResponse> usageSink, Consumer<String> progress) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
-            SpecFidelityReport report = specFidelityCritic.critique(brief, problemStatement, testNames);
+            SpecFidelityReport report = specFidelityCritic.critique(brief, problemStatement, testNames, usageSink);
             // Merge the model-free messageless-assertion check into the same advisory report (folds into the retry prompt / review comments, never affects acceptance).
             List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedTests);
             if (!messageless.isEmpty()) {

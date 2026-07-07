@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,8 +139,16 @@ public class SpecFidelityCriticService {
      * @return the advisory report (possibly empty); never {@code null}
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
+        return critique(brief, problemStatement, testNames, null);
+    }
+
+    /**
+     * As {@link #critique(String, String, List)}, but the token usage of the critic's single LLM call is reported to {@code usageSink} so it is counted against the generation run
+     * instead of going unrecorded. Pass {@code null} to skip token accounting (e.g. in isolated tests).
+     */
+    public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, @Nullable Consumer<ChatResponse> usageSink) {
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
-        findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames));
+        findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames, usageSink));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -165,7 +174,8 @@ public class SpecFidelityCriticService {
      * too
      * short to be a real spec, or the call/parse fails for any reason (timeout, error, empty or garbage output), so a critic failure can never perturb the run.
      */
-    private List<SpecFidelityReport.Finding> detectUncoveredRequirements(@Nullable String brief, @Nullable String problemStatement, List<String> testNames) {
+    private List<SpecFidelityReport.Finding> detectUncoveredRequirements(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
+            @Nullable Consumer<ChatResponse> usageSink) {
         if (chatClient == null) {
             return List.of();
         }
@@ -178,6 +188,10 @@ public class SpecFidelityCriticService {
             // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop. A plain ChatOptions means the critic cannot call tools.
             ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames))
                     .options(ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS)).call().chatResponse();
+            if (usageSink != null) {
+                // Count the critic's own token usage against the generation run; without this its spend goes entirely unrecorded.
+                usageSink.accept(response);
+            }
             String text = LLMTokenUsageService.extractResponseText(response);
             if (text == null || text.isBlank()) {
                 return List.of();
