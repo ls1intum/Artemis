@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.dto;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * @param exam        reference to the exam the group is created in; must match the path exam (validated, never
  *                        persisted)
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ExerciseGroupCreateDTO(@Nullable Long id, @Nullable String title, @Nullable Boolean isMandatory, @Nullable ExamReferenceDTO exam) {
 
@@ -32,6 +34,7 @@ public record ExerciseGroupCreateDTO(@Nullable Long id, @Nullable String title, 
      *
      * @param id the id of the exam the exercise group is created in
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ExamReferenceDTO(@Nullable Long id) {
     }
