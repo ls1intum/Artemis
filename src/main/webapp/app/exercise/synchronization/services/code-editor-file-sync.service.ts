@@ -4,6 +4,7 @@ import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 import {
     ExerciseEditorSyncEvent,
     ExerciseEditorSyncEventType,
@@ -817,6 +818,6 @@ export class CodeEditorFileSyncService {
     }
 
     private generateRequestId(): string {
-        return window.crypto.randomUUID();
+        return generateUuid();
     }
 }

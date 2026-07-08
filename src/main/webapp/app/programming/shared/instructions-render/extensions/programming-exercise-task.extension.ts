@@ -17,7 +17,7 @@ export const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacementPlugin {
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
-    viewContainerRef: ViewContainerRef;
+    viewContainerRef!: ViewContainerRef; // assigned by ProgrammingExerciseInstructionComponent's constructor before any use
 
     /**
      * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server

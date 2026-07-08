@@ -22,10 +22,12 @@ export const MONACO_DARK_THEME_DEFINITION: MonacoThemeDefinition = {
         },
     ],
     editorColors: {
-        backgroundColor: '#181a18',
+        // Tracks --module-bg (the dark slate panel surface) so the editor blends into its container.
+        // Monaco themes require literal hex (no CSS vars), so keep this in sync with $neutral-dark.
+        backgroundColor: '#16191d',
         lineHighlight: {
             borderColor: '#00000000',
-            backgroundColor: '#282a2e',
+            backgroundColor: '#262b31', // active-line highlight: the slate "raised" step (surface-800)
         },
         lineNumbers: {
             foregroundColor: '#ffffff',

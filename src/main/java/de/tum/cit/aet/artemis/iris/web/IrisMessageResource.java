@@ -207,6 +207,9 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only rate messages sent by Iris");
         }
+        if (Boolean.TRUE.equals(message.getIntermediate())) {
+            throw new BadRequestException("Intermediate messages cannot be rated");
+        }
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(savedMessage));

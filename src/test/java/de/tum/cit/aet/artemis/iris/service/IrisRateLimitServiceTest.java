@@ -66,12 +66,25 @@ class IrisRateLimitServiceTest {
         var effective = new IrisRateLimitConfiguration(5, 3);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
                 .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettings.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(3);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(3);
 
         var info = rateLimitService.getRateLimitInformation(COURSE_ID, user);
 
         assertThat(info).isEqualTo(new IrisRateLimitService.IrisRateLimitInformation(3, 5, 3));
-        verify(irisMessageRepository).countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any());
+        verify(irisMessageRepository).countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any());
+    }
+
+    @Test
+    void getRateLimitInformation_countsOnlyFinalLlmResponsesSoIntermediatesDoNotConsumeLimit() {
+        var effective = new IrisRateLimitConfiguration(5, 3);
+        when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettings.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+
+        var info = rateLimitService.getRateLimitInformation(COURSE_ID, user);
+
+        assertThat(info.currentMessageCount()).isEqualTo(1);
+        verify(irisMessageRepository).countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any());
     }
 
     @Test
@@ -84,7 +97,7 @@ class IrisRateLimitServiceTest {
 
         // Both -1 means unlimited (no counting needed)
         assertThat(info).isEqualTo(new IrisRateLimitService.IrisRateLimitInformation(0, -1, -1));
-        verify(irisMessageRepository, never()).countLlmResponsesOfUserWithinTimeframe(anyLong(), any(), any());
+        verify(irisMessageRepository, never()).countFinalLlmResponsesOfUserWithinTimeframe(anyLong(), any(), any());
     }
 
     @Test
@@ -98,7 +111,7 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
 
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
@@ -114,7 +127,7 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(course, user);
 
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
@@ -135,7 +148,7 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(textExercise, user, IrisChatMode.TEXT_EXERCISE_CHAT);
 
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
@@ -156,7 +169,7 @@ class IrisRateLimitServiceTest {
 
         var session = new IrisChatSession(lecture, user);
 
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
@@ -181,7 +194,7 @@ class IrisRateLimitServiceTest {
         var session = new IrisTutorSuggestionSession(post.getId(), user);
 
         when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(1);
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsWithRateLimit(COURSE_ID))
@@ -202,7 +215,7 @@ class IrisRateLimitServiceTest {
 
         var applicationDefaults = new IrisRateLimitConfiguration(100, 24);
         when(irisSettingsService.getApplicationRateLimitDefaults()).thenReturn(applicationDefaults);
-        when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(0);
+        when(irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(0);
 
         // Should not throw - falls back to application defaults without exceptions
         var info = rateLimitServiceWithAbsentApis.getRateLimitInformation(tutorSession, user);

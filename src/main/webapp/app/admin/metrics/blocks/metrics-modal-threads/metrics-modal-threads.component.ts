@@ -1,33 +1,38 @@
-import { NgClass } from '@angular/common';
-import { Component, computed, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Thread, ThreadState } from '../../metrics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TableModule } from 'primeng/table';
+import { SelectButtonModule } from 'primeng/selectbutton';
+
+type ThreadStateFilter = ThreadState | 'ALL';
+
+interface ThreadStateFilterOption {
+    label: string;
+    value: ThreadStateFilter;
+    severity: 'secondary' | 'success' | 'info' | 'warn' | 'danger';
+    testId: string;
+    count: () => number;
+}
 
 @Component({
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
-    imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisTranslatePipe, DialogModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule, InputTextModule, TableModule, SelectButtonModule],
 })
 export class MetricsModalThreadsComponent {
-    ThreadState = ThreadState;
-
-    private threadStateFilter = signal<ThreadState | undefined>(undefined);
-    get selectedThreadState(): ThreadState | undefined {
-        return this.threadStateFilter();
-    }
+    /** Active thread-state filter; 'ALL' shows every thread. */
+    readonly selectedThreadState = signal<ThreadStateFilter>('ALL');
 
     readonly visible = model<boolean>(false);
     readonly threads = input<Thread[]>([]);
-
-    set selectedThreadState(newValue: ThreadState | undefined) {
-        this.threadStateFilter.set(newValue);
-    }
 
     private readonly _threadFilter = signal<string | undefined>(undefined);
     get threadFilter(): string | undefined {
@@ -43,25 +48,30 @@ export class MetricsModalThreadsComponent {
     readonly threadDumpBlocked = computed(() => this.threads().filter((t) => t.threadState === ThreadState.Blocked).length);
     readonly threadDumpAll = computed(() => this.threadDumpRunnable() + this.threadDumpWaiting() + this.threadDumpTimedWaiting() + this.threadDumpBlocked());
 
+    readonly filterOptions: ThreadStateFilterOption[] = [
+        { label: 'All', value: 'ALL', severity: 'secondary', testId: 'filter-all', count: this.threadDumpAll },
+        { label: 'Runnable', value: ThreadState.Runnable, severity: 'success', testId: 'filter-runnable', count: this.threadDumpRunnable },
+        { label: 'Waiting', value: ThreadState.Waiting, severity: 'info', testId: 'filter-waiting', count: this.threadDumpWaiting },
+        { label: 'Timed Waiting', value: ThreadState.TimedWaiting, severity: 'warn', testId: 'filter-timed-waiting', count: this.threadDumpTimedWaiting },
+        { label: 'Blocked', value: ThreadState.Blocked, severity: 'danger', testId: 'filter-blocked', count: this.threadDumpBlocked },
+    ];
+
     readonly filteredThreads = computed(() => {
         return this.threads().filter((thread) => this.isMatchingTextFilter(thread) && this.isMatchingSelectedThreadState(thread));
     });
 
-    // Icons
-    faCheck = faCheck;
-
-    getBgClass(threadState: ThreadState): string {
+    getBadgeSeverity(threadState: ThreadState): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
         switch (threadState) {
             case ThreadState.Runnable:
-                return 'bg-success';
+                return 'success';
             case ThreadState.Waiting:
-                return 'bg-info';
+                return 'info';
             case ThreadState.TimedWaiting:
-                return 'bg-warning';
+                return 'warn';
             case ThreadState.Blocked:
-                return 'bg-danger';
+                return 'danger';
             default:
-                return '';
+                return 'secondary';
         }
     }
 
@@ -79,8 +89,8 @@ export class MetricsModalThreadsComponent {
     }
 
     private isMatchingSelectedThreadState(thread: Thread): boolean {
-        const state = this.threadStateFilter();
-        if (state == undefined) {
+        const state = this.selectedThreadState();
+        if (state === 'ALL') {
             return true;
         }
 
