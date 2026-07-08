@@ -55,17 +55,31 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
  * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
  */
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
+    const expectedValue = date.format(format);
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.click();
-    // Wait until the input is actually focused before typing; otherwise the first character(s) can be
-    // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
-    await expect(dateInputField).toBeFocused();
-    await dateInputField.press('ControlOrMeta+a');
-    await dateInputField.press('Delete');
-    // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
-    // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
-    await dateInputField.pressSequentially(date.format(format), { delay: 30 });
-    await dateInputField.press('Tab');
+    // PrimeNG's date input is masked. Under load a keystroke can still be dropped even with a per-key delay —
+    // most often the very first character after clearing (e.g. the leading "0" of the day), which silently
+    // yields "1.06.2027" instead of "01.06.2027". Re-type until the field holds exactly the expected value.
+    for (let attempt = 0; attempt < 3; attempt++) {
+        await dateInputField.click();
+        // Wait until the input is actually focused before typing; otherwise the first character(s) can be
+        // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
+        await expect(dateInputField).toBeFocused();
+        await dateInputField.press('ControlOrMeta+a');
+        await dateInputField.press('Delete');
+        // Ensure the clear has actually settled before typing, so the first keystroke is not swallowed while the
+        // mask is still resetting (the root cause of the dropped leading character).
+        await expect(dateInputField).toHaveValue('');
+        // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
+        // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
+        await dateInputField.pressSequentially(expectedValue, { delay: 30 });
+        await dateInputField.press('Tab');
+        if ((await dateInputField.inputValue()) === expectedValue) {
+            return;
+        }
+    }
+    // Surface a clear assertion error if every attempt still dropped a character.
+    await expect(dateInputField).toHaveValue(expectedValue);
 }
 
 /**
