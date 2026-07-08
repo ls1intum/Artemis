@@ -90,6 +90,11 @@
             </div>
         }
 
+        <!-- Slot for extra host-provided actions (e.g. the Atlas "Suggest competencies" trigger).
+             Placed before Delete so it groups inline with the other actions; Delete stays the
+             terminal (destructive) button, matching the non-programming common-actions bar. -->
+        <ng-content />
+
         <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <button
                 jhiDeleteButton
@@ -111,7 +116,4 @@
             </button>
         </div>
     }
-    <!-- Slot for extra host-provided actions (e.g. the Atlas "Suggest competencies" trigger),
-         so they flow inline within this button group and wrap identically. -->
-    <ng-content />
 </div>

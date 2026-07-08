@@ -52,8 +52,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Text, modeling and file-upload exercises carry a prose problem statement (flavor-stripped) plus
  * their example/sample solution; quizzes have no problem statement, so their content is assembled
  * from the questions, answer options, and correct solutions. All extracted content is server-side
- * only and is sanitized (fence-neutralized, truncated) by the orchestrator before it reaches the
- * prompt — see {@code CompetencyOrchestrationService.sanitizeForPrompt}.
+ * only; both the batch orchestration path and the on-demand {@code OrchestratorToolsService.getExerciseContent}
+ * read tool sanitize it (fence-neutralized, truncated) via {@code CompetencyOrchestrationService.sanitizeForPrompt}
+ * before it reaches the prompt.
  * <p>
  * To add a new learning object type:
  * <ol>

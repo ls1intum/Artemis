@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegrationTest {
 
@@ -28,6 +30,11 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    private Course course;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -37,7 +44,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // retain its group membership to pass the @EnforceAtLeastInstructorInExercise DB check.
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         // Restrict the course's groups to TEST_PREFIX so the OTHER_PREFIX instructor is not a
         // member of this course and the wrong-course branch can be exercised.
         course.setStudentGroupName(TEST_PREFIX + "tumuser");
@@ -79,6 +86,17 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void runForExercise_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForExercise_nonProgrammingWrongCourseInstructor_returnsForbidden() throws Exception {
+        // The endpoint is now generic over all exercise types, so the @EnforceAtLeastInstructorInExercise
+        // gate must bind to the owning course of a non-programming exercise too — an instructor of another
+        // course cannot trigger orchestration on this course's text exercise.
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExercise(course);
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", textExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
