@@ -5,8 +5,7 @@ import { Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { NgModel } from '@angular/forms';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
@@ -94,6 +93,8 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
+        const packageNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_packageName');
+        expect(packageNameInput.maxLength).toBe(MAX_PACKAGE_NAME_LENGTH);
         vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: false } as NgModel);
         expect(comp.isPackageNameValid()).toBe(false);
     });
@@ -105,6 +106,8 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', Object.assign({}, programmingExerciseCreationConfigMock, { packageNameRequired: true }));
         fixture.detectChanges();
+        const packageNameInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_packageName');
+        expect(packageNameInput.maxLength).toBe(MAX_PACKAGE_NAME_LENGTH);
         vi.spyOn(internals(comp), 'packageNameField').mockReturnValue({ valid: true } as NgModel);
         expect(comp.isPackageNameValid()).toBe(true);
     });

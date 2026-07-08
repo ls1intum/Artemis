@@ -1480,7 +1480,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.programmingExercise.packageName.length > MAX_PACKAGE_NAME_LENGTH) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.packageName.maxlength',
-                translateValues: {},
+                translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
             });
             return;
         }

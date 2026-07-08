@@ -340,7 +340,7 @@
                         "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
                         "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
                     },
-                    "maxlength": "The package name must not exceed 100 characters."
+                    "maxlength": "The package name must not exceed {{ max }} characters."
                 },
                 "points": {
                     "undefined": "You need to specify the points.",
