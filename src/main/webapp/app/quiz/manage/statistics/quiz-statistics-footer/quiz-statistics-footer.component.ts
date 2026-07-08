@@ -19,6 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -45,14 +46,14 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
     readonly question = signal<QuizQuestion>(undefined!);
-    quizPointStatistic: QuizPointStatistic;
-    questionStatistic: MultipleChoiceQuestionStatistic;
-    questionIdParam: number;
+    quizPointStatistic?: QuizPointStatistic;
+    questionStatistic?: MultipleChoiceQuestionStatistic;
+    questionIdParam!: number; // set in ngOnInit() from the route params before loadQuiz() reads it
     // timer
     readonly waitingForQuizStart = signal(false);
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() before ngOnDestroy() clears it
 
     // Icons
     farListAlt = faListAlt;
@@ -104,13 +105,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {
@@ -126,7 +121,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['/courses']);
+            void this.router.navigate(['/courses']);
         }
         this.quizExercise.set(quiz);
         const updatedQuestion = this.quizExercise().quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
@@ -143,10 +138,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizStatistic()) {
-            this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
+            void this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic()) {
             if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
+                void this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
             } else {
                 // go to previous question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions.last()!);
@@ -165,11 +160,11 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizPointStatistic()) {
-            this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
+            void this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
         } else if (this.isQuizStatistic()) {
             // go to quiz-statistic if the position = last position
             if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
-                this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
+                void this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
                 this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[0]);

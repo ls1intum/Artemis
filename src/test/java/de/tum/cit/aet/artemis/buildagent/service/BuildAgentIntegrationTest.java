@@ -115,14 +115,30 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         }
     }
 
+    /**
+     * Resets the shared build-agent state after each test so it cannot leak into the next one. The distributed build
+     * job queue, processing-jobs map, and result queue are cleared <em>before</em> the agent is resumed (and once more
+     * afterwards), and the agent is un-paused if a test left it paused. See the inline comment for why the clear must
+     * precede the resume.
+     */
     @AfterEach
     void cleanup() {
-        // Ensure the build agent is resumed after each test to not affect subsequent tests
+        // Clear queued work BEFORE resuming the agent. If we resumed first (as the previous version did), the resume
+        // would pick up a job that a paused test had cancelled and re-queued, and re-run it. Because some tests mock the
+        // container start to sleep far longer than the build, that re-run keeps executing in the background, leaks past
+        // this test boundary, and contaminates the next test's getRunningBuildJobIds()/build job queue -> flaky tests
+        // (notably testPauseBuildAgentBehavior). This mirrors the clear-then-resume order already used in @BeforeEach.
+        buildJobQueue.clear();
+        processingJobs.clear();
+        resultQueue.clear();
+
+        // Ensure the build agent is resumed after each test to not affect subsequent tests.
         if (sharedQueueProcessingService.isPaused()) {
             resumeBuildAgentTopic.publish(buildAgentShortName);
             await().atMost(10, TimeUnit.SECONDS).until(() -> !sharedQueueProcessingService.isPaused());
         }
-        // Clear any remaining items
+
+        // Clear once more in case the resume produced residue.
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();

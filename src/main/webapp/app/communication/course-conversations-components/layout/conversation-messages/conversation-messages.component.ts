@@ -32,7 +32,7 @@ import { User } from 'app/account/user/user.model';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
@@ -101,7 +101,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
-    previousScrollDistanceFromTop: number;
+    previousScrollDistanceFromTop = 0;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
     currentPostContextFilter?: PostContextFilter;
@@ -110,7 +110,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
-    elementsAtScrollPosition: PostingThreadComponent[];
+    elementsAtScrollPosition: PostingThreadComponent[] = [];
     readonly newPost = signal<Post | undefined>(undefined);
     readonly posts = signal<Post[]>([]);
     readonly allPosts = signal<Post[]>([]);
@@ -119,7 +119,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     readonly isFetchingPosts = signal(true);
-    currentUser: User;
+    currentUser!: User; // set in ngOnInit() from the resolved account identity
     readonly firstUnreadPostId = signal<number | undefined>(undefined);
     readonly unreadPostsCount = signal<number>(0);
     readonly atNewPostPosition = signal(false);
@@ -213,7 +213,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.pinnedCount.emit(pinnedPosts.length);
             });
 
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
 
@@ -223,7 +223,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;
@@ -482,14 +482,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private getPostIdsWithForwardedMessages(): number[] {
         return this.posts()
             .filter((post) => post.hasForwardedMessages && post.id !== undefined)
-            .map((post) => post.id!) as number[];
+            .map((post) => post.id!);
     }
 
     /**
      * Converts list of forwarded message groups to a map from post ID to message list.
      */
     private mapForwardedMessages(groups: ForwardedMessagesGroupDTO[]): Map<number, ForwardedMessageDTO[]> {
-        return new Map(groups.map((group) => [group.id!, group.messages!]));
+        return new Map(groups.map((group) => [group.id!, group.messages]));
     }
 
     /**
@@ -550,9 +550,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             if (Array.isArray(response) && response.length > 0) {
                 const first = response[0];
                 if ((first as Post).conversation !== undefined) {
-                    fetchedPosts = response as Post[];
+                    fetchedPosts = response;
                 } else if ((first as AnswerPost).resolvesPost !== undefined) {
-                    fetchedAnswerPosts = response as AnswerPost[];
+                    fetchedAnswerPosts = response;
                 }
             }
         });

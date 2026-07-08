@@ -29,15 +29,13 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
-vi.mock('export-to-csv', () => {
+vi.mock('app/foundation/util/csv-download.util', () => {
     return {
-        mkConfig: vi.fn(),
-        download: vi.fn(() => vi.fn()),
-        generateCsv: vi.fn(() => vi.fn()),
+        downloadCsv: vi.fn(),
     };
 });
 
@@ -823,7 +821,7 @@ describe('GradingComponent', () => {
         const csvColumnsGrade = 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade';
 
         it('should read no grade steps from csv file without data', async () => {
-            const event = { target: { files: [csvColumnsGrade] } };
+            const event = { target: { files: [csvColumnsGrade] } } as unknown as Event;
             await comp.onCSVFileSelect(event);
 
             expect(comp.gradingScale.gradeSteps).toHaveLength(0);
@@ -832,7 +830,7 @@ describe('GradingComponent', () => {
         it('should read grade steps from csv file', async () => {
             const csvData = `gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade\n4.0,0,50,FALSE\n3.0,50,100,TRUE`;
             const blob = new Blob([csvData], { type: 'text/csv' });
-            const event = { target: { files: [new File([blob], 'test.csv')] } };
+            const event = { target: { files: [new File([blob], 'test.csv')] } } as unknown as Event;
 
             await comp.onCSVFileSelect(event);
 
@@ -843,7 +841,7 @@ describe('GradingComponent', () => {
         it('should read bonus steps from csv file', async () => {
             const csvData = `bonusPoints,lowerBoundPercentage,upperBoundPercentage\n0,0,50\n1,50,100`;
             const blob = new Blob([csvData], { type: 'text/csv' });
-            const event = { target: { files: [new File([blob], 'test.csv')] } };
+            const event = { target: { files: [new File([blob], 'test.csv')] } } as unknown as Event;
 
             await comp.onCSVFileSelect(event);
 
@@ -857,9 +855,7 @@ describe('GradingComponent', () => {
 
             comp.exportGradingStepsToCsv();
 
-            expect(mkConfig).toHaveBeenCalled();
-            expect(generateCsv).toHaveBeenCalled();
-            expect(download).toHaveBeenCalled();
+            expect(downloadCsv).toHaveBeenCalled();
         });
 
         it('should convert grade step to csv row for GRADE type', () => {

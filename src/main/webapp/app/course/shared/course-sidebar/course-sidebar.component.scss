@@ -43,14 +43,6 @@ $transition-color-length: 0.2s;
     margin-left: -0.9rem;
 }
 
-jhi-image {
-    ::ng-deep img {
-        border-radius: 50%;
-        height: 36px;
-        width: auto;
-    }
-}
-
 .double-arrow.menu-closed {
     transform: translate(16px);
 }
@@ -83,19 +75,6 @@ jhi-image {
 
 .me-negative {
     margin-right: -10px;
-}
-
-.course-circle {
-    height: 36px;
-    min-width: 36px;
-    background-color: var(--course-image-bg);
-    border-radius: 50%;
-    display: inline-block;
-    color: var(--bs-body-color);
-}
-
-.course-title {
-    margin-left: 0.75rem;
 }
 
 .max-width-collapsed {

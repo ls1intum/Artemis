@@ -16,11 +16,11 @@ export abstract class UserSettingsDirective implements OnInit {
 
     // HTML template related
     settingsChanged = false;
-    currentUser: User;
+    currentUser?: User;
 
     // userSettings logic related
-    userSettingsCategory: UserSettingsCategory;
-    changeEventMessage: string;
+    userSettingsCategory!: UserSettingsCategory; // set in the overriding ngOnInit() of each child-settings component before loadSetting() reads it
+    changeEventMessage!: string; // set in the ngOnInit() of each child-settings component before createApplyChangesEvent() reads it
     readonly userSettings = signal<UserSettingsStructure<Setting>>(undefined!);
     readonly settings = signal<Array<Setting>>(undefined!);
     page = 0;

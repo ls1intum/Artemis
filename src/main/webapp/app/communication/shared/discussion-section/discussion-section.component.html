@@ -2,7 +2,12 @@
 @if (course()) {
     <div [class]="embedded() ? 'd-flex flex-column h-100' : 'h-100'">
         @if (!collapsed()) {
-            <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'postings-container expanded-discussion'">
+            <div
+                [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'postings-container expanded-discussion'"
+                jhiResizable
+                [resizableEdges]="{ left: '.draggable-left' }"
+                [resizableConstraints]="{ minWidth: 375, maxWidth: 600 }"
+            >
                 <div class="draggable-left" [hidden]="embedded()">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>

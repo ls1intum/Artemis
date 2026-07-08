@@ -8,16 +8,17 @@ export enum TeamImportStrategyType {
     CREATE_ONLY = 'CREATE_ONLY',
 }
 
-export class OnlineTeamStudent {
-    public login: string;
-    public lastTypingDate: dayjs.Dayjs;
-    public lastActionDate: dayjs.Dayjs;
+export interface OnlineTeamStudent {
+    login: string;
+    lastTypingDate: dayjs.Dayjs;
+    lastActionDate: dayjs.Dayjs;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class TeamAssignmentPayload {
-    public exerciseId: number;
+    public exerciseId!: number;
     public teamId?: number;
-    public studentParticipations: StudentParticipation[];
+    public studentParticipations!: StudentParticipation[];
 }
 
 export class Team implements BaseEntity {
@@ -43,10 +44,10 @@ export class Team implements BaseEntity {
  * Either registration number or login must be set
  * Additionally student has teamName to identify which team they belong to
  */
-export class StudentWithTeam {
-    public firstName?: string;
-    public lastName?: string;
-    public registrationNumber?: string;
-    public teamName: string;
-    public username?: string;
+export interface StudentWithTeam {
+    firstName?: string;
+    lastName?: string;
+    registrationNumber?: string;
+    teamName: string;
+    username?: string;
 }

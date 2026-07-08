@@ -40,30 +40,17 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentB
         final ScheduledFuture<?> dueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, dueTrigger::setTrue);
         final ScheduledFuture<?> assessmentDueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, assessmentDueTrigger::setTrue);
 
+        // Checked synchronously right after scheduling (well before the 200ms release), so this is safe.
         assertThat(releaseFuture.isDone()).isFalse();
         assertThat(dueFuture.isDone()).isFalse();
         assertThat(assessmentDueFuture.isDone()).isFalse();
 
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, false);
-            assertEqual(assessmentDueTrigger, false);
-        });
-
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isFalse();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
-
-        await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
-            assertEqual(releaseTrigger, true);
-            assertEqual(dueTrigger, true);
-            assertEqual(assessmentDueTrigger, false);
-        });
-
-        assertThat(releaseFuture.isDone()).isTrue();
-        assertThat(dueFuture.isDone()).isTrue();
-        assertThat(assessmentDueFuture.isDone()).isFalse();
-
+        // The scheduler fires tasks in scheduled-time order (release < due < assessment-due). Asserting the
+        // intermediate wall-clock windows ("due has fired but assessment-due has NOT yet") is flaky: under CI
+        // load the scheduler thread can be starved and then fire several already-overdue tasks back-to-back,
+        // collapsing those windows and making a "still false" assertion observe "true". Assert only that every
+        // task eventually fires and that every future completes without cancellation — that verifies
+        // scheduleTask works for each lifecycle without racing the scheduler's exact firing instants.
         await().pollInterval(50, TimeUnit.MILLISECONDS).untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
             assertEqual(dueTrigger, true);

@@ -49,19 +49,37 @@ export class Commands {
         expect(response!.status()).toBe(200);
 
         // The previous user's JWT cookie has been cleared and a new one set for `username`.
-        // Verify by re-reading: the cookie jar must contain exactly one jwt that is non-empty.
-        // We do not look up the cookie by value (we only have the token after auth) — finding any
-        // jwt cookie after clearCookies + this auth POST is sufficient.
-        await expect
-            .poll(
-                async () =>
-                    page
-                        .context()
-                        .cookies()
-                        .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value),
-                { timeout: 10000 },
-            )
-            .toBeTruthy();
+        // Verify by re-reading: the cookie jar must contain a jwt that is non-empty. We do not look
+        // up the cookie by value (we only have the token after auth) — finding any jwt cookie after
+        // clearCookies + this auth POST is sufficient.
+        //
+        // Under heavy parallel multi-node load — and especially right after Playwright recycles a
+        // crashed worker process — the Set-Cookie from the auth POST has occasionally not landed in
+        // the page context's cookie jar within the poll window even though the POST returned 200.
+        // Re-issue the (idempotent) auth POST and re-check rather than failing outright; the retry
+        // re-sends the cookie and recovers the rare jar-propagation race. The final attempt rethrows
+        // so a genuine auth failure still surfaces with the original assertion error.
+        const jwtCookieValue = () =>
+            page
+                .context()
+                .cookies()
+                .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value);
+        for (let cookieAttempt = 0; ; cookieAttempt++) {
+            const isLastAttempt = cookieAttempt === 2;
+            try {
+                await expect.poll(jwtCookieValue, { timeout: isLastAttempt ? 10000 : 5000 }).toBeTruthy();
+                break;
+            } catch (error) {
+                if (isLastAttempt) {
+                    throw error;
+                }
+                const retryResponse = await page.request.post(`api/core/public/authenticate`, {
+                    data: { username, password, rememberMe: true },
+                    failOnStatusCode: false,
+                });
+                expect(retryResponse.status()).toBe(200);
+            }
+        }
 
         if (url) {
             // page.goto triggers a full document navigation, which re-bootstraps Angular and the

@@ -1,7 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
-import { outputToObservable } from '@angular/core/rxjs-interop';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -63,9 +62,8 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
-import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -125,6 +123,9 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
+// The sidebar renders as a mobile overlay below Bootstrap `sm`; keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
+
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
@@ -136,7 +137,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FormsModule,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
-        NgClass,
         SidebarComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
@@ -165,13 +165,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
+    readonly isMobile = toSignal(this.breakpointObserver.observe(MOBILE_SIDEBAR_BREAKPOINT).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(MOBILE_SIDEBAR_BREAKPOINT),
+    });
 
     private ngUnsubscribe = new Subject<void>();
-    private closeSidebarEventSubscription: Subscription;
-    private openSidebarEventSubscription: Subscription;
-    private toggleSidebarEventSubscription: Subscription;
-    private reloadSidebarEventSubscription: Subscription;
+    private closeSidebarEventSubscription?: Subscription;
+    private openSidebarEventSubscription?: Subscription;
+    private toggleSidebarEventSubscription?: Subscription;
+    private reloadSidebarEventSubscription?: Subscription;
+    // Transient observers that watch for a post/reply to appear in the DOM. They self-disconnect on
+    // success and via a 5s timeout, but are stored here so ngOnDestroy can disconnect them if the
+    // component is torn down within that window.
+    private highlightPostObserver?: MutationObserver;
+    private highlightReplyObserver?: MutationObserver;
     course = signal<Course | undefined>(undefined);
     readonly isLoading = signal(false);
     readonly isServiceSetUp = signal(false);
@@ -188,6 +195,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
     readonly openThreadOnFocus = signal(false);
@@ -308,7 +316,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
-                this.course.set(this.metisConversationService.course!);
+                this.course.set(this.metisConversationService.course);
                 this.initializeCourseWideSearchConfig();
                 this.initializeSidebarAccordions();
                 this.setupMetis();
@@ -381,7 +389,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 if (this.postInThread()?.id !== messageId) {
                     const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
                     this.pendingThreadPostId = messageId;
-                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } } as Post);
+                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } });
                     // Immediately try to resolve the full post from already-loaded posts
                     this.metisService.posts.pipe(take(1)).subscribe((posts) => {
                         if (posts) {
@@ -426,7 +434,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         this.focusPostId.set(post.referencePostId);
         this.openThreadOnFocus.set((post.postingType as PostingType) === PostingType.ANSWER);
-        this.metisConversationService.setActiveConversation(post.conversation!.id!);
+        this.metisConversationService.setActiveConversation(post.conversation.id);
     }
 
     updateQueryParameters() {
@@ -437,7 +445,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (threadBelongsToActiveConversation) {
             queryParams.messageId = this.postInThread()!.id;
         }
-        this.router.navigate([], {
+        void this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams,
             replaceUrl: true,
@@ -451,10 +459,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.reloadSidebarEventSubscription?.unsubscribe();
+        this.highlightPostObserver?.disconnect();
+        this.highlightReplyObserver?.disconnect();
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             const previousConversation = this.activeConversation();
             this.activeConversation.set(conversation);
 
@@ -628,6 +638,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.setIsCollapsed(!this.isCollapsed());
     }
 
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     closeSidebarOnMobile() {
         if (this.isMobile()) {
             this.courseSidebarService.closeSidebar();
@@ -782,11 +796,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         if (tryHighlight()) return;
 
+        this.highlightPostObserver?.disconnect();
         const observer = new MutationObserver(() => {
             if (tryHighlight()) {
                 observer.disconnect();
             }
         });
+        this.highlightPostObserver = observer;
         observer.observe(document.body, { childList: true, subtree: true });
         setTimeout(() => observer.disconnect(), 5000);
     }
@@ -802,6 +818,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
 
         // Watch for the element to appear in the DOM
+        this.highlightReplyObserver?.disconnect();
         const observer = new MutationObserver(() => {
             const element = document.getElementById(elementId);
             if (element) {
@@ -809,6 +826,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.highlightElement(element);
             }
         });
+        this.highlightReplyObserver = observer;
 
         observer.observe(document.body, { childList: true, subtree: true });
 

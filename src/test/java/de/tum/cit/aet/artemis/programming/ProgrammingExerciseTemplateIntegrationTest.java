@@ -248,23 +248,23 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         Path repoPath = repository.getLocalPath();
 
         if (!Files.exists(repoPath)) {
-            throw new IllegalStateException(String.format("%s path does not exist: %s", description, repoPath));
+            throw new IllegalStateException("%s path does not exist: %s".formatted(description, repoPath));
         }
 
         if (!Files.isDirectory(repoPath)) {
-            throw new IllegalStateException(String.format("%s path is not a directory: %s", description, repoPath));
+            throw new IllegalStateException("%s path is not a directory: %s".formatted(description, repoPath));
         }
 
         // Check that the repository contains some files (not empty)
         try (Stream<Path> files = Files.list(repoPath)) {
             long fileCount = files.count();
             if (fileCount == 0) {
-                throw new IllegalStateException(String.format("%s directory is empty: %s", description, repoPath));
+                throw new IllegalStateException("%s directory is empty: %s".formatted(description, repoPath));
             }
             log.debug("Verified {} has {} items at: {}", description, fileCount, repoPath);
         }
         catch (IOException e) {
-            throw new IllegalStateException(String.format("Failed to verify %s at: %s", description, repoPath), e);
+            throw new IllegalStateException("Failed to verify %s at: %s".formatted(description, repoPath), e);
         }
     }
 
@@ -296,11 +296,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
 
         // Log diagnostic information for debugging
-        String diagnosticInfo = String.format("Directory %s exists: %s", directory, Files.exists(directory));
+        String diagnosticInfo = "Directory %s exists: %s".formatted(directory, Files.exists(directory));
         if (Files.exists(directory)) {
             try (Stream<Path> files = Files.list(directory)) {
                 List<String> fileNames = files.map(Path::getFileName).map(Path::toString).toList();
-                diagnosticInfo += String.format(", contains %d files: %s", fileNames.size(), fileNames);
+                diagnosticInfo += ", contains %d files: %s".formatted(fileNames.size(), fileNames);
             }
             catch (IOException e) {
                 diagnosticInfo += ", unable to list files: " + e.getMessage();
@@ -308,7 +308,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
 
         log.error("{} ({}) not found after {} retries. {}", description, fileName, maxRetries, diagnosticInfo);
-        throw new IllegalStateException(String.format("%s (%s) not found in directory %s after %d attempts. %s", description, fileName, directory, maxRetries, diagnosticInfo));
+        throw new IllegalStateException("%s (%s) not found in directory %s after %d attempts. %s".formatted(description, fileName, directory, maxRetries, diagnosticInfo));
     }
 
     /**
@@ -338,11 +338,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         // Log diagnostic information for debugging
         Path parentDir = directoryPath.getParent();
-        String diagnosticInfo = String.format("Parent directory %s exists: %s", parentDir, Files.exists(parentDir));
+        String diagnosticInfo = "Parent directory %s exists: %s".formatted(parentDir, Files.exists(parentDir));
         if (Files.exists(parentDir)) {
             try (Stream<Path> files = Files.list(parentDir)) {
                 List<String> dirNames = files.filter(Files::isDirectory).map(Path::getFileName).map(Path::toString).toList();
-                diagnosticInfo += String.format(", contains %d subdirectories: %s", dirNames.size(), dirNames);
+                diagnosticInfo += ", contains %d subdirectories: %s".formatted(dirNames.size(), dirNames);
             }
             catch (IOException e) {
                 diagnosticInfo += ", unable to list parent directory: " + e.getMessage();
@@ -350,7 +350,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         }
 
         log.error("{} not found after {} retries. {}", description, maxRetries, diagnosticInfo);
-        throw new IllegalStateException(String.format("%s not found at %s after %d attempts. %s", description, directoryPath, maxRetries, diagnosticInfo));
+        throw new IllegalStateException("%s not found at %s after %d attempts. %s".formatted(description, directoryPath, maxRetries, diagnosticInfo));
     }
 
     /**
@@ -385,9 +385,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             }
         }
 
-        String diagnosticInfo = String.format("Assignment repository exists: %s, Test repository exists: %s", Files.exists(assignmentPath), Files.exists(testPath));
+        String diagnosticInfo = "Assignment repository exists: %s, Test repository exists: %s".formatted(Files.exists(assignmentPath), Files.exists(testPath));
         log.error("Repositories not initialized after {} retries. {}", maxRetries, diagnosticInfo);
-        throw new IllegalStateException(String.format("Repositories not initialized after %d attempts. %s", maxRetries, diagnosticInfo));
+        throw new IllegalStateException("Repositories not initialized after %d attempts. %s".formatted(maxRetries, diagnosticInfo));
     }
 
     /**
@@ -437,7 +437,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         boolean allDeletionAttemptsFailed = Files.exists(directory);
         if (allDeletionAttemptsFailed) {
-            String message = String.format("Failed to delete %s directory after %d attempts: %s", description, maxAttempts, directory);
+            String message = "Failed to delete %s directory after %d attempts: %s".formatted(description, maxAttempts, directory);
             log.error(message);
             if (lastException != null) {
                 throw new IOException(message, lastException);
@@ -852,7 +852,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
             String diagnosticInfo = "Report folder status: ";
             if (reportFolder.exists()) {
                 File[] files = reportFolder.listFiles();
-                diagnosticInfo += String.format("exists with %d files: %s", files != null ? files.length : 0, files != null ? Arrays.toString(files) : "null");
+                diagnosticInfo += "exists with %d files: %s".formatted(files != null ? files.length : 0, files != null ? Arrays.toString(files) : "null");
             }
             else {
                 diagnosticInfo += "does not exist";

@@ -83,4 +83,11 @@ describe('CourseCardComponent', () => {
         expect(component.totalAbsoluteScore()).toBe(4);
         expect(component.totalReachableScore()).toBe(20);
     });
+
+    it('should show the translated chart label as tooltip title and the value as body', () => {
+        const callbacks = (component.chartOptions().plugins!.tooltip as any).callbacks;
+
+        expect(callbacks.title([{ label: 'missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
+        expect(callbacks.label({ parsed: 400 })).toBe('400');
+    });
 });

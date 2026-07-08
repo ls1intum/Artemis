@@ -105,7 +105,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '${{ env.java }}'
-          cache: 'gradle'  # without this the cold `clean bootJar` re-downloads all deps every run
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build application
         shell: bash

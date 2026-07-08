@@ -4,39 +4,27 @@ import { TranslateService } from '@ngx-translate/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { faPencilAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonDirective } from 'primeng/button';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-update-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize()"
-            [icon]="team() ? faPencilAlt : faPlus"
-            [title]="team() ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
-            (onClick)="openTeamCreateDialog($event)"
-        />
+        <button pButton size="small" severity="primary" (click)="openTeamCreateDialog($event)">
+            <i [class]="team() ? 'pi pi-pencil' : 'pi pi-plus'"></i>
+            <span>{{ (team() ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label') | artemisTranslate }}</span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [ButtonDirective, ArtemisTranslatePipe],
 })
 export class TeamUpdateButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
-
     readonly team = input<Team | undefined>(undefined);
     readonly exercise = input.required<Exercise>();
-    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     readonly save = output<Team>();
-
-    // Icons
-    faPencilAlt = faPencilAlt;
-    faPlus = faPlus;
 
     /**
      * Open the dialog for team creation

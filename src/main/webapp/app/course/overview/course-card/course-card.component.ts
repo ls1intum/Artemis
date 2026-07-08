@@ -92,7 +92,13 @@ export class CourseCardComponent {
         doughnutChartOptions({
             arcWidth: 0.3,
             legend: false,
-            tooltip: { label: (item) => `${this.translateService.instant('artemisApp.courseOverview.statistics.' + item.label)}: ${item.parsed}` },
+            tooltip: {
+                title: (items) => {
+                    const label = items[0]?.label;
+                    return label ? this.translateService.instant('artemisApp.courseOverview.statistics.' + label) : '';
+                },
+                label: (item) => `${item.parsed}`,
+            },
         }),
     );
 
@@ -100,7 +106,7 @@ export class CourseCardComponent {
         if (course.exercises && course.exercises.length > 0) {
             this._exerciseCount.set(course.exercises.length);
 
-            const nextExercisesWithAnyScore = this.exerciseService.getNextExercisesForDays(course.exercises!);
+            const nextExercisesWithAnyScore = this.exerciseService.getNextExercisesForDays(course.exercises);
             // filters out every already successful (100%) exercise, only exercises left that still need work
             const nextExercises = nextExercisesWithAnyScore.filter((exercise: Exercise) => !exercise.studentParticipations?.[0]?.submissions?.[0]?.results?.[0]?.successful);
 
@@ -128,6 +134,6 @@ export class CourseCardComponent {
      * Delegates the user to the corresponding course page when clicking on the chart
      */
     onSelect(): void {
-        this.router.navigate(['courses', this.course().id]);
+        void this.router.navigate(['courses', this.course().id]);
     }
 }

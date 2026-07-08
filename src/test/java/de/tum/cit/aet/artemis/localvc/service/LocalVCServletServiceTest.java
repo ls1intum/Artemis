@@ -32,7 +32,9 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerSer
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
@@ -82,6 +84,9 @@ class LocalVCServletServiceTest {
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Mock
+    private RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
+    @Mock
     private VcsAccessLogService vcsAccessLogService;
 
     @InjectMocks
@@ -118,6 +123,7 @@ class LocalVCServletServiceTest {
         testRepositoryUri = mock(LocalVCRepositoryUri.class);
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
+        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/EXERCISE-template.git");
 
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
@@ -169,10 +175,10 @@ class LocalVCServletServiceTest {
 
         // Use reflection to call the private method for testing
         java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class);
+                User.class, LocalVCRepositoryUri.class);
         method.setAccessible(true);
 
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser);
+        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
 
         assertThat(result).isEqualTo(AuthenticationMechanism.SSH);
     }
@@ -186,10 +192,10 @@ class LocalVCServletServiceTest {
 
         // Use reflection to call the private method for testing
         java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class);
+                User.class, LocalVCRepositoryUri.class);
         method.setAccessible(true);
 
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser);
+        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
 
         assertThat(result).isEqualTo(AuthenticationMechanism.AUTH_HEADER_MISSING);
     }
@@ -204,10 +210,10 @@ class LocalVCServletServiceTest {
 
         // Use reflection to call the private method for testing
         java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class);
+                User.class, LocalVCRepositoryUri.class);
         method.setAccessible(true);
 
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser);
+        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
 
         assertThat(result).isEqualTo(AuthenticationMechanism.PASSWORD);
     }
@@ -226,12 +232,36 @@ class LocalVCServletServiceTest {
 
         // Use reflection to call the private method for testing
         java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
-                User.class);
+                User.class, LocalVCRepositoryUri.class);
         method.setAccessible(true);
 
-        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser);
+        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
 
         assertThat(result).isEqualTo(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+    }
+
+    @Test
+    void testResolveAuthenticationMechanismFromSessionOrRequest_withRepositoryToken() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        // A valid token that does NOT match the user-level token, but matches a repository-scoped staff token for the requested repository.
+        String token = "vcpat-" + "b".repeat(44);
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
+
+        RepositoryVCSAccessToken repositoryToken = new RepositoryVCSAccessToken();
+        repositoryToken.setVcsAccessToken(token);
+        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(testUser.getId(), "http://localhost/git/TEST/EXERCISE-template.git"))
+                .thenReturn(Optional.of(repositoryToken));
+
+        AuthenticationContext.Request context = new AuthenticationContext.Request(request);
+
+        java.lang.reflect.Method method = LocalVCServletService.class.getDeclaredMethod("resolveAuthenticationMechanismFromSessionOrRequest", AuthenticationContext.class,
+                User.class, LocalVCRepositoryUri.class);
+        method.setAccessible(true);
+
+        AuthenticationMechanism result = (AuthenticationMechanism) method.invoke(localVCServletService, context, testUser, testRepositoryUri);
+
+        assertThat(result).isEqualTo(AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN);
     }
 
     @Test

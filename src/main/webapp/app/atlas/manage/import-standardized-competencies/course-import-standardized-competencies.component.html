@@ -16,10 +16,15 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="tree?.collapseAll()"
+            (onClick)="knowledgeAreaTreeComponent?.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree?.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button
+            [btnSize]="ButtonSize.SMALL"
+            [icon]="faMaximize"
+            (onClick)="knowledgeAreaTreeComponent?.expandAll()"
+            tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip"
+        />
     </div>
     @if (dataSource.data.length) {
         <div class="d-flex">
@@ -30,7 +35,7 @@
                         <fa-icon
                             class="me-2"
                             [icon]="getIcon(competency.taxonomy)"
-                            [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                            [pTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                             [fixedWidth]="true"
                         />
                         <h6 class="mb-0">{{ competency.title }}</h6>

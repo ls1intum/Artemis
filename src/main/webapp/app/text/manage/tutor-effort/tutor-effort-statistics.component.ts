@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { median } from 'simple-statistics';
+import { median } from 'app/foundation/util/statistics.util';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -41,10 +41,10 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     readonly numberOfSubmissions = signal<number>(undefined!);
     readonly totalTimeSpent = signal<number>(undefined!);
     readonly averageTimeSpent = signal<number>(undefined!);
-    currentExerciseId: number;
-    currentCourseId: number;
+    currentExerciseId!: number; // set in ngOnInit() from the route params before loadTutorEfforts() reads it
+    currentCourseId!: number; // set in ngOnInit() from the route params before loadTutorEfforts() reads it
     readonly numberOfTutorsInvolvedInCourse = signal<number>(undefined!);
-    effortDistribution: number[];
+    effortDistribution: number[] = [];
     readonly yScaleMax = signal(10);
     readonly medianValue = signal<number>(undefined!);
 
@@ -165,7 +165,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Delegates the user to the assessment dashboard
      */
     onSelect() {
-        this.router.navigate(['/course-management', this.currentCourseId, 'assessment-dashboard', this.currentExerciseId]);
+        void this.router.navigate(['/course-management', this.currentCourseId, 'assessment-dashboard', this.currentExerciseId]);
     }
 
     /**

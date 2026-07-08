@@ -15,11 +15,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
-import JSZip from 'jszip';
+import { strFromU8 } from 'fflate';
+import { ZipEntries, readZipEntries } from 'app/foundation/util/zip.util';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum State {
     COURSE = 'Course',
@@ -63,7 +65,7 @@ export class QuizQuestionListEditExistingComponent {
     readonly exams = signal<Exam[]>([]);
     readonly allExistingQuestions = signal<QuizQuestion[]>([]);
     readonly existingQuestions = signal<QuizQuestion[]>([]);
-    searchQueryText: string;
+    searchQueryText?: string;
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
     shortAnswerFilterEnabled = true;
@@ -101,7 +103,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -126,7 +128,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -158,9 +160,9 @@ export class QuizQuestionListEditExistingComponent {
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setImportFile(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList?.length) {
             this.importFile.set(fileList[0]);
             this.importFileName.set(fileList[0].name);
         }
@@ -190,29 +192,28 @@ export class QuizQuestionListEditExistingComponent {
     }
 
     async handleZipFile() {
-        const jszip = new JSZip();
-
         try {
-            const zipContent = await jszip.loadAsync(this.importFile()!);
-            const jsonFiles = Object.keys(zipContent.files).filter((fileName) => fileName.endsWith('.json'));
+            const zipEntries = await readZipEntries(this.importFile()!);
+            const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
+            if (jsonFiles.length === 0) {
+                throw new Error('No JSON file found in the ZIP archive.');
+            }
 
-            const images = await this.extractImagesFromZip(zipContent);
-            const jsonFile = zipContent.files[jsonFiles[0]];
-            const jsonContent = await jsonFile.async('string');
+            const images = this.extractImagesFromZip(zipEntries);
+            const jsonContent = strFromU8(zipEntries[jsonFiles[0]]);
             await this.processJsonContent(jsonContent, images);
         } catch (error) {
             alert('Import Quiz Failed! Invalid zip file.');
             return;
         }
     }
-    async extractImagesFromZip(zipContent: JSZip) {
+    extractImagesFromZip(zipEntries: ZipEntries): Map<string, File> {
         const images: Map<string, File> = new Map();
-        for (const [fileName, zipEntry] of Object.entries(zipContent.files)) {
+        for (const [fileName, data] of Object.entries(zipEntries)) {
             if (!fileName.endsWith('.json')) {
                 const lastDotIndex = fileName.lastIndexOf('.');
-                const fileNameNoExtension = fileName.substring(0, lastDotIndex);
-                const imageData = await zipEntry.async('blob');
-                const imageFile = new File([imageData], fileName);
+                const fileNameNoExtension = lastDotIndex === -1 ? fileName : fileName.substring(0, lastDotIndex);
+                const imageFile = new File([data], fileName);
                 images.set(fileNameNoExtension, imageFile);
             }
         }
@@ -221,7 +222,7 @@ export class QuizQuestionListEditExistingComponent {
 
     async processJsonContent(jsonContent: string, images: Map<string, File> = new Map()) {
         try {
-            const questions = JSON.parse(jsonContent) as QuizQuestion[];
+            const questions = parseJson<QuizQuestion[]>(jsonContent);
             await this.addQuestions(questions, images);
             // Clearing html elements
             this.importFile.set(undefined);

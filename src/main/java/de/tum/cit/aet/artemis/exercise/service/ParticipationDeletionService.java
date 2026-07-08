@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -118,6 +117,15 @@ public class ParticipationDeletionService {
             delete(participation.getId(), false);
         }
 
+        // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score
+        // from a still-pending task while the results above are being deleted. The participant_score -> result
+        // foreign keys are ON DELETE SET NULL, so those result deletes never fail; and once all results of the
+        // exercise are gone the scheduler can no longer create a score (it computes an empty score and deletes it
+        // instead). A final bulk delete therefore removes any score that slipped in during the loop, so the
+        // subsequent exercise deletion does not hit the participant_score -> exercise RESTRICT constraint. This
+        // closes the race cluster-wide without any transaction or cross-node coordination.
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
+
         if (recalculateCompetencyProgress) {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }
@@ -205,7 +213,7 @@ public class ParticipationDeletionService {
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Collections.emptyList());
+            submission.setResults(List.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }

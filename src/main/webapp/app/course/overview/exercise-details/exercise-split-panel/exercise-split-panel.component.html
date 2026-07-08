@@ -1,4 +1,4 @@
-<jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden" [useViewportWidthForCollapse]="true" storageKey="exercise-details-split">
     @if (showEditorPanel()) {
         <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {

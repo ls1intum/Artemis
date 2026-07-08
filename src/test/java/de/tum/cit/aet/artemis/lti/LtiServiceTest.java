@@ -10,9 +10,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -81,7 +81,7 @@ class LtiServiceTest {
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
-        user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
+        user.setGroups(new HashSet<>(Set.of(LtiService.LTI_GROUP_NAME)));
     }
 
     @AfterEach

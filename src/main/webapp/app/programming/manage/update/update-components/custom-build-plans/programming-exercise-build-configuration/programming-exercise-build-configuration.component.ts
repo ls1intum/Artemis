@@ -1,13 +1,14 @@
-import { Component, OnInit, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { parseJson } from 'app/foundation/util/json.util';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -23,7 +24,7 @@ interface DockerFlags {
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
     styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgxDatatableModule, TableEditableFieldComponent, FaIconComponent],
+    imports: [TranslateDirective, HelpIconComponent, FormsModule, TableEditableFieldComponent, FaIconComponent, TableViewComponent],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -45,6 +46,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 
+    readonly envVarKeyTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarKeyTemplate');
+    readonly envVarValueTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarValueTemplate');
+
     network = signal<string | undefined>(undefined);
 
     readonly timeoutMinValue = signal<number | undefined>(undefined);
@@ -55,6 +59,27 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     faPlus = faPlus;
     faTrash = faTrash;
+
+    readonly envVarTableOptions: TableViewOptions = {
+        lazy: false,
+        paginated: false,
+        showSearch: false,
+        striped: true,
+    };
+
+    readonly envVarColumns = computed<ColumnDef<[string, string]>[]>(() => [
+        {
+            field: '0',
+            header: 'Key',
+            width: '200px',
+            templateRef: this.envVarKeyTemplate(),
+        },
+        {
+            field: '1',
+            header: 'Value',
+            templateRef: this.envVarValueTemplate(),
+        },
+    ]);
 
     constructor() {
         effect(() => {
@@ -104,7 +129,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
-        this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        this.dockerFlags = parseJson<DockerFlags>(this.programmingExercise()?.buildConfig?.dockerFlags ?? '');
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
         }
@@ -131,16 +156,19 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onCpuCountChange(event: any) {
         this.cpuCount.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemoryChange(event: any) {
         this.memory.set(event.target.value);
         this.parseDockerFlagsToString();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- input `$event` from the template and the numeric `{ target: { value } }` mock in the spec share no common non-any DOM type
     onMemorySwapChange(event: any) {
         this.memorySwap.set(event.target.value);
         this.parseDockerFlagsToString();
@@ -166,16 +194,16 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.envVars.update((envVars) => [...envVars, ['', '']]);
     }
 
-    removeEnvVar(index: number) {
-        this.envVars.update((envVars) => envVars.filter((_, envVarIndex) => envVarIndex !== index));
+    removeEnvVar(row: [string, string]) {
+        this.envVars.update((envVars) => envVars.filter((envVar) => envVar !== row));
         this.parseDockerFlagsToString();
     }
 
     parseDockerFlagsToString() {
-        const newEnv = {} as { [key: string]: string } | undefined;
+        const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
-                newEnv![key] = value;
+                newEnv[key] = value;
             }
         });
         const network = this.network() === '' ? undefined : this.network();

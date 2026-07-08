@@ -105,7 +105,7 @@ public class CalendarSubscriptionService {
     private String convertBytesToSubscriptionToken(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
-            hexString.append(String.format("%02x", b));
+            hexString.append("%02x".formatted(b));
         }
         return hexString.toString();
     }

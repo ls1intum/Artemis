@@ -43,6 +43,17 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Starts a practice attempt for an ended quiz via the dedicated "Start practice" action button in the exercise
+     * header. Works for both the first attempt and subsequent attempts (the button reappears after each submit).
+     * @param exerciseId The id of the quiz exercise to practice.
+     */
+    async startQuizPractice(exerciseId: number) {
+        const button = this.page.locator(`#quiz-start-practice-${exerciseId}`);
+        await button.waitFor({ state: 'visible', timeout: 30_000 });
+        await button.click();
+    }
+
+    /**
      * Retrieves the Locator for an exercise card by its ID.
      * @param exerciseName title of the exercise.
      * @returns The Locator for the exercise card.
@@ -82,6 +93,44 @@ export class CourseOverviewPage {
      */
     async startPracticeExercise(exerciseId: number) {
         await this.page.locator(`#start-practice-${exerciseId} button`).click();
+    }
+
+    /**
+     * Verifies that the result badge for the given exercise renders with the expected score in the course-overview
+     * sidebar card. This exercises the `isInSidebarCard` placement of {@code jhi-result} (rendered via
+     * {@code jhi-updating-result}, non-clickable, no completion timestamp), which the code-editor / exercise-header
+     * placements do not cover. Call this after the build/assessment has completed; the for-dashboard data can briefly
+     * lag a just-finished build, so this re-navigates (full page.goto) up to six times to re-fetch, mirroring
+     * {@code ProgrammingExerciseOverviewPage.checkResultScoreAfterBuild}.
+     * @param courseId The id of the course to open.
+     * @param exerciseTitle The title of the exercise whose sidebar card to check.
+     * @param expectedResult The expected result score text (or pattern) shown in the badge.
+     */
+    async checkExerciseResultInSidebar(courseId: number, exerciseTitle: string, expectedResult: string | RegExp) {
+        const sidebarResult = () => this.page.locator('#test-sidebar-card-medium', { hasText: exerciseTitle }).first().locator('#result-score');
+        for (let attempt = 0; attempt < 6; attempt++) {
+            await this.page.goto(`/courses/${courseId}/exercises`);
+            await this.page.waitForLoadState('domcontentloaded');
+            try {
+                await expect(sidebarResult()).toContainText(expectedResult, { timeout: 15000 });
+                return;
+            } catch {
+                // The course-overview dashboard data has not refreshed with the new result yet; re-navigate to re-fetch.
+            }
+        }
+        await this.page.goto(`/courses/${courseId}/exercises`);
+        await this.page.waitForLoadState('domcontentloaded');
+        await expect(sidebarResult()).toContainText(expectedResult, { timeout: 30000 });
+    }
+
+    /**
+     * Returns the sidebar card element for the given exercise (the `#test-sidebar-card-medium` entry whose text
+     * contains the title). Useful for asserting live, websocket-driven state transitions of its result badge
+     * without re-navigating.
+     * @param exerciseTitle The title of the exercise whose sidebar card to locate.
+     */
+    getExerciseSidebarCard(exerciseTitle: string): Locator {
+        return this.page.locator('#test-sidebar-card-medium', { hasText: exerciseTitle }).first();
     }
 
     /**

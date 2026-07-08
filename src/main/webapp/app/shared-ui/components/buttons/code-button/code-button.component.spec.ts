@@ -4,11 +4,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -160,6 +161,271 @@ describe('CodeButtonComponent', () => {
         component.onClick();
         fixture.detectChanges();
         expect(component.selectedAuthenticationMechanism()).toEqual(RepositoryAuthenticationMethod.Token);
+    });
+
+    describe('repository-scoped staff token', () => {
+        const repoToken = 'vcpat-StaffStaffStaffStaffStaffStaffStaffStaff123';
+        let getRepoTokenSpy: MockInstance;
+        let createRepoTokenSpy: MockInstance;
+
+        beforeEach(() => {
+            getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
+            createRepoTokenSpy = vi.spyOn(programmingExerciseService, 'createRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
+        });
+
+        it('should load the repository-scoped token when opening the dialog for a base repository', async () => {
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.isBaseRepository()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create the repository-scoped token on demand when none exists yet (404)', async () => {
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+        });
+
+        it('should not load participation tokens while in base repository mode', async () => {
+            fixture.componentRef.setInput('repositoryType', 'TESTS');
+            fixture.componentRef.setInput('exercise', { id: 42 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [participation]);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load the repository-scoped token via the exerciseId input when no exercise object is provided', async () => {
+            // The exercise detail view only knows the exercise id, not the full exercise object.
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+        });
+
+        it('should pass the auxiliaryRepositoryId when loading the token for an auxiliary repository', async () => {
+            fixture.componentRef.setInput('repositoryType', 'AUXILIARY');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('auxiliaryRepositoryId', 3);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3);
+        });
+
+        it('should reload a fresh token when the component is reused for a different base repository', async () => {
+            // The repository view reuses one code-button instance across base repositories (only the route params change). A token minted for the previous repository must not be
+            // reused for the next one, because repository tokens are scoped to one exact repository URI.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+
+            // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
+            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
+            getRepoTokenSpy.mockReturnValue(of(new HttpResponse({ body: solutionToken })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
+            fixture.detectChanges();
+
+            component.onClick();
+            fixture.detectChanges();
+
+            // A fresh token request is made for the new repository and the stale template token is replaced.
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(component.repositoryAccessToken()).toEqual(solutionToken);
+            // The embedded clone URL must use the new repository's token, never the stale template one.
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
+            expect(cloneUrl).toContain(`:${solutionToken}@`);
+            expect(cloneUrl).not.toContain(repoToken);
+        });
+
+        it('should ignore late repository token responses for a previously viewed base repository', async () => {
+            const templateTokenSubject = new Subject<HttpResponse<string>>();
+            const solutionTokenSubject = new Subject<HttpResponse<string>>();
+            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
+            getRepoTokenSpy.mockReturnValueOnce(templateTokenSubject.asObservable()).mockReturnValueOnce(solutionTokenSubject.asObservable());
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
+            fixture.detectChanges();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+
+            templateTokenSubject.next(new HttpResponse({ body: repoToken }));
+            templateTokenSubject.complete();
+            expect(component.repositoryAccessToken()).toBeUndefined();
+            expect(component.copyEnabled()).toBe(false);
+
+            solutionTokenSubject.next(new HttpResponse({ body: solutionToken }));
+            solutionTokenSubject.complete();
+
+            expect(component.repositoryAccessToken()).toEqual(solutionToken);
+            expect(component.copyEnabled()).toBe(true);
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
+            expect(cloneUrl).toContain(`:${solutionToken}@`);
+            expect(cloneUrl).not.toContain(repoToken);
+        });
+
+        it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
+            // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
+            // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
+            const tokenSubject = new Subject<HttpResponse<string>>();
+            getRepoTokenSpy.mockReturnValue(tokenSubject.asObservable());
+            localStorageState = RepositoryAuthenticationMethod.SSH;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+
+            component.onClick();
+            expect(component.useSsh()).toBe(true);
+            // The user has SSH keys, so copy is enabled while the token request is still pending.
+            expect(component.copyEnabled()).toBe(true);
+
+            // The repository token resolves now, after the dialog already opened.
+            tokenSubject.next(new HttpResponse({ body: repoToken }));
+            tokenSubject.complete();
+
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+        });
+
+        it('should not show the manual VCS token warning for a base repository in course management', async () => {
+            // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
+            // repositories, because a repository-scoped staff token is provisioned automatically instead.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.isInCourseManagement.set(true);
+            fixture.detectChanges();
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.isBaseRepository()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
+        });
+
+        it('should embed the repository-scoped token as the password in the clone URL', async () => {
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            // The non-masked clone URL must embed the repository-scoped staff token as the password (not a participation or user token).
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
+            expect(cloneUrl).toContain(`:${repoToken}@`);
+            expect(component.copyEnabled()).toBe(true);
+        });
+
+        it('should warn when fetching the repository token is forbidden (403) and not attempt to create one', async () => {
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            // Select the token method so the copy button state reflects the (failed) token, not SSH.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+            expect(component.repositoryAccessToken()).toBeUndefined();
+            expect(component.copyEnabled()).toBe(false);
+        });
+
+        it('should show an error when fetching the repository token fails unexpectedly', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenError');
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should warn when creating the repository token (after a 404) is forbidden (403)', async () => {
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            createRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+            expect(component.repositoryAccessToken()).toBeUndefined();
+        });
+
+        it('should not crash for a base repository whose view passes a participation-less array (tests/auxiliary repo)', async () => {
+            // The staff tests/auxiliary repository view has no student participation and renders the code button with a
+            // participation-less array. activeParticipation must tolerate that instead of dereferencing undefined (regression).
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TESTS');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-tests.git');
+            fixture.componentRef.setInput('participations', [undefined as unknown as ProgrammingExerciseStudentParticipation]);
+            await component.ngOnInit();
+
+            expect(() => component.activeParticipation()).not.toThrow();
+            expect(component.activeParticipation()).toBeUndefined();
+
+            component.onClick();
+            fixture.detectChanges();
+
+            // The clone URL is built from the base repository URI plus the repository-scoped token, with no participation involved.
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
+            expect(cloneUrl).toContain('test-tests.git');
+            expect(cloneUrl).toContain(`:${repoToken}@`);
+        });
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {

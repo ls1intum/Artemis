@@ -21,6 +21,7 @@ import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.c
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
@@ -33,7 +34,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -51,18 +51,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
 // Mock components to avoid complex dependencies
-@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
-class MockHeaderParticipationPageComponent {
-    exercise = input<any>();
-    participation = input<any>();
-}
-
 @Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
 class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
@@ -70,14 +63,6 @@ class MockRequestFeedbackButtonComponent {
     hasAthenaResultForLatestSubmission = input<any>();
     isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
-}
-
-@Component({ selector: 'jhi-result-history', template: '', standalone: true })
-class MockResultHistoryComponent {
-    results = input<any>();
-    exercise = input<any>();
-    participationInput = input<any>();
-    selectedResultId = input<any>();
 }
 
 @Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
@@ -140,16 +125,10 @@ describe('TextEditorComponent', () => {
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
                 },
                 add: {
-                    imports: [
-                        MockHeaderParticipationPageComponent,
-                        MockRequestFeedbackButtonComponent,
-                        MockResultHistoryComponent,
-                        MockIrisExerciseChatbotButtonComponent,
-                        FormsModule,
-                    ],
+                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
                 },
             })
             .compileComponents();
@@ -181,6 +160,88 @@ describe('TextEditorComponent', () => {
         expect(comp.answer()).toBeDefined();
     });
 
+    it('should ignore participation changes that belong to a different participation', () => {
+        // Regression test: subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject.
+        // When several text editors are rendered together (e.g. multiple text exercises in the exam summary),
+        // an emission for another participation must not overwrite this instance's state.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = { id: 2 } as TextExercise;
+        otherParticipation.submissions = [new TextSubmission()];
+        participationSubject.next(otherParticipation);
+
+        expect(updateParticipationSpy).not.toHaveBeenCalled();
+
+        // an emission for our own participation must still be applied
+        participationSubject.next(participation);
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(participation, undefined, undefined);
+
+        fixture.destroy();
+    });
+
+    it('should not be overwritten by a sibling text editor for a different participation (multi-instance)', () => {
+        // The actual reported bug: several text editors render together in the exam summary and share the app-wide
+        // participation-change subject. When a sibling editor initializes (addParticipation), its emission must not
+        // overwrite this editor's exercise/submission.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'A' });
+        fixture.detectChanges();
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        // A second editor for a DIFFERENT text exercise/participation initializes and pushes its participation.
+        const fixture2 = TestBed.createComponent(TextEditorComponent);
+        const otherExercise = { id: 2 } as TextExercise;
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = otherExercise;
+        otherParticipation.submissions = [{ id: 5, text: 'B' } as TextSubmission];
+        fixture2.componentRef.setInput('inputExercise', otherExercise);
+        fixture2.componentRef.setInput('inputParticipation', otherParticipation);
+        fixture2.componentRef.setInput('inputSubmission', { id: 5, text: 'B' });
+        fixture2.detectChanges();
+
+        // This editor must still show its own exercise/submission, not the sibling's.
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        fixture2.destroy();
+        fixture.destroy();
+    });
+
+    it('should apply a participation-change emission with the same id but a different object reference', () => {
+        // Real result updates arrive as a different object (the cached clone) with the same participation id. The guard
+        // must compare by id, not by reference, so such own-participation updates are still applied.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const sameIdDifferentObject = new StudentParticipation();
+        sameIdDifferentObject.id = participation.id; // 42 - same participation, different object
+        sameIdDifferentObject.exercise = textExercise;
+        sameIdDifferentObject.submissions = [new TextSubmission()];
+        participationSubject.next(sameIdDifferentObject);
+
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(sameIdDifferentObject, undefined, undefined);
+
+        fixture.destroy();
+    });
+
     it('should not allow to submit after the due date if there is no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
@@ -193,7 +254,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeFalsy();
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
@@ -226,37 +286,6 @@ describe('TextEditorComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isAllowedToSubmitAfterDueDate()).toBeTruthy();
-
-        fixture.destroy();
-    });
-
-    it('should not be always active if there is a result and no due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.result.set(result);
-        comp.textExercise.set(textExercise);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeFalsy();
-
-        fixture.destroy();
-    });
-
-    it('should be always active if there is no result and the initialization date is after the due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise.set(textExercise);
-        comp.textExercise().dueDate = dayjs();
-        participation.initializationDate = dayjs().add(1, 'days');
-        // @ts-ignore updateParticipation is private
-        comp.updateParticipation(participation);
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeTruthy();
 
         fixture.destroy();
     });
@@ -511,29 +540,6 @@ describe('TextEditorComponent', () => {
         expect(textarea).toBeTruthy();
     });
 
-    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
-        comp.isReadOnlyWithShowResult.set(true);
-        comp.textExercise.set(textExercise);
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeFalsy();
-    });
-
-    it('should render the submit button when isReadOnlyWithShowResult is false and in exam mode', () => {
-        comp.isOwnerOfParticipation.set(true);
-        comp.isReadOnlyWithShowResult.set(false);
-        comp.isAlwaysActive = true;
-        comp.examMode.set(true);
-        comp.textExercise.set(textExercise);
-        comp.submission.set({ id: 5, submitted: true });
-
-        fixture.changeDetectorRef.detectChanges();
-
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeTruthy();
-    });
-
     it('should destroy', () => {
         comp.submission.set({ text: 'abc' } as TextSubmission);
         comp.answer.set('def');
@@ -557,29 +563,6 @@ describe('TextEditorComponent', () => {
         expect(comp.isAutomaticResult).toBe(true);
         comp.result.set({ assessmentType: AssessmentType.MANUAL } as Result);
         expect(comp.isAutomaticResult).toBe(false);
-    });
-
-    it('submitButtonTooltip covers all branches', () => {
-        comp.textExercise.set({} as TextExercise);
-        // Due date missed allowed
-        comp.isAllowedToSubmitAfterDueDate.set(true);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
-
-        // Active without due date
-        comp.isAllowedToSubmitAfterDueDate.set(false);
-        comp.isAlwaysActive = true;
-        comp.result.set(undefined as any);
-        comp.textExercise.set({ dueDate: undefined } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
-
-        // Active with due date
-        comp.textExercise.set({ dueDate: dayjs().add(1, 'hour') } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
-
-        // Not active
-        comp.isAlwaysActive = false;
-        comp.result.set({ assessmentType: AssessmentType.MANUAL } as any);
-        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
     });
 
     it('canDeactivate true when no submission or unchanged; false when changed', () => {

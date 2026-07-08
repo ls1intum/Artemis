@@ -13,7 +13,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -643,8 +642,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (!StringUtils.hasText(searchTerm)) {
             return Page.empty(page);
         }
-        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
+        String escaped = escapeSearchTerm(searchTerm);
+        // Guarantee a deterministic order so the LIMIT/OFFSET pages form a stable, non-overlapping partition. Without a
+        // fixed order the database may return the results in a different order per page, so a matching user can shuffle
+        // between pages and never appear on the page the caller is viewing (see issue #13069). Applied here so every
+        // caller (exam and organization registration) is covered; a caller that already requested an order keeps it.
+        Pageable stablePage = stabilizePageable(page);
+        return findAllByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped);
     }
 
     @Query("""
@@ -659,6 +663,68 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
             """)
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
+
+    /**
+     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains),
+     * excluding users who belong to any of the given staff groups (teaching assistant, editor, instructor) or have
+     * admin/super-admin authority.
+     * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
+     *
+     * @param page            Pageable controlling page index and size
+     * @param searchTerm      the search string entered by the user
+     * @param staffGroupNames the set of group names whose members should be excluded
+     * @return a page of matching non-staff users
+     */
+    default Page<User> searchNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, String searchTerm, Set<String> staffGroupNames) {
+        if (!StringUtils.hasText(searchTerm)) {
+            return Page.empty(page);
+        }
+        String escaped = escapeSearchTerm(searchTerm);
+        Pageable stablePage = stabilizePageable(page);
+        return findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped, staffGroupNames);
+    }
+
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND (
+                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM User u JOIN u.groups g
+                    WHERE u.id = user.id AND g IN :staffGroupNames
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM User u JOIN u.authorities a
+                    WHERE u.id = user.id AND a IN (
+                        :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY},
+                        :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY}
+                    )
+                )
+            """)
+    Page<User> findAllNonStaffByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm,
+            @Param("staffGroupNames") Set<String> staffGroupNames);
+
+    private static String escapeSearchTerm(final String searchTerm) {
+        return searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    private static Pageable stabilizePageable(Pageable pageable) {
+        return pageable.getSort().isSorted() ? pageable : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+    }
+
+    /**
+     * Find all users by their logins with their organizations eagerly loaded.
+     *
+     * @param logins the logins to look up
+     * @return list of matching users with organizations initialized
+     */
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.organizations WHERE u.deleted = FALSE AND u.login IN :logins")
+    List<User> findAllByLoginsWithOrganizations(@Param("logins") Collection<String> logins);
 
     @Query("""
             SELECT DISTINCT user
@@ -712,7 +778,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findDistinctUsersWithGroupsByIdIn(userIds);
@@ -731,7 +797,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
 
         if (userIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return new PageImpl<>(List.of(), pageable, 0);
         }
 
         List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);

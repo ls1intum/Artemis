@@ -16,7 +16,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
-import { generateCsv } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,11 +33,9 @@ vi.mock('app/foundation/util/download.util', () => ({
     downloadZipFileFromResponse: vi.fn(),
 }));
 
-vi.mock('export-to-csv', () => {
+vi.mock('app/foundation/util/csv-download.util', () => {
     return {
-        mkConfig: vi.fn(),
-        download: vi.fn(() => vi.fn()),
-        generateCsv: vi.fn(() => vi.fn()),
+        downloadCsv: vi.fn(),
     };
 });
 
@@ -182,7 +180,7 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult.set(textPlagiarismResult);
         comp.downloadPlagiarismResultsCsv();
 
-        expect(generateCsv).toHaveBeenCalledOnce();
+        expect(downloadCsv).toHaveBeenCalledOnce();
     });
 
     it('should get the latest plagiarism result for programming exercise', async () => {

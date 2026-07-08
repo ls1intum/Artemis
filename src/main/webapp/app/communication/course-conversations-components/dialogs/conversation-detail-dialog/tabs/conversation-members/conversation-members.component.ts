@@ -7,7 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EMPTY, Subject, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -32,7 +32,7 @@ interface SearchQuery {
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
     styleUrls: ['./conversation-members.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe, SelectModule],
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, PaginatorModule, ArtemisTranslatePipe, SelectModule],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -51,7 +51,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     readonly members = signal<ConversationUserDTO[]>([]);
     // page information
-    page = 1;
+    readonly page = signal(1);
     itemsPerPage = 10;
     readonly totalItems = signal<number>(0);
     readonly isSearching = signal(true);
@@ -149,7 +149,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                             this.course().id!,
                             this.activeConversation()!.id!,
                             this.searchTerm,
-                            this.page - 1,
+                            this.page() - 1,
                             this.itemsPerPage,
                             Number(this.selectedFilter),
                         );
@@ -187,7 +187,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     onFilterChange(newFilterValue: ConversationMemberSearchFilter) {
         this.selectedFilter = newFilterValue;
-        this.page = 1;
+        this.page.set(1);
         this.search$.next({
             searchTerm: this.searchTerm,
             force: true,
@@ -201,8 +201,13 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
         });
     }
 
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
+    }
+
     onSearchQueryInput($event: Event) {
-        this.page = 1;
+        this.page.set(1);
         const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
         this.search$.next({
             searchTerm,

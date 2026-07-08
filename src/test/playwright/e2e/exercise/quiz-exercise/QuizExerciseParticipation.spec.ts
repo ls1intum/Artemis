@@ -304,6 +304,70 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
     });
 
+    test.describe('Quiz exercise practice mode', () => {
+        let practiceQuiz: QuizExercise;
+
+        test.beforeEach('Create an ended course quiz that is open for practice', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            // A quiz whose due date is in the past has ended and is therefore open for practice.
+            practiceQuiz = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceQuizTemplate],
+                releaseDate: dayjs().subtract(2, 'days'),
+                dueDate: dayjs().subtract(1, 'days'),
+                duration: 60,
+                quizMode: QuizMode.SYNCHRONIZED,
+            });
+        });
+
+        /**
+         * Regression test for https://github.com/ls1intum/Artemis/issues/12955 (PR #12972). Two practice-mode bugs:
+         *  - Bug 1: after submitting a new practice attempt, every prior attempt must stay in the result-history
+         *    dropdown WITHOUT a page refresh (the participation merge must not drop earlier submissions).
+         *  - Bug 2: viewing a practice attempt must render per-question correctness. Practice results are unrated, and
+         *    the result endpoint used to filter unrated results out, so showResult never fired and no correctness showed.
+         */
+        test('keeps all practice attempts in the result history without refresh and shows per-question correctness', async ({
+            login,
+            courseOverview,
+            quizExerciseMultipleChoice,
+            quizExerciseParticipation,
+            page,
+        }) => {
+            test.setTimeout(180_000);
+            await login(studentOne, `/courses/${course.id}/exercises/${practiceQuiz.id}`);
+
+            // --- First practice attempt ---
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await quizExerciseMultipleChoice.tickAnswerOption(practiceQuiz.id!, 0);
+            const firstSubmit = await quizExerciseParticipation.submitPractice();
+            expect(firstSubmit.status(), 'practice submit must return 200 OK').toBe(200);
+            // The just-submitted attempt renders its per-question correctness table immediately.
+            await expect(quizExerciseParticipation.getMultipleChoiceResultTable()).toBeVisible();
+
+            // --- Second practice attempt, in the same session (no page reload) ---
+            await courseOverview.startQuizPractice(practiceQuiz.id!);
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await quizExerciseMultipleChoice.tickAnswerOption(practiceQuiz.id!, 1);
+            const secondSubmit = await quizExerciseParticipation.submitPractice();
+            expect(secondSubmit.status(), 'second practice submit must return 200 OK').toBe(200);
+
+            // Bug 1: the result-history dropdown must list BOTH attempts without a refresh.
+            await quizExerciseParticipation.openResultHistory();
+            await expect(quizExerciseParticipation.getResultHistoryRows()).toHaveCount(2);
+
+            // Bug 2: opening an earlier attempt loads its (unrated) result via getParticipationResult and renders the
+            // per-question correctness table. The newest attempt is listed first, so the last row is the oldest one.
+            const resultResponse = page.waitForResponse(
+                (response) => /\/api\/quiz\/quiz-exercises\/\d+\/participations\/\d+\/result/.test(response.url()) && response.status() === 200,
+            );
+            await quizExerciseParticipation.getResultHistoryRows().last().click();
+            await resultResponse;
+            await expect(quizExerciseParticipation.getMultipleChoiceResultTable()).toBeVisible();
+        });
+    });
+
     test.describe('Quiz exercise individual participation', () => {
         let quizExercise: QuizExercise;
 

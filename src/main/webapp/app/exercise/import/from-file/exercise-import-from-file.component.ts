@@ -6,7 +6,9 @@ import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
-import JSZip from 'jszip';
+import { strFromU8 } from 'fflate';
+import { parseJson } from 'app/foundation/util/json.util';
+import { readZipEntries } from 'app/foundation/util/zip.util';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -47,33 +49,35 @@ export class ExerciseImportFromFileComponent implements OnInit {
             return;
         }
 
-        const jsonRegex = new RegExp('.*.json');
-        const zip = await JSZip.loadAsync(this.fileForImport() as File);
-        const jsonFiles = zip.file(jsonRegex);
+        const zipEntries = await readZipEntries(this.fileForImport() as File);
+        const jsonFiles = Object.keys(zipEntries).filter((fileName) => fileName.endsWith('.json'));
         if (jsonFiles.length !== 1) {
             this.alertService.error('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
             return;
         }
-        const exerciseDetails = await jsonFiles[0].async('string');
+        const exerciseDetails = strFromU8(zipEntries[jsonFiles[0]]);
 
-        const exerciseJson = JSON.parse(exerciseDetails) as Exercise;
+        const exerciseJson = parseJson<Exercise>(exerciseDetails);
         if (exerciseJson.type !== exerciseType) {
             this.alertService.error('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
             return;
         }
         switch (exerciseType) {
             case ExerciseType.PROGRAMMING:
-                this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                this.exercise = parseJson<ProgrammingExercise>(exerciseDetails);
                 const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
                     const buildConfig = new ProgrammingExerciseBuildConfig();
-                    const raw = exerciseJson as unknown as Partial<ProgrammingExerciseBuildConfig>;
+                    // Old exports serialized the build-config fields flat on the exercise object (before they were nested
+                    // under buildConfig). Those fields are disjoint from Exercise, so we view the parsed exercise as also
+                    // carrying the optional legacy build-config fields and copy them across.
+                    const raw = exerciseJson as Exercise & Partial<ProgrammingExerciseBuildConfig>;
                     Object.assign(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
-                    progEx.auxiliaryRepositories!.forEach((repo, index) => {
+                    progEx.auxiliaryRepositories.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;
                     });
                 }

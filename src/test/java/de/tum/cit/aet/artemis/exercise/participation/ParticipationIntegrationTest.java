@@ -112,6 +112,7 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -834,6 +835,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setSuccessful(null);
@@ -864,6 +867,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
@@ -890,6 +895,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -907,6 +914,35 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
         assertThat(invokedResult.getScore()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestProgrammingFeedbackWithSubmittedSubmissionWithoutResult() throws Exception {
+        setupAthenaForExercise(programmingExercise, ATHENA_MODULE_PROGRAMMING_TEST);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+
+        var participation = createParticipationWithRepository(programmingExercise);
+        participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
+        var submissions = submissionRepository.findAllByParticipationId(participation.getId());
+        assertThat(submissions).hasSize(1);
+
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().getLast();
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isTrue();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+        assertThat(invokedResult.getScore()).isZero();
     }
 
     @Test
@@ -1024,6 +1060,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participation = participationUtilService.addTeamParticipationForProgrammingExercise(teamExercise, team);
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -1145,6 +1183,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -1407,7 +1447,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+        request.putAndExpectError("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "examexercise");
     }
 
@@ -1422,7 +1462,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+        request.putAndExpectError("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "quizexercise");
     }
 
@@ -1438,7 +1478,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
         final var participationsToUpdate = new DueDateUpdateDTOList((StudentParticipation) submission.getParticipation());
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
@@ -1463,7 +1503,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation, participation2);
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
@@ -1482,7 +1522,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         final var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).isEmpty();
@@ -1501,7 +1541,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).isEmpty(); // individual due date should remain null
@@ -1523,7 +1563,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
@@ -1546,7 +1586,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
-        final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
+        final var response = request.putWithResponseBodyList("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
@@ -1616,8 +1656,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1638,8 +1678,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1651,8 +1691,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
         assertThat(participations).hasSize(1);
@@ -1668,8 +1708,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
         assertThat(participations).hasSize(1);
@@ -1685,8 +1725,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
         assertThat(dbParticipation).isNotNull();
@@ -1702,8 +1742,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
         assertThat(participations).isPresent();
@@ -1719,8 +1759,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
+        var actualParticipation = request.get("/api/text/participations/" + participation.getId() + "/text-editor", HttpStatus.OK, TextParticipationDTO.class);
+        assertThat(actualParticipation.id()).isEqualTo(participation.getId());
 
         participationDeletionService.deleteAllByTeamId(team.getId());
 
@@ -1851,7 +1891,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participation = createParticipationWithRepository(programmingExercise);
 
-        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());

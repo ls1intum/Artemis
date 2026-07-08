@@ -831,7 +831,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return an unmodifiable list of all file names under the given path
      */
     private List<String> listAllFilesInPath(Path path) {
-        List<String> allRepoFiles = Collections.emptyList();
+        List<String> allRepoFiles = List.of();
         try (Stream<Path> walk = Files.walk(path)) {
             allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(fileName -> !fileName.contains(File.separator + ".git" + File.separator)).toList();
         }

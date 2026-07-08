@@ -45,9 +45,11 @@
                     <jhi-code-button
                         [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
-                        [participations]="[participation()]"
+                        [participations]="participation() ? [participation()] : []"
                         [exercise]="exercise()"
                         [repositoryUri]="repositoryUri()"
+                        [repositoryType]="repositoryType()"
+                        [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
                         [routerLinkForRepositoryView]="[]"
                     />
                 }

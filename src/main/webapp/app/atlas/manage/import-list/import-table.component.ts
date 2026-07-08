@@ -1,13 +1,14 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -26,7 +27,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [NgbPagination, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
+    imports: [PaginatorModule, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })
@@ -67,14 +68,22 @@ export class ImportTableComponent<T extends BaseEntity> {
 
     constructor() {
         effect(() => {
-            untracked(async () => await this.loadData());
+            void untracked(async () => await this.loadData());
         });
     }
 
+    /**
+     * Runs the current paginated search and applies its result to the table.
+     *
+     * Several searches can be in flight simultaneously (the initial unfiltered load plus debounced loads
+     * issued while typing) and their responses may return out of order. A response is therefore only applied
+     * when the search state it was issued with still matches the current state; otherwise a newer request has
+     * superseded it and the stale response is discarded so the table never shows results for an old query.
+     */
     private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
-            const searchState = <SearchTermPageableSearch>{
+            const searchState = {
                 searchTerm: this.searchTerm(),
                 page: this.page(),
                 sortedColumn: this.sortedColumn(),
@@ -82,6 +91,15 @@ export class ImportTableComponent<T extends BaseEntity> {
                 pageSize: this.pageSize(),
             };
             const result = await lastValueFrom(this.pagingService.search(searchState));
+            // A newer request has superseded this one; discard its (now stale) response.
+            if (
+                searchState.searchTerm !== this.searchTerm() ||
+                searchState.page !== this.page() ||
+                searchState.sortedColumn !== this.sortedColumn() ||
+                searchState.sortingOrder !== this.sortingOrder()
+            ) {
+                return;
+            }
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {
@@ -97,7 +115,7 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
-        return <SearchResult<T>>{
+        return {
             ...searchResults,
             resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)),
         };
@@ -113,6 +131,11 @@ export class ImportTableComponent<T extends BaseEntity> {
     protected async setPage(page: number): Promise<void> {
         this.page.set(page);
         await this.loadData();
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    protected onPageChange(event: PaginatorState): void {
+        void this.setPage((event.page ?? 0) + 1);
     }
 
     protected search(): void {

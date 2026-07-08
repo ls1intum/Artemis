@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -19,13 +19,13 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faThLarge, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -36,8 +36,12 @@ import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
+import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -64,8 +68,9 @@ import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/compo
         ArtemisTranslatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        ServerAdministrationComponent,
         GlobalSearchNavbarComponent,
+        ImageComponent,
+        SlicePipe,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -83,10 +88,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly currentCourseContextService = inject(CurrentCourseContextService);
 
     protected readonly faBars = faBars;
-    protected readonly faThLarge = faThLarge;
-    protected readonly faThList = faThList;
     protected readonly faUser = faUser;
     protected readonly faCog = faCog;
     protected readonly faWrench = faWrench;
@@ -95,7 +99,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faBook = faBook;
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
+    protected readonly faUserShield = faUserShield;
 
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);
@@ -112,7 +118,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
-    breadcrumbSubscriptions: Subscription[];
+    breadcrumbSubscriptions: Subscription[] = [];
     readonly isCollapsed = signal<boolean>(undefined!);
     readonly iconsMovedToMenu = signal<boolean>(undefined!);
     readonly isNavbarNavVertical = signal<boolean>(undefined!);
@@ -121,23 +127,31 @@ export class NavbarComponent implements OnInit, OnDestroy {
     atlasEnabled = false;
     examEnabled = false;
     localCIActive = false;
-    ltiEnabled: boolean;
+    ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
     readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
+    readonly currentCourse = this.currentCourseContextService.course;
+    readonly currentRoute = getCurrentRouteSignal(this.router);
+    readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
+    readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
+    readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
+    readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
 
-    courseTitle?: string;
-    exerciseTitle?: string;
-    lectureTitle?: string;
-    examTitle?: string;
+    courseTitle = signal<string | undefined>(undefined);
+    exerciseTitle = signal<string | undefined>(undefined);
+    lectureTitle = signal<string | undefined>(undefined);
+    examTitle = signal<string | undefined>(undefined);
 
-    private standardizedCompetencySubscription: Subscription;
-    private globalSearchSubscription: Subscription;
-    private authStateSubscription: Subscription;
-    private routerEventSubscription: Subscription;
-    private queryParamsSubscription: Subscription;
-    private examStartedSubscription: Subscription;
+    // Assigned lazily in ngOnInit()/route handlers (some only when a feature is active) and torn down defensively
+    // in ngOnDestroy(), so they are genuinely optional rather than definitely assigned.
+    private standardizedCompetencySubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private authStateSubscription?: Subscription;
+    private routerEventSubscription?: Subscription;
+    private queryParamsSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -162,15 +176,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
-            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
             const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
                 neededWidthToDisplayCollapsedOptionsHorizontally += 200;
-            }
-            if (hasServerAdminOption) {
-                neededWidthToNotRequireCollapse += 225;
-                neededWidthToDisplayCollapsedOptionsHorizontally += 225;
             }
         } else {
             // For login screen, we only see language and theme selectors which are smaller
@@ -208,7 +217,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currAccount.set(user);
                     this.passwordResetEnabled.set(user?.internal || false);
                     this.onResize();
@@ -811,12 +820,92 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/sign-in']).then((res) => {
+        void this.router.navigate(['/sign-in']).then((res) => {
             if (res) {
                 this.participationWebsocketService.resetLocalCache();
                 this.loginService.logout(true);
             }
         });
+    }
+
+    getCourseLink(courseId: number | undefined): (string | number)[] | undefined {
+        if (!courseId) {
+            return undefined;
+        }
+        return this.router.url.startsWith('/course-management') ? ['/course-management', courseId] : ['/courses', courseId];
+    }
+
+    private isStudentCourseViewRoute(url: string): boolean {
+        return /(^|\/)courses(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private isCourseManagementViewRoute(url: string): boolean {
+        return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
+    }
+
+    private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        const courseId = course?.id?.toString();
+
+        const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseStudentPath, 'lectures'] },
+            { urlParts: ['communication'], targetPath: [...baseStudentPath, 'communication'] },
+            { urlParts: ['learning-path-management'], targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlParts: ['competency-management'], targetPath: [...baseStudentPath, 'competencies'] },
+            { urlParts: ['faqs'], targetPath: [...baseStudentPath, 'faq'] },
+            { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
+            { urlParts: ['course-statistics'], targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+
+        if (matchedRoute) {
+            return matchedRoute.targetPath;
+        }
+        return baseStudentPath;
+    }
+
+    private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        const courseId = course?.id?.toString();
+        const isAtLeastEditor = !!course?.isAtLeastEditor;
+        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
+        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
+
+        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+        const routeMappings = [
+            { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
+            { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
+            { urlParts: ['lectures'], targetPath: [...baseManagementPath, 'lectures'] },
+            { urlParts: ['communication'], targetPath: [...baseManagementPath, 'communication'] },
+            { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-path-management'] },
+            { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
+            { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
+            { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return route.urlParts.some((urlPart) => url.includes(urlPart));
+        });
+
+        if (!matchedRoute) {
+            return baseManagementPath;
+        }
+
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
+        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+            return baseManagementPath;
+        }
+
+        return matchedRoute.targetPath;
     }
 
     toggleNavbar() {
@@ -893,7 +982,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // Include the most specific title into the tab title, but only if the title is meant to be displayed to the user, i.e. should be translated.
         const breadcrumbs = this.breadcrumbs();
         const generalTitle = breadcrumbs[breadcrumbs.length - 1].translate ? this.translateService.instant(breadcrumbs[breadcrumbs.length - 1].label) : undefined;
-        const titles = [generalTitle, this.exerciseTitle, this.examTitle, this.lectureTitle, this.courseTitle].filter((title) => title !== undefined).join(' | ');
+        const titles = [generalTitle, this.exerciseTitle(), this.examTitle(), this.lectureTitle(), this.courseTitle()].filter((title) => title !== undefined).join(' | ');
         // No need have a dynamic title on the start page -> use the title defined in the Router modules.
         if (titles && breadcrumbs.length > 1) {
             this.titleService.setTitle(titles);
@@ -905,9 +994,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     initTabTitles() {
         // The course title is not set to undefined, as there is a change detection in the setTabTitle Method
-        this.exerciseTitle = undefined;
-        this.lectureTitle = undefined;
-        this.examTitle = undefined;
+        this.exerciseTitle.set(undefined);
+        this.lectureTitle.set(undefined);
+        this.examTitle.set(undefined);
     }
 
     /**
@@ -918,20 +1007,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     setTabTitles(type: EntityType, title: string) {
         switch (type) {
             case EntityType.COURSE:
-                if (this.courseTitle != title) {
-                    this.courseTitle = title;
+                if (this.courseTitle() !== title) {
+                    this.courseTitle.set(title);
                     // If the courseTitle changes, we need to rebuild the tab titles
                     this.buildTabTitles();
                 }
                 break;
             case EntityType.EXERCISE:
-                this.exerciseTitle = title;
+                this.exerciseTitle.set(title);
                 break;
             case EntityType.EXAM:
-                this.examTitle = title;
+                this.examTitle.set(title);
                 break;
             case EntityType.LECTURE:
-                this.lectureTitle = title;
+                this.lectureTitle.set(title);
                 break;
         }
     }
@@ -960,8 +1049,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 }
 
+/** Instantiated via `new Breadcrumb()` and populated field-by-field in setBreadcrumb(), hence the definite-assignment (!) markers. */
 class Breadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }

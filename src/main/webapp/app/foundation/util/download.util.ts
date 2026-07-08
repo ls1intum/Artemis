@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 
 export function downloadZipFileFromResponse(response: HttpResponse<Blob>): void {
     if (response.body) {
@@ -26,14 +26,16 @@ export function downloadFile(blob: Blob, filename: string) {
     window.URL.revokeObjectURL(url);
 }
 
-export function downloadStream(data: any, type: string, filename: string) {
-    const blob = new Blob([data], { type });
+export function downloadStream(data: BlobPart | null, type: string, filename: string) {
+    // The array element is intentionally passed through unchanged (callers supply an HttpResponse body that is typed
+    // Blob | null); a null slips through to Blob exactly as before, so runtime behavior is preserved.
+    const blob = new Blob([data as BlobPart], { type });
     downloadFile(blob, `${filename || 'file'}.pdf`);
 }
 
-export function downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
-    Promise.allSettled(filePromises).then(() => {
-        zip.generateAsync({ type: 'blob' })
+export function downloadZipFromFilePromises(zip: ZipBuilder, filePromises: Promise<void | File>[], zipFileName: string) {
+    void Promise.allSettled(filePromises).then(() => {
+        zip.generateBlob()
             .then((zipBlob) => {
                 downloadFile(zipBlob, `${zipFileName}.zip`);
             })

@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -818,7 +817,7 @@ public class ParticipationService {
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
+            return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
         }
 
         List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
@@ -910,7 +909,7 @@ public class ParticipationService {
                 search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
+            return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
         }
 
         // Step 2: Load full entity data for those IDs

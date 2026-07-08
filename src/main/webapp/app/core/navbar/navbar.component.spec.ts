@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -28,6 +29,11 @@ class StubLoadingNotificationComponent {}
 class StubThemeSwitchComponent {
     popoverPlacement = input<string>();
 }
+
+@Component({ selector: 'jhi-image', template: '' })
+class StubImageComponent {
+    src = input<string>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -53,11 +59,19 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 import { BehaviorSubject } from 'rxjs';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { LoginService } from 'app/core/login/login.service';
 
 class MockBreadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }
 
 describe('NavbarComponent', () => {
@@ -68,6 +82,7 @@ describe('NavbarComponent', () => {
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
+    let currentCourseContextService: CurrentCourseContextService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -118,22 +133,28 @@ describe('NavbarComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: LoginService, useValue: { logout: vi.fn() } },
                 { provide: LoadingNotificationService, useValue: { loadingStatus: new BehaviorSubject(false) } },
             ],
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent],
                 },
                 add: {
-                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent],
+                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent, StubImageComponent],
                 },
             })
             .compileComponents();
         fixture = TestBed.createComponent(NavbarComponent);
         component = fixture.componentInstance;
+        router.navigate.mockClear();
+        router.navigateByUrl.mockClear();
         examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
+        currentCourseContextService = TestBed.inject(CurrentCourseContextService);
+        currentCourseContextService.clearCourse();
         entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
@@ -146,6 +167,125 @@ describe('NavbarComponent', () => {
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should display the current course next to the logo', () => {
+        const course = { id: 1, title: 'Course1', courseIconPath: 'path/to/icon.png' } as Course;
+        currentCourseContextService.setCourse(course);
+
+        fixture.detectChanges();
+
+        const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
+        expect(titleElement).toBeTruthy();
+        expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
+    });
+
+    it('should display a course initial if the current course has no icon', () => {
+        currentCourseContextService.setCourse({ id: 1, title: 'Course1' } as Course);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it('should link the current course to the management overview when in a management route', () => {
+        router.setUrl('/course-management/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/course-management', 1]);
+    });
+
+    it('should link the current course to the student overview when in a student route', () => {
+        router.setUrl('/courses/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/courses', 1]);
+    });
+
+    describe('perspective switch links', () => {
+        const course = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            tutorialGroupsConfiguration: {},
+        } as Course;
+
+        beforeEach(() => {
+            currentCourseContextService.setCourse(course);
+        });
+
+        it.each([
+            ['/course-management/123/exams/1/edit', ['/courses', '123', 'exams']],
+            ['/course-management/123/exercises/new', ['/courses', '123', 'exercises']],
+            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures']],
+            ['/course-management/123/communication?conversationId=123', ['/courses', '123', 'communication']],
+            ['/course-management/123/learning-path-management', ['/courses', '123', 'learning-path']],
+            ['/course-management/123/competency-management', ['/courses', '123', 'competencies']],
+            ['/course-management/123/faqs/new', ['/courses', '123', 'faq']],
+            ['/course-management/123/tutorial-groups/configuration/new', ['/courses', '123', 'tutorial-groups']],
+            ['/course-management/123/tutorial-groups-checklist', ['/courses', '123', 'tutorial-groups']],
+            ['/course-management/123/course-statistics', ['/courses', '123', 'statistics']],
+        ])('should link from management route %s to corresponding student route', (url, expectedLink) => {
+            router.setUrl(url);
+
+            expect(component.studentViewLink()).toEqual(expectedLink);
+        });
+
+        it('should default student view link to the course overview when route has no student equivalent', () => {
+            router.setUrl('/course-management/123/build-overview');
+
+            expect(component.studentViewLink()).toEqual(['/courses', '123']);
+        });
+
+        it.each([
+            ['/courses/123/exams/1', ['/course-management', '123', 'exams']],
+            ['/courses/123/exercises/programming-exercises/1', ['/course-management', '123', 'exercises']],
+            ['/courses/123/lectures/1', ['/course-management', '123', 'lectures']],
+            ['/courses/123/communication?conversationId=123', ['/course-management', '123', 'communication']],
+            ['/courses/123/learning-path', ['/course-management', '123', 'learning-path-management']],
+            ['/courses/123/competencies', ['/course-management', '123', 'competency-management']],
+            ['/courses/123/faq', ['/course-management', '123', 'faqs']],
+            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups-checklist']],
+            ['/courses/123/statistics', ['/course-management', '123', 'course-statistics']],
+        ])('should link from student route %s to corresponding management route', (url, expectedLink) => {
+            router.setUrl(url);
+
+            expect(component.managementViewLink()).toEqual(expectedLink);
+        });
+
+        it('should default management view link to the course management overview when route has no management equivalent', () => {
+            router.setUrl('/courses/123/settings');
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it.each([
+            [{ isAtLeastEditor: false }, '/courses/123/lectures/1'],
+            [{ isAtLeastInstructor: false }, '/courses/123/learning-path'],
+            [{ isAtLeastInstructor: false }, '/courses/123/competencies'],
+            [{ isAtLeastInstructor: false, tutorialGroupsConfiguration: undefined }, '/courses/123/tutorial-groups'],
+        ])('should default management view link to the course management overview when access is missing', (courseOverrides, url) => {
+            currentCourseContextService.setCourse({ ...course, ...courseOverrides });
+            router.setUrl(url);
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it('should link to tutorial group management for non-instructors when tutorial group configuration exists', () => {
+            currentCourseContextService.setCourse({ ...course, isAtLeastInstructor: false, tutorialGroupsConfiguration: {} });
+            router.setUrl('/courses/123/tutorial-groups');
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+        });
+
+        it('should omit the course id from base perspective links when no current course is available', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses');
+
+            expect(component.studentViewLink()).toEqual(['/courses']);
+            expect(component.managementViewLink()).toEqual(['/course-management']);
+        });
     });
 
     it('should make api call when logged in user changes language', () => {
@@ -284,6 +424,25 @@ describe('NavbarComponent', () => {
             label: 'Test Organization',
             translate: false,
             uri: '/admin/organization-management/1/',
+        } as MockBreadcrumb);
+    });
+
+    it('should show user management breadcrumbs for the admin root', () => {
+        const testUrl = '/admin';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs()).toHaveLength(2);
+        expect(component.breadcrumbs()[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs()[1]).toEqual({
+            label: 'global.menu.admin.sidebar.users',
+            translate: true,
+            uri: '/admin/user-management/',
         } as MockBreadcrumb);
     });
 
@@ -473,6 +632,24 @@ describe('NavbarComponent', () => {
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/assessment-dashboard/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should show the exercise title and correct exercise link for generic exercise routes', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            const testUrl = '/course-management/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(exerciseService.find).toHaveBeenCalledOnce();
+            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Programming Exercise',
+                translate: false,
+                uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
         });
 
@@ -742,6 +919,61 @@ describe('NavbarComponent', () => {
     });
 
     describe('Special student route breadcrumb cases', () => {
+        it.each([
+            {
+                url: '/courses/1/code-editor/2',
+                label: 'artemisApp.editor.breadCrumbTitle',
+            },
+            {
+                url: '/courses/1/exams/test-exam/2',
+                label: 'artemisApp.courseOverview.menu.testExam',
+            },
+            {
+                url: '/courses/1/exercises/2/participate/3',
+                label: 'artemisApp.submission.detail.title',
+            },
+        ])('should use translated labels for student route id segment %s', ({ url, label }) => {
+            router.setUrl(url);
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toMatchObject({
+                label,
+                translate: true,
+                uri: url + '/',
+            });
+        });
+
+        it('should resolve a student exercise route without an exercise type segment', () => {
+            const testUrl = '/courses/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Exercise',
+                translate: false,
+                uri: '/courses/1/exercises/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should resolve a student tutorial lecture route', () => {
+            const testUrl = '/courses/1/tutorial-lectures/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.LECTURE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Lecture',
+                translate: false,
+                uri: '/courses/1/tutorial-lectures/2/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
             const testUrl = `/courses/1/exercises/${exType}/2`;
             router.setUrl(testUrl);
@@ -763,6 +995,31 @@ describe('NavbarComponent', () => {
         });
     });
 
+    it('should collapse and toggle the navbar', () => {
+        component.isNavbarCollapsed.set(false);
+
+        component.collapseNavbar();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.toggleNavbar();
+        expect(component.isNavbarCollapsed()).toBe(false);
+    });
+
+    it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const loginService = TestBed.inject(LoginService);
+        const resetLocalCacheSpy = vi.spyOn(participationWebsocketService, 'resetLocalCache');
+        const logoutSpy = vi.spyOn(loginService, 'logout');
+
+        component.logout();
+        await Promise.resolve();
+
+        expect(router.navigate).toHaveBeenCalledWith(['/sign-in']);
+        expect(resetLocalCacheSpy).toHaveBeenCalledOnce();
+        expect(logoutSpy).toHaveBeenCalledWith(true);
+        expect(component.isNavbarCollapsed()).toBe(true);
+    });
+
     it.each([
         {
             width: 1200,
@@ -774,7 +1031,7 @@ describe('NavbarComponent', () => {
             width: 1100,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
@@ -786,7 +1043,7 @@ describe('NavbarComponent', () => {
             width: 550,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
         },
         {
             width: 1000,

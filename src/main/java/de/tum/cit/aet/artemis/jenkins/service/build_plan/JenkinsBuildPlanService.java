@@ -84,11 +84,12 @@ public class JenkinsBuildPlanService {
     /**
      * Creates a build plan for the programming exercise
      *
-     * @param exercise      the programming exercise
-     * @param planKey       the name of the plan
-     * @param repositoryUri the uri of the vcs repository
+     * @param exercise                   the programming exercise
+     * @param planKey                    the name of the plan
+     * @param repositoryUri              the uri of the vcs repository
+     * @param forceCreateStoredBuildPlan whether to create the stored build plan even if one already exists
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri) {
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, boolean forceCreateStoredBuildPlan) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUris = getInternalRepositoryUris(exercise, repositoryUri);
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
 
@@ -102,7 +103,9 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
 
         // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+        if (forceCreateStoredBuildPlan || buildPlanRepository.findByProgrammingExercises_Id(exercise.getId()).isEmpty()) {
+            jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+        }
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
 
         triggerBuild(jobFolder, job);
@@ -202,8 +205,8 @@ public class JenkinsBuildPlanService {
         final Long newExerciseId = newExercise.getId();
         final String newBuildPlanAccessSecret = newExercise.getBuildConfig().getBuildPlanAccessSecret();
 
-        String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
-        String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
+        String toBeReplaced = "/%d/build-plan?secret=%s".formatted(previousExerciseId, previousBuildPlanAccessSecret);
+        String replacement = "/%d/build-plan?secret=%s".formatted(newExerciseId, newBuildPlanAccessSecret);
 
         try {
             JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);

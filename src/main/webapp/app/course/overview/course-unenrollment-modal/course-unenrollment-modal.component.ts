@@ -25,7 +25,7 @@ export class CourseUnenrollmentModalComponent implements OnInit {
     readonly visible = model<boolean>(false);
     readonly course = input<Course | undefined>();
 
-    confirmationForm: FormGroup;
+    confirmationForm!: FormGroup; // built in ngOnInit()
 
     // Icons
     faXmark = faXmark;
@@ -68,7 +68,7 @@ export class CourseUnenrollmentModalComponent implements OnInit {
         this.courseService.unenrollFromCourse(courseValue!.id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.courseOverview.exerciseList.details.unenrollmentModal.unenrollmentSuccessful');
-                this.router.navigate(['/']);
+                void this.router.navigate(['/']);
             },
             error: (error: string) => {
                 this.alertService.error(error);

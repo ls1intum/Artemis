@@ -1,8 +1,10 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
-import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
@@ -33,7 +35,7 @@ export interface FeedbackAnalysisState {
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [SortIconComponent, NgbModule, NgbPagination, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
+    imports: [SortIconComponent, NgbTooltipModule, PaginatorModule, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
@@ -57,7 +59,6 @@ export class FeedbackAnalysisComponent {
 
     readonly content = signal<SearchResult<FeedbackDetail>>({ resultsOnPage: [], numberOfPages: 0 });
     readonly totalItems = signal<number>(0);
-    readonly collectionsSize = computed(() => this.content().numberOfPages * this.pageSize());
 
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
     readonly faSort = faSort;
@@ -99,7 +100,7 @@ export class FeedbackAnalysisComponent {
 
     constructor() {
         effect(() => {
-            untracked(async () => {
+            void untracked(async () => {
                 await this.loadData();
             });
         });
@@ -175,7 +176,12 @@ export class FeedbackAnalysisComponent {
 
     setPage(newPage: number): void {
         this.page.set(newPage);
-        this.loadData();
+        void this.loadData();
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPageChange(event: PaginatorState): void {
+        this.setPage((event.page ?? 0) + 1);
     }
 
     async search(searchTerm: string): Promise<void> {
@@ -196,7 +202,7 @@ export class FeedbackAnalysisComponent {
             this.sortedColumn.set(column);
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
-        this.loadData();
+        void this.loadData();
     }
 
     getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
@@ -231,14 +237,14 @@ export class FeedbackAnalysisComponent {
             occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
             errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
         };
-        modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
+        modalRef.componentInstance.filterApplied.subscribe((filters: FilterData) => {
             this.applyFilters(filters);
         });
     }
 
     applyFilters(filters: FilterData): void {
         this.selectedFiltersCount.set(this.countAppliedFilters(filters));
-        this.loadData();
+        void this.loadData();
     }
 
     countAppliedFilters(filters: FilterData): number {
@@ -290,7 +296,7 @@ export class FeedbackAnalysisComponent {
                     await this.router.navigateByUrl(urlTree);
                 }
             } catch (error) {
-                this.alertService.error(error);
+                this.alertService.error(getErrorMessage(error));
             }
         });
         try {
@@ -304,6 +310,6 @@ export class FeedbackAnalysisComponent {
 
     toggleGroupFeedback(): void {
         this.groupFeedback.update((current) => !current);
-        this.loadData();
+        void this.loadData();
     }
 }

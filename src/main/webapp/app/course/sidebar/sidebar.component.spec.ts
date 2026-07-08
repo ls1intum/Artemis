@@ -30,6 +30,7 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 describe('SidebarComponent', () => {
     setupTestBed({ zoneless: true });
@@ -72,6 +73,47 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('sidebarData', {
             sidebarType: 'default',
         } as SidebarData);
+        fixture.componentRef.setInput('collapseState', {});
+        fixture.componentRef.setInput('sidebarItemAlwaysShow', {});
+    });
+
+    it('should display the optional page title in the sidebar header', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.changeDetectorRef.detectChanges();
+
+        const titleComponent = fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent)).componentInstance as CourseTitleBarTitleComponent;
+
+        expect(titleComponent.title()).toBe('overview.exercises');
+    });
+
+    it('should display the sidebar collapse button in the sidebar header while expanded', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+    });
+
+    it('should hide the sidebar collapse button in the sidebar header while collapsed', () => {
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
+
+    it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
+        const emitSpy = vi.spyOn(component.toggleSidebar, 'emit');
+        fixture.componentRef.setInput('pageTitle', 'overview.exercises');
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should filter sidebar items based on search criteria', () => {
@@ -151,7 +193,7 @@ describe('SidebarComponent', () => {
     });
 
     describe('openFilterExercisesLink', () => {
-        const FILTER_LINK_SELECTOR = '.text-primary a';
+        const FILTER_LINK_SELECTOR = '.filter-link';
 
         it('should display the filter link', () => {
             fixture.componentRef.setInput('showFilter', true);

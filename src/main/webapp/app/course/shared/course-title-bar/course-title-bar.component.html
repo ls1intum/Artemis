@@ -1,24 +1,12 @@
 <div id="course-title-bar" class="module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top" [style.display]="displayStyle()">
     <div class="align-self-center d-flex">
         @if (hasSidebar()) {
-            <button
-                [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                [ngClass]="{ 'is-collapsed': isSidebarCollapsed(), 'is-communication-module': pageTitle() === 'communication' }"
-                triggers="hover"
-                class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
-                (click)="toggleSidebar.emit()"
-            >
-                <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
-                <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-                    <fa-icon
-                        [fixedWidth]="true"
-                        [icon]="faChevronRight"
-                        class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
-                        size="xs"
-                    />
-                    <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
-                </div>
-            </button>
+            <jhi-course-sidebar-toggle-button
+                class="me-3"
+                [isCollapsed]="isSidebarCollapsed()"
+                [isCommunicationModule]="pageTitle() === 'communication'"
+                (toggleSidebar)="toggleSidebar.emit()"
+            />
         }
 
         <div class="align-self-center">

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,14 +68,14 @@ public class EurekaHazelcastDiscoveryStrategy extends AbstractDiscoveryStrategy 
         log.info("Hazelcast discovery strategy discoverNodes() called");
         if (eurekaInstanceHelper == null) {
             log.warn("EurekaInstanceHelper not available - cannot discover core nodes. Returning empty list.");
-            return Collections.emptyList();
+            return List.of();
         }
 
         log.info("EurekaInstanceHelper is available, querying for core node addresses");
         List<String> addresses = eurekaInstanceHelper.discoverCoreNodeAddresses();
         if (addresses.isEmpty()) {
             log.warn("No core nodes discovered from service registry. Returning empty list.");
-            return Collections.emptyList();
+            return List.of();
         }
 
         log.info("Discovered {} core node(s) from service registry: {}", addresses.size(), addresses);

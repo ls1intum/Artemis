@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.redisson;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,7 +41,7 @@ public class RedisClientListResolver {
         }
         catch (RuntimeException e) {
             log.error("Failed to fetch Redis client list within timeout", e);
-            return Collections.emptySet();
+            return Set.of();
         }
 
         Set<String> uniqueClients = new HashSet<>();

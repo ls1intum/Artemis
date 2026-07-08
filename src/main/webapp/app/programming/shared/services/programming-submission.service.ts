@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -59,7 +59,7 @@ export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
-    triggerBuild: (participationId: number) => Observable<any>;
+    triggerBuild: (participationId: number) => Observable<object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
@@ -307,12 +307,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
-                                const programmingSubmissionError = submission as ProgrammingSubmissionError;
-                                this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
+                                const programmingSubmissionError = submission;
+                                // Resolve the exercise id through the mapping instead of the callback-captured exerciseId:
+                                // the shared /user/topic/newSubmissions subscription can carry errors for other participations
+                                // (different exercises), and the mapping is gone once a participation has been cleaned up.
+                                const errorExerciseId = this.participationIdToExerciseId.get(programmingSubmissionError.participationId);
+                                if (errorExerciseId === undefined) {
+                                    return;
+                                }
+                                this.emitFailedSubmission(programmingSubmissionError.participationId, errorExerciseId);
                                 return;
                             }
-                            const programmingSubmission = submission as ProgrammingSubmission;
+                            const programmingSubmission = submission;
                             const submissionParticipationId = programmingSubmission.participation!.id!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIEnabled) {
@@ -370,6 +380,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
                             const submissionParticipationId = submissionProcessing.participationId!;
+                            if (!this.participationIdToExerciseId.has(submissionParticipationId)) {
+                                return;
+                            }
                             const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
 
                             if (!this.isNewestSubmission(submissionProcessing, exerciseId, submissionParticipationId)) {
@@ -452,7 +465,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             // Fallback: Try to fetch the latest result from the server as the websocket connection might have failed
             switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
-            tap((result: Result) => {
+            tap((result: Result | undefined) => {
                 if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
                     // Notify all result subscribers with the latest result if it belongs to the latest submission
                     // This will also trigger the resultObservable above, which emits that the submission is no longer pending
@@ -480,7 +493,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             .subscribe();
     }
 
-    private isResultOfLatestSubmission(result: Result | undefined, exerciseId: number, participationId: number): boolean {
+    private isResultOfLatestSubmission(result: Result | undefined, exerciseId: number, participationId: number): result is Result {
         if (!result || !result.submission) {
             return false;
         }
@@ -550,11 +563,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @return the expected rest time to wait for the build.
      */
     private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission): number {
-        return this.currentExpectedResultETA - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedResultETA - (Date.now() - dayjs(submission.submissionDate).valueOf());
     }
 
     private getExpectedRemainingTimeForQueue(submission: ProgrammingSubmission): number {
-        return this.currentExpectedQueueEstimate - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedQueueEstimate - (Date.now() - dayjs(submission.submissionDate).valueOf());
     }
 
     /**
@@ -583,7 +596,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     return false;
                 }
                 // If we already have a value cached for the participation we don't override it.
-                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations![0].id!]) {
+                if (!forceCacheOverride && !!this.submissionSubjects[exercise.studentParticipations[0].id!]) {
                     return false;
                 }
                 // Without submissions, we can't determine if the latest submission is pending.
@@ -627,9 +640,21 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param fetchPending whether the latest pending submission should be fetched from the server
      */
     public getLatestPendingSubmissionByParticipationId(participationId: number, exerciseId: number, personal: boolean, forceCacheOverride = false, fetchPending = true) {
+        // Record the participation -> exercise mapping eagerly and synchronously, the moment a subscriber expresses
+        // interest in this participation. The shared websocket handlers (/user/topic/newSubmissions and
+        // /user/topic/submissionProcessing) gate on participationIdToExerciseId.has(...) to drop events for
+        // participations the client no longer tracks. The mapping was previously only set inside
+        // setupWebsocketSubscriptionForLatestPendingSubmission, which runs AFTER the per-participation
+        // latest-pending-submission GET resolves. While that GET is in flight, a build triggered right after
+        // (re)subscribing pushes its "building" event on the already-open shared topic (opened by another
+        // participation's card) before the mapping exists, so the guard silently drops it — the course-overview
+        // sidebar card then never shows the building indicator (a flaky, timing-dependent miss). Setting it here closes
+        // that window and also restores the mapping on the cached-subject fast path below, which a prior
+        // navigate-away cleanup (unsubscribeForLatestSubmissionOfParticipation) may have deleted.
+        this.participationIdToExerciseId.set(participationId, exerciseId);
         const subject = this.submissionSubjects[participationId];
         if (!forceCacheOverride && subject) {
-            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined));
         }
         // If all submission states for the exercise are currently loaded, don't send a new rest request.
         // Instead, wait for the exercise request to finish and return this result
@@ -664,7 +689,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             this.processPendingSubmission(undefined, participationId, exerciseId, personal).subscribe();
         }
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
-        return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
+        return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined));
     }
 
     /**
@@ -683,7 +708,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // We need to check if the submissions for the given exercise are already being fetched, otherwise the call would be done multiple times.
         const preloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (preloadingSubject) {
-            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
+            return preloadingSubject.asObservable().pipe(filter((val) => val !== undefined));
         }
         this.exerciseBuildStateSubjects.set(exerciseId, new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined));
         this.fetchLatestPendingSubmissionsByExerciseId(exerciseId)
@@ -692,8 +717,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 map(this.mapParticipationIdToNumber),
                 switchMap((submissions: Array<[number, ProgrammingSubmission]>) => {
                     if (!submissions.length) {
-                        // This needs to be done as from([]) would stop the stream.
-                        return of([]);
+                        // No pending submissions: emit nothing so the downstream reduce emits its `{}` seed
+                        // (an empty ExerciseSubmissionState). EMPTY completes without a value and keeps the
+                        // switchMap's output typed as Observable<ProgrammingSubmissionStateObj>.
+                        return EMPTY;
                     }
                     return from(submissions).pipe(
                         switchMap(([participationId, submission]): Observable<ProgrammingSubmissionStateObj> => {
@@ -712,15 +739,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.exerciseBuildStateSubjects
             .get(exerciseId)!
             .asObservable()
-            .pipe(filter((val) => val !== undefined)) as Observable<ExerciseSubmissionState>;
+            .pipe(filter((val) => val !== undefined));
     }
 
     getResultEtaInMs() {
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     }
 
-    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
+    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL): Observable<object> {
+        return this.http.post<object>(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {
@@ -803,6 +830,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     this.emitFailedSubmission(participationId, exerciseId);
                     return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
                 }
+                // The initial latest-pending-submission GET returned no pending submission. This GET is a point-in-time
+                // snapshot taken when the subscription was (re)created; under load it can resolve AFTER a build's
+                // submission event has already arrived on the websocket and moved this participation into a live
+                // building/queued state. Emitting HAS_NO_PENDING_SUBMISSION here would clobber that live state, and
+                // under coalesced zoneless change detection the building indicator would then never paint (e.g. the
+                // course-overview sidebar card flickers straight back to the result). Only emit "no pending" when we are
+                // not already tracking a live building/queued state for this participation.
+                const liveState = this.exerciseBuildState[exerciseId]?.[participationId];
+                if (
+                    liveState &&
+                    (liveState.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION || liveState.submissionState === ProgrammingSubmissionState.IS_QUEUED)
+                ) {
+                    return liveState;
+                }
                 this.emitNoPendingSubmission(participationId, exerciseId);
                 return { participationId, submission: undefined, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
             }),
@@ -815,8 +856,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         );
     }
 
-    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission | undefined]>) {
-        return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
+    private mapParticipationIdToNumber(submissions: Array<[string, ProgrammingSubmission]>): Array<[number, ProgrammingSubmission]> {
+        return submissions.map(([participationId, submission]): [number, ProgrammingSubmission] => [parseInt(participationId, 10), submission]);
     }
 
     private mapToExerciseBuildState(exerciseSubmissionState: ExerciseSubmissionState, programmingSubmissionState: ProgrammingSubmissionStateObj) {
@@ -962,6 +1003,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (this.submissionSubjects[participationId]?.observed) {
             return;
         }
+        // The participation is no longer observed, so also release the result-side subscriptions and timers that were
+        // set up alongside the submission subscription (subscribeForNewResult / startResultWaitingTimer /
+        // startQueueEstimateTimer). These were previously only cleared on logout (resetState), so they accumulated for
+        // every distinct participation a user visited within a session — a memory leak on navigate-away-and-back.
+        this.resultSubscriptions[participationId]?.unsubscribe();
+        delete this.resultSubscriptions[participationId];
+        this.resetResultWaitingTimer(participationId);
+        delete this.resultTimerSubscriptions[participationId];
+        this.resetQueueEstimateTimer(participationId);
+        delete this.queueEstimateTimerSubscriptions[participationId];
+        this.participationIdToExerciseId.delete(participationId);
         const submissionTopic = this.submissionTopicsSubscribed.get(participationId);
         if (submissionTopic) {
             this.submissionTopicsSubscribed.delete(participationId);

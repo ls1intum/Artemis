@@ -5,7 +5,7 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription, combineLatest } from 'rxjs';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -35,18 +35,18 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     readonly postComponent = viewChild.required<PostComponent>('post');
     readonly ButtonType = ButtonType;
 
-    courseId: number;
-    plagiarismCaseId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
     readonly plagiarismCase = signal<PlagiarismCase | undefined>(undefined);
 
-    private paramSubscription: Subscription;
+    private paramSubscription?: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     getIcon = getIcon;
     faUser = faUser;
 
     readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
     readonly posts = signal<Post[]>([]);
 
     readonly affectedExerciseRouterLink = signal<(string | number)[]>([]);
@@ -70,7 +70,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                     const plagiarismCase = res.body!;
                     this.plagiarismCase.set(plagiarismCase);
 
-                    const examId = plagiarismCase?.exercise?.exerciseGroup?.exam?.id;
+                    const examId = plagiarismCase.exercise?.examId;
                     if (examId) {
                         // Navigate to the exam result since individual exam exercises are not addressable.
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exams', examId]);
@@ -78,7 +78,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                         this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse(getCourseFromExercise(plagiarismCase.exercise!)!);
+                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle });
 
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({

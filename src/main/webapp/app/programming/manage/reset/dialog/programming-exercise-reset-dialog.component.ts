@@ -32,10 +32,13 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
     programmingExercise: ProgrammingExercise = (this.dialogConfig.data as ProgrammingExerciseResetDialogData).programmingExercise;
 
-    programmingExerciseResetOptions: ProgrammingExerciseResetOptions;
+    programmingExerciseResetOptions: ProgrammingExerciseResetOptions = {
+        deleteParticipationsSubmissionsAndResults: false,
+        recreateBuildPlans: false,
+    };
     readonly isLoading = signal(false);
     readonly resetInProgress = signal(false);
-    confirmText: string;
+    confirmText = '';
 
     versionControlName?: string;
     continuousIntegrationName?: string;
