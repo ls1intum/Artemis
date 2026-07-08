@@ -103,8 +103,17 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
         const studentExam = this.studentExam()!;
         this.studentExamService.updateWorkingTime(this.courseId()!, studentExam.exam!.id!, studentExam.id!, this.workingTimeSeconds()).subscribe({
             next: (res) => {
-                if (res.body) {
-                    this.setStudentExam(res.body);
+                // The response only carries a slimmed-down nested `exam` (no startDate/gracePeriod) and omits `user`/
+                // `exercises`/`examSessions` entirely, so merge just the fields that can actually change (workingTime,
+                // submissionDate) into the already-loaded studentExam instead of replacing it wholesale. Replacing it
+                // would wipe fields the template and isExamOver()/individualEndDate() computeds still depend on.
+                const updatedStudentExam = res.body;
+                if (updatedStudentExam?.workingTime !== undefined) {
+                    const updatedWorkingTime = updatedStudentExam.workingTime;
+                    this.studentExam.update((current) =>
+                        current ? Object.assign(new StudentExam(), current, { workingTime: updatedWorkingTime, submissionDate: updatedStudentExam.submissionDate }) : current,
+                    );
+                    this.workingTimeSeconds.set(updatedWorkingTime);
                 }
                 this.isSavingWorkingTime.set(false);
                 this.alertService.success('artemisApp.studentExamDetail.saveWorkingTimeSuccessful');
