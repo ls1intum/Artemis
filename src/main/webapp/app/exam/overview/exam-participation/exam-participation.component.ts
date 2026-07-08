@@ -401,7 +401,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
             // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
             // retried by the autosave timer. Guarded by studentExam because triggerSave dereferences the current exam.
-            this.triggerSave(false);
+            // Force the save (forceSave=true): the recovery re-send is a plain HTTP request and must NOT be gated on the
+            // WebSocket `connected()` state, which right after a reload has often not re-established yet (especially in a
+            // multi-node cluster). Gating it there would silently defer the recovery to the next autosave cycle, which is
+            // exactly the answer-loss window this recovery path exists to close.
+            this.triggerSave(true);
         }
     }
 
