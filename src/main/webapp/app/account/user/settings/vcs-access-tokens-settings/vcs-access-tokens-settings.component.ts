@@ -44,7 +44,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
 
     readonly currentUser = signal<User | undefined>(undefined);
 
-    private authStateSubscription: Subscription;
+    private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
     expiryDate?: dayjs.Dayjs;
     readonly validExpiryDate = signal(false);
     readonly edit = signal(false);
@@ -57,7 +57,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
-                tap((user: User) => {
+                tap((user: User | undefined) => {
                     this.currentUser.set(user);
                     return user;
                 }),

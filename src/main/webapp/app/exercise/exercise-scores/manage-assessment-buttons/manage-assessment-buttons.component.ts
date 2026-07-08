@@ -36,7 +36,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     readonly refresh = output<void>();
 
     readonly correctionRoundIndices = signal<number[]>(undefined!);
-    cancelConfirmationText: string;
+    cancelConfirmationText!: string; // resolved from the translation service in the constructor before the cancel action can be triggered
     readonly newManualResultAllowed = signal(false);
     examMode = false;
 

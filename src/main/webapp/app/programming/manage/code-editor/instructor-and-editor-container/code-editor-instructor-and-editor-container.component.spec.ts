@@ -2113,7 +2113,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
     it('normalizes CRLF fallback content and enforces LF EOL before binding', () => {
         const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
         const { model } = makeMonacoDoubles();
-        const openFile = vi.fn(() => ({ doc: {}, text: { toString: () => '' }, awareness: {} }));
+        const openFile = vi.fn(() => ({ doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} }));
 
         internals(comp).fileSyncService = {
             isInitialized: vi.fn(() => true),
@@ -2142,7 +2142,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         const newBinding = { destroy: vi.fn() };
         let bindingCallCount = 0;
 
-        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} });
 
         const createFileBindingSpy = vi.spyOn(internals(comp), 'createFileBinding').mockImplementation(() => {
             internals(comp).currentFileBinding = [oldBinding, newBinding][bindingCallCount++];
@@ -2155,7 +2155,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         expect(createFileBindingSpy).toHaveBeenCalledOnce();
 
         // Emit a state replacement for the same file
-        const newText = { toString: () => 'replacement text' } as any;
+        const newText = { toString: () => 'replacement text', toJSON: () => 'replacement text' } as any;
         stateReplaced$.next({ filePath: 'src/Main.java', doc: {} as any, text: newText, awareness: {} as any });
 
         // Old binding must be destroyed before model mutation
@@ -2171,7 +2171,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         const { model } = makeMonacoDoubles();
         const binding = { destroy: vi.fn() };
 
-        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+        internals(comp).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '', toJSON: () => '' }, awareness: {} });
 
         const createFileBindingSpy = vi.spyOn(internals(comp), 'createFileBinding').mockImplementation(() => {
             internals(comp).currentFileBinding = binding;
@@ -2182,7 +2182,7 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
         internals(comp).onFileSyncLoad('src/Main.java');
 
         // Emit for a DIFFERENT file — must be ignored
-        stateReplaced$.next({ filePath: 'src/Other.java', doc: {} as any, text: { toString: () => 'other' } as any, awareness: {} as any });
+        stateReplaced$.next({ filePath: 'src/Other.java', doc: {} as any, text: { toString: () => 'other', toJSON: () => 'other' } as any, awareness: {} as any });
 
         expect(binding.destroy).not.toHaveBeenCalled();
         expect(model.setValue).not.toHaveBeenCalledWith('other');

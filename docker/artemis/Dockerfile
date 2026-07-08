@@ -144,6 +144,17 @@ WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=extractor /extract/app /opt/artemis/app
 
+RUN set -eu; \
+  war_entries="$(jar tf Artemis.war)"; \
+  if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
+    echo "Artemis.war does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."; \
+    exit 1; \
+  fi; \
+  if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
+    echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi
+
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]

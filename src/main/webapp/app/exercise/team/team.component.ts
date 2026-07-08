@@ -69,7 +69,7 @@ export class TeamComponent implements OnInit {
     ];
 
     constructor() {
-        void this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
         });

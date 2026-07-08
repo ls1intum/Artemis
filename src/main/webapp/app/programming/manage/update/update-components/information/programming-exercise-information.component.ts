@@ -122,7 +122,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
 
-    formValid: boolean;
+    formValid!: boolean; // assigned in calculateFormValid() (run by the updateFormStatus effect); parent reads it via `?? false`
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];

@@ -57,13 +57,16 @@ export class MetisConversationService implements OnDestroy {
     private activeConversationSubscription?: Subscription;
     private conversationMembershipSubscription?: Subscription;
 
-    private userId: number;
-    private _courseId: number;
+    private userId!: number; // set in constructor from accountService.identity()
+    private _courseId!: number; // set in setUpConversationService() before any read
 
     private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     constructor() {
-        void this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
+            if (!user) {
+                return;
+            }
             this.userId = user.id!;
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
             this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {

@@ -160,6 +160,7 @@ describe('CourseOverviewComponent', () => {
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
+            data: of({}),
             snapshot: { firstChild: { routeConfig: { path: 'exercises' } } },
         } as ActivatedRoute;
         router = new MockRouter();

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Data } from '@angular/router';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -67,7 +67,8 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isLoading.set(true);
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.route.data.subscribe(({ exam }: { exam: Exam }) => {
+        this.route.data.subscribe((data: Data) => {
+            const exam: Exam = data.exam;
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);

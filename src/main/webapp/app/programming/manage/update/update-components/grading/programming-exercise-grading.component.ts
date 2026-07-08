@@ -63,8 +63,8 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
 
     formValidSignal = signal<boolean>(false);
 
-    formValid: boolean;
-    formEmpty: boolean;
+    formValid!: boolean; // assigned in calculateFormStatus(); left unset so parent's `?? false` / `=== false` reads can distinguish "not yet computed"
+    formEmpty!: boolean; // assigned in calculateFormStatus() (see formValid)
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];

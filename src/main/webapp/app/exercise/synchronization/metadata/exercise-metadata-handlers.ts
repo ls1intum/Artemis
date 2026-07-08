@@ -23,10 +23,14 @@ import { toAuxiliaryRepositories, toBuildConfig } from 'app/exercise/synchroniza
 export interface ExerciseMetadataFieldHandler<T extends Exercise, V = unknown> {
     key: string;
     labelKey: string;
-    getCurrentValue: (exercise: T) => V;
-    getBaselineValue: (exercise: T) => V;
-    getIncomingValue: (snapshot: ExerciseSnapshotDTO) => V;
-    applyValue: (exercise: T, value: V) => void;
+    // Method syntax (not `prop: (…) => V`) is intentional: it makes the members bivariant, so a concrete
+    // `…FieldHandler<Exercise, string | undefined>` remains assignable to the erased `…FieldHandler<Exercise, unknown>`
+    // element type of the handler arrays. Each value round-trips through its own handler (getters ↔ applyValue),
+    // so the variance is safe by construction. Without this, strictFunctionTypes rejects `applyValue`'s `V` parameter.
+    getCurrentValue(exercise: T): V;
+    getBaselineValue(exercise: T): V;
+    getIncomingValue(snapshot: ExerciseSnapshotDTO): V;
+    applyValue(exercise: T, value: V): void;
 }
 
 type ExerciseResolver = () => Exercise;

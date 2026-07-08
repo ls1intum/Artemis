@@ -7,33 +7,34 @@ import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.mode
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
-export class QuizQuestionWithSolutionDTO {
-    public id?: number;
-    public title?: string;
-    public text?: string;
-    public hint?: string;
-    public explanation?: string;
-    public points?: number;
-    public scoringType?: ScoringType;
-    public randomizeOrder = true;
-    public invalid = false;
-    public type?: QuizQuestionType;
-    public exportQuiz = false;
-    public backgroundFilePath?: string;
-    public dropLocations?: DropLocation[];
-    public dragItems?: DragItem[];
-    public correctMappings?: DragAndDropMapping[] | ShortAnswerMapping[];
-    public spots?: ShortAnswerSpot[];
-    public solutions?: ShortAnswerSolution[];
-    public similarityValue?: number;
-    public matchLetterCase?: boolean;
-    public answerOptions?: AnswerOption[];
-    public singleChoice?: boolean;
+export interface QuizQuestionWithSolutionDTO {
+    id?: number;
+    title?: string;
+    text?: string;
+    hint?: string;
+    explanation?: string;
+    points?: number;
+    scoringType?: ScoringType;
+    // Required (not optional) to stay assignable to the QuizQuestion class, which declares these as non-optional.
+    randomizeOrder: boolean;
+    invalid: boolean;
+    type?: QuizQuestionType;
+    exportQuiz: boolean;
+    backgroundFilePath?: string;
+    dropLocations?: DropLocation[];
+    dragItems?: DragItem[];
+    correctMappings?: DragAndDropMapping[] | ShortAnswerMapping[];
+    spots?: ShortAnswerSpot[];
+    solutions?: ShortAnswerSolution[];
+    similarityValue?: number;
+    matchLetterCase?: boolean;
+    answerOptions?: AnswerOption[];
+    singleChoice?: boolean;
 }
 
-export class QuizQuestionTraining {
-    public quizQuestionWithSolutionDTO?: QuizQuestionWithSolutionDTO;
-    public isRated: boolean;
-    public questionIds: number[];
-    public isNewSession: boolean;
+export interface QuizQuestionTraining {
+    quizQuestionWithSolutionDTO?: QuizQuestionWithSolutionDTO;
+    isRated: boolean;
+    questionIds: number[];
+    isNewSession: boolean;
 }

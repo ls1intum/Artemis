@@ -29,13 +29,15 @@ export interface ExerciseHintExplanationInterface {
     explanation?: string;
 }
 
+/** Instantiated and populated after construction (fields assigned once markdown is rendered), hence the definite-assignment (!) markers. */
 export class RenderedQuizQuestionMarkDownElement {
-    text: SafeHtml;
-    hint: SafeHtml;
-    explanation: SafeHtml;
+    text!: SafeHtml; // assigned after construction once the markdown is rendered
+    hint!: SafeHtml; // assigned after construction once the markdown is rendered
+    explanation!: SafeHtml; // assigned after construction once the markdown is rendered
     renderedSubElements: RenderedQuizQuestionMarkDownElement[] = [];
 }
 
+/** Abstract base extended by concrete question types and deserialized from server data; fields are populated after construction. */
 export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, ExerciseHintExplanationInterface {
     public id?: number;
     public title?: string;

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
@@ -162,8 +162,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | undefined
     >(undefined);
 
-    async ngOnInit() {
-        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
+    override async ngOnInit() {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
@@ -198,7 +198,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    protected handleNavigationEndActions(): void {
+    protected override handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
     }
 
@@ -395,7 +395,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return irisItems;
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();

@@ -1,14 +1,16 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TableModule } from 'primeng/table';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN, toPercentage } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-request',
     templateUrl: './metrics-request.component.html',
-    imports: [TranslateDirective, ProgressBarModule, DecimalPipe, KeyValuePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, ProgressBarModule, TableModule, DecimalPipe, KeyValuePipe],
 })
 export class MetricsRequestComponent {
     /**

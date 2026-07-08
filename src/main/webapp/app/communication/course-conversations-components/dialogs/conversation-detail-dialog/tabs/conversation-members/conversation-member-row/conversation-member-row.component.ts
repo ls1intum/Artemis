@@ -61,7 +61,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     conversationMember = input<ConversationUserDTO>();
     readonly onUserNameClicked = output<number>();
 
-    idOfLoggedInUser: number;
+    idOfLoggedInUser!: number; // set in ngOnInit() from the resolved account identity; only read within that callback
 
     readonly isCurrentUser = signal(false);
 
@@ -99,7 +99,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         if (this.conversationMember() && this.activeConversation()) {
-            void this.accountService.identity().then((loggedInUser: User) => {
+            void this.accountService.identity().then((loggedInUser: User | undefined) => {
+                if (!loggedInUser) {
+                    return;
+                }
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
                     this.isCurrentUser.set(true);
