@@ -9,7 +9,7 @@
     [showHeader]="false"
     [closeOnEscape]="false"
     [dismissableMask]="true"
-    contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
+    contentStyleClass="p-0 flex flex-col h-full overflow-hidden"
     position="center"
     styleClass="global-search-dialog"
 >
@@ -49,18 +49,15 @@
         }
     </div>
     <!-- Keyboard hints footer -->
-    <div class="search-footer flex-shrink-0 text-start">
-        <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary w-100 gap-3">
-            <span class="d-flex align-items-center gap-1">
-                <span class="d-flex align-items-center gap-1">
-                    <kbd
-                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
-                        [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate"
-                    >
+    <div class="search-footer shrink-0 text-start">
+        <div class="keyboard-hints flex items-center justify-between text-muted-color w-full gap-3">
+            <span class="flex items-center gap-1">
+                <span class="flex items-center gap-1">
+                    <kbd class="key-hint-small inline-flex items-center font-mono text-muted-color border" [attr.aria-label]="'global.search.arrowUpAriaLabel' | artemisTranslate">
                         <fa-icon [icon]="faArrowUp" aria-hidden="true" />
                     </kbd>
                     <kbd
-                        class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border"
+                        class="key-hint-small inline-flex items-center font-mono text-muted-color border"
                         [attr.aria-label]="'global.search.arrowDownAriaLabel' | artemisTranslate"
                     >
                         <fa-icon [icon]="faArrowDown" aria-hidden="true" />
@@ -68,8 +65,8 @@
                 </span>
                 <span class="ms-2">{{ 'global.search.toNavigate' | artemisTranslate }}</span>
             </span>
-            <span class="d-flex align-items-center gap-1">
-                <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Escape">ESC</kbd>
+            <span class="flex items-center gap-1">
+                <kbd class="key-hint-small inline-flex items-center font-mono text-muted-color border" aria-label="Escape">ESC</kbd>
                 <span class="ms-2">{{ 'global.search.toClose' | artemisTranslate }}</span>
             </span>
         </div>

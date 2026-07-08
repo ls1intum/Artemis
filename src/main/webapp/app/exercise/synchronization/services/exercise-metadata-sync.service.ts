@@ -29,9 +29,13 @@ import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exerc
 export interface ExerciseMetadataSyncContext<T extends Exercise> {
     exerciseId: number;
     exerciseType: ExerciseType;
-    getCurrentExercise: () => T;
-    getBaselineExercise: () => T;
-    setBaselineExercise: (exercise: T) => void;
+    // Method syntax (not `prop: (…) => …`) makes these members bivariant, so a subtype-specific context
+    // (e.g. <ProgrammingExercise>) stays assignable to the erased <Exercise> context the service stores.
+    // Safe by construction: setBaselineExercise only ever receives values read from this same context's
+    // getters (see applySnapshotToBaseline). Without this, strictFunctionTypes rejects the assignment.
+    getCurrentExercise(): T;
+    getBaselineExercise(): T;
+    setBaselineExercise(exercise: T): void;
 }
 
 interface ConflictCandidate {
@@ -150,7 +154,7 @@ export const metadataValuesEqual = (value: unknown, otherValue: unknown): boolea
             // Both absent/invalid → equal; one valid and one not → not equal
             return leftValid === rightValid;
         }
-        return normalizedLeft!.isSame(normalizedRight!);
+        return normalizedLeft!.isSame(normalizedRight);
     }
     return isEqual(value, otherValue);
 };
@@ -192,7 +196,9 @@ export class ExerciseMetadataSyncService {
         if (this.subscriptionActive && this.context?.exerciseId !== context.exerciseId) {
             this.destroy();
         }
-        this.context = context as ExerciseMetadataSyncContext<Exercise>;
+        // The generic <T> lets callers pass a subtype-specific context; the interface's method-syntax members
+        // (see its note) keep that assignable to the erased <Exercise> context stored here — no cast needed.
+        this.context = context;
         this.cachedHandlers = this.buildHandlers(this.context);
         if (this.subscriptionActive) {
             return;

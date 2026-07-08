@@ -15,7 +15,7 @@ export class UnreferencedFeedbackComponent {
 
     FeedbackType = FeedbackType;
 
-    assessmentsAreValid: boolean;
+    assessmentsAreValid = false;
 
     readonly readOnly = input<boolean>(undefined!);
     readonly highlightDifferences = input<boolean>(undefined!);

@@ -1,29 +1,25 @@
 <h3 id="endpointsRequestsMetrics">Endpoints requests (time in millisecond)</h3>
 @if (!updating() && endpointsRequestsMetrics()) {
-    <div class="table-responsive">
-        <table class="table table-striped" aria-describedby="endpointsRequestsMetrics">
-            <thead>
+    <p-table [value]="endpointsRequestsMetrics() | keyvalue" aria-describedby="endpointsRequestsMetrics" data-testid="endpoints-table">
+        <ng-template #header>
+            <tr>
+                <th scope="col">Method</th>
+                <th scope="col">Endpoint url</th>
+                <th scope="col" class="text-end">Count</th>
+                <th scope="col" class="text-end">Mean</th>
+                <th scope="col" class="text-end">Max</th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-entry>
+            @for (method of entry.value | keyvalue; track method) {
                 <tr>
-                    <th scope="col">Method</th>
-                    <th scope="col">Endpoint url</th>
-                    <th scope="col" class="text-right">Count</th>
-                    <th scope="col" class="text-right">Mean</th>
-                    <th scope="col" class="text-right">Max</th>
+                    <td>{{ method.key }}</td>
+                    <td>{{ entry.key }}</td>
+                    <td class="text-end">{{ method.value!.count }}</td>
+                    <td class="text-end">{{ method.value!.mean | number: '1.0-3' }}</td>
+                    <td class="text-end">{{ method.value!.max | number: '1.0-3' }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @for (entry of endpointsRequestsMetrics() | keyvalue; track entry) {
-                    @for (method of entry.value | keyvalue; track method) {
-                        <tr>
-                            <td>{{ method.key }}</td>
-                            <td>{{ entry.key }}</td>
-                            <td class="text-right">{{ method.value!.count }}</td>
-                            <td class="text-right">{{ method.value!.mean | number: '1.0-3' }}</td>
-                            <td class="text-right">{{ method.value!.max | number: '1.0-3' }}</td>
-                        </tr>
-                    }
-                }
-            </tbody>
-        </table>
-    </div>
+            }
+        </ng-template>
+    </p-table>
 }

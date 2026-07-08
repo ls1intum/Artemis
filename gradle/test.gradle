@@ -1,8 +1,17 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
+import java.time.Duration
+
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
+
+    // Hard backstop against a hung test/deadlock (suite normally finishes in ~30 min). On timeout the
+    // build fails as `failure`, not the opaque `cancelled` a GitHub job-timeout produces, so the merge
+    // gate shows a real failure. A global JUnit per-method timeout is deliberately NOT used:
+    // SAME_THREAD cannot interrupt a deadlock, and SEPARATE_THREAD breaks the ~288 tests relying on the
+    // thread-bound Spring SecurityContext (@WithMockUser).
+    timeout = Duration.ofMinutes(55)
 
     jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
     // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.

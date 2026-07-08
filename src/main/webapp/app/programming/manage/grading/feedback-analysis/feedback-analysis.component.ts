@@ -4,6 +4,7 @@ import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelReque
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
@@ -99,7 +100,7 @@ export class FeedbackAnalysisComponent {
 
     constructor() {
         effect(() => {
-            untracked(async () => {
+            void untracked(async () => {
                 await this.loadData();
             });
         });
@@ -175,7 +176,7 @@ export class FeedbackAnalysisComponent {
 
     setPage(newPage: number): void {
         this.page.set(newPage);
-        this.loadData();
+        void this.loadData();
     }
 
     /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
@@ -201,7 +202,7 @@ export class FeedbackAnalysisComponent {
             this.sortedColumn.set(column);
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
-        this.loadData();
+        void this.loadData();
     }
 
     getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
@@ -236,14 +237,14 @@ export class FeedbackAnalysisComponent {
             occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
             errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
         };
-        modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
+        modalRef.componentInstance.filterApplied.subscribe((filters: FilterData) => {
             this.applyFilters(filters);
         });
     }
 
     applyFilters(filters: FilterData): void {
         this.selectedFiltersCount.set(this.countAppliedFilters(filters));
-        this.loadData();
+        void this.loadData();
     }
 
     countAppliedFilters(filters: FilterData): number {
@@ -295,7 +296,7 @@ export class FeedbackAnalysisComponent {
                     await this.router.navigateByUrl(urlTree);
                 }
             } catch (error) {
-                this.alertService.error(error);
+                this.alertService.error(getErrorMessage(error));
             }
         });
         try {
@@ -309,6 +310,6 @@ export class FeedbackAnalysisComponent {
 
     toggleGroupFeedback(): void {
         this.groupFeedback.update((current) => !current);
-        this.loadData();
+        void this.loadData();
     }
 }

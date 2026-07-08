@@ -170,7 +170,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
-    paramSub: Subscription;
+    paramSub!: Subscription; // set in ngOnInit(), unsubscribed in ngOnDestroy()
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
@@ -346,9 +346,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   '/course-management',
                   course.id!.toString(),
                   'exams',
-                  ex.exerciseGroup!.exam!.id!.toString(),
+                  ex.exerciseGroup.exam!.id!.toString(),
                   'exercise-groups',
-                  ex.exerciseGroup!.id!.toString(),
+                  ex.exerciseGroup.id!.toString(),
                   ex.type + '-exercises',
                   ex.id!.toString(),
                   'participations',
@@ -466,7 +466,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                       },
                   ]
                 : [],
-        } as Participation;
+        };
     }
 
     /**

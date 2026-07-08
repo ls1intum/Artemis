@@ -1,51 +1,82 @@
 {
-  "plugins": ["stylelint-scss"],  
-  "extends": [
-    "stylelint-config-standard-scss",
-    "stylelint-config-html"
-  ],
-  "overrides": [
-    { "files": ["**/*.scss"], "customSyntax": "postcss-scss" },
-    { "files": ["**/*.html"], "customSyntax": "postcss-html" }
-  ],
+    "plugins": ["stylelint-scss"],
+    "extends": ["stylelint-config-standard-scss", "stylelint-config-html"],
+    "overrides": [
+        { "files": ["**/*.scss"], "customSyntax": "postcss-scss" },
+        { "files": ["**/*.html"], "customSyntax": "postcss-html" },
+        {
+            "files": [
+                "src/main/webapp/app/admin/**/*.scss",
+                "src/main/webapp/app/course/request/**/*.scss",
+                "src/main/webapp/app/exercise/result/**/*.scss",
+                "src/main/webapp/app/iris/manage/settings/**/*.scss",
+                "src/main/webapp/app/shared-ui/date-time-picker/**/*.scss",
+                "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",
+                "src/main/webapp/app/localci/build-queue/**/*.scss",
+                "src/main/webapp/app/shared-ui/user-import/**/*.scss",
+                "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss",
+                "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
+                "src/main/webapp/app/shared-ui/delete-dialog/**/*.scss",
+                "src/main/webapp/app/core/alert/**/*.scss",
+                "src/main/webapp/app/core/layouts/footer/**/*.scss",
+                "src/main/webapp/app/course/overview/setup-passkey-modal/**/*.scss",
+                "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
+                "src/main/webapp/app/localci/build-agent-summary/**/*.scss",
+                "src/main/webapp/app/localci/build-agent-details/**/*.scss",
+                "src/main/webapp/app/localci/build-job-statistics/**/*.scss",
+                "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
+                "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss"
+            ],
+            "customSyntax": "postcss-scss",
+            "rules": {
+                "color-no-hex": true,
+                "declaration-property-value-disallowed-list": { "/.+/": ["/--bs-/"] }
+            }
+        }
+    ],
 
+    "rules": {
+        "alpha-value-notation": "number",
+        "media-feature-range-notation": "prefix",
+        "selector-pseudo-element-no-unknown": [true, { "ignorePseudoElements": ["ng-deep"] }],
+        "at-rule-empty-line-before": [
+            "always",
+            {
+                "except": ["first-nested", "blockless-after-same-name-blockless"],
+                "ignore": ["after-comment", "inside-block"]
+            }
+        ],
 
-"rules": {
-    "alpha-value-notation": "number",
-    "media-feature-range-notation": "prefix",
-    "selector-pseudo-element-no-unknown": [true, { "ignorePseudoElements": ["ng-deep"] }],
-    "at-rule-empty-line-before": ["always", {
-      "except": ["first-nested", "blockless-after-same-name-blockless"],
-      "ignore": ["after-comment", "inside-block"]
-    }],
+        "font-family-no-missing-generic-family-keyword": [
+            true,
+            {
+                "ignoreFontFamilies": ["codicon"]
+            }
+        ],
 
-    "font-family-no-missing-generic-family-keyword": [true,{
-      "ignoreFontFamilies": ["codicon"]
-    }],
+        "color-function-alias-notation": null,
+        "color-function-notation": null,
 
-    "color-function-alias-notation": null,
-    "color-function-notation": null,
+        "no-descending-specificity": null,
+        "selector-class-pattern": null,
+        "selector-id-pattern": null,
+        "scss/at-extend-no-missing-placeholder": null,
+        "comment-whitespace-inside": null,
+        "property-no-vendor-prefix": null,
+        "at-rule-no-vendor-prefix": null,
+        "scss/dollar-variable-empty-line-before": null,
+        "scss/no-global-function-names": null,
+        "no-empty-source": null,
+        "keyframes-name-pattern": null,
+        "declaration-block-no-redundant-longhand-properties": null,
+        "scss/at-mixin-pattern": null,
+        "scss/operator-no-unspaced": null,
+        "scss/dollar-variable-pattern": null,
+        "custom-property-pattern": null,
+        "value-no-vendor-prefix": null,
+        "selector-no-vendor-prefix": null,
 
-    "no-descending-specificity": null,
-    "selector-class-pattern": null,
-    "selector-id-pattern": null,
-    "scss/at-extend-no-missing-placeholder": null,
-    "comment-whitespace-inside": null,
-    "property-no-vendor-prefix": null,
-    "at-rule-no-vendor-prefix": null,
-    "scss/dollar-variable-empty-line-before": null,
-    "scss/no-global-function-names": null,
-    "no-empty-source": null,
-    "keyframes-name-pattern": null,
-    "declaration-block-no-redundant-longhand-properties": null,
-    "scss/at-mixin-pattern": null,
-    "scss/operator-no-unspaced": null,
-    "scss/dollar-variable-pattern": null,
-    "custom-property-pattern":null,
-    "value-no-vendor-prefix": null,
-    "selector-no-vendor-prefix": null,
-
-    "no-duplicate-selectors":null,
-    "selector-not-notation": null
-  }
+        "no-duplicate-selectors": null,
+        "selector-not-notation": null
+    }
 }

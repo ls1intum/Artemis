@@ -4,16 +4,18 @@
             <a ngbNavLink class="btn-sm text-center">{{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}</a>
             <div class="my-2 text-center fs-5">
                 {{ 'artemisApp.plagiarism.plagiarismCases.overallSimilarity' | artemisTranslate }}:
-                <strong>{{ submission.plagiarismComparison.similarity?.toFixed(1) }}%</strong>
+                <strong>{{ submission.plagiarismComparison?.similarity?.toFixed(1) }}%</strong>
             </div>
             <ng-template ngbNavContent>
-                <jhi-plagiarism-split-view
-                    [comparison]="submission.plagiarismComparison!"
-                    [exercise]="plagiarismCase()?.exercise!"
-                    [sortByStudentLogin]="forStudent() ? 'Your submission' : (plagiarismCase()?.student)!.login!"
-                    [splitControlSubject]="splitControlSubject"
-                    [forStudent]="forStudent()"
-                />
+                @if (submission.plagiarismComparison) {
+                    <jhi-plagiarism-split-view
+                        [comparison]="submission.plagiarismComparison"
+                        [exercise]="plagiarismCase()?.exercise!"
+                        [sortByStudentLogin]="forStudent() ? 'Your submission' : (plagiarismCase()?.student)!.login!"
+                        [splitControlSubject]="splitControlSubject"
+                        [forStudent]="forStudent()"
+                    />
+                }
             </ng-template>
         </li>
     }

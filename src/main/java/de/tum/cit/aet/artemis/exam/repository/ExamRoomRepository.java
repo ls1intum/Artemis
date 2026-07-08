@@ -68,46 +68,36 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * its {@code roomNumber}.
      *
      * <p>
-     * This query uses the SQL window function {@code ROW_NUMBER()} in combination with
-     * the {@code OVER (PARTITION BY ... ORDER BY ...)} clause to identify, for each group of
-     * exam rooms that share the same {@code roomNumber}, which row represents
-     * the latest version.
+     * Exam rooms that share the same {@code roomNumber} are successive versions of the same physical room,
+     * ordered from oldest to newest by {@code createdDate} and, when two versions share the same creation
+     * timestamp (the {@code datetime(3)} column only has millisecond resolution, so rapid re-uploads can
+     * collide), by {@code id}. The latest version is therefore the row for which no other row with the same
+     * {@code roomNumber} has a more recent {@code (createdDate, id)} pair.
      *
      * <p>
-     * <b>Why {@code OVER (PARTITION BY ...)} works:</b><br>
-     * The {@code OVER} clause defines a <i>window</i> — a set of rows related to the current row —
-     * over which a window function (here {@code ROW_NUMBER()}) operates. Unlike aggregate
-     * functions (e.g., {@code MAX()}, {@code COUNT()}), window functions do not collapse rows
-     * into a single result. Instead, each row retains its identity while having access to other rows
-     * in its partition.
-     * <ul>
-     * <li>{@code PARTITION BY er.roomNumber} divides the full result set into
-     * partitions, one per unique room number.</li>
-     * <li>{@code ORDER BY er.createdDate DESC, er.id DESC} orders each partition so that the
-     * most recently created room (and, in case of ties, the one with the highest ID) appears first.</li>
-     * <li>{@code ROW_NUMBER()} then assigns an increasing row number within each partition
-     * according to this order.</li>
-     * </ul>
-     * By selecting only rows where {@code rowNumber = 1}, the query effectively filters out all
-     * but the latest version of each unique exam room.
-     *
-     * <p>
-     * This use of window functions is compliant with the SQL standard and supported by
-     * including MySQL ≥ 8.0 and PostgreSQL ≥ 9.4. Hibernate also supports such queries in JPQL/HQL,
-     * as documented in <a href="https://docs.hibernate.org/orm/current/userguide/html_single/#hql-aggregate-functions-window">the Hibernate User Guide</a>
+     * This is expressed as an anti-join via {@code NOT EXISTS}: a room is returned exactly when no "newer"
+     * room with the same {@code roomNumber} exists. We deliberately avoid the SQL window function
+     * {@code ROW_NUMBER() OVER (PARTITION BY ...)} wrapped in a derived sub-query: that pattern breaks
+     * Hibernate's query bootstrap once {@code hibernate.boot.allow_jdbc_metadata_access} is disabled (which
+     * we keep off to shorten production startup), whereas this {@code NOT EXISTS} formulation is plain SQL
+     * that Hibernate can compile without probing JDBC metadata. Since {@code id} is unique, exactly one row
+     * per {@code roomNumber} survives, and on the small {@code exam_room} table the optimizer resolves the
+     * anti-join to an efficient self-join.
      *
      * @return a {@link Set} of IDs corresponding to the latest version of each unique exam room
      */
     @Query("""
-            SELECT id
-            FROM (
-                SELECT er.id AS id, er.roomNumber AS roomNumber, er.createdDate AS createdDate, ROW_NUMBER() OVER (
-                    PARTITION BY er.roomNumber
-                    ORDER BY er.createdDate DESC, er.id DESC
-                ) AS rowNumber
-                FROM ExamRoom er
+            SELECT er.id
+            FROM ExamRoom er
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM ExamRoom newerVersion
+                WHERE newerVersion.roomNumber = er.roomNumber
+                    AND (
+                        newerVersion.createdDate > er.createdDate
+                        OR (newerVersion.createdDate = er.createdDate AND newerVersion.id > er.id)
+                    )
             )
-            WHERE rowNumber = 1
             """)
     Set<Long> findAllIdsOfNewestExamRoomVersions();
 
@@ -117,27 +107,30 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Returns a collection of {@link ExamRoomForDistributionDTO}, which are derived from {@link ExamRoom}.
      *
-     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfNewestExamRoomVersions}
+     * @implNote Selects the latest version of each unique exam room with the same {@code NOT EXISTS}
+     *           anti-join as {@link #findAllIdsOfNewestExamRoomVersions} and projects it directly into the DTO.
      *
      * @return Basic room information for distribution
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO(
-                roomPartition.id,
-                roomPartition.roomNumber,
-                roomPartition.alternativeRoomNumber,
-                roomPartition.name,
-                roomPartition.alternativeName,
-                roomPartition.building
+                er.id,
+                er.roomNumber,
+                er.alternativeRoomNumber,
+                er.name,
+                er.alternativeName,
+                er.building
             )
-            FROM (
-                SELECT er.id AS id, er.roomNumber AS roomNumber, er.alternativeRoomNumber AS alternativeRoomNumber, er.name AS name, er.alternativeName AS alternativeName, er.building AS building, er.createdDate AS createdDate, ROW_NUMBER() OVER (
-                    PARTITION BY er.roomNumber
-                    ORDER BY er.createdDate DESC, er.id DESC
-                ) AS rowNumber
-                FROM ExamRoom er
-            ) roomPartition
-            WHERE roomPartition.rowNumber = 1
+            FROM ExamRoom er
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM ExamRoom newerVersion
+                WHERE newerVersion.roomNumber = er.roomNumber
+                    AND (
+                        newerVersion.createdDate > er.createdDate
+                        OR (newerVersion.createdDate = er.createdDate AND newerVersion.id > er.id)
+                    )
+            )
             """)
     Set<ExamRoomForDistributionDTO> findAllCurrentExamRoomsForDistribution();
 

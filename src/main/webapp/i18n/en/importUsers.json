@@ -18,8 +18,8 @@
                 "noUsersFound": "No users to import have been found"
             },
             "numberOfUsers": "Number of users:",
-            "numberOfUsersImported": "Imported:",
-            "numberOfUsersNotImported": "Not found:",
+            "numberOfUsersImported": "Imported students:",
+            "numberOfUsersNotImported": "Not found students:",
             "genericErrorMessage": "Import of users failed!",
             "firstName": "First name",
             "lastName": "Last name",
