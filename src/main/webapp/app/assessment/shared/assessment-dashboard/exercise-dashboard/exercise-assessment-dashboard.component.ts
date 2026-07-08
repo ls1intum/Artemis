@@ -24,7 +24,7 @@ import {
 } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { filter, finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
@@ -144,8 +144,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
     readonly courseId = signal<number>(undefined!);
     readonly exam = signal<Exam | undefined>(undefined);
-    examId: number;
-    exerciseGroupId: number;
+    examId?: number;
+    exerciseGroupId?: number;
     readonly isExamMode = signal(false);
     readonly isTestRun = signal<boolean>(false);
     readonly isLoading = signal(false);
@@ -554,6 +554,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         submissionsObservable
             .pipe(
                 map((res) => res.body),
+                filter((body): body is Submission[] => body != undefined),
                 map(this.reconnectEntities),
             )
             .subscribe((submissions: Submission[]) => {
@@ -736,7 +737,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             queryParams.toComplete = toComplete;
         }
 
-        this.router.navigate([route], { queryParams });
+        void this.router.navigate([route], { queryParams });
     }
 
     isComplaintLocked(complaint: Complaint) {
@@ -787,6 +788,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (result !== undefined) {
             return this.getAssessmentQueryParams(result.results!.length - 1);
         }
+        return undefined;
     }
 
     /**
@@ -804,6 +806,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             }
             return submissionToView;
         }
+        return undefined;
     }
 
     toggleSecondCorrection() {

@@ -77,13 +77,13 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
-    changesSubscription: Subscription;
+    changesSubscription?: Subscription;
     cachedDiffInformation = signal<Map<string, RepositoryDiffInformation>>(new Map<string, RepositoryDiffInformation>());
 
     currentPageComponents = viewChildren(ExamSubmissionComponent);
     examNavigationBarComponent = viewChild.required<ExamNavigationBarComponent>('examNavigationBar');
 
-    private activatedRouteSubscription: Subscription;
+    private activatedRouteSubscription?: Subscription;
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {

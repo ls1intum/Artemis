@@ -1,128 +1,106 @@
+/*
+ * Theme-bound custom colors for the editor surface. These map to per-theme SCSS variables
+ * (--md-wrapper-color / --md-editor-background, light + dark) that have no PrimeNG semantic-token
+ * equivalent, so they stay as a scoped class rather than a Tailwind color utility.
+ */
 .markdown-editor-wrapper {
-    display: flex;
-    flex-flow: column nowrap;
-    flex: 1 1 auto;
-    height: inherit;
     color: var(--md-wrapper-color);
     background-color: var(--md-editor-background);
 
-    // This is a fix for using the fullscreen mode on Safari.
+    /* Fullscreen mode fix for Safari (cannot be expressed as a Tailwind utility — pseudo-class selector). */
     &:-webkit-full-screen {
         width: 100%;
         height: 100%;
     }
+}
 
-    .markdown-editor {
-        border: 1px solid var(--border-color);
+/* Theme-bound resize handle color (--md-resize-icon-color, light + dark); no semantic-token equivalent. */
+.md-resize-icon {
+    color: var(--md-resize-icon-color);
+}
+
+/* Theme-bound toolbar background (--md-tab-list-bg, light + dark); no semantic-token equivalent. */
+.md-action-palette {
+    background: var(--md-tab-list-bg);
+}
+
+/*
+ * Compact the PrimeNG tabs so they fit the dense editor toolbar. Targets PrimeNG's internal pass-through
+ * classes (.p-tablist-tab-list / .p-tab), which are not Tailwind utilities; the p-tabs DOM is rendered
+ * inside this component so emulated encapsulation applies and no ::ng-deep is needed.
+ */
+.md-tabs {
+    .p-tablist-tab-list {
+        border-bottom: 0;
     }
 
-    .md-resize-icon {
-        color: var(--md-resize-icon-color);
-    }
-
-    // The row hosting the tabs, close button and (in edit mode) the action toolbar.
-    .md-action-palette {
-        background: var(--md-tab-list-bg);
-        column-gap: 0.1rem;
-    }
-
-    // Compact the PrimeNG tabs so they fit the dense editor toolbar (the previous ng-bootstrap
-    // nav rendered small, low-padding links). Drop the default tab padding and the full-width
-    // active-ink bar so the tabs sit inline with the toolbar buttons.
-    .md-tabs {
-        .p-tablist-tab-list {
-            border-bottom: 0;
-        }
-
-        .p-tab {
-            padding: 0.1rem 0.5rem;
-            font-weight: 400;
-        }
+    .p-tab {
+        padding: 0.1rem 0.5rem;
+        font-weight: 400;
     }
 }
 
-.resize-placeholder {
-    border: 1px solid var(--border-color);
-}
-
-.file-upload-footer-input {
-    // Cannot hide input[type=file] with display: none, as this may prevent file uploads entirely.
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    position: absolute;
-    z-index: -1;
-}
-
-.file-upload-footer-label {
-    cursor: pointer;
-    width: 100%;
-    border-radius: 0 0.15em 0.15em 0;
-
-    .upload-subtitle {
-        font-size: 12px;
-        color: var(--bs-secondary);
-    }
-}
-
-.text-style-icon {
+/*
+ * Dense toolbar buttons (small font, horizontal-only padding, transparent border/background, no hover).
+ * Kept as a shared class because it is applied to ~15 toolbar buttons and carries a `:disabled` pseudo-state
+ * that a per-element utility string cannot express cleanly.
+ */
+.md-toolbar-btn {
     display: inline-block;
-    line-height: 0.75em;
-    font-size: 1.1em;
+    padding: 0 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    color: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--bs-border-radius-sm);
+
+    &:disabled {
+        pointer-events: none;
+        opacity: 0.65;
+    }
 }
 
-.background-editor-high {
-    overflow: auto;
+/*
+ * Popover dropdown item (headers, domain options, AI assistance). Kept as a shared class for the same
+ * reason as `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states that a per-element
+ * utility string cannot express cleanly.
+ */
+.md-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.25rem 1rem;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--p-surface-100);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
 }
 
-// Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
-// to a PrimeNG Popover. The popover hosts a vertical list of Bootstrap-styled `.dropdown-item` buttons.
+:host-context([prime-ng-use-dark-theme='true']) .md-dropdown-item:hover {
+    background-color: var(--p-surface-800);
+}
+
+/*
+ * The action-dropdown popover is body-appended by PrimeNG, so its content can only be reached with ::ng-deep
+ * on the styleClass target rather than a scoped selector.
+ */
 :host ::ng-deep .md-action-popover {
     .p-popover-content {
         max-height: 300px;
         overflow-y: auto;
         padding: 0.25rem 0;
-    }
-
-    .dropdown-item {
-        cursor: pointer;
-    }
-}
-
-.default-font-size {
-    font-size: var(--bs-body-font-size);
-}
-
-// Diff view: column headers above the split panes
-.diff-pane-headers {
-    display: flex;
-    border-bottom: 1px solid var(--p-content-border-color);
-
-    .diff-pane-header {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-        padding: 0.25rem 0.5rem;
-        background-color: var(--p-content-background);
-
-        &--right {
-            flex: 1 1 0;
-            border-left: 1px solid var(--p-content-border-color);
-        }
-    }
-}
-
-.diff-pane-unified-hint {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    border-bottom: 1px solid var(--p-content-border-color);
-    background-color: var(--p-content-background);
-
-    &__text {
-        font-size: 0.78rem;
-        color: var(--p-text-muted-color);
     }
 }

@@ -25,7 +25,7 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessageDTO, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -61,22 +61,22 @@ export class MetisService implements OnDestroy {
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
-    private user: User;
-    private pageType: PageType;
-    private courseId: number;
+    private user!: User; // set in constructor from accountService.identity()
+    private pageType!: PageType; // set via setPageType() before use
+    private courseId!: number; // set in setCourse() before any read
     private cachedPosts: Post[] = [];
-    private cachedTotalNumberOfPosts: number;
+    private cachedTotalNumberOfPosts = 0;
     private subscriptionChannel?: string;
-    private courseWideTopicSubscription: Subscription;
-    private activeConversationSubscription: Subscription;
+    private courseWideTopicSubscription?: Subscription;
+    private activeConversationSubscription?: Subscription;
     private subscriptionChannelSubscription?: Subscription;
 
-    private course: Course;
+    private course!: Course; // set in setCourse() before any read
     // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
     private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
@@ -956,7 +956,15 @@ export class MetisService implements OnDestroy {
 
                 // Send a creation request for each ForwardedMessage
                 const createForwardedMessageObservables = forwardedMessages.map((message) =>
-                    this.forwardedMessageService.createForwardedMessage(message).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                    this.forwardedMessageService.createForwardedMessage(message).pipe(
+                        // Return the locally-built ForwardedMessage entity (which carries `destinationPost`, used by the
+                        // cache-marking logic below) updated with the server-assigned id, rather than casting the response
+                        // DTO — which only exposes `destinationPostId` — to the entity type.
+                        map((res: HttpResponse<ForwardedMessageDTO>) => {
+                            message.id = res.body?.id;
+                            return message;
+                        }),
+                    ),
                 );
 
                 return forkJoin(createForwardedMessageObservables).pipe(

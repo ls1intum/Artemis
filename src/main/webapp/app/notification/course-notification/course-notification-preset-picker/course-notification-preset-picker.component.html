@@ -1,5 +1,5 @@
 <div [ngClass]="{ 'is-small-button': isSmallButton(), 'is-recently-selected': isRecentlySelected() }" class="course-notification-preset-picker" ngbDropdown>
-    <button [ngClass]="{ 'btn-sm': isSmallButton() }" class="btn btn-outline-secondary d-flex align-items-center" type="button" ngbDropdownToggle>
+    <button pButton severity="secondary" [outlined]="true" [size]="isSmallButton() ? 'small' : undefined" class="d-flex align-items-center" type="button" ngbDropdownToggle>
         <fa-icon [icon]="selectedCourseSettingPreset() && selectedCourseSettingPreset()!.typeId === 3 ? farEyeSlash : farEye" class="course-notification-preset-picker-eye-icon" />
         <span class="course-notification-preset-picker-text">
             <span jhiTranslate="artemisApp.courseNotification.preset.dropdown"></span>:
@@ -12,8 +12,10 @@
                 <div>
                     @if (selectedCourseSettingPreset() && selectedCourseSettingPreset()!.identifier === preset.identifier) {
                         <fa-icon [icon]="faCheck" class="me-1" />
+                        <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
+                    } @else {
+                        <span [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></span>
                     }
-                    <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
                 </div>
                 <div>
                     <span
@@ -28,8 +30,10 @@
             <div>
                 @if (selectedCourseSettingPreset() === undefined) {
                     <fa-icon [icon]="faCheck" class="me-1" />
+                    <strong [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></strong>
+                } @else {
+                    <span [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></span>
                 }
-                <strong [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></strong>
             </div>
             <div>
                 <span

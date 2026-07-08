@@ -82,12 +82,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     readonly assessmentsAreValid = signal(false);
     readonly nextSubmissionBusy = signal<boolean>(false);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route paramMap
     examId = 0;
-    exerciseId: number;
-    exerciseGroupId: number;
+    exerciseId!: number; // set in ngOnInit() from route paramMap
+    exerciseGroupId!: number; // set in ngOnInit() from route paramMap (exam mode)
     readonly exerciseDashboardLink = signal<string[]>([]);
-    userId: number;
+    userId!: number; // set in ngOnInit() from accountService.identity()
     readonly isAssessor = signal(false);
     readonly complaint = signal<Complaint>(undefined!);
     ComplaintType = ComplaintType;
@@ -103,7 +103,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     resizeOptions = { verticalResize: true };
     isApollonModelLoaded = false;
 
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string; // set in constructor from translateService.get() subscription
 
     constructor() {
         const translateService = this.translateService;
@@ -136,7 +136,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
 
@@ -561,7 +561,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);

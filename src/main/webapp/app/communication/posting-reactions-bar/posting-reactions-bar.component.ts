@@ -132,10 +132,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
     readonly showReactionSelector = signal(false);
     readonly isAtLeastTutorInCourse = signal<boolean>(undefined!);
-    isAuthorOfPosting: boolean;
+    isAuthorOfPosting!: boolean; // set in ngOnInit() from metisService
     readonly isAuthorOfOriginalPost = signal<boolean>(undefined!);
     readonly isAnswerOfAnnouncement = signal<boolean>(undefined!);
-    isAtLeastInstructorInCourse: boolean;
+    isAtLeastInstructorInCourse!: boolean; // set in ngOnInit() from metisService
     readonly mayEdit = signal<boolean>(undefined!);
     readonly mayDelete = signal<boolean>(undefined!);
     readonly canMarkAsUnread = signal<boolean>(undefined!);

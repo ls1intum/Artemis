@@ -114,8 +114,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     readonly isAdmin = signal(false);
 
-    private eventSubscription: Subscription;
-    private paramSub: Subscription;
+    private eventSubscription?: Subscription;
+    private paramSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -130,14 +130,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['fromOnboarding'] === 'true') {
                 this.fromOnboarding.set(true);
-                this.router.navigate([], { queryParams: {}, replaceUrl: true });
+                void this.router.navigate([], { queryParams: {}, replaceUrl: true });
             }
         });
 
         this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             if (course) {
                 if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
-                    this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
+                    void this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
                     return;
                 }
                 this.course.set(course);

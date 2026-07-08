@@ -167,9 +167,9 @@ describe('TextExercise Management Update Component', () => {
     };
 
     beforeEach(async () => {
-        routeData$ = new BehaviorSubject({ textExercise: createExercise(createCourse()) });
+        routeData$ = new BehaviorSubject<Data>({ textExercise: createExercise(createCourse()) });
         routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
-        routeParams$ = new BehaviorSubject({ courseId: 1 });
+        routeParams$ = new BehaviorSubject<Params>({ courseId: 1 });
 
         await TestBed.configureTestingModule({
             imports: [TextExerciseUpdateComponent, TranslateModule.forRoot()],
