@@ -221,7 +221,7 @@ describe('HomeComponent', () => {
             const pendingPromise = new Promise<void>((resolve) => {
                 resolveLogin = resolve;
             });
-            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
+            vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
             vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
             // Enable login
