@@ -2,76 +2,78 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 import { ActiveFeatureToggles } from 'app/foundation/feature-toggle/feature-toggle.service';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class SentryConfig {
     public dsn?: string;
 }
 
-export class GitCommitId {
-    public describe?: string;
-    public abbrev: string;
-    public full?: string;
+export interface GitCommitId {
+    describe?: string;
+    abbrev: string;
+    full?: string;
 }
 
-export class GitCommitMessage {
-    public full?: string;
-    public short?: string;
+export interface GitCommitMessage {
+    full?: string;
+    short?: string;
 }
 
-export class GitCommitUser {
-    public name: string;
-    public email: string;
+export interface GitCommitUser {
+    name: string;
+    email: string;
 }
 
-export class GitCommit {
-    public id: GitCommitId;
-    public message?: GitCommitMessage;
-    public user: GitCommitUser;
-    public time: string;
+export interface GitCommit {
+    id: GitCommitId;
+    message?: GitCommitMessage;
+    user: GitCommitUser;
+    time: string;
 }
 
-export class GitBuildUser {
-    public name?: string;
-    public email?: string;
+export interface GitBuildUser {
+    name?: string;
+    email?: string;
 }
 
-export class GitBuild {
-    public version?: string;
-    public user?: GitBuildUser;
-    public host?: string;
+export interface GitBuild {
+    version?: string;
+    user?: GitBuildUser;
+    host?: string;
 }
 
-export class GitTotalCommit {
-    public count?: string;
+export interface GitTotalCommit {
+    count?: string;
 }
 
-export class GitClosestTagCommit {
-    public count?: string;
+export interface GitClosestTagCommit {
+    count?: string;
 }
 
-export class GitClosestTag {
-    public name?: string;
-    public commit?: GitClosestTagCommit;
+export interface GitClosestTag {
+    name?: string;
+    commit?: GitClosestTagCommit;
 }
 
-export class GitRemoteOrigin {
-    public url?: string;
+export interface GitRemoteOrigin {
+    url?: string;
 }
 
-export class GitRemote {
-    public origin?: GitRemoteOrigin;
+export interface GitRemote {
+    origin?: GitRemoteOrigin;
 }
 
-export class Git {
-    public branch: string;
-    public commit: GitCommit;
-    public build?: GitBuild;
-    public dirty?: string;
-    public tags?: string;
-    public total?: { commit?: GitTotalCommit };
-    public closest?: { tag?: GitClosestTag };
-    public remote?: GitRemote;
+export interface Git {
+    branch: string;
+    commit: GitCommit;
+    build?: GitBuild;
+    dirty?: string;
+    tags?: string;
+    total?: { commit?: GitTotalCommit };
+    closest?: { tag?: GitClosestTag };
+    remote?: GitRemote;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Build {
     public artifact?: string;
     public name?: string;
@@ -80,21 +82,22 @@ export class Build {
     public group?: string;
 }
 
-export class JavaVendor {
-    public name?: string;
+export interface JavaVendor {
+    name?: string;
 }
 
-export class JavaRuntime {
-    public name?: string;
-    public version?: string;
+export interface JavaRuntime {
+    name?: string;
+    version?: string;
 }
 
-export class JavaJvm {
-    public name?: string;
-    public vendor?: string;
-    public version?: string;
+export interface JavaJvm {
+    name?: string;
+    vendor?: string;
+    version?: string;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Java {
     public version?: string;
     public vendor?: JavaVendor;
@@ -102,27 +105,29 @@ export class Java {
     public jvm?: JavaJvm;
 }
 
-export class MobileVersion {
-    public min?: string;
-    public recommended?: string;
+export interface MobileVersion {
+    min?: string;
+    recommended?: string;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CompatibleVersions {
     public android?: MobileVersion;
     public ios?: MobileVersion;
 }
 
-export class ProgrammingLanguageFeature {
-    public programmingLanguage: ProgrammingLanguage;
-    public sequentialTestRuns: boolean;
-    public staticCodeAnalysis: boolean;
-    public plagiarismCheckSupported: boolean;
-    public packageNameRequired: boolean;
-    public checkoutSolutionRepositoryAllowed: boolean;
-    public projectTypes: ProjectType[];
-    public auxiliaryRepositoriesSupported: boolean;
+export interface ProgrammingLanguageFeature {
+    programmingLanguage: ProgrammingLanguage;
+    sequentialTestRuns: boolean;
+    staticCodeAnalysis: boolean;
+    plagiarismCheckSupported: boolean;
+    packageNameRequired: boolean;
+    checkoutSolutionRepositoryAllowed: boolean;
+    projectTypes: ProjectType[];
+    auxiliaryRepositoriesSupported: boolean;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class ProfileInfo {
     public accountName?: string;
     public activeModuleFeatures: string[] = [];
@@ -131,38 +136,38 @@ export class ProfileInfo {
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
-    public build: Build;
+    public build!: Build;
     public buildPlanURLTemplate?: string; // only available on Artemis instances with Jenkins
-    public buildTimeoutDefault: number;
-    public buildTimeoutMax: number;
-    public buildTimeoutMin: number;
-    public compatibleVersions: CompatibleVersions;
-    public contact: string;
-    public continuousIntegrationName: string;
-    public defaultContainerCpuCount: number;
-    public defaultContainerMemoryLimitInMB: number;
-    public defaultContainerMemorySwapLimitInMB: number;
-    public externalCredentialProvider: string;
-    public externalPasswordResetLinkMap: { [key: string]: string };
-    public features: ActiveFeatureToggles;
-    public git: Git;
-    public java: Java;
+    public buildTimeoutDefault!: number;
+    public buildTimeoutMax!: number;
+    public buildTimeoutMin!: number;
+    public compatibleVersions!: CompatibleVersions;
+    public contact!: string;
+    public continuousIntegrationName!: string;
+    public defaultContainerCpuCount!: number;
+    public defaultContainerMemoryLimitInMB!: number;
+    public defaultContainerMemorySwapLimitInMB!: number;
+    public externalCredentialProvider!: string;
+    public externalPasswordResetLinkMap!: { [key: string]: string };
+    public features!: ActiveFeatureToggles;
+    public git!: Git;
+    public java!: Java;
     public needsToAcceptTerms?: boolean;
-    public operatorAdminName: string;
-    public operatorName: string;
+    public operatorAdminName!: string;
+    public operatorName!: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[] = [];
     public registrationEnabled?: boolean;
-    public repositoryAuthenticationMechanisms: string[];
+    public repositoryAuthenticationMechanisms!: string[];
     public saml2?: Saml2Config;
-    public sentry: SentryConfig;
-    public sshCloneURLTemplate: string;
-    public studentExamStoreSessionData: boolean;
-    public testServer: boolean;
-    public textAssessmentAnalyticsEnabled: boolean;
+    public sentry!: SentryConfig;
+    public sshCloneURLTemplate!: string;
+    public studentExamStoreSessionData!: boolean;
+    public testServer!: boolean;
+    public textAssessmentAnalyticsEnabled!: boolean;
     public theiaPortalURL?: string;
-    public useExternal: boolean;
-    public versionControlName: string;
-    public versionControlUrl: string;
-    public localLLMDeploymentEnabled: boolean;
-    public allowedCustomDockerNetworks: string[];
+    public useExternal!: boolean;
+    public versionControlName!: string;
+    public versionControlUrl!: string;
+    public localLLMDeploymentEnabled!: boolean;
+    public allowedCustomDockerNetworks!: string[];
 }

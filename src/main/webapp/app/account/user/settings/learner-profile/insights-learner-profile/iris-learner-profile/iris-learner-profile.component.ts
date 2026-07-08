@@ -13,7 +13,7 @@ import { MemirisMemoriesListComponent } from './memiris-memories-list.component'
 export class IrisLearnerProfileComponent implements OnInit {
     accountService = inject(AccountService);
 
-    memirisEnabled: boolean;
+    memirisEnabled = false;
 
     ngOnInit(): void {
         this.memirisEnabled = this.accountService.userIdentity()?.memirisEnabled ?? false;

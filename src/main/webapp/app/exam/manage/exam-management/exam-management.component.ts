@@ -61,10 +61,10 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     readonly exams = signal<Exam[]>(undefined!);
     predicate: string;
     ascending: boolean;
-    eventSubscriber: Subscription;
+    eventSubscriber?: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    currentTime: dayjs.Dayjs;
+    currentTime = dayjs();
 
     // Icons
     faSort = faSort;

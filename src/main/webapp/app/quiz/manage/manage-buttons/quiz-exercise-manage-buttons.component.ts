@@ -48,9 +48,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    courseId: number;
-    examId: number;
-    isExamMode: boolean;
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
+    isExamMode = false;
 
     readonly baseUrl = signal<string>(undefined!);
     readonly isEvaluatingQuizExercise = signal(false);

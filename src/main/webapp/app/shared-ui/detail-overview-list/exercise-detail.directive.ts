@@ -30,7 +30,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     detail = input<Detail>();
 
-    private componentRef: ComponentRef<DetailComponent>;
+    private componentRef?: ComponentRef<DetailComponent>;
 
     ngOnInit() {
         const detail = this.detail();

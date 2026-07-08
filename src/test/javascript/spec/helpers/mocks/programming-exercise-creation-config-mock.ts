@@ -4,7 +4,6 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationConfig = {
     auxiliaryRepositoriesSupported: false,
     auxiliaryRepositoryDuplicateDirectories: false,
