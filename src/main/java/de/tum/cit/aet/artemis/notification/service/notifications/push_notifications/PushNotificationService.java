@@ -6,7 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -70,8 +69,7 @@ public abstract class PushNotificationService {
      * @param relayServerBaseUrl the url of the relay
      */
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl) {
-        var futures = requests.stream()
-                .map(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(Collections.singletonList(request), relayServerBaseUrl))).toList()
+        var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(List.of(request), relayServerBaseUrl))).toList()
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures);

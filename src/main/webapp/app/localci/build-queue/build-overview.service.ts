@@ -3,10 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/localci/shared/entities/build-job.model';
+import { BuildJob, BuildJobDetail, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/localci/shared/entities/build-job.model';
 import { createNestedRequestOption } from 'app/foundation/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 @Injectable({ providedIn: 'root' })
 export class BuildOverviewService {
@@ -134,7 +135,7 @@ export class BuildOverviewService {
      * @param req The query request
      * @param filter The filter to apply
      */
-    getFinishedBuildJobs(req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+    getFinishedBuildJobs(req?: SearchTermPageableSearch, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
         let options = createNestedRequestOption(req, this.nestedDtoKey);
         if (filter) {
             options = filter.addHttpParams(options);
@@ -152,7 +153,7 @@ export class BuildOverviewService {
      * @param req The query request
      * @param filter The filter to apply
      */
-    getFinishedBuildJobsByCourseId(courseId: number, req?: any, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
+    getFinishedBuildJobsByCourseId(courseId: number, req?: SearchTermPageableSearch, filter?: FinishedBuildJobFilter): Observable<HttpResponse<FinishedBuildJob[]>> {
         let options = createNestedRequestOption(req, this.nestedDtoKey);
         if (filter) {
             options = filter.addHttpParams(options);
@@ -196,8 +197,8 @@ export class BuildOverviewService {
      * Get a single build job by its ID (admin)
      * @param buildJobId the id of the build job
      */
-    getBuildJobById(buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.adminResourceUrl}/build-jobs/${buildJobId}`);
+    getBuildJobById(buildJobId: string): Observable<BuildJobDetail> {
+        return this.http.get<BuildJobDetail>(`${this.adminResourceUrl}/build-jobs/${buildJobId}`);
     }
 
     /**
@@ -205,8 +206,8 @@ export class BuildOverviewService {
      * @param courseId the id of the course
      * @param buildJobId the id of the build job
      */
-    getBuildJobByIdForCourse(courseId: number, buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
+    getBuildJobByIdForCourse(courseId: number, buildJobId: string): Observable<BuildJobDetail> {
+        return this.http.get<BuildJobDetail>(`${this.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
     }
 
     /**

@@ -100,19 +100,16 @@ class OnlineCourseConfigurationServiceTest {
     void noLtiConfigurationValidateOnlineCourseConfiguration() {
         LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
         OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
-        when(ltiPlatformConfigurationRepository.findByRegistrationId(onlineCourseConfiguration.getLtiPlatformConfiguration().getRegistrationId())).thenReturn(Optional.empty());
+        when(ltiPlatformConfigurationRepository.findById(onlineCourseConfiguration.getLtiPlatformConfiguration().getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
-    void invalidRegistrationIdValidateOnlineCourseConfiguration() {
+    void nullPlatformIdValidateOnlineCourseConfiguration() {
         LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
-        ltiPlatformConfiguration.setId(2L);
-        OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(getMockLtiPlatformConfiguration());
-
-        when(ltiPlatformConfigurationRepository.findByRegistrationId(onlineCourseConfiguration.getLtiPlatformConfiguration().getRegistrationId()))
-                .thenReturn(Optional.of(ltiPlatformConfiguration));
+        ltiPlatformConfiguration.setId(null);
+        OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
 
         assertThatThrownBy(() -> onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration)).isInstanceOf(BadRequestAlertException.class);
     }

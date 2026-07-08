@@ -48,25 +48,26 @@
                 />
             </div>
             <div class="d-flex">
-                <input
-                    class="form-control position-relative ps-5"
-                    id="reference-date-field"
-                    type="text"
-                    [value]="referenceDate()"
-                    [owlDateTime]="dt"
-                    [owlDateTimeTrigger]="dt"
-                    (dateTimeChange)="setReferenceDate($event)"
+                <p-datepicker
+                    inputId="reference-date-field"
+                    styleClass="w-100"
+                    [inputStyle]="{ width: '100%' }"
+                    [ngModel]="referenceDate() ?? null"
+                    (ngModelChange)="setReferenceDate($event)"
+                    (onClear)="setReferenceDate()"
                     name="datePicker"
+                    [showTime]="true"
+                    hourFormat="24"
+                    dateFormat="dd.mm.yy"
+                    timeSeparator=":"
+                    placeholder="dd.mm.yyyy hh:mm"
+                    showClear="true"
+                    [showIcon]="true"
+                    iconDisplay="input"
+                    showOnFocus="false"
+                    appendTo="body"
+                    [baseZIndex]="1060"
                 />
-                <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
-                    <fa-icon [icon]="faCalendarAlt" />
-                </button>
-                <div class="position-relative">
-                    <button class="btn position-absolute" type="button" style="right: 0" (click)="setReferenceDate(undefined)">
-                        <fa-icon [icon]="faCircleXmark" [class.text-secondary]="!referenceDate()" />
-                    </button>
-                </div>
-                <owl-date-time #dt />
             </div>
         </div>
         <div class="col p-0 ps-2 align-items-center">

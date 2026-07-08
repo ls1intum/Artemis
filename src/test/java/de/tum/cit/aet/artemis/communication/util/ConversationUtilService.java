@@ -289,7 +289,7 @@ public class ConversationUtilService {
         List<Post> posts = new ArrayList<>();
         for (Channel channelContext : channelContexts) {
             for (int i = 0; i < 4; i++) {
-                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "student", (i + 1))));
+                Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + "student", (i + 1))));
                 postToAdd.setConversation(channelContext);
                 postRepository.save(postToAdd);
                 posts.add(postToAdd);
@@ -307,7 +307,7 @@ public class ConversationUtilService {
      * @return The created Post
      */
     public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
-        Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
+        Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
         return postRepository.save(postToAdd);
     }
@@ -323,7 +323,7 @@ public class ConversationUtilService {
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix, String userRole) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + userRole, (i + 1))));
+            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities("%s%s".formatted(userPrefix + userRole, (i + 1))));
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);

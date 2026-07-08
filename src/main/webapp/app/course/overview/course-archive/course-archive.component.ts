@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,7 +24,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     imports: [CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe, TranslateDirective, ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
-    private archiveCourseSubscription: Subscription;
+    private archiveCourseSubscription?: Subscription;
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
@@ -33,7 +32,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     readonly semesters = signal<string[]>([]);
     readonly fullFormOfSemesterStrings = signal<{ [key: string]: string }>({});
     readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
-    readonly coursesBySemester = signal<{ [key: string]: Course[] }>({});
+    readonly coursesBySemester = signal<{ [key: string]: CourseForArchiveDTO[] }>({});
     readonly searchCourseText = signal('');
     readonly isSortAscending = signal(true);
     iconSize: SizeProp = 'lg';
@@ -74,7 +73,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      */
     mapCoursesIntoSemesters(): void {
         const semesterCollapsed: { [key: string]: boolean } = {};
-        const coursesBySemester: { [key: string]: Course[] } = {};
+        const coursesBySemester: { [key: string]: CourseForArchiveDTO[] } = {};
         const fullFormOfSemesterStrings: { [key: string]: string } = {};
         this.semesters().forEach((semester) => {
             const stored = this.courseService.getSemesterCollapseStateFromStorage(semester);
@@ -89,7 +88,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.archiveCourseSubscription.unsubscribe();
+        this.archiveCourseSubscription?.unsubscribe();
     }
 
     setSearchValue(searchValue: string): void {

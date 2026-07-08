@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service.parser;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -188,7 +187,7 @@ public class TestResultXmlParser {
     record TestSuites(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
 
         TestSuites {
-            testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
+            testSuites = Objects.requireNonNullElse(testSuites, List.of());
         }
     }
 
@@ -198,8 +197,8 @@ public class TestResultXmlParser {
             @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
 
         TestSuite {
-            testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
-            testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
+            testCases = Objects.requireNonNullElse(testCases, List.of());
+            testSuites = Objects.requireNonNullElse(testSuites, List.of());
         }
     }
 

@@ -1,16 +1,6 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
-import {
-    faChevronRight,
-    faDownLeftAndUpRightToCenter,
-    faEye,
-    faFileExport,
-    faFileImport,
-    faGripLinesVertical,
-    faPlus,
-    faUpRightAndDownLeftFromCenter,
-} from '@fortawesome/free-solid-svg-icons';
-import interact from 'interactjs';
-import type { ResizeEvent } from '@interactjs/actions/resize/plugin';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faGripLinesVertical, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -26,7 +16,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
 import { TooltipModule } from 'primeng/tooltip';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
@@ -34,7 +23,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -45,21 +33,26 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
-    styleUrls: ['standardized-competency-management.component.scss'],
+    styleUrls: ['./standardized-competency-management.component.scss'],
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },
+    // No OnPush: the knowledge-area tree state lives in a non-signal dataSource (and knowledgeAreasForSelect)
+    // mutated in subscribe callbacks; OnPush would skip those mutations and render stale until a signal write happens.
     imports: [
+        NgTemplateOutlet,
         TranslateDirective,
         DocumentationButtonComponent,
         RouterLink,
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
-        ButtonComponent,
         KnowledgeAreaTreeComponent,
         TooltipModule,
         StandardizedCompetencyEditComponent,
@@ -68,15 +61,17 @@ import { DialogModule } from 'primeng/dialog';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         DialogModule,
+        ButtonModule,
+        ProgressSpinnerModule,
+        ResizableDirective,
     ],
 })
-export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, AfterViewInit, OnDestroy, ComponentCanDeactivate {
+export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
     private standardizedCompetencyService = inject(StandardizedCompetencyService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
-    /** Reference to the knowledge area tree component for tree control */
     private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
 
     protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
@@ -98,10 +93,9 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private dialogErrorSource = new Subject<string>();
     protected dialogError = this.dialogErrorSource.asObservable();
 
-    /** width of the detail panel in px, persisted across panel switches */
+    /** Width (px) of the resizable detail panel; persisted across competency/knowledge-area selections. */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
 
-    // Cancel confirmation dialog state (replaced the legacy ng-bootstrap confirm modal)
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');
@@ -109,7 +103,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private confirmDialogCallback: () => void = () => {};
 
     // Icons
-    protected readonly faChevronRight = faChevronRight;
     protected readonly faPlus = faPlus;
     protected readonly faMinimize = faDownLeftAndUpRightToCenter;
     protected readonly faMaximize = faUpRightAndDownLeftFromCenter;
@@ -118,8 +111,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faFileExport = faFileExport;
     protected readonly faGripLinesVertical = faGripLinesVertical;
     // Other constants for template
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
 
@@ -145,33 +136,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         });
     }
 
-    ngAfterViewInit() {
-        interact('.sc-detail-panel')
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    interact.modifiers.restrictSize({
-                        min: { width: 250, height: 0 },
-                        max: { width: 1100, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', (event: ResizeEvent) => {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: ResizeEvent) => {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', (event: ResizeEvent) => {
-                (event.target as HTMLElement).style.width = event.rect.width + 'px';
-                this.detailPanelWidth.set(event.rect.width);
-            });
-    }
-
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        interact('.sc-detail-panel').unset();
     }
 
     exportStandardizedCompetencyCatalog() {
@@ -342,10 +308,10 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
         if (parent) {
             parent.children = parent.children?.filter((ka) => ka.id !== knowledgeArea.id);
-            this.refreshTree();
         } else {
             this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== knowledgeArea.id);
         }
+        this.refreshTree();
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
         this.knowledgeAreasForSelect = this.knowledgeAreasForSelect.filter((ka) => ka.id === undefined || !descendantIds.includes(ka.id));
@@ -363,10 +329,10 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
         if (parent) {
             parent.children = this.insertBasedOnTitle(knowledgeAreaForTree, parent.children);
-            this.refreshTree();
         } else {
             this.dataSource.data = this.insertBasedOnTitle(knowledgeAreaForTree, this.dataSource.data);
         }
+        this.refreshTree();
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
         this.knowledgeAreasForSelect = [];
@@ -413,10 +379,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.knowledgeAreasForSelect = [];
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
 
-        // refresh tree if dataSource.data was not modified directly
-        if (previousParent || parent) {
-            this.refreshTree();
-        }
+        this.refreshTree();
         // filter again if the knowledge area was moved.
         if (previousParent?.id !== parent?.id && this.knowledgeAreaFilter) {
             this.filterByKnowledgeArea(this.knowledgeAreaFilter);
@@ -438,6 +401,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         knowledgeArea.competencies = knowledgeArea.competencies?.filter((c) => c.id !== competency.id);
+        this.refreshTree();
     }
 
     /**
@@ -455,6 +419,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         knowledgeArea.competencies = (knowledgeArea.competencies ?? []).concat(competencyForTree);
+        this.refreshTree();
     }
 
     /**
@@ -495,6 +460,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             }
             previousKnowledgeArea.competencies.splice(index, 1, competencyForTree);
         }
+        this.refreshTree();
     }
 
     // utility functions
@@ -517,9 +483,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     }
 
     private refreshTree() {
-        const _data = this.dataSource.data;
-        this.dataSource.data = [];
-        this.dataSource.data = _data;
+        this.knowledgeAreaTree()?.rebuild();
     }
 
     private isAncestorOf(ancestor: KnowledgeAreaDTO, knowledgeArea: KnowledgeAreaDTO): boolean {

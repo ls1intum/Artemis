@@ -1,11 +1,10 @@
 import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -45,15 +44,12 @@ export interface SidebarItem {
         NgbDropdownToggle,
         NgTemplateOutlet,
         NgbDropdownMenu,
-        NgbDropdownItem,
         FaIconComponent,
         TranslateDirective,
         NgbTooltip,
         RouterLink,
-        ImageComponent,
         RouterLinkActive,
         FeatureToggleHideDirective,
-        SlicePipe,
     ],
 })
 export class CourseSidebarComponent {
@@ -62,7 +58,6 @@ export class CourseSidebarComponent {
     protected readonly faCog = faCog;
 
     course = input<Course | undefined>();
-    courses = input<Course[] | undefined>();
     sidebarItemsTop = signal<SidebarItem[]>([]);
     sidebarItemsBottom = signal<SidebarItem[]>([]);
     sidebarItems = input<SidebarItem[]>([]);
@@ -80,7 +75,6 @@ export class CourseSidebarComponent {
     anyItemHidden = signal<boolean>(false);
     private readonly irisImpressionLoggedForCourseId = signal<number | undefined>(undefined);
 
-    switchCourse = output<Course>();
     courseActionItemClick = output<CourseActionItem>();
     toggleCollapseState = output<void>();
     activeBreakpoints: Signal<string[]>;

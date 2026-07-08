@@ -20,16 +20,14 @@ public class ConflictingPasskeyConfigurationFailureAnalyzer extends AbstractFail
     }
 
     private String buildDescription(ConflictingPasskeyConfigurationException cause) {
-        return String.format(
-                "Invalid passkey configuration detected:%n%n" + "Property '%s' is set to 'true', but property '%s' is set to 'false'.%n%n"
-                        + "This configuration is invalid because passkey authentication must be enabled " + "if it is required for administrator features.",
-                cause.getPropertyName(), cause.getConflictingPropertyName());
+        return ("Invalid passkey configuration detected:%n%n" + "Property '%s' is set to 'true', but property '%s' is set to 'false'.%n%n"
+                + "This configuration is invalid because passkey authentication must be enabled " + "if it is required for administrator features.")
+                .formatted(cause.getPropertyName(), cause.getConflictingPropertyName());
     }
 
     private String buildAction(ConflictingPasskeyConfigurationException cause) {
-        return String.format(
-                "Update your application configuration (e.g., application-core.yml or environment variables):%n%n" + "Option 1: Enable passkey authentication:%n"
-                        + "    %s: true%n%n" + "Option 2: Disable the requirement for administrator features:%n" + "    %s: false%n%n",
-                cause.getConflictingPropertyName(), cause.getPropertyName());
+        return ("Update your application configuration (e.g., application-core.yml or environment variables):%n%n" + "Option 1: Enable passkey authentication:%n"
+                + "    %s: true%n%n" + "Option 2: Disable the requirement for administrator features:%n" + "    %s: false%n%n")
+                .formatted(cause.getConflictingPropertyName(), cause.getPropertyName());
     }
 }

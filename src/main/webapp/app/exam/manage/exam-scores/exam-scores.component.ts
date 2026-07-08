@@ -6,7 +6,7 @@ import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/foundation/service/sort.service';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -26,7 +26,7 @@ import { captureException } from '@sentry/angular';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { mean, median, standardDeviation } from 'simple-statistics';
+import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -115,16 +115,16 @@ export class ExamScoresComponent implements OnInit {
     // TODO: Cache already calculated filter dependent statistics
     readonly aggregatedExamResults = signal<AggregatedExamResult>(undefined!);
     readonly aggregatedExerciseGroupResults = signal<AggregatedExerciseGroupResult[]>(undefined!);
-    public noOfExamsFiltered: number;
+    public noOfExamsFiltered = 0;
 
     dataLabelFormatting = this.formatDataLabel.bind(this);
     readonly scores = signal<number[]>(undefined!);
     readonly gradesWithBonus = signal<string[]>(undefined!);
-    lastCalculatedMedianType: MedianType;
+    lastCalculatedMedianType?: MedianType;
     readonly highlightedValue = signal<number | undefined>(undefined);
 
     readonly showOverallMedian = signal<boolean>(undefined!); // Indicates whether the median of all exams is currently highlighted
-    overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
+    overallChartMedian = 0; // This value can vary as it depends on if the user only includes submitted exams or not
     readonly overallChartMedianType = signal<MedianType>(undefined!); // We need to distinguish the different overall medians for the toggling
     readonly showPassedMedian = signal<boolean>(undefined!); // Same as above for the median of all passed exams
 
@@ -183,7 +183,7 @@ export class ExamScoresComponent implements OnInit {
 
             forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
                 next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
-                    this.examScoreDTO.set(getExamScoresResponse!.body!);
+                    this.examScoreDTO.set(getExamScoresResponse.body!);
                     if (this.examScoreDTO()) {
                         this.hasSecondCorrectionAndStarted.set(this.examScoreDTO().hasSecondCorrectionAndStarted);
                         this.studentResults.set(this.examScoreDTO().studentResults);
@@ -211,7 +211,7 @@ export class ExamScoresComponent implements OnInit {
                     // set the grading scale if it exists for the exam
                     if (gradingScaleResponse.body) {
                         this.gradingScaleExists.set(true);
-                        this.gradingScale.set(toEntity(gradingScaleResponse.body!, this.course()));
+                        this.gradingScale.set(toEntity(gradingScaleResponse.body, this.course()));
                         this.isBonus.set(this.gradingScale()!.gradeType === GradeType.BONUS);
                         this.hasBonus.set(this.studentResults()?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy);
                         this.gradingScale()!.gradeSteps = this.gradingService.sortGradeSteps(this.gradingScale()!.gradeSteps);
@@ -672,18 +672,14 @@ export class ExamScoresComponent implements OnInit {
      * @param customOptions Custom csv options that should be used for export.
      */
     exportAsCsv(headers: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
-        const options = {
-            showLabels: true,
-            showTitle: false,
-            filename: `${this.examScoreDTO().title} Exam Results`,
-            useTextFile: false,
-            useBom: true,
+        downloadCsv(rows, {
             columnHeaders: headers,
-        };
-
-        const csvExportOptions = mkConfig(Object.assign(options, customOptions));
-        const csvData = generateCsv(csvExportOptions)(rows);
-        download(csvExportOptions)(csvData);
+            fileName: `${this.examScoreDTO().title} Exam Results`,
+            fieldSeparator: customOptions.fieldSeparator,
+            quoteStrings: customOptions.quoteStrings,
+            quoteCharacter: customOptions.quoteCharacter,
+            decimalSeparator: customOptions.decimalSeparator,
+        });
     }
 
     /**
@@ -1074,7 +1070,7 @@ export class ExamScoresComponent implements OnInit {
 
                 this.aggregatedExamResults().medianGradeSubmittedAndNonEmptyInFirstCorrection = this.gradingService.findMatchingGradeStep(
                     this.gradingScale()!.gradeSteps,
-                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection!,
+                    this.aggregatedExamResults().medianScoreSubmittedAndNonEmptyInFirstCorrection,
                 )!.gradeName;
             }
         }

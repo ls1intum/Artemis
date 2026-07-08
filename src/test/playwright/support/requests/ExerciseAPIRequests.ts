@@ -93,6 +93,8 @@ export class ExerciseAPIRequests {
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
         problemStatement?: string;
+        // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
+        auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -110,6 +112,7 @@ export class ExerciseAPIRequests {
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
             problemStatement,
+            auxiliaryRepositories,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -132,6 +135,7 @@ export class ExerciseAPIRequests {
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
             ...(problemStatement ? { problemStatement } : {}),
+            ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -153,7 +157,7 @@ export class ExerciseAPIRequests {
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
     async deleteProgrammingExercise(exerciseId: number) {
@@ -228,14 +232,15 @@ export class ExerciseAPIRequests {
         title = 'Text ' + generateUUID(),
         exerciseTemplate: any = textExerciseTemplate,
     ): Promise<TextExercise> {
-        const template = {
+        // The endpoint consumes UpdateTextExerciseDTO, which expects a flat courseId XOR exerciseGroupId rather than a
+        // nested course/exerciseGroup entity; other template fields are ignored by Jackson.
+        const textExercise = {
             ...exerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            ...this.toExerciseReference(body),
         };
-        const textExercise = Object.assign({}, template, body);
-        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -254,16 +259,56 @@ export class ExerciseAPIRequests {
         assessmentDueDate: dayjs.Dayjs,
         title = 'Text ' + generateUUID(),
     ): Promise<TextExercise> {
-        const template = {
+        const textExercise = {
             ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
-            releaseDate: releaseDate,
-            dueDate: dueDate,
-            assessmentDueDate: assessmentDueDate,
+            releaseDate: dayjsToString(releaseDate),
+            dueDate: dayjsToString(dueDate),
+            assessmentDueDate: dayjsToString(assessmentDueDate),
+            ...this.toExerciseReference(body),
         };
-        const textExercise = Object.assign({}, template, body);
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Builds the flat course/exercise-group reference expected by UpdateTextExerciseDTO (courseId XOR exerciseGroupId)
+     * from the nested body used by the test helpers.
+     */
+    private toExerciseReference(body: { course: Course } | { exerciseGroup: ExerciseGroup }): { courseId?: number; exerciseGroupId?: number } {
+        if ('course' in body) {
+            return { courseId: body.course.id };
+        }
+        return { exerciseGroupId: body.exerciseGroup.id };
+    }
+
+    /**
+     * Ensures a freshly-created exam exercise carries the caller-known exercise group (including its `title`).
+     *
+     * The exercise-creation endpoints only receive a flat `exerciseGroupId` and echo back a partial
+     * `exerciseGroup` whose `title` is intermittently absent under load. Exam E2E tests navigate to
+     * exercises by that title (see ExamNavigationBar.openOrSaveExerciseByTitle), so a missing echo used
+     * to surface as a cryptic `getByText(undefined)` -> "Cannot read properties of undefined (reading
+     * 'unicode')" TypeError and produced correlated, hard-to-diagnose failures across the exam suite.
+     * Since the caller already holds the fully-populated group it created (id + title), prefer that over
+     * the server echo. No-op for course-based exercises, which have no exercise group.
+     */
+    private withKnownExerciseGroup<T extends { exerciseGroup?: ExerciseGroup }>(exercise: T, exerciseGroup?: ExerciseGroup): T {
+        if (exerciseGroup) {
+            exercise.exerciseGroup = { ...exercise.exerciseGroup, ...exerciseGroup };
+        }
+        return exercise;
+    }
+
+    /**
+     * POSTs the given UpdateTextExerciseDTO payload to the text exercise creation endpoint and asserts success so a
+     * failed setup throws loudly instead of cascading into undefined exercise ids.
+     */
+    private async postTextExercise(textExercise: Record<string, unknown>): Promise<TextExercise> {
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        if (!response.ok()) {
+            throw new Error(`Failed to create text exercise: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -309,7 +354,7 @@ export class ExerciseAPIRequests {
         };
         const uploadExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -359,6 +404,9 @@ export class ExerciseAPIRequests {
      * @param releaseDate - The release date of the exercise (optional, default: current date).
      * @param dueDate - The due date of the exercise (optional, default: current date + 1 day).
      * @param assessmentDueDate - The assessment due date of the exercise (optional, default: current date + 2 days).
+     * @param options - Optional extra configuration:
+     *   - mode: INDIVIDUAL (default, backward compatible) or TEAM for team modeling exercises.
+     *   - teamAssignmentConfig: min/max team size; only relevant when mode is TEAM.
      * @returns A Promise<ModelingExercise> representing the modeling exercise created.
      */
     async createModelingExercise(
@@ -367,11 +415,15 @@ export class ExerciseAPIRequests {
         releaseDate = dayjs(),
         dueDate = dayjs().add(1, 'days'),
         assessmentDueDate = dayjs().add(2, 'days'),
+        options: { mode?: ExerciseMode; teamAssignmentConfig?: TeamAssignmentConfig } = {},
     ): Promise<ModelingExercise> {
+        const { mode = ExerciseMode.INDIVIDUAL, teamAssignmentConfig } = options;
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            mode,
+            ...(teamAssignmentConfig ? { teamAssignmentConfig } : {}),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
@@ -385,7 +437,7 @@ export class ExerciseAPIRequests {
             newModelingExercise = Object.assign({}, templateCopy, body);
         }
         const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -579,7 +631,7 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.post(url, {
             multipart: multipartData,
         });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**

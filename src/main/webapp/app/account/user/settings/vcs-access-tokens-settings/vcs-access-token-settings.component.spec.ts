@@ -11,7 +11,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
@@ -39,7 +38,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

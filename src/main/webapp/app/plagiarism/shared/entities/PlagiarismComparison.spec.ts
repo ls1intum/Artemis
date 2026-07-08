@@ -3,7 +3,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PlagiarismComparison } from './PlagiarismComparison';
 import { PlagiarismStatus } from './PlagiarismStatus';
 import { PlagiarismSubmission } from './PlagiarismSubmission';
-import { PlagiarismResult } from './PlagiarismResult';
 import { PlagiarismMatch } from './PlagiarismMatch';
 
 describe('PlagiarismComparison', () => {
@@ -12,7 +11,6 @@ describe('PlagiarismComparison', () => {
     let plagiarismComparison: PlagiarismComparison;
     let mockSubmissionA: PlagiarismSubmission;
     let mockSubmissionB: PlagiarismSubmission;
-    let mockPlagiarismResult: PlagiarismResult;
     let mockMatches: PlagiarismMatch[];
 
     beforeEach(() => {
@@ -31,15 +29,6 @@ describe('PlagiarismComparison', () => {
             size: 200,
             score: 90,
         } as PlagiarismSubmission;
-
-        mockPlagiarismResult = {
-            id: 100,
-            comparisons: [],
-            duration: 1000,
-            exercise: {} as any,
-            similarityDistribution: new Array(10).fill(0) as [number, 10],
-            createdDate: {} as any,
-        } as PlagiarismResult;
 
         mockMatches = [
             {
@@ -65,7 +54,6 @@ describe('PlagiarismComparison', () => {
             plagiarismComparison.similarity = 95.7;
             plagiarismComparison.status = PlagiarismStatus.CONFIRMED;
             plagiarismComparison.matches = mockMatches;
-            plagiarismComparison.plagiarismResult = mockPlagiarismResult;
 
             expect(plagiarismComparison.similarity).toBeGreaterThan(90);
             expect(plagiarismComparison.status).toBe(PlagiarismStatus.CONFIRMED);

@@ -115,7 +115,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 
-        comp.removeEnvVar(0);
+        comp.removeEnvVar(comp.envVars()[0]);
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom"}');
 
         comp.addEnvVar();
@@ -139,7 +139,7 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.envVars()).toEqual([['', '']]);
 
         const envVarsBeforeRemove = comp.envVars();
-        comp.removeEnvVar(0);
+        comp.removeEnvVar(comp.envVars()[0]);
 
         expect(comp.envVars()).not.toBe(envVarsBeforeRemove);
         expect(comp.envVars()).toEqual([]);

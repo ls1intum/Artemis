@@ -1,23 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('interactjs', () => {
-    const interactFn = vi.fn(() => {
-        return {
-            resizable: vi.fn().mockReturnThis(),
-            draggable: vi.fn().mockReturnThis(),
-            unset: vi.fn(),
-        };
-    });
-
-    (interactFn as unknown as { modifiers: unknown }).modifiers = {
-        restrictEdges: vi.fn((opts: unknown) => ({ type: 'restrictEdges', opts })),
-        restrictSize: vi.fn((opts: unknown) => ({ type: 'restrictSize', opts })),
-        restrictRect: vi.fn((opts: unknown) => ({ type: 'restrictRect', opts })),
-    };
-
-    return { __esModule: true, default: interactFn };
-});
-
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -26,23 +7,17 @@ import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockIrisBaseChatbotComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component.mock';
 import { MockProvider } from 'ng-mocks';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NavigationStart, Router } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import interact from 'interactjs';
 
-type InteractResizeMoveEvent = {
-    target: HTMLElement;
-    rect: { width: number; height: number };
-    deltaRect: { left: number; top: number };
-};
-
-type InteractDragMoveEvent = {
-    target: HTMLElement;
-    dx: number;
-    dy: number;
-};
+/** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button plus the pointer fields the component reads. */
+function pointer(target: EventTarget, type: string, clientX: number, clientY: number, pointerId = 1): void {
+    const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 });
+    Object.defineProperties(event, { pointerId: { value: pointerId }, pointerType: { value: 'mouse' } });
+    target.dispatchEvent(event);
+}
 
 describe('IrisChatbotWidgetComponent', () => {
     setupTestBed({ zoneless: true });
@@ -50,7 +25,7 @@ describe('IrisChatbotWidgetComponent', () => {
     let component: IrisChatbotWidgetComponent;
     let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
-    let dialog: MatDialog;
+    let dialogRef: DynamicDialogRef;
     let routerEvents$: Subject<unknown>;
 
     beforeEach(async () => {
@@ -63,9 +38,8 @@ describe('IrisChatbotWidgetComponent', () => {
             imports: [IrisChatbotWidgetComponent],
             providers: [
                 MockProvider(IrisChatService),
-                { provide: MatDialog, useValue: { closeAll: vi.fn() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
                 { provide: Router, useValue: { events: routerEvents$.asObservable() } },
-                { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },
                 {
                     provide: BreakpointObserver,
                     useValue: {
@@ -84,7 +58,7 @@ describe('IrisChatbotWidgetComponent', () => {
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
         component = fixture.componentInstance;
 
-        dialog = TestBed.inject(MatDialog);
+        dialogRef = TestBed.inject(DynamicDialogRef);
         fixture.detectChanges();
     });
 
@@ -96,18 +70,18 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call closeAll on dialog when closeChat is called', () => {
-        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
+    it('should close the dialog when closeChat is called', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.closeChat();
-        expect(closeAllSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 
-    it('should close all dialogs on NavigationStart', () => {
-        const closeAllSpy = vi.spyOn(dialog, 'closeAll');
+    it('should close the dialog on NavigationStart', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         routerEvents$.next(new NavigationStart(1, '/somewhere'));
 
-        expect(closeAllSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should toggle fullSize and call setPositionAndScale when toggleFullSize is called', () => {
@@ -157,9 +131,10 @@ describe('IrisChatbotWidgetComponent', () => {
             matches: true,
             breakpoints: { [Breakpoints.Handset]: true },
         });
-        // Setup DOM
+        // Setup DOM — the widget now lives in a PrimeNG DynamicDialog, so its bounding container
+        // is the dialog mask wrapper (.p-dialog-mask).
         const overlay = document.createElement('div');
-        overlay.className = 'cdk-overlay-container';
+        overlay.className = 'p-dialog-mask';
 
         overlay.getBoundingClientRect = vi.fn(() => ({
             x: 0,
@@ -187,80 +162,166 @@ describe('IrisChatbotWidgetComponent', () => {
         document.body.removeChild(widget);
     });
 
-    it('should not throw if cdk-overlay-container or chat-widget is missing in setPositionAndScale', () => {
+    it('should not throw if the dialog mask or chat-widget is missing in setPositionAndScale', () => {
         expect(() => component.setPositionAndScale()).not.toThrow();
     });
 
-    it('should update widget size/position and fullSize from interactjs move listeners', () => {
-        // DOM required by the handlers
+    /** Builds the dialog mask container + a chat widget (with header) in the DOM and wires the pointer handlers. */
+    function setupWidget(rect: { left: number; top: number; width: number; height: number }): { overlay: HTMLElement; widget: HTMLElement; header: HTMLElement } {
+        // Ensure the component binds to OUR test widget (not the one rendered by the fixture template).
+        document.querySelectorAll('.chat-widget, .p-dialog-mask, .cdk-overlay-container').forEach((el) => el.remove());
         const overlay = document.createElement('div');
-        overlay.className = 'cdk-overlay-container';
-        overlay.getBoundingClientRect = vi.fn(() => ({
-            x: 0,
-            y: 0,
-            width: 1000,
-            height: 1000,
-            top: 0,
-            right: 1000,
-            bottom: 1000,
-            left: 0,
-            toJSON: () => {},
-        }));
+        overlay.className = 'p-dialog-mask';
+        overlay.getBoundingClientRect = vi.fn(() => ({ x: 0, y: 0, width: 1000, height: 1000, top: 0, right: 1000, bottom: 1000, left: 0, toJSON: () => {} }));
         document.body.appendChild(overlay);
 
         const widget = document.createElement('div');
         widget.className = 'chat-widget';
-        widget.setAttribute('data-x', '10');
-        widget.setAttribute('data-y', '20');
+        widget.setAttribute('data-x', String(rect.left - 100));
+        widget.setAttribute('data-y', String(rect.top - 80));
+        widget.getBoundingClientRect = vi.fn(
+            () =>
+                ({
+                    x: rect.left,
+                    y: rect.top,
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                    right: rect.left + rect.width,
+                    bottom: rect.top + rect.height,
+                    toJSON: () => {},
+                }) as DOMRect,
+        );
+        const header = document.createElement('div');
+        header.className = 'chat-header';
+        widget.appendChild(header);
         document.body.appendChild(widget);
 
-        const interactMock = interact as unknown as ReturnType<typeof vi.fn>;
-        interactMock.mockClear();
-
         component.ngAfterViewInit();
+        return { overlay, widget, header };
+    }
 
-        expect(interactMock).toHaveBeenCalledWith('.chat-widget');
+    it('resizes the widget from the right edge, clamping to the minimum width', () => {
+        const { overlay, widget } = setupWidget({ left: 110, top: 100, width: 600, height: 600 });
+        // ngAfterViewInit -> setPositionAndScale repositions the widget; pin a known translate for the math.
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
 
-        const chain = (interactMock as ReturnType<typeof vi.fn>).mock.results[0].value as {
-            resizable: ReturnType<typeof vi.fn>;
-            draggable: ReturnType<typeof vi.fn>;
-        };
+        // pointerdown within EDGE_MARGIN of the right border (right = 710) -> right-edge resize. startWidth 600 -> right anchor 610.
+        pointer(widget, 'pointerdown', 705, 400);
+        pointer(widget, 'pointermove', 755, 400); // +50 -> width 650
+        expect(widget.style.width).toBe('650px');
+        expect(widget.style.transform).toBe('translate(10px, 20px)'); // x unchanged on right-edge resize
+        expect(component.fullSize()).toBe(false); // 650 < 1000 * 0.93
 
-        const resizableConfig = chain.resizable.mock.calls[0][0] as {
-            listeners: { move: (e: InteractResizeMoveEvent) => void };
-        };
-        const draggableConfig = chain.draggable.mock.calls[0][0] as {
-            listeners: { move: (e: InteractDragMoveEvent) => void };
-        };
+        // shrink well past the minimum (initialWidth 450) -> clamped
+        pointer(widget, 'pointermove', 405, 400); // -300 -> 300, clamped to 450
+        expect(widget.style.width).toBe('450px');
+        pointer(widget, 'pointerup', 405, 400);
 
-        // Resize move -> should set width/height, transform, data-x/y, and fullSize
-        resizableConfig.listeners.move({
-            target: widget,
-            rect: { width: 950, height: 900 },
-            deltaRect: { left: 5, top: 10 },
+        overlay.remove();
+        widget.remove();
+    });
+
+    it('shows a resize cursor when hovering near a border and clears it in the body', () => {
+        // Regression: the in-house resize replaced interact.js, which changed the cursor near a resizable edge.
+        // Without a hover affordance users cannot tell the widget is resizable.
+        const { overlay, widget } = setupWidget({ left: 110, top: 100, width: 600, height: 600 }); // right = 710, bottom = 700
+
+        pointer(widget, 'pointermove', 705, 400); // within 10px of the right border
+        expect(widget.style.cursor).toBe('ew-resize');
+
+        pointer(widget, 'pointermove', 400, 695); // within 10px of the bottom border
+        expect(widget.style.cursor).toBe('ns-resize');
+
+        pointer(widget, 'pointermove', 705, 695); // bottom-right corner
+        expect(widget.style.cursor).toBe('nwse-resize');
+
+        pointer(widget, 'pointermove', 400, 400); // interior -> no resize affordance
+        expect(widget.style.cursor).toBe('');
+
+        overlay.remove();
+        widget.remove();
+    });
+
+    it('drags the widget from the header and keeps it inside the overlay container', () => {
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
+
+        // pointerdown on the header, away from all edges -> drag.
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 330, 295); // dx +30, dy -5 -> translate from (10,20) to (40,15)
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
+        expect(widget.getAttribute('data-x')).toBe('40');
+        expect(widget.getAttribute('data-y')).toBe('15');
+        pointer(widget, 'pointerup', 330, 295);
+
+        overlay.remove();
+        widget.remove();
+    });
+
+    it('does not stay stuck after a cancelled gesture (pointercancel) and can be dragged again', () => {
+        // Regression: the gesture-end handler released the pointer capture unconditionally. On pointercancel the
+        // browser has already released it, so releasePointerCapture() throws InvalidPointerId, which aborted the
+        // teardown and left the widget permanently following the pointer (with its listeners leaked).
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
+
+        // jsdom no-ops pointer capture; reproduce the real browser: on pointercancel the capture is already gone,
+        // so hasPointerCapture() is false and an unguarded releasePointerCapture() call would throw.
+        widget.setPointerCapture = vi.fn();
+        widget.hasPointerCapture = vi.fn(() => false);
+        widget.releasePointerCapture = vi.fn(() => {
+            throw new DOMException('InvalidPointerId', 'NotFoundError');
         });
 
-        expect(widget.style.width).toBe('950px');
-        expect(widget.style.height).toBe('900px');
-        expect(widget.style.transform).toBe('translate(15px,30px)');
-        expect(widget.getAttribute('data-x')).toBe('15');
-        expect(widget.getAttribute('data-y')).toBe('30');
-        expect(component.fullSize()).toBe(true);
+        // Drag, then let the browser cancel the gesture mid-drag.
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 330, 295); // -> translate(40px, 15px)
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
+        pointer(widget, 'pointercancel', 330, 295);
 
-        // Shrink -> should flip fullSize back
-        resizableConfig.listeners.move({
-            target: widget,
-            rect: { width: 500, height: 500 },
-            deltaRect: { left: -2, top: -3 },
-        });
-        expect(component.fullSize()).toBe(false);
+        // The gesture must have torn down: a stray move no longer drags the widget.
+        pointer(widget, 'pointermove', 500, 500);
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
 
-        // Drag move -> should update transform and data-x/y
-        draggableConfig.listeners.move({ target: widget, dx: 7, dy: -3 });
+        // And a fresh gesture works again (proves the widget is not wedged).
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 320, 300); // dx +20 from (40,15) -> (60,15)
+        expect(widget.style.transform).toBe('translate(60px, 15px)');
+        pointer(widget, 'pointerup', 320, 300);
 
-        expect(widget.style.transform).toBe(`translate(${widget.getAttribute('data-x')}px, ${widget.getAttribute('data-y')}px)`);
+        overlay.remove();
+        widget.remove();
+    });
 
-        // cleanup
+    it('does not start a drag when the pointerdown lands on a header control, so the control keeps its click', () => {
+        // Regression: the drag/resize handler used to start a drag (and preventDefault) on any pointerdown inside
+        // .chat-header, which swallowed clicks on the header controls (info / new chat / maximize / close).
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
+
+        // A header control button, away from all widget edges (so only the interactive-target rule can apply).
+        const button = document.createElement('button');
+        button.className = 'header-control';
+        header.appendChild(button);
+
+        const transformBefore = widget.style.transform;
+        const down = new MouseEvent('pointerdown', { bubbles: true, cancelable: true, clientX: 300, clientY: 300, button: 0 });
+        Object.defineProperties(down, { pointerId: { value: 1 }, pointerType: { value: 'mouse' } });
+        button.dispatchEvent(down);
+        pointer(widget, 'pointermove', 330, 295); // would translate to (40,15) if a drag had started
+
+        // No gesture started: the widget did not move, and the pointerdown was not preventDefaulted, so the click proceeds.
+        expect(widget.getAttribute('data-x')).toBe('10');
+        expect(widget.getAttribute('data-y')).toBe('20');
+        expect(widget.style.transform).toBe(transformBefore);
+        expect(down.defaultPrevented).toBe(false);
+
         overlay.remove();
         widget.remove();
     });

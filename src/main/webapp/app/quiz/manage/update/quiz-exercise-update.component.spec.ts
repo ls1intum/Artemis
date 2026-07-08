@@ -5,7 +5,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -668,19 +667,23 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(durationAsSeconds).toEqual(comp.quizExercise().duration);
             });
 
-            it('should increase minutes when reaching 60 seconds', () => {
-                comp.duration = { minutes: 0, seconds: 60 };
+            it('should support week-long durations', () => {
+                comp.duration = { hours: 7 * 24, minutes: 0, seconds: 0 };
                 comp.onDurationChange();
 
-                expect(comp.duration.minutes).toBe(1);
+                expect(comp.quizExercise().duration).toBe(7 * 24 * 60 * 60);
+                expect(comp.duration.hours).toBe(7 * 24);
+                expect(comp.duration.minutes).toBe(0);
                 expect(comp.duration.seconds).toBe(0);
             });
 
-            it('should decrease minutes when reaching -1 seconds', () => {
-                comp.duration = { minutes: 1, seconds: -1 };
+            it('should keep entered duration fields stable while updating the stored duration', () => {
+                comp.duration = { hours: 24, minutes: 59, seconds: 59 };
                 comp.onDurationChange();
 
-                expect(comp.duration.minutes).toBe(0);
+                expect(comp.quizExercise().duration).toBe(24 * 60 * 60 + 59 * 60 + 59);
+                expect(comp.duration.hours).toBe(24);
+                expect(comp.duration.minutes).toBe(59);
                 expect(comp.duration.seconds).toBe(59);
             });
 
@@ -691,6 +694,35 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.onDurationChange();
                 expect(comp.quizExercise().duration).toBe(1530);
                 comp.isExamMode.set(false);
+            });
+
+            it('should display long persisted durations using total hours', () => {
+                comp.duration = new Duration(0, 0);
+                comp.quizExercise().duration = 7 * 24 * 60 * 60 + 2 * 60 * 60 + 3 * 60 + 4;
+
+                comp.updateDuration();
+
+                expect(comp.duration.hours).toBe(7 * 24 + 2);
+                expect(comp.duration.minutes).toBe(3);
+                expect(comp.duration.seconds).toBe(4);
+            });
+
+            it('should validate batch start times against long durations', () => {
+                const now = dayjs();
+                comp.quizExercise().quizMode = QuizMode.INDIVIDUAL;
+                comp.quizExercise().releaseDate = now.subtract(1, 'hour');
+                comp.quizExercise().dueDate = now.add(6, 'days');
+                comp.quizExercise().duration = 7 * 24 * 60 * 60;
+                comp.quizExercise().quizBatches = [{ startTime: now } as QuizBatch];
+
+                comp.validateDate();
+
+                expect(comp.quizExercise().quizBatches![0].startTimeError).toBe(true);
+
+                comp.quizExercise().dueDate = now.add(8, 'days');
+                comp.validateDate();
+
+                expect(comp.quizExercise().quizBatches![0].startTimeError).toBe(false);
             });
         });
 
@@ -768,38 +800,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise().isEditable = false;
                 comp.pendingChangesCache.set(true);
                 expect(comp.canDeactivate()).toBe(true);
-            });
-        });
-
-        describe('check if date is in the past', () => {
-            let tomorrow: NgbDate;
-            beforeEach(() => {
-                tomorrow = new NgbDate(2020, 11, 16);
-                // Set system time to 2020-11-15
-                // dayjs adds one month
-                vi.useFakeTimers();
-                vi.setSystemTime(new Date(2020, 10, 15, 0, 0, 0));
-            });
-
-            afterEach(() => {
-                vi.useRealTimers();
-            });
-
-            it('should return true if given month is before month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 10 })).toBe(true);
-            });
-
-            it('should return false if given month is same or after month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
-            });
-
-            it('should return true if given date is before now', () => {
-                const past = new NgbDate(2020, 11, 10);
-                expect(comp.isDateInPast(past, { month: 11 })).toBe(true);
-            });
-
-            it('should return false if given date is before now', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
             });
         });
 

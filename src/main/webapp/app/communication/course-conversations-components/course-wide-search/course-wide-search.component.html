@@ -2,8 +2,8 @@
     <span class="mb-2" jhiTranslate="artemisApp.metis.overview.mobileDisclaimer"></span>
     <button class="btn btn-outline-secondary" jhiTranslate="artemisApp.metis.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
 </div>
-<div [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
-    <div class="mt-2 mx-2">
+<div class="course-wide-search-content" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig().searchTerm }">
+    <div class="mt-2 mx-2 course-wide-search-inner">
         <div>
             <h4 class="d-inline-block rounded p-1 info">
                 @if (!courseWideSearchConfig().searchTerm) {
@@ -88,45 +88,46 @@
                         <div class="envelope">
                             <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                         </div>
-                    } @else {
-                        <!-- no message exist -->
-                        @if (!isFetchingPosts() && posts().length === 0) {
-                            <div class="envelope">
-                                <fa-icon size="5x" [icon]="faEnvelope" />
-                                <div class="text-center mt-2" jhiTranslate="artemisApp.metis.noPosts"></div>
-                            </div>
-                        }
-                        <!-- list of messages -->
-                        <div
-                            id="scrollableDiv"
-                            #container
-                            [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0 }"
-                            infinite-scroll
-                            [scrollWindow]="false"
-                            (scrolledUp)="fetchNextPage()"
-                        >
-                            <!-- list of all top level posts -->
-                            <!-- answers are opened in the thread sidebar -->
-                            @for (post of posts(); track postsTrackByFn($index, post)) {
-                                <div class="pt-2" style="cursor: pointer">
-                                    <jhi-posting-thread
-                                        #postingThread
-                                        [lastReadDate]="post.conversation?.lastMessageDate"
-                                        [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
-                                        [id]="'item-' + post.id"
-                                        [post]="post"
-                                        [showAnswers]="false"
-                                        [searchConfig]="courseWideSearchConfig()"
-                                        [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                                        [isCommunicationPage]="true"
-                                        [showChannelReference]="true"
-                                        (openThread)="setPostForThread($event)"
-                                        (click)="onTriggerNavigateToPost(post)"
-                                    />
-                                </div>
-                            }
+                    }
+                    <!-- no message exist -->
+                    @if (!isFetchingPosts() && posts().length === 0) {
+                        <div class="envelope">
+                            <fa-icon size="5x" [icon]="faEnvelope" />
+                            <div class="text-center mt-2" jhiTranslate="artemisApp.metis.noPosts"></div>
                         </div>
                     }
+                    <!-- list of messages -->
+                    <!-- Kept mounted (hidden via the is-fetching-posts class while loading) instead of recreated on every -->
+                    <!-- fetch, so the infinite-scroll directive and the scroll position survive across pages and chained paging works. -->
+                    <div
+                        id="scrollableDiv"
+                        #container
+                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() }"
+                        infinite-scroll
+                        [scrollWindow]="false"
+                        (scrolledUp)="fetchNextPage()"
+                    >
+                        <!-- list of all top level posts -->
+                        <!-- answers are opened in the thread sidebar -->
+                        @for (post of posts(); track postsTrackByFn($index, post)) {
+                            <div class="pt-2" style="cursor: pointer">
+                                <jhi-posting-thread
+                                    #postingThread
+                                    [lastReadDate]="post.conversation?.lastMessageDate"
+                                    [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                                    [id]="'item-' + post.id"
+                                    [post]="post"
+                                    [showAnswers]="false"
+                                    [searchConfig]="courseWideSearchConfig()"
+                                    [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                                    [isCommunicationPage]="true"
+                                    [showChannelReference]="true"
+                                    (openThread)="setPostForThread($event)"
+                                    (click)="onTriggerNavigateToPost(post)"
+                                />
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

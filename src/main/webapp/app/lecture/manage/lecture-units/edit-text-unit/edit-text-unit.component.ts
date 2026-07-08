@@ -23,9 +23,9 @@ export class EditTextUnitComponent implements OnInit {
     private alertService = inject(AlertService);
 
     readonly isLoading = signal(false);
-    textUnit: TextUnit;
+    textUnit!: TextUnit; // loaded in ngOnInit() before the form can trigger an update
     readonly formData = signal<TextUnitFormData>(undefined!);
-    lectureId: number;
+    lectureId!: number; // set in ngOnInit() from route params
 
     ngOnInit(): void {
         this.isLoading.set(true);
@@ -69,7 +69,7 @@ export class EditTextUnitComponent implements OnInit {
                 finalize(() => {
                     this.isLoading.set(false);
                     // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/text-units/:textUnitId/edit
-                    this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

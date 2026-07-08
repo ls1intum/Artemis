@@ -11,7 +11,7 @@ import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { multiSeriesToLineData, referenceLineDataset } from 'app/shared-ui/chart/chart-adapters';
 import { lineChartOptions } from 'app/shared-ui/chart/chart-options';
-import { mean } from 'simple-statistics';
+import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -55,7 +55,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
 
     readonly xAxisLabel = signal('');
 
-    readonly data = signal<any[]>([]);
+    readonly data = signal<{ name: string; series: { name?: string; value?: number }[] }[]>([]);
     // Data changes will be stored in the copy first, to trigger change detection when ready
     dataCopy: { name: string; series: { name?: string; value?: number }[] }[] = [
         {
@@ -79,10 +79,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
     });
     readonly chartOptions = computed(() =>
         lineChartOptions({
-            xAxis: { label: this.xAxisLabel() },
+            xAxis: { label: this.xAxisLabel(), tickFormatter: (value) => `${value}` },
             yAxis: { min: 0, max: 100, tickFormatter: this.formatYAxis },
             tooltip: {
-                label: (item) => `${item.dataset.label} in ${item.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
+                label: (item) => `${item.dataset.label}: ${this.findAbsoluteValue({ name: item.label })} (${item.parsed.y}%)`,
             },
         }),
     );

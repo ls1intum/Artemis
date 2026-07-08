@@ -361,7 +361,7 @@ public class AtlasAgentService {
     }
 
     public String generateSessionId(Long courseId, Long userId) {
-        return String.format("course_%d_user_%d", courseId, userId);
+        return "course_%d_user_%d".formatted(courseId, userId);
     }
 
     /**

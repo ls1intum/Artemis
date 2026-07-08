@@ -91,4 +91,28 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         expect(component.hasUnsavedChanges()).toBe(false);
     });
+
+    it('should force a re-render of the problem statement on activation to restore PlantUML diagrams', () => {
+        // Regression test for the exam bug where switching between exercises removed already-rendered PlantUML diagrams.
+        // onActivate() must force a re-render (which bypasses the "unchanged problem statement" optimization) instead of
+        // calling updateMarkdown(), so the diagrams are reliably restored when the exercise becomes visible again.
+        const forceReRenderProblemStatement = vi.fn();
+        const updateMarkdown = vi.fn();
+        // Replace the required viewChild signal with a stub instructions component.
+        (component as unknown as { instructions: () => unknown }).instructions = () => ({ forceReRenderProblemStatement, updateMarkdown });
+        const updateDomainSpy = vi.spyOn(component, 'updateDomain').mockImplementation(() => {});
+        const reattachSpy = vi.spyOn((component as unknown as { changeDetectorReference: { reattach: () => void } }).changeDetectorReference, 'reattach');
+
+        component.onActivate();
+
+        // The re-render is forced (not the optimized updateMarkdown which would skip the unchanged statement).
+        expect(forceReRenderProblemStatement).toHaveBeenCalledOnce();
+        expect(updateMarkdown).not.toHaveBeenCalled();
+        // The domain is refreshed and change detection is reattached for the now-visible exercise.
+        expect(updateDomainSpy).toHaveBeenCalledOnce();
+        expect(reattachSpy).toHaveBeenCalledOnce();
+        // Change detection must be reattached (super.onActivate) BEFORE the re-render, so the diagram injection runs
+        // against a live, attached component rather than the detached DOM that caused the original bug.
+        expect(reattachSpy.mock.invocationCallOrder[0]).toBeLessThan(forceReRenderProblemStatement.mock.invocationCallOrder[0]);
+    });
 });

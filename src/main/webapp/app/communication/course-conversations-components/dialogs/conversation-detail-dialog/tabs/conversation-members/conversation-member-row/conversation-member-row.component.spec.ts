@@ -110,7 +110,7 @@ examples.forEach((activeConversation) => {
             component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
             translateService = TestBed.inject(TranslateService) as TranslateService;
-            vi.spyOn(translateService, 'instant').mockImplementation((key: string) => key);
+            vi.spyOn(translateService, 'instant').mockImplementation((key: string | string[]) => key);
         });
 
         afterEach(() => {

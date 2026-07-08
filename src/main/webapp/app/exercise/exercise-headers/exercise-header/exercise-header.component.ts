@@ -11,11 +11,12 @@ import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercis
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 @Component({
     selector: 'jhi-exercise-header',
     templateUrl: './exercise-header.component.html',
-    imports: [FaIconComponent, ExerciseHeadersInformationComponent, ExerciseHeaderActionsComponent, ParticipationModeToggleComponent],
+    imports: [FaIconComponent, ExerciseHeadersInformationComponent, ExerciseHeaderActionsComponent, ParticipationModeToggleComponent, CourseSidebarToggleButtonComponent],
 })
 export class ExerciseHeaderComponent {
     readonly exercise = input.required<Exercise>();
@@ -33,7 +34,10 @@ export class ExerciseHeaderComponent {
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     readonly quizLiveHeaderInfo = input<QuizLiveHeaderInfo>();
+    readonly showSidebarToggle = input<boolean>(false);
+    readonly isSidebarCollapsed = input<boolean>(false);
     readonly newParticipation = output<StudentParticipation>();
+    readonly toggleSidebar = output<void>();
 
     // Local signal to track a practice participation created in this session,
     // ensuring the toggle appears immediately without waiting for the parent round-trip.

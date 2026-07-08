@@ -9,7 +9,7 @@ export const fileUploadParticipationRoute: Routes = [
         loadComponent: () => import('./file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.fileUploadExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],

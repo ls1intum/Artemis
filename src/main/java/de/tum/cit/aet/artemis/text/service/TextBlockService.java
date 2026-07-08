@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.service;
 import static java.lang.Integer.compare;
 
 import java.text.BreakIterator;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
@@ -59,7 +58,7 @@ public class TextBlockService {
         // Return empty set for missing submission text.
         final String submissionText = submission.getText();
         if (submissionText == null) {
-            return Collections.emptySet();
+            return Set.of();
         }
 
         // Javas Sentence BreakIterator handles sentence splitting.

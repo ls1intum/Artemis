@@ -42,15 +42,11 @@
 </table>
 @if (displayPagination()) {
     <div class="d-flex justify-content-between p-2">
-        <ngb-pagination
-            (pageChange)="onPageChange($event)"
-            [page]="search().page"
-            [collectionSize]="search().pageSize * content().numberOfPages"
-            [maxSize]="5"
-            [pageSize]="search().pageSize"
-            [rotate]="true"
-            [ellipses]="true"
-            [boundaryLinks]="true"
+        <p-paginator
+            [first]="(search().page - 1) * search().pageSize"
+            [rows]="search().pageSize"
+            [totalRecords]="search().pageSize * content().numberOfPages"
+            (onPageChange)="onPaginatorPageChange($event)"
         />
     </div>
 }

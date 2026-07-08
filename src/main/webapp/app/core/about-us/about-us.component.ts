@@ -8,6 +8,15 @@ import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+/** Minimal shape of a contributor entry as returned in about-us.json (plain object, before mapping into {@link ContributorModel}). */
+interface ContributorDto {
+    fullName: string;
+    photoDirectory: string;
+    sortBy?: string;
+    role?: string;
+    website?: string;
+}
+
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
@@ -66,7 +75,7 @@ export class AboutUsComponent implements OnInit {
             // Map contributors into the model, as the returned data are just plain objects
             const mappedData: AboutUsModel = {
                 ...data,
-                contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
+                contributors: data.contributors.map((con: ContributorDto) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
             };
 
             // Sort by last name

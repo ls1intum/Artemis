@@ -67,6 +67,8 @@
             "sshKeyExpiredTip": "Du hast abgelaufene SSH-Schlüssel. Möglicherweise musst du {link:hier} einen neuen SSH-Schlüssel zu deinem Konto hinzufügen.",
             "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
             "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
+            "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",
+            "repositoryAccessTokenError": "Das Repository-Zugriffstoken konnte nicht abgerufen werden. Bitte versuche es erneut.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
             "aiExperienceConfirmation": {

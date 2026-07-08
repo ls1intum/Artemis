@@ -1,9 +1,10 @@
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -27,18 +28,17 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingExerciseConfigureGradingStatusComponent } from '../configure-status/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from '../configure-actions/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from '../configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from '../tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from '../charts/test-case-distribution-chart.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from '../table-actions/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule, SortPropDir } from '@siemens/ngx-datatable';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Message } from 'primeng/message';
 
 /**
  * Describes the editableField
@@ -52,6 +52,12 @@ export enum EditableField {
     MAX_PENALTY = 'maxPenalty',
     STATE = 'state',
 }
+
+/**
+ * The value of an editable test-case / SCA-category field. Numeric fields (weight, penalty, ...) come in as numbers,
+ * enum fields (visibility, state) as strings; the DOM edit path can also deliver the raw string before coercion.
+ */
+export type EditableFieldValue = string | number | boolean;
 export enum ChartFilterType {
     TEST_CASES,
     CATEGORIES,
@@ -89,19 +95,17 @@ export type Table = 'testCases' | 'codeAnalysis';
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
         SubmissionPolicyUpdateComponent,
-        NgbAlert,
         ProgrammingExerciseGradingTasksTableComponent,
         TestCaseDistributionChartComponent,
         ProgrammingExerciseGradingTableActionsComponent,
-        NgxDatatableModule,
         FaIconComponent,
-        NgbTooltip,
         FormsModule,
         TableEditableFieldComponent,
         CategoryIssuesChartComponent,
         ScaCategoryDistributionChartComponent,
         FeedbackAnalysisComponent,
-        ArtemisTranslatePipe,
+        TableViewComponent,
+        Message,
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -135,9 +139,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     private commitProgrammingExercise(): void {
         this._programmingExercise.update((exercise) => Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
     }
-    testCaseSubscription: Subscription;
-    testCaseChangedSubscription: Subscription;
-    paramSub: Subscription;
+    testCaseSubscription?: Subscription;
+    testCaseChangedSubscription?: Subscription;
+    paramSub?: Subscription;
 
     readonly testCasesValue = signal<ProgrammingExerciseTestCase[]>([]);
     readonly changedTestCaseIds = signal<number[]>([]);
@@ -163,7 +167,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     backupStaticCodeAnalysisCategories: StaticCodeAnalysisCategory[] = [];
     readonly changedCategoryIds = signal<number[]>([]);
 
-    buildAfterDueDateActive: boolean;
+    buildAfterDueDateActive = false;
     readonly isReleasedAndHasResults = signal<boolean>(undefined!);
     showInactiveValue = false;
     readonly isSaving = signal(false);
@@ -186,8 +190,62 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly hadPolicyBefore = signal<boolean>(undefined!);
 
     // Icons
-    faQuestionCircle = faQuestionCircle;
     faSquare = faSquare;
+
+    readonly categoryTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('categoryTemplate');
+    readonly stateTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('stateTemplate');
+    readonly penaltyTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('penaltyTemplate');
+    readonly maxPenaltyTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('maxPenaltyTemplate');
+    readonly detectedIssuesTemplate = viewChild<CellTemplateRef<StaticCodeAnalysisCategory>>('detectedIssuesTemplate');
+
+    readonly codeAnalysisTableOptions: TableViewOptions = {
+        lazy: false,
+        pageSize: 20,
+        showSearch: false,
+        hidePageSizeOptions: true,
+        striped: true,
+        initialSortField: 'name',
+        initialSortOrder: 1,
+    };
+
+    readonly codeAnalysisColumns = computed<ColumnDef<StaticCodeAnalysisCategory>[]>(() => [
+        { field: 'name', header: 'Category', sort: true, templateRef: this.categoryTemplate() },
+        {
+            field: 'state',
+            header: 'State',
+            sort: true,
+            width: '130px',
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.state',
+            templateRef: this.stateTemplate(),
+            sortComparator: this.compareCategoryState,
+        },
+        {
+            field: 'penalty',
+            header: 'Penalty',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.penalty',
+            templateRef: this.penaltyTemplate(),
+            sortComparator: this.comparePenalty,
+        },
+        {
+            field: 'maxPenalty',
+            header: 'Max Penalty',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.maxPenalty',
+            templateRef: this.maxPenaltyTemplate(),
+            sortComparator: this.compareMaxPenalty,
+        },
+        {
+            // Virtual field — does not exist on StaticCodeAnalysisCategory; used only as the sort-dispatch
+            // key so PrimeNG knows which comparator to call. The cell template uses cell.data, not cell.value.
+            field: 'detectedIssues',
+            header: 'Detected Issues',
+            sort: true,
+            headerTooltip: 'artemisApp.programmingExercise.configureGrading.help.detectedIssues',
+            templateRef: this.detectedIssuesTemplate(),
+            sortComparator: this.compareDetectedIssues,
+        },
+    ]);
 
     /**
      * Returns the value of testcases
@@ -305,8 +363,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.testCaseSubscription = this.gradingService
             .subscribeForTestCases(this.programmingExercise.id!)
             .pipe(
-                tap((testCases: ProgrammingExerciseTestCase[]) => {
-                    this.testCases = testCases;
+                tap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                    this.testCases = testCases ?? [];
                 }),
                 tap(() => this.loadStatistics(this.programmingExercise.id!)),
             )
@@ -344,7 +402,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field             the edited field;
      */
     updateEditedField(editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
-        return (newValue: any) => {
+        return (newValue: EditableFieldValue) => {
             newValue = this.checkFieldValue(newValue, editedTestCase[field as keyof ProgrammingExerciseTestCase], field);
             // Only mark the testcase as changed, if the field has changed.
             if (newValue !== editedTestCase[field as keyof ProgrammingExerciseTestCase]) {
@@ -364,7 +422,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field             the edited field;
      */
     updateEditedCategoryField(editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
-        return (newValue: any) => {
+        return (newValue: EditableFieldValue) => {
             newValue = this.checkFieldValue(newValue, editedCategory[field as keyof StaticCodeAnalysisCategory], field);
             // Only mark the category as changed, if the field has changed.
             if (newValue !== editedCategory[field as keyof StaticCodeAnalysisCategory]) {
@@ -381,7 +439,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param oldValue  The previous value
      * @param field     The edited field
      */
-    checkFieldValue(newValue: any, oldValue: any, field: EditableField) {
+    checkFieldValue(newValue: EditableFieldValue, oldValue: unknown, field: EditableField): EditableFieldValue {
         // Don't allow an empty string as a value!
         if (newValue === '') {
             newValue = DefaultFieldValues[field];
@@ -406,7 +464,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const categoriesToUpdate = _intersectionWith(
             this.backupStaticCodeAnalysisCategories,
             this.changedCategoryIds(),
-            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number) => codeAnalysisCategory.id === id,
+            (codeAnalysisCategory: StaticCodeAnalysisCategory, id: number | StaticCodeAnalysisCategory) => codeAnalysisCategory.id === id,
         );
         const categoryUpdates = categoriesToUpdate.map((category) => StaticCodeAnalysisCategoryUpdate.from(category));
 
@@ -569,7 +627,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
                 .pipe(
                     tap(() => {
-                        this.programmingExercise!.submissionPolicy!.active = false;
+                        this.programmingExercise.submissionPolicy!.active = false;
                         this.commitProgrammingExercise();
                     }),
                 )
@@ -579,7 +637,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
                 .pipe(
                     tap(() => {
-                        this.programmingExercise!.submissionPolicy!.active = true;
+                        this.programmingExercise.submissionPolicy!.active = true;
                         this.commitProgrammingExercise();
                     }),
                 )
@@ -599,7 +657,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Calculates the rounded points awarded for passing each test
      */
-    updateTestPoints(editedTestCase?: ProgrammingExerciseTestCase, field?: EditableField, newValue?: any) {
+    updateTestPoints(editedTestCase?: ProgrammingExerciseTestCase, field?: EditableField, newValue?: EditableFieldValue) {
         if (!this.testCases) {
             return;
         }
@@ -659,62 +717,46 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         return categoryIssuesMap ? categoryIssuesMap[categoryName] : undefined;
     }
 
-    tableSorts: Record<string, SortPropDir[]> = {
-        testCases: [{ prop: 'testName', dir: 'asc' }],
-        codeAnalysis: [{ prop: 'name', dir: 'asc' }],
-    };
-    onSort(table: Table, config: any) {
-        this.tableSorts[table] = config.sorts;
-    }
+    // ─── SCA category sort comparators ───────────────────────────────────────────
+    // Arrow functions so `this` is captured correctly when the references are
+    // passed to ColumnDef.sortComparator.
+
+    /** Maps a category state to a numeric rank: Inactive(0) < Feedback(1) < Graded(2). */
+    private readonly valForState = (s: StaticCodeAnalysisCategoryState): number =>
+        s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2;
+
+    /** Sorts by semantic state order instead of alphabetical string value. */
+    private readonly compareCategoryState = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number =>
+        this.valForState(rowA.state) - this.valForState(rowB.state);
 
     /**
-     * Returns the correct sort-icon for the specified property
-     * @param table The table of the property
-     * @param prop The sorted property
+     * Sorts by state first; within Graded rows, sorts by penalty value.
+     * Non-Graded rows show "N/A" text so their penalty number is meaningless for ordering.
      */
-    iconForSortPropField(table: Table, prop: string) {
-        const propSort = this.tableSorts[table].find((e) => e.prop === prop);
-        if (!propSort) {
-            return faSort;
-        }
-        return propSort.dir === 'asc' ? faSortUp : faSortDown;
-    }
-
-    valForState = (s: StaticCodeAnalysisCategoryState) => (s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2);
-
-    /**
-     * Comparator function for the state of a sca category.
-     */
-    compareCategoryState = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        return this.valForState(rowA.state) - this.valForState(rowB.state);
+    private readonly comparePenalty = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const val = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
+        return val(rowA) - val(rowB);
     };
 
     /**
-     * Comparator function for the penalty of a sca category.
+     * Sorts by state first; within Graded rows, sorts by maxPenalty value.
      */
-    comparePenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.penalty : 0);
-        return valForPenalty(rowA) - valForPenalty(rowB);
+    private readonly compareMaxPenalty = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const val = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
+        return val(rowA) - val(rowB);
     };
 
     /**
-     * Comparator function for the max-penalty of a sca category.
+     * Sorts by total detected issue count (sum of all issue-count buckets in the issuesMap).
+     * Uses category state as a tiebreaker.
      */
-    compareMaxPenalty = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const valForMaxPenalty = (c: StaticCodeAnalysisCategory) => this.valForState(c.state) + (c.state === StaticCodeAnalysisCategoryState.Graded ? c.maxPenalty : 0);
-        return valForMaxPenalty(rowA) - valForMaxPenalty(rowB);
+    private readonly compareDetectedIssues = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number => {
+        const totalIssues = (row: StaticCodeAnalysisCategory) => Object.values(this.getIssuesMap(row.name) ?? {}).reduce((sum, n) => sum + n, 0);
+        const diff = totalIssues(rowA) - totalIssues(rowB);
+        return diff !== 0 ? diff : this.compareCategoryState(rowA, rowB);
     };
 
-    /**
-     * Comparator function for the detected issues of a sca category.
-     */
-    compareDetectedIssues = (_: any, __: any, rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory) => {
-        const issuesA = this.getIssuesMap(rowA.name);
-        const issuesB = this.getIssuesMap(rowB.name);
-        const totalIssuesA = Object.values(issuesA ?? {}).reduce((sum, n) => sum + n, 0);
-        const totalIssuesB = Object.values(issuesB ?? {}).reduce((sum, n) => sum + n, 0);
-        return totalIssuesA !== totalIssuesB ? totalIssuesA - totalIssuesB : this.compareCategoryState(_, __, rowA, rowB);
-    };
+    // ─────────────────────────────────────────────────────────────────────────────
 
     /**
      * Load the static code analysis categories
@@ -766,7 +808,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param filterType enum indicating whether test cases or static code analysis categories are filtered
      */
     filterByChart(testCaseId: number, filterType: ChartFilterType): void {
-        const filterFunction = (part: any) => part.id === testCaseId;
+        const filterFunction = (part: BaseEntity) => part.id === testCaseId;
         if (filterType === ChartFilterType.TEST_CASES) {
             this.filteredTestCasesForTable = this.backupTestCases;
             if (testCaseId !== this.RESET_TABLE) {
@@ -786,7 +828,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field the field that is edited
      * @param newValue the newly inserted value
      */
-    private updateAllTestCaseViewsAfterEditing(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any): void {
+    private updateAllTestCaseViewsAfterEditing(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: EditableFieldValue): void {
         const testCaseDisplayTypes = [TestCaseView.TABLE, TestCaseView.CHART, TestCaseView.BACKUP, TestCaseView.SAVE_VALUES];
         testCaseDisplayTypes.forEach((testCaseDisplayType) => this.updateTestCases(editedTestCase, field, newValue, testCaseDisplayType));
     }
@@ -798,8 +840,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param newValue the newly inserted value
      * @param displayType enum indicating which view is updated
      */
-    private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any, displayType: TestCaseView): void {
-        const mapFunction = (testCase: ProgrammingExerciseTestCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue });
+    private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: EditableFieldValue, displayType: TestCaseView): void {
+        const mapFunction = (testCase: ProgrammingExerciseTestCase): ProgrammingExerciseTestCase =>
+            testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue };
         switch (displayType) {
             case TestCaseView.TABLE:
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
@@ -822,8 +865,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param field the field that is edited
      * @param newValue the newly inserted value
      */
-    private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: any): void {
-        const filterFunction = (category: StaticCodeAnalysisCategory) => (category.id !== editedCategory.id ? category : { ...category, [field]: newValue });
+    private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: EditableFieldValue): void {
+        const filterFunction = (category: StaticCodeAnalysisCategory): StaticCodeAnalysisCategory =>
+            category.id !== editedCategory.id ? category : { ...category, [field]: newValue };
 
         this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);

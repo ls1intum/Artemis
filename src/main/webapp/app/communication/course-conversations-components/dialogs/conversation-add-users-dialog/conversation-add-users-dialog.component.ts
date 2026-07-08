@@ -35,11 +35,11 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     course = signal<Course | undefined>(undefined);
     activeConversation = signal<ConversationDTO | undefined>(undefined);
 
-    isInitialized = false;
+    override isInitialized = false;
     readonly maxSelectable = signal<number | undefined>(undefined);
     protected readonly isLoading = signal(false);
 
-    initialize() {
+    override initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
             const activeConversation = this.activeConversation()!;

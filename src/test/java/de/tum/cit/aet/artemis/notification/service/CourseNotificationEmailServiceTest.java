@@ -15,7 +15,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,7 +128,7 @@ class CourseNotificationEmailServiceTest {
     void shouldNotSendNotificationWhenRecipientListIsEmpty() {
         CourseNotificationDTO notification = createNotification("EXERCISE_RELEASED", 789L);
 
-        courseNotificationEmailService.sendCourseNotification(notification, Collections.emptyList());
+        courseNotificationEmailService.sendCourseNotification(notification, List.of());
 
         Awaitility.await().during(1, TimeUnit.SECONDS).atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(messageSource, never()).getMessage(anyString(), any(), any(Locale.class));
