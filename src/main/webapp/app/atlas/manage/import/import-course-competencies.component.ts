@@ -25,7 +25,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
     // set this attribute to hide the options to import relation
     allowRelationImport = false;
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route paramMap
     readonly isLoading = signal(false);
     isSubmitted = false;
     importRelations = true;

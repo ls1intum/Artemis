@@ -119,7 +119,7 @@ export class AttachmentVideoUnitFormComponent {
 
     // have to handle the file input as a special case at is not part of the reactive form
     fileInput = viewChild<ElementRef>('fileInput');
-    file: File;
+    file?: File;
     fileInputTouched = false;
 
     fileName = signal<string | undefined>(undefined);

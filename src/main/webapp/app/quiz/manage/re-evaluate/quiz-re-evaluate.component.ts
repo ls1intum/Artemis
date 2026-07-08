@@ -54,11 +54,11 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     private quizExercisePopupService = inject(QuizExercisePopupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    private subscription: Subscription;
+    private subscription?: Subscription;
 
     readonly reEvaluateDragAndDropQuestionComponents = viewChildren(ReEvaluateDragAndDropQuestionComponent);
 
-    popupService: QuizExercisePopupService;
+    popupService!: QuizExercisePopupService; // assigned from the injected service in ngOnInit()
 
     readonly isSaving = signal<boolean>(false);
     readonly duration = signal<Duration>(new Duration(0, 0));
