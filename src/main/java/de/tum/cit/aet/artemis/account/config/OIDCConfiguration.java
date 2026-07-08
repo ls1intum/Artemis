@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -99,9 +98,6 @@ public class OIDCConfiguration {
             // /login/oauth2/code/tum-login - when TUM sends the code
             .securityMatcher("/oauth2/authorization/**", "/login/oauth2/code/**")
 
-            // Switch off CSR, since flow is protected by OAuth2
-            .csrf(AbstractHttpConfigurer::disable)
-
             // Session for redirects
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
@@ -114,9 +110,6 @@ public class OIDCConfiguration {
                 .clientRegistrationRepository(clientRegistrationRepository())
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
-                .failureHandler((request, response, exception) -> {
-                    exception.printStackTrace();
-                })
             );
         // @formatter:on
 

@@ -46,6 +46,9 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
         String username = oidcUser.getAttribute(usernameClaimKey);
+        if (username == null || username.isBlank()) {
+            throw new IllegalStateException("OIDC authentication succeeded but required username claim '" + usernameClaimKey + "' is missing.");
+        }
 
         // Artemis-side authorization, get roles from database
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
