@@ -1,46 +1,62 @@
 $practice-color: #3e8acc;
 $graded-color: #28a745;
 
-.segmented-control {
+.participation-mode {
     display: inline-flex;
-    border: 1px solid var(--bs-border-color);
-    border-radius: 6px;
-    overflow: hidden;
+    align-items: center;
+}
 
-    &__button {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 16px;
-        border: none;
-        background: var(--bs-body-bg);
-        color: var(--bs-secondary);
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition:
-            background-color 0.15s ease,
-            color 0.15s ease;
+// Shared icon + label layout inside the select button and the tag.
+.participation-mode-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-size: 0.75rem;
+}
 
-        &:not(:last-child) {
-            border-right: 1px solid var(--bs-border-color);
-        }
+#participation-mode-badge {
+    cursor: default;
+}
 
-        &--active {
-            color: white;
-        }
+// The active toggle option / badge has a neutral gray fill inside a neutral gray border, with the
+// text and icon in the mode color (blue practice, green graded).
+.participation-mode {
+    ::ng-deep .p-togglebutton-checked {
+        background: var(--p-surface-100, #f3f4f6);
+        background-clip: padding-box;
+        border-color: var(--p-content-border-color, #d1d5db);
+    }
 
-        /* Single-mode badge is non-interactive */
-        &--static {
-            cursor: default;
-        }
+    #participation-mode-badge {
+        background: var(--p-surface-100, #f3f4f6);
+        background-clip: padding-box;
+        border: 1px solid var(--p-content-border-color, #d1d5db);
+    }
+}
 
-        &--practice {
-            background-color: $practice-color;
-        }
+.participation-mode--practice {
+    ::ng-deep .p-togglebutton-checked .participation-mode-item,
+    ::ng-deep .p-togglebutton-checked .participation-mode-item * {
+        color: $practice-color;
+    }
 
-        &--graded {
-            background-color: $graded-color;
-        }
+    #participation-mode-badge,
+    #participation-mode-badge .participation-mode-item,
+    #participation-mode-badge .participation-mode-item * {
+        color: $practice-color;
+    }
+}
+
+.participation-mode--graded {
+    ::ng-deep .p-togglebutton-checked .participation-mode-item,
+    ::ng-deep .p-togglebutton-checked .participation-mode-item * {
+        color: $graded-color;
+    }
+
+    #participation-mode-badge,
+    #participation-mode-badge .participation-mode-item,
+    #participation-mode-badge .participation-mode-item * {
+        color: $graded-color;
     }
 }
