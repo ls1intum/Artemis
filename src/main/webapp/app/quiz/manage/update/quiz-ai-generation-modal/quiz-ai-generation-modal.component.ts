@@ -242,6 +242,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
             return;
         }
         this.addQuestions.emit(questions);
+        this.generatedQuestions.set([]);
         this.close();
     }
 
