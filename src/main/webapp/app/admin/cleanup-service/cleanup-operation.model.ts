@@ -12,8 +12,9 @@ export type OperationName =
 /** Instantiated in code; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CleanupOperation {
     name!: OperationName;
-    deleteFrom!: dayjs.Dayjs;
-    deleteTo!: dayjs.Dayjs;
+    // Optional (not `!`): clearing a picker sets these to undefined so validateDates can invalidate the row.
+    deleteFrom: dayjs.Dayjs | undefined;
+    deleteTo: dayjs.Dayjs | undefined;
     lastExecuted: dayjs.Dayjs | undefined;
     datesValid!: WritableSignal<boolean>;
 }
