@@ -148,4 +148,56 @@ describe('Plagiarism Run Details', () => {
         const startedAtInfo: HTMLElement = fixture.nativeElement.querySelector('.plagiarism-run-details-stats-item:nth-child(5) .plagiarism-run-details-info');
         expect(startedAtInfo.textContent?.trim()).toBe('');
     });
+
+    it('does not rebuild the chart while no plagiarism result is set', () => {
+        const updateSpy = vi.spyOn(comp, 'updateChartDataSet');
+
+        // The effect runs on change detection but must skip its work while plagiarismResult() is undefined.
+        fixture.detectChanges();
+
+        expect(updateSpy).not.toHaveBeenCalled();
+    });
+
+    it('falls back to empty arrays when the result has neither comparisons nor a similarity distribution', () => {
+        const filterComparisonsMock = vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+
+        fixture.componentRef.setInput('plagiarismResult', { duration: 0 } as any);
+        fixture.detectChanges();
+
+        expect(filterComparisonsMock).toHaveBeenCalledTimes(10);
+        expect(comp.bucketDTOs).toHaveLength(10);
+        expect(comp.chartEntries()).toHaveLength(0);
+    });
+
+    it('builds the tooltip title and label lines via the chart options callbacks', () => {
+        vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        fixture.componentRef.setInput('plagiarismResult', plagiarismResult);
+        fixture.detectChanges();
+
+        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
+
+        // title(): empty string when nothing is hovered, otherwise a (translated) string.
+        expect(callbacks.title([])).toBe('');
+        expect(typeof callbacks.title([{ parsed: { y: 5 } }])).toBe('string');
+
+        // label(): a known bucket label with data present produces the five detail lines.
+        const knownLabelLines = callbacks.label({ label: '[0%-10%)', parsed: { y: 24 } });
+        expect(knownLabelLines).toHaveLength(5);
+
+        // label(): an unknown label / missing value hits the bucketDTO?.x ?? 0 and item.label ?? '' fallbacks.
+        const fallbackLines = callbacks.label({ label: undefined, parsed: {} });
+        expect(fallbackLines).toHaveLength(5);
+    });
+
+    it('reports a zero portion in the tooltip label when no plagiarisms were detected', () => {
+        vi.spyOn(injectorService, 'filterComparisons').mockReturnValue([]);
+        // An all-zero distribution keeps totalDetectedPlagiarisms at 0, exercising the "> 0 ? … : 0" branch.
+        fixture.componentRef.setInput('plagiarismResult', { duration: 0, similarityDistribution: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] } as any);
+        fixture.detectChanges();
+
+        const callbacks = (comp.chartOptions() as any).plugins.tooltip.callbacks;
+        const lines = callbacks.label({ label: '[0%-10%)', parsed: { y: 0 } });
+
+        expect(lines).toHaveLength(5);
+    });
 });
