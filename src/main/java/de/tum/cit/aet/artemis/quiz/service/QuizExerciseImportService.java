@@ -274,23 +274,26 @@ public class QuizExerciseImportService extends ExerciseImportService {
         copy.setSimilarityValue(original.getSimilarityValue());
         copy.setMatchLetterCase(original.getMatchLetterCase());
 
-        // Copy spots (a fresh, question-scoped id is minted for each by setSpots)
+        // Copy spots (a fresh, question-scoped id is minted for each by setSpots). Keep an ordered list so the original spot order is preserved, and a map only for resolving the
+        // correct mappings below by old id (HashMap iteration order is unspecified, so it must not drive the stored/serialized order).
         Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
+        List<ShortAnswerSpot> newSpots = new ArrayList<>();
         for (ShortAnswerSpot oldSpot : original.getSpots()) {
             ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot);
-            Long key = oldSpot.getId();
-            spotMap.put(key, newSpot);
+            spotMap.put(oldSpot.getId(), newSpot);
+            newSpots.add(newSpot);
         }
-        copy.setSpots(new ArrayList<>(spotMap.values()));
+        copy.setSpots(newSpots);
 
-        // Copy solutions (a fresh, question-scoped id is minted for each by setSolutions)
+        // Copy solutions (a fresh, question-scoped id is minted for each by setSolutions); same ordered-list + lookup-map approach as the spots above.
         Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
+        List<ShortAnswerSolution> newSolutions = new ArrayList<>();
         for (ShortAnswerSolution oldSolution : original.getSolutions()) {
             ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution);
-            Long key = oldSolution.getId();
-            solutionMap.put(key, newSolution);
+            solutionMap.put(oldSolution.getId(), newSolution);
+            newSolutions.add(newSolution);
         }
-        copy.setSolutions(new ArrayList<>(solutionMap.values()));
+        copy.setSolutions(newSolutions);
 
         // Copy correct mappings: the new spots/solutions already have minted ids, so setCorrectMappings can store them id-based (resolved against spotMap/solutionMap by old id)
         Set<ShortAnswerMapping> newMappings = new HashSet<>();

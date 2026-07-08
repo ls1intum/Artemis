@@ -17,10 +17,10 @@ public class AnswerCounter {
     private Long answerId;
 
     @JsonProperty("ratedCounter")
-    private Integer ratedCounter = 0;
+    private int ratedCounter = 0;
 
     @JsonProperty("unRatedCounter")
-    private Integer unRatedCounter = 0;
+    private int unRatedCounter = 0;
 
     public AnswerCounter() {
     }
@@ -37,19 +37,19 @@ public class AnswerCounter {
         this.answerId = answerId;
     }
 
-    public Integer getRatedCounter() {
+    public int getRatedCounter() {
         return ratedCounter;
     }
 
-    public void setRatedCounter(Integer ratedCounter) {
+    public void setRatedCounter(int ratedCounter) {
         this.ratedCounter = ratedCounter;
     }
 
-    public Integer getUnRatedCounter() {
+    public int getUnRatedCounter() {
         return unRatedCounter;
     }
 
-    public void setUnRatedCounter(Integer unRatedCounter) {
+    public void setUnRatedCounter(int unRatedCounter) {
         this.unRatedCounter = unRatedCounter;
     }
 

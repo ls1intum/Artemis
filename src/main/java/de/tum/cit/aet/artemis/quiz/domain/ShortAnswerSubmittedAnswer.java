@@ -96,19 +96,28 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
         List<ShortAnswerTextSelection> entries = new ArrayList<>();
         if (shortAnswerSubmittedTexts != null) {
             for (ShortAnswerSubmittedText submittedText : shortAnswerSubmittedTexts) {
-                entries.add(submittedText.getEntry());
+                // skip null elements reaching this public API so a malformed submission cannot NPE while normalizing into the JSON selection
+                if (submittedText != null) {
+                    entries.add(submittedText.getEntry());
+                }
             }
         }
         saSelection().setSubmittedTexts(entries);
     }
 
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
+        if (shortAnswerSubmittedText == null) {
+            return this;
+        }
         saSelection().getSubmittedTexts().add(shortAnswerSubmittedText.getEntry());
         shortAnswerSubmittedText.setSubmittedAnswer(this);
         return this;
     }
 
     public ShortAnswerSubmittedAnswer removeSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
+        if (shortAnswerSubmittedText == null) {
+            return this;
+        }
         ShortAnswerTextSelection entry = shortAnswerSubmittedText.getEntry();
         saSelection().getSubmittedTexts().removeIf(existing -> existing == entry || Objects.equals(existing.getSpotId(), entry.getSpotId()));
         shortAnswerSubmittedText.setSubmittedAnswer(null);

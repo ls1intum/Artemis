@@ -59,9 +59,10 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonIgnore
     private QuizSubmission submission;
 
-    // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection).
+    // The student's submitted selection, stored as JSON instead of separate relational child tables/join tables (see SubmittedAnswerSelection). All three submitted-answer types
+    // (drag-and-drop, multiple-choice, short-answer) use it.
     // @JsonIgnore because this is an internal storage representation: subclasses expose the selection through their existing getters (e.g. getMappings()),
-    // preserving the REST/websocket wire format. Only drag-and-drop uses it so far; multiple-choice/short-answer still use their relational collections until their slices.
+    // preserving the REST/websocket wire format.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "selection")
     @JsonIgnore

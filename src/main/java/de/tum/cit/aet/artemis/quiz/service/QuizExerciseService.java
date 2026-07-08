@@ -357,6 +357,25 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         boolean recalculationNecessary = false;
         Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
+        // Validate every incoming solution up front, before the toMap below: each must carry exactly one of {id, tempID}, and neither ids nor tempIDs may repeat. A duplicate id
+        // would otherwise blow up the toMap with an uncontrolled IllegalStateException; a duplicate tempID would silently overwrite the tempID -> solution mapping and leave an
+        // orphan solution.
+        Set<Long> seenSolutionIds = new HashSet<>();
+        Set<Long> seenSolutionTempIds = new HashSet<>();
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
+                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
+            }
+            if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
+                throw new BadRequestException("An existing short answer solution cannot have a tempID");
+            }
+            if (solutionDTO.id() != null && !seenSolutionIds.add(solutionDTO.id())) {
+                throw new BadRequestException("Duplicate short answer solution id " + solutionDTO.id());
+            }
+            if (solutionDTO.tempID() != null && !seenSolutionTempIds.add(solutionDTO.tempID())) {
+                throw new BadRequestException("Duplicate short answer solution tempID " + solutionDTO.tempID());
+            }
+        }
         // ids of the solutions that already exist on the question; a DTO carrying an id not in this set is a newly added solution (client-minted, question-scoped id)
         Set<Long> originalSolutionIds = originalSolution.stream().map(ShortAnswerSolution::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         // Only map existing solutions (id != null); new solutions (id=null with tempID, or an id not in originalSolutionIds) are handled separately below
@@ -376,22 +395,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         originalSolution.removeAll(solutionsToRemove);
-        // Validate the id / tempID combination of every incoming solution up front.
-        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
-            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
-                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
-            }
-            if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
-                throw new BadRequestException("An existing short answer solution cannot have a tempID");
-            }
-        }
         // First add the new solutions that already carry a client-minted, question-scoped id (their correct mappings resolve them by that id). Adding these before minting the
-        // tempID solutions below guarantees the server-minted ids (max+1) cannot collide with a client-provided one; a duplicate id is rejected outright.
+        // tempID solutions below guarantees the server-minted ids (max+1) cannot collide with a client-provided one; ids were already validated unique above.
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.id() != null && !originalSolutionIds.contains(solutionDTO.id())) {
-                if (originalSolution.stream().anyMatch(existing -> solutionDTO.id().equals(existing.getId()))) {
-                    throw new BadRequestException("Duplicate short answer solution id " + solutionDTO.id());
-                }
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
                 newSolution.setId(solutionDTO.id());
                 newSolution.setText(solutionDTO.text());

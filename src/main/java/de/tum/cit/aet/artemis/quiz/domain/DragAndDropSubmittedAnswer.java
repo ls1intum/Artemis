@@ -89,18 +89,34 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
         List<DragAndDropMappingSelection> entries = new ArrayList<>();
         if (mappings != null) {
             for (DragAndDropMapping mapping : mappings) {
-                entries.add(new DragAndDropMappingSelection(idOf(mapping.getDragItem()), idOf(mapping.getDropLocation())));
+                addMappingSelection(entries, mapping);
             }
         }
         dndSelection().setMappings(entries);
     }
 
     public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping mapping) {
-        dndSelection().getMappings().add(new DragAndDropMappingSelection(idOf(mapping.getDragItem()), idOf(mapping.getDropLocation())));
+        addMappingSelection(dndSelection().getMappings(), mapping);
         return this;
     }
 
+    // Only store mappings that carry both a drag item and a drop location id; a null or incomplete mapping would be discarded on read anyway, so drop it here instead of persisting
+    // an unusable entry (and avoid an NPE if a null element reaches this public API).
+    private static void addMappingSelection(List<DragAndDropMappingSelection> entries, DragAndDropMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        Long dragItemId = idOf(mapping.getDragItem());
+        Long dropLocationId = idOf(mapping.getDropLocation());
+        if (dragItemId != null && dropLocationId != null) {
+            entries.add(new DragAndDropMappingSelection(dragItemId, dropLocationId));
+        }
+    }
+
     public DragAndDropSubmittedAnswer removeMappings(DragAndDropMapping mapping) {
+        if (mapping == null) {
+            return this;
+        }
         Long dragItemId = idOf(mapping.getDragItem());
         Long dropLocationId = idOf(mapping.getDropLocation());
         dndSelection().getMappings().removeIf(entry -> Objects.equals(entry.dragItemId(), dragItemId) && Objects.equals(entry.dropLocationId(), dropLocationId));

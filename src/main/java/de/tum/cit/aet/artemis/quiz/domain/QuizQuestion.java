@@ -85,10 +85,10 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     private QuizExercise exercise;
 
-    // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, ...), stored as JSON instead of separate relational child
-    // tables.
+    // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, answer options for MC, spots / solutions / correct mappings for
+    // SA), stored as JSON instead of separate relational child tables. All three question types use it.
     // @JsonIgnore because this is an internal storage representation: subclasses expose the content through their existing getters (e.g. getDropLocations()), preserving the
-    // REST/websocket wire format. Only drag-and-drop uses it so far; multiple-choice/short-answer still use their relational collections until their slices.
+    // REST/websocket wire format.
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content")
     @JsonIgnore

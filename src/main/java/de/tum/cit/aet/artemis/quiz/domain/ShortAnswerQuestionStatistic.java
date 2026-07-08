@@ -87,6 +87,10 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         }
         ShortAnswerQuestion question = getQuizQuestion() instanceof ShortAnswerQuestion shortAnswerQuestion ? shortAnswerQuestion : null;
 
+        // Recompute correctness first: isAnswerCorrect runs the scoring pass that (re)sets each submitted text's isCorrect flag, which correctSpotCounters then reads. Reuse its
+        // result for the whole-answer correct counter so the spot counters and the correct counter are derived from the same, freshly computed scoring.
+        boolean answerCorrect = getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer);
+
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
@@ -95,7 +99,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
                 spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
             }
             // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (answerCorrect) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -108,7 +112,7 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
                 spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
             }
             // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (answerCorrect) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

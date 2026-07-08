@@ -654,4 +654,60 @@ class QuizComparisonTest {
 
         Assertions.assertThat(question.getCorrectMappings()).hasSize(1);
     }
+
+    @Test
+    void dragAndDropSubmittedAnswerSkipsNullAndIncompleteMappings() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        DropLocation dropLocation = new DropLocation();
+        question.addDropLocation(dropLocation);
+        DragItem dragItem = new DragItem();
+        question.addDragItem(dragItem);
+
+        DragAndDropSubmittedAnswer answer = new DragAndDropSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        DragAndDropMapping valid = new DragAndDropMapping();
+        valid.setDragItem(dragItem);
+        valid.setDropLocation(dropLocation);
+        // a mapping without a drag item / drop location must be dropped instead of stored as an unusable entry
+        DragAndDropMapping incomplete = new DragAndDropMapping();
+        answer.setMappings(new HashSet<>(List.of(valid, incomplete)));
+        answer.addMappings(null); // must not NPE
+
+        Assertions.assertThat(answer.getMappings()).hasSize(1);
+    }
+
+    @Test
+    void multipleChoiceSubmittedAnswerSkipsNullSelectedOptions() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        AnswerOption option = new AnswerOption();
+        question.addAnswerOption(option);
+
+        MultipleChoiceSubmittedAnswer answer = new MultipleChoiceSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        Set<AnswerOption> options = new HashSet<>();
+        options.add(option);
+        options.add(new AnswerOption()); // no id -> skipped
+        answer.setSelectedOptions(options);
+        answer.addSelectedOptions(null); // must not NPE
+
+        Assertions.assertThat(answer.getSelectedOptions()).hasSize(1);
+    }
+
+    @Test
+    void shortAnswerSubmittedAnswerSkipsNullSubmittedTexts() {
+        ShortAnswerQuestion question = new ShortAnswerQuestion();
+        ShortAnswerSpot spot = new ShortAnswerSpot();
+        question.addSpot(spot);
+
+        ShortAnswerSubmittedAnswer answer = new ShortAnswerSubmittedAnswer();
+        answer.setQuizQuestion(question);
+        ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
+        text.setSpot(spot);
+        text.setText("answer");
+        answer.setSubmittedTexts(new HashSet<>(List.of(text)));
+        answer.addSubmittedTexts(null); // must not NPE
+        answer.removeSubmittedTexts(null); // must not NPE
+
+        Assertions.assertThat(answer.getSubmittedTexts()).hasSize(1);
+    }
 }

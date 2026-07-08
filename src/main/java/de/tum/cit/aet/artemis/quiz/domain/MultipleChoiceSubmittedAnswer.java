@@ -69,7 +69,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
         List<Long> ids = new ArrayList<>();
         if (answerOptions != null) {
             for (AnswerOption option : answerOptions) {
-                if (option.getId() != null) {
+                if (option != null && option.getId() != null) {
                     ids.add(option.getId());
                 }
             }
@@ -78,7 +78,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     }
 
     public void addSelectedOptions(AnswerOption answerOption) {
-        if (answerOption.getId() != null && !mcSelection().getSelectedOptionIds().contains(answerOption.getId())) {
+        if (answerOption != null && answerOption.getId() != null && !mcSelection().getSelectedOptionIds().contains(answerOption.getId())) {
             mcSelection().getSelectedOptionIds().add(answerOption.getId());
         }
     }

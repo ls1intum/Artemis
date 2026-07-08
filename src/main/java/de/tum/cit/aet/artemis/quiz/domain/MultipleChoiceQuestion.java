@@ -153,7 +153,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
         // check answer options
         for (AnswerOption answerOption : getAnswerOptions()) {
-            if (answerOption.isIsCorrect()) {
+            if (Boolean.TRUE.equals(answerOption.isIsCorrect())) {
                 correctAnswerCount++;
             }
         }
