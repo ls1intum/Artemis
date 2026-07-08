@@ -1556,7 +1556,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetModelingExercisesForCourse_listDtoCarriesTableScalars() throws Exception {
-        classExercise.setBonusPoints(0.0);
+        classExercise.setBonusPoints(5.0);
         classExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         classExercise.setPresentationScoreEnabled(true);
         modelingExerciseTestRepository.save(classExercise);
@@ -1566,6 +1566,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ModelingExerciseListItemDTO.class);
         ModelingExerciseListItemDTO listItem = exercises.stream().filter(exercise -> exercise.id().equals(classExercise.getId())).findFirst().orElseThrow();
 
+        assertThat(listItem.bonusPoints()).isEqualTo(5.0);
         assertThat(listItem.includedInOverallScore()).isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
         assertThat(listItem.presentationScoreEnabled()).isTrue();
         assertThat(listItem.teamMode()).isFalse();

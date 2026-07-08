@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
  * DTO for creating and updating modeling exercises.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude
 public record UpdateModelingExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
