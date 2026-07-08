@@ -144,8 +144,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
     readonly courseId = signal<number>(undefined!);
     readonly exam = signal<Exam | undefined>(undefined);
-    examId: number;
-    exerciseGroupId: number;
+    examId?: number;
+    exerciseGroupId?: number;
     readonly isExamMode = signal(false);
     readonly isTestRun = signal<boolean>(false);
     readonly isLoading = signal(false);

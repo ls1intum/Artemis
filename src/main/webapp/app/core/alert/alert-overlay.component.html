@@ -1,10 +1,10 @@
 @if (alerts().length >= 2) {
     <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
         <div class="dismiss-all">
-            <div class="btn btn-secondary" (click)="alertService.closeAll()">
+            <button type="button" pButton severity="secondary" size="small" (click)="alertService.closeAll()">
                 <fa-icon [icon]="times" />
                 <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
-            </div>
+            </button>
         </div>
     </div>
 }
@@ -17,7 +17,7 @@
                     <div class="message" [innerHTML]="alert.message"></div>
                 </div>
                 @if (alert.action) {
-                    <button type="button" [ngClass]="'btn ' + alert.type.buttonClassName" (click)="alert.action.callback(alert)">{{ alert.action.label }}</button>
+                    <button type="button" pButton [severity]="alert.type.buttonSeverity" size="small" (click)="alert.action.callback(alert)">{{ alert.action.label }}</button>
                 }
                 @if (alert.dismissible) {
                     <jhi-close-circle (click)="alert.close()" />

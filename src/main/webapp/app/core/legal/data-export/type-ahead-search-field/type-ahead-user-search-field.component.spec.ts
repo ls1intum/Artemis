@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserService } from 'app/account/user/shared/user.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,7 +23,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
+            imports: [MockModule(FormsModule), TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);
@@ -106,10 +106,19 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         expect(component.resultFormatter(user)).toBe('abc (ge12abc)');
     });
 
-    it('should format the input correctly', () => {
-        const user = { login: 'ge12abc' } as User;
-        expect(component.inputFormatter(user)).toBe('ge12abc');
-        const loginString = 'ge12abc';
-        expect(component.inputFormatter(loginString)).toBe('ge12abc');
+    it('should cancel an in-flight search and clear suggestions when the query drops below the minimum length', () => {
+        const searchSubject = new Subject<HttpResponse<User[]>>();
+        vi.spyOn(userService, 'search').mockReturnValue(searchSubject.asObservable());
+
+        // A valid query starts a search that has not resolved yet.
+        component.onComplete({ query: 'abc' } as AutoCompleteCompleteEvent);
+        // The user deletes back below the minimum length before it resolves (PrimeNG no longer fires completeMethod).
+        component.loginOrName.set('ab');
+        component.onChange();
+        // The now-stale response for the longer query arrives after the field is already too short.
+        searchSubject.next({ body: [{ login: 'abcuser' }] } as unknown as HttpResponse<User[]>);
+
+        expect(component.suggestions()).toEqual([]);
+        expect(component.searchQueryTooShort()).toBe(true);
     });
 });

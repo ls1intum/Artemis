@@ -36,11 +36,11 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
     exercises?: Exercise[];
     lectures?: Lecture[];
-    course: Course;
-    pageType: PageType;
-    isAtLeastTutorInCourse: boolean;
-    isAtLeastInstructorInCourse: boolean;
-    currentContextSelectorOption: ContextSelectorOption;
+    course!: Course; // set in ngOnInit() from metisService.getCourse()
+    pageType!: PageType; // set in resetFormGroup() before the modal is used
+    isAtLeastTutorInCourse!: boolean; // set in ngOnInit() from metisService
+    isAtLeastInstructorInCourse!: boolean; // set in ngOnInit() from metisService
+    currentContextSelectorOption!: ContextSelectorOption; // set in ngOnInit() via resetCurrentContextSelectorOption()
     similarPosts: Post[] = [];
     private contextSubscription?: Subscription;
 

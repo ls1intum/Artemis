@@ -8,7 +8,7 @@ import { DomainAuxiliaryRepositoryChange, DomainChange, DomainParticipationChang
  */
 @Injectable({ providedIn: 'root' })
 export class DomainService {
-    protected domain: DomainChange;
+    protected domain!: DomainChange; // set in setDomain() before any read
     private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | DomainAuxiliaryRepositoryChange | undefined>(undefined);
 
     /**

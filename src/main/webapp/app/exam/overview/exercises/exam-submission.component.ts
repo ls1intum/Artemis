@@ -32,6 +32,6 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     readonly = input(false);
     examTimeline = input(false);
     // needs to be public so that it can be accessed in the tests
-    submissionVersion: SubmissionVersion;
+    submissionVersion!: SubmissionVersion; // set externally via setSubmissionVersion() before the submission view reads it
     abstract setSubmissionVersion(submissionVersion: SubmissionVersion): void;
 }

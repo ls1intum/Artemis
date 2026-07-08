@@ -8,11 +8,10 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
+import { SortEvent } from 'primeng/api';
 
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { SortService } from 'app/foundation/service/sort.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('LtiConfigurationComponent', () => {
@@ -22,13 +21,11 @@ describe('LtiConfigurationComponent', () => {
     let fixture: ComponentFixture<LtiConfigurationComponent>;
     let mockRouter: any;
     let mockActivatedRoute: any;
-    let mockSortService: any;
     let mockLtiConfigurationService: any;
     let mockAlertService: AlertService;
 
     beforeEach(async () => {
         mockRouter = { navigate: vi.fn() };
-        mockSortService = { sortByProperty: vi.fn() };
         mockActivatedRoute = {
             data: of({ defaultSort: 'id,desc' }),
             queryParamMap: of(
@@ -53,7 +50,6 @@ describe('LtiConfigurationComponent', () => {
             imports: [LtiConfigurationComponent],
             providers: [
                 { provide: Router, useValue: mockRouter },
-                { provide: SortService, useValue: mockSortService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LtiConfigurationService, useValue: mockLtiConfigurationService },
                 { provide: AlertService, useValue: { error: vi.fn() } },
@@ -131,28 +127,35 @@ describe('LtiConfigurationComponent', () => {
         expect(component.getRedirectUri()).toContain('/api/lti/public/lti13/auth-callback');
     });
 
-    it('should sort platforms', () => {
-        const dummyPlatforms: LtiPlatformConfiguration[] = [
-            {
-                id: 1,
-                customName: 'Platform A',
-                clientId: 'platform-a',
-                authorizationUri: 'platformA.com/auth-login',
-                jwkSetUri: 'platformA.com/jwk',
-                tokenUri: 'platformA.com/token',
-            },
-            {
-                id: 2,
-                customName: 'Platform B',
-                clientId: 'platform-b',
-                authorizationUri: 'platformB.com/auth-login',
-                jwkSetUri: 'platformB.com/jwk',
-                tokenUri: 'platformB.com/token',
-            },
-        ];
-        component.platforms.set(dummyPlatforms);
-        component.sortRows();
-        expect(mockSortService.sortByProperty).toHaveBeenCalledWith(dummyPlatforms, 'id', false);
+    describe('onTableSort (PrimeNG table)', () => {
+        it('maps the sort field/order onto predicate/ascending and navigates (server-side sort)', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({ field: 'customName', order: -1 } as SortEvent);
+
+            expect(component.predicate()).toBe('customName');
+            expect(component.ascending()).toBe(false);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(
+                ['/admin/lti-configuration'],
+                expect.objectContaining({ queryParams: expect.objectContaining({ sort: 'customName,desc' }) }),
+            );
+        });
+
+        it('treats a missing order as ascending', () => {
+            component.onTableSort({ field: 'clientId' } as SortEvent);
+
+            expect(component.predicate()).toBe('clientId');
+            expect(component.ascending()).toBe(true);
+        });
+
+        it('ignores a sort event without a field and does not navigate', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onTableSort({} as SortEvent);
+
+            expect(component.predicate()).toBe('id');
+            expect(mockRouter.navigate).not.toHaveBeenCalled();
+        });
     });
 
     it('should delete an LTI platform and navigate', () => {

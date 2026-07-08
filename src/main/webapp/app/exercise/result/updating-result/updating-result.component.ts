@@ -60,8 +60,8 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly buildStartDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly showProgressBarInResult = signal(false);
     readonly missingResultInfo = signal(MissingResultInformation.NONE);
-    public resultSubscription: Subscription;
-    public submissionSubscription: Subscription;
+    public resultSubscription?: Subscription;
+    public submissionSubscription?: Subscription;
 
     isLocalCIEnabled = true;
 
