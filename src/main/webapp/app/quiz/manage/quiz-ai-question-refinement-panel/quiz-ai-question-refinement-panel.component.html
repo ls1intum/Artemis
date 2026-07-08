@@ -5,14 +5,30 @@
                 <div class="refinement-explanation-card-header">
                     <fa-icon [icon]="faWandMagicSparkles" class="refinement-explanation-icon" />
                     <span class="refinement-explanation-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.refinement.changesLabel"></span>
-                    <button
-                        type="button"
-                        class="refinement-explanation-dismiss"
-                        (click)="dismissReasoning()"
-                        [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.dismissChanges' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faCloseMark" />
-                    </button>
+                    <div class="refinement-explanation-actions">
+                        @if (restorable()) {
+                            <button
+                                type="button"
+                                class="refinement-explanation-dismiss"
+                                (click)="restorePreviousQuestion()"
+                                [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.restoreChanges' | artemisTranslate"
+                                [pTooltip]="'artemisApp.quizExercise.aiGeneration.refinement.restoreChanges' | artemisTranslate"
+                                tooltipPosition="top"
+                            >
+                                <fa-icon [icon]="faRotateLeft" />
+                            </button>
+                        }
+                        <button
+                            type="button"
+                            class="refinement-explanation-dismiss"
+                            (click)="dismissReasoning()"
+                            [attr.aria-label]="'artemisApp.quizExercise.aiGeneration.refinement.dismissChanges' | artemisTranslate"
+                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.refinement.dismissChanges' | artemisTranslate"
+                            tooltipPosition="top"
+                        >
+                            <fa-icon [icon]="faCloseMark" />
+                        </button>
+                    </div>
                 </div>
                 <p class="refinement-explanation-text">{{ refinementExplanation() ?? externalReasoning() }}</p>
             </div>
