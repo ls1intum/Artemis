@@ -352,7 +352,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
                 .exerciseGroups();
 
         // Response shape: the 5 pre-existing groups plus the 4 imported groups (the empty source group is skipped) = 9, all with ids.
-        assertThat(exerciseGroupsNow).hasSize(9).allMatch(element -> element.id() != null);
+        assertThat(exerciseGroupsNow).hasSize(9).allMatch(element -> element.id() > 0);
         assertThat(exerciseGroupsNow).extracting(ExerciseGroupDTO::id).containsAll(idsBefore);
 
         // B1 independent DB check: count the actually persisted exercise-group rows via a fresh reload, never trusting the
