@@ -843,6 +843,34 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
+        // The event also carries the exam's current schedule so a conducting student can refresh the countdown (#13071).
+        var examDb = examRepository.findById(exam1.getId()).orElseThrow();
+        assertThat(capturedEvent.newStartDate()).isEqualTo(examDb.getStartDate().toInstant());
+        assertThat(capturedEvent.newEndDate()).isEqualTo(examDb.getEndDate().toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTimeTestExamDoesNotCarrySchedule() throws Exception {
+        // For a test exam the exam start/end dates are only the availability window, not the student's conduction window
+        // (which is derived from their individual startedDate). A working time update must therefore NOT carry them, so
+        // the client keeps recomputing the timer from the student's startedDate rather than the wrong exam start (#13071).
+        int newWorkingTime = 180 * 60;
+        testExam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        testExam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        testExam1 = examRepository.save(testExam1);
+
+        StudentExam result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/working-time", newWorkingTime,
+                StudentExam.class, HttpStatus.OK);
+        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+
+        var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExamForTestExam1.getId(), false);
+        assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
+        // Even though the (test) exam has start/end dates set above, the schedule must be omitted for test exams.
+        assertThat(capturedEvent.newStartDate()).isNull();
+        assertThat(capturedEvent.newEndDate()).isNull();
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {

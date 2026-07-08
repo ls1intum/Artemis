@@ -192,6 +192,13 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async ngOnInit() {
+        // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
+        // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
+        // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings
+        // are still empty, the alert element has no text. Setting them up front guarantees the alert always
+        // renders its message as soon as it becomes visible.
+        this.configureTooltips();
+
         const user = await this.accountService.identity();
         if (!user) {
             return;
@@ -216,7 +223,6 @@ export class CodeButtonComponent implements OnInit {
             this.versionControlUrl = profileInfo.versionControlUrl;
         }
 
-        this.configureTooltips();
         this.initTheia(profileInfo);
 
         void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
