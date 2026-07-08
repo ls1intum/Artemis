@@ -429,11 +429,7 @@ public class GenerationPersistenceService {
      * @return the statement normalised to ASCII, or {@code null} if the input was {@code null}
      */
     static String normalizeTypography(String problemStatement) {
-        if (problemStatement == null) {
-            return null;
-        }
-        return problemStatement.replaceAll("[\u2010-\u2015]", "-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'')
-                .replace('\u201C', '"').replace('\u201D', '"').replace("\u2026", "...");
+        return TypographyNormalizer.normalize(problemStatement);
     }
 
     /**

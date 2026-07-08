@@ -118,6 +118,9 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
+        // Normalize typographic punctuation on the way in, so the bytes the differential oracle builds are the bytes that get persisted: a non-breaking hyphen inside a graded
+        // exception message would otherwise pass the sandbox yet fail real grading, because persist normalizes and the oracle's build did not.
+        content = TypographyNormalizer.normalize(content);
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
@@ -145,6 +148,10 @@ public class SandboxAgentTools {
         if (oldText.isEmpty()) {
             return "ERROR: oldText must not be empty.";
         }
+        // writeFile normalizes typographic punctuation, so an already-written file holds the ASCII form; normalize the needle too or a model-supplied snippet carrying a
+        // typographic
+        // dash would never match. The replacement is normalized by the writeFile call below.
+        oldText = TypographyNormalizer.normalize(oldText);
         SandboxExecResult read = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!read.isSuccess()) {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();

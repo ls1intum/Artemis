@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,16 @@ class SandboxAgentToolsTest {
 
         private int execCount;
 
+        /** The last {@code sh -c} script, so a test can recover the base64-encoded bytes writeFile actually sent. */
+        private String lastScript;
+
+        /** The content writeFile actually wrote, decoded from the recorded script. */
+        String writtenContent() {
+            int start = lastScript.indexOf("echo '") + "echo '".length();
+            int end = lastScript.indexOf('\'', start);
+            return new String(java.util.Base64.getDecoder().decode(lastScript.substring(start, end)), StandardCharsets.UTF_8);
+        }
+
         @Override
         public String createSession(SandboxSessionSpec spec) {
             return "s";
@@ -43,6 +54,9 @@ class SandboxAgentToolsTest {
             if (command.length >= 2 && "cat".equals(command[0])) {
                 String content = files.get(command[1]);
                 return content == null ? new SandboxExecResult(1, "", "no such file", false) : new SandboxExecResult(0, content, "", false);
+            }
+            if (command.length >= 3 && "sh".equals(command[0])) {
+                lastScript = command[2];
             }
             return new SandboxExecResult(0, "", "", false);
         }
@@ -107,6 +121,34 @@ class SandboxAgentToolsTest {
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         String result = tools.editFile("solution/A.java", "return 0;", "return a + b;");
         assertThat(result).startsWith("Wrote ");
+    }
+
+    @Test
+    void writeFile_normalizesTypographicPunctuationSoTheOracleSeesThePersistedBytes() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.writeFile("solution/A.java", "throw new IllegalArgumentException(\"amount must be non\u2011negative\u2026\");");
+        assertThat(sandbox.writtenContent()).isEqualTo("throw new IllegalArgumentException(\"amount must be non-negative...\");");
+    }
+
+    @Test
+    void writeFile_preservesGenuineNonAsciiDataLiterals() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        // Only typographic punctuation is mapped; an exercise whose data is literally Unicode must survive untouched.
+        tools.writeFile("tests/T.java", "assertEquals(2, graphemes(\"\u4E2D\u6587\uD83D\uDE00\"));");
+        assertThat(sandbox.writtenContent()).isEqualTo("assertEquals(2, graphemes(\"\u4E2D\u6587\uD83D\uDE00\"));");
+    }
+
+    @Test
+    void editFile_matchesATypographicNeedleAgainstTheNormalisedFile() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        // The file on disk holds the normalised ASCII form (writeFile normalised it); the model still supplies the typographic form it "remembers" writing.
+        sandbox.files.put("/workspace/solution/A.java", "msg = \"non-negative\";");
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        String result = tools.editFile("solution/A.java", "\"non\u2011negative\"", "\"must be >= 0\"");
+        assertThat(result).startsWith("Wrote ");
+        assertThat(sandbox.writtenContent()).isEqualTo("msg = \"must be >= 0\";");
     }
 
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */

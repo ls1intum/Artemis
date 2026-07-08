@@ -45,8 +45,10 @@ public class AgentSystemPromptService {
         String problemStatementGuidance = isNonTrivialProblemStatement(exercise.getProblemStatement())
                 ? "- problem-statement.md : the exercise's CURRENT problem statement and the starting point for this run. Follow the BRIEF: it is authoritative and may refine this "
                         + "statement or change the task itself (topic, named types, requirements). Where the BRIEF is silent, preserve the statement's intent and every stated requirement "
-                        + "and edge case, and bring it up to the PROBLEM STATEMENT QUALITY standard below; rewrite or drop only what the BRIEF changes. Implement the solution, template, "
-                        + "and tests to MATCH the resulting statement, add the required [task] bindings, and DELETE any internal/meta notes a placeholder left behind."
+                        + "and edge case, and bring it up to the PROBLEM STATEMENT QUALITY standard below; rewrite or drop only what the BRIEF changes. Preserving the requirements does "
+                        + "NOT mean preserving the PRESENTATION: the FINAL PROBLEM-STATEMENT PASS below is MANDATORY here too, and an inherited statement almost always fails it — it "
+                        + "typically has no per-[task] worked examples and carries guarantees no test checks, so you must add the examples and cut the unverified claims. Implement the "
+                        + "solution, template, and tests to MATCH the resulting statement, add the required [task] bindings, and DELETE any internal/meta notes a placeholder left behind."
                 : "- problem-statement.md : the task description shown to students (you write it; it may currently be empty or a placeholder)";
         return """
                 You are an expert author of programming exercises for the Artemis learning platform, working inside a sandbox in the /workspace directory.
@@ -62,6 +64,10 @@ public class AgentSystemPromptService {
                 copy its design or code, and do NOT add it to the exercise. Build the exercise the BRIEF asks for — the brief always wins, even when its topic happens to match the \
                 reference's (a brief asking for a sort means implement that sort with your OWN design; never substitute an unrelated topic to avoid resembling the reference). Use reference/ \
                 only as a conventions guide.
+
+                TOPIC LOCK: the exercise's topic is EXACTLY the one the BRIEF names. Before you write a single file, restate that topic to yourself and build it. The reference/ sample \
+                and the seeded sample tests already in tests/ are scaffolding, not competition: never switch to a different topic (a stack, a cache, a string utility, …) because the \
+                sample or reference happens to cover the topic the brief asked for. Delivering a well-built exercise on the wrong topic is a FAILED run.
 
                 Programming language: %s%s
 
