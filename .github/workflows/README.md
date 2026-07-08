@@ -61,16 +61,20 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-Two jobs are deliberately **advisory** (not in the gate's `needs:`). They run for signal and
-red the run on a genuine failure, but never block merge:
+`e2e` **is** part of the required `all-required-ci-passed` gate, but with a flakiness-aware verdict
+so it blocks only on genuine regressions rather than on noise:
 
-- **`e2e`.** E2E takes up to ~2 hours (the gate must not wait on it) and is flaky enough that
-  requiring it would block good PRs on noise. It is advisory like `codeql`: a real (non-flaky)
-  regression fails the job and reds the run, but a run whose only failures are known-flaky is
-  exonerated and passes green — the real-vs-flaky split is decided against Helios history in
-  `classify-failures.js`, and the per-test detail (with ✅/⚪/❌ per phase) lives in the E2E PR
-  comment. Once it is stabilised behind a merge queue (the `merge_group` trigger is already
-  wired), it can move into the gate.
+- **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
+  good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
+  history (`classify-failures.js`): a real (non-flaky) regression fails the job and **blocks
+  merge**, while a run whose only failures are known-flaky is **exonerated and passes green**. The
+  per-test detail (✅/⚪/❌ per phase, plus Helios flakiness scores) lives in the E2E PR comment. The
+  test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
+  by any single phase job.
+
+`codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
+run on a genuine failure, but never blocks merge.
+
 - **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
   advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
   so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant

@@ -38,7 +38,8 @@ on:
         description: 'Raw aggregated E2E test outcome (success|failure|error), for the CI Summary
           table. This is the unexonerated signal — `failure` here includes known-flaky-only runs
           that report-results exonerates. The caller `e2e` job conclusion is the exonerated verdict
-          (red only on a real regression, like the codeql advisory job).'
+          (red only on a real regression). `e2e` is part of the required `all-required-ci-passed`
+          gate, so a real regression blocks merging while a known-flaky-only run stays green.'
         value: ${{ jobs.report-results.outputs.status }}
 
 permissions: {}  # default-deny; each job grants only what it needs
@@ -725,10 +726,10 @@ jobs:
         with:
           script: await require('./.github/scripts/classify-failures.js')(core)
 
-  # Aggregates the E2E outcome and is the single advisory gate. E2E is not in the required
-  # `all-required-ci-passed` gate (ci.yml), so this never blocks merging — but, exactly like the
-  # sibling `codeql` advisory job, it fails (reds the run) on a real regression so the failure is
-  # never hidden. A known-flaky-only run is exonerated and passes green; the real-vs-flaky split
+  # Aggregates the E2E outcome and is the single E2E gate. `e2e` IS part of the required
+  # `all-required-ci-passed` gate (ci.yml), so a real regression here reds the run and blocks
+  # merging — but a known-flaky-only run is exonerated and passes green, so ambient flakiness never
+  # blocks a good PR (only a genuine, reproducible regression does). The real-vs-flaky split
   # comes from classify-failures.js via Helios. The three-state nuance (pass / exonerated / real)
   # is surfaced in the PR comment, where per-test detail belongs. Phase test steps are
   # continue-on-error, so a failed test never fails a phase job; the honest verdict is decided here.
@@ -791,7 +792,7 @@ jobs:
             [ "$r" = failure ] && any_job_failed=true
           done
 
-          # The advisory verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
+          # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
           # classified `flaky`, none `real`, and no job broke) — it maps to a passing (green) run.
           # A real regression, an infra job failure, or a failure we could not classify (test step
           # failed but produced no failure element — e.g. a global-setup crash) all become `failure`
@@ -908,7 +909,7 @@ jobs:
       # Fail the job (reds the run) on a real/infra/unclassified verdict; pass on success or an
       # exonerated flaky-only run. Runs last, after the PR comment finalises, and always. Fail-safe:
       # any verdict other than success/neutral — including an empty one — reds the run.
-      - name: Gate the run on the advisory E2E verdict
+      - name: Gate the run (and the required merge check) on the E2E verdict
         if: always()
         env:
           CONCLUSION: ${{ steps.overall-status.outputs.conclusion }}
@@ -916,8 +917,8 @@ jobs:
         run: |
           set -Eeuo pipefail
           if [ "$CONCLUSION" = success ] || [ "$CONCLUSION" = neutral ]; then
-            echo "E2E advisory verdict: ${DESCRIPTION:-passed} — not blocking."
+            echo "E2E verdict: ${DESCRIPTION:-passed} — not a real regression, run stays green."
             exit 0
           fi
-          echo "::error title=E2E advisory failure::${DESCRIPTION:-E2E failed}. E2E is not a required check, so this does not block merging; see the E2E PR comment for the per-test breakdown and Helios flakiness scores."
+          echo "::error title=E2E real failure::${DESCRIPTION:-E2E failed}. E2E is part of the required all-required-ci-passed gate, so a real (non-flaky) regression blocks merging; see the E2E PR comment for the per-test breakdown and Helios flakiness scores. A known-flaky-only run would have been exonerated and stayed green."
           exit 1
