@@ -113,6 +113,12 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
         }
     }
 
+    /**
+     * Removes the submitted mapping for the same drag item and drop location from the JSON selection. A {@code null} argument is ignored.
+     *
+     * @param mapping the submitted mapping to remove
+     * @return this submitted answer for fluent chaining
+     */
     public DragAndDropSubmittedAnswer removeMappings(DragAndDropMapping mapping) {
         if (mapping == null) {
             return this;

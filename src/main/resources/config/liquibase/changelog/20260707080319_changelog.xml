@@ -333,18 +333,19 @@
         </sql>
     </changeSet>
 
-    <!-- Step 12b: backfill quiz_question.content for multiple-choice questions (MySQL). CAVEAT: MySQL JSON_ARRAYAGG does not support ORDER BY and does not guarantee element order,
-         so the authored answer-option display order (answer_options_order) may not be preserved on MySQL. Scoring is unaffected (options are matched by id), and questions with
-         randomizeOrder shuffle client-side anyway; only the display order of a non-randomized question can change. PostgreSQL (step 12a) preserves the order via ORDER BY. Booleans
-         are emitted as 0/1 by "= TRUE" and coerced back to Boolean by Jackson on read. -->
+    <!-- Step 12b: backfill quiz_question.content for multiple-choice questions (MySQL). The authored answer-option display order (answer_options_order) drives the rendered A/B/C
+         labels, so it must be preserved (the source table is dropped afterwards). MySQL JSON_ARRAYAGG does not accept an ORDER BY clause, so the rows are ordered in a derived table
+         first and then aggregated; MySQL preserves the input order of a materialized, ordered derived table. PostgreSQL (step 12a) preserves the order via ORDER BY. Booleans are
+         emitted as 0/1 by "= TRUE" and coerced back to Boolean by Jackson on read. -->
     <changeSet id="20260707080319-12b" author="krusche" dbms="mysql">
         <sql>
             UPDATE quiz_question q
-            SET content = JSON_OBJECT(
-                'type', 'multiple-choice',
-                'answerOptions', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', o.id, 'text', o.text, 'hint', o.hint, 'explanation', o.explanation, 'isCorrect', o.is_correct = TRUE, 'invalid', o.invalid = TRUE))
-                    FROM answer_option o WHERE o.question_id = q.id), JSON_ARRAY()))
+            LEFT JOIN (
+                SELECT question_id,
+                    JSON_ARRAYAGG(JSON_OBJECT('id', id, 'text', text, 'hint', hint, 'explanation', explanation, 'isCorrect', is_correct = TRUE, 'invalid', invalid = TRUE)) AS options
+                FROM (SELECT id, question_id, text, hint, explanation, is_correct, invalid FROM answer_option ORDER BY question_id, answer_options_order) ordered_options
+                GROUP BY question_id) agg ON agg.question_id = q.id
+            SET content = JSON_OBJECT('type', 'multiple-choice', 'answerOptions', COALESCE(agg.options, JSON_ARRAY()))
             WHERE q.discriminator = 'MC';
         </sql>
     </changeSet>

@@ -105,6 +105,12 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
         saSelection().setSubmittedTexts(entries);
     }
 
+    /**
+     * Adds a submitted text, storing its backing entry in the JSON selection and wiring the back-reference. A {@code null} argument is ignored.
+     *
+     * @param shortAnswerSubmittedText the submitted text to add
+     * @return this submitted answer for fluent chaining
+     */
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
         if (shortAnswerSubmittedText == null) {
             return this;
@@ -114,6 +120,12 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
         return this;
     }
 
+    /**
+     * Removes the submitted text for the same spot from the JSON selection and clears its back-reference. A {@code null} argument is ignored.
+     *
+     * @param shortAnswerSubmittedText the submitted text to remove
+     * @return this submitted answer for fluent chaining
+     */
     public ShortAnswerSubmittedAnswer removeSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
         if (shortAnswerSubmittedText == null) {
             return this;
