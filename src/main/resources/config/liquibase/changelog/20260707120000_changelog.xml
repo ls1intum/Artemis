@@ -4,13 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-    Defense-in-depth for the programming exercise build config: narrow the build_plan_configuration and docker_flags
-    columns from LONGTEXT (up to 4 GB) to MEDIUMTEXT (up to 16 MB). The application already rejects oversized values
-    (buildPlanConfiguration <= 1 MB, dockerFlags <= 8 KB) via ProgrammingExerciseValidationService#validateBuildConfigSize;
-    this migration caps the stored size at the database layer as a second safeguard should the validation ever be bypassed.
-
-    MySQL only: both columns are nullable with no default, so MySQL's modifyDataType does not strip NOT NULL/DEFAULT.
-    PostgreSQL has no MEDIUMTEXT (the column stays text); there the application-level validation remains the safeguard.
+    Change the build_plan_configuration and docker_flags columns of programming_exercise_build_config from LONGTEXT
+    to MEDIUMTEXT on MySQL. Both columns are nullable with no default, so modifyDataType does not drop NOT NULL/DEFAULT.
+    PostgreSQL has no MEDIUMTEXT; the column stays text there.
     -->
     <changeSet id="20260707120000-1" author="harbeck">
         <preConditions onFail="MARK_RAN">

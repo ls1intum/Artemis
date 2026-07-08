@@ -34,14 +34,12 @@ public final class Constants {
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
     /**
-     * The maximum allowed length (in characters) of the build plan configuration JSON stored for a programming exercise build config.
-     * This prevents storing oversized build configurations that would unnecessarily consume database and application resources.
+     * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
      */
     public static final int MAX_BUILD_PLAN_CONFIGURATION_LENGTH = 1024 * 1024;
 
     /**
-     * The maximum allowed length (in characters) of the docker flags JSON stored for a programming exercise build config.
-     * This prevents storing oversized docker flags that would unnecessarily consume database and application resources.
+     * The maximum allowed length (in characters) of the docker flags stored for a programming exercise build config.
      */
     public static final int MAX_DOCKER_FLAGS_LENGTH = 8 * 1024;
 

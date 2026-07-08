@@ -134,7 +134,7 @@ public class ProgrammingExerciseValidationService {
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
-        // Reject oversized build config text fields before the configuration is parsed
+        // Check the build config field lengths before the configuration is parsed
         validateBuildConfigSize(programmingExercise);
         validateBuildPhaseNames(programmingExercise);
         validateDockerFlags(programmingExercise);
@@ -293,9 +293,8 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Validates that the text fields of the build config do not exceed their maximum allowed length.
-     * The limits are character limits (see {@link String#length()}), not byte limits. This prevents storing oversized build
-     * configurations (e.g. multi-megabyte JSON) that would unnecessarily consume database and application resources.
+     * Validates that the build config text fields do not exceed their maximum allowed length.
+     * The limits are character limits (see {@link String#length()}), not byte limits.
      *
      * @param programmingExercise the programming exercise whose build config should be validated
      */

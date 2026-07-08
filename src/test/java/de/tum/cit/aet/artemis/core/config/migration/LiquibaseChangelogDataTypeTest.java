@@ -21,11 +21,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * Architecture-style guard that prevents future Liquibase migrations from introducing columns of type {@code LONGTEXT}.
+ * Guards against future Liquibase migrations introducing columns of type {@code LONGTEXT}.
  * <p>
- * {@code LONGTEXT} (up to 4 GB on MySQL) is disproportionate for the values Artemis stores and enables resource-exhaustion
- * abuse when no application-level size validation exists. New columns should use a bounded type (e.g. {@code MEDIUMTEXT},
- * {@code TEXT} or {@code VARCHAR}). The initial baseline schema is grandfathered; every incremental changelog must comply.
+ * {@code LONGTEXT} (up to 4 GB on MySQL) is larger than needed for the values stored here; new columns should use a
+ * bounded type (e.g. {@code MEDIUMTEXT}, {@code TEXT} or {@code VARCHAR}). The initial baseline schema is grandfathered;
+ * every incremental changelog must comply.
  * <p>
  * The check inspects the {@code type} / {@code newDataType} attributes of all changelog elements and the text of inline
  * {@code <sql>} blocks. XML comments are ignored by the parser, so mentioning the word in a comment does not trigger it.
