@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +44,8 @@ class ContentExtractionServiceIntegrationTest extends AbstractAtlasIntegrationTe
         // Load through the generic exercise repository (as the orchestrator's batch resolution does):
         // the quizQuestions collection is LAZY on this instance. Extraction must re-fetch it eagerly.
         Exercise reloaded = exerciseRepository.findByIdElseThrow(quizId);
-        ExtractedContentDTO extracted = assertDoesNotThrow(() -> contentExtractionService.extractContent(reloaded));
+        // A LazyInitializationException on the unfiltered entity would fail the test here; extraction must re-fetch eagerly instead.
+        ExtractedContentDTO extracted = contentExtractionService.extractContent(reloaded);
 
         assertThat(extracted.metadata()).containsEntry("exerciseType", "quiz").containsEntry("questionCount", "3");
         // The default quiz carries one MC, one drag-and-drop and one short-answer question. Their prompts,
