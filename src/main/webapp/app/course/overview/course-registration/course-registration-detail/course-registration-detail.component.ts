@@ -19,7 +19,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
 
     readonly loading = signal(false);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly course = signal<Course | undefined>(undefined);
     private paramSubscription?: Subscription;
 
@@ -40,7 +40,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
     }
 
     redirectToCoursePage(): void {
-        this.router.navigate(['courses', this.courseId]);
+        void this.router.navigate(['courses', this.courseId]);
     }
 
     /**

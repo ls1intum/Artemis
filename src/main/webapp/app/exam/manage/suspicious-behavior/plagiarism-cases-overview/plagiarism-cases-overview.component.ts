@@ -21,7 +21,7 @@ export class PlagiarismCasesOverviewComponent {
     goToPlagiarismDetection(exercise: Exercise) {
         const exerciseGroupId = exercise.exerciseGroup?.id;
         const exerciseType = exercise.type;
-        this.router.navigate([
+        void this.router.navigate([
             '/course-management',
             this.courseId(),
             'exams',
@@ -34,6 +34,6 @@ export class PlagiarismCasesOverviewComponent {
         ]);
     }
     goToPlagiarismCases() {
-        this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'plagiarism-cases']);
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'plagiarism-cases']);
     }
 }

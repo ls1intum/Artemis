@@ -32,7 +32,7 @@ enum AssessmentAction {
 }
 
 class ExerciseForTeam extends Exercise {
-    team: Team;
+    team!: Team; // assigned in transformExercisesFromServer() before the row is rendered
     participation?: StudentParticipation;
     submission?: Submission;
     individualDueDate?: dayjs.Dayjs;
@@ -177,7 +177,7 @@ export class TeamParticipationTableComponent implements OnInit {
      * @param exercises Exercises from the server which to transform
      */
     transformExercisesFromServer(exercises: Exercise[]): ExerciseForTeam[] {
-        return ExerciseService.convertExercisesDateFromServer(exercises).map((exercise: ExerciseForTeam) => {
+        return (ExerciseService.convertExercisesDateFromServer(exercises) as ExerciseForTeam[]).map((exercise: ExerciseForTeam) => {
             exercise.team = exercise.teams![0];
             const participation = get(exercise, 'studentParticipations[0]', undefined);
             exercise.participation = participation;

@@ -86,11 +86,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(async () => await this.loadCourseCompetencies(courseId));
+            void untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
             const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-            untracked(async () => {
+            void untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
                 }

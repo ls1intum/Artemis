@@ -84,7 +84,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private plagiarismPostService = inject(PlagiarismPostService);
 
     readonly courseId = signal<number>(undefined!);
-    plagiarismCaseId: number;
+    plagiarismCaseId!: number; // set in ngOnInit() from route params
     readonly plagiarismCase = signal<PlagiarismCase>(undefined!);
 
     readonly verdictPointDeduction = signal(0);
@@ -102,7 +102,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     faCheck = faCheck;
 
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
-    private postsSubscription: Subscription;
+    private postsSubscription?: Subscription;
     readonly posts = signal<Post[] | undefined>(undefined);
 
     ngOnInit(): void {
@@ -120,7 +120,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.metisService.getFilteredPosts({
                     plagiarismCaseId: plagiarismCase.id,
                 });
-                this.accountService.identity().then((user) => {
+                void this.accountService.identity().then((user) => {
                     this.currentAccount = user;
                     this.createEmptyPost();
                 });

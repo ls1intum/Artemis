@@ -159,7 +159,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should return cached subject as Observable for provided participation if exists', () => {
-        const cachedSubject = new BehaviorSubject(undefined);
+        const cachedSubject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
         const fetchLatestPendingSubmissionSpy = vi.spyOn(priv(submissionService), 'fetchLatestPendingSubmissionByParticipationId');
         const setupWebsocketSubscriptionSpy = vi.spyOn(priv(submissionService), 'setupWebsocketSubscriptionForLatestPendingSubmission');
         const subscribeForNewResultSpy = vi.spyOn(priv(submissionService), 'subscribeForNewResult');
@@ -527,7 +527,10 @@ describe('ProgrammingSubmissionService', () => {
     it('should recalculate the result eta based on the number of open submissions', () => {
         const exerciseId = 10;
         // Simulate 340 participations with one pending submission each.
-        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
+        const submissionState = _range(340).reduce<Record<string, ProgrammingSubmission>>(
+            (acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }),
+            {},
+        );
         const expectedSubmissionState = Object.entries(submissionState).reduce(
             (acc, [participationID, submission]: [string, ProgrammingSubmission]) => ({
                 ...acc,

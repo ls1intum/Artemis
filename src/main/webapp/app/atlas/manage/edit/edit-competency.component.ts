@@ -22,7 +22,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     readonly competency = signal<Competency>(undefined!);
     readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
 
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
@@ -79,7 +79,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                 finalize(() => {
                     this.isLoading.set(false);
                     // currently at /course-management/{courseId}/competency-management/{competencyId}/edit, going back to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

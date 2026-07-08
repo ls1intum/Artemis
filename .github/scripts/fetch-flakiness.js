@@ -117,4 +117,38 @@ function buildFlakinessTable(flakinessResults) {
     return table;
 }
 
-module.exports = { parseFailedTests, fetchFlakinessScores, buildFlakinessTable };
+/**
+ * Split failed tests into real regressions vs known-flaky, using Helios history.
+ *
+ * A failure is exonerated (treated as known-flaky, not a regression introduced by this change) when
+ * EITHER signal from Helios says the test is unreliable independent of the change:
+ *   - flakinessScore > scoreThreshold (Helios' own LOW_FLAKINESS_THRESHOLD, 30): it flakes; or
+ *   - defaultBranchFailureRate >= baseFailureRate (Helios' own MIN_FLAKY_RATE, 0.01 = 1%): it also
+ *     fails on the base branch, so the failure is not attributable to this change — the base-branch
+ *     signal Datadog and Chromium's commit-queue use to distinguish a real regression from noise.
+ * Everything else — tests Helios does not know, and tests reliable on the default branch — is a real
+ * regression. Fail-safe: if Helios returns no data (e.g. unreachable), every failure is real, so the
+ * run is never silently exonerated.
+ *
+ * @param {Array<{testName: string, className: string}>} failedTests
+ * @param {Array} flakinessResults - Helios response (empty if unavailable)
+ * @param {number} scoreThreshold - flakinessScore above which a test counts as known-flaky
+ * @param {number} baseFailureRate - default-branch failure rate at/above which a failure is not a regression
+ * @returns {{real: Array, flaky: Array}}
+ */
+function classifyFailures(failedTests, flakinessResults, scoreThreshold, baseFailureRate) {
+    const byKey = new Map();
+    for (const r of flakinessResults) {
+        byKey.set(`${r.className}#${r.testName}`, r);
+    }
+    const real = [];
+    const flaky = [];
+    for (const test of failedTests) {
+        const stats = byKey.get(`${test.className}#${test.testName}`);
+        const knownFlaky = stats !== undefined && (stats.flakinessScore > scoreThreshold || stats.defaultBranchFailureRate >= baseFailureRate);
+        (knownFlaky ? flaky : real).push(test);
+    }
+    return { real, flaky };
+}
+
+module.exports = { parseFailedTests, fetchFlakinessScores, buildFlakinessTable, classifyFailures };

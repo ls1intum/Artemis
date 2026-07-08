@@ -134,6 +134,6 @@ export class CourseCardComponent {
      * Delegates the user to the corresponding course page when clicking on the chart
      */
     onSelect(): void {
-        this.router.navigate(['courses', this.course().id]);
+        void this.router.navigate(['courses', this.course().id]);
     }
 }

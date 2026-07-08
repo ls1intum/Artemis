@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -50,6 +50,7 @@ interface SystemNotificationForm {
         ButtonModule,
         MessageModule,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);
@@ -162,7 +163,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      * Navigates back to the system notifications overview.
      */
     goToOverview(): void {
-        this.router.navigate(['admin', 'system-notification-management']);
+        void this.router.navigate(['admin', 'system-notification-management']);
     }
 
     /**

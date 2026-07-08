@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -110,13 +111,14 @@ export class CourseExerciseRowComponent implements OnInit {
         this.participationWebsocketService
             .subscribeForParticipationChanges()
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((changedParticipation: StudentParticipation) => {
+            .subscribe((changedParticipation: Participation | undefined) => {
                 const exerciseValue = this.exercise();
                 if (changedParticipation && exerciseValue?.id && changedParticipation.exercise?.id === exerciseValue.id) {
+                    const studentParticipation = changedParticipation as StudentParticipation;
                     const currentParticipations = this._studentParticipations();
                     const updatedParticipations = currentParticipations.length
-                        ? currentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
-                        : [changedParticipation];
+                        ? currentParticipations.map((el) => (el.id === studentParticipation.id ? studentParticipation : el))
+                        : [studentParticipation];
                     this._studentParticipations.set(updatedParticipations);
                     const participation = this.participationService.getSpecificStudentParticipation(updatedParticipations, false);
                     this._gradedStudentParticipation.set(participation);
@@ -172,6 +174,7 @@ export class CourseExerciseRowComponent implements OnInit {
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         }
+        return undefined;
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

@@ -44,7 +44,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
-        firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
+        void firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
                 this.lecturesWithDetails = lectures
@@ -74,7 +74,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
      * Executes the action in the current editor for the given arguments (lecture, attachment, slide, and/or attachment video unit).
      * @param args The arguments to execute the action with.
      */
-    executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
+    override executeInCurrentEditor(args: LectureAttachmentReferenceActionArgs): void {
         super.executeInCurrentEditor(args);
     }
 
@@ -120,7 +120,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         editor.focus();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.lecturesWithDetails = [];
     }

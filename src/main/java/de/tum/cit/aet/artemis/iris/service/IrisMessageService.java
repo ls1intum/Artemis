@@ -53,12 +53,11 @@ public class IrisMessageService {
         message.getContent().forEach(content -> content.setMessage(message));
 
         session.getMessages().add(message);
-        irisSessionRepository.save(session);
+        // saveAndFlush so the cascaded message has its generated id; the returned managed entity
+        // replaces the previous full-session reload that ran on every message save.
+        var savedSession = irisSessionRepository.saveAndFlush(session);
+        session.setMessages(savedSession.getMessages()); // Keep the caller's session instance consistent with the managed state.
 
-        var sessionWithMessages = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
-        session.setMessages(sessionWithMessages.getMessages()); // Make sure we keep the session up to date as we overrode it. We do this to avoid unnecessarily fetching the
-                                                                // session again.
-
-        return sessionWithMessages.getMessages().getLast();
+        return savedSession.getMessages().getLast();
     }
 }

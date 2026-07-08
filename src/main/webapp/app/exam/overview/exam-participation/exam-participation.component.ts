@@ -34,6 +34,7 @@ import { ProgrammingExamSubmissionComponent } from '../exercises/programming/pro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
@@ -83,6 +84,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         AsyncPipe,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -124,6 +126,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly studentExamId = signal<number>(undefined!);
     readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
 
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
+
     // determines if component was once drawn visited
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
@@ -145,7 +151,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly attendanceChecked = signal(false);
 
     readonly examSummaryButtonSecondsLeft = signal(10);
-    examSummaryButtonTimer: ReturnType<typeof setInterval>;
+    examSummaryButtonTimer?: ReturnType<typeof setInterval>;
     readonly showExamSummary = signal(false);
 
     readonly exerciseIndex = signal(0);
@@ -175,7 +181,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // autoTimerInterval in seconds
     readonly autoSaveTimer = signal(0);
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
 
     private synchronizationAlert = new Subject<void>();
 
@@ -189,7 +195,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
     readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
-    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
+    generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject<GenerateParticipationStatus>('success');
 
     constructor() {
         // show only one synchronization error every 5s
@@ -276,8 +282,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     loadAndDisplaySummary() {
         this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
-            next: (studentExamWithExercises: StudentExam) => {
-                this.studentExam.set(studentExamWithExercises);
+            next: (studentExamWithExercises: StudentExam | undefined) => {
+                if (studentExamWithExercises) {
+                    this.studentExam.set(studentExamWithExercises);
+                }
                 this.showExamSummary.set(true);
                 this.loadingExam.set(false);
             },
@@ -310,6 +318,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return this.currentPageComponents().find(
             (submissionComponent) => !this.activeExamPage().isOverviewPage && submissionComponent.getExerciseId() === this.activeExamPage().exercise!.id,
         );
+    }
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     /**
@@ -388,7 +401,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
             // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
             // retried by the autosave timer. Guarded by studentExam because triggerSave dereferences the current exam.
-            this.triggerSave(false);
+            // Force the save (forceSave=true): the recovery re-send is a plain HTTP request and must NOT be gated on the
+            // WebSocket `connected()` state, which right after a reload has often not re-established yet (especially in a
+            // multi-node cluster). Gating it there would silently defer the recovery to the next autosave cycle, which is
+            // exactly the answer-loss window this recovery path exists to close.
+            this.triggerSave(true);
         }
     }
 
@@ -458,12 +475,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
-                        this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
+                        void this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
                     }
 
                     if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
-                        this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
+                        void this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
                         this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
@@ -680,19 +697,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         } else {
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
-                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId()).subscribe((localExam: StudentExam) => {
-                    if (localExam) {
-                        // Keep the working time from the server
-                        localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
-                        this.studentExam.set(localExam);
-                        this.loadingExam.set(false);
-                        // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
-                        this.examStarted(this.studentExam(), true);
-                        // Inform the student that their previously entered answers were restored and are being saved,
-                        // so it is clear that nothing was lost when the page was reloaded.
-                        this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
-                    }
-                });
+                this.examParticipationService
+                    .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId())
+                    .subscribe((localExam: StudentExam | undefined) => {
+                        if (localExam) {
+                            // Keep the working time from the server
+                            localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
+                            this.studentExam.set(localExam);
+                            this.loadingExam.set(false);
+                            // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
+                            this.examStarted(this.studentExam(), true);
+                            // Inform the student that their previously entered answers were restored and are being saved,
+                            // so it is clear that nothing was lost when the page was reloaded.
+                            this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
+                        }
+                    });
             } else {
                 this.loadingExam.set(false);
             }
@@ -732,28 +751,44 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.workingTimeUpdateEventsSubscription) {
             this.workingTimeUpdateEventsSubscription.unsubscribe();
         }
-        this.workingTimeUpdateEventsSubscription = this.liveEventsService
-            .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
-            .subscribe((event: WorkingTimeUpdateEvent) => {
-                // Create new object to make change detection work, otherwise the date will not update
-                this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
-                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
-                this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
-                this.liveEventsService.acknowledgeEvent(event, false);
-            });
+        // observeNewEventsAsSystem already filters by the requested event type, so the emitted events are
+        // WorkingTimeUpdateEvent at runtime; the cast keeps the callback param typed without an extra `filter`
+        // (which would incorrectly drop events lacking an explicit `eventType`, e.g. in tests).
+        this.workingTimeUpdateEventsSubscription = (
+            this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE]) as Observable<WorkingTimeUpdateEvent>
+        ).subscribe((event: WorkingTimeUpdateEvent) => {
+            // Create new object to make change detection work, otherwise the date will not update
+            this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
+            this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+            // A real-exam event carries the exam's (possibly changed) start/end date; apply it so the pre-start
+            // countdown and the start-based content visibility (isActive/isVisible) recompute. A test-exam event omits
+            // the schedule (the exam dates are only its availability window, not the student's conduction window), so
+            // the exam dates are left untouched and the end date is derived from the student's own start below.
+            if (event.newStartDate) {
+                this.exam.set({ ...this.exam(), startDate: event.newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+            }
+            // Derive the end date from the new start when present, otherwise from the start captured when the
+            // subscription was created (the exam start for real exams, the student's startedDate for test exams),
+            // instead of a stale value.
+            const effectiveStartDate = event.newStartDate ?? startDate;
+            this.individualStudentEndDate.set(dayjs(effectiveStartDate).add(this.studentExam().workingTime!, 'seconds'));
+            this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
+            this.liveEventsService.acknowledgeEvent(event, false);
+        });
     }
 
     private subscribeToProblemStatementUpdates() {
         if (this.problemStatementUpdateEventsSubscription) {
             this.problemStatementUpdateEventsSubscription.unsubscribe();
         }
-        this.problemStatementUpdateEventsSubscription = this.liveEventsService
-            .observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE])
-            .subscribe((event: ProblemStatementUpdateEvent) => {
-                this.updateProblemStatement(event);
-                this.liveEventsService.acknowledgeEvent(event, false);
-            });
+        // See subscribeToWorkingTimeUpdates: the events are already type-filtered by observeNewEventsAsSystem,
+        // so we cast rather than add a `filter` that would drop events without an explicit `eventType`.
+        this.problemStatementUpdateEventsSubscription = (
+            this.liveEventsService.observeNewEventsAsSystem([ExamLiveEventType.PROBLEM_STATEMENT_UPDATE]) as Observable<ProblemStatementUpdateEvent>
+        ).subscribe((event: ProblemStatementUpdateEvent) => {
+            this.updateProblemStatement(event);
+            this.liveEventsService.acknowledgeEvent(event, false);
+        });
     }
 
     /**
