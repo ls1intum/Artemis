@@ -539,14 +539,14 @@ describe('ExamResultSummaryComponent', () => {
             } as StudentResult;
             component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult });
 
-            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-success');
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-success');
         });
 
         it('should fall back to the participation result color when there is no authoritative exam score', () => {
             const exercise = exerciseWithStaleResult(43, 20);
             component.studentExamGradeInfoDTO.set({ ...gradeInfo, studentResult: { exerciseGroupIdToExerciseResult: {} } as StudentResult });
 
-            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-danger');
+            expect(component.getTextColorAndIconClassByExercise(exercise).textColorClass).toBe('text-state-danger');
         });
     });
 
