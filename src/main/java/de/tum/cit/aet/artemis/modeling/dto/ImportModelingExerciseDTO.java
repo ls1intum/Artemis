@@ -3,15 +3,12 @@ package de.tum.cit.aet.artemis.modeling.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -27,7 +24,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
  * Superset of {@link UpdateModelingExerciseDTO} with the additional configuration needed during import.
  * Dumb DTO: only scalars, enums, date/time values, and nested DTOs. The controller builds the entity from this payload.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude
 public record ImportModelingExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         ExerciseMode mode, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
@@ -51,10 +48,8 @@ public record ImportModelingExerciseDTO(Long id, String title, String channelNam
         Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        List<GradingCriterionDTO> gradingCriterionDTOs = criteria != null && Hibernate.isInitialized(criteria) ? criteria.stream().map(GradingCriterionDTO::of).toList() : null;
-        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
-        Set<CompetencyLinkDTO> competencyLinkDTOs = links != null && Hibernate.isInitialized(links) ? links.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet()) : null;
+        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
@@ -63,8 +58,7 @@ public record ImportModelingExerciseDTO(Long id, String title, String channelNam
 
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
-        Set<String> exerciseCategories = exercise.getCategories();
-        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+        Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
 
         return new ImportModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(), categories,
                 exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),

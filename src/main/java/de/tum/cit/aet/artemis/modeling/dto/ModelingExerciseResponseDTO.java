@@ -4,16 +4,13 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -86,26 +83,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
             }
         }
 
-        List<GradingCriterionDTO> gradingCriterionDTOs;
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
-        }
-        else {
-            gradingCriterionDTOs = null;
-        }
+        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
 
-        Set<CompetencyLinkDTO> competencyLinkDTOs;
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
-        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
-        }
-        else {
-            competencyLinkDTOs = null;
-        }
+        Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
-        TeamAssignmentConfigDTO teamAssignmentConfigDTO = Hibernate.isInitialized(exercise.getTeamAssignmentConfig())
-                ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
+        TeamAssignmentConfigDTO teamAssignmentConfigDTO = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
 
         PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
@@ -113,14 +95,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
                 : null;
 
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
-        Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exercise.getExampleSubmissions())
-                ? exercise.getExampleSubmissions().stream().map(ModelingExampleSubmissionDTO::of).collect(Collectors.toSet())
-                : null;
+        Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getExampleSubmissions(), ModelingExampleSubmissionDTO::of);
 
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
-        Set<String> exerciseCategories = exercise.getCategories();
-        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+        Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
 
         return new ModelingExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(),

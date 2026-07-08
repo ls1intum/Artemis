@@ -5,11 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.hibernate.Hibernate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
@@ -65,14 +62,7 @@ public record ModelingExerciseListItemDTO(Long id, String title, String shortNam
             }
         }
 
-        List<GradingCriterionDTO> gradingCriterionDTOs;
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
-        }
-        else {
-            gradingCriterionDTOs = null;
-        }
+        var gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
 
         // Light course reference (id + title) so the client courseTitle pipe can render the course column in the list and
         // the cross-course import search; resolves the course for both course and exam exercises.
@@ -80,8 +70,7 @@ public record ModelingExerciseListItemDTO(Long id, String title, String shortNam
 
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
-        Set<String> exerciseCategories = exercise.getCategories();
-        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+        Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
 
         return new ModelingExerciseListItemDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getDiagramType(), exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),

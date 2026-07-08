@@ -3,15 +3,12 @@ package de.tum.cit.aet.artemis.modeling.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -51,30 +48,14 @@ public record UpdateModelingExerciseDTO(Long id, String title, String channelNam
         Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        List<GradingCriterionDTO> gradingCriterionDTOs;
-        Set<CompetencyLinkDTO> competencyLinkDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
 
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
-
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? List.of() : criteria.stream().map(GradingCriterionDTO::of).toList();
-        }
-        else {
-            gradingCriterionDTOs = null;
-        }
-        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
-        }
-        else {
-            competencyLinkDTOs = null;
-        }
+        Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
                 : null;
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
-        Set<String> exerciseCategories = exercise.getCategories();
-        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+        Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(), categories,
                 exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),

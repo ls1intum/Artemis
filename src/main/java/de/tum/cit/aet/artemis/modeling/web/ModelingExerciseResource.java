@@ -241,7 +241,7 @@ public class ModelingExerciseResource {
         });
         exerciseVersionService.createExerciseVersion(result);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(ModelingExerciseResponseDTO.of(result));
+        return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + result.getId())).body(ModelingExerciseResponseDTO.of(result));
     }
 
     /**
@@ -469,7 +469,7 @@ public class ModelingExerciseResource {
         atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
         exerciseVersionService.createExerciseVersion(newModelingExercise, user);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(ModelingExerciseResponseDTO.of(newModelingExercise));
+        return ResponseEntity.created(new URI("/api/modeling/modeling-exercises/" + newModelingExercise.getId())).body(ModelingExerciseResponseDTO.of(newModelingExercise));
     }
 
     /**
