@@ -139,11 +139,6 @@ public class ExamResource {
 
     private static final String ENTITY_NAME = "exam";
 
-    /**
-     * Maximum exam title length. Must stay consistent with the varchar(255) exam.title database column and the client-side EXAM_TITLE_MAX_LENGTH.
-     */
-    private static final int MAX_EXAM_TITLE_LENGTH = 255;
-
     private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
@@ -494,8 +489,9 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamTitleLengthElseThrow(Exam exam) {
-        if (exam.getTitle() != null && exam.getTitle().length() > MAX_EXAM_TITLE_LENGTH) {
-            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + MAX_EXAM_TITLE_LENGTH + " characters.", ENTITY_NAME, "examTitleTooLong");
+        if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
+                    "examTitleTooLong");
         }
     }
 
