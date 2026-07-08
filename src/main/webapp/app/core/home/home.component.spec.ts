@@ -221,8 +221,7 @@ describe('HomeComponent', () => {
             vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
             vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
-            const loginPromise = component.loginWithOidc();
-
+            component.loginWithOidc();
             fixture.detectChanges();
 
             // Verify that login button is rendered
