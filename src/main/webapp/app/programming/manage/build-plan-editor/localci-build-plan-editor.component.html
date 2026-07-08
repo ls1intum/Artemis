@@ -1,0 +1,51 @@
+@if (programmingExercise()) {
+    <div class="d-flex align-content-between flex-wrap mb-2">
+        @if (!loadingResults()) {
+            <div class="d-flex flex-column">
+                <div>
+                    <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
+                    @if (programmingExercise()?.templateParticipation) {
+                        <jhi-updating-result
+                            [exercise]="programmingExercise()!"
+                            [participation]="programmingExercise()!.templateParticipation!"
+                            [showUngradedResults]="true"
+                            [personalParticipation]="false"
+                        />
+                    }
+                </div>
+                <div>
+                    <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation"></span>
+                    @if (programmingExercise()?.solutionParticipation) {
+                        <jhi-updating-result
+                            [exercise]="programmingExercise()!"
+                            [participation]="programmingExercise()!.solutionParticipation!"
+                            [showUngradedResults]="true"
+                            [personalParticipation]="false"
+                        />
+                    }
+                </div>
+            </div>
+        }
+        <button
+            id="submit_button"
+            type="button"
+            class="btn btn-success navbar-btn ms-auto"
+            [disabled]="isSaving()"
+            (click)="submit()"
+            [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+        >
+            <fa-icon [icon]="farPlayCircle" />
+            <span jhiTranslate="artemisApp.editor.submit"></span>
+        </button>
+    </div>
+    <jhi-programming-exercise-build-configuration
+        [programmingExercise]="programmingExercise()!"
+        [dockerImage]="dockerImage()"
+        (dockerImageChange)="dockerImage.set($event)"
+        [timeout]="timeout()"
+        (timeoutChange)="timeout.set($event)"
+    />
+    <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
+    <jhi-build-phases-editor [phases]="phases()" (phasesChange)="phases.set($event)" [isExamMode]="isExamMode()" />
+}

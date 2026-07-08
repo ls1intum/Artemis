@@ -140,6 +140,9 @@
             "buildplan": "Build Plan",
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
+            "buildPlanConfiguration": {
+                "saved": "The build plan configuration was saved successfully. The template and solution builds were triggered."
+            },
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "customizeBuildPlan": "Customize Build Configuration",
             "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",

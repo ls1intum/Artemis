@@ -129,7 +129,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor-page.component').then((m) => m.BuildPlanEditorPageComponent),
         resolve: {
             exercise: ProgrammingExerciseResolve,
         },

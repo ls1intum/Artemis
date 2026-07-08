@@ -81,8 +81,7 @@ public class ProgrammingExerciseBuildConfigResource {
         log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
-        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, dto.buildPlan(),
-                dto.timeoutSeconds());
+        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, dto);
         programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
         return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
     }

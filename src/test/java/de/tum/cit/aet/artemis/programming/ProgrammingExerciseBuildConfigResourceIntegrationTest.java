@@ -25,6 +25,8 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     private static final String DOCKER_IMAGE = "ghcr.io/ls1intum/artemis-maven-template:latest";
 
+    private static final String DOCKER_FLAGS = "{\"network\":\"none\",\"cpuCount\":2}";
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -43,7 +45,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     private static UpdateBuildPlanConfigurationDTO configurationWith(List<BuildPhaseDTO> phases, int timeoutSeconds) {
-        return new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(phases, DOCKER_IMAGE), timeoutSeconds);
+        return new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(phases, DOCKER_IMAGE), timeoutSeconds, DOCKER_FLAGS);
     }
 
     private void assertConfigurationPersisted() throws Exception {
@@ -57,10 +59,12 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
         assertThat(response.timeoutSeconds()).isEqualTo(240);
         assertThat(response.buildPlanConfiguration()).contains("compile").contains("test").contains(DOCKER_IMAGE);
+        assertThat(response.dockerFlags()).isEqualTo(DOCKER_FLAGS);
 
         var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         assertThat(persisted.getTimeoutSeconds()).isEqualTo(240);
         assertThat(persisted.getBuildPlanConfiguration()).contains("compile").contains("test").contains(DOCKER_IMAGE);
+        assertThat(persisted.getDockerFlags()).isEqualTo(DOCKER_FLAGS);
         // the structured phases configuration supersedes any legacy build script
         assertThat(persisted.getBuildScript()).isNull();
 

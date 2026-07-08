@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
@@ -151,29 +152,30 @@ public class ProgrammingExerciseBuildPlanService {
     }
 
     /**
-     * Updates the build plan configuration (build phases and Docker image) and the build timeout of an existing
-     * programming exercise from the dedicated build plan editor, without re-running the full programming exercise update.
+     * Updates the build plan configuration (build phases and Docker image), the build timeout, and the Docker flags of an
+     * existing programming exercise from the dedicated build plan editor, without re-running the full programming exercise
+     * update.
      * <p>
      * The structured configuration is serialized and stored in the build config. For LocalCI the configuration is
      * interpreted at build time, so persisting it is sufficient; {@link #updateBuildPlanForExercise} recreates the build
      * plans for external CI systems when the configuration changed.
      *
-     * @param programmingExercise the programming exercise whose build config should be updated (with its build config loaded)
-     * @param buildPlan           the new build plan configuration (build phases and Docker image)
-     * @param timeoutSeconds      the build timeout in seconds
+     * @param programmingExercise    the programming exercise whose build config should be updated (with its build config loaded)
+     * @param buildPlanConfiguration the new build plan configuration (build phases, Docker image, timeout, and Docker flags)
      * @return the persisted build config
      * @throws JsonProcessingException if the build plan configuration cannot be serialized
      */
-    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, BuildPlanPhasesDTO buildPlan, int timeoutSeconds)
+    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration)
             throws JsonProcessingException {
-        validateBuildPhaseNames(buildPlan.phases());
+        validateBuildPhaseNames(buildPlanConfiguration.buildPlan().phases());
 
         var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
-        buildConfig.setBuildPlanConfiguration(buildPlan.toBuildPlanConfiguration());
+        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration.buildPlan().toBuildPlanConfiguration());
         // the structured phases configuration supersedes any legacy build script
         buildConfig.setBuildScript(null);
-        buildConfig.setTimeoutSeconds(timeoutSeconds);
+        buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
+        buildConfig.setDockerFlags(buildPlanConfiguration.dockerFlags());
 
         updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
 
