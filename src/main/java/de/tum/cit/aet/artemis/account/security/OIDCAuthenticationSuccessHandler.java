@@ -34,7 +34,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
     private final UserRepository userRepository;
 
-    @Value("${artemis.user-management.oidc.mappings.username}")
+    @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
 
     public OIDCAuthenticationSuccessHandler(JWTCookieService jwtCookieService, UserRepository userRepository) {

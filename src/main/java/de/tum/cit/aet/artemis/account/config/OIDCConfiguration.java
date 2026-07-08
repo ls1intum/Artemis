@@ -35,25 +35,25 @@ public class OIDCConfiguration {
 
     private final Environment environment;
 
-    @Value("${spring.security.oauth2.client.registration.oidc.client-id}")
+    @Value("${spring.security.oauth2.client.registration.oidc.client-id:mock-id}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.registration.oidc.client-secret}")
+    @Value("${spring.security.oauth2.client.registration.oidc.client-secret:mock-secret}")
     private String clientSecret;
 
-    @Value("${spring.security.oauth2.client.provider.oidc.authorization-uri}")
+    @Value("${spring.security.oauth2.client.provider.oidc.authorization-uri:http://mock-auth}")
     private String authorizationUri;
 
-    @Value("${spring.security.oauth2.client.provider.oidc.token-uri}")
+    @Value("${spring.security.oauth2.client.provider.oidc.token-uri:http://mock-token}")
     private String tokenUri;
 
-    @Value("${spring.security.oauth2.client.provider.oidc.user-info-uri}")
+    @Value("${spring.security.oauth2.client.provider.oidc.user-info-uri:http://mock-user}")
     private String userInfoUri;
 
-    @Value("${spring.security.oauth2.client.provider.oidc.jwk-set-uri}")
+    @Value("${spring.security.oauth2.client.provider.oidc.jwk-set-uri:http://mock-jwk}")
     private String jwkSetUri;
 
-    @Value("${artemis.user-management.oidc.mappings.username}")
+    @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
 
     public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler, Environment environment) {

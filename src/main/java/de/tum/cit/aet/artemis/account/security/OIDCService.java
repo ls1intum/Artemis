@@ -33,19 +33,19 @@ public class OIDCService extends OidcUserService {
 
     private final UserCreationService userCreationService;
 
-    @Value("${artemis.user-management.oidc.mappings.username}")
+    @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
 
-    @Value("${artemis.user-management.oidc.mappings.matriculation-number}")
+    @Value("${artemis.user-management.oidc.mappings.matriculation-number:matriculation_number}")
     private String matriculationClaimKey;
 
-    @Value("${artemis.user-management.oidc.mappings.first-name}")
+    @Value("${artemis.user-management.oidc.mappings.first-name:given_name}")
     private String firstNameClaimKey;
 
-    @Value("${artemis.user-management.oidc.mappings.last-name}")
+    @Value("${artemis.user-management.oidc.mappings.last-name:family_name}")
     private String lastNameClaimKey;
 
-    @Value("${artemis.user-management.oidc.mappings.email}")
+    @Value("${artemis.user-management.oidc.mappings.email:email}")
     private String emailClaimKey;
 
     public OIDCService(UserRepository userRepository, UserCreationService userCreationService) {
