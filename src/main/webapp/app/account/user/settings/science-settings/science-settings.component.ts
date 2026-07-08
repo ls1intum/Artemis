@@ -23,7 +23,7 @@ import { ScienceSetting } from 'app/account/user/settings/science-settings/scien
         ArtemisTranslatePipe,
     ],
 })
-export class ScienceSettingsComponent extends UserSettingsDirective<ScienceSetting> implements OnInit, OnDestroy {
+export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     private scienceSettingsService = inject(ScienceSettingsService);
     private featureToggleService = inject(FeatureToggleService);
 

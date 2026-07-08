@@ -8,15 +8,9 @@ import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-s
 
 /**
  * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.
- *
- * The concrete setting type is a generic parameter so subclasses (e.g. science settings) get the narrowed type without
- * re-declaring the {@link userSettings}/{@link settings} signals. Re-declaring an inherited, initialized field in a
- * subclass MUST be avoided: under `useDefineForClassFields` (target es2024) the Angular build emits the subclass field
- * as an uninitialized property that shadows the base signal with `undefined`, which crashed the science settings page
- * (issue #13173). Parameterizing here keeps the signals defined on every subclass instance.
  */
 @Directive()
-export abstract class UserSettingsDirective<T extends Setting = Setting> implements OnInit {
+export abstract class UserSettingsDirective implements OnInit {
     protected userSettingsService = inject(UserSettingsService);
     private alertService = inject(AlertService);
 
@@ -27,8 +21,8 @@ export abstract class UserSettingsDirective<T extends Setting = Setting> impleme
     // userSettings logic related
     userSettingsCategory!: UserSettingsCategory; // set in the overriding ngOnInit() of each child-settings component before loadSetting() reads it
     changeEventMessage!: string; // set in the ngOnInit() of each child-settings component before createApplyChangesEvent() reads it
-    readonly userSettings = signal<UserSettingsStructure<T>>(undefined!);
-    readonly settings = signal<Array<T>>(undefined!);
+    readonly userSettings = signal<UserSettingsStructure<Setting>>(undefined!);
+    readonly settings = signal<Array<Setting>>(undefined!);
     page = 0;
     error?: string;
 
@@ -45,8 +39,8 @@ export abstract class UserSettingsDirective<T extends Setting = Setting> impleme
     protected loadSetting(): void {
         this.userSettingsService.loadSettings(this.userSettingsCategory)?.subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                this.userSettings.set(this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory) as UserSettingsStructure<T>);
-                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()) as T[]);
+                this.userSettings.set(this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.alertService.closeAll();
             },
             error: (res: HttpErrorResponse) => this.onError(res),
@@ -62,8 +56,8 @@ export abstract class UserSettingsDirective<T extends Setting = Setting> impleme
     public saveSettings() {
         this.userSettingsService.saveSettings(this.settings(), this.userSettingsCategory).subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                this.userSettings.set(this.userSettingsService.saveSettingsSuccess(this.userSettings(), res.body!) as UserSettingsStructure<T>);
-                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()) as T[]);
+                this.userSettings.set(this.userSettingsService.saveSettingsSuccess(this.userSettings(), res.body!));
+                this.settings.set(this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings()));
                 this.finishSaving();
             },
             error: (res: HttpErrorResponse) => this.onError(res),
