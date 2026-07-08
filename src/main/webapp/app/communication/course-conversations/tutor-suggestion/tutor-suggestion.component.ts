@@ -75,12 +75,12 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
 
     readonly irisIsActive = signal(false);
 
-    messagesSubscription: Subscription;
-    irisSettingsSubscription: Subscription;
-    tutorSuggestionSubscription: Subscription;
-    errorSubscription: Subscription;
-    irisActivationSubscription: Subscription;
-    featureToggleSubscription: Subscription;
+    messagesSubscription?: Subscription;
+    irisSettingsSubscription?: Subscription;
+    tutorSuggestionSubscription?: Subscription;
+    errorSubscription?: Subscription;
+    irisActivationSubscription?: Subscription;
+    featureToggleSubscription?: Subscription;
 
     readonly messages = signal<IrisMessage[] | undefined>(undefined);
     readonly suggestion = signal<IrisMessage | undefined>(undefined);

@@ -58,15 +58,15 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly textExercise = signal<TextExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly isExamExercise = signal<boolean>(false);
-    formattedProblemStatement: SafeHtml | null;
-    formattedExampleSolution: SafeHtml | null;
-    formattedGradingInstructions: SafeHtml | null;
+    formattedProblemStatement: SafeHtml | null = null;
+    formattedExampleSolution: SafeHtml | null = null;
+    formattedGradingInstructions: SafeHtml | null = null;
 
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
     readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
+    private subscription?: Subscription;
+    private eventSubscriber!: Subscription; // set in ngOnInit() via registerChangeInTextExercises(); destroy() requires a non-optional Subscription
 
     /**
      * Loads the text exercise and subscribes to changes of it on component initialization.

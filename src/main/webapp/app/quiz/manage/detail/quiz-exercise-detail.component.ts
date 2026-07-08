@@ -44,9 +44,9 @@ export class QuizExerciseDetailComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Quiz';
     readonly dayjs = dayjs;
 
-    courseId: number;
-    examId: number;
-    quizId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
+    quizId!: number; // set in ngOnInit() from route params
     readonly isExamMode = signal<boolean>(false);
     readonly showStatistics = signal<boolean>(false);
 

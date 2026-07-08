@@ -18,8 +18,8 @@
                 "noUsersFound": "Es wurden keine Benutzer zum Importieren gefunden"
             },
             "numberOfUsers": "Anzahl an Nutzern:",
-            "numberOfUsersImported": "Importiert:",
-            "numberOfUsersNotImported": "Nicht gefunden:",
+            "numberOfUsersImported": "Importierte Studierende:",
+            "numberOfUsersNotImported": "Nicht gefundene Studierende:",
             "genericErrorMessage": "Der Import von Nutzern in den Kurs oder die Klausur ist fehlgeschlagen!",
             "firstName": "Vorname",
             "lastName": "Nachname",

@@ -17,7 +17,7 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
 
     isExamMode = input(false);
     readonly disconnected = signal(true);
-    websocketStatusSubscription: Subscription;
+    websocketStatusSubscription?: Subscription;
 
     // Icons
     readonly faCircle = faCircle;
@@ -35,6 +35,6 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
      * Life cycle hook called by Angular for cleanup just before Angular destroys the component
      */
     ngOnDestroy() {
-        this.websocketStatusSubscription.unsubscribe();
+        this.websocketStatusSubscription?.unsubscribe();
     }
 }

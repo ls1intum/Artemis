@@ -30,6 +30,11 @@ $graded-color: #28a745;
             color: white;
         }
 
+        /* Single-mode badge is non-interactive */
+        &--static {
+            cursor: default;
+        }
+
         &--practice {
             background-color: $practice-color;
         }

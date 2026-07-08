@@ -5,7 +5,7 @@ import { PlagiarismComparisonSummary } from './PlagiarismComparison';
  * Each `PlagiarismSubmission` refers to a submission that has been compared during plagiarism detection.
  * It contains fundamental information independent of the exercise type or algorithm used.
  */
-export class PlagiarismSubmission {
+export interface PlagiarismSubmission {
     /**
      * ID of the submission.
      */
