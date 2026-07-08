@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Route } from '@angular/router';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { IdlePreloadScheduler } from 'app/core/config/idle-preload.scheduler';
 import { RoleAwarePreloadingStrategy, preloadTierForRoute } from 'app/core/config/role-aware-preloading.strategy';
@@ -95,7 +95,7 @@ describe('RoleAwarePreloadingStrategy', () => {
 
         accountStub.hasAnyAuthorityDirect.mockReturnValue(false);
         let result: unknown = 'unset';
-        (guardedLoad() as ReturnType<typeof of>).subscribe((v: unknown) => (result = v));
+        (guardedLoad() as Observable<unknown>).subscribe((v: unknown) => (result = v));
         expect(loader).not.toHaveBeenCalled();
         expect(result).toBeNull();
     });
@@ -110,7 +110,7 @@ describe('RoleAwarePreloadingStrategy', () => {
 
         accountStub.isAuthenticated.mockReturnValue(false);
         let result: unknown = 'unset';
-        (guardedLoad() as ReturnType<typeof of>).subscribe((v: unknown) => (result = v));
+        (guardedLoad() as Observable<unknown>).subscribe((v: unknown) => (result = v));
         expect(loader).not.toHaveBeenCalled();
         expect(result).toBeNull();
     });
