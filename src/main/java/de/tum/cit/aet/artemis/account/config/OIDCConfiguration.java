@@ -65,6 +65,8 @@ public class OIDCConfiguration {
     /**
      * Explicitly defines the ClientRegistrationRepository bean.
      * This guarantees that Spring Security is deterministically aware of 'oidc' provider,
+     *
+     * @return the configured InMemoryClientRegistrationRepository containing the OIDC registration details.
      */
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository() {
