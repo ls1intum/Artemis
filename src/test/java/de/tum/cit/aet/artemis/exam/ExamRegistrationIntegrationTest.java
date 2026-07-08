@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
@@ -31,6 +32,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -66,6 +69,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private StudentExamTestRepository studentExamRepository;
 
+    @Autowired
+    private MockMvc mockMvc;
+
     private Course course1;
 
     private Exam exam1;
@@ -76,11 +82,15 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final int NUMBER_OF_TUTORS = 1;
 
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
+
     private User student1;
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         // Add a student that is not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
@@ -107,7 +117,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
 
         Set<User> studentsInCourseBefore = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(student), HttpStatus.OK, null);
         Set<User> studentsInCourseAfter = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
@@ -124,7 +135,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
 
         Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsAfter).hasSize(1);
@@ -133,8 +145,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.BAD_REQUEST,
-                null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -176,9 +188,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student99 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
         assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
 
-        // Note: student111 is not yet a user of Artemis and should be retrieved from the LDAP
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        var examUserDtoNonExisting = new StudentDTO("nonExistingStudent", "", "", "", "");
+        var nonExistingResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoNonExisting),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(nonExistingResult.notFoundStudents()).hasSize(1);
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
         ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
@@ -202,11 +218,11 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var studentsToRegister = List.of(studentDto1, studentDto2, studentDto3, studentDto4, studentDto99, studentDto111, studentDto10);
 
         // now we register all these students for the exam.
-        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
-                studentsToRegister, StudentDTO.class, HttpStatus.OK);
         // all students get registered if they can be found in the LDAP
-        assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto4, studentDto10);
-
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", studentsToRegister,
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder(registrationNumber4WithTypo, null);
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
         // TODO check audit events stored properly
 
         storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
@@ -259,9 +275,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // user without anything
         StudentDTO dto4 = new StudentDTO(null, null, null, null, null);
 
-        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
-                List.of(dto1, dto2, dto3, dto4), StudentDTO.class, HttpStatus.OK);
-        assertThat(registrationFailures).containsExactly(dto4);
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(dto1, dto2, dto3, dto4), ExamRegistrationResultDTO.class, HttpStatus.OK);
+        assertThat(result.notFoundStudents()).extracting(ExamUserDTO::registrationNumber).containsExactly(dto4.registrationNumber());
+        assertThat(result.rejectedStaffUsers()).isNullOrEmpty();
     }
 
     @Test
@@ -341,9 +358,15 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterInstructorToExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "instructor1", null, HttpStatus.FORBIDDEN,
-                null);
+    void testRegisterPlainStudentToExam_successful() throws Exception {
+        var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(examUserDtoStudent1),
+                ExamRegistrationResultDTO.class, HttpStatus.OK);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
+
+        assertThat(storedExam.getExamUsers()).contains(examUser);
     }
 
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
@@ -377,5 +400,54 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
         Exam testExamReloaded = examRepository.findByIdWithExamUsersElseThrow(testExam.getId());
         assertThat(testExamReloaded.getExamUsers()).contains(examUser);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterStaffInExam_rejectedButRealStudentRegistered() throws Exception {
+        var savedExam = examUtilService.addExam(course1);
+
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "2000001");
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "editor1", "2000002");
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "tutor1", "2000003");
+
+        var studentDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000001");
+        var editorDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000002");
+        var tutorDto = UserFactory.generateStudentDTOWithRegistrationNumber("2000003");
+
+        ExamRegistrationResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
+                List.of(studentDto, editorDto, tutorDto), ExamRegistrationResultDTO.class, HttpStatus.OK);
+
+        assertThat(result.rejectedStaffUsers()).extracting(ExamUserDTO::registrationNumber).containsExactlyInAnyOrder("2000002", "2000003");
+        assertThat(result.notFoundStudents()).isNullOrEmpty();
+
+        Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).orElseThrow();
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), student.getId())).isPresent();
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), editor.getId())).isEmpty();
+        assertThat(examUserRepository.findByExamIdAndUserId(storedExam.getId(), tutor.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterCourseStudents_doesNotRegisterStaff() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam, "staff-filter-channel");
+
+        // user in BOTH student group and editor group, so getStudents(course) returns them but they must be rejected as staff
+        User dualRole = userUtilService.createAndSaveUser(TEST_PREFIX + "dualrole");
+        dualRole.setGroups(Set.of(course1.getStudentGroupName(), course1.getEditorGroupName()));
+        userTestRepository.save(dualRole);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+
+        exam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        assertThat(examUserRepository.findByExamIdAndUserId(exam.getId(), dualRole.getId())).isEmpty();
+
+        // a normal course student is still registered
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId())).isPresent();
     }
 }
