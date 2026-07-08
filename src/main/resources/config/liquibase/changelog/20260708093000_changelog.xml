@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Change the participant_score -> result foreign keys (last_result_id, last_rated_result_id) from
+        ON DELETE RESTRICT to ON DELETE SET NULL.
+
+        A participant_score is a derived/cached projection of an exercise's results. When a result is deleted,
+        the reference should simply be nulled: the scheduled ParticipantScoreScheduleService already recomputes
+        scores whose last result became null (see ParticipantScoreRepository.findAllOutdated), and the normal
+        single-result delete path nulls these references explicitly (clearAllByResultId). RESTRICT was therefore
+        both unnecessary and harmful: during exercise deletion the async score scheduler could re-create a score
+        referencing a result in the window between the bulk score delete and the result delete, and the result
+        delete then violated the constraint (intermittent HTTP 500, SQLState 23503). SET NULL removes that
+        violation cluster-wide (it is enforced by the database, independent of which node runs the scheduler or
+        the deletion) without needing any application-level transaction or cross-node coordination.
+
+        The exercise_id foreign key intentionally stays RESTRICT: once all results of an exercise are deleted the
+        scheduler can no longer create a score (it computes an empty score and deletes it), so the deletion code
+        removes the remaining scores before the exercise row is deleted.
+    -->
+    <!--
+        The re-added constraints use validate="false" (PostgreSQL "NOT VALID"): the existing rows already
+        satisfied the previous RESTRICT foreign keys (same referential integrity, only the ON DELETE action
+        changes), so re-scanning the potentially large participant_score table under a lock during deployment is
+        unnecessary. "NOT VALID" still enforces the constraint (and the ON DELETE SET NULL action) for all future
+        writes; it only skips the one-time validation of already-valid pre-existing rows, keeping the deployment
+        lock brief.
+    -->
+    <changeSet id="20260708093000-1-participant-score-result-fk-set-null" author="artemis">
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_result_id"/>
+        <addForeignKeyConstraint baseColumnNames="last_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="false"/>
+
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id"/>
+        <addForeignKeyConstraint baseColumnNames="last_rated_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="false"/>
+    </changeSet>
+</databaseChangeLog>
