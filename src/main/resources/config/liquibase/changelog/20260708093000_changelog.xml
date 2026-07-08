@@ -22,18 +22,18 @@
         removes the remaining scores before the exercise row is deleted.
     -->
     <!--
-        The re-added constraints use validate="false" (PostgreSQL "NOT VALID"): the existing rows already
-        satisfied the previous RESTRICT foreign keys (same referential integrity, only the ON DELETE action
-        changes), so re-scanning the potentially large participant_score table under a lock during deployment is
-        unnecessary. "NOT VALID" still enforces the constraint (and the ON DELETE SET NULL action) for all future
-        writes; it only skips the one-time validation of already-valid pre-existing rows, keeping the deployment
-        lock brief.
+        The constraints are re-added with validate="true" (the default), i.e. a normal validated foreign key on
+        both PostgreSQL and MySQL. Only the ON DELETE action changes (RESTRICT -> SET NULL); the referential
+        integrity is identical, so the pre-existing rows already satisfy it. We deliberately do NOT use
+        validate="false" (PostgreSQL NOT VALID): it is a Postgres-only lock optimization that MySQL (a supported
+        production database, and not covered by CI) simply ignores, so keeping the default guarantees identical,
+        well-understood behavior on both engines.
     -->
     <changeSet id="20260708093000-1-participant-score-result-fk-set-null" author="artemis">
         <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_result_id"/>
-        <addForeignKeyConstraint baseColumnNames="last_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="false"/>
+        <addForeignKeyConstraint baseColumnNames="last_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
 
         <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id"/>
-        <addForeignKeyConstraint baseColumnNames="last_rated_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="false"/>
+        <addForeignKeyConstraint baseColumnNames="last_rated_result_id" baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
     </changeSet>
 </databaseChangeLog>
