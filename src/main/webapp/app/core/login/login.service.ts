@@ -23,7 +23,7 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe({
                 next: () => {
-                    this.accountService.identity(true).then(() => {
+                    void this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
@@ -43,7 +43,7 @@ export class LoginService {
         return new Promise<void>((resolve, reject) => {
             this.authServerProvider.loginSAML2(rememberMe).subscribe({
                 next: () => {
-                    this.accountService.identity(true).then(() => {
+                    void this.accountService.identity(true).then(() => {
                         resolve();
                     });
                 },
@@ -80,7 +80,7 @@ export class LoginService {
     private onLogout(): void {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
-        this.router.navigateByUrl('/sign-in');
+        void this.router.navigateByUrl('/sign-in');
         this.authServerProvider.clearCaches().subscribe();
     }
 

@@ -30,7 +30,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnDestroy {
     readonly exercise = input<ProgrammingExercise>();
 
     protected readonly latestResult = signal<Result | undefined>(undefined);
-    resultSubscription: Subscription;
+    resultSubscription?: Subscription;
 
     // Tracks the id of the participation the current subscription belongs to, so that the
     // subscription is only re-created when the participation actually changes (mirrors the

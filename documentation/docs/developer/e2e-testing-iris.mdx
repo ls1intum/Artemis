@@ -1,0 +1,188 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import irisE2eDeployment from './assets/iris_e2e_deployment.png';
+import irisE2eSequence from './assets/iris_e2e_sequence.png';
+
+# E2E Testing Iris (Real Pyris)
+
+## Background
+
+Iris is Artemis's AI tutor, powered by [Pyris](https://github.com/ls1intum/edutelligence)
+(subdirectory `iris/`), a separate microservice living in a separate repository
+(`ls1intum/edutelligence`). Because Artemis and Pyris evolve independently, the wire contract
+between them (REST endpoints, DTO shapes, the async job/callback protocol) can drift — a PR
+merged in one repo can silently break the other.
+
+An earlier test approach stubbed out Pyris itself, which meant it only ever verified
+Artemis's side of a *fake* contract. The current setup instead runs a **real Pyris** build
+against a real Weaviate, with **only the LLM replaced** by a deterministic, OpenAI-compatible
+mock server. This exercises the genuine Artemis ↔ Pyris wire contract end to end — endpoint
+paths, DTO field mapping, the async accepted-then-callback flow, authentication, run-state
+transitions — without ever calling a real model.
+
+This is exercised in two places:
+
+- **Locally**, via `RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"` (see
+  [Set up Playwright locally](./e2e-testing-playwright.mdx#fast-local-runner-recommended-for-development)
+  for the base runner).
+- **Nightly in CI**, via the [`Nightly Iris E2E`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-iris-e2e.yml)
+  workflow, which runs Artemis `develop` against the latest edutelligence `main`.
+
+<Callout variant={CalloutVariant.info}>
+
+    The nightly workflow is a **non-blocking monitor**, not a PR gate. A failure means the
+    Artemis ↔ Pyris contract may have drifted; the root cause can live in *either* repository.
+    It opens (and updates) a tracking GitHub issue on failure rather than blocking any merge.
+
+</Callout>
+
+## Architecture overview
+
+<Image src={irisE2eDeployment} alt="UML deployment diagram of the Iris real-Pyris e2e stack: Playwright, Artemis client and server, PostgreSQL, and a Docker network containing pyris-app, weaviate, and mock-llm" size={ImageSize.large} caption="Deployment overview: Playwright drives the Artemis client/server as usual; the Docker network adds a real Pyris, a real Weaviate, and the mock LLM — the only faked component." />
+
+| Component | What it is | Purpose |
+|-----------|-----------|---------|
+| `pyris-app` | Real Pyris, built from `ls1intum/edutelligence` | Runs the actual chat pipeline (LangChain agent, tool calling, activity tracking, streaming) |
+| `weaviate` | Real [Weaviate](./weaviate-setup.mdx) vector database | Required for retrieval and for Pyris's `/health` endpoint to report healthy |
+| `mock-llm` | `src/test/playwright/support/iris-mock-llm/mock_llm.py` (this repo) | The **only** mocked component — a deterministic, OpenAI-compatible HTTP stub |
+| Artemis server/client | The regular fast-runner setup | Unmodified; Iris is turned on via server properties (see below) |
+
+Artemis and Pyris talk over the **genuine wire contract**: Artemis POSTs a pipeline execution
+request to Pyris (`/api/v1/pipelines/chat/run`), gets back an immediate `202 Accepted`, and
+Pyris later POSTs one or more asynchronous status callbacks back to Artemis
+(`/api/iris/internal/pipelines/chat/runs/{token}/status`, authenticated with a shared bearer
+token). Artemis relays these to the browser over WebSocket. None of this plumbing is faked;
+only the LLM behind Pyris is.
+
+## How the mock LLM works
+
+`mock_llm.py` is a dependency-free Python stdlib HTTP server (see the file's own docstring
+for the exact endpoint list) that implements just enough of the OpenAI Chat Completions API
+for Pyris's `openai_chat` / `openai_embedding` model clients:
+
+- **`POST /v1/chat/completions`** → a canned assistant message containing the marker
+  substring `mock-llm`, which the e2e assertions check for.
+- **`POST /v1/embeddings`** → a deterministic, constant-dimension embedding vector.
+- **`GET /v1/models`**, **`GET /health`**, **`GET /`** → liveness/model listing.
+
+Two behaviors make it possible to exercise more than "the model replies once":
+
+- **One tool-call round.** If the latest user message contains the marker `[e2e-tool]`
+  *and* the request offers tools, the mock first answers with a `tool_calls` response
+  (asking the agent to run `get_course_details` with no arguments) before its canned final
+  reply. This lets tests exercise the real activity-visibility pipeline — LangChain tool
+  hooks → Pyris's `ActivityTracker` → activity snapshots → Artemis relay → the activity feed
+  component — with a deterministic tool round, instead of asserting on hardcoded fake
+  "progress" text.
+- **Server-Sent Events streaming.** Pyris streams chat answers to the browser as they
+  generate: every course/lecture chat completion is requested with `"stream": true` so Pyris
+  can forward partial deltas to Artemis while the model is still "typing" (see
+  [#13099](https://github.com/ls1intum/Artemis/pull/13099) /
+  [#13134](https://github.com/ls1intum/Artemis/pull/13134)). When the mock sees `stream:
+  true`, it re-shapes the same canned response into a sequence of `chat.completion.chunk`
+  Server-Sent Events instead of a single JSON body — content deltas, a tool-call delta when
+  applicable, a finish chunk, and a trailing usage chunk — so the `openai-python` streaming
+  client parses it correctly.
+
+<Callout variant={CalloutVariant.warning}>
+
+    Before [#13149](https://github.com/ls1intum/Artemis/pull/13149), the mock ignored
+    `"stream": true` and always returned a plain non-streaming JSON body. The
+    `openai-python` client silently parses that mismatch as an **empty stream** — no
+    exception, no content — so the chat pipeline forwarded an empty answer to Artemis. In the
+    UI this looked like the chat staying on "Thinking…" forever and the tool activity chip
+    never appearing. If a future edutelligence change requests streaming somewhere the mock
+    doesn't yet handle, expect the exact same silent-empty-stream failure mode.
+
+</Callout>
+
+The sequence diagram below traces one full chat turn through the tool-call round, showing
+where streaming and the callback protocol fit together:
+
+<Image src={irisE2eSequence} alt="UML sequence diagram of an Iris chat message flowing from Playwright through Artemis, Pyris, and the mock LLM, including the tool-call round and the streaming SSE responses" size={ImageSize.large} caption="Wire flow for one chat message with a tool-call round: Pyris calls the mock LLM twice (once for the tool decision, once for the final answer), streaming both, and posts two status callbacks back to Artemis (the answer, then the terminal run-state)." />
+
+Configuration (all optional, see the top of `mock_llm.py`):
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MOCK_LLM_HOST` / `MOCK_LLM_PORT` | `0.0.0.0` / `8081` | Bind address |
+| `MOCK_LLM_REPLY` | a canned sentence containing `mock-llm` | The final answer text asserted on by e2e tests |
+| `MOCK_LLM_EMBED_DIM` | `1536` | Embedding vector dimension |
+| `MOCK_LLM_TOOL_MARKER` | `[e2e-tool]` | Marker in the user message that triggers the tool-call round |
+| `MOCK_LLM_TOOL_FOLLOWUP_DELAY_S` | `1.5` | Delay before the post-tool answer, so the UI assertion has time to see the finished tool chip |
+
+## Running locally
+
+```bash
+RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"
+```
+
+This is the same [fast local runner](./e2e-testing-playwright.mdx#fast-local-runner-recommended-for-development)
+used for every other Playwright suite, with `RUN_IRIS=true` adding:
+
+1. A check that the `pyris-e2e:local` Docker image exists, then `docker compose up -d` for
+   the stack in `src/test/playwright/support/iris-stack/` (`pyris-app`, `weaviate`,
+   `mock-llm`), waiting for Pyris's `/api/v1/health/` to report healthy.
+2. Server properties that turn Iris on: `ARTEMIS_IRIS_ENABLED=true`, `ARTEMIS_IRIS_URL` (→
+   Pyris), `ARTEMIS_IRIS_SECRETTOKEN` (the shared bearer token both sides must agree on).
+3. `server.url` overridden to `http://host.docker.internal:8080` so Pyris's container can
+   reach Artemis on the host for status callbacks.
+
+You need the `pyris-e2e:local` image before the first run. The fastest way is to pull the
+image edutelligence's own CI already publishes rather than building it yourself:
+
+```bash
+docker pull ghcr.io/ls1intum/edutelligence/iris:latest
+docker tag ghcr.io/ls1intum/edutelligence/iris:latest pyris-e2e:local
+```
+
+See [`src/test/playwright/support/iris-stack/README.md`](https://github.com/ls1intum/Artemis/blob/develop/src/test/playwright/support/iris-stack/README.md)
+for building from source instead (only needed to test an unreleased edutelligence
+branch/PR), manual `docker compose` commands, the full networking summary, and a
+troubleshooting note about stale cached images not picking up local `mock_llm.py` edits.
+
+`./run-e2e-tests-local-fast.sh --stop` tears the whole stack down, including Postgres, the
+server, and the client.
+
+**Debugging a failure:**
+
+- `.e2e-local/server.log` / `.e2e-local/client.log` — Artemis server/client logs.
+- `docker logs iris-e2e-pyris` — Pyris's own logs (pipeline execution, tool calls, callback
+  attempts).
+- `docker logs iris-e2e-mock-llm` — every request the mock received, including whether it
+  detected a tool round or a streaming request (`chat.completions model=... tools=...
+  tool_round=... stream=...`).
+- The Playwright HTML report / trace, same as any other suite.
+
+## CI: the nightly workflow
+
+The [`Nightly Iris E2E`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-iris-e2e.yml)
+workflow runs on a fixed daily schedule (offset from the main nightly suite) and on manual
+`workflow_dispatch`. By default it pulls `ghcr.io/ls1intum/edutelligence/iris:latest` — the
+image edutelligence's own CI publishes on every push to `main` — rather than checking out
+edutelligence and building the image from source, since that published image is already
+built from the exact commit the schedule would otherwise rebuild.
+
+Building from source is still available via the `edutelligence_ref` manual-dispatch input,
+for validating an in-progress edutelligence branch or PR (no published image exists for those
+until they're merged).
+
+On failure, the workflow opens (or comments on, if one is already open) a tracking GitHub
+issue titled "Nightly Iris e2e failed" and uploads the Playwright report plus service logs as
+a workflow artifact — it does not block anything, since `develop` and the edutelligence side
+may have diverged for reasons unrelated to either individual PR.
+
+## Wire-contract coordination
+
+Because the contract spans two repositories, a change to it is usually a **coordinated pair
+of PRs** — one in each repo, merged close together (see
+[Artemis #13099](https://github.com/ls1intum/Artemis/pull/13099)/[#13134](https://github.com/ls1intum/Artemis/pull/13134)
+and the matching
+[edutelligence #658](https://github.com/ls1intum/edutelligence/pull/658)/[#660](https://github.com/ls1intum/edutelligence/pull/660)
+that introduced streaming and the run-state/activity protocol). When investigating a nightly
+failure, check both repositories' recent history around the failure time — the root cause,
+and the fix, can live in either one. [#13149](https://github.com/ls1intum/Artemis/pull/13149)
+is a worked example: the wire contract itself was fine, but the e2e mock LLM hadn't been
+updated for one new assumption (`stream: true`) the coordinated change introduced.

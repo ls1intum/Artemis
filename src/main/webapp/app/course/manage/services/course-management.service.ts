@@ -37,27 +37,30 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CourseGradeInformationDTO {
-    gradeScores: GradeScoreDTO[];
-    students: StudentGradeDTO[];
+    gradeScores!: GradeScoreDTO[];
+    students!: StudentGradeDTO[];
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class StudentGradeDTO {
-    id: number;
-    login: string;
-    firstName: string;
-    lastName: string;
-    name: string;
+    id!: number;
+    login!: string;
+    firstName!: string;
+    lastName!: string;
+    name!: string;
     registrationNumber?: string;
-    email: string;
+    email!: string;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class GradeScoreDTO {
-    participationId: number;
-    userId: number;
-    exerciseId: number;
-    score: number;
-    presentationScore: number;
+    participationId!: number;
+    userId!: number;
+    exerciseId!: number;
+    score!: number;
+    presentationScore!: number;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -37,7 +37,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     course?: Course;
     readonly competencies = signal<Competency[]>([]);
     readonly prerequisites = signal<Competency[]>([]);
-    parentParamSubscription: Subscription;
+    parentParamSubscription?: Subscription;
 
     isCollapsed = true;
     faAngleDown = faAngleDown;

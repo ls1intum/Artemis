@@ -170,7 +170,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
-    paramSub: Subscription;
+    paramSub!: Subscription; // set in ngOnInit(), unsubscribed in ngOnDestroy()
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');

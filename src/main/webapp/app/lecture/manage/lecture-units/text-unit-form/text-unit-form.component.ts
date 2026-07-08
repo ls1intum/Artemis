@@ -82,7 +82,7 @@ export class TextUnitFormComponent implements OnInit, OnDestroy {
     isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
     private markdownChanges = new Subject<string>();
-    private markdownChangesSubscription: Subscription;
+    private markdownChangesSubscription!: Subscription; // set in ngOnInit(), always before ngOnDestroy() unsubscribes
 
     // Tracks the formData reference already applied to the form so the patching effect stays idempotent.
     private appliedFormData?: TextUnitFormData;

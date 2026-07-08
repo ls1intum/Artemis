@@ -98,9 +98,9 @@ export class CourseOverviewGuard implements CanActivate {
         if (!hasAccess) {
             const hasOptedOutOfAI = user?.selectedLLMUsage === LLMSelectionDecision.NO_AI;
             if (type === CourseOverviewRoutePath.DASHBOARD && access.irisEnabled && !hasOptedOutOfAI) {
-                this.router.navigate([`/courses/${courseId}/iris`]);
+                void this.router.navigate([`/courses/${courseId}/iris`]);
             } else {
-                this.router.navigate([`/courses/${courseId}/exercises`]);
+                void this.router.navigate([`/courses/${courseId}/exercises`]);
             }
         }
         return hasAccess;

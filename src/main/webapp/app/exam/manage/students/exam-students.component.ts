@@ -152,30 +152,39 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
     readonly isLoading = signal(true);
 
-    readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {
+    readonly searchUsersForExamFn = (term: string, page: number, size: number): Observable<UserSearchResult> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (term: string, page: number, size: number) => {
-            if (!examId) return of({ content: [], totalElements: 0 });
-            return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
-        };
-    });
+        if (!examId) return of({ content: [], totalElements: 0 });
+        return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
+    };
 
-    readonly registerUsersForExamFn = computed((): ((users: UserForRegistration[]) => Observable<void>) => {
+    readonly registerUsersForExamFn = (users: UserForRegistration[]): Observable<void> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (users: UserForRegistration[]) => {
-            if (!examId) return of(void 0);
-            const dtos: ExamUserDTO[] = users.map((u) => ({
-                login: u.login,
-                firstName: '',
-                lastName: '',
-                registrationNumber: u.registrationNumber ?? '',
-                email: u.email ?? '',
-            }));
-            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(map(() => void 0));
-        };
-    });
+        if (!examId) return of(void 0);
+        const dtos: ExamUserDTO[] = users.map((u) => ({
+            login: u.login,
+            firstName: '',
+            lastName: '',
+            registrationNumber: u.registrationNumber ?? '',
+            email: u.email ?? '',
+        }));
+        return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
+            tap((res) => {
+                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
+                if (notFoundStudents?.length) {
+                    const logins = notFoundStudents.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
+                }
+                if (rejectedStaffUsers?.length) {
+                    const logins = rejectedStaffUsers.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins });
+                }
+            }),
+            map(() => undefined),
+        );
+    };
 
     readonly activeFilter = signal('All');
     readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {
@@ -195,6 +204,9 @@ export class ExamStudentsComponent implements OnDestroy {
     });
     private requestId = 0;
     private lastLazyEvent: TableLazyLoadEvent | undefined;
+    // True while a lazy load was recorded but skipped because the exam id was not yet available. It lets the
+    // examData$ tap replay exactly that one skipped load and nothing more (issue #13063).
+    private lazyEventPending = false;
 
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
     private examData$ = new Subject<Exam>();
@@ -335,6 +347,16 @@ export class ExamStudentsComponent implements OnDestroy {
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
                     this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
+                    // The paginated table fires its initial lazy load before the exam id is available, so
+                    // loadExamStudents early-returns (leaving isLoading=true and totalExamStudents=0). Replay that one
+                    // skipped load now that the exam has resolved, otherwise the "Generate student exams" button stays
+                    // disabled even though students are registered (issue #13063). Guarded by lazyEventPending so later
+                    // exam re-emissions (reloadStudentsView / websocket-driven fetchExamData) do not trigger a second,
+                    // redundant page load — the table's own reset() already reloads on those paths. This replay is
+                    // fire-and-forget and intentionally independent of the switchMap below (which only refreshes stats).
+                    if (this.lastLazyEvent && this.lazyEventPending) {
+                        this.loadExamStudents(this.lastLazyEvent);
+                    }
                 }),
                 switchMap((exam: Exam) => {
                     const courseId = this.courseId();
@@ -409,8 +431,12 @@ export class ExamStudentsComponent implements OnDestroy {
         this.lastLazyEvent = event;
         const examId = this.exam().id;
         if (!examId) {
+            // The table fired its lazy load before the exam id was available; remember that we owe a load so the
+            // examData$ tap can replay it once the exam resolves (issue #13063).
+            this.lazyEventPending = true;
             return;
         }
+        this.lazyEventPending = false;
 
         const currentRequestId = ++this.requestId;
         const query = buildDbQueryFromLazyEvent(event);
@@ -495,7 +521,7 @@ export class ExamStudentsComponent implements OnDestroy {
         if (!this.hasExamStarted() || !exam?.id) {
             return;
         }
-        this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
     private openIndividualExamsStatusPopover(event?: Event, defer = false) {

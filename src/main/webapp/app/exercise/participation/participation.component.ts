@@ -158,8 +158,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
-    private paramSub: Subscription;
-    private gradeStepsDTOSub: Subscription;
+    private paramSub?: Subscription;
+    private gradeStepsDTOSub?: Subscription;
     private websocketSubscriptions: Subscription[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();

@@ -95,13 +95,14 @@
                                 "output": "vs"
                             },
                             {
-                                "glob": "**/*",
-                                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
-                                "output": "assets/ngx-extended-pdf-viewer"
+                                "glob": "pdfium.wasm",
+                                "input": "./node_modules/@embedpdf/pdfium/dist",
+                                "output": "assets/embedpdf"
                             }
                         ],
                         "styles": [
                             "src/main/webapp/content/scss/themes/theme-default.scss",
+                            "src/main/webapp/tailwind.css",
                             {
                                 "bundleName": "theme-dark",
                                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
