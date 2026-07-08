@@ -98,7 +98,7 @@ describe('TextExercise Service', () => {
             const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
             const expected = Object.assign({}, returnedFromService);
             service
-                .query(expected)
+                .query(expected as unknown as Record<string, unknown>)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -147,12 +147,13 @@ describe('TextExercise Service', () => {
             const textExerciseReturned = { ...elemDefault };
             textExerciseReturned.id = 123;
             service
-                .reevaluateAndUpdate(textExerciseReturned)
+                .reevaluateAndUpdate(textExerciseReturned, { deleteFeedback: false })
                 .pipe(take(1))
                 .subscribe((resp) => {
                     expect(resp.body).toEqual(textExerciseReturned);
                 });
             const request = httpMock.expectOne({ method: 'PUT' });
+            expect(request.request.params.get('deleteFeedback')).toBe('false');
             request.flush(textExerciseReturned);
         });
 

@@ -24,8 +24,8 @@ export class GradingKeyOverviewComponent implements OnInit {
     readonly faChevronLeft = faChevronLeft;
     readonly faPrint = faPrint;
 
-    plagiarismGrade: string;
-    noParticipationGrade: string;
+    plagiarismGrade?: string;
+    noParticipationGrade?: string;
 
     readonly isExam = signal<boolean>(false);
 

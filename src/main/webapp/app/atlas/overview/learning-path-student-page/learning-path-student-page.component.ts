@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,7 +10,7 @@ import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-pa
 import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { onError } from 'app/foundation/util/global.utils';
+import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { ScienceService } from 'app/foundation/science/science.service';
@@ -39,7 +40,7 @@ export class LearningPathStudentPageComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadLearningPath(courseId));
+            untracked(() => void this.loadLearningPath(courseId));
         });
     }
 
@@ -52,7 +53,7 @@ export class LearningPathStudentPageComponent {
             this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id);
         } catch (error) {
             // If learning path does not exist (404) ignore the error
-            if (error.status != 404) {
+            if (!(error instanceof HttpErrorResponse) || error.status != 404) {
                 onError(this.alertService, error);
             }
         } finally {
@@ -70,7 +71,7 @@ export class LearningPathStudentPageComponent {
             await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
             this.learningPath.update((learningPath) => ({ ...learningPath!, startedByStudent: true }));
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLearningPathLoading.set(false);
         }

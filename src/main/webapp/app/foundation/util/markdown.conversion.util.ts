@@ -182,7 +182,7 @@ export function htmlForMarkdown(
         markdownRender = markdownRender.slice(0, -1);
     }
 
-    const purifyParameters = {} as Config;
+    const purifyParameters: Config = {};
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
     if (allowedHtmlTags) {
@@ -191,7 +191,7 @@ export function htmlForMarkdown(
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(markdownRender, purifyParameters) as string;
+    return DOMPurify.sanitize(markdownRender, purifyParameters);
 }
 
 export function markdownForHtml(htmlText: string): string {

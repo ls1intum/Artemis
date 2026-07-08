@@ -27,7 +27,7 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     readonly minTeamSizeField = viewChild<NgModel>('minTeamSize');
     readonly maxTeamsizeField = viewChild<NgModel>('maxTeamSize');
 
-    formValid: boolean;
+    formValid = false;
     formValidChanges = new Subject<boolean>();
 
     // `config` is bound deep two-way in the template (`[(ngModel)]="config.minTeamSize/maxTeamSize"`),

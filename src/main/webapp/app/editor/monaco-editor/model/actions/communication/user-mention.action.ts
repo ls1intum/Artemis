@@ -32,7 +32,7 @@ export class UserMentionAction extends TextEditorAction {
      * @param editor The editor to register the action in.
      * @param translateService The translate service to use for translations, e.g. the label.
      */
-    register(editor: TextEditor, translateService: TranslateService) {
+    override register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<UserNameAndLoginDTO>(
             editor,
@@ -54,12 +54,12 @@ export class UserMentionAction extends TextEditorAction {
         editor.focus();
     }
 
-    dispose(): void {
+    override dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
     }
 
-    async loadUsersForSearchTerm(searchTerm: string): Promise<UserNameAndLoginDTO[]> {
+    async loadUsersForSearchTerm(searchTerm: string = ''): Promise<UserNameAndLoginDTO[]> {
         const response = await firstValueFrom(this.courseManagementService.searchMembersForUserMentions(this.metisService.getCourse().id!, searchTerm));
         return response.body ?? [];
     }

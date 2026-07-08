@@ -32,7 +32,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         this.setupListeners();
     }
 
-    protected setupListeners() {
+    protected override setupListeners() {
         super.setupListeners();
         this.mouseMoveListener = this.editor.onMouseMove((editorMouseEvent: monaco.editor.IEditorMouseEvent) => {
             // This is undefined e.g. when hovering over a line widget.
@@ -72,7 +72,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
         }
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.mouseMoveListener?.dispose();
         this.mouseDownListener?.dispose();

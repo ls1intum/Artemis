@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260705130000-1-add-iris-message-intermediate" author="artemis">
+        <addColumn tableName="iris_message">
+            <column name="intermediate" type="boolean"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

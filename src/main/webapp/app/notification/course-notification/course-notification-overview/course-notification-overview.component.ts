@@ -44,7 +44,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     protected readonly isShown = signal(false);
     protected selectedCategory = CourseNotificationCategory.GENERAL;
-    protected notifications: CourseNotification[];
+    protected notifications?: CourseNotification[];
     protected readonly notificationsForSelectedCategory = signal<CourseNotification[]>([]);
     protected readonly courseNotificationCount = signal<number>(0);
     protected queryStartSize: number = 0;
@@ -174,7 +174,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * @param target - The element that was clicked
      */
     @HostListener('document:click', ['$event.target'])
-    protected onClickOutside(target: any) {
+    protected onClickOutside(target: EventTarget | null) {
         const clickedInside = this.elementRef.nativeElement.contains(target);
         if (!clickedInside && this.isShown()) {
             this.isShown.set(false);

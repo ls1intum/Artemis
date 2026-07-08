@@ -201,7 +201,7 @@ jobs:
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
   # In-run coverage table for INTERNAL PRs — posts as soon as `test` finishes (~28 min) instead of
-  # waiting for the whole run, which the advisory e2e tail delays to ~120 min (and with it the
+  # waiting for the whole run, which the slow e2e tail delays to ~120 min (and with it the
   # workflow_run reporter). Trust model: runs on `pull_request` (NOT pull_request_target) in the PR's
   # OWN context, so the token is the PR's own — write only on internal PRs (author is already a
   # collaborator), force-read-only on forks. Hence the internal-PR `if` gate IS the security boundary,
@@ -388,11 +388,12 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # Advisory — not in the required gate. Depends on `build` for the Docker image, not on
-  # `test`, so a flaky unit-test run never blocks it; runs only when `build` succeeded
-  # (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they cannot
-  # push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
-  # fail at setup with no image to pull.
+  # Required for internal PRs — part of the `all-required-ci-passed` gate (a test that fails all
+  # its retries blocks the merge; flaky-recovered runs stay green). Depends on `build` for the
+  # Docker image, not on `test`, so a flaky unit-test run never blocks it; runs only when `build`
+  # succeeded (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they
+  # cannot push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
+  # fail at setup with no image to pull — the gate accepts that skip as a pass on forks.
   e2e:
     name: E2E
     needs: [detect-changes, build]
@@ -439,18 +440,22 @@ jobs:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
   # The single required status check. Depends on every deterministic job — build, test, and
-  # the quality gates — which run in parallel and finish within `test`'s window, so requiring
-  # them adds no merge latency. `e2e` is the one exclusion: it is slow and flaky, so it stays
-  # advisory (out of `needs:`) and never blocks merging. `detect-changes` is included so a
-  # change-detection failure fails the gate closed. Path-skipped jobs report `skipped`, which
-  # the gate accepts as a pass.
+  # the quality gates — plus `e2e`. `e2e` is required: an E2E result of `failure` means at least
+  # one test failed ALL its retries (Playwright exits 0 when a test recovers on retry, so
+  # flaky-recovered runs stay green and do NOT block), which is a genuine regression signal worth
+  # blocking a merge on. This does add merge latency — the gate now waits for the full E2E run —
+  # which is the accepted trade-off for not merging over a reproducibly failing test. `e2e`
+  # reflects its honest outcome via ci-e2e's report-results job (advisory continue-on-error test
+  # steps, then a final step that fails the job when the aggregated outcome is not success).
+  # `detect-changes` is included so a change-detection failure fails the gate closed. Path-skipped
+  # jobs report `skipped`, which the gate accepts as a pass.
   #
   # INVARIANT (load-bearing): a required job's `skipped` is accepted as a pass, so the gate is
   # only safe while every job whose skip could hide a failure has its failure-producing
-  # dependency ALSO listed here. Today that holds because the required jobs gate solely on
-  # `detect-changes`, which is in this list. If a future required job is made to `needs:`
-  # another required job's output, add that producer here too, or a cascading skip could pass
-  # the gate green over broken code.
+  # dependency ALSO listed here. This holds for `e2e` too: it `needs: [detect-changes, build]`,
+  # both of which are required here, so an `e2e` skip caused by an upstream failure is still
+  # caught. If a future required job is made to `needs:` another required job's output, add that
+  # producer here too, or a cascading skip could pass the gate green over broken code.
   all-required-ci-passed:
     name: All required CI Passed
     if: always()
@@ -465,26 +470,55 @@ jobs:
       - workflows
       - version-consistency
       - bean-instantiations
+      - e2e
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions: {}  # reads only the `needs` context; no checkout, no token scope
     timeout-minutes: 5
     steps:
+      # Renders an actionable report to the job summary on failure and fails closed on any
+      # non-`success`/non-`skipped` result. `cancelled` is never waved through, preserving the
+      # skipped==pass invariant above. Kept inline (like `ci-summary`) so the required gate needs no
+      # checkout and no token scope.
       - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
-          # Fail closed: a jq error must not leave `failing` empty and pass the gate green.
           set -Eeuo pipefail
-          failing=$(jq -r '
-            to_entries[]
-            | select(.value.result != "success" and .value.result != "skipped")
-            | "\(.key): \(.value.result)"
-          ' <<< "$NEEDS")
-          if [ -n "$failing" ]; then
-            echo "::error::One or more required CI jobs did not pass:"
-            echo "$failing"
-            exit 1
+          # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
+          # non-object exits non-zero (aborting under set -e); command substitution (not `< <(jq)`)
+          # makes a parse error abort here too, instead of the loop reading nothing and passing.
+          jq -e 'type == "object" and length > 0' <<< "$NEEDS" > /dev/null
+          parsed=$(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+
+          declare -a failed=() cancelled=()
+          while IFS=$'\t' read -r job result; do
+            case "$result" in
+              success | skipped) ;;
+              cancelled) cancelled+=("$job") ;;
+              *) failed+=("$job") ;;  # failure or any unrecognised result -> fail closed
+            esac
+          done <<< "$parsed"
+
+          if [ "$(( ${#failed[@]} + ${#cancelled[@]} ))" -eq 0 ]; then
+            echo "::notice::All required CI checks passed."
+            exit 0
           fi
+
+          code_list() { local out='' j; for j in "$@"; do out+="${out:+, }\`$j\`"; done; printf '%s' "$out"; }
+          {
+            echo "## ❌ Required CI did not pass"
+            [ "${#failed[@]}" -gt 0 ] && printf '\n### ❌ Failed — fix before merging\n\n%s — open each failed check from the **Checks** tab to see the error.\n' "$(code_list "${failed[@]}")"
+            [ "${#cancelled[@]}" -gt 0 ] && printf '\n### 🚫 Cancelled — not a test failure\n\n%s — a job hit its timeout, was preempted, or a newer push superseded this run. Re-run it if this run is still current.\n' "$(code_list "${cancelled[@]}")"
+            for j in "${failed[@]}" "${cancelled[@]}"; do
+              [ "$j" = test ] && { printf "\n> 💡 If \`test\` hung, a JVM thread dump is attached under **Artifacts → Server Test Thread Dumps**.\n"; break; }
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          annotation='Required CI did not pass —'
+          [ "${#failed[@]}" -gt 0 ] && annotation+=" failed: $(code_list "${failed[@]}");"
+          [ "${#cancelled[@]}" -gt 0 ] && annotation+=" cancelled: $(code_list "${cancelled[@]}");"
+          echo "::error::$annotation see the job summary for what to do."
+          exit 1
 
   # Informational Summary-page report (timeline + per-job table); never required, never in
   # another job's `needs:`, so it cannot block merging.
@@ -518,7 +552,9 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           # Everything except these is required (i.e. in all-required-ci-passed's needs).
-          ADVISORY: e2e codeql coverage-report
+          # `e2e` is now required (blocks merge on a test that fails all its retries); only
+          # codeql and coverage-report remain advisory.
+          ADVISORY: codeql coverage-report
         run: |
           set -Eeuo pipefail
           icon() {
@@ -527,7 +563,7 @@ jobs:
               failure)   printf '❌' ;;
               skipped)   printf '⏭️' ;;
               cancelled) printf '🚫' ;;
-              error)     printf '⚠️' ;;  # e2e_result aggregate (advisory infra error)
+              error)     printf '⚠️' ;;  # e2e_result aggregate (infra error)
               *)         printf '❔' ;;
             esac
           }

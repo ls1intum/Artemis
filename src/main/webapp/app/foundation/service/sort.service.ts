@@ -47,7 +47,7 @@ export class SortService {
      * @param func The function that returns a value based on which the elements should be sorted
      * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
      */
-    sortByFunction<T>(array: T[], func: { (parameter: T): any }, ascending: boolean): T[] {
+    sortByFunction<T>(array: T[], func: { (parameter: T): unknown }, ascending: boolean): T[] {
         return array.sort((a: T, b: T) => {
             const valueA = func(a);
             const valueB = func(b);
@@ -55,7 +55,7 @@ export class SortService {
         });
     }
 
-    private compareValues(valueA: any, valueB: any, ascending: boolean) {
+    private compareValues(valueA: unknown, valueB: unknown, ascending: boolean) {
         let compareValue;
 
         if (valueA == undefined || valueB == undefined) {
@@ -72,7 +72,7 @@ export class SortService {
         return compareValue;
     }
 
-    public static compareWithUndefinedNull(valueA: any, valueB: any) {
+    public static compareWithUndefinedNull(valueA: unknown, valueB: unknown) {
         if ((valueA === null || valueA === undefined) && (valueB === null || valueB === undefined)) {
             return 0;
         } else if (valueA === null || valueA === undefined) {
@@ -90,34 +90,38 @@ export class SortService {
         }
     }
 
-    private static compareBasic(valueA: any, valueB: any) {
+    private static compareBasic(valueA: unknown, valueB: unknown) {
         if (typeof valueA === 'string' && typeof valueB === 'string') {
             return SortService.stringCollator.compare(valueA, valueB);
         } else if (valueA === valueB) {
             return 0;
         } else {
-            return valueA < valueB ? -1 : 1;
+            // At this point both values are non-string, non-equal primitives (numbers/booleans); compare them
+            // relationally exactly as before, using a numeric cast so the `<` operator type-checks.
+            return (valueA as number) < (valueB as number) ? -1 : 1;
         }
     }
 
-    private static customGet(object: any, path: string, defaultValue: any) {
+    private static customGet(object: unknown, path: string, defaultValue: unknown): unknown {
         // Get rid of all optional chainings as they are handled down below. After that split the path into all array and attribute accesses
         // Example: path 'some?.path[0].x' will be split into pathArray ['some', 'path', '0', 'x']
         path = path.replaceAll('?', '').replaceAll(']', '');
         const pathArray = path.split(/\.|\[/).filter((key) => key);
-        const value = pathArray.reduce((obj, key) => {
+        const value = pathArray.reduce((obj: unknown, key) => {
             if (!obj) {
                 return obj;
             } else {
+                const record = obj as Record<string, unknown>;
                 // Function calls without arguments (e.g. last()) are also supported.
                 if (key.endsWith('()')) {
                     const functionName = key.substring(0, key.length - 2);
-                    return obj[functionName]?.();
+                    const member = record[functionName];
+                    return typeof member === 'function' ? member.call(obj) : undefined;
                 }
                 if (obj instanceof Map) {
                     return obj.get(key);
                 } else {
-                    return obj[key];
+                    return record[key];
                 }
             }
         }, object);

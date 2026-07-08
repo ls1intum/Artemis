@@ -30,7 +30,7 @@ export class LearningPathsAnalyticsComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadInstructionCompetencyGraph(courseId));
+            void untracked(() => this.loadInstructionCompetencyGraph(courseId));
         });
     }
 

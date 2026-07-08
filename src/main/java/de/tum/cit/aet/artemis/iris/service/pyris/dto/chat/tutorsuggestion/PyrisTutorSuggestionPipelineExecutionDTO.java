@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
  * Represents the execution of a pipeline for a tutor suggestion chat session.
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param chatHistory            chat history of the session
  * @param user                   user that is asking for the suggestion
  * @param settings               pipeline settings
- * @param initialStages          initial stages of the pipeline
  * @param textExerciseDTO        optional text exercise DTO
  * @param submission             optional submission DTO
  * @param programmingExerciseDTO optional programming exercise DTO
@@ -31,6 +29,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTutorSuggestionPipelineExecutionDTO(PyrisCourseDTO course, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory, PyrisUserDTO user,
-        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submission,
+        PyrisPipelineExecutionSettingsDTO settings, Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submission,
         Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Optional<Long> lectureId) {
 }
