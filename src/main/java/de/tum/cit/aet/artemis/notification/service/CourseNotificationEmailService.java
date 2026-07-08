@@ -100,7 +100,12 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      * @param courseNotification The notification data to be sent
      * @param recipients         The list of recipients who should receive the notification
      */
-    @Async
+    // Runs on the "mailTaskExecutor" so all mail-sending async work goes through the same executor. In production
+    // that executor delegates to the shared task executor (identical behavior to a bare @Async), while in the test
+    // profile it is a SyncTaskExecutor. Running mail on the caller's thread in tests keeps the shared JavaMailSender
+    // spy from being invoked by a background thread while another test stubs or resets it, which otherwise corrupts
+    // Mockito's state and surfaces as a flaky UnfinishedStubbingException.
+    @Async("mailTaskExecutor")
     @Override
     protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         recipients.forEach(recipient -> {
