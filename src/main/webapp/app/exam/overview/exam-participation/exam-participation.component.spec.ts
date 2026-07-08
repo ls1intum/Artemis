@@ -801,23 +801,24 @@ describe('ExamParticipationComponent', () => {
             expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
         });
 
-        it('should keep answers unsynced and not send them when offline at resume so the autosave retries later', () => {
+        it('should force the recovery re-send even when the websocket is not (re)connected yet at resume', () => {
             const { studentExam, quizSubmission, textSubmission, modelingSubmission } = buildResumeStudentExam();
             comp.exam.set(studentExam.exam!);
-            comp.connected.set(false); // the websocket is not (re)connected yet at resume time
+            // Right after a reload the websocket often has not re-established yet (especially in a multi-node cluster),
+            // so `connected()` is false. The recovery re-send is a plain HTTP request that does not need the websocket,
+            // and it must fire regardless — otherwise the restored answers are silently deferred to the next autosave
+            // cycle, the answer-loss window this recovery path exists to close (regression: ExamSubmissionRecovery E2E).
+            comp.connected.set(false);
             const quizSpy = vi.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(quizSubmission));
             const textSpy = vi.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: textSubmission })));
             const modelingSpy = vi.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: modelingSubmission })));
 
             comp.examStarted(studentExam, true);
 
-            // Nothing is sent while offline, but the answers stay unsynced so the autosave re-sends them once reconnected.
-            expect(quizSpy).not.toHaveBeenCalled();
-            expect(textSpy).not.toHaveBeenCalled();
-            expect(modelingSpy).not.toHaveBeenCalled();
-            expect(quizSubmission.isSynced).toBe(false);
-            expect(textSubmission.isSynced).toBe(false);
-            expect(modelingSubmission.isSynced).toBe(false);
+            // All three restored answers are re-sent immediately, not deferred, despite the websocket being down.
+            expect(quizSpy).toHaveBeenCalledWith(11, quizSubmission);
+            expect(textSpy).toHaveBeenCalledWith(textSubmission, 12);
+            expect(modelingSpy).toHaveBeenCalledWith(modelingSubmission, 13);
         });
 
         it('should not show the restore notification on a normal (not failed) start', () => {
