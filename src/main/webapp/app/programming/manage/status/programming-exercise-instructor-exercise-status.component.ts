@@ -32,8 +32,8 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
     readonly solutionParticipation = input<Participation>();
     readonly exercise = input<ProgrammingExercise>();
 
-    templateParticipationSubscription: Subscription;
-    solutionParticipationSubscription: Subscription;
+    templateParticipationSubscription?: Subscription;
+    solutionParticipationSubscription?: Subscription;
     protected readonly issues = signal<(ProgrammingExerciseIssues | undefined)[]>([]);
 
     // Track the ids of the participations the current subscriptions belong to, so that the

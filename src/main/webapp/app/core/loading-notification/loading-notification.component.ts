@@ -17,7 +17,7 @@ export class LoadingNotificationComponent implements OnInit, OnDestroy {
     // Under zoneless change detection the (debounced) subscription callback below mutates a signal,
     // which automatically schedules change detection so the spinner toggles.
     readonly isLoading = signal(false);
-    loadingSubscription: Subscription;
+    loadingSubscription?: Subscription;
 
     ngOnInit() {
         /**
@@ -29,6 +29,6 @@ export class LoadingNotificationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.loadingSubscription.unsubscribe();
+        this.loadingSubscription?.unsubscribe();
     }
 }
