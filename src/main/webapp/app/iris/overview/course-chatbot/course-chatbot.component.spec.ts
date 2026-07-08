@@ -18,6 +18,8 @@ class MockIrisBaseChatbotComponent {
     readonly isChatHistoryAvailable = input<boolean>();
 }
 
+type CourseChatbotInternals = { irisBaseChatbot: () => { isChatHistoryOpen: () => boolean } | undefined };
+
 describe('CourseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -97,5 +99,18 @@ describe('CourseChatbotComponent', () => {
         component.toggleChatHistory();
 
         expect(mockBaseChatbot.setChatHistoryVisibility).toHaveBeenCalledWith(false);
+    });
+
+    it('should expose isChatHistoryOpen from the base chatbot', () => {
+        const isChatHistoryOpen = vi.fn().mockReturnValue(false);
+        vi.spyOn(component as unknown as CourseChatbotInternals, 'irisBaseChatbot').mockReturnValue({ isChatHistoryOpen });
+
+        expect(component.isChatHistoryOpen()).toBe(false);
+    });
+
+    it('should default isChatHistoryOpen to true when the base chatbot is not available', () => {
+        vi.spyOn(component as unknown as CourseChatbotInternals, 'irisBaseChatbot').mockReturnValue(undefined);
+
+        expect(component.isChatHistoryOpen()).toBe(true);
     });
 });

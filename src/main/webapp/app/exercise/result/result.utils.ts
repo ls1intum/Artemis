@@ -279,7 +279,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  */
 export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
     if (!result) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
@@ -287,9 +287,9 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
             return 'text-primary';
         }
         if (isAIResultAndFailed(result)) {
-            return 'text-danger';
+            return 'text-state-danger';
         }
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -297,30 +297,30 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (isBuildFailedAndResultIsAutomatic(result, participation)) {
-        return 'text-danger';
+        return 'text-state-danger';
     }
 
     if (resultIsPreliminary(result, participation)) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result?.score === undefined) {
-        return result?.successful ? 'text-success' : 'text-danger';
+        return result?.successful ? 'text-state-success' : 'text-state-danger';
     }
 
     if (isOnlyCompilationTested(result, participation, templateStatus)) {
-        return 'text-success';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
-        return 'text-success';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_ORANGE) {
         return 'result-orange';
     }
 
-    return 'text-danger';
+    return 'text-state-danger';
 };
 
 /**
@@ -429,7 +429,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
         if (!result.result.feedbacks) {
-            return [];
+            return;
         }
         result.result.feedbacks.forEach((feedback) => {
             if (Feedback.isTestCaseFeedback(feedback)) {

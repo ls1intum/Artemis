@@ -1,109 +1,101 @@
 <div>
     <h5 *adminTitleBarTitle id="build-agents-heading" class="mb-0" jhiTranslate="artemisApp.buildAgents.title"></h5>
-    <div *adminTitleBarActions>
-        <button class="btn btn-success btn-sm" (click)="resumeAllBuildAgents()">
+    <div *adminTitleBarActions class="flex items-center gap-2">
+        <p-button severity="success" size="small" (onClick)="resumeAllBuildAgents()">
             <fa-icon [icon]="faPlay" />
             <span jhiTranslate="artemisApp.buildAgents.resumeAll"></span>
-        </button>
-        <button class="btn btn-danger btn-sm" (click)="displayPauseBuildAgentModal()">
+        </p-button>
+        <p-button severity="danger" size="small" (onClick)="displayPauseBuildAgentModal()">
             <fa-icon [icon]="faPause" />
             <span jhiTranslate="artemisApp.buildAgents.pauseAll"></span>
-        </button>
-        <button class="btn btn-danger btn-sm" (click)="displayClearDistributedDataModal()">
+        </p-button>
+        <p-button severity="danger" size="small" (onClick)="displayClearDistributedDataModal()">
             <fa-icon [icon]="faTrash" />
             <span jhiTranslate="artemisApp.buildAgents.clearDistributedData.title"></span>
-        </button>
+        </p-button>
     </div>
     @if (buildAgents()) {
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <div class="flex justify-between items-center border-b pb-2 mb-3">
             <p class="mb-0">
                 {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
                 <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
             </p>
         </div>
         <div class="build-agents-section">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th class="build-agents-column-strings" jhiTranslate="artemisApp.buildAgents.name"></th>
-                            <th class="build-agents-column-strings" jhiTranslate="artemisApp.buildAgents.memberAddress"></th>
-                            <th class="build-agents-column" jhiTranslate="artemisApp.buildAgents.status"></th>
-                            <th class="build-agents-column" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></th>
-                            <th class="build-agents-column" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></th>
-                            <th class="build-agents-column-jobs" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
-                            <th class="build-agents-column" jhiTranslate="artemisApp.buildQueue.actions"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (agent of buildAgents(); track agent.buildAgent?.name ?? agent.buildAgent?.memberAddress ?? $index) {
-                            <tr class="clickable-row">
-                                <td class="build-agents-column-strings">
-                                    <!-- Stretched link enables Cmd+Click to open in new tab -->
-                                    <a
-                                        class="stretched-row-link"
-                                        [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
-                                        [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
-                                        aria-hidden="true"
-                                        tabindex="-1"
-                                    ></a>
-                                    <a
-                                        [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
-                                        [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
-                                    >
-                                        {{ agent.buildAgent?.displayName }}
+            <p-table [value]="buildAgents()" [size]="'small'" [stripedRows]="true" class="block">
+                <ng-template #header>
+                    <tr>
+                        <th scope="col" class="build-agents-column-strings" jhiTranslate="artemisApp.buildAgents.name"></th>
+                        <th scope="col" class="build-agents-column-strings" jhiTranslate="artemisApp.buildAgents.memberAddress"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.status"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></th>
+                        <th scope="col" class="build-agents-column-jobs" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildQueue.actions"></th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-agent>
+                    <tr class="clickable-row">
+                        <td class="build-agents-column-strings">
+                            <!-- Stretched link enables Cmd+Click to open in new tab -->
+                            <a
+                                class="stretched-row-link"
+                                [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
+                                [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
+                                aria-hidden="true"
+                                tabindex="-1"
+                            ></a>
+                            <a
+                                [routerLink]="agent.buildAgent?.name ? ['/admin/build-agents/details'] : null"
+                                [queryParams]="agent.buildAgent?.name ? { agentName: agent.buildAgent?.name } : null"
+                            >
+                                {{ agent.buildAgent?.displayName }}
+                            </a>
+                        </td>
+                        <td class="build-agents-column-strings">{{ agent.buildAgent?.memberAddress }}</td>
+                        <td class="build-agents-column">
+                            @switch (agent.status) {
+                                @case ('ACTIVE') {
+                                    <p-tag severity="success" [value]="'artemisApp.buildAgents.running' | artemisTranslate" />
+                                }
+                                @case ('IDLE') {
+                                    <p-tag severity="secondary" [value]="'artemisApp.buildAgents.idle' | artemisTranslate" />
+                                }
+                                @case ('PAUSED') {
+                                    <p-tag severity="warn" [value]="'artemisApp.buildAgents.paused' | artemisTranslate" />
+                                }
+                                @case ('SELF_PAUSED') {
+                                    <p-tag severity="warn" [value]="'artemisApp.buildAgents.selfPaused' | artemisTranslate" />
+                                }
+                            }
+                        </td>
+                        <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
+                        <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
+                        <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
+                            @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
+                                <div class="running-job-item">
+                                    <a class="job-link" [routerLink]="job.id ? ['/admin/build-overview', job.id, 'job-details'] : null">
+                                        {{ job.name ?? job.id }}
                                     </a>
-                                </td>
-                                <td class="build-agents-column-strings">{{ agent.buildAgent?.memberAddress }}</td>
-                                <td class="build-agents-column">
-                                    @switch (agent.status) {
-                                        @case ('ACTIVE') {
-                                            <span class="text-success" jhiTranslate="artemisApp.buildAgents.running"></span>
-                                        }
-                                        @case ('IDLE') {
-                                            <span class="text-muted" jhiTranslate="artemisApp.buildAgents.idle"></span>
-                                        }
-                                        @case ('PAUSED') {
-                                            <span class="text-warning" jhiTranslate="artemisApp.buildAgents.paused"></span>
-                                        }
-                                        @case ('SELF_PAUSED') {
-                                            <span class="text-warning" jhiTranslate="artemisApp.buildAgents.selfPaused"></span>
-                                        }
-                                    }
-                                </td>
-                                <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
-                                <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
-                                <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
-                                    @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
-                                        <div class="running-job-item">
-                                            <a class="job-link" [routerLink]="job.id ? ['/admin/build-overview', job.id, 'job-details'] : null">
-                                                {{ job.name ?? job.id }}
-                                            </a>
-                                            @if (job.id) {
-                                                <button
-                                                    class="btn btn-danger btn-xs"
-                                                    (click)="cancelBuildJob(job.id)"
-                                                    [attr.aria-label]="'artemisApp.buildQueue.cancel' | artemisTranslate"
-                                                >
-                                                    <fa-icon [icon]="faTimes" />
-                                                </button>
-                                            }
-                                        </div>
-                                    }
-                                </td>
-                                <td class="build-agents-column" (click)="$event.stopPropagation()">
-                                    @if ((agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0) {
-                                        <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(agent.buildAgent)">
+                                    @if (job.id) {
+                                        <p-button severity="danger" size="small" (onClick)="cancelBuildJob(job.id)" [ariaLabel]="'artemisApp.buildQueue.cancel' | artemisTranslate">
                                             <fa-icon [icon]="faTimes" />
-                                            <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
-                                        </button>
+                                        </p-button>
                                     }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            }
+                        </td>
+                        <td class="build-agents-column" (click)="$event.stopPropagation()">
+                            @if ((agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0) {
+                                <p-button severity="danger" size="small" (onClick)="cancelAllBuildJobs(agent.buildAgent)">
+                                    <fa-icon [icon]="faTimes" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
+                                </p-button>
+                            }
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </div>
     }
 </div>

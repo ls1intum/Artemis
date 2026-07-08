@@ -34,7 +34,7 @@ export function downloadStream(data: BlobPart | null, type: string, filename: st
 }
 
 export function downloadZipFromFilePromises(zip: ZipBuilder, filePromises: Promise<void | File>[], zipFileName: string) {
-    Promise.allSettled(filePromises).then(() => {
+    void Promise.allSettled(filePromises).then(() => {
         zip.generateBlob()
             .then((zipBlob) => {
                 downloadFile(zipBlob, `${zipFileName}.zip`);

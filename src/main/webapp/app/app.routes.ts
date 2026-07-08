@@ -289,19 +289,6 @@ const routes: Routes = [
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
     },
-    // ===== PDF VIEWER IFRAME =====
-    {
-        path: 'pdf-viewer-iframe',
-        loadComponent: () => import('./lecture/shared/pdf-viewer/pdf-viewer-iframe-content.component').then((m) => m.PdfViewerIframeContentComponent),
-        data: {
-            authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
-            hidePageRibbon: true,
-            // ~860 KB chunk used by a niche route — keep it strictly on-demand rather than warming it in the background.
-            preload: 'never',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 export default routes;

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,8 +24,14 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO.IrisWebsocketMessageType;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityKind;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -68,11 +76,50 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
-        irisChatWebsocketService.sendMessage(irisSession, message, List.of());
+        irisChatWebsocketService.sendMessage(irisSession, message, null, null);
 
         var expectedRateLimitInfo = irisRateLimitService.getRateLimitInformation(irisSession, user);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisChatWebsocketDTO(IrisMessageResponseDTO.of(message), expectedRateLimitInfo, List.of(), null, null, null, null)));
+                eq(new IrisChatWebsocketDTO(IrisMessageResponseDTO.of(message), expectedRateLimitInfo, null, null, null, null, null, null)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendStatusUpdateIncludesRunIdAndActivitySnapshot() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, user);
+        var error = new PyrisStatusErrorDTO("failed", "tool_failed");
+        var activity = new PyrisActivityDTO("activity-1", PyrisActivityKind.TOOL, "lecture_content_retrieval", PyrisActivityState.RUNNING, "Lecture 1", null, null);
+
+        irisChatWebsocketService.sendStatusUpdate(irisSession, "run-42", PyrisRunState.FAILED, error, "Updated title", List.of("suggestion"), null, List.of(activity), 7);
+
+        var payloadCaptor = ArgumentCaptor.forClass(IrisChatWebsocketDTO.class);
+        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
+        var payload = payloadCaptor.getValue();
+        assertThat(payload.type()).isEqualTo(IrisWebsocketMessageType.STATUS);
+        assertThat(payload.runId()).isEqualTo("run-42");
+        assertThat(payload.runState()).isEqualTo(PyrisRunState.FAILED);
+        assertThat(payload.error()).isEqualTo(error);
+        assertThat(payload.activities()).containsExactly(activity);
+        assertThat(payload.activitySeq()).isEqualTo(7);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendPartialUpdateIncludesRunningRunStateAndRunId() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, user);
+
+        irisChatWebsocketService.sendPartialUpdate(irisSession, "draft", 2, "run-43");
+
+        var payloadCaptor = ArgumentCaptor.forClass(IrisChatWebsocketDTO.class);
+        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
+        var payload = payloadCaptor.getValue();
+        assertThat(payload.type()).isEqualTo(IrisWebsocketMessageType.PARTIAL);
+        assertThat(payload.runId()).isEqualTo("run-43");
+        assertThat(payload.runState()).isEqualTo(PyrisRunState.RUNNING);
+        assertThat(payload.partialResult()).isEqualTo("draft");
+        assertThat(payload.partialSeq()).isEqualTo(2);
     }
 
     private IrisTextMessageContent createMockContent() {

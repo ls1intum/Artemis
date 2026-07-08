@@ -156,7 +156,7 @@ export class CourseTrainingComponent {
         effect(() => {
             const id = this.courseId();
             if (id) {
-                this.loadLeaderboard(Number(id));
+                void this.loadLeaderboard(Number(id));
             }
         });
     }
@@ -184,7 +184,7 @@ export class CourseTrainingComponent {
     public navigateToTraining(): void {
         const courseId = this.courseId();
         if (courseId !== undefined) {
-            this.router.navigate(['courses', courseId, 'training', 'quiz']);
+            void this.router.navigate(['courses', courseId, 'training', 'quiz']);
         }
     }
 
@@ -198,7 +198,7 @@ export class CourseTrainingComponent {
             this.isLoading.set(false);
             const courseId = this.courseId();
             if (courseId !== undefined) {
-                this.loadLeaderboard(courseId);
+                void this.loadLeaderboard(courseId);
             }
         } catch (error) {
             onError(this.alertService, error);
@@ -230,7 +230,7 @@ export class CourseTrainingComponent {
             this.displayInfoDialog = false;
             const courseId = this.courseId();
             if (courseId !== undefined) {
-                this.loadLeaderboard(courseId);
+                void this.loadLeaderboard(courseId);
             }
             this.isLoading.set(false);
         } catch (error) {

@@ -16,7 +16,7 @@ export abstract class CreateCourseCompetencyComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Competencies';
 
     readonly isLoading = signal(false);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route paramMap
 
     ngOnInit(): void {
         const paramMap = this.activatedRoute.parent!.parent!.snapshot.paramMap;

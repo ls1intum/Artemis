@@ -146,8 +146,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
-            return 'some/client/dependent/path/' + file.name;
+        createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((obj: Blob | MediaSource) => {
+            const fileName = obj instanceof File ? obj.name : '';
+            return 'some/client/dependent/path/' + fileName;
         });
         addFileSpy = vi.spyOn(component.addNewFile, 'emit');
         removeFileSpy = vi.spyOn(component.removeFile, 'emit');

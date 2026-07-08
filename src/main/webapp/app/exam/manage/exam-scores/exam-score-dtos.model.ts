@@ -4,79 +4,85 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { BonusResult } from 'app/assessment/shared/entities/bonus.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
-export class ExamScoreDTO {
-    public examId: number;
-    public title: string;
-    public maxPoints: number;
-    public averagePointsAchieved: number;
-    public hasSecondCorrectionAndStarted: boolean;
-    public exerciseGroups: ExerciseGroup[];
-    public studentResults: StudentResult[];
+export interface ExamScoreDTO {
+    examId: number;
+    title: string;
+    maxPoints: number;
+    averagePointsAchieved: number;
+    hasSecondCorrectionAndStarted: boolean;
+    exerciseGroups: ExerciseGroup[];
+    studentResults: StudentResult[];
 }
 
+/**
+ * Instantiated in tests via `new ExerciseGroup()` and populated after construction, hence a class with
+ * definite-assignment (!) markers rather than an interface.
+ */
 export class ExerciseGroup {
-    public id: number;
-    public title: string;
-    public maxPoints: number;
-    public numberOfParticipants: number;
-    public containedExercises: ExerciseInfo[];
+    public id!: number;
+    public title!: string;
+    public maxPoints!: number;
+    public numberOfParticipants!: number;
+    public containedExercises!: ExerciseInfo[];
 }
 
-export class ExerciseInfo {
-    public exerciseId: number;
-    public title: string;
-    public maxPoints: number;
-    public numberOfParticipants: number;
-    public exerciseType: string;
+export interface ExerciseInfo {
+    exerciseId: number;
+    title: string;
+    maxPoints: number;
+    numberOfParticipants: number;
+    exerciseType: string;
 }
 
-export class StudentResult {
-    public userId: number;
-    public name: string;
-    public login: string;
-    public email: string;
-    public registrationNumber: string;
-    public overallPointsAchieved?: number;
-    public overallScoreAchieved?: number;
-    public overallPointsAchievedInFirstCorrection?: number;
-    public overallGrade?: string;
-    public overallGradeInFirstCorrection?: string;
-    public hasPassed?: boolean;
-    public submitted: boolean;
-    public gradeWithBonus?: BonusResult;
-    public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
-    public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
+export interface StudentResult {
+    userId: number;
+    name: string;
+    login: string;
+    email: string;
+    registrationNumber: string;
+    overallPointsAchieved?: number;
+    overallScoreAchieved?: number;
+    overallPointsAchievedInFirstCorrection?: number;
+    overallGrade?: string;
+    overallGradeInFirstCorrection?: string;
+    hasPassed?: boolean;
+    submitted: boolean;
+    gradeWithBonus?: BonusResult;
+    exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
+    mostSeverePlagiarismVerdict?: PlagiarismVerdict;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class StudentExamWithGradeDTO {
-    public maxPoints: number;
-    public maxBonusPoints: number;
+    public maxPoints!: number;
+    public maxBonusPoints!: number;
     public gradeType?: GradeType;
     public studentExam?: StudentExam;
-    public studentResult: StudentResult;
-    public achievedPointsPerExercise: { [exerciseId: number]: number };
+    public studentResult!: StudentResult;
+    public achievedPointsPerExercise!: { [exerciseId: number]: number };
 }
 
-export class ExerciseResult {
-    public exerciseId: number;
-    public title: string;
-    public maxScore: number;
-    public achievedScore?: number;
-    public achievedPoints?: number;
-    public hasNonEmptySubmission: boolean;
+export interface ExerciseResult {
+    exerciseId: number;
+    title: string;
+    maxScore: number;
+    achievedScore?: number;
+    achievedPoints?: number;
+    hasNonEmptySubmission: boolean;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class AggregatedExamResult {
     public meanPointsPassed?: number;
     public meanPointsRelativePassed?: number;
-    public meanPointsSubmitted: number;
-    public meanPointsRelativeSubmitted: number;
-    public meanPointsTotal: number;
-    public meanPointsRelativeTotal: number;
-    public meanPointsNonEmpty: number;
-    public meanScoreNonEmpty: number;
-    public meanPointsSubmittedAndNonEmpty: number;
-    public meanScoreSubmittedAndNonEmpty: number;
+    public meanPointsSubmitted!: number;
+    public meanPointsRelativeSubmitted!: number;
+    public meanPointsTotal!: number;
+    public meanPointsRelativeTotal!: number;
+    public meanPointsNonEmpty!: number;
+    public meanScoreNonEmpty!: number;
+    public meanPointsSubmittedAndNonEmpty!: number;
+    public meanScoreSubmittedAndNonEmpty!: number;
     public meanGradePassed?: string;
     public meanGradeSubmitted?: string;
     public meanGradeTotal?: string;
@@ -84,24 +90,24 @@ export class AggregatedExamResult {
     public meanGradeSubmittedAndNonEmpty?: string;
     public medianPassed?: number;
     public medianRelativePassed?: number;
-    public medianSubmitted: number;
-    public medianRelativeSubmitted: number;
-    public medianTotal: number;
-    public medianRelativeTotal: number;
-    public medianNonEmpty: number;
-    public medianScoreNonEmpty: number;
-    public medianSubmittedAndNonEmpty: number;
-    public medianScoreSubmittedAndNonEmpty: number;
+    public medianSubmitted!: number;
+    public medianRelativeSubmitted!: number;
+    public medianTotal!: number;
+    public medianRelativeTotal!: number;
+    public medianNonEmpty!: number;
+    public medianScoreNonEmpty!: number;
+    public medianSubmittedAndNonEmpty!: number;
+    public medianScoreSubmittedAndNonEmpty!: number;
     public medianGradePassed?: string;
     public medianGradeSubmitted?: string;
     public medianGradeTotal?: string;
     public medianGradeNonEmpty?: string;
     public medianGradeSubmittedAndNonEmpty?: string;
     public standardDeviationPassed?: number;
-    public standardDeviationSubmitted: number;
-    public standardDeviationTotal: number;
-    public standardDeviationNonEmpty: number;
-    public standardDeviationSubmittedAndNonEmpty: number;
+    public standardDeviationSubmitted!: number;
+    public standardDeviationTotal!: number;
+    public standardDeviationNonEmpty!: number;
+    public standardDeviationSubmittedAndNonEmpty!: number;
     public standardGradeDeviationPassed?: number;
     public standardGradeDeviationSubmitted?: number;
     public standardGradeDeviationTotal?: number;
@@ -116,14 +122,14 @@ export class AggregatedExamResult {
     // same for first correction round
     public meanPointsPassedInFirstCorrection?: number;
     public meanPointsRelativePassedInFirstCorrection?: number;
-    public meanPointsInFirstCorrection: number;
-    public meanPointsRelativeInFirstCorrection: number;
-    public meanPointsTotalInFirstCorrection: number;
-    public meanPointsRelativeTotalInFirstCorrection: number;
-    public meanPointsNonEmptyInFirstCorrection: number;
-    public meanScoreNonEmptyInFirstCorrection: number;
-    public meanPointsSubmittedAndNonEmptyInFirstCorrection: number;
-    public meanScoreSubmittedAndNonEmptyInFirstCorrection: number;
+    public meanPointsInFirstCorrection!: number;
+    public meanPointsRelativeInFirstCorrection!: number;
+    public meanPointsTotalInFirstCorrection!: number;
+    public meanPointsRelativeTotalInFirstCorrection!: number;
+    public meanPointsNonEmptyInFirstCorrection!: number;
+    public meanScoreNonEmptyInFirstCorrection!: number;
+    public meanPointsSubmittedAndNonEmptyInFirstCorrection!: number;
+    public meanScoreSubmittedAndNonEmptyInFirstCorrection!: number;
     public meanGradePassedInFirstCorrection?: string;
     public meanGradeInFirstCorrection?: string;
     public meanGradeTotalInFirstCorrection?: string;
@@ -131,24 +137,24 @@ export class AggregatedExamResult {
     public meanGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public medianPassedInFirstCorrection?: number;
     public medianRelativePassedInFirstCorrection?: number;
-    public medianInFirstCorrection: number;
-    public medianRelativeInFirstCorrection: number;
-    public medianTotalInFirstCorrection: number;
-    public medianRelativeTotalInFirstCorrection: number;
-    public medianNonEmptyInFirstCorrection: number;
-    public medianScoreNonEmptyInFirstCorrection: number;
-    public medianSubmittedAndNonEmptyInFirstCorrection: number;
-    public medianScoreSubmittedAndNonEmptyInFirstCorrection: number;
+    public medianInFirstCorrection!: number;
+    public medianRelativeInFirstCorrection!: number;
+    public medianTotalInFirstCorrection!: number;
+    public medianRelativeTotalInFirstCorrection!: number;
+    public medianNonEmptyInFirstCorrection!: number;
+    public medianScoreNonEmptyInFirstCorrection!: number;
+    public medianSubmittedAndNonEmptyInFirstCorrection!: number;
+    public medianScoreSubmittedAndNonEmptyInFirstCorrection!: number;
     public medianGradePassedInFirstCorrection?: string;
     public medianGradeInFirstCorrection?: string;
     public medianGradeTotalInFirstCorrection?: string;
     public medianGradeNonEmptyInFirstCorrection?: string;
     public medianGradeSubmittedAndNonEmptyInFirstCorrection?: string;
     public standardDeviationPassedInFirstCorrection?: number;
-    public standardDeviationInFirstCorrection: number;
-    public standardDeviationTotalInFirstCorrection: number;
-    public standardDeviationNonEmptyInFirstCorrection: number;
-    public standardDeviationSubmittedAndNonEmptyInFirstCorrection: number;
+    public standardDeviationInFirstCorrection!: number;
+    public standardDeviationTotalInFirstCorrection!: number;
+    public standardDeviationNonEmptyInFirstCorrection!: number;
+    public standardDeviationSubmittedAndNonEmptyInFirstCorrection!: number;
     public standardGradeDeviationPassedInFirstCorrection?: number;
     public standardGradeDeviationInFirstCorrection?: number;
     public standardGradeDeviationTotalInFirstCorrection?: number;
@@ -156,6 +162,7 @@ export class AggregatedExamResult {
     public standardGradeDeviationSubmittedAndNonEmptyInFirstCorrection?: number;
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class AggregatedExerciseGroupResult {
     public exerciseGroupId: number;
     public title: string;
@@ -176,6 +183,7 @@ export class AggregatedExerciseGroupResult {
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class AggregatedExerciseResult {
     public exerciseId: number;
     public title: string;
@@ -196,47 +204,48 @@ export class AggregatedExerciseResult {
     }
 }
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class TableState {
-    relativeAmountOfPassedExams: string;
-    relativeAmountOfSubmittedExams: string;
-    absoluteAmountOfSubmittedExams: number;
-    absoluteAmountOfTotalExams: number;
+    relativeAmountOfPassedExams!: string;
+    relativeAmountOfSubmittedExams!: string;
+    absoluteAmountOfSubmittedExams!: number;
+    absoluteAmountOfTotalExams!: number;
 
-    averageScoreSubmitted: string;
-    averageScoreTotal: string;
-    averageScoreSubmittedInFirstCorrection: string;
-    averageScoreTotalInFirstCorrection: string;
-    averagePointsSubmitted: string;
-    averagePointsTotal: string;
-    averagePointsSubmittedInFirstCorrection: string;
-    averagePointsTotalInFirstCorrection: string;
+    averageScoreSubmitted!: string;
+    averageScoreTotal!: string;
+    averageScoreSubmittedInFirstCorrection!: string;
+    averageScoreTotalInFirstCorrection!: string;
+    averagePointsSubmitted!: string;
+    averagePointsTotal!: string;
+    averagePointsSubmittedInFirstCorrection!: string;
+    averagePointsTotalInFirstCorrection!: string;
 
-    averageGradeSubmitted: string;
-    averageGradeTotal: string;
-    averageGradeSubmittedInFirstCorrection: string;
-    averageGradeTotalInFirstCorrection: string;
+    averageGradeSubmitted!: string;
+    averageGradeTotal!: string;
+    averageGradeSubmittedInFirstCorrection!: string;
+    averageGradeTotalInFirstCorrection!: string;
 
-    medianScoreSubmitted: string;
-    medianScoreTotal: string;
-    medianScoreSubmittedInFirstCorrection: string;
-    medianScoreTotalInFirstCorrection: string;
-    medianPointsSubmitted: string;
-    medianPointsTotal: string;
-    medianPointsSubmittedInFirstCorrection: string;
-    medianPointsTotalInFirstCorrection: string;
+    medianScoreSubmitted!: string;
+    medianScoreTotal!: string;
+    medianScoreSubmittedInFirstCorrection!: string;
+    medianScoreTotalInFirstCorrection!: string;
+    medianPointsSubmitted!: string;
+    medianPointsTotal!: string;
+    medianPointsSubmittedInFirstCorrection!: string;
+    medianPointsTotalInFirstCorrection!: string;
 
-    medianGradeSubmitted: string;
-    medianGradeTotal: string;
-    medianGradeSubmittedInFirstCorrection: string;
-    medianGradeTotalInFirstCorrection: string;
+    medianGradeSubmitted!: string;
+    medianGradeTotal!: string;
+    medianGradeSubmittedInFirstCorrection!: string;
+    medianGradeTotalInFirstCorrection!: string;
 
-    standardDeviationSubmitted: string;
-    standardDeviationTotal: string;
-    standardDeviationSubmittedInFirstCorrection: string;
-    standardDeviationTotalInFirstCorrection: string;
+    standardDeviationSubmitted!: string;
+    standardDeviationTotal!: string;
+    standardDeviationSubmittedInFirstCorrection!: string;
+    standardDeviationTotalInFirstCorrection!: string;
 
-    standardGradeDeviationSubmitted: string;
-    standardGradeDeviationTotal: string;
-    standardGradeDeviationSubmittedInFirstCorrection: string;
-    standardGradeDeviationTotalInFirstCorrection: string;
+    standardGradeDeviationSubmitted!: string;
+    standardGradeDeviationTotal!: string;
+    standardGradeDeviationSubmittedInFirstCorrection!: string;
+    standardGradeDeviationTotalInFirstCorrection!: string;
 }

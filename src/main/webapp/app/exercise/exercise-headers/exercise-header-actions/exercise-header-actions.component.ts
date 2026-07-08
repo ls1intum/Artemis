@@ -498,7 +498,7 @@ export class ExerciseHeaderActionsComponent {
                 return;
             }
         }
-        this.router.navigate(['/courses', this.courseId(), 'exercises', 'quiz-exercises', this.exercise().id, quizMode]);
+        void this.router.navigate(['/courses', this.courseId(), 'exercises', 'quiz-exercises', this.exercise().id, quizMode]);
     }
 
     closeSubmitPopover() {

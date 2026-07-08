@@ -34,7 +34,7 @@ export class ArtemisNavigationUtilService {
         if (!this.onFirstPage) {
             this.location.back();
         } else if (fallbackUrl) {
-            this.router.navigate(fallbackUrl);
+            void this.router.navigate(fallbackUrl);
         }
     }
 
@@ -57,7 +57,7 @@ export class ArtemisNavigationUtilService {
     navigateForwardFromExerciseUpdateOrCreation(exercise?: Exercise) {
         if (exercise?.exerciseGroup?.exam?.course?.id) {
             // If an exercise group is set we are in exam mode
-            this.router.navigate([
+            void this.router.navigate([
                 'course-management',
                 exercise.exerciseGroup.exam.course.id,
                 'exams',
@@ -68,7 +68,7 @@ export class ArtemisNavigationUtilService {
                 exercise.id,
             ]);
         } else if (exercise?.course?.id) {
-            this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
+            void this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
         } else {
             // Fallback
             this.navigateBack();

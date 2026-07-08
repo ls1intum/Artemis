@@ -27,6 +27,7 @@ import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { Popover } from 'primeng/popover';
 import { TieredMenu } from 'primeng/tieredmenu';
 import { Tooltip } from 'primeng/tooltip';
+import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -46,7 +47,6 @@ import { TextEditorActionGroup } from 'app/editor/monaco-editor/model/actions/te
 import { HeadingAction } from 'app/editor/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/editor/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/editor/monaco-editor/model/actions/color.action';
-import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
@@ -78,6 +78,7 @@ import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from '
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Cached selection with Monaco-compatible data used by scroll re-positioning. */
 type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
@@ -142,8 +143,8 @@ const TAB_VISUAL_ID = 'editor_visual';
         Tooltip,
         NgTemplateOutlet,
         Popover,
+        ButtonDirective,
         TieredMenu,
-        ColorSelectorComponent,
         PostingButtonComponent,
         CdkDrag,
         ArtemisTranslatePipe,
@@ -171,7 +172,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly resizePlaceholder = viewChild<ElementRef<HTMLDivElement>>('resizePlaceholder');
     readonly actionPalette = viewChild<ElementRef<HTMLElement>>('actionPalette');
     readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
-    readonly colorSelector = viewChild(ColorSelectorComponent);
 
     /**
      * The incoming markdown content. Supports one-way `[markdown]` and two-way `[(markdown)]` bindings (the latter
@@ -361,8 +361,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     static readonly TAB_EDIT = TAB_EDIT_ID;
     static readonly TAB_PREVIEW = TAB_PREVIEW_ID;
     static readonly TAB_VISUAL = TAB_VISUAL_ID;
-    readonly colorPickerMarginTop = 35;
-    readonly colorPickerHeight = 110;
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSpinner = faSpinner;
@@ -383,7 +381,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private reviewCommentManager?: ReviewCommentWidgetManager;
 
     constructor() {
-        this.uniqueMarkdownEditorId.set('markdown-editor-' + window.crypto.randomUUID().toString());
+        this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
 
         // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
         // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards
@@ -964,13 +962,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
         files.forEach((file) => {
-            (this.useCommunicationForFileUpload()
-                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
-                      file,
-                      this.metisService?.getCourse()?.id,
-                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
-                  )
-                : this.fileUploaderService.uploadMarkdownFile(file)
+            void (
+                this.useCommunicationForFileUpload()
+                    ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                          file,
+                          this.metisService?.getCourse()?.id,
+                          this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                      )
+                    : this.fileUploaderService.uploadMarkdownFile(file)
             )
                 .then(
                     (response) => this.processFileUploadResponse(response, file),
@@ -1008,16 +1007,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (inputElement) {
             inputElement.value = '';
         }
-    }
-
-    /**
-     * Open the color selector at the current cursor position.
-     * @param event The mouse event that triggered the color selector.
-     */
-    openColorSelector(event: MouseEvent): void {
-        const marginTop = this.colorPickerMarginTop;
-        const height = this.colorPickerHeight;
-        this.colorSelector()!.openColorSelector(event, marginTop, height);
     }
 
     /**

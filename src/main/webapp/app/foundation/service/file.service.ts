@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -129,7 +130,7 @@ export class FileService {
     getUniqueFileName(extension: string, mapOfFiles?: Map<string, { path?: string; file: File }>): string {
         let name;
         do {
-            name = window.crypto.randomUUID().toString() + '.' + extension;
+            name = generateUuid() + '.' + extension;
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
     }
