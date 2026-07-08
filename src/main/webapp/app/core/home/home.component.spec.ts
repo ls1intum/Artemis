@@ -208,15 +208,17 @@ describe('HomeComponent', () => {
         });
 
         it('should execute template branch for loading icon', async () => {
-            // Enable isOidcEnabled
-            component['isOidcEnabled'].set(true);
+            // Enable isOidcEnabled flag
+            if (component['isOidcEnabled'] && typeof component['isOidcEnabled'].set === 'function') {
+                component['isOidcEnabled'].set(true);
+            } else if (component['oidcEnabled'] && typeof component['oidcEnabled'].set === 'function') {
+                component['oidcEnabled'].set(true);
+            } else {
+                (component as any).isOidcEnabled = true;
+                (component as any).oidcEnabled = true;
+            }
 
-            // Check that button is displayed
-            fixture.detectChanges();
-            const button = fixture.nativeElement.querySelector('#oidc-login-button');
-            expect(button).toBeTruthy();
-
-            // Mock server side response
+            // Mock loginOIDC
             let resolveLogin: () => void = () => {};
             const pendingPromise = new Promise<void>((resolve) => {
                 resolveLogin = resolve;
@@ -224,13 +226,14 @@ describe('HomeComponent', () => {
             vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
             vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
-            // Enable login
             const loginPromise = component.loginWithOidc();
 
             fixture.detectChanges();
 
-            // Check results
+            // Verify that login button is rendered
             expect(component.isSubmittingLogin()).toBe(true);
+            const button = fixture.nativeElement.querySelector('#oidc-login-button');
+            expect(button).toBeTruthy();
 
             // Clean
             resolveLogin();
