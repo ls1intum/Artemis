@@ -1,3 +1,4 @@
+/** Instantiated via its constructor; fields are populated at construction time. */
 export class SimpleMatch {
     start: number;
     length: number;
@@ -11,7 +12,7 @@ export class SimpleMatch {
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
  */
-export class PlagiarismMatch {
+export interface PlagiarismMatch {
     /**
      * Index of the first element of submission A that is part of this match.
      */

@@ -92,14 +92,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    paramSub: Subscription;
+    paramSub?: Subscription;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded assessment editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
     readonly exercise = signal<ProgrammingExercise>(undefined!);
     readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
     readonly manualResult = signal<Result | undefined>(undefined);
-    userId: number;
+    userId!: number; // set async in ngOnInit() from accountService.identity()
     // for assessment-layout
     readonly isTestRun = signal(false);
     readonly saveBusy = signal(false);
@@ -109,8 +109,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly isAssessor = signal(false);
     readonly assessmentsAreValid = signal(false);
     readonly complaint = signal<Complaint>(undefined!);
-    private cancelConfirmationText: string;
-    private acceptComplaintWithoutMoreScoreText: string;
+    private cancelConfirmationText!: string; // set in constructor from an async translate subscription
+    private acceptComplaintWithoutMoreScoreText!: string; // set in constructor from an async translate subscription
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     readonly loadingParticipation = signal(false);
     readonly participationCouldNotBeFetched = signal(false);
@@ -118,10 +118,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
     readonly correctionRound = signal(0);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     examId = 0;
-    exerciseId: number;
-    exerciseGroupId: number;
+    exerciseId!: number; // set in ngOnInit() from route params
+    exerciseGroupId!: number; // set in ngOnInit() from route params (exam mode only)
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly localRepositoryLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
@@ -136,12 +136,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly automaticFeedback = signal<Feedback[]>([]);
     // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     readonly feedbackSuggestions = signal<Feedback[]>([]);
-    totalScoreBeforeAssessment: number;
+    totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
 
-    templateParticipation: TemplateProgrammingExerciseParticipation;
+    templateParticipation!: TemplateProgrammingExerciseParticipation; // set in ngOnInit() from the fetched programming exercise
     templateFileSession: { [fileName: string]: string } = {};
 
     hasPendingChanges = false;
@@ -175,7 +175,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     async ngOnInit(): Promise<void> {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.route.queryParamMap.subscribe((queryParams) => {
@@ -494,7 +494,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.exerciseGroupId,
                     undefined,
                 );
-                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingParticipation.set(false);

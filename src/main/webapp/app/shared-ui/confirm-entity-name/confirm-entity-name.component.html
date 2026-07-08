@@ -1,8 +1,8 @@
-<div class="form-group d-flex flex-column gap-1">
-    <div class="d-flex flex-md-row flex-column align-items-md-center">
+<div class="flex flex-col gap-1">
+    <div class="flex flex-col md:flex-row md:items-center">
         <label for="confirm-entity-name" [ngClass]="warningTextColor()" [jhiTranslate]="confirmationText()"></label>
-        <code class="display-spaces background-grey rounded-2 d-inline-block ms-md-2 px-2">{{ entityName() }}</code>
+        <code class="display-spaces background-grey rounded-md inline-block md:ms-2 px-2">{{ entityName() }}</code>
         <jhi-copy-to-clipboard-button [copyText]="entityName()" />
     </div>
-    <input id="confirm-entity-name" type="text" class="form-control" name="confirmEntityName" [formControl]="control" (blur)="onTouched()" />
+    <input id="confirm-entity-name" pInputText type="text" name="confirmEntityName" [formControl]="control" (blur)="onTouched()" />
 </div>

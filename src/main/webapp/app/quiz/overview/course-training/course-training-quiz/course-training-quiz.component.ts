@@ -67,7 +67,7 @@ export class CourseTrainingQuizComponent {
     questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
     nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && this.hasNext());
 
-    submittedAnswer: SubmittedAnswer;
+    submittedAnswer!: SubmittedAnswer; // populated by applySelection() before onSubmit() reads it
     readonly showingResult = signal(false);
     readonly submitted = signal(false);
     readonly questionScores = signal<number>(0);
@@ -325,7 +325,7 @@ export class CourseTrainingQuizComponent {
      * navigates to the course practice page
      */
     navigateToTraining(): void {
-        this.router.navigate(['courses', this.courseId(), 'training']);
+        void this.router.navigate(['courses', this.courseId(), 'training']);
     }
 
     confirmUnratedPractice(): void {

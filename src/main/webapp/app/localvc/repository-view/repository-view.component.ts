@@ -57,12 +57,12 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    paramSub: Subscription;
+    paramSub?: Subscription;
     // These fields are set inside async callbacks (route.params subscribe, HTTP subscribe/tap, identity().then)
     // and read in the template, so they must be signals to render under zoneless change detection.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
     readonly exercise = signal<ProgrammingExercise>(undefined!);
-    userId: number;
+    userId!: number; // set asynchronously in ngOnInit() from accountService.identity()
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     readonly loadingParticipation = signal(false);
     readonly participationCouldNotBeFetched = signal(false);
@@ -79,8 +79,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly showInlineFeedback = signal(false);
 
     faClockRotateLeft = faClockRotateLeft;
-    participationWithLatestResultSub: Subscription;
-    differentParticipationSub: Subscription;
+    participationWithLatestResultSub?: Subscription;
+    differentParticipationSub?: Subscription;
 
     /**
      * Unsubscribe from all subscriptions when the component is destroyed
@@ -98,7 +98,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
         this.routeCommitHistory.set(this.router.url + '/commit-history');

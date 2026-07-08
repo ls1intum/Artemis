@@ -21,7 +21,7 @@ export class CreateTestRunModalComponent implements OnInit {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
 
     exam = signal<Exam | undefined>(undefined);
-    workingTimeForm: FormGroup;
+    workingTimeForm!: FormGroup; // initialized in ngOnInit() via initWorkingTimeForm()
     testRunConfiguration: { [id: number]: Exercise } = {};
 
     ngOnInit(): void {

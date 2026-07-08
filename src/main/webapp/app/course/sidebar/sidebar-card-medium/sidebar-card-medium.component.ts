@@ -44,8 +44,8 @@ export class SidebarCardMediumComponent {
         const targetComponentSubRoute = this.sidebarItem()?.targetComponentSubRoute;
         const itemId = this.sidebarItem()?.id;
         const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
-        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            this.router.navigate(pathSegments, { relativeTo: this.route });
+        void this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
+            void this.router.navigate(pathSegments, { relativeTo: this.route });
         });
     }
 

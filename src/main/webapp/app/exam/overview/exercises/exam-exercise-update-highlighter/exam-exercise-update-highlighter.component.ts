@@ -18,12 +18,12 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    subscriptionToLiveExamExerciseUpdates: Subscription;
-    themeSubscription: Subscription;
-    updatedProblemStatementHTML: SafeHtml;
-    updatedProblemStatementWithHighlightedDifferencesHTML: SafeHtml;
-    outdatedProblemStatement: string;
-    updatedProblemStatement: string;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
+    themeSubscription?: Subscription;
+    updatedProblemStatementHTML!: SafeHtml; // populated in highlightProblemStatementDifferences() before the toggle view reads it
+    updatedProblemStatementWithHighlightedDifferencesHTML!: SafeHtml; // populated in highlightProblemStatementDifferences() before the toggle view reads it
+    outdatedProblemStatement = '';
+    updatedProblemStatement = '';
     readonly showHighlightedDifferences = signal(true);
     readonly isHidden = signal(true);
     exercise = input.required<Exercise>();

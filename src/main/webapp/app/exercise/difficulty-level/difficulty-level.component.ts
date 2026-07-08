@@ -18,7 +18,7 @@ export interface ColoredDifficultyLevel {
 export class DifficultyLevelComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
 
-    private translateSubscription: Subscription;
+    private translateSubscription?: Subscription;
     readonly difficultyLevel = input<string>(undefined!);
     readonly coloredDifficultyLevel = signal<ColoredDifficultyLevel>({ label: '', color: [] });
 

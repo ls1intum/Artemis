@@ -69,7 +69,8 @@
                     "globalPlaceholder": "Describe how to refine all multiple-choice questions in this quiz...",
                     "globalRefineFabLabel": "Refine all questions with AI",
                     "changesLabel": "Changes made",
-                    "dismissChanges": "Dismiss changes",
+                    "dismissChanges": "Close",
+                    "restoreChanges": "Restore previous version",
                     "defaultReasoning": "The question was refined based on your instructions.",
                     "errors": {
                         "failed": "Failed to refine the question. Please try again."

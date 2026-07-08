@@ -1,15 +1,16 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Observable, Subject } from 'rxjs';
-import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -18,7 +19,8 @@ import { DialogModule } from 'primeng/dialog';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
     /** Whether the dialog is visible */
@@ -39,6 +41,7 @@ export class CleanupOperationModalComponent {
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faCheckCircle = faCheckCircle;
 
     /** Keys from the CleanupCount object for iteration */
@@ -76,21 +79,25 @@ export class CleanupOperationModalComponent {
             },
         };
 
-        switch (this.operation().name) {
+        const operation = this.operation();
+        // Range operations are only reachable once validateDates has confirmed both dates are set.
+        const deleteFrom = operation.deleteFrom!;
+        const deleteTo = operation.deleteTo!;
+        switch (operation.name) {
             case 'deleteOrphans':
                 this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldSubmissionVersions':
-                this.dataCleanupService.deleteOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo).subscribe(operationHandler);
                 break;
         }
     }
@@ -99,19 +106,23 @@ export class CleanupOperationModalComponent {
      * Fetch counts for the operation.
      */
     private fetchCounts(): Observable<HttpResponse<CleanupCount>> {
-        switch (this.operation().name) {
+        const operation = this.operation();
+        // Range operations are only reachable once validateDates has confirmed both dates are set.
+        const deleteFrom = operation.deleteFrom!;
+        const deleteTo = operation.deleteTo!;
+        switch (operation.name) {
             case 'deleteOrphans':
                 return this.dataCleanupService.countOrphans();
             case 'deletePlagiarismComparisons':
-                return this.dataCleanupService.countPlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countPlagiarismComparisons(deleteFrom, deleteTo);
             case 'deleteNonRatedResults':
-                return this.dataCleanupService.countNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countNonRatedResults(deleteFrom, deleteTo);
             case 'deleteOldRatedResults':
-                return this.dataCleanupService.countOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countOldRatedResults(deleteFrom, deleteTo);
             case 'deleteOldSubmissionVersions':
-                return this.dataCleanupService.countOldSubmissionVersions(this.operation().deleteFrom, this.operation().deleteTo);
+                return this.dataCleanupService.countOldSubmissionVersions(deleteFrom, deleteTo);
             default:
-                throw new Error(`Unsupported operation: ${this.operation().name}`);
+                throw new Error(`Unsupported operation: ${operation.name}`);
         }
     }
 

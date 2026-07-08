@@ -117,6 +117,15 @@ public class ParticipationDeletionService {
             delete(participation.getId(), false);
         }
 
+        // The async ParticipantScoreScheduleService (on the scheduling node) may re-create a participant score
+        // from a still-pending task while the results above are being deleted. The participant_score -> result
+        // foreign keys are ON DELETE SET NULL, so those result deletes never fail; and once all results of the
+        // exercise are gone the scheduler can no longer create a score (it computes an empty score and deletes it
+        // instead). A final bulk delete therefore removes any score that slipped in during the loop, so the
+        // subsequent exercise deletion does not hit the participant_score -> exercise RESTRICT constraint. This
+        // closes the race cluster-wide without any transaction or cross-node coordination.
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
+
         if (recalculateCompetencyProgress) {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }

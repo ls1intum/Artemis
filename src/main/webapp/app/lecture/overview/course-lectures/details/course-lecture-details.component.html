@@ -9,16 +9,14 @@
     <div>
         <div class="px-3 pb-3 pt-2 scrollable-content">
             <!-- HEADER INFORMATION START -->
-            <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                }
                 <h5 class="my-2">
                     <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
                     {{ lecture.title }}
                 </h5>
-                @if (lecture.course?.isAtLeastEditor) {
-                    <div class="col-auto d-flex align-items-center">
-                        <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()" jhiTranslate="artemisApp.courseOverview.manage"></button>
-                    </div>
-                }
             </div>
 
             <hr class="mt-2 mb-3" />

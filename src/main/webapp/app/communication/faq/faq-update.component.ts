@@ -55,7 +55,7 @@ export class FaqUpdateComponent implements OnInit {
     readonly isAllowedToSave = signal(false);
     readonly existingCategories = signal<FaqCategory[]>([]);
     readonly faqCategories = signal<FaqCategory[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route paramMap
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
@@ -146,12 +146,12 @@ export class FaqUpdateComponent implements OnInit {
                         this.faq = faqBody;
                     }
                     this.showSuccessAlert(faq, false);
-                    this.router.navigate(['course-management', this.courseId, 'faqs']);
+                    void this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
             this.showSuccessAlert(faq, true);
-            this.router.navigate(['course-management', this.courseId, 'faqs']);
+            void this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
     }
 

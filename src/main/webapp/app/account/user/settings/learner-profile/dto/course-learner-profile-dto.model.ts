@@ -1,3 +1,4 @@
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class CourseLearnerProfileDTO {
     /**
      * Minimum value allowed for profile fields representing values on a Likert scale.
@@ -10,12 +11,12 @@ export class CourseLearnerProfileDTO {
      */
     public static readonly MAX_VALUE = 5;
 
-    public id: number;
-    public courseId: number;
-    public courseTitle: string;
-    public aimForGradeOrBonus: number;
-    public timeInvestment: number;
-    public repetitionIntensity: number;
+    public id!: number;
+    public courseId!: number;
+    public courseTitle!: string;
+    public aimForGradeOrBonus!: number;
+    public timeInvestment!: number;
+    public repetitionIntensity!: number;
 
     public isValid(): boolean {
         return this.isValueInRange(this.aimForGradeOrBonus) && this.isValueInRange(this.timeInvestment) && this.isValueInRange(this.repetitionIntensity);

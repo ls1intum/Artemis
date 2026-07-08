@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -7,6 +7,7 @@ import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 @Component({
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ProgressBarModule, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {

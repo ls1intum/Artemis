@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -32,14 +33,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
@@ -58,10 +68,16 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextBlockType;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.ComplaintResponseRequestDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.text.dto.TextBlockDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExampleResultDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
@@ -100,7 +116,11 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
     private final ResultService resultService;
+
+    private final GradingInstructionRepository gradingInstructionRepository;
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
@@ -108,7 +128,8 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            FeedbackRepository feedbackRepository, ResultService resultService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            FeedbackRepository feedbackRepository, ResultService resultService, GradingInstructionRepository gradingInstructionRepository,
+            LongFeedbackTextRepository longFeedbackTextRepository, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
@@ -120,6 +141,8 @@ public class TextAssessmentResource extends AssessmentResource {
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
+        this.gradingInstructionRepository = gradingInstructionRepository;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
@@ -133,13 +156,15 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PutMapping("participations/{participationId}/results/{resultId}/text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
-        final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks() != null
-                && textAssessment.getFeedbacks().stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
+    public ResponseEntity<ResultDTO> saveTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+        final List<Feedback> feedbacks = feedbacksFromDtos(textAssessment.feedbacks());
+        final boolean hasAssessmentWithTooLongReference = feedbacks != null
+                && feedbacks.stream().filter(Feedback::hasReference).anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
+        final Set<TextBlock> textBlocks = textBlocksFromDtos(textAssessment.textBlocks());
         Result result = resultRepository.findByIdElseThrow(resultId);
         if (!result.getSubmission().getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "feedbackList",
@@ -147,14 +172,14 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, result.getSubmission().getParticipation().getExercise(), null);
         final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, textAssessment.getFeedbacks(), resultId, textAssessment.getAssessmentNote());
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, false, feedbacks, resultId, textAssessment.assessmentNote());
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
+            saveTextBlocks(textBlocks, textSubmission, feedbacksWithIds);
         }
 
-        return response;
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(ResultDTO.of(response.getBody()));
     }
 
     /**
@@ -168,8 +193,11 @@ public class TextAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/example-text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
+    public ResponseEntity<ResultDTO> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId,
+            @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
+        final List<Feedback> feedbacks = feedbacksFromDtos(textAssessment.feedbacks());
+        final Set<TextBlock> textBlocks = textBlocksFromDtos(textAssessment.textBlocks());
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
@@ -183,12 +211,12 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
-        final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
+        final Result result = super.saveExampleAssessment(exampleSubmissionId, feedbacks);
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
         final Set<Feedback> feedbacksWithIds = result.getFeedbacks();
-        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
-        return ResponseEntity.ok(result);
+        saveTextBlocks(textBlocks, textSubmission, feedbacksWithIds);
+        return ResponseEntity.ok(ResultDTO.of(result));
     }
 
     /**
@@ -243,13 +271,15 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @PostMapping("participations/{participationId}/results/{resultId}/submit-text-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
-        final boolean hasAssessmentWithTooLongReference = textAssessment.getFeedbacks().stream().filter(Feedback::hasReference)
+    public ResponseEntity<ResultDTO> submitTextAssessment(@PathVariable Long participationId, @PathVariable Long resultId, @RequestBody TextAssessmentDTO textAssessment) {
+        final List<Feedback> feedbacks = feedbacksFromDtos(textAssessment.feedbacks());
+        final boolean hasAssessmentWithTooLongReference = feedbacks.stream().filter(Feedback::hasReference)
                 .anyMatch(feedback -> feedback.getReference().length() > Feedback.MAX_REFERENCE_LENGTH);
         if (hasAssessmentWithTooLongReference) {
             throw new BadRequestAlertException("Please select a text block shorter than " + Feedback.MAX_REFERENCE_LENGTH + " characters.", "feedbackList",
                     "feedbackReferenceTooLong");
         }
+        final Set<TextBlock> textBlocks = textBlocksFromDtos(textAssessment.textBlocks());
         Result result = resultRepository.findByIdElseThrow(resultId);
         if (!(result.getSubmission().getParticipation().getExercise() instanceof final TextExercise exercise)) {
             throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
@@ -260,15 +290,15 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
-        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, textAssessment.getFeedbacks(), resultId, textAssessment.getAssessmentNote());
+        ResponseEntity<Result> response = super.saveAssessment(textSubmission, true, feedbacks, resultId, textAssessment.assessmentNote());
 
         if (response.getStatusCode().is2xxSuccessful()) {
             final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
+            saveTextBlocks(textBlocks, textSubmission, feedbacksWithIds);
             sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
 
-        return response;
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(ResultDTO.of(response.getBody()));
     }
 
     /**
@@ -282,7 +312,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("participations/{participationId}/submissions/{submissionId}/text-assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
+    public ResponseEntity<ResultDTO> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -295,15 +325,17 @@ public class TextAssessmentResource extends AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
-        saveTextBlocks(assessmentUpdate.textBlocks(), textSubmission, result.getFeedbacks());
+        final AssessmentUpdateBaseDTO assessmentUpdateEntities = assessmentUpdateFromDto(assessmentUpdate);
+        final Set<TextBlock> textBlocks = textBlocksFromDtos(assessmentUpdate.textBlocks());
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdateEntities);
+        saveTextBlocks(textBlocks, textSubmission, result.getFeedbacks());
 
         if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(textExercise)) {
             ((StudentParticipation) result.getSubmission().getParticipation()).setParticipant(null);
         }
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ResultDTO.of(result));
     }
 
     /**
@@ -356,7 +388,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<TextParticipationDTO> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
@@ -376,7 +408,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
             if (result == null) {
                 return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "TextSubmission", "ResultNotFound", "No Result was found for the given ID.")).body(null);
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "TextSubmission", "ResultNotFound", "No Result was found for the given ID."))
+                        .body((TextParticipationDTO) null);
             }
         }
         else {
@@ -421,7 +454,9 @@ public class TextAssessmentResource extends AssessmentResource {
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
 
-        return ResponseEntity.ok().body(participation);
+        final TextParticipationDTO participationDTO = TextParticipationDTO.of((StudentParticipation) participation, isAtLeastInstructorForExercise)
+                .withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
+        return ResponseEntity.ok().body(participationDTO);
     }
 
     /**
@@ -433,7 +468,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
+    public ResponseEntity<TextExampleResultDTO> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
@@ -449,7 +484,7 @@ public class TextAssessmentResource extends AssessmentResource {
         Submission submission = exampleSubmission.getSubmission();
 
         if (!(submission instanceof final TextSubmission textSubmission)) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body((TextExampleResultDTO) null);
         }
 
         final var textBlocks = textBlockService.findAllBySubmissionId(textSubmission.getId());
@@ -459,32 +494,149 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         var result = textSubmission.getLatestResult();
-        if (result != null) {
-            final List<Feedback> assessments = feedbackRepository.findByResult(result);
-            result.setFeedbacks(assessments);
-
-            if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-                Result freshResult = new Result();
-                // set the id to null to make sure that the client does know it is a restricted result and treat it accordingly
-                result.setId(null);
-                if (result.getFeedbacks() != null) {
-                    result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
-                            .forEach(feedback -> {
-                                Feedback freshFeedback = new Feedback();
-                                freshFeedback.setId(feedback.getId());
-                                freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
-                            });
-                }
-                result = freshResult;
-            }
+        if (result == null) {
+            return ResponseEntity.ok().body((TextExampleResultDTO) null);
         }
 
-        return ResponseEntity.ok().body(result);
+        // The tutor needs the submission text and blocks to display and assess the example, in both the masked and full cases.
+        final List<TextBlockDTO> blockDTOs = textSubmission.getBlocks() == null ? List.of() : textSubmission.getBlocks().stream().map(TextBlockDTO::of).toList();
+        final TextExampleResultDTO.ExampleTextSubmissionDTO submissionDTO = new TextExampleResultDTO.ExampleTextSubmissionDTO(textSubmission.getId(), textSubmission.getText(),
+                textSubmission.getLanguage(), blockDTOs);
+
+        final List<Feedback> assessments = feedbackRepository.findByResult(result);
+        result.setFeedbacks(assessments);
+
+        if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+            // Restricted result: the id is null so the client knows it is restricted, and only id/reference/type of the
+            // (non-general, referenced) feedbacks are exposed; the submission text/blocks are still included so the tutor can assess.
+            final List<FeedbackDTO> maskedFeedbacks = result.getFeedbacks() == null ? List.of()
+                    : result.getFeedbacks().stream()
+                            .filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                            .map(feedback -> new FeedbackDTO(feedback.getId(), null, null, false, feedback.getReference(), null, null, feedback.getType(), null, null)).toList();
+            return ResponseEntity.ok().body(new TextExampleResultDTO(null, maskedFeedbacks, submissionDTO));
+        }
+
+        final List<FeedbackDTO> feedbackDTOs = result.getFeedbacks() == null ? List.of() : result.getFeedbacks().stream().map(FeedbackDTO::of).toList();
+        return ResponseEntity.ok().body(new TextExampleResultDTO(result.getId(), feedbackDTOs, submissionDTO));
     }
 
     @Override
     protected String getEntityName() {
         return ENTITY_NAME;
+    }
+
+    /**
+     * Maps a list of {@link FeedbackDTO} to transient {@link Feedback} entities, setting only the allowed scalar fields.
+     * For feedbacks that reference a grading instruction, the managed {@link GradingInstruction} is loaded by id and attached
+     * (never a detached graph).
+     *
+     * @param feedbackDTOs the DTOs received from the client (may be {@code null})
+     * @return the mapped list, or {@code null} if the input was {@code null}
+     */
+    private List<Feedback> feedbacksFromDtos(final List<FeedbackDTO> feedbackDTOs) {
+        // Mirror the previous (non-record) TextAssessmentDTO which defaulted feedbacks to an empty list: an omitted/null
+        // feedbacks field must map to an empty list, not null, so the unguarded submit path does not NPE and the
+        // save/example path still clears existing feedbacks (updateAllFeedbackItems treats null as "no change").
+        if (feedbackDTOs == null) {
+            return new ArrayList<>();
+        }
+        return feedbackDTOs.stream().map(this::feedbackFromDto).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private Feedback feedbackFromDto(final FeedbackDTO dto) {
+        final Feedback feedback = new Feedback();
+        // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
+        // and cleanup paths (ResultService) key on feedback id.
+        feedback.setId(dto.id());
+        feedback.setCredits(dto.credits());
+        feedback.setDetailText(detailTextFromDto(dto));
+        feedback.setText(dto.text());
+        feedback.setReference(dto.reference());
+        feedback.setType(dto.type());
+        feedback.setPositive(dto.positive());
+        feedback.setVisibility(dto.visibility());
+        if (dto.gradingInstruction() != null && dto.gradingInstruction().id() != null) {
+            final GradingInstruction gradingInstruction = gradingInstructionRepository.findByIdElseThrow(dto.gradingInstruction().id());
+            feedback.setGradingInstruction(gradingInstruction);
+        }
+        return feedback;
+    }
+
+    private String detailTextFromDto(final FeedbackDTO dto) {
+        if (!dto.hasLongFeedbackText() || dto.id() == null) {
+            return dto.detailText();
+        }
+
+        // The read DTO can carry only the stored preview of long feedback, but the editor loads the full long text before
+        // changes. Reload the old full text only for preview-only saves; otherwise preserve the user's edited detail text.
+        final boolean dtoContainsOnlyPreview = feedbackRepository.findById(dto.id()).map(feedback -> Objects.equals(dto.detailText(), feedback.getDetailText())).orElse(false);
+        if (dto.detailText() == null || dtoContainsOnlyPreview) {
+            return longFeedbackTextRepository.findByFeedbackId(dto.id()).map(LongFeedbackText::getText).orElse(dto.detailText());
+        }
+        return dto.detailText();
+    }
+
+    /**
+     * Maps a set of {@link TextBlockDTO} to transient {@link TextBlock} entities, setting only the allowed scalar fields.
+     *
+     * @param textBlockDTOs the DTOs received from the client (may be {@code null})
+     * @return the mapped set, or {@code null} if the input was {@code null}
+     */
+    private Set<TextBlock> textBlocksFromDtos(final Set<TextBlockDTO> textBlockDTOs) {
+        if (textBlockDTOs == null) {
+            return null;
+        }
+        return textBlockDTOs.stream().map(this::textBlockFromDto).collect(toSet());
+    }
+
+    private TextBlock textBlockFromDto(final TextBlockDTO dto) {
+        final TextBlock textBlock = new TextBlock();
+        textBlock.setId(dto.id());
+        textBlock.setText(dto.text());
+        textBlock.setStartIndex(dto.startIndex());
+        textBlock.setEndIndex(dto.endIndex());
+        if (dto.type() == TextBlockType.AUTOMATIC) {
+            textBlock.automatic();
+        }
+        else if (dto.type() == TextBlockType.MANUAL) {
+            textBlock.manual();
+        }
+        return textBlock;
+    }
+
+    /**
+     * Adapts a dumb {@link TextAssessmentUpdateDTO} into the entity-shaped {@link AssessmentUpdateBaseDTO} expected by
+     * {@link TextAssessmentService#updateAssessmentAfterComplaint}. The feedbacks are mapped to transient entities and a
+     * transient {@link ComplaintResponse} is reconstructed from the client payload (lock id, response text and the nested
+     * complaint's accepted flag). This mirrors the previous behavior where the shared assessment-update logic received the
+     * client-sent complaint response and resolved it by id; the reconstructed graph is never persisted directly.
+     *
+     * @param assessmentUpdate the dumb DTO received from the client
+     * @return an {@link AssessmentUpdateBaseDTO} carrying the mapped entities
+     */
+    private AssessmentUpdateBaseDTO assessmentUpdateFromDto(final TextAssessmentUpdateDTO assessmentUpdate) {
+        final List<Feedback> feedbacks = feedbacksFromDtos(assessmentUpdate.feedbacks());
+        ComplaintResponse complaintResponse = null;
+        final ComplaintResponseRequestDTO complaintResponseDTO = assessmentUpdate.complaintResponse();
+        if (complaintResponseDTO != null) {
+            complaintResponse = new ComplaintResponse();
+            complaintResponse.setId(complaintResponseDTO.id());
+            complaintResponse.setResponseText(complaintResponseDTO.responseText());
+            final Complaint complaint = new Complaint();
+            if (complaintResponseDTO.complaint() != null) {
+                complaint.setId(complaintResponseDTO.complaint().id());
+                complaint.setAccepted(complaintResponseDTO.complaint().accepted());
+            }
+            complaintResponse.setComplaint(complaint);
+        }
+        return new TextAssessmentUpdateAdapter(feedbacks, complaintResponse, assessmentUpdate.assessmentNote());
+    }
+
+    /**
+     * Minimal entity-shaped adapter implementing {@link AssessmentUpdateBaseDTO} so the controller can delegate to the shared
+     * assessment-update logic without exposing entities at the REST boundary.
+     */
+    private record TextAssessmentUpdateAdapter(List<Feedback> feedbacks, ComplaintResponse complaintResponse, String assessmentNote) implements AssessmentUpdateBaseDTO {
     }
 
     /**
