@@ -44,7 +44,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     hide$ = new Subject<boolean>();
     mute$ = new Subject<boolean>();
 
-    course: Course;
+    course!: Course; // set in ngOnInit() from metisService.getCourse()
 
     readonly conversation = input.required<ConversationDTO>();
 

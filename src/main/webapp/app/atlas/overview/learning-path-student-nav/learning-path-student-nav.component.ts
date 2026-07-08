@@ -45,7 +45,7 @@ export class LearningPathNavComponent {
     constructor() {
         effect(() => {
             const learningPathId = this.learningPathId();
-            untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
+            void untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
         });
     }
 

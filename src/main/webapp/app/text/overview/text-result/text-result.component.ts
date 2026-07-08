@@ -20,7 +20,7 @@ export class TextResultComponent {
 
     submissionText = signal('');
     textResults = signal<TextResultBlock[]>([]);
-    private submission: TextSubmission;
+    private submission!: TextSubmission; // set in the constructor effect (guarded by result?.submission) before convertTextToResultBlocks() reads it
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
@@ -42,7 +42,7 @@ export class TextResultComponent {
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         checkSubsequentFeedbackInAssessment(feedbacks);
-        const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
+        const [referenceBasedFeedback, blockBasedFeedback] = feedbacks.reduce<[Feedback[], Feedback[]]>(
             ([refBased, blockBased], elem) => (this.SHA1_REGEX.test(elem.reference!) ? [refBased, [...blockBased, elem]] : [[...refBased, elem], blockBased]),
             [[], []],
         );

@@ -37,7 +37,7 @@ export class LearningPathInstructorPageComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadCourse(courseId));
+            void untracked(() => this.loadCourse(courseId));
         });
     }
 

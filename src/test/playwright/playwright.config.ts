@@ -57,9 +57,14 @@ export default defineConfig({
         baseURL: process.env.BASE_URL || 'http://localhost:9000',
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
-        /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
+        /* Record video only when a test is retried (mirrors `trace` above). Recording full-HD video for
+         * every one of the ~300 passing tests in the single "run all" CI job added significant browser-
+         * process memory, disk, and encoding time (a large part of the >1h wall-clock) for footage that
+         * is only ever looked at for failures. `on-first-retry` keeps the video for retried/failing tests
+         * — where it is actually useful — while eliminating that overhead for the passing majority.
+         * Override via PLAYWRIGHT_VIDEO_MODE (e.g. 'on' locally) when debugging a passing test. */
         video: {
-            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on',
+            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on-first-retry',
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,

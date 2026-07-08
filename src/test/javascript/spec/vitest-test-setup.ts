@@ -87,7 +87,9 @@ if (typeof Element.prototype.matches === 'undefined') {
     Element.prototype.matches = function (selector: string): boolean {
         const matches = (this.ownerDocument || document).querySelectorAll(selector);
         let i = matches.length;
-        while (--i >= 0 && matches.item(i) !== this) {}
+        while (--i >= 0 && matches.item(i) !== this) {
+            // no body: the loop condition walks i back to the matching element
+        }
         return i > -1;
     };
 }

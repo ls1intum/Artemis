@@ -81,6 +81,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.helpful = TRUE
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
@@ -92,6 +93,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.helpful = FALSE
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
@@ -103,6 +105,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)
@@ -113,6 +116,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.helpful = TRUE
               AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
@@ -125,6 +129,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.helpful = FALSE
               AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
@@ -139,11 +144,13 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                 (SELECT m2.sender FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
+                   AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSender,
                 (SELECT m2.sent_at FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
+                   AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSentAt,
                 CASE WHEN s.discriminator = 'TUTOR_SUGGESTION' THEN 'TUTOR_SUGGESTION' ELSE s.chat_mode END AS modeLabel,
@@ -151,6 +158,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                     SELECT 1 FROM iris_message m3
                     WHERE m3.session_id = u.session_id
                       AND m3.sender <> 'USER'
+                      AND NOT (m3.sender = 'LLM' AND COALESCE(m3.intermediate, FALSE) = TRUE)
                       AND (m3.sent_at > u.sent_at OR (m3.sent_at = u.sent_at AND m3.id > u.id))
                 ) THEN 1 ELSE 0 END AS hasAssistantResponse
             FROM iris_message u
@@ -210,6 +218,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
+              AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)

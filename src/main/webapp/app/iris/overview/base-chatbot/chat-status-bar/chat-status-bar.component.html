@@ -1,22 +1,8 @@
-<div class="chat-status-bar" [class.open]="open()">
-    @if (isError()) {
+@if (isFailed()) {
+    <div class="chat-status-bar open">
         <div class="display error" role="alert">
             <fa-icon [icon]="faCircleXmark" />
-            <div>{{ stageMessage() }}</div>
+            <div>{{ errorMessage() }}</div>
         </div>
-    } @else {
-        <div class="thinking-state">
-            <span class="visually-hidden" role="status" aria-live="polite">{{ displayName() }}</span>
-
-            <jhi-iris-logo [size]="20" [spinning]="true" aria-hidden="true" />
-
-            <span class="status-text" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ displayName() }}</span>
-
-            <div class="typing-dots" aria-hidden="true">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-        </div>
-    }
-</div>
+    </div>
+}

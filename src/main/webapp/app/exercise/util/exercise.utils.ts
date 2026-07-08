@@ -242,6 +242,7 @@ export const countSubmissions = (participation?: StudentParticipation): number =
     participation?.submissions
         ?.filter((submission) => submission.type === SubmissionType.MANUAL)
         .map((submission) => (submission as ProgrammingSubmission).commitHash)
-        .forEach((commitHash: string) => commitHashSet.add(commitHash));
+        .filter((commitHash): commitHash is string => commitHash !== undefined)
+        .forEach((commitHash) => commitHashSet.add(commitHash));
     return commitHashSet.size;
 };

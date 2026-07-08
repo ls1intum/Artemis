@@ -39,8 +39,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # be present at install time (pnpm applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
-# also copy this script which is required by postinstall lifecycle hook
-COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
@@ -128,6 +126,17 @@ USER artemis:artemis
 WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
+
+RUN set -eu; \
+  war_entries="$(jar tf Artemis.war)"; \
+  if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
+    echo "Artemis.war does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."; \
+    exit 1; \
+  fi; \
+  if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
+    echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi
 
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]

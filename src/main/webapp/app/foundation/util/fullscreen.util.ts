@@ -44,7 +44,7 @@ export function exitFullscreen() {
     const docElement = document as VendorPrefixedDocument;
     // exit fullscreen for different browser types
     if (document.exitFullscreen) {
-        document.exitFullscreen();
+        void document.exitFullscreen();
     } else if (docElement.mozCancelFullScreen) {
         docElement.mozCancelFullScreen();
     } else if (docElement.msRequestFullscreen) {
@@ -60,7 +60,7 @@ export function exitFullscreen() {
 export function enterFullscreen(element: VendorPrefixedElement) {
     // requestFullscreen for different browser types
     if (element.requestFullscreen) {
-        element.requestFullscreen();
+        void element.requestFullscreen();
     } else if (element.mozRequestFullScreen) {
         element.mozRequestFullScreen();
     } else if (element.msRequestFullscreen) {

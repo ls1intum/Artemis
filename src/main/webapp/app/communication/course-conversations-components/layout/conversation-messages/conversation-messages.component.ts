@@ -101,7 +101,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
-    previousScrollDistanceFromTop: number;
+    previousScrollDistanceFromTop = 0;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
     currentPostContextFilter?: PostContextFilter;
@@ -110,7 +110,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
-    elementsAtScrollPosition: PostingThreadComponent[];
+    elementsAtScrollPosition: PostingThreadComponent[] = [];
     readonly newPost = signal<Post | undefined>(undefined);
     readonly posts = signal<Post[]>([]);
     readonly allPosts = signal<Post[]>([]);
@@ -119,7 +119,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     totalNumberOfPosts = 0;
     page = 1;
     readonly isFetchingPosts = signal(true);
-    currentUser: User;
+    currentUser!: User; // set in ngOnInit() from the resolved account identity
     readonly firstUnreadPostId = signal<number | undefined>(undefined);
     readonly unreadPostsCount = signal<number>(0);
     readonly atNewPostPosition = signal(false);
@@ -218,7 +218,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.pinnedCount.emit(pinnedPosts.length);
             });
 
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User | undefined) => {
             this.currentUser = user!;
         });
 
@@ -228,7 +228,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;

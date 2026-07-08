@@ -29,7 +29,7 @@ export class RatingListComponent implements OnInit {
     readonly page = signal(1); // 1-indexed (PrimeNG paginator is 0-indexed; converted in onPageChange)
     public pageSize = 20;
 
-    private courseId: number;
+    private courseId!: number; // set in ngOnInit() from route params
 
     ratingsSortingPredicate = 'id';
     ratingsReverseOrder = false;
@@ -70,10 +70,19 @@ export class RatingListComponent implements OnInit {
 
         if (rating.exerciseType === ExerciseType.PROGRAMMING) {
             // Programming exercises use a different route structure (no resultId)
-            this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessment']);
+            void this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessment']);
         } else {
             // Text, Modeling, and File Upload exercises use assessments/:resultId
-            this.router.navigate(['/course-management', this.courseId, exerciseTypePath, rating.exerciseId, 'submissions', rating.submissionId, 'assessments', rating.resultId]);
+            void this.router.navigate([
+                '/course-management',
+                this.courseId,
+                exerciseTypePath,
+                rating.exerciseId,
+                'submissions',
+                rating.submissionId,
+                'assessments',
+                rating.resultId,
+            ]);
         }
     }
 

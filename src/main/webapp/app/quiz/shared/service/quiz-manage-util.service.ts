@@ -92,7 +92,7 @@ export function isQuizQuestionValid(question: QuizQuestion, dragAndDropQuestionU
             );
         }
         default: {
-            captureException(new Error('Unknown question type: ' + question));
+            captureException(new Error('Unknown question type: ' + question.type));
             return question.title && question.title !== '';
         }
     }
