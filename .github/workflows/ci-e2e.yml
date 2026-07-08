@@ -787,9 +787,18 @@ jobs:
             [ "$c" = real ] && any_real=true
             [ "$c" = flaky ] && any_flaky=true
           done
+          # Treat ANY needed-job result other than `success` or `skipped` as a blocking infra verdict —
+          # not just `failure`. A `cancelled` phase (e.g. Phase 2 timing out with no outputs) would
+          # otherwise leave `any_job_failed=false` and its empty test outcome would be ignored by the
+          # `status` loop above, so the required E2E run could go green without actually completing.
+          # `skipped` is the normal not-selected-path result (e.g. run-all on a phased run) and must pass;
+          # an empty/unknown result is treated as blocking (fail closed).
           any_job_failed=false
           for r in "$DETERMINE_JOB" "$RELEVANT_JOB" "$REMAINING_JOB" "$ALL_PR_JOB" "$ALL_NON_PR_JOB"; do
-            [ "$r" = failure ] && any_job_failed=true
+            case "$r" in
+              success|skipped) ;;
+              *) any_job_failed=true ;;
+            esac
           done
 
           # The E2E verdict. `neutral` (exonerate) ONLY on positive proof of flakiness (a phase
