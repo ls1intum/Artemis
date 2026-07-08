@@ -75,7 +75,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
     readonly filteredLectures = signal<Lecture[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -131,6 +131,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     .pipe(
                         filter((res: HttpResponse<Lecture>) => res.ok),
                         map((res: HttpResponse<Lecture>) => res.body),
+                        filter((body): body is Lecture => body != undefined),
                     )
                     .subscribe({
                         next: (res: Lecture) => {
@@ -181,6 +182,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
+                filter((body): body is Lecture[] => body != undefined),
             )
             .subscribe({
                 next: (res: Lecture[]) => {

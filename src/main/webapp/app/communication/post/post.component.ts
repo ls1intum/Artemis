@@ -57,7 +57,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnDestroy {
-    metisService = inject(MetisService);
+    override metisService = inject(MetisService);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -77,15 +77,15 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
     static activeDropdownPost: PostComponent | undefined = undefined;
 
-    showReactionSelector = false;
+    override showReactionSelector = false;
     displayInlineInput = signal(false);
-    routerLink: RouteComponents;
+    routerLink: RouteComponents = [];
     queryParams = {};
     readonly showAnnouncementIcon = signal(false);
     readonly showSearchResultInAnswersHint = signal(false);
     readonly sortedAnswerPosts = signal<AnswerPost[]>(undefined!);
-    createdAnswerPost: AnswerPost;
-    isAtLeastTutorInCourse: boolean;
+    createdAnswerPost?: AnswerPost;
+    isAtLeastTutorInCourse = false;
 
     readonly pageType = signal<PageType>(undefined!);
     readonly contextInformation = signal<ContextInformation>(undefined!);
@@ -105,7 +105,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
-    readonly faBookmark = faBookmark;
+    override readonly faBookmark = faBookmark;
     readonly faShare = faShare;
     readonly faEnvelopeOpenText = faEnvelopeOpenText;
 
@@ -279,7 +279,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     /**
      * on initialization: evaluates post context and page type
      */
-    ngOnInit() {
+    override ngOnInit() {
         super.ngOnInit();
         this.pageType.set(this.metisService.getPageType());
         const posting = this.posting();

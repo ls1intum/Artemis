@@ -105,7 +105,7 @@ export class EmojiAction extends TextEditorAction {
      * @param position The current cursor position.
      * @param emoji The emoji text to insert.
      */
-    insertTextAtPosition(editor: TextEditor, position: TextEditorPosition, emoji: string): void {
+    override insertTextAtPosition(editor: TextEditor, position: TextEditorPosition, emoji: string): void {
         this.replaceTextAtRange(editor, new TextEditorRange(position, position), emoji);
     }
 

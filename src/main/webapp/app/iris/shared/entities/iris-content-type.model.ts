@@ -62,6 +62,7 @@ export function getTextContent(content: IrisMessageContent) {
         const irisMessageTextContent = content;
         return irisMessageTextContent.textContent;
     }
+    return undefined;
 }
 
 /**

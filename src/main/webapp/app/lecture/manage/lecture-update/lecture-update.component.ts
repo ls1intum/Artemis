@@ -95,7 +95,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     formStatusBar = viewChild(FormStatusBarComponent);
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
-    lectureOnInit: Lecture;
+    lectureOnInit!: Lecture; // set in ngOnInit() (and re-cloned on save success)
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
     readonly isSaving = signal<boolean>(undefined!);
@@ -103,7 +103,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     readonly processUnitMode = signal<boolean>(undefined!);
     readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
-    file: File;
+    file?: File;
     readonly fileName = signal<string>(undefined!);
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
@@ -315,7 +315,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
         this.isSaving.set(false);
 
         if (!lecture.course?.id) {
-            captureException('Lecture has no course id: ' + lecture);
+            captureException('Lecture has no course id: ' + lecture.id);
             return;
         }
 

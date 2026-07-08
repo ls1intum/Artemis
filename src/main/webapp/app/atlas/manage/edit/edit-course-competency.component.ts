@@ -15,7 +15,7 @@ export abstract class EditCourseCompetencyComponent implements OnInit {
     // Signal-backed so the form (gated via @if (isLoading())) renders under zoneless change
     // detection once the async data load completes in the subclasses.
     readonly isLoading = signal(false);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route paramMap
 
     ngOnInit(): void {
         const paramMap = this.activatedRoute.parent!.parent!.snapshot.paramMap;

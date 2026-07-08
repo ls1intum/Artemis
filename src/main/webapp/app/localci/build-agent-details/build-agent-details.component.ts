@@ -7,7 +7,10 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { InputTextModule } from 'primeng/inputtext';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -46,7 +49,10 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
     imports: [
         FontAwesomeModule,
         RouterModule,
-        CommonModule,
+        ButtonModule,
+        TagModule,
+        MessageModule,
+        InputTextModule,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,
@@ -97,19 +103,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningJobsWebsocketSubscription?: Subscription;
 
     /** Subscription for initial running jobs REST API load */
-    runningJobsSubscription: Subscription;
+    runningJobsSubscription?: Subscription;
 
     /** Subscription for initial agent details REST API load */
-    agentDetailsSubscription: Subscription;
+    agentDetailsSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
-    buildDurationInterval: ReturnType<typeof setInterval>;
+    buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
 
     /** Subscription for route query parameter changes */
-    routeParamsSubscription: Subscription;
+    routeParamsSubscription!: Subscription; // set in ngOnInit()
 
     /** WebSocket channel for receiving agent-specific updates (constructed from base topic + agent name) */
-    agentDetailsWebsocketChannel: string;
+    agentDetailsWebsocketChannel!: string; // set in ngOnInit() before the websocket subscription reads it
 
     /** Base WebSocket topic for agent updates */
     readonly agentUpdatesChannel = '/topic/admin/build-agent';
@@ -139,7 +145,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     // Search and filter configuration
     /** Subscription for debounced search input handling */
-    searchSubscription: Subscription;
+    searchSubscription!: Subscription; // set in ngOnInit()
 
     /** Subject for triggering debounced search requests for finished build jobs */
     finishedJobsSearchTrigger = new Subject<void>();

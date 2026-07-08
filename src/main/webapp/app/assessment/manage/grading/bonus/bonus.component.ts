@@ -100,8 +100,8 @@ export class BonusComponent implements OnInit {
     readonly bonusToGradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
     readonly isLoading = signal(false);
-    private courseId: number;
-    private examId: number;
+    private courseId!: number; // set in ngOnInit() from route params
+    private examId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

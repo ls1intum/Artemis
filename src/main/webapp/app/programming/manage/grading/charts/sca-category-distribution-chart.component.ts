@@ -61,7 +61,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
             horizontal: true,
             stacked: true,
             percentScale: true,
-            xAxis: { tickFormatter: this.xAxisFormatting },
+            xAxis: { tickFormatter: (value) => this.xAxisFormatting(String(value)) },
             tooltip: {
                 title: (items) => items[0]?.dataset.label ?? '',
                 label: (item) => {
@@ -182,7 +182,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
     /**
      * Auxiliary method for the reset button to reset the table view
      */
-    resetTableFilter(): void {
+    override resetTableFilter(): void {
         super.resetTableFilter();
         this.scaCategoryFilter.emit(ProgrammingGradingChartsDirective.RESET_TABLE);
     }

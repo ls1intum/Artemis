@@ -1,5 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -10,7 +15,17 @@ import { generateCourseShortName } from 'app/foundation/util/semester-utils';
 @Component({
     selector: 'jhi-course-request-form',
     templateUrl: './course-request-form.component.html',
-    imports: [ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe, FormDateTimePickerComponent],
+    imports: [
+        ReactiveFormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormDateTimePickerComponent,
+        ButtonModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule,
+        CheckboxModule,
+    ],
 })
 export class CourseRequestFormComponent {
     /** The form group containing the course request fields */

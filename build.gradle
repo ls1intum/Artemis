@@ -37,7 +37,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.54.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.3"
-    id "com.gorylenko.gradle-git-properties" version "2.5.7"
+    id "com.gorylenko.gradle-git-properties" version "4.0.1"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.2.1"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -57,7 +57,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.6"
+version = "9.7"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -67,7 +67,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.5.0"
+    gradleVersion = "9.6.1"
 }
 
 node {

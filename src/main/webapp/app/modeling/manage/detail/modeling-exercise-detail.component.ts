@@ -50,12 +50,12 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
-    problemStatement: SafeHtml;
-    gradingInstructions: SafeHtml;
-    exampleSolution: SafeHtml;
-    exampleSolutionUML: UMLModel;
+    private subscription!: Subscription; // set in ngOnInit() from route params subscription
+    private eventSubscriber!: Subscription; // set in ngOnInit() via registerChangeInModelingExercises()
+    problemStatement!: SafeHtml; // set in load() before it is read
+    gradingInstructions!: SafeHtml; // set in load() before it is read
+    exampleSolution!: SafeHtml; // set in load() before it is read
+    exampleSolutionUML?: UMLModel;
     readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
