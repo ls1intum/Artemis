@@ -50,7 +50,7 @@ export class LearningPathNavOverviewComponent {
 
             this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION, learningPathId);
 
-            untracked(() => this.loadCompetencies(learningPathId));
+            void untracked(() => this.loadCompetencies(learningPathId));
         });
     }
 

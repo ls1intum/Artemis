@@ -275,7 +275,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
-        expect(overlayElement.nativeElement.classList).toContain('d-none');
+        expect(overlayElement.nativeElement.classList).toContain('hidden');
     });
 
     it('should add is-expanded class when isExpanded is true', () => {
@@ -307,7 +307,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny.notifications.set([mockNotification]);
         fixture.changeDetectorRef.detectChanges();
         const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
-        const collapseButton = fixture.debugElement.query(By.css('.btn-outline-primary'));
+        const collapseButton = fixture.debugElement.query(By.css('button[pButton]'));
 
         collapseButton.nativeElement.click();
 
@@ -374,7 +374,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         const clearAllNotificationsSpy = vi.spyOn(component, 'clearAllNotifications');
 
-        const clearButton = fixture.debugElement.queryAll(By.css('.btn-outline-primary'))[1];
+        const clearButton = fixture.debugElement.queryAll(By.css('button[pButton]'))[1];
         clearButton.nativeElement.click();
 
         expect(clearAllNotificationsSpy).toHaveBeenCalledOnce();

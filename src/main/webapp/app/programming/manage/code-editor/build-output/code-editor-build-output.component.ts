@@ -46,8 +46,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     readonly rawBuildLogs = signal(new BuildLogEntryArray());
     readonly result = signal<Result | undefined>(undefined);
 
-    private resultSubscription: Subscription;
-    private submissionSubscription: Subscription;
+    private resultSubscription?: Subscription;
+    private submissionSubscription?: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;
@@ -169,6 +169,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
                     this.result.set(result);
                 }),
                 switchMap((result) => this.fetchBuildResults(result)),
+                map((buildLogsFromServer) => buildLogsFromServer ?? []),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs.set(BuildLogEntryArray.fromBuildLogs(buildLogsFromServer));
                 }),
@@ -188,8 +189,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
         return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
-            map((res) => res?.body),
-            map((feedbacks: Feedback[]) => {
+            map((res) => res?.body ?? undefined),
+            map((feedbacks: Feedback[] | undefined) => {
                 result.feedbacks = feedbacks;
                 return result;
             }),

@@ -28,15 +28,15 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     readonly dayjs = dayjs;
 
     readonly participation = signal<TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation>(undefined!);
-    exerciseId: number;
-    repositoryType: RepositoryType;
+    exerciseId!: number; // set in ngOnInit() from route params before any read
+    repositoryType!: RepositoryType; // set in ngOnInit() from route params before any read
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
-    paramSub: Subscription;
+    paramSub?: Subscription;
     readonly commits = signal<CommitInfo[]>([]);
-    commitsInfoSubscription: Subscription;
-    participationSub: Subscription;
+    commitsInfoSubscription?: Subscription;
+    participationSub?: Subscription;
 
-    exercise: ProgrammingExercise;
+    exercise!: ProgrammingExercise; // set in loadDifferentParticipation() tap before it is read in the same subscription
 
     isTestRepository = false;
 

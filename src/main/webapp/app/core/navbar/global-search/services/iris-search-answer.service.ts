@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
 export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
@@ -43,7 +44,7 @@ export class IrisSearchAnswerService {
         return new Observable<IrisSearchStatusUpdate>((subscriber) => {
             // Generate the correlation ID client-side so it's known before the HTTP call.
             // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.
-            const runId = window.crypto.randomUUID();
+            const runId = generateUuid();
 
             // 1. Attach to the shared STOMP subscription, filtering to this run's messages only.
             //    The shared Observable keeps the underlying STOMP channel open as long as any

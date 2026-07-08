@@ -63,10 +63,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected currentCourseContextService = inject(CurrentCourseContextService);
 
     ngUnsubscribe = new Subject<void>();
-    protected closeSidebarEventSubscription: Subscription;
-    protected openSidebarEventSubscription: Subscription;
+    protected closeSidebarEventSubscription?: Subscription;
+    protected openSidebarEventSubscription?: Subscription;
     protected subscription?: Subscription;
-    protected ltiSubscription: Subscription;
+    protected ltiSubscription?: Subscription;
     protected loadCourseSubscription?: Subscription;
 
     courseId = signal<number>(0);

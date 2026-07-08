@@ -156,7 +156,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     readonly removeFile = output<string>();
 
     readonly questionEditorText = signal('');
-    backupQuestion: DragAndDropQuestion;
+    backupQuestion!: DragAndDropQuestion; // set in ngOnInit() as a deep copy of the question input
     readonly filePreviewPaths = signal<Map<string, string>>(new Map<string, string>());
     readonly dropAllowed = signal(false);
     readonly showPreview = signal(false);
@@ -181,7 +181,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
      * Keep track of the current mouse location
      * @type {DragAndDropMouseEvent}
      */
-    mouse: DragAndDropMouseEvent;
+    mouse!: DragAndDropMouseEvent; // initialized in ngOnInit()
 
     hintAction = new QuizHintAction();
     explanationAction = new QuizExplanationAction();

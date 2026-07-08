@@ -47,7 +47,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     readonly similaritySelected = output<Range>();
 
     yScaleMax = 5;
-    totalDetectedPlagiarisms: number;
+    totalDetectedPlagiarisms = 0;
     bucketDTOs: SimilarityRangeComparisonStateDTO[] = [];
 
     readonly round = round;

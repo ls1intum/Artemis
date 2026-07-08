@@ -10,21 +10,24 @@ import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriang
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-export class AlertType {
-    public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
-    public static readonly DANGER = new AlertType(faExclamationCircle, 'danger', 'btn-danger');
-    public static readonly WARNING = new AlertType(faExclamationTriangle, 'warning', 'btn-warning');
-    public static readonly INFO = new AlertType(faInfoCircle, 'info', 'btn-info');
+/** PrimeNG `p-button` severities used by alert action buttons. */
+export type AlertButtonSeverity = 'success' | 'danger' | 'warn' | 'info';
 
-    private constructor(icon: IconDefinition, containerClassName: string, buttonClassName: string) {
+export class AlertType {
+    public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'success');
+    public static readonly DANGER = new AlertType(faExclamationCircle, 'danger', 'danger');
+    public static readonly WARNING = new AlertType(faExclamationTriangle, 'warning', 'warn');
+    public static readonly INFO = new AlertType(faInfoCircle, 'info', 'info');
+
+    private constructor(icon: IconDefinition, containerClassName: string, buttonSeverity: AlertButtonSeverity) {
         this.icon = icon;
         this.containerClassName = containerClassName;
-        this.buttonClassName = buttonClassName;
+        this.buttonSeverity = buttonSeverity;
     }
 
     public readonly icon: IconDefinition;
     public readonly containerClassName: string;
-    public readonly buttonClassName: string;
+    public readonly buttonSeverity: AlertButtonSeverity;
 }
 
 interface AlertBase {
@@ -67,7 +70,7 @@ export class AlertService {
     errorListener: Subscription;
     httpErrorListener: Subscription;
 
-    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
+    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterStaff'];
     readonly badRequestErrorKeysToSkip: string[] = ['courseShortNameExists', 'courseRequestShortNameExists'];
 
     constructor() {
@@ -274,7 +277,7 @@ export class AlertService {
         // Some callers forward a server error field that is typed `any`, so it may not actually be a string at
         // runtime; coerce defensively before display.
         if (message && typeof message !== 'string') {
-            message = '' + message;
+            message = String(message);
         }
         this.addAlert({ type: AlertType.DANGER, message, translationKey, translationParams });
     }

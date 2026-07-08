@@ -214,6 +214,6 @@ export class CompetencyAccordionComponent {
         if (!course?.id) {
             return;
         }
-        this.router.navigate(['/courses', course.id, 'competencies', this.competency().id]);
+        void this.router.navigate(['/courses', course.id, 'competencies', this.competency().id]);
     }
 }

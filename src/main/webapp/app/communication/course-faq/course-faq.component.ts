@@ -30,8 +30,8 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
 
-    courseId: number;
-    referencedFaqId: number;
+    courseId!: number; // set in ngOnInit() from the parent route paramMap
+    referencedFaqId!: number; // set in ngOnInit() from the route queryParamMap
     readonly faqs = signal<Faq[]>([]);
     faqState = FaqState.ACCEPTED;
 
@@ -82,7 +82,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadFaqs() {
         this.faqService
             .findAllByCourseIdAndState(this.courseId, this.faqState)
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
             .subscribe({
                 next: (res: Faq[]) => {
                     this.faqs.set(res);

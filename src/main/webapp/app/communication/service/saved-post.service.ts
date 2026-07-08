@@ -57,7 +57,7 @@ export class SavedPostService {
      */
     public fetchSavedPosts(courseId: number, status: SavedPostStatus): Observable<HttpResponse<Posting[]>> {
         const params = new HttpParams().set('status', status.toString().toLowerCase()).set('courseId', courseId.toString());
-        return this.http.get(`${this.resourceUrl}`, { observe: 'response', params }).pipe(map(this.convertPostResponseFromServer));
+        return this.http.get<Posting[]>(`${this.resourceUrl}`, { observe: 'response', params }).pipe(map(this.convertPostResponseFromServer));
     }
 
     /**

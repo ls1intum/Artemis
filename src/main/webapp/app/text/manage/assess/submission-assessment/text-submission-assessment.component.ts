@@ -104,14 +104,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Non-reset properties:
      * These properties are not reset on purpose, as they cannot change between assessments.
      */
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string; // set in constructor from the (already-loaded) translation before cancel() reads it
 
     // ExerciseId is updated from Route Subscription directly.
-    exerciseId: number;
-    courseId: number;
+    exerciseId!: number; // set in ngOnInit() from the route paramMap before any read
+    courseId!: number; // set in ngOnInit() from the route paramMap before any read
     readonly course = signal<Course | undefined>(undefined);
     examId = 0;
-    exerciseGroupId: number;
+    exerciseGroupId!: number; // set in ngOnInit() from the route paramMap in exam mode before it is read
     readonly exerciseDashboardLink = signal<string[]>([]);
     isExamMode = false;
 
@@ -165,7 +165,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     /**
      * Life cycle hook to indicate component creation is done
      */
-    async ngOnInit(): Promise<void> {
+    override async ngOnInit(): Promise<void> {
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
@@ -410,7 +410,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         });
     }
 
-    protected handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
+    protected override handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
         super.handleSaveOrSubmitSuccessWithAlert(response, translationKey);
         this.result.set(response.body!);
         setSubmissionResultByCorrectionRound(this.submission!, this.result()!, this.correctionRound());
@@ -566,7 +566,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         return !isAllowedToModifyFeedback(this.isTestRun(), this.isAssessor(), this.hasAssessmentDueDatePassed(), this.result(), this.complaint(), this.exercise);
     }
 
-    protected handleError(error: HttpErrorResponse): void {
+    protected override handleError(error: HttpErrorResponse): void {
         super.handleError(error);
         this.saveBusy.set(false);
         this.submitBusy.set(false);

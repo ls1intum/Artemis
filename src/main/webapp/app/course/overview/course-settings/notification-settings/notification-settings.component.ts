@@ -120,7 +120,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         });
     }
 
-    ngOnDestroy() {
+    override ngOnDestroy() {
         super.ngOnDestroy();
     }
 

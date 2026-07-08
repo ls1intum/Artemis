@@ -32,7 +32,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     profileService = inject(ProfileService);
     router = inject(Router);
 
-    private conversationServiceSubscription: Subscription;
+    private conversationServiceSubscription?: Subscription;
     private settingsSubscription: Subscription | undefined;
     private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
     channelSubTypeReferenceRouterLink = '';
@@ -147,6 +147,6 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
      */
     redirectToIris(): void {
         const content = this.question();
-        this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
+        void this.router.navigate([this.channelSubTypeReferenceRouterLink], { queryParams: { irisQuestion: content } });
     }
 }

@@ -16,13 +16,15 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -90,6 +92,48 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should initialize', () => {
         expect(component).not.toBeNull();
+    });
+
+    describe('sidebar toggle sync', () => {
+        beforeEach(() => {
+            vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseTutorialGroupDetailContainerComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
+
+        it('should sync the collapse state and a working toggle into an activated tutorial lecture detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
+            const detail = Object.assign(Object.create(CourseLectureDetailsComponent.prototype), { setSidebarToggle });
+
+            component.onSubRouteActivate(detail);
+            fixture.detectChanges();
+
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
+        });
     });
 
     it('should use cached groups and lectures if available to compute correct sidebar data', async () => {
@@ -282,9 +326,12 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
 
 @Component({ selector: 'jhi-sidebar', template: '' })
 class MockSidebarComponent {
-    itemSelected = input<any>();
-    courseId = input<any>();
-    sidebarData = input<any>();
-    collapseState = input<any>();
-    sidebarItemAlwaysShow = input<any>();
+    itemSelected = input<boolean>();
+    courseId = input<number>();
+    sidebarData = input<SidebarData>();
+    collapseState = input<CollapseState>();
+    sidebarItemAlwaysShow = input<SidebarItemShowAlways>();
+    pageTitle = input<string>();
+    showSidebarToggle = input<boolean>();
+    isSidebarCollapsed = input<boolean>();
 }

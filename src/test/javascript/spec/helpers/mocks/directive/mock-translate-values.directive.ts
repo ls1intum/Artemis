@@ -1,6 +1,6 @@
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 
 @Directive({ selector: '[translateValues]' })
 export class MockTranslateValuesDirective {
-    @Input('translateValues') data: any;
+    data = input<any>(undefined, { alias: 'translateValues' });
 }

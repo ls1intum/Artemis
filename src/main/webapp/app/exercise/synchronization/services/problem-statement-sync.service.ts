@@ -350,7 +350,7 @@ export class ProblemStatementSyncService {
         if (!this.pendingInitialSync) {
             return;
         }
-        const textBeforeFinalize = this.yText?.toString() ?? '';
+        const textBeforeFinalize = this.yText?.toJSON() ?? '';
         const responses = this.pendingInitialSync.responses;
         if (responses.length) {
             const selected = responses.reduce((best, next) => {
@@ -387,7 +387,7 @@ export class ProblemStatementSyncService {
         // because even tho we sent the "seed" update, remote might have initialized with their own seed already
         // this ensures that remote will replace their seed with our seed
         this.flushQueuedFullContentRequests();
-        const finalContent = this.yText?.toString() ?? '';
+        const finalContent = this.yText?.toJSON() ?? '';
         const contentChangedDuringFinalize = textBeforeFinalize !== finalContent;
         const contentDivergedFromFallback = finalContent !== this.fallbackInitialContent;
         this.awaitingInitialSync = false;
