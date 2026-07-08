@@ -569,6 +569,45 @@ describe('ExamParticipationComponent', () => {
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
+        it('should update the exam schedule and end date when the start date changes (issue #13071)', () => {
+            const newStartDate = startDate.add(30, 'minutes');
+            const newEndDate = newStartDate.add(comp.studentExam().workingTime!, 'seconds');
+            const event = {
+                newWorkingTime: comp.studentExam().workingTime,
+                newStartDate,
+                newEndDate,
+            } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+
+            comp.initIndividualEndDates(startDate);
+
+            // The exam start/end must reflect the pushed schedule so the pre-start countdown and start-based visibility recompute.
+            expect(comp.exam().startDate!.isSame(newStartDate)).toBe(true);
+            expect(comp.exam().endDate!.isSame(newEndDate)).toBe(true);
+            // The individual end date must be derived from the NEW start, not the stale one captured on subscription.
+            expect(comp.individualStudentEndDate()).toEqual(newStartDate.add(comp.studentExam().workingTime!, 'seconds'));
+        });
+
+        it('should keep the exam dates untouched when the event carries no schedule, e.g. a test exam (issue #13071)', () => {
+            // A test-exam working time update omits the schedule (the exam dates are only its availability window). The
+            // exam's own dates must be preserved and the end date derived from the student's start captured on subscription.
+            const originalStartDate = dayjs('2022-02-21T22:00:00+01:00');
+            const originalEndDate = originalStartDate.add(2, 'hours');
+            comp.exam.set({ ...comp.exam(), startDate: originalStartDate, endDate: originalEndDate });
+            const event = {
+                newWorkingTime: comp.studentExam().workingTime,
+            } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+
+            comp.initIndividualEndDates(startDate);
+
+            // The exam's own start/end must not be overwritten with the (per-student) subscription start.
+            expect(comp.exam().startDate!.isSame(originalStartDate)).toBe(true);
+            expect(comp.exam().endDate!.isSame(originalEndDate)).toBe(true);
+            // The individual end date is derived from the start captured on subscription (the student's start for test exams).
+            expect(comp.individualStudentEndDate()).toEqual(startDate.add(comp.studentExam().workingTime!, 'seconds'));
+        });
+
         it('should correctly increase working time to next day', () => {
             const event = {
                 newWorkingTime: 9001,
