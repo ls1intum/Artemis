@@ -10,8 +10,15 @@
                     <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeStandardCategories"></b>
                 </li>
                 <li>
-                    <input class="ms-2 form-check-input" (change)="toggleNotIncludedInScoreExercises()" [checked]="currentlyHidingNotIncludedInScoreExercises()" type="checkbox" />
-                    <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"></span>
+                    <label>
+                        <input
+                            class="ms-2 form-check-input"
+                            (change)="toggleNotIncludedInScoreExercises()"
+                            [checked]="currentlyHidingNotIncludedInScoreExercises()"
+                            type="checkbox"
+                        />
+                        <span class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.hideNotIncludedInScoreExercises"></span>
+                    </label>
                 </li>
                 <li class="mt-1 mb-1">
                     <b class="ms-2" jhiTranslate="artemisApp.courseOverview.statistics.includeIndividualCategories"></b>
@@ -53,7 +60,7 @@
             <div class="row">
                 <div class="statistic-summary">
                     <div class="d-flex align-items-center">
-                        <h2 jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
+                        <h2 class="mb-0" jhiTranslate="artemisApp.courseOverview.statistics.totalScore"></h2>
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
                     <div class="row d-flex justify-content-center align-items-start">
