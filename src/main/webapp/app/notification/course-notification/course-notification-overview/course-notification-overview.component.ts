@@ -9,9 +9,9 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { combineLatest, fromEvent } from 'rxjs';
+import { firstValueFrom, from, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -116,16 +116,25 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
                     this.selectableSettingPresets.set(undefined);
                     this.selectedSettingPreset.set(undefined);
                 }),
-                switchMap((courseId) => combineLatest([this.courseNotificationService.getInfo(), this.courseNotificationSettingService.getSettingInfo(courseId, false)])),
+                switchMap((courseId) =>
+                    from(
+                        Promise.all([
+                            firstValueFrom(this.courseNotificationService.getInfo()),
+                            firstValueFrom(
+                                this.courseNotificationSettingService
+                                    .getSettingInfo(courseId, false)
+                                    .pipe(filter((value): value is CourseNotificationSettingInfo => value !== undefined)),
+                            ),
+                        ]).then(([info, settingInfo]) => ({ info, settingInfo })),
+                    ),
+                ),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe(([info, settingInfo]) => {
+            .subscribe(({ info, settingInfo }) => {
                 if (info.body) {
                     this.info = info.body;
                 }
-                if (settingInfo) {
-                    this.settingInfo = settingInfo;
-                }
+                this.settingInfo = settingInfo;
                 if (this.info && this.settingInfo) {
                     this.initializeCourseNotificationValues();
                 }

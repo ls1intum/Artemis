@@ -63,6 +63,12 @@ describe('CourseNotificationOverviewComponent', () => {
         return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
     };
 
+    const waitForPresetInitialization = async () => {
+        await vi.waitFor(() => {
+            expect(componentAsAny.selectableSettingPresets()).toEqual(mockNotificationSettingPresets);
+        });
+    };
+
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -127,6 +133,7 @@ describe('CourseNotificationOverviewComponent', () => {
 
         fixture.detectChanges();
         componentAsAny = component as any;
+        await waitForPresetInitialization();
     });
 
     it('should create', () => {
@@ -475,19 +482,26 @@ describe('CourseNotificationOverviewComponent', () => {
             expect(courseNotificationService.getInfo).toHaveBeenCalledOnce();
         });
 
-        it('should rebind setting and info subscriptions when courseId changes', () => {
+        it('should rebind setting and info subscriptions when courseId changes', async () => {
             const alternateSettingInfo: CourseNotificationSettingInfo = {
                 selectedPreset: 2,
                 notificationTypeChannels: { test: { PUSH: true, EMAIL: false, WEBAPP: true } },
             };
 
-            vi.mocked(courseNotificationSettingService.getSettingInfo).mockReturnValueOnce(of(alternateSettingInfo));
+            vi.mocked(courseNotificationSettingService.getSettingInfo).mockImplementation((courseId: number) => {
+                if (courseId === 202) {
+                    return of(alternateSettingInfo);
+                }
+                return of(mockSettingInfo);
+            });
 
             fixture.componentRef.setInput('courseId', 202);
             fixture.detectChanges();
 
-            expect(courseNotificationSettingService.getSettingInfo).toHaveBeenCalledWith(202, false);
-            expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[1]);
+            await vi.waitFor(() => {
+                expect(courseNotificationSettingService.getSettingInfo).toHaveBeenCalledWith(202, false);
+                expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[1]);
+            });
         });
 
         it('should initialize the selectable and selected presets once both responses are available', () => {
