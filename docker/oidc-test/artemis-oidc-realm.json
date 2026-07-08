@@ -51,6 +51,10 @@
       "firstName": "Administrator",
       "lastName": "Administrator",
       "email": "admin@localhost",
+      "groups": [
+        "artemis-admins",
+        "artemis-instructors"
+      ],
       "credentials": [
         {
           "type": "password",
