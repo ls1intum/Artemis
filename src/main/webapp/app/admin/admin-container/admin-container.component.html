@@ -1,34 +1,30 @@
-<div class="sidebar-wrapper">
-    <div class="vw-100 bg-body">
-        <div
-            class="layout-container vw-100"
-            [ngClass]="{
-                'container-closed': isNavbarCollapsed(),
-            }"
-        >
-            <div class="sidebar module-bg rounded-3" [class.collapsed]="isNavbarCollapsed()">
-                <jhi-admin-sidebar
-                    [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [localCIActive]="localCIActive()"
-                    [ltiEnabled]="ltiEnabled()"
-                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
-                    [atlasEnabled]="atlasEnabled()"
-                    [examEnabled]="examEnabled()"
-                    [passkeyEnabled]="passkeyEnabled()"
-                    [isSuperAdmin]="isSuperAdmin()"
-                    [irisEnabled]="irisEnabled()"
-                    (toggleCollapseState)="toggleCollapseState()"
-                />
-            </div>
+<div
+    class="flex w-full items-stretch overflow-x-hidden pr-2 h-[calc(100vh_-_var(--sidebar-header-footer-combined-height,105px)_-_15px_-_var(--system-notification-height,0px))]"
+    data-testid="admin-layout"
+>
+    <aside
+        class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-[64px] print:hidden"
+        [class]="isNavbarCollapsed() ? 'w-[64px]' : 'w-[220px]'"
+        data-testid="admin-sidebar-column"
+    >
+        <jhi-admin-sidebar
+            [isNavbarCollapsed]="isNavbarCollapsed()"
+            [localCIActive]="localCIActive()"
+            [ltiEnabled]="ltiEnabled()"
+            [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+            [atlasEnabled]="atlasEnabled()"
+            [examEnabled]="examEnabled()"
+            [passkeyEnabled]="passkeyEnabled()"
+            [isSuperAdmin]="isSuperAdmin()"
+            [irisEnabled]="irisEnabled()"
+            (toggleCollapseState)="toggleCollapseState()"
+        />
+    </aside>
 
-            <div class="layout-content">
-                <div class="admin-content-wrapper ms-2">
-                    <jhi-admin-title-bar />
-                    <div class="admin-body-container module-bg rounded-3 scrollable-content p-3">
-                        <router-outlet />
-                    </div>
-                </div>
-            </div>
+    <div class="ms-2 flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="admin-content-column">
+        <jhi-admin-title-bar />
+        <div class="admin-body module-bg flex-1 overflow-y-auto rounded-lg p-3" data-testid="admin-body">
+            <router-outlet />
         </div>
     </div>
 </div>

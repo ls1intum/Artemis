@@ -36,7 +36,7 @@ export class CategorySelectorPrimengComponent {
     readonly selectedCategories = output<ExerciseCategory[]>();
 
     categoryColors = DEFAULT_COLORS;
-    selectedCategory: ExerciseCategory;
+    selectedCategory!: ExerciseCategory; // set in openColorSelector() before the color selector emits onSelectedColor()
 
     /**
      * Suggestions shown in the p-autoComplete dropdown. Updated on every keystroke via {@link onComplete}.

@@ -43,7 +43,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
 
     settings = new CropperSettings();
     setImageMaxSizeRetries = 0;
-    moveStart: MoveStart;
+    moveStart!: MoveStart; // set in constructor via reset()
     loadedImage?: LoadedImage;
 
     readonly safeImgDataUrl = signal<SafeUrl | string>('');

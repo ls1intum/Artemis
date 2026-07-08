@@ -29,4 +29,22 @@ class PyrisPipelineExecutionSettingsDTOTest {
 
         assertThat(serialized).contains("\"supportLevel\":\"low\"");
     }
+
+    @Test
+    void serializesStreamResponseWhenEnabled() throws JsonProcessingException {
+        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low", true);
+
+        String serialized = objectMapper.writeValueAsString(dto);
+
+        assertThat(serialized).contains("\"streamResponse\":true");
+    }
+
+    @Test
+    void omitsStreamResponseWhenUnset() throws JsonProcessingException {
+        var dto = new PyrisPipelineExecutionSettingsDTO("token", null, "https://artemis.example", "default", "low");
+
+        String serialized = objectMapper.writeValueAsString(dto);
+
+        assertThat(serialized).doesNotContain("streamResponse");
+    }
 }

@@ -13,7 +13,7 @@ export class ProfileService {
     private browserFingerprintService = inject(BrowserFingerprintService);
 
     /** Internal mutable reference */
-    private profileInfo: ProfileInfo;
+    private profileInfo!: ProfileInfo; // set in loadProfileInfo(), called once by the app initializer before any read
 
     // Should only be called once by the app initializer
     public async loadProfileInfo(): Promise<void> {

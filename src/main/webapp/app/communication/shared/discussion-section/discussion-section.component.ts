@@ -64,7 +64,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     readonly content = viewChild<ElementRef>('itemsContainer');
 
     private ngUnsubscribe = new Subject<void>();
-    private previousScrollDistanceFromTop: number;
+    private previousScrollDistanceFromTop = 0;
     private page = 1;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;

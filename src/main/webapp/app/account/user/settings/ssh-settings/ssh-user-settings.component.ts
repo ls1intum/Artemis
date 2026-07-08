@@ -52,7 +52,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     readonly keyCount = signal(0);
     readonly isLoading = signal(true);
 
-    currentDate: dayjs.Dayjs;
+    currentDate = dayjs();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
