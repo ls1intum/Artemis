@@ -38,10 +38,10 @@ export class StatisticsGraphComponent {
     readonly chartTime = signal<string>(undefined!);
     // Data
     barChartLabels: string[] = [];
-    dataForSpanType: number[];
+    dataForSpanType: number[] = [];
 
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
-    tooltipTranslation: string;
+    tooltipTranslation = '';
     readonly yScaleMax = signal<number | undefined>(undefined);
 
     private readonly chartColors = inject(ChartColorService).resolvedColors(() => [GraphColors.DARK_BLUE]);

@@ -48,8 +48,8 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
-    faqs: Faq[];
-    course: Course;
+    faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
+    course!: Course; // set in ngOnInit() from the route data resolver
     readonly filteredFaqs = signal<Faq[]>([]);
     readonly existingCategories = signal<FaqCategory[]>([]);
     readonly courseId = signal<number>(undefined!);
@@ -59,7 +59,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    private routeDataSubscription: Subscription;
+    private routeDataSubscription?: Subscription;
 
     readonly activeFilters = signal(new Set<string>());
     searchInput = new BehaviorSubject<string>('');
@@ -86,7 +86,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
 
-    private profileInfoSubscription: Subscription;
+    private profileInfoSubscription?: Subscription;
 
     constructor() {
         this.predicate = 'id';
@@ -130,7 +130,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     private handleDeleteSuccess(faqId: number) {
-        this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
+        this.faqs = this.faqs?.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
         this.loadCourseFaqCategories(this.courseId());
     }
@@ -141,7 +141,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     private applyFilters(): void {
-        this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs));
+        this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs ?? []));
     }
 
     sortRows() {
@@ -222,7 +222,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     ingestFaqsInPyris() {
-        if (this.faqs.first()) {
+        if (this.faqs?.first()) {
             this.faqService.ingestFaqsInPyris(this.courseId()).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
                 error: () => {

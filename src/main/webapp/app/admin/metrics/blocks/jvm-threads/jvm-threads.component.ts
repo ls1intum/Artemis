@@ -1,5 +1,6 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { ButtonModule } from 'primeng/button';
 
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MetricsModalThreadsComponent } from '../metrics-modal-threads/metrics-modal-threads.component';
@@ -10,7 +11,8 @@ import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 @Component({
     selector: 'jhi-jvm-threads',
     templateUrl: './jvm-threads.component.html',
-    imports: [TranslateDirective, ProgressBarModule, DecimalPipe, MetricsModalThreadsComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, ProgressBarModule, ButtonModule, DecimalPipe, MetricsModalThreadsComponent],
 })
 export class JvmThreadsComponent {
     /** Thread data from parent */
