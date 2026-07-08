@@ -178,6 +178,7 @@
                 "sessions": "Sitzungen",
                 "login": "Anmelden",
                 "loginWithPasskey": "Mit einem Passkey anmelden",
+                "loginWithOidc": "Mit Universitätskonto anmelden",
                 "logout": "Abmelden",
                 "register": "Registrierung"
             },

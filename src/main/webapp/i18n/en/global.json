@@ -178,6 +178,7 @@
                 "sessions": "Sessions",
                 "login": "Sign in",
                 "loginWithPasskey": "Sign in with a passkey",
+                "loginWithOidc": "Sign in with University Account",
                 "logout": "Sign out",
                 "register": "Register"
             },
