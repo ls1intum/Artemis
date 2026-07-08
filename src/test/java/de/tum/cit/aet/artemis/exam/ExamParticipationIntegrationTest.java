@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
@@ -210,7 +211,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
 
         // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
         Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
@@ -227,7 +229,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
-        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
@@ -253,7 +255,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         assertThat(numberOfGeneratedParticipations).isEqualTo(12);
         // Fetch student exams
-        List<StudentExam> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
         Exercise[] exercises = examRepository.findAllExercisesWithDetailsByExamId(exam.getId()).toArray(Exercise[]::new);
@@ -272,7 +275,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
-        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamsDB).isEmpty();
 
         // Fetch participations
@@ -323,8 +326,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(1);
 
         // Ensure that the student exam of student2 was deleted
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(1).doesNotContain(studentExam2);
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(1).extracting(StudentExamDTO::id).doesNotContain(studentExam2.getId());
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
@@ -403,8 +407,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
 
         // Ensure that the student exam of student1 was deleted
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSize(2).doesNotContain(studentExam1);
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(2).extracting(StudentExamDTO::id).doesNotContain(studentExam1.getId());
 
         // Ensure that the participations of student1 were deleted
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student1.getId(),

@@ -77,7 +77,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -352,7 +354,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private void testAllPreAuthorize() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId(), HttpStatus.FORBIDDEN, StudentExam.class);
-        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.FORBIDDEN, StudentExamDTO.class);
     }
 
     @Test
@@ -364,8 +366,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamsForExam_asInstructor() throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
+        // measured baseline is 7 queries (auth + access checks + findByExamIdWithSessions); guards against an
+        // accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
+        List<StudentExamDTO> studentExams = assertThatDb(
+                () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams", HttpStatus.OK, StudentExamDTO.class))
+                .hasBeenCalledAtMostTimes(7);
         assertThat(studentExams).hasSize(2);
+        // the nested exam/user are intentionally omitted for this endpoint (see StudentExamDTO#of)
+        assertThat(studentExams).allSatisfy(dto -> {
+            assertThat(dto.exam()).isNull();
+            assertThat(dto.user()).isNull();
+        });
     }
 
     @Test
@@ -656,8 +667,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
-        List<StudentExam> response = request.getList("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExam.class);
+        // measured baseline is 7 queries (auth + access checks + findAllTestRunsByExamId); guards against an
+        // accidental N+1 regression (e.g. touching a lazy association per element) creeping into the DTO factory
+        List<StudentExamDTO> response = assertThatDb(
+                () -> request.getList("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExamDTO.class))
+                .hasBeenCalledAtMostTimes(7);
         assertThat(response).hasSize(2);
+        // the template reads user.name/user.id (see StudentExamDTO#withUser); the nested exam is intentionally omitted
+        assertThat(response).allSatisfy(dto -> {
+            assertThat(dto.user()).isNotNull();
+            assertThat(dto.exam()).isNull();
+        });
     }
 
     @Test
@@ -799,11 +819,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         int newWorkingTime = 180 * 60;
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         exam1 = examRepository.save(exam1);
-        StudentExam result = request.patchWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
-                HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        StudentExamDTO result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
+        // the client's processStudentExam/setAccessRightsForCourse need the nested exam + course
+        assertThat(result.exam()).isNotNull();
+        assertThat(result.exam().id()).isEqualTo(exam1.getId());
+        assertThat(result.exam().course()).isNotNull();
+        assertThat(result.exam().course().id()).isEqualTo(course1.getId());
+        // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
+        assertThat(result.user()).isNull();
     }
 
     @Test
@@ -813,14 +840,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         exam1 = examRepository.save(exam1);
         request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
-                newWorkingTime, StudentExam.class, HttpStatus.BAD_REQUEST);
+                newWorkingTime, StudentExamDTO.class, HttpStatus.BAD_REQUEST);
         // working time did not change
         var studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
 
         newWorkingTime = -10;
         request.patchWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time",
-                newWorkingTime, StudentExam.class, HttpStatus.BAD_REQUEST);
+                newWorkingTime, StudentExamDTO.class, HttpStatus.BAD_REQUEST);
         // working time did not change
         studentExamDB = studentExamRepository.findById(studentExam1.getId()).orElseThrow();
         assertThat(studentExamDB.getWorkingTime()).isEqualTo(studentExam1.getWorkingTime());
@@ -833,10 +860,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         int oldWorkingTime = studentExam1.getWorkingTime();
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
-        StudentExam result = request.patchWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime, StudentExam.class,
-                HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+        StudentExamDTO result = request.patchWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/working-time", newWorkingTime,
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
         assertThat(studentExamRepository.findById(studentExam1.getId()).orElseThrow().getWorkingTime()).isEqualTo(newWorkingTime);
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExam1.getId(), false);
@@ -861,10 +888,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExam1.setEndDate(ZonedDateTime.now().plusHours(1));
         testExam1 = examRepository.save(testExam1);
 
-        StudentExam result = request.patchWithResponseBody(
+        StudentExamDTO result = request.patchWithResponseBody(
                 "/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/working-time", newWorkingTime,
-                StudentExam.class, HttpStatus.OK);
-        assertThat(result.getWorkingTime()).isEqualTo(newWorkingTime);
+                StudentExamDTO.class, HttpStatus.OK);
+        assertThat(result.workingTime()).isEqualTo(newWorkingTime);
 
         var capturedEvent = (WorkingTimeUpdateEventDTO) captureExamLiveEventForId(studentExamForTestExam1.getId(), false);
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
@@ -2467,23 +2494,31 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private StudentExam createTestRun(Exam exam) throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        StudentExam testRun = new StudentExam();
-        testRun.setExercises(new ArrayList<>());
-
-        exam.getExerciseGroups().forEach(exerciseGroup -> testRun.getExercises().add(exerciseGroup.getExercises().iterator().next()));
-        testRun.setExam(exam);
-        testRun.setWorkingTime(6000);
-        testRun.setUser(instructor);
+        // the client builds this list by iterating the exam's exercise groups in order, picking one exercise per
+        // group; the order must be preserved end-to-end since StudentExam.exercises is an @OrderColumn list
+        List<Long> exerciseIds = exam.getExerciseGroups().stream().map(exerciseGroup -> exerciseGroup.getExercises().iterator().next().getId()).toList();
+        CreateTestRunDTO testRunConfiguration = new CreateTestRunDTO(exam.getId(), exerciseIds, 6000);
 
         var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
-        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", testRun, StudentExam.class,
-                HttpStatus.OK);
+        var newTestRun = request.postWithResponseBody("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
+                StudentExamDTO.class, HttpStatus.OK);
         var testRunsInDbAfter = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
         assertThat(testRunsInDbAfter).hasSize(testRunsInDbBefore.size() + 1);
-        assertThat(newTestRun.isTestRun()).isTrue();
-        assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
-        assertThat(newTestRun.getUser()).isEqualTo(instructor);
-        return newTestRun;
+        assertThat(newTestRun.testRun()).isTrue();
+        assertThat(newTestRun.workingTime()).isEqualTo(6000);
+        assertThat(newTestRun.user()).isNotNull();
+        assertThat(newTestRun.user().id()).isEqualTo(instructor.getId());
+        // the nested exam is intentionally omitted from this endpoint's response (see StudentExamDTO#withUser)
+        assertThat(newTestRun.exam()).isNull();
+
+        // reload from the repository: verifies actual persistence (not just the echoed response) and, since
+        // StudentExam.exercises is an @OrderColumn list, that the exact order of exerciseIds was preserved
+        StudentExam persistedTestRun = studentExamRepository.findByIdWithExercisesElseThrow(newTestRun.id());
+        assertThat(persistedTestRun.getExercises().stream().map(Exercise::getId).toList()).containsExactlyElementsOf(exerciseIds);
+        assertThat(persistedTestRun.getUser().getId()).isEqualTo(instructor.getId());
+        assertThat(persistedTestRun.getWorkingTime()).isEqualTo(6000);
+        assertThat(persistedTestRun.isTestRun()).isTrue();
+        return persistedTestRun;
     }
 
     @Test
@@ -2663,7 +2698,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null,
                 HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, HttpStatus.OK);
+        StudentExamDTO submitResponse = request.putWithResponseBody(
+                "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-submitted", null, StudentExamDTO.class,
+                HttpStatus.OK);
+        assertThat(submitResponse.id()).isEqualTo(studentExam.getId());
+        assertThat(submitResponse.submitted()).isTrue();
+        assertThat(submitResponse.submissionDate()).isNotNull();
+        // no exercise/user data leaks through this endpoint's response (see StudentExamDTO#of)
+        assertThat(submitResponse.exam()).isNull();
+        assertThat(submitResponse.user()).isNull();
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
         assertThat(studentExam.isSubmitted()).isTrue();
         assertThat(studentExam.getSubmissionDate()).isNotNull();
@@ -2678,7 +2721,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null,
                 HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, HttpStatus.OK);
+        StudentExamDTO unsubmitResponse = request.putWithResponseBody(
+                "/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/toggle-to-unsubmitted", null, StudentExamDTO.class,
+                HttpStatus.OK);
+        assertThat(unsubmitResponse.id()).isEqualTo(studentExam.getId());
+        assertThat(unsubmitResponse.submitted()).isFalse();
+        assertThat(unsubmitResponse.submissionDate()).isNull();
+        // no exercise/user data leaks through this endpoint's response (see StudentExamDTO#of)
+        assertThat(unsubmitResponse.exam()).isNull();
+        assertThat(unsubmitResponse.user()).isNull();
         studentExam = studentExamRepository.findById(studentExam.getId()).orElseThrow();
         assertThat(studentExam.isSubmitted()).isFalse();
         assertThat(studentExam.getSubmissionDate()).isNull();
@@ -2739,23 +2790,38 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamsForCoursePerUser_NoCourseAccess() throws Exception {
         examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
-        request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success() throws Exception {
         examUtilService.addStudentExamForTestExam(exam2, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        List<StudentExam> studentExamListReceived = request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamListReceived = request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamListReceived).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(studentExamListReceived).contains(studentExamForTestExam1, studentExamForTestExam2);
+        assertThat(studentExamListReceived).extracting(StudentExamDTO::id).contains(studentExamForTestExam1.getId(), studentExamForTestExam2.getId());
+        // the client reads exam.id/.course.id (setAccessRightsForCourse) and exam.workingTime/.testExam (working-time display)
+        StudentExamDTO dtoForTestExam1 = studentExamListReceived.stream().filter(dto -> dto.id() == studentExamForTestExam1.getId()).findFirst().orElseThrow();
+        StudentExamDTO dtoForTestExam2 = studentExamListReceived.stream().filter(dto -> dto.id() == studentExamForTestExam2.getId()).findFirst().orElseThrow();
+        assertThat(dtoForTestExam1.exam()).isNotNull();
+        assertThat(dtoForTestExam1.exam().id()).isEqualTo(testExam1.getId());
+        assertThat(dtoForTestExam2.exam()).isNotNull();
+        assertThat(dtoForTestExam2.exam().id()).isEqualTo(testExam2.getId());
+        assertThat(studentExamListReceived).allSatisfy(dto -> {
+            assertThat(dto.exam()).isNotNull();
+            assertThat(dto.exam().testExam()).isTrue();
+            assertThat(dto.exam().course()).isNotNull();
+            assertThat(dto.exam().course().id()).isEqualTo(course1.getId());
+            // user is intentionally omitted from this endpoint's response (see StudentExamDTO#withExam)
+            assertThat(dto.user()).isNull();
+        });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success_noStudentExams() throws Exception {
         course2 = courseUtilService.addEmptyCourse();
-        List<StudentExam> studentExamListReceived = request.getList("/api/exam/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
+        List<StudentExamDTO> studentExamListReceived = request.getList("/api/exam/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExamDTO.class);
         assertThat(studentExamListReceived).isEmpty();
     }
 

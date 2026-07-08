@@ -712,11 +712,13 @@ public class StudentExamService {
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
-     * @param testRunConfiguration the configured studentExam
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return the created testRun studentExam
      */
-    public StudentExam createTestRun(StudentExam testRunConfiguration) {
-        StudentExam testRun = generateTestRun(testRunConfiguration);
+    public StudentExam createTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
+        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
         setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
         return testRun;
     }
@@ -724,14 +726,16 @@ public class StudentExamService {
     /**
      * Create TestRun student exam based on the configuration provided.
      *
-     * @param testRunConfiguration Contains the exercises and working time for this test run
+     * @param exam        the exam the test run belongs to
+     * @param exercises   the exercises to include in the test run, in the exact order they should be persisted
+     * @param workingTime the working time of the test run in seconds
      * @return The created test run
      */
-    private StudentExam generateTestRun(StudentExam testRunConfiguration) {
+    private StudentExam generateTestRun(Exam exam, List<Exercise> exercises, Integer workingTime) {
         StudentExam testRun = new StudentExam();
-        testRun.setExercises(testRunConfiguration.getExercises());
-        testRun.setExam(testRunConfiguration.getExam());
-        testRun.setWorkingTime(testRunConfiguration.getWorkingTime());
+        testRun.setExercises(exercises);
+        testRun.setExam(exam);
+        testRun.setWorkingTime(workingTime);
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);

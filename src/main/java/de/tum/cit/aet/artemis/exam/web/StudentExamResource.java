@@ -57,6 +57,8 @@ import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -71,6 +73,8 @@ import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
@@ -105,6 +109,8 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamService examService;
@@ -128,8 +134,9 @@ public class StudentExamResource {
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
-            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository, StudentExamLiveEventService studentExamLiveEventService) {
+            ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
+            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository,
+            StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -140,6 +147,7 @@ public class StudentExamResource {
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.examRepository = examRepository;
+        this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
@@ -172,18 +180,18 @@ public class StudentExamResource {
      *
      * @param courseId the course to which the student exams belong to
      * @param examId   the exam to which the student exams belong to
-     * @return the ResponseEntity with status 200 (OK) and a set of student exams. The set can be empty
+     * @return the ResponseEntity with status 200 (OK) and a list of student exams (without the nested exam). The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<StudentExam>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> getStudentExamsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all student exams for exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var studentExams = studentExamRepository.findByExamIdWithSessions(examId);
-        // reduce payload
-        studentExams.forEach(studentExam -> studentExam.setExam(null));
-        return ResponseEntity.ok(studentExams);
+        // reduce payload: the nested exam is intentionally omitted (see StudentExamDTO#of)
+        List<StudentExamDTO> studentExamDTOs = studentExams.stream().map(StudentExamDTO::of).toList();
+        return ResponseEntity.ok(studentExamDTOs);
     }
 
     /**
@@ -193,17 +201,18 @@ public class StudentExamResource {
      * @param examId        the exam to which the student exams belong to
      * @param studentExamId the id of the student exam to find
      * @param workingTime   the new working time in seconds
-     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam (including its nested exam and course) as body
      */
     @PatchMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamDTO> updateWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody Integer workingTime) {
         log.debug("REST request to update the working time of student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        return ResponseEntity.ok(studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime));
+        StudentExam studentExam = studentExamLiveEventService.updateWorkingTime(examId, studentExamId, workingTime);
+        return ResponseEntity.ok(StudentExamDTO.withExam(studentExam));
     }
 
     /**
@@ -431,17 +440,18 @@ public class StudentExamResource {
      * Retrieves all StudentExams for test exams of one Course for the current user
      *
      * @param courseId the course to which the student exam belongs to
-     * @return all StudentExams for test exam for the specified course and user
+     * @return all StudentExams (each including its nested exam and course) for test exam for the specified course and user
      */
     @GetMapping("courses/{courseId}/test-exams-per-user")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
+    public ResponseEntity<List<StudentExamDTO>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
         List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+        List<StudentExamDTO> studentExamDTOs = studentExamList.stream().map(StudentExamDTO::withExam).toList();
 
-        return ResponseEntity.ok(studentExamList);
+        return ResponseEntity.ok(studentExamDTOs);
     }
 
     /**
@@ -558,17 +568,18 @@ public class StudentExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the list of test runs
+     * @return the list of test runs (each including its nested user)
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentExam>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> findAllTestRunsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to find all test runs for exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
-        return ResponseEntity.ok(testRuns);
+        List<StudentExamDTO> testRunDTOs = testRuns.stream().map(StudentExamDTO::withUser).toList();
+        return ResponseEntity.ok(testRunDTOs);
     }
 
     /**
@@ -576,20 +587,25 @@ public class StudentExamResource {
      *
      * @param courseId             the id of the course
      * @param examId               the id of the exam
-     * @param testRunConfiguration the desired student exam configuration for the test run
-     * @return the created test run student exam
+     * @param testRunConfiguration the desired exam id, exercise ids (in persistence order) and working time for the test run
+     * @return the created test run student exam (including its nested user), consistent with {@link #findAllTestRunsForExam}
      */
     @PostMapping({ "courses/{courseId}/exams/{examId}/test-runs", "courses/{courseId}/exams/{examId}/test-run" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
+    public ResponseEntity<StudentExamDTO> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody CreateTestRunDTO testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
-        if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
+        if (testRunConfiguration.examId() != examId) {
             throw new BadRequestException();
         }
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        StudentExam testRun = studentExamService.createTestRun(testRunConfiguration);
-        return ResponseEntity.ok(testRun);
+        Exam exam = examRepository.findByIdElseThrow(examId);
+        List<Long> exerciseIds = testRunConfiguration.exerciseIds() != null ? testRunConfiguration.exerciseIds() : List.of();
+        // preserve the exact order of exerciseIds: StudentExam.exercises is an @OrderColumn list
+        List<Exercise> exercises = exerciseIds.stream().map(exerciseRepository::findByIdElseThrow).toList();
+
+        StudentExam testRun = studentExamService.createTestRun(exam, exercises, testRunConfiguration.workingTime());
+        return ResponseEntity.ok(StudentExamDTO.withUser(testRun));
     }
 
     /**
@@ -790,7 +806,7 @@ public class StudentExamResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamDTO> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
@@ -812,7 +828,7 @@ public class StudentExamResource {
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        return ResponseEntity.ok(StudentExamDTO.of(studentExamRepository.save(studentExam)));
     }
 
     /**
@@ -827,7 +843,7 @@ public class StudentExamResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted")
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamDTO> unsubmitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         User instructor = userRepository.getUser();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -849,7 +865,7 @@ public class StudentExamResource {
                 "studentExamId=" + studentExamId);
         auditEventRepository.add(auditEvent);
 
-        return ResponseEntity.ok(studentExamRepository.save(studentExam));
+        return ResponseEntity.ok(StudentExamDTO.of(studentExamRepository.save(studentExam)));
     }
 
     /**

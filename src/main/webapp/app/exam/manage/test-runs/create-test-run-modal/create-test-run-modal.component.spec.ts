@@ -7,7 +7,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -77,10 +77,10 @@ describe('Create Test Run Modal Component', () => {
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
             expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-            const testRun = dialogRefCloseSpy.mock.calls[0][0] as StudentExam;
+            const testRun = dialogRefCloseSpy.mock.calls[0][0] as CreateTestRunDTO;
             expect(testRun).not.toBeNull();
-            expect(testRun.exam).toEqual(exam);
-            expect(testRun.exercises).toContain(exercise);
+            expect(testRun.examId).toBe(exam.id);
+            expect(testRun.exerciseIds).toEqual([exercise.id]);
             expect(testRun.workingTime).toBe(1800);
         });
     });

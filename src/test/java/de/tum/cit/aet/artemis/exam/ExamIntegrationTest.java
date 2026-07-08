@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -320,9 +321,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     private void verifyStudentsExamAndExercises(Exam exam) throws Exception {
-        List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        verifyStudentExams(studentExams, exam.getExamUsers().size());
-        verifyStudentExamsExercises(studentExams, exam.getNumberOfExercisesInExam());
+        List<StudentExamDTO> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK,
+                StudentExamDTO.class);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        for (StudentExamDTO studentExam : studentExams) {
+            assertThat(studentExam.workingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
+        }
+        verifyStudentExamsExercises(studentExams.stream().map(StudentExamDTO::id).toList(), exam.getNumberOfExercisesInExam());
     }
 
     private void verifyStudentExams(List<StudentExam> studentExams, int expectedNumberOfStudentExams) {
@@ -332,8 +337,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
     }
 
-    private void verifyStudentExamsExercises(List<StudentExam> studentExams, int expected) {
-        List<Long> ids = studentExams.stream().map(StudentExam::getId).toList();
+    private void verifyStudentExamsExercises(List<Long> ids, int expected) {
         List<StudentExam> studentExamsWithExercises = studentExamRepository.findAllWithEagerExercisesById(ids);
         for (var studentExam : studentExamsWithExercises) {
             assertThat(studentExam.getExercises()).hasSize(expected);
