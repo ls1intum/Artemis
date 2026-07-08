@@ -3,9 +3,9 @@ import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submiss
 /**
  * A payload for a submission patch. It contains the patch and the sender of the patch.
  */
-export class SubmissionPatchPayload {
-    public submissionPatch: SubmissionPatch;
-    public sender: string;
+export interface SubmissionPatchPayload {
+    submissionPatch: SubmissionPatch;
+    sender: string;
 }
 
 /**

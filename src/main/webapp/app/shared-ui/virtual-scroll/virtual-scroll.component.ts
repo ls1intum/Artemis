@@ -94,11 +94,11 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     public endIndex = 0;
 
-    scrollUnListener: () => void;
-    focusInUnListener: () => void;
+    scrollUnListener?: () => void;
+    focusInUnListener?: () => void;
 
-    screenHeight: number;
-    windowScrollTop: number;
+    screenHeight!: number; // set in constructor via getScreenSize()
+    windowScrollTop = 0;
 
     constructor() {
         this.getScreenSize();

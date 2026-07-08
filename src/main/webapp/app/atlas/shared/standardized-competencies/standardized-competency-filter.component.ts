@@ -2,12 +2,14 @@ import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-filter',
     templateUrl: './standardized-competency-filter.component.html',
-    imports: [FormsModule, TranslateDirective],
+    imports: [FormsModule, InputTextModule, SelectModule, TranslateDirective],
 })
 export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy {
     competencyTitleFilter = input<string>('');
@@ -33,7 +35,10 @@ export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy 
         this.titleFilterSubject.next(value);
     }
 
-    onKnowledgeAreaChange(value: KnowledgeAreaDTO | undefined): void {
-        this.knowledgeAreaFilterChange.emit(value);
+    onKnowledgeAreaChange(id: number | undefined): void {
+        // The p-select binds the knowledge area id (optionValue) — primitive matching reliably resolves the
+        // selected option's label, unlike object binding. Map the id back to the DTO the parent filter expects.
+        const knowledgeArea = id === undefined ? undefined : this.knowledgeAreasForSelect().find((ka) => ka.id === id);
+        this.knowledgeAreaFilterChange.emit(knowledgeArea);
     }
 }

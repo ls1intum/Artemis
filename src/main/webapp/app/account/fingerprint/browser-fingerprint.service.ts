@@ -3,6 +3,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 /**
  * Service for generating and managing browser fingerprints and instance identifiers.
@@ -87,7 +88,7 @@ export class BrowserFingerprintService {
 
         if (!storedInstanceId) {
             // Generate a new UUID for this browser instance
-            storedInstanceId = window.crypto.randomUUID();
+            storedInstanceId = generateUuid();
             this.localStorageService.store<string>(this.INSTANCE_STORAGE_KEY, storedInstanceId);
         }
 
@@ -103,7 +104,7 @@ export class BrowserFingerprintService {
         let storedSessionId = this.sessionStorageService.retrieve<string>(this.SESSION_STORAGE_KEY);
 
         if (!storedSessionId) {
-            storedSessionId = window.crypto.randomUUID();
+            storedSessionId = generateUuid();
             this.sessionStorageService.store<string>(this.SESSION_STORAGE_KEY, storedSessionId);
         }
 

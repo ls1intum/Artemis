@@ -28,8 +28,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 
 class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
@@ -130,8 +129,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String jobToken = pyrisWebhookService.addFaq(faq1);
-        PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FINISHED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
@@ -143,8 +141,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String jobToken = pyrisWebhookService.deleteFaq(faq1);
-        PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FINISHED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -156,9 +153,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String jobToken = pyrisWebhookService.addFaq(faq1);
-        PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
-        PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.RUNNING, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
@@ -171,9 +166,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
         String jobToken = pyrisWebhookService.deleteFaq(faq1);
-        PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.", false, null);
-        PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.RUNNING, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
@@ -186,8 +179,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
 
         String jobToken = pyrisWebhookService.deleteFaq(faq1);
-        PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -199,8 +191,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         activateIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String jobToken = pyrisWebhookService.addFaq(faq1);
-        PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
         request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
@@ -213,8 +204,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
         String chatJobToken = pyrisJobService.addChatJob(123L, 123L, null, null);
-        PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);
@@ -229,8 +219,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         String newJobToken = pyrisJobService.addFaqIngestionWebhookJob(123L, faq1.getId());
         String chatJobToken = pyrisJobService.addChatJob(123L, 123L, null, null);
-        PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.", false, null);
-        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
+        PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", PyrisRunState.FAILED, null, faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);

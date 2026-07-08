@@ -39,7 +39,7 @@ export class CourseManagementStatisticsComponent implements OnDestroy {
 
     private paramSub: Subscription;
     private dataSub: Subscription;
-    private statisticsSub: Subscription;
+    private statisticsSub?: Subscription;
 
     readonly courseId = signal<number | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);

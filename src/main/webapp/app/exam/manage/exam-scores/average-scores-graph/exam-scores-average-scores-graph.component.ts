@@ -39,8 +39,8 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     averageScores = input.required<AggregatedExerciseGroupResult>();
     course = input.required<Course>();
 
-    courseId: number;
-    examId: number;
+    courseId!: number; // set in ngOnInit() from route params
+    examId!: number; // set in ngOnInit() from route params
 
     /** One entry per bar: the exercise group average followed by the exercise averages. */
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
