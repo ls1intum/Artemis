@@ -26,6 +26,7 @@ import dart from 'highlight.js/lib/languages/dart';
 import diff from 'highlight.js/lib/languages/diff';
 import dockerfile from 'highlight.js/lib/languages/dockerfile';
 import go from 'highlight.js/lib/languages/go';
+import groovy from 'highlight.js/lib/languages/groovy';
 import haskell from 'highlight.js/lib/languages/haskell';
 import ini from 'highlight.js/lib/languages/ini';
 import java from 'highlight.js/lib/languages/java';
@@ -42,6 +43,7 @@ import python from 'highlight.js/lib/languages/python';
 import r from 'highlight.js/lib/languages/r';
 import ruby from 'highlight.js/lib/languages/ruby';
 import rust from 'highlight.js/lib/languages/rust';
+import scala from 'highlight.js/lib/languages/scala';
 import scss from 'highlight.js/lib/languages/scss';
 import sql from 'highlight.js/lib/languages/sql';
 import swift from 'highlight.js/lib/languages/swift';
@@ -66,6 +68,7 @@ const languages = {
     diff,
     dockerfile,
     go,
+    groovy,
     haskell,
     ini,
     java,
@@ -82,6 +85,7 @@ const languages = {
     r,
     ruby,
     rust,
+    scala,
     scss,
     sql,
     swift,

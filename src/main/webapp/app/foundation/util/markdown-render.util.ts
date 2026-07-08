@@ -15,7 +15,13 @@ import type { PluginSimple } from 'markdown-it';
 let markdownModulePromise: Promise<typeof import('app/foundation/util/markdown.conversion.util')> | undefined;
 
 function loadMarkdownModule(): Promise<typeof import('app/foundation/util/markdown.conversion.util')> {
-    return (markdownModulePromise ??= import('app/foundation/util/markdown.conversion.util'));
+    return (markdownModulePromise ??= import('app/foundation/util/markdown.conversion.util').catch((error) => {
+        // Do not memoize a rejected import: a transient failure (e.g. a network blip fetching the chunk)
+        // would otherwise be cached and blank out every markdown render for the rest of the session.
+        // Clearing the cache lets the next render retry the import.
+        markdownModulePromise = undefined;
+        throw error;
+    }));
 }
 
 /**
