@@ -9,7 +9,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
@@ -18,6 +18,11 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
 
 describe('KnowledgeAreaEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -59,9 +64,14 @@ describe('KnowledgeAreaEditComponent', () => {
                     FaIconComponent,
                     MockComponent(ButtonComponent),
                     MockDirective(MarkdownDirective),
+                    MockPipe(ArtemisTranslatePipe),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
+                    MockModule(ButtonModule),
+                    MockModule(InputTextModule),
+                    MockModule(SelectModule),
+                    MockModule(MessageModule),
                 ],
             },
         });
@@ -181,9 +191,9 @@ describe('KnowledgeAreaEditComponent', () => {
         componentFixture.detectChanges();
         expect(component.form.controls.parentId.invalid).toBe(false);
 
-        const select = componentFixture.debugElement.query(By.css('#knowledge-area-select')).nativeElement;
-        select.value = select.options[newParentId].value;
-        select.dispatchEvent(new Event('change'));
+        // Drive the parentId control directly (the validator is the behavior under test, not the select widget)
+        component.form.controls.parentId.setValue(newParentId);
+        component.form.controls.parentId.markAsDirty();
         componentFixture.detectChanges();
 
         expect(component.form.controls.parentId.value).toEqual(newParentId);

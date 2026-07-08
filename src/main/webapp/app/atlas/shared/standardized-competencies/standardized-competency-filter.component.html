@@ -1,22 +1,32 @@
-<div class="card">
-    <div class="card-header">
+<div class="rounded-lg border border-surface">
+    <div class="border-b border-surface px-3 py-2">
         <h5 class="mb-0" jhiTranslate="artemisApp.standardizedCompetency.manage.filter"></h5>
     </div>
-    <div class="card-body row pb-0">
-        <div class="form-group col">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3">
+        <div class="flex flex-col gap-1">
             <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-            <input id="title-filter" class="form-control" [ngModel]="competencyTitleFilter()" (ngModelChange)="onTitleChange($event)" />
+            <input id="title-filter" pInputText [ngModel]="competencyTitleFilter()" (ngModelChange)="onTitleChange($event)" />
         </div>
-        <div class="form-group col">
+        <div class="flex flex-col gap-1">
             <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <select [ngModel]="knowledgeAreaFilter()" (ngModelChange)="onKnowledgeAreaChange($event)" class="form-select" id="knowledge-area-filter">
-                <option [ngValue]="undefined"></option>
-                @for (knowledgeArea of knowledgeAreasForSelect(); track knowledgeArea.id) {
-                    <option [ngValue]="knowledgeArea">
-                        {{ knowledgeArea.title }}
-                    </option>
-                }
-            </select>
+            <!--
+                Only create the p-select once options are loaded. PrimeNG's Select `label` computed reads the
+                selected value's signal only inside its options.findIndex() loop; if the select is first
+                rendered while the (async-loaded) options are empty, that loop never runs, the value signal is
+                never tracked, and the label is frozen empty — the selected area would never display.
+            -->
+            @if (knowledgeAreasForSelect().length) {
+                <p-select
+                    inputId="knowledge-area-filter"
+                    [ngModel]="knowledgeAreaFilter()?.id"
+                    (ngModelChange)="onKnowledgeAreaChange($event)"
+                    [options]="knowledgeAreasForSelect()"
+                    optionLabel="title"
+                    optionValue="id"
+                    [showClear]="true"
+                    appendTo="body"
+                />
+            }
         </div>
     </div>
 </div>

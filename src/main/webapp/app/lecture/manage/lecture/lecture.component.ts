@@ -75,7 +75,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
     readonly filteredLectures = signal<Lecture[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

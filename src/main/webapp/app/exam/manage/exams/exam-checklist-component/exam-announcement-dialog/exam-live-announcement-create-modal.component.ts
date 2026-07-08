@@ -31,8 +31,8 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
 
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
-    courseId: number;
-    examId: number;
+    courseId!: number; // set in ngOnInit() from dialog config data
+    examId!: number; // set in ngOnInit() from dialog config data
 
     readonly textContent = signal<string>(undefined!);
     html?: SafeHtml;

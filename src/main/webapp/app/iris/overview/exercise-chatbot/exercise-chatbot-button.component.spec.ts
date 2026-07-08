@@ -16,7 +16,6 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-c
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -25,6 +24,7 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
+import { IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('ExerciseChatbotButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -86,7 +86,15 @@ describe('ExerciseChatbotButtonComponent', () => {
                     provide: TranslateService,
                     useValue: {
                         get: vi.fn().mockReturnValue(of('')),
-                        instant: vi.fn((key: string) => key),
+                        instant: vi.fn((key: string) => {
+                            if (key === 'artemisApp.iris.activities.lecture_content_retrieval') {
+                                return 'Lecture search';
+                            }
+                            if (key === 'artemisApp.iris.thinking') {
+                                return 'Thinking...';
+                            }
+                            return key;
+                        }),
                         getCurrentLang: vi.fn().mockReturnValue('en'),
                         onTranslationChange: new Subject(),
                         onLangChange: new Subject(),
@@ -284,25 +292,28 @@ describe('ExerciseChatbotButtonComponent', () => {
         });
     });
 
-    describe('stage display name', () => {
-        it('should show rotation label when stage message is empty', async () => {
-            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
+    describe('processing display name', () => {
+        it('should show the current running activity label', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.RUNNING });
+            chatService.activities.next([{ id: 'act-1', kind: IrisActivityKind.TOOL, name: 'lecture_content_retrieval', state: IrisActivityState.RUNNING }]);
             await fixture.whenStable();
 
-            expect(component.displayName()).toBe('artemisApp.iris.stages.thinking');
+            expect(component.displayName()).toBe('Lecture search');
             expect(component.isProcessing()).toBe(true);
         });
 
-        it('should show stage message when provided', async () => {
-            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: 'Checking info', internal: false }]);
+        it('should show thinking when awaiting an answer without a running activity', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.RUNNING });
+            chatService.activities.next([]);
             await fixture.whenStable();
 
-            expect(component.displayName()).toBe('Checking info');
+            expect(component.displayName()).toBe('Thinking...');
             expect(component.isProcessing()).toBe(true);
         });
 
-        it('should return empty string when no active stage', async () => {
-            chatService.stages.next([{ name: 'Done Stage', state: IrisStageStateDTO.DONE, weight: 10, message: '', internal: false }]);
+        it('should return empty string when no answer is pending', async () => {
+            chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
+            chatService.activities.next([]);
             await fixture.whenStable();
 
             expect(component.displayName()).toBe('');

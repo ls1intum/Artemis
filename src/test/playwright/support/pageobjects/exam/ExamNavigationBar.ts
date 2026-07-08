@@ -22,6 +22,17 @@ export class ExamNavigationBar {
      * we reload once and try again — typically recovers within one round trip.
      */
     async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
+        // Fail loudly and legibly if the title is missing. Passing undefined to getByText() throws a
+        // cryptic "Cannot read properties of undefined (reading 'unicode')" TypeError from deep inside
+        // Playwright, which previously masked the real cause: an exercise whose exerciseGroup.title was
+        // not populated (see ExerciseAPIRequests.withKnownExerciseGroup). A clear message keeps any
+        // future regression diagnosable instead of being mislabelled as generic flakiness.
+        if (!exerciseGroupTitle) {
+            throw new Error(
+                `openOrSaveExerciseByTitle was called with an empty exercise group title (got: ${JSON.stringify(exerciseGroupTitle)}). ` +
+                    'The created exercise likely did not carry its exerciseGroup.title; check the exercise setup in ExerciseAPIRequests.',
+            );
+        }
         const exerciseLink = this.page.getByText(exerciseGroupTitle).nth(0);
         const visibleWithin = async (timeout: number): Promise<boolean> =>
             exerciseLink

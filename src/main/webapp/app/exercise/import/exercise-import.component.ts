@@ -51,7 +51,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly isCourseFilter = signal(true);
     readonly isExamFilter = signal(true);
 
-    titleKey: string;
+    titleKey?: string;
 
     constructor() {
         // The exercise import component does not know yet which paging service to use

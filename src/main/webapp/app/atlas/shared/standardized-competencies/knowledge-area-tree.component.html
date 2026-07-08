@@ -1,20 +1,27 @@
-<p-tree [value]="nodes()" class="card w-100 knowledge-area-tree">
-    <!-- Knowledge-area node: PrimeNG resolves this template by the node's `type` (= 'knowledgeArea'). -->
+<p-tree
+    class="block w-full"
+    styleClass="w-full"
+    [pt]="{ nodeContent: { class: 'bg-surface-0 dark:bg-surface-900' } }"
+    [value]="nodes()"
+    (onNodeExpand)="onNodeExpand($event.node)"
+    (onNodeCollapse)="onNodeCollapse($event.node)"
+    data-testid="knowledge-area-tree"
+>
     <ng-template let-node pTemplate="knowledgeArea">
-        <div class="d-flex align-items-center knowledge-area-node">
-            <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
-            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
-            <!-- Base the "empty" label on the raw domain arrays, not the (filtered) tree-node children: a knowledge area whose
-                 competencies are merely hidden by an active title/area filter is not empty and must not show this label. -->
-            @if (!node.data.children?.length && !node.data.competencies?.length) {
-                <h6 class="mb-0 ms-2 text-muted" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
-            }
+        <div class="flex items-center" data-testid="knowledge-area-node">
+            <h5 class="mb-0 me-2 clickable" (click)="toggle(node.data)">{{ node.data.title }}</h5>
+            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
         </div>
     </ng-template>
-    <!-- Competency leaf node: resolved by the node's `type` (= 'competency'). -->
     <ng-template let-node pTemplate="competency">
-        <div class="d-flex align-items-center competency-node">
-            <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: node.data, knowledgeArea: node.parent?.data }" />
+        <div class="flex items-center" data-testid="competency-node">
+            <ng-container
+                [ngTemplateOutlet]="competencyTemplate() ?? null"
+                [ngTemplateOutletContext]="{ competency: node.data.competency, knowledgeArea: node.data.knowledgeArea }"
+            />
         </div>
+    </ng-template>
+    <ng-template pTemplate="emptyKnowledgeArea">
+        <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
     </ng-template>
 </p-tree>

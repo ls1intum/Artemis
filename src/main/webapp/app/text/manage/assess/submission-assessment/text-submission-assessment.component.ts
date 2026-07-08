@@ -104,14 +104,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * Non-reset properties:
      * These properties are not reset on purpose, as they cannot change between assessments.
      */
-    private cancelConfirmationText: string;
+    private cancelConfirmationText!: string; // set in constructor from the (already-loaded) translation before cancel() reads it
 
     // ExerciseId is updated from Route Subscription directly.
-    exerciseId: number;
-    courseId: number;
+    exerciseId!: number; // set in ngOnInit() from the route paramMap before any read
+    courseId!: number; // set in ngOnInit() from the route paramMap before any read
     readonly course = signal<Course | undefined>(undefined);
     examId = 0;
-    exerciseGroupId: number;
+    exerciseGroupId!: number; // set in ngOnInit() from the route paramMap in exam mode before it is read
     readonly exerciseDashboardLink = signal<string[]>([]);
     isExamMode = false;
 
