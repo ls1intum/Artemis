@@ -228,6 +228,11 @@ export class CourseManagementExercisesComponent implements OnInit {
                 // groups for editors; tutors see the plain exercise list without groups (and avoid a 403 on load).
                 if (loadedCourse?.isAtLeastEditor) {
                     this.loadGroupsFromServer(courseId);
+                } else {
+                    // Tutors have no group data for this course; clear any groups left over from a previously shown
+                    // (editor) course so they are not rendered against this course's exercises when Angular reuses the
+                    // component instance across a course switch.
+                    this.groups.set([]);
                 }
                 this.rebuildCards();
                 this.loaded.set(true);

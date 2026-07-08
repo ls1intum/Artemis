@@ -127,6 +127,21 @@ describe('Course Management Exercises Component', () => {
         expect(groupsSpy).not.toHaveBeenCalled();
     });
 
+    it('should clear previously loaded groups when a reused component loads a non-editor course', () => {
+        // Simulate group state left over from a previously shown editor course.
+        comp.groups.set([{ id: 10, title: 'G', exercises: [] }]);
+        course.isAtLeastEditor = false;
+        const groupsSpy = vi.spyOn(variantGroupService, 'getGroupsForCourse');
+
+        comp.ngOnInit();
+
+        expect(groupsSpy).not.toHaveBeenCalled();
+        expect(comp.groups()).toEqual([]);
+        // The group view must not surface the stale group as a card / selector for the new course.
+        comp.onViewChange('group');
+        expect(comp.cards().every((card) => card.group === undefined)).toBe(true);
+    });
+
     it('should mark itself loaded without exercises when the route has no course', () => {
         (parentRoute as any).data = of({});
         comp.ngOnInit();
