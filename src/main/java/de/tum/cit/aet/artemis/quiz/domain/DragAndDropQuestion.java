@@ -247,6 +247,15 @@ public class DragAndDropQuestion extends QuizQuestion {
      * @return this question for fluent chaining
      */
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping mapping) {
+        Long dragItemId = mapping.getDragItem() != null ? mapping.getDragItem().getId() : null;
+        Long dropLocationId = mapping.getDropLocation() != null ? mapping.getDropLocation().getId() : null;
+        // Skip a duplicate mapping for the same (drag item, drop location) pair: the former Set<DragAndDropMapping> storage deduplicated by id, so preserve that behavior against a
+        // request that sends the same pair twice.
+        boolean alreadyMapped = dndContent().getCorrectMappings().stream()
+                .anyMatch(entry -> Objects.equals(entry.getDragItemId(), dragItemId) && Objects.equals(entry.getDropLocationId(), dropLocationId));
+        if (alreadyMapped) {
+            return this;
+        }
         if (mapping.getId() == null) {
             mapping.setId(nextComponentId());
         }
@@ -265,6 +274,15 @@ public class DragAndDropQuestion extends QuizQuestion {
         Long dropLocationId = mapping.getDropLocation() != null ? mapping.getDropLocation().getId() : null;
         dndContent().getCorrectMappings().removeIf(entry -> Objects.equals(entry.getDragItemId(), dragItemId) && Objects.equals(entry.getDropLocationId(), dropLocationId));
         return this;
+    }
+
+    /**
+     * Removes correct-mapping entries whose drag item or drop location no longer exists on this question (e.g. after a component was deleted during re-evaluation). Keeps the
+     * stored
+     * content free of orphan mappings so {@link #isValid()} / {@code nextComponentId()} stay accurate and the JSON does not grow across repeated re-evaluations.
+     */
+    public void removeOrphanCorrectMappings() {
+        dndContent().getCorrectMappings().removeIf(entry -> findDragItemById(entry.getDragItemId()) == null || findDropLocationById(entry.getDropLocationId()) == null);
     }
 
     private DragAndDropCorrectMapping toEntry(DragAndDropMapping mapping) {

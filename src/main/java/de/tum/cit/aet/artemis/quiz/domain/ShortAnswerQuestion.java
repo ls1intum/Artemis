@@ -217,6 +217,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
+        Long spotId = shortAnswerMapping.getSpot() != null ? shortAnswerMapping.getSpot().getId() : null;
+        Long solutionId = shortAnswerMapping.getSolution() != null ? shortAnswerMapping.getSolution().getId() : null;
+        // Skip a duplicate mapping for the same (spot, solution) pair: the former Set<ShortAnswerMapping> storage deduplicated by id, so preserve that behavior against a request
+        // that
+        // sends the same pair twice.
+        boolean alreadyMapped = saContent().getCorrectMappings().stream()
+                .anyMatch(entry -> Objects.equals(entry.getSpotId(), spotId) && Objects.equals(entry.getSolutionId(), solutionId));
+        if (alreadyMapped) {
+            return this;
+        }
         if (shortAnswerMapping.getId() == null) {
             shortAnswerMapping.setId(nextComponentId());
         }
@@ -235,6 +245,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
         Long solutionId = shortAnswerMapping.getSolution() != null ? shortAnswerMapping.getSolution().getId() : null;
         saContent().getCorrectMappings().removeIf(entry -> Objects.equals(entry.getSpotId(), spotId) && Objects.equals(entry.getSolutionId(), solutionId));
         return this;
+    }
+
+    /**
+     * Removes correct-mapping entries whose spot or solution no longer exists on this question (e.g. after a component was deleted during re-evaluation). Keeps the stored content
+     * free of orphan mappings so {@link #isValid()} / {@code nextComponentId()} stay accurate and the JSON does not grow across repeated re-evaluations.
+     */
+    public void removeOrphanCorrectMappings() {
+        saContent().getCorrectMappings().removeIf(entry -> findSpotById(entry.getSpotId()) == null || findSolutionById(entry.getSolutionId()) == null);
     }
 
     private ShortAnswerCorrectMapping toEntry(ShortAnswerMapping mapping) {

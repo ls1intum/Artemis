@@ -632,4 +632,26 @@ class QuizComparisonTest {
         }
         return id;
     }
+
+    @Test
+    void addCorrectMappingDeduplicatesByComponentPair() {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        DropLocation dropLocation = new DropLocation();
+        question.addDropLocation(dropLocation);
+        DragItem dragItem = new DragItem();
+        question.addDragItem(dragItem);
+
+        DragAndDropMapping mapping = new DragAndDropMapping();
+        mapping.setDropLocation(dropLocation);
+        mapping.setDragItem(dragItem);
+        question.addCorrectMapping(mapping);
+
+        // Adding the same (drag item, drop location) pair again must not create a second correct mapping.
+        DragAndDropMapping duplicate = new DragAndDropMapping();
+        duplicate.setDropLocation(dropLocation);
+        duplicate.setDragItem(dragItem);
+        question.addCorrectMapping(duplicate);
+
+        Assertions.assertThat(question.getCorrectMappings()).hasSize(1);
+    }
 }

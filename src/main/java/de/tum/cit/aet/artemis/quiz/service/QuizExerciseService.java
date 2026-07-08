@@ -297,6 +297,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         recalculationNecessary = applyDropLocationsFromDTO(dndDTO.dropLocations(), originalQuestion.getDropLocations()) || recalculationNecessary;
         recalculationNecessary = applyDragItemsFromDTO(dndDTO.dragItems(), originalQuestion.getDragItems()) || recalculationNecessary;
         recalculationNecessary = applyDragAndDropMappingsFromDTO(dndDTO, originalQuestion) || recalculationNecessary;
+        // Drop correct mappings orphaned by a drop-location / drag-item removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
         return recalculationNecessary;
     }
 
@@ -527,6 +529,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion);
         recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
         recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
+        // Drop correct mappings orphaned by a spot / solution removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
 
         return recalculationNecessary;
     }
