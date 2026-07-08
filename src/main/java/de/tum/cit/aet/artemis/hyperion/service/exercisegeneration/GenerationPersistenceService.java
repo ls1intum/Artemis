@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -303,8 +304,9 @@ public class GenerationPersistenceService {
             if (gitService.getFileByName(repository, path).isPresent()) {
                 repositoryService.deleteFile(repository, path);
             }
-            // Scrub model typography from source files too (producedFiles is always text, never binary).
-            String content = normalizeTypography(entry.getValue());
+            // Committed byte-for-byte as the oracle built them. Rewriting source here (typography, formatting) would validate one exercise and ship another: the solution and its
+            // tests would be graded on bytes no build ever saw.
+            String content = entry.getValue();
             repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
         }
         // The produced tree can re-introduce raw ${...} placeholders (e.g. from the reference's run.sh); normalize to real-CI values as exercise creation does (idempotent if
@@ -420,16 +422,25 @@ public class GenerationPersistenceService {
         }
     }
 
+    /** The dash family (hyphen, non-breaking hyphen, figure dash, en dash, em dash, horizontal bar); all render like a hyphen-minus. */
+    private static final Pattern DASHES = Pattern.compile("[\\u2010-\\u2015]");
+
     /**
-     * Replaces typographic punctuation the model leaks (Unicode dashes {@code U+2010..U+2015}, non-breaking/narrow spaces, smart quotes, ellipsis) with ASCII equivalents. Applied
-     * to
-     * the problem statement and every generated source file. The substitution is safe: code spans are ASCII and no generation-capable language needs these characters in a literal.
+     * Replaces the typographic punctuation the model leaks (Unicode dashes {@code U+2010..U+2015}, non-breaking/narrow spaces, smart quotes, ellipsis) with ASCII equivalents.
+     * <p>
+     * Applied to the problem statement ONLY. The statement is prose rendered to students, so the substitution cannot change a program's meaning, and none of the gates that read it
+     * (task bindings, prose-hygiene leaks) matches on punctuation. Source files are committed byte-for-byte as the oracle built them: rewriting a source literal here would grade
+     * the exercise on bytes no build ever saw, and an ellipsis or a smart quote inside a string literal changes its length or its lexing.
      *
      * @param problemStatement the produced problem statement (may be {@code null})
      * @return the statement normalised to ASCII, or {@code null} if the input was {@code null}
      */
     static String normalizeTypography(String problemStatement) {
-        return TypographyNormalizer.normalize(problemStatement);
+        if (problemStatement == null) {
+            return null;
+        }
+        return DASHES.matcher(problemStatement).replaceAll("-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'').replace('\u201C', '"')
+                .replace('\u201D', '"').replace("\u2026", "...");
     }
 
     /**

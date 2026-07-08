@@ -128,61 +128,24 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void writeFile_normalizesTypographicPunctuationSoTheOracleSeesThePersistedBytes() {
+    void writeFile_writesTheAgentsBytesVerbatim() {
         RecordingSandbox sandbox = new RecordingSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        tools.writeFile("solution/A.java", "throw new IllegalArgumentException(\"amount must be non\u2011negative\u2026\");");
-        assertThat(sandbox.writtenContent()).isEqualTo("throw new IllegalArgumentException(\"amount must be non-negative...\");");
+        // The oracle builds these bytes and persist commits them unchanged, so the tool must not rewrite typography, quotes or anything else on the way in.
+        String source = "throw new IllegalArgumentException(\"amount must be non\u2011negative\u2026\"); // \u4E2D\u6587\uD83D\uDE00";
+        tools.writeFile("solution/A.java", source);
+        assertThat(sandbox.writtenContent()).isEqualTo(source);
     }
 
     @Test
-    void writeFile_leavesNonPunctuationCodePointsUntouched() {
+    void editFile_matchesTheNeedleByteForByte() {
         RecordingSandbox sandbox = new RecordingSandbox();
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        // Supplementary-plane and CJK code points must survive; U+2212 MINUS SIGN is a look-alike an arithmetic exercise may legitimately assert on, so it is not mapped either.
-        tools.writeFile("tests/T.java", "assertEquals(2, graphemes(\"\u4E2D\u6587\uD83D\uDE00\")); sign = '\u2212';");
-        assertThat(sandbox.writtenContent()).isEqualTo("assertEquals(2, graphemes(\"\u4E2D\u6587\uD83D\uDE00\")); sign = '\u2212';");
-    }
-
-    @Test
-    void writeFile_deletesInvisibleCharactersThatWouldBreakAGradedLiteral() {
-        RecordingSandbox sandbox = new RecordingSandbox();
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        // A soft hyphen renders as nothing, so it silently breaks String.equals between a test's expected literal and the solution's.
-        tools.writeFile("solution/A.java", "\"non\u00ADnegative\u200B\"");
-        assertThat(sandbox.writtenContent()).isEqualTo("\"nonnegative\"");
-    }
-
-    @Test
-    void editFile_matchesATypographicNeedleAgainstTheNormalisedFile() {
-        RecordingSandbox sandbox = new RecordingSandbox();
-        // The file on disk holds the normalised ASCII form (writeFile normalised it); the model still supplies the typographic form it "remembers" writing.
-        sandbox.files.put("/workspace/solution/A.java", "msg = \"non-negative\";");
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        String result = tools.editFile("solution/A.java", "\"non\u2011negative\"", "\"must be >= 0\"");
-        assertThat(result).startsWith("Wrote ");
-        assertThat(sandbox.writtenContent()).isEqualTo("msg = \"must be >= 0\";");
-    }
-
-    @Test
-    void editFile_matchesAgainstARawSeededFileInsteadOfLoopingOnNotFound() {
-        RecordingSandbox sandbox = new RecordingSandbox();
-        // An instructor-authored statement reaches the sandbox un-normalised. Normalising only the needle would make this miss, and re-reading the file would return the same
-        // unmatchable text: a deterministic retry loop. Both sides are normalised, so the edit lands.
+        // An instructor-authored statement reaches the sandbox verbatim; edit_file must match it as-is rather than against some normalised form of it.
         sandbox.files.put("/workspace/problem-statement.md", "Do not modify the caller\u2019s list \u2013 return a copy.");
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         String result = tools.editFile("problem-statement.md", "the caller\u2019s list", "the input list");
         assertThat(result).startsWith("Wrote ");
-        assertThat(sandbox.writtenContent()).isEqualTo("Do not modify the input list - return a copy.");
-    }
-
-    @Test
-    void editFile_rejectsWhenNormalisationMakesTwoDistinctSitesCollide() {
-        RecordingSandbox sandbox = new RecordingSandbox();
-        // "non-negative" (ASCII) and "non\u2011negative" (U+2011) are distinct on disk but identical once normalised; guessing a site would silently edit the wrong one.
-        sandbox.files.put("/workspace/solution/A.java", "a = \"non-negative\"; b = \"non\u2011negative\";");
-        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
-        assertThat(tools.editFile("solution/A.java", "\"non-negative\"", "\"x\"")).contains("more than once");
+        assertThat(sandbox.writtenContent()).isEqualTo("Do not modify the input list \u2013 return a copy.");
     }
 
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */

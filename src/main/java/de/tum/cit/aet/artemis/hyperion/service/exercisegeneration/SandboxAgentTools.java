@@ -118,9 +118,6 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
-        // Normalize typographic punctuation on the way in, so the bytes the differential oracle builds are the bytes that get persisted: a non-breaking hyphen inside a graded
-        // exception message would otherwise pass the sandbox yet fail real grading, because persist normalizes and the oracle's build did not.
-        content = TypographyNormalizer.normalize(content);
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
@@ -152,11 +149,7 @@ public class SandboxAgentTools {
         if (!read.isSuccess()) {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();
         }
-        // Match on the normalized forms of BOTH sides. writeFile normalizes what it writes, but a file can still hold typographic punctuation when it was seeded (the instructor's
-        // problem statement) or written with bash, and the model supplies whichever form it last saw. Normalizing only the needle would make every such edit miss and the "read the
-        // file again" advice would return the same unmatchable text. If normalization makes two distinct sites collide, the uniqueness check below rejects rather than guessing.
-        oldText = TypographyNormalizer.normalize(oldText);
-        String current = TypographyNormalizer.normalize(read.stdout());
+        String current = read.stdout();
         int first = current.indexOf(oldText);
         if (first < 0) {
             return "ERROR: the provided oldText was not found in '" + safe + "'. Read the file again to get the exact current text.";

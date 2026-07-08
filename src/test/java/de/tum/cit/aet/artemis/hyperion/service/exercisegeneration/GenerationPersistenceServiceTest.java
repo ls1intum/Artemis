@@ -444,27 +444,23 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_normalizesTypographyInGeneratedSourceFiles_soNoUnicodeDashLeaksIntoCommittedCode() throws Exception {
+    void persist_commitsGeneratedSourceFilesByteForByte() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        // The exact leak the ego-death audit found: a non-breaking hyphen (U+2011) in a comment AND in a live exception message a student can trigger.
-        String dirty = "public class X {\n    // ensures the value is non‑negative\n    String message() { return \"size must be non‑negative\"; }\n}\n";
+        // The differential oracle accepted these exact bytes. Rewriting them here (typography, formatting) would grade the exercise on a source no build ever saw: an ellipsis
+        // shortened to "..." changes a string's length, and a smart quote inside a literal changes how it lexes.
+        String source = "public class X {\n    String message() { return \"size must be non\u2011negative\u2026\"; }\n}\n";
 
-        service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("X.java", dirty), Map.of("Test.java", "x"), ""));
+        service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("X.java", source), Map.of("Test.java", "x"), ""));
 
         ArgumentCaptor<InputStream> captor = ArgumentCaptor.forClass(InputStream.class);
         verify(repositoryService, atLeastOnce()).createFile(any(), eq("X.java"), captor.capture());
-        String written = new String(captor.getValue().readAllBytes(), StandardCharsets.UTF_8);
-        assertThat(written).doesNotContain("‑").contains("non-negative");
-        assertThat(written.chars().allMatch(c -> c < 0x80)).as("the committed source file is pure ASCII").isTrue();
+        assertThat(new String(captor.getValue().readAllBytes(), StandardCharsets.UTF_8)).isEqualTo(source);
     }
 
     @Test
     void normalizeTypography_replacesTypographicDashesAndSpacesWithAscii() {
-        // gpt-oss reliably leaks a non-breaking hyphen (U+2011) in compound modifiers ("non-negative") plus the occasional en/em dash and non-breaking space, which it keeps
-        // emitting
-        // even when the prompt forbids them. The deterministic persist-time pass must leave the student-facing statement pure ASCII regardless of model compliance, untouched
-        // elsewhere.
+        // The statement is prose rendered to students, so normalising it cannot change any program's meaning. Source files are committed verbatim; only this text is normalised.
         String produced = "Reject a non\u2011negative amount \u2013 see the deposit\u2014withdraw flow. It\u2019s the \u201cmain\u201d path\u2026";
         String normalized = GenerationPersistenceService.normalizeTypography(produced);
         assertThat(normalized).isEqualTo("Reject a non-negative amount - see the deposit-withdraw flow. It's the \"main\" path...");

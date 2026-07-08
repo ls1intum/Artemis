@@ -106,8 +106,7 @@ public class GenerationWorkspaceService {
     public Map<String, String> seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
         Map<String, String> textFiles = new LinkedHashMap<>();
-        // Seed the statement in the same normalized form the agent's write tools produce, so a curly quote in an instructor-authored statement cannot make every edit_file miss.
-        textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : TypographyNormalizer.normalize(exercise.getProblemStatement()));
+        textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
