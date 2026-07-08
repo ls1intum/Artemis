@@ -112,8 +112,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     readonly savingInstructions = signal(false);
 
-    testCaseSubscription: Subscription;
-    forceRenderSubscription: Subscription;
+    testCaseSubscription?: Subscription;
+    forceRenderSubscription?: Subscription;
     private problemStatementStateReplacementSubscription?: Subscription;
     private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;

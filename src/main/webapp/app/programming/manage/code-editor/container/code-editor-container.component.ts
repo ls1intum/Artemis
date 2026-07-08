@@ -120,7 +120,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
-    unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
+    unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
     readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
     get selectedFile(): string | undefined {
         return this.selectedFileValue();
@@ -139,8 +139,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     /** Code Editor State Variables **/
-    editorState: EditorState;
-    commitState: CommitState;
+    editorState!: EditorState; // set in constructor via initializeProperties()
+    commitState!: CommitState; // set in constructor via initializeProperties()
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);

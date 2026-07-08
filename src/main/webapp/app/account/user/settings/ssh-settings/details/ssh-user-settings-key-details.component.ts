@@ -38,7 +38,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
-    subscription: Subscription;
+    subscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
 
     // state change variables
     readonly isCreateMode = signal(false); // true when creating new key, false when viewing existing key

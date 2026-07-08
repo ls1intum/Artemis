@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
-import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -381,11 +380,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * Find StudentParticipation of the given quizExercise that was done by the given user
      *
      * @param quizExercise   the QuizExercise of which the StudentParticipation belongs to
-     * @param quizSubmission the AbstractQuizSubmission of which the participation to be set to
+     * @param quizSubmission the QuizSubmission of which the participation to be set to
      * @param user           the User of the StudentParticipation
      * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
      */
-    protected StudentParticipation getParticipation(QuizExercise quizExercise, AbstractQuizSubmission quizSubmission, User user) {
+    protected StudentParticipation getParticipation(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
 
         if (optionalParticipation.isEmpty()) {

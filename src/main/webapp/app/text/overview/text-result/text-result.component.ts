@@ -20,7 +20,7 @@ export class TextResultComponent {
 
     submissionText = signal('');
     textResults = signal<TextResultBlock[]>([]);
-    private submission: TextSubmission;
+    private submission!: TextSubmission; // set in the constructor effect (guarded by result?.submission) before convertTextToResultBlocks() reads it
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;

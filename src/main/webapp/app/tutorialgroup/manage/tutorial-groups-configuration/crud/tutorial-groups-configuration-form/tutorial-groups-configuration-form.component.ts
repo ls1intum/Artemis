@@ -51,7 +51,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
 
     existingChannelSetting?: boolean;
 
-    form: FormGroup;
+    form!: FormGroup; // built by initializeForm() in the constructor effect and ngOnInit, before any template/getter read
 
     constructor() {
         // Effect to handle formData changes (replaces ngOnChanges)

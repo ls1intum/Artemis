@@ -29,7 +29,7 @@ export class RatingListComponent implements OnInit {
     readonly page = signal(1); // 1-indexed (PrimeNG paginator is 0-indexed; converted in onPageChange)
     public pageSize = 20;
 
-    private courseId: number;
+    private courseId!: number; // set in ngOnInit() from route params
 
     ratingsSortingPredicate = 'id';
     ratingsReverseOrder = false;
