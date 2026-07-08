@@ -73,7 +73,15 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
             return result;
         }
         ShortAnswerQuestion question = shortAnswerQuestion();
+        if (question == null) {
+            return result;
+        }
         for (ShortAnswerTextSelection entry : selection.getSubmittedTexts()) {
+            // Skip texts whose spot no longer exists on the question (deleted during re-evaluation / orphaned entry): the wire, DTO and data-export consumers dereference the spot,
+            // so a null spot would NPE. Mirrors the DnD getMappings() and MC getSelectedOptions() null-skip.
+            if (question.findSpotById(entry.getSpotId()) == null) {
+                continue;
+            }
             result.add(wrap(entry, question));
         }
         return result;

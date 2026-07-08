@@ -11,7 +11,10 @@
       Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON), so existing submissions and statistics counters keep resolving.
     -->
 
-    <!-- Step 1a: add the JSON columns (MySQL / H2) -->
+    <!-- Step 1a: add the JSON columns (MySQL / H2).
+         H2 intentionally gets the columns but no backfill (the backfill changesets below target only mysql/postgresql): H2 is used exclusively as a fresh, per-test database seeded
+         through the new JPA POJOs, so there is never any legacy relational quiz data on H2 to migrate. Do not add H2 to the backfill without also giving it the missing
+         dialect-specific ordering/boolean handling the mysql/postgresql branches have. -->
     <changeSet id="20260707080319-1a" author="krusche" dbms="mysql,h2">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -399,8 +402,9 @@
       Cleanup (DESTRUCTIVE, irreversible). Every drag-and-drop / short-answer / multiple-choice question, submission and question-statistic has now been backfilled into the JSON
       columns above, so the legacy relational child tables and the now-unused quiz_statistic_counter columns/rows are removed. This drops the source data, so it must only run
       after the backfills above are trusted (validate on a staging copy first, especially on MySQL — see documentation/docs/developer/guidelines/quiz-json-persistence-migration.mdx).
-      quiz_statistic and quiz_statistic_counter themselves are intentionally KEPT: QuizPointStatistic / PointCounter (discriminator 'PC', columns points + quiz_point_statistic_id)
-      are still relational. Only the per-question-type counter rows ('DD' / 'SA' / 'AC') and their columns are removed.
+      quiz_statistic and quiz_statistic_counter themselves are intentionally KEPT: the QuizPointStatistic rows (quiz_statistic discriminator 'QP') and their PointCounter rows
+      (quiz_statistic_counter discriminator 'PC', columns points + quiz_point_statistic_id) are still relational. Only the per-question-type counter rows ('DD' / 'SA' / 'AC') and
+      their columns are removed.
       ==========================================================================================================================================================================
     -->
 

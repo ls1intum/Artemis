@@ -374,29 +374,38 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         originalSolution.removeAll(solutionsToRemove);
+        // Validate the id / tempID combination of every incoming solution up front.
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
                 throw new BadRequestException("A new short answer solution must have a tempID to identify it");
             }
-            else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
+            if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
                 throw new BadRequestException("An existing short answer solution cannot have a tempID");
             }
-            if (solutionDTO.tempID() != null) {
-                ShortAnswerSolution newSolution = new ShortAnswerSolution();
-                newSolution.setText(solutionDTO.text());
-                newSolution.setInvalid(solutionDTO.invalid());
-                // add via the question so a fresh, question-scoped id is minted (correct mappings resolve solutions by id)
-                question.addSolution(newSolution);
-                tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
-                recalculationNecessary = true;
-            }
-            else if (!originalSolutionIds.contains(solutionDTO.id())) {
-                // a newly added solution that already carries a client-minted, question-scoped id (kept as-is so its correct mappings resolve by that id)
+        }
+        // First add the new solutions that already carry a client-minted, question-scoped id (their correct mappings resolve them by that id). Adding these before minting the
+        // tempID solutions below guarantees the server-minted ids (max+1) cannot collide with a client-provided one; a duplicate id is rejected outright.
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.id() != null && !originalSolutionIds.contains(solutionDTO.id())) {
+                if (originalSolution.stream().anyMatch(existing -> solutionDTO.id().equals(existing.getId()))) {
+                    throw new BadRequestException("Duplicate short answer solution id " + solutionDTO.id());
+                }
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
                 newSolution.setId(solutionDTO.id());
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
                 originalSolution.add(newSolution);
+                recalculationNecessary = true;
+            }
+        }
+        // Then mint the tempID solutions server-side; addSolution's max+1 now accounts for any client-provided ids added above, so the ids never collide.
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.tempID() != null) {
+                ShortAnswerSolution newSolution = new ShortAnswerSolution();
+                newSolution.setText(solutionDTO.text());
+                newSolution.setInvalid(solutionDTO.invalid());
+                question.addSolution(newSolution);
+                tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
                 recalculationNecessary = true;
             }
         }

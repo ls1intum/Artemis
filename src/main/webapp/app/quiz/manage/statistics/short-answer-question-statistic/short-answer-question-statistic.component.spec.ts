@@ -29,7 +29,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
-const shortAnswerCounter = { spot: answerSpot } as ShortAnswerSpotCounter;
+const shortAnswerCounter = { spotId: answerSpot.id } as ShortAnswerSpotCounter;
 const shortAnswerSolution = { id: 1, tempID: 2 } as ShortAnswerSolution;
 const shortAnswerMapping = { spot: answerSpot, solution: shortAnswerSolution } as ShortAnswerMapping;
 const questionStatistic = { shortAnswerSpotCounters: [shortAnswerCounter] } as ShortAnswerQuestionStatistic;

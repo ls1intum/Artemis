@@ -28,7 +28,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
-const answerCounter = { answer: answerOption1 } as AnswerCounter;
+const answerCounter = { answerId: answerOption1.id } as AnswerCounter;
 const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
 const question = { id: 1, answerOptions: [answerOption1], quizQuestionStatistic: questionStatistic } as MultipleChoiceQuestion;
 const course = { id: 3 } as Course;

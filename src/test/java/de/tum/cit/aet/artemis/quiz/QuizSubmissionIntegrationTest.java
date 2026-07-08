@@ -1157,7 +1157,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             staleMapping.setDragItem(staleDragItem);
             staleMapping.setDropLocation(dndQuestion.getDropLocations().getFirst());
             dndAnswer.addMappings(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
+            int validMappingCount = dndAnswer.getMappings().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
@@ -1193,7 +1194,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             staleDropLocation.setId(Long.MAX_VALUE);
             staleMapping.setDropLocation(staleDropLocation);
             dndAnswer.addMappings(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
+            int validMappingCount = dndAnswer.getMappings().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
@@ -1228,7 +1230,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             staleText.setSpot(staleSpot);
             staleText.setText("text-with-stale-spot-id");
             saAnswer.addSubmittedTexts(staleText);
-            int validTextCount = saAnswer.getSubmittedTexts().size() - 1;
+            // getSubmittedTexts() resolves spot ids against the question, so the stale (unresolvable) text is already excluded from the count here and from the serialized
+            // submission
+            int validTextCount = saAnswer.getSubmittedTexts().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);

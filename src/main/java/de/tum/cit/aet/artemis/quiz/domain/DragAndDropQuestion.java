@@ -288,8 +288,8 @@ public class DragAndDropQuestion extends QuizQuestion {
             }
         }
 
-        // check if at least one correct mapping exists
-        return !dndContent().getCorrectMappings().isEmpty();
+        // check if at least one correct mapping exists (resolved getter, so orphan mappings left behind by a re-evaluation deletion don't count)
+        return !getCorrectMappings().isEmpty();
     }
 
     /**

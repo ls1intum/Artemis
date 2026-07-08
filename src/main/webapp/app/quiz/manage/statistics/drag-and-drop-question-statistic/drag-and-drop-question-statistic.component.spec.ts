@@ -27,8 +27,8 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
 const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
 const dropLocation2 = { posX: 0, invalid: false, tempID: 2 } as DropLocation;
-const dropLocationCounter = { dropLocation: dropLocation1, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
-const questionStatistic = { dropLocation: dropLocation1, dropLocationCounters: [dropLocationCounter] } as DragAndDropQuestionStatistic;
+const dropLocationCounter = { dropLocationId: dropLocation1.id, ratedCounter: 0, unRatedCounter: 0 } as DropLocationCounter;
+const questionStatistic = { dropLocationCounters: [dropLocationCounter] } as DragAndDropQuestionStatistic;
 const question = { id: 1, dropLocations: [dropLocation1, dropLocation2], quizQuestionStatistic: questionStatistic } as DragAndDropQuestion;
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;

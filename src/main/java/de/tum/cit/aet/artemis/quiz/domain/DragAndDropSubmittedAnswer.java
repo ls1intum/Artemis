@@ -56,22 +56,25 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
             return result;
         }
         DragAndDropQuestion question = dragAndDropQuestion();
+        if (question == null) {
+            return result;
+        }
         for (DragAndDropMappingSelection entry : selection.getMappings()) {
-            DragAndDropMapping mapping = new DragAndDropMapping();
-            if (question != null) {
-                DragItem dragItem = question.findDragItemById(entry.dragItemId());
-                DropLocation dropLocation = question.findDropLocationById(entry.dropLocationId());
-                mapping.setDragItem(dragItem);
-                mapping.setDropLocation(dropLocation);
-                if (dragItem != null) {
-                    int index = question.getDragItems().indexOf(dragItem);
-                    mapping.setDragItemIndex(index >= 0 ? index : null);
-                }
-                if (dropLocation != null) {
-                    int index = question.getDropLocations().indexOf(dropLocation);
-                    mapping.setDropLocationIndex(index >= 0 ? index : null);
-                }
+            DragItem dragItem = question.findDragItemById(entry.dragItemId());
+            DropLocation dropLocation = question.findDropLocationById(entry.dropLocationId());
+            // Skip mappings whose drag item or drop location no longer exists on the question (e.g. removed during re-evaluation before checkAndDeleteReferences ran, or an
+            // orphaned selection): consumers resolve the nested objects unconditionally, so a null drag item/drop location would NPE. Mirrors getCorrectMappings() and the
+            // MultipleChoiceSubmittedAnswer.getSelectedOptions() null-skip.
+            if (dragItem == null || dropLocation == null) {
+                continue;
             }
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            mapping.setDragItem(dragItem);
+            mapping.setDropLocation(dropLocation);
+            int dragItemIndex = question.getDragItems().indexOf(dragItem);
+            mapping.setDragItemIndex(dragItemIndex >= 0 ? dragItemIndex : null);
+            int dropLocationIndex = question.getDropLocations().indexOf(dropLocation);
+            mapping.setDropLocationIndex(dropLocationIndex >= 0 ? dropLocationIndex : null);
             result.add(mapping);
         }
         return result;
