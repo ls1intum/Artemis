@@ -100,13 +100,13 @@
             SET content = JSON_OBJECT(
                 'type', 'drag-and-drop',
                 'dropLocations', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', dl.id, 'posX', dl.pos_x, 'posY', dl.pos_y, 'width', dl.width, 'height', dl.height, 'invalid', dl.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', dl.id, 'posX', dl.pos_x, 'posY', dl.pos_y, 'width', dl.width, 'height', dl.height, 'invalid', COALESCE(dl.invalid, FALSE) = TRUE))
                     FROM drop_location dl WHERE dl.question_id = q.id), JSON_ARRAY()),
                 'dragItems', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', di.id, 'pictureFilePath', di.picture_file_path, 'text', di.text, 'invalid', di.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', di.id, 'pictureFilePath', di.picture_file_path, 'text', di.text, 'invalid', COALESCE(di.invalid, FALSE) = TRUE))
                     FROM drag_item di WHERE di.question_id = q.id), JSON_ARRAY()),
                 'correctMappings', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', dm.id, 'dragItemId', dm.drag_item_id, 'dropLocationId', dm.drop_location_id, 'invalid', dm.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', dm.id, 'dragItemId', dm.drag_item_id, 'dropLocationId', dm.drop_location_id, 'invalid', COALESCE(dm.invalid, FALSE) = TRUE))
                     FROM drag_and_drop_mapping dm WHERE dm.question_id = q.id), JSON_ARRAY()))
             WHERE q.discriminator = 'DD';
         </sql>
@@ -237,13 +237,13 @@
             SET content = JSON_OBJECT(
                 'type', 'short-answer',
                 'spots', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.id, 'spotNr', s.spot_nr, 'width', s.width, 'invalid', s.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.id, 'spotNr', s.spot_nr, 'width', s.width, 'invalid', COALESCE(s.invalid, FALSE) = TRUE))
                     FROM short_answer_spot s WHERE s.question_id = q.id), JSON_ARRAY()),
                 'solutions', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.id, 'text', s.text, 'invalid', s.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', s.id, 'text', s.text, 'invalid', COALESCE(s.invalid, FALSE) = TRUE))
                     FROM short_answer_solution s WHERE s.question_id = q.id), JSON_ARRAY()),
                 'correctMappings', COALESCE((
-                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', m.id, 'spotId', m.spot_id, 'solutionId', m.solution_id, 'invalid', m.invalid = TRUE))
+                    SELECT JSON_ARRAYAGG(JSON_OBJECT('id', m.id, 'spotId', m.spot_id, 'solutionId', m.solution_id, 'invalid', COALESCE(m.invalid, FALSE) = TRUE))
                     FROM short_answer_mapping m WHERE m.question_id = q.id), JSON_ARRAY()))
             WHERE q.discriminator = 'SA';
         </sql>
@@ -335,14 +335,14 @@
 
     <!-- Step 12b: backfill quiz_question.content for multiple-choice questions (MySQL). The authored answer-option display order (answer_options_order) drives the rendered A/B/C
          labels, so it must be preserved (the source table is dropped afterwards). MySQL JSON_ARRAYAGG does not accept an ORDER BY clause, so the rows are ordered in a derived table
-         first and then aggregated; MySQL preserves the input order of a materialized, ordered derived table. PostgreSQL (step 12a) preserves the order via ORDER BY. Booleans are
-         emitted as 0/1 by "= TRUE" and coerced back to Boolean by Jackson on read. -->
+         first and then aggregated; MySQL preserves the input order of a materialized, ordered derived table. PostgreSQL (step 12a) preserves the order via ORDER BY. The "= TRUE"
+         comparisons emit real JSON booleans (true/false); invalid is wrapped in COALESCE(..., FALSE) so a NULL source column becomes false, matching the PostgreSQL COALESCE branch. -->
     <changeSet id="20260707080319-12b" author="krusche" dbms="mysql">
         <sql>
             UPDATE quiz_question q
             LEFT JOIN (
                 SELECT question_id,
-                    JSON_ARRAYAGG(JSON_OBJECT('id', id, 'text', text, 'hint', hint, 'explanation', explanation, 'isCorrect', is_correct = TRUE, 'invalid', invalid = TRUE)) AS options
+                    JSON_ARRAYAGG(JSON_OBJECT('id', id, 'text', text, 'hint', hint, 'explanation', explanation, 'isCorrect', is_correct = TRUE, 'invalid', COALESCE(invalid, FALSE) = TRUE)) AS options
                 FROM (SELECT id, question_id, text, hint, explanation, is_correct, invalid FROM answer_option ORDER BY question_id, answer_options_order) ordered_options
                 GROUP BY question_id) agg ON agg.question_id = q.id
             SET content = JSON_OBJECT('type', 'multiple-choice', 'answerOptions', COALESCE(agg.options, JSON_ARRAY()))
