@@ -28,7 +28,8 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -1206,6 +1207,51 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.shortName = 'ab';
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                translateValues: {},
+            });
+        });
+
+        const setupCustomizeBuildPlan = (buildPlanPhasesJSON: string | undefined, dockerFlags: string | undefined) => {
+            comp.programmingExercise.customizeBuildPlan = true;
+            comp.customBuildPlansSupported = PROFILE_LOCALCI;
+            comp.programmingExercise.buildConfig = Object.assign(new ProgrammingExerciseBuildConfig(), { dockerFlags });
+            const customBuildPlanComponent = {
+                arePhaseNamesValid: () => true,
+                getBuildPlanPhasesJSON: () => buildPlanPhasesJSON,
+            };
+            internals(comp).exerciseLanguageComponent = signal({
+                programmingExerciseCustomBuildPlanComponent: () => customBuildPlanComponent,
+            } as unknown as ProgrammingExerciseLanguageComponent).asReadonly();
+        };
+
+        it('validateBuildConfigSize rejects a build plan configuration exceeding the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts a build plan configuration exactly at the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH), undefined);
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize rejects docker flags exceeding the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts docker flags exactly at the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
                 translateValues: {},
             });
         });
