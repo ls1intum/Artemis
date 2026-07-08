@@ -56,7 +56,21 @@
             <!-- Competency-graph mode: multi-select -->
             @if (isCompetencyMode()) {
                 <div class="field-group">
-                    <label class="field-label" for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                    <div class="field-label label-with-help">
+                        <label class="mb-0" for="quiz-ai-competencies" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.competencies"></label>
+                        <span
+                            class="text-secondary d-inline-flex align-items-center"
+                            [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.competenciesTooltip' | artemisTranslate"
+                            tooltipPosition="right"
+                            appendTo="body"
+                            tooltipStyleClass="quiz-ai-generation-tooltip"
+                            tabindex="0"
+                        >
+                            <fa-stack class="icon-full-size">
+                                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                            </fa-stack>
+                        </span>
+                    </div>
                     <p-multiselect
                         inputId="quiz-ai-competencies"
                         [options]="courseCompetencies()"
