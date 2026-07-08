@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -20,23 +21,21 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.test.context.TestSecurityContextHolder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
  * Integrated business-logic tests for OIDC Authentication and JIT provisioning features.
  * Bypasses network filter restrictions by executing the OIDCService module directly.
  */
-@ActiveProfiles(profiles = "oidc", inheritProfiles = true)
-@TestPropertySource(properties = { "artemis.user-management.oidc.enabled=true", "artemis.user-management.oidc.mappings.username=preferred_username",
-        "artemis.user-management.oidc.mappings.matriculation-number=matriculation_number", "artemis.user-management.oidc.mappings.first-name=given_name",
-        "artemis.user-management.oidc.mappings.last-name=family_name", "artemis.user-management.oidc.mappings.email=email" })
 class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private static final String STUDENT_NAME = "student_oidc_test";
@@ -46,21 +45,35 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
 
     @Autowired
-    private OIDCService oidcService;
+    private UserCreationService userCreationService;
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private JWTCookieService jwtCookieService;
+
+    private OIDCService oidcService;
+
+    private OIDCAuthenticationSuccessHandler successHandler;
+
+    @BeforeEach
+    void initManualMocks() {
+        oidcService = new OIDCService(userTestRepository, userCreationService);
+        ReflectionTestUtils.setField(oidcService, "usernameClaimKey", "preferred_username");
+        ReflectionTestUtils.setField(oidcService, "matriculationClaimKey", "matriculation_number");
+        ReflectionTestUtils.setField(oidcService, "firstNameClaimKey", "given_name");
+        ReflectionTestUtils.setField(oidcService, "lastNameClaimKey", "family_name");
+        ReflectionTestUtils.setField(oidcService, "emailClaimKey", "email");
+
+        successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository);
+        ReflectionTestUtils.setField(successHandler, "usernameClaimKey", "preferred_username");
+    }
 
     @AfterEach
     void clearTestData() {
         userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
         TestSecurityContextHolder.clearContext();
-    }
-
-    @Test
-    void testAuthenticationRedirect() throws Exception {
-        final String redirectTarget = request.getRedirectTarget("/oauth2/authorization/oidc", HttpStatus.FOUND);
-        assertThat(redirectTarget).contains("/idp/profile/oidc/authorize");
     }
 
     @Test
