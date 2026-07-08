@@ -45,7 +45,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly programmingExerciseCustomBuildPlanComponent = viewChild(ProgrammingExerciseCustomBuildPlanComponent);
     readonly programmingExerciseTheiaComponent = viewChild(ProgrammingExerciseTheiaComponent);
 
-    formValid: boolean;
+    formValid!: boolean; // assigned in calculateFormValid() (run after view init / field changes); parent reads it via `?? false`
     formValidChanges = new Subject<boolean>();
 
     fieldSubscriptions: (Subscription | undefined)[] = [];

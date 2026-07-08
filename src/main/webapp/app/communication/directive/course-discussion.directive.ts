@@ -15,8 +15,8 @@ export abstract class CourseDiscussionDirective {
     protected metisService = inject(MetisService);
 
     searchText?: string;
-    currentPostContextFilter: PostContextFilter;
-    formGroup: FormGroup;
+    currentPostContextFilter!: PostContextFilter; // set by setFilterAndSort() (implemented in subclasses) before use
+    formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
     readonly ButtonType = ButtonType;
     readonly course = signal<Course | undefined>(undefined);
     readonly createdPost = signal<Post | undefined>(undefined);
@@ -28,8 +28,8 @@ export abstract class CourseDiscussionDirective {
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
 
-    protected postsSubscription: Subscription;
-    protected paramSubscription: Subscription;
+    protected postsSubscription?: Subscription;
+    protected paramSubscription?: Subscription;
 
     // Icons
     faPlus = faPlus;

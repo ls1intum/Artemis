@@ -161,9 +161,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
 
-    auxiliaryRepositoryDuplicateNames: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoryNamedCorrectly: boolean;
+    auxiliaryRepositoryDuplicateNames = false;
+    auxiliaryRepositoryDuplicateDirectories = false;
+    auxiliaryRepositoryNamedCorrectly = false;
     private isImportFromExistingExerciseValue = false;
     private isImportFromFileValue = false;
     private isImportFromSharingValue = false;
@@ -198,10 +198,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.isImportFromSharingForAi.set(value);
     }
 
-    isEdit: boolean;
-    isCreate: boolean;
+    isEdit = false;
+    isCreate = false;
     readonly isExamMode = signal<boolean>(undefined!);
-    isLocalCIEnabled: boolean;
+    isLocalCIEnabled = false;
     hasUnsavedChanges = false;
     // programmingExercise is deeply template-bound (directly via [programmingExercise]/[(exercise)] and through the
     // recomputed getProgrammingExerciseCreationConfig()) and populated asynchronously from the route resolver, so it
@@ -222,7 +222,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }
 
-    backupExercise: ProgrammingExercise;
+    backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
@@ -233,18 +233,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
-    private selectedProgrammingLanguageValue: ProgrammingLanguage;
+    private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
+    exerciseCategories?: ExerciseCategory[];
+    existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    public inProductionEnvironment: boolean;
+    public inProductionEnvironment = false;
 
     public supportedLanguages = ['java'];
 
