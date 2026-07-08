@@ -183,6 +183,62 @@ describe('HomeComponent', () => {
         });
     });
 
+    describe('loginWithOidc', () => {
+        it('should handle successful OIDC login', async () => {
+            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            await component.loginWithOidc();
+            await fixture.whenStable();
+
+            expect(loginOidcSpy).toHaveBeenCalledWith(true);
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+            expect(component.authenticationError()).toBe(false);
+            expect(component.isSubmittingLogin()).toBe(false);
+        });
+
+        it('should handle failed OIDC login', async () => {
+            vi.spyOn(loginService, 'loginOIDC').mockRejectedValue(new Error('OIDC failed'));
+
+            await component.loginWithOidc();
+            await fixture.whenStable();
+
+            expect(component.authenticationError()).toBe(true);
+            expect(component.isSubmittingLogin()).toBe(false);
+        });
+
+        it('should execute template branch for loading icon', async () => {
+            // Enable isOidcEnabled
+            component['isOidcEnabled'].set(true);
+
+            // Check that button is displayed
+            fixture.detectChanges();
+            const button = fixture.nativeElement.querySelector('#oidc-login-button');
+            expect(button).toBeTruthy();
+
+            // Mock server side response
+            let resolveLogin: () => void = () => {};
+            const pendingPromise = new Promise<void>((resolve) => {
+                resolveLogin = resolve;
+            });
+            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
+            vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            // Enable login
+            const loginPromise = component.loginWithOidc();
+
+            fixture.detectChanges();
+
+            // Check results
+            expect(component.isSubmittingLogin()).toBe(true);
+
+            // Clean
+            resolveLogin();
+            await loginPromise;
+            fixture.detectChanges();
+        });
+    });
+
     describe('prefillPasskeysIfPossible', () => {
         it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
             component.isPasskeyEnabled.set(true);
