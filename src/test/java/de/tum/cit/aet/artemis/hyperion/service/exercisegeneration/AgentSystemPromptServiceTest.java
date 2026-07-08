@@ -147,6 +147,30 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void build_locksTheTopicToTheBriefAndFallsBackToTheStatementWhenTheBriefNamesNone() {
+        // A brief whose topic matches the reference sample's (Java's reference is a sort) was answered with an unrelated topic; the lock forbids that. A feedback-only brief names
+        // no topic, so the lock must resolve to the existing statement rather than to whatever topic-shaped word the feedback contains.
+        String prompt = systemPromptService.build(exerciseWithStatement(""));
+        assertThat(prompt).contains("TOPIC LOCK").contains("the topic is the one problem-statement.md already sets").contains("the brief always wins");
+    }
+
+    @Test
+    void build_requiresAFinalProblemStatementPassAndScopesWhatTheOracleChecks() {
+        // The pass exists because the oracle gates the [task] bindings, not the prose. Claiming it checks NOTHING about the statement is false and licenses skipping the [task]
+        // rules.
+        String prompt = systemPromptService.build(exerciseWithStatement(""));
+        assertThat(prompt).contains("FINAL PROBLEM-STATEMENT PASS").contains("checks your [task] bindings, never the prose quality")
+                .contains("If a fix adds or changes a test, re-run `verify`");
+    }
+
+    @Test
+    void build_specMode_addsTheMissingTestRatherThanCuttingTheInstructorsPromise() {
+        // In spec mode the statement IS the spec, so an unverified promise means the tests are behind, not that the prose is wrong.
+        String prompt = systemPromptService.build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
+        assertThat(prompt).contains("Here the statement IS the spec").contains("ADD the test").contains("Where the statement already meets the standard, leave its wording alone");
+    }
+
+    @Test
     void build_scaDisabled_omitsStaticCodeAnalysisGuidance() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).doesNotContain("STATIC CODE ANALYSIS IS ENABLED");

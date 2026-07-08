@@ -46,8 +46,9 @@ public class AgentSystemPromptService {
                 ? "- problem-statement.md : the exercise's CURRENT problem statement and the starting point for this run. Follow the BRIEF: it is authoritative and may refine this "
                         + "statement or change the task itself (topic, named types, requirements). Where the BRIEF is silent, preserve the statement's intent and every stated requirement "
                         + "and edge case, and bring it up to the PROBLEM STATEMENT QUALITY standard below; rewrite or drop only what the BRIEF changes. Preserving the requirements does "
-                        + "NOT mean preserving the PRESENTATION: the FINAL PROBLEM-STATEMENT PASS below is MANDATORY here too, and an inherited statement almost always fails it — it "
-                        + "typically has no per-[task] worked examples and carries guarantees no test checks, so you must add the examples and cut the unverified claims. Implement the "
+                        + "NOT mean preserving the PRESENTATION: the FINAL PROBLEM-STATEMENT PASS below applies here too. Where the statement already meets the standard, leave its "
+                        + "wording alone; where it does not (typically no per-[task] worked example), ADD what is missing. Here the statement IS the spec, so when it promises something "
+                        + "no test checks, ADD the test — cut the sentence only when the reference solution cannot honour it. Implement the "
                         + "solution, template, and tests to MATCH the resulting statement, add the required [task] bindings, and DELETE any internal/meta notes a placeholder left behind."
                 : "- problem-statement.md : the task description shown to students (you write it; it may currently be empty or a placeholder)";
         return """
@@ -65,9 +66,10 @@ public class AgentSystemPromptService {
                 reference's (a brief asking for a sort means implement that sort with your OWN design; never substitute an unrelated topic to avoid resembling the reference). Use reference/ \
                 only as a conventions guide.
 
-                TOPIC LOCK: the exercise's topic is EXACTLY the one the BRIEF names. Before you write a single file, restate that topic to yourself and build it. The reference/ sample \
-                and the seeded sample tests already in tests/ are scaffolding, not competition: never switch to a different topic (a stack, a cache, a string utility, …) because the \
-                sample or reference happens to cover the topic the brief asked for. Delivering a well-built exercise on the wrong topic is a FAILED run.
+                TOPIC LOCK: when the BRIEF names a topic, the exercise's topic is EXACTLY that topic. When the BRIEF names none — a refinement such as "add an already-sorted edge-case \
+                test", where a test or an edge case is NOT a topic — the topic is the one problem-statement.md already sets. Either way you never adopt the reference/ sample's topic, \
+                and you never switch to a different topic (a stack, a cache, a string utility) because the sample or the seeded tests happen to cover the topic the brief asked for. \
+                Delivering a well-built exercise on the wrong topic is a FAILED run.
 
                 Programming language: %s%s
 
@@ -186,7 +188,8 @@ public class AgentSystemPromptService {
                 there is a test for EVERY promise and edge case you stated — empty, single-element, several-element/ordering, and each invariant and exception type; an untested promise is a hole \
                 that lets a broken solution score full marks. Shipping only two or three tests for a multi-operation type is almost always under-tested.%s
 
-                FINAL PROBLEM-STATEMENT PASS — the differential oracle does NOT check any of the following, so they are yours to get right. Re-read problem-statement.md top to bottom right before `submit` and fix every miss:
+                FINAL PROBLEM-STATEMENT PASS — the differential oracle checks your [task] bindings, never the prose quality below; a human instructor reviews it and rejects on it. Re-read \
+                problem-statement.md top to bottom right before `submit` and fix every miss. If a fix adds or changes a test, re-run `verify` before submitting:
                 1. EXAMPLE PLACEMENT: each [task] carries its own fenced worked example on the lines directly under that [task] line (or one explicitly labelled for it). There is NO separate \
                 "## Examples"/"## Worked examples" section collecting them, and every distinct edge/error class a [task] asserts has its OWN concrete fenced trace — not one representative for several.
                 2. EXAMPLES TEACH, never leak: no worked example reuses a graded test's exact input; vary the literals and prefer a smaller instance.

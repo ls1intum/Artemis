@@ -148,15 +148,15 @@ public class SandboxAgentTools {
         if (oldText.isEmpty()) {
             return "ERROR: oldText must not be empty.";
         }
-        // writeFile normalizes typographic punctuation, so an already-written file holds the ASCII form; normalize the needle too or a model-supplied snippet carrying a
-        // typographic
-        // dash would never match. The replacement is normalized by the writeFile call below.
-        oldText = TypographyNormalizer.normalize(oldText);
         SandboxExecResult read = sandbox.exec(sessionId, FILE_OP_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!read.isSuccess()) {
             return "ERROR: could not read '" + safe + "' for editing: " + read.combinedOutput();
         }
-        String current = read.stdout();
+        // Match on the normalized forms of BOTH sides. writeFile normalizes what it writes, but a file can still hold typographic punctuation when it was seeded (the instructor's
+        // problem statement) or written with bash, and the model supplies whichever form it last saw. Normalizing only the needle would make every such edit miss and the "read the
+        // file again" advice would return the same unmatchable text. If normalization makes two distinct sites collide, the uniqueness check below rejects rather than guessing.
+        oldText = TypographyNormalizer.normalize(oldText);
+        String current = TypographyNormalizer.normalize(read.stdout());
         int first = current.indexOf(oldText);
         if (first < 0) {
             return "ERROR: the provided oldText was not found in '" + safe + "'. Read the file again to get the exact current text.";
