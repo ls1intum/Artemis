@@ -24,16 +24,16 @@ ci.yml                                                            (single entry 
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
+├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
-├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 ├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 │
-├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory e2e/codeql/coverage-report — the required check)
+├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
@@ -51,7 +51,9 @@ The single required check is `CI / All required CI Passed`. It gates on every jo
 `docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
 the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
-so requiring them adds no merge latency. Path-skipped jobs report `skipped`, which the gate
+so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
+it is gated too, but with a flakiness-aware verdict, so it blocks only on a real, non-flaky
+regression and never on ambient flakiness. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
