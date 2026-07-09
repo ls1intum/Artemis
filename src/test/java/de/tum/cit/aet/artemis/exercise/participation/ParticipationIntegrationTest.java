@@ -928,7 +928,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackWithSubmittedSubmissionWithoutResult() throws Exception {
-        setupAthenaForExercise(programmingExercise, ATHENA_MODULE_PROGRAMMING_TEST);
+        setupAthenaForExercise(programmingExercise);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
