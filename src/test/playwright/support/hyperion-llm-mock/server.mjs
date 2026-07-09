@@ -4,6 +4,46 @@ const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
+const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
+const correctedSeedStatementMarker = 'Use merge sort for big lists';
+const correctedSeedProblemStatement = `In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
+
+### Part 1: Sorting
+
+First, we need to implement two sorting algorithms, in this case \`MergeSort\` and \`BubbleSort\`.
+
+**You have the following tasks:**
+
+1. [task][Implement Bubble Sort](testBubbleSort)
+Implement the method \`performSort(List<Date>)\` in the class \`BubbleSort\`. Make sure to follow the Bubble Sort algorithm exactly.
+
+2. [task][Implement Merge Sort](testMergeSort)
+Implement the method \`performSort(List<Date>)\` in the class \`MergeSort\`. Make sure to follow the Merge Sort algorithm exactly.
+
+### Part 2: Strategy Pattern
+
+We want the application to apply different algorithms for sorting a \`List\` of \`Date\` objects.
+Use the strategy pattern to select the right sorting algorithm at runtime.
+
+**You have the following tasks:**
+
+1. [task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])
+Create a \`SortStrategy\` interface and adjust the sorting algorithms so that they implement this interface.
+
+2. [task][Context Class](testAttributes[Context],testMethods[Context])
+Create and implement a \`Context\` class following the below class diagram.
+
+3. [task][Context Policy](testConstructors[Policy],testAttributes[Policy],testMethods[Policy])
+Create and implement a \`Policy\` class following the below class diagram with a simple configuration mechanism:
+
+    1. [task][Use merge sort for big lists](testUseMergeSortForBigList)
+    Select \`MergeSort\` when the List has more than 10 dates.
+
+    2. [task][Use bubble sort for small lists](testUseBubbleSortForSmallList)
+    Select \`BubbleSort\` when the List has less or equal 10 dates.
+
+4. Complete the \`Client\` class which demonstrates switching between two strategies at runtime.
+`;
 
 function jsonResponse(res, status, body) {
     res.writeHead(status, { 'content-type': 'application/json' });
@@ -66,6 +106,14 @@ const server = http.createServer((req, res) => {
                         content: 'package de.test;\n\npublic class HyperionPreview {\n    public String marker() {\n        return "retained-preview";\n    }\n}\n',
                     }),
                 );
+                return;
+            }
+            if (body.includes(submitSeedMarker) && !body.includes(correctedSeedStatementMarker)) {
+                jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedSeedProblemStatement }));
+                return;
+            }
+            if (body.includes(submitSeedMarker)) {
+                jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the seeded Java exercise for deterministic E2E verification.' }));
                 return;
             }
             jsonResponse(res, 200, toolCallResponse(requestNumber, 'bash', { command: 'sleep 30' }));

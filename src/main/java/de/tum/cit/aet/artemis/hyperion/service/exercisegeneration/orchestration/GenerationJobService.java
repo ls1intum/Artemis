@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -22,10 +23,13 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.MapConfig;
@@ -80,7 +84,7 @@ public class GenerationJobService {
     private static final String REVERT_JOB_PREFIX = "revert-";
 
     /** Pipeline id under which a generation run's model-call token usage is recorded. */
-    private static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
+    static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
 
     private static final int JOB_TTL_SECONDS = 7200;
 
@@ -100,6 +104,12 @@ public class GenerationJobService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final Duration staleJobTimeout;
+
+    private final Duration maxJobDuration;
+
+    private String localNodeId;
+
     private IMap<String, JobInfo> jobMap;
 
     private IMap<String, Boolean> cancellationMap;
@@ -114,11 +124,19 @@ public class GenerationJobService {
     // flag.
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
+    @Autowired
     public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
-            LLMTokenUsageService llmTokenUsageService) {
+            LLMTokenUsageService llmTokenUsageService, @Value("${artemis.hyperion.agent.stale-job-timeout:PT35M}") Duration staleJobTimeout,
+            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.staleJobTimeout = staleJobTimeout;
+        this.maxJobDuration = maxJobDuration;
+    }
+
+    public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, Duration.ofMinutes(35), Duration.ofMinutes(30));
     }
 
     /**
@@ -161,6 +179,7 @@ public class GenerationJobService {
         snapshotIndexMap = hazelcastInstance.getMap(SNAPSHOT_INDEX_MAP_NAME);
         ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
         cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
+        localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
     }
 
     /**
@@ -175,7 +194,9 @@ public class GenerationJobService {
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), Instant.now(), Boolean.TRUE);
+        Instant startedAt = Instant.now();
+        Instant deadlineAt = deadlineAt(startedAt);
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, Boolean.TRUE);
         JobInfo existing = jobMap.putIfAbsent(key, newJob);
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
@@ -188,7 +209,7 @@ public class GenerationJobService {
         JobFileSnapshotIndex snapshotIndex = new JobFileSnapshotIndex(jobId, user.getLogin(), new ArrayList<>());
         snapshotIndexMap.set(key, snapshotIndex, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         try {
-            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
+            eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt));
         }
         catch (RejectedExecutionException e) {
             // The generation executor is saturated (AbortPolicy). The @Async listener never ran, so no terminal event will ever fire — roll back the claimed slot and its retained
@@ -235,7 +256,7 @@ public class GenerationJobService {
         if (job == null || !job.jobId().equals(jobId)) {
             return;
         }
-        jobMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        jobMap.set(key, job.withHeartbeat(Instant.now()), JOB_TTL_SECONDS, TimeUnit.SECONDS);
         JobTranscript transcript = transcriptMap.get(key);
         if (transcript != null && transcript.jobId().equals(jobId)) {
             transcriptMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
@@ -359,6 +380,28 @@ public class GenerationJobService {
         return true;
     }
 
+    /**
+     * Requests cancellation for server-side safety controls such as deadlines and token budgets. The caller already owns the job id from the running task, so no user ownership
+     * check is required.
+     */
+    public boolean requestSystemCancellation(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(jobId)) {
+                return false;
+            }
+            cancellationMap.put(jobId, Boolean.TRUE);
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+        runLocalCancelHook(jobId);
+        hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
+        return true;
+    }
+
     private void runLocalCancelHook(String jobId) {
         Runnable hook = cancelHooks.remove(jobId);
         if (hook != null) {
@@ -393,7 +436,7 @@ public class GenerationJobService {
             if (isCancelled(jobId)) {
                 return false;
             }
-            jobMap.set(key, new JobInfo(job.jobId(), job.userLogin(), job.exerciseId(), job.startedAt(), Boolean.FALSE));
+            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(Boolean.FALSE), JOB_TTL_SECONDS, TimeUnit.SECONDS);
         }
         finally {
             jobMap.unlock(key);
@@ -428,6 +471,41 @@ public class GenerationJobService {
     }
 
     /**
+     * Checks whether this JVM still owns the active exercise mutation slot. This is a best-effort stale-writer guard before durable Git/DB writes; repository head checks and DB
+     * compare-and-set guards remain the authoritative clobber protection for external resources.
+     */
+    public boolean isOwnedActiveJob(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            return job != null && job.jobId().equals(jobId) && (job.ownerNodeId() == null || localNodeId == null || job.ownerNodeId().equals(localNodeId));
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+    }
+
+    /**
+     * Refreshes the owning worker's liveness independently of progress events. A false return means this process no longer owns the job and must stop before durable mutations.
+     */
+    public boolean heartbeat(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(jobId) || (job.ownerNodeId() != null && localNodeId != null && !job.ownerNodeId().equals(localNodeId))) {
+                return false;
+            }
+            jobMap.set(key, job.withHeartbeat(Instant.now()), JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            return true;
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+    }
+
+    /**
      * Atomically claims the same per-exercise mutation slot used by generation/adaptation for a destructive adaptation revert. This closes the check-then-act race where a revert
      * could observe "no active job" and a generation could start before the repositories are reset.
      *
@@ -437,7 +515,8 @@ public class GenerationJobService {
      */
     public String claimRevertSlot(User user, long exerciseId) {
         String token = REVERT_JOB_PREFIX + UUID.randomUUID();
-        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, Instant.now(), Boolean.FALSE);
+        Instant startedAt = Instant.now();
+        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, startedAt, null, localNodeId, startedAt, Boolean.FALSE);
         JobInfo existing = jobMap.putIfAbsent(key(exerciseId), newJob);
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise; wait for it to finish before reverting an adaptation.", ENTITY_NAME,
@@ -516,6 +595,54 @@ public class GenerationJobService {
         }
     }
 
+    /**
+     * Marks jobs without a recent owner heartbeat terminal. This keeps reconnecting clients from showing an indefinite running state after node death.
+     */
+    @Scheduled(fixedDelayString = "${artemis.hyperion.agent.stale-job-scan-ms:60000}")
+    public void clearStaleJobs() {
+        if (staleJobTimeout == null || staleJobTimeout.isZero() || staleJobTimeout.isNegative()) {
+            return;
+        }
+        Instant staleBefore = Instant.now().minus(staleJobTimeout);
+        for (Map.Entry<String, JobInfo> entry : jobMap.entrySet()) {
+            JobInfo job = entry.getValue();
+            if (job == null || job.lastHeartbeatOrStartedAt().isAfter(staleBefore)) {
+                continue;
+            }
+            String key = entry.getKey();
+            jobMap.lock(key);
+            try {
+                JobInfo current = jobMap.get(key);
+                if (current == null || !current.jobId().equals(job.jobId()) || current.lastHeartbeatOrStartedAt().isAfter(staleBefore)) {
+                    continue;
+                }
+                markStaleTranscript(current.exerciseId(), current.jobId());
+                jobMap.remove(key, current);
+                cancellationMap.remove(current.jobId());
+                runLocalCancelHook(current.jobId());
+            }
+            finally {
+                jobMap.unlock(key);
+            }
+        }
+    }
+
+    private void markStaleTranscript(long exerciseId, String jobId) {
+        transcriptMap.computeIfPresent(key(exerciseId), (k, transcript) -> {
+            if (!transcript.jobId().equals(jobId) || transcript.done()) {
+                return transcript;
+            }
+            List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
+            events.add(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                    "Generation stopped because the owning node stopped sending heartbeats. Review the exercise and repositories before use if this happened while saving."));
+            while (events.size() > MAX_RETAINED_EVENTS) {
+                events.remove(1);
+            }
+            return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true);
+        });
+        transcriptMap.setTtl(key(exerciseId), TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+    }
+
     /** Deletes every retained per-file snapshot key listed by {@code index}; a {@code null} index (nothing retained) is a no-op. */
     private void removeSnapshotFiles(long exerciseId, @Nullable JobFileSnapshotIndex index) {
         if (index == null) {
@@ -537,6 +664,13 @@ public class GenerationJobService {
         return String.valueOf(exerciseId);
     }
 
+    private Instant deadlineAt(Instant startedAt) {
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            return null;
+        }
+        return startedAt.plus(maxJobDuration);
+    }
+
     /** The per-file snapshot map key for a file in one run. */
     static String fileKey(long exerciseId, String jobId, String path) {
         return exerciseId + "::" + jobId + "::" + path;
@@ -545,7 +679,8 @@ public class GenerationJobService {
     /**
      * Metadata for an active whole-exercise generation job (claimed slot owner and claim time).
      */
-    public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Boolean cancellable) implements Serializable {
+    public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
+            @Nullable Instant lastHeartbeatAt, @Nullable Boolean cancellable) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
@@ -556,6 +691,18 @@ public class GenerationJobService {
          */
         boolean cancellableOrDefault() {
             return cancellable == null || cancellable;
+        }
+
+        Instant lastHeartbeatOrStartedAt() {
+            return lastHeartbeatAt == null ? startedAt : lastHeartbeatAt;
+        }
+
+        JobInfo withHeartbeat(Instant heartbeatAt) {
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable);
+        }
+
+        JobInfo withCancellable(Boolean newCancellable) {
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable);
         }
     }
 

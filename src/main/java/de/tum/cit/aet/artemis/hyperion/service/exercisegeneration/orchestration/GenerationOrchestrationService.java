@@ -136,17 +136,18 @@ public class GenerationOrchestrationService {
      * @param cancelled        polled cooperatively; if it returns {@code true} the session is aborted
      * @param progress         receives short human-readable progress lines for the live transcript; may be {@code null}
      * @param fileSnapshotSink receives a whole-file snapshot on every successful write for live streaming; {@code null} disables snapshot streaming
+     * @param usageSink        receives token usage for every model call; {@code null} uses the default persisted run sink
      * @return the outcome including the verification verdict and the produced files
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
-            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink) {
+            Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink, @Nullable Consumer<ChatResponse> usageSink) {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
-        Consumer<ChatResponse> usageSink = jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
+        Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         try {
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
@@ -183,7 +184,7 @@ public class GenerationOrchestrationService {
             // Recomputed each attempt; the final attempt's report rides the outcome. Advisory only.
             SpecFidelityReport specFidelityReport = SpecFidelityReport.empty();
             for (int attempt = 1; attempt <= MAX_GENERATION_ATTEMPTS; attempt++) {
-                loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
+                loopResult = agentLoopRunner.run(systemPrompt, currentPrompt, tools, maxTurns, cancelled, effectiveUsageSink, progress);
                 log.info("Exercise generation attempt {} took {} turn(s)", attempt, loopResult.turns());
 
                 if (loopResult.status() == AgentLoopResult.Status.CANCELLED) {
@@ -242,7 +243,8 @@ public class GenerationOrchestrationService {
                 }
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
-                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), usageSink, progress);
+                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), effectiveUsageSink,
+                        progress);
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,9 +97,16 @@ public class GenerationRecoveryService {
      * @throws RuntimeException only when the persist itself fails (nothing durable was saved); the caller maps that to {@code PARTIAL}
      */
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        // A persist failure means nothing durable was saved, so it propagates and the caller reports PARTIAL.
-        GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId);
+        return recoverAfterPersist(exercise, outcome, persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId));
+    }
 
+    public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
+        // A persist failure means nothing durable was saved, so it propagates and the caller reports PARTIAL.
+        GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId, stillOwnsMutationSlot);
+        return recoverAfterPersist(exercise, outcome, persistResult);
+    }
+
+    private RecoveryResult recoverAfterPersist(ProgrammingExercise exercise, GenerationOutcome outcome, GenerationPersistenceService.RecoveryPersistResult persistResult) {
         // The draft is now committed, so a failed annotation must not be reported as "nothing saved": swallow it and return REVIEW_COMMENTS_FAILED for a degraded NEEDS_REVIEW.
         try {
             List<ConsistencyIssueDTO> findings = toFindings(outcome);

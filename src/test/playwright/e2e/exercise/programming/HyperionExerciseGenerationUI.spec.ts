@@ -8,6 +8,7 @@ import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import javaProgrammingExerciseTemplate from '../../../fixtures/exercise/programming/java/template.json';
 
 const course = { id: SEED_COURSES.programmingManagement.id } as any;
 
@@ -21,7 +22,13 @@ type GenerationStatus = {
     jobId: string;
     running: boolean;
     mode?: 'GENERATE' | 'ADAPT';
-    events: { type: 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR'; message?: string }[];
+    events: {
+        type: 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
+        message?: string;
+        completionStatus?: 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
+        verdict?: { accepted?: boolean; solutionPassed?: boolean; templateFailed?: boolean; testCount?: number };
+        liveExerciseChanged?: boolean;
+    }[];
     fileSnapshots?: { path: string; repo: string; action: string; content: string }[];
 };
 
@@ -29,6 +36,10 @@ type BuildAgentSlots = {
     reservedGenerationSandboxSlots?: number;
     maxGenerationSandboxSlots?: number;
 };
+
+const verifierSafeJavaProblemStatement = javaProgrammingExerciseTemplate.problemStatement
+    .replace('(testClass[MergeSort],testUseMergeSortForBigList)', '(testUseMergeSortForBigList)')
+    .replace('(testClass[BubbleSort],testUseBubbleSortForSmallList)', '(testUseBubbleSortForSmallList)');
 
 test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () => {
     test.skip(process.env.HYPERION_LLM_MODE !== 'mock', 'Mocked Hyperion UI tests require HYPERION_LLM_MODE=mock.');
@@ -48,9 +59,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
             releaseDate: dayjs().add(2, 'days'),
             dueDate: dayjs().add(3, 'days'),
             assessmentDate: dayjs().add(4, 'days'),
+            problemStatement: verifierSafeJavaProblemStatement,
             title: `hyperion-ui-${generateUUID()}`,
         });
         expect(exercise.id).toBeDefined();
+        await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
         runningJobId = undefined;
     });
 
@@ -148,6 +161,36 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+        runningJobId = undefined;
+    });
+
+    test('completes a mocked accepted adaptation through the browser and real verifier', async ({ browser, page, login }) => {
+        test.setTimeout(300_000);
+        const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
+        await openEditor(page, login, exercise!);
+
+        await page.getByTestId('hyperion-ai-menu').click();
+        await page.getByTestId('hyperion-adapt-with-feedback').click();
+        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: fix task bindings in the seeded Java exercise and submit it.');
+
+        const startResponsePromise = waitForGenerationStart(page, exercise!.id!);
+        await page.getByRole('button', { name: 'Adapt exercise', exact: true }).click();
+        const { jobId, request } = await startResponsePromise;
+        runningJobId = jobId;
+
+        expect(request).toEqual({
+            mode: 'ADAPT',
+            prompt: 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE: fix task bindings in the seeded Java exercise and submit it.',
+        });
+        const activity = page.getByTestId('hyperion-generation-activity');
+        await expect(activity).toContainText('Checking the exercise builds and grades', { timeout: 180_000 });
+        await expect(activity).toContainText('The exercise was generated and saved', { timeout: 240_000 });
+        await expect(page.getByTestId('hyperion-generation-verdict')).toBeVisible();
+        await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
+        await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
+        await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
+        await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
+        await expectAdminGenerationSandboxSlots(browser, '0 / 2');
         runningJobId = undefined;
     });
 
@@ -307,6 +350,37 @@ async function expectTerminalGenerationStatus(page: Page, exerciseId: number, jo
             };
         })
         .toEqual({ jobId, running: false, terminalType });
+}
+
+async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, jobId: string, mode: 'GENERATE' | 'ADAPT') {
+    await expect
+        .poll(
+            async () => {
+                const status = await getGenerationStatus(page, exerciseId);
+                const terminal = [...status.events].reverse().find((event) => event.type === 'DONE');
+                return {
+                    jobId: status.jobId,
+                    mode: status.mode,
+                    running: status.running,
+                    completionStatus: terminal?.completionStatus,
+                    accepted: terminal?.verdict?.accepted,
+                    solutionPassed: terminal?.verdict?.solutionPassed,
+                    templateFailed: terminal?.verdict?.templateFailed,
+                    testCount: terminal?.verdict?.testCount,
+                };
+            },
+            { timeout: 60_000 },
+        )
+        .toEqual({
+            jobId,
+            mode,
+            running: false,
+            completionStatus: 'SUCCESS',
+            accepted: true,
+            solutionPassed: true,
+            templateFailed: true,
+            testCount: 13,
+        });
 }
 
 async function expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page: Page, exerciseId: number, runningJobId: string, expectedLlmRequestCount: number) {

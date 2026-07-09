@@ -314,7 +314,7 @@ class GenerationJobServiceTest {
         String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
         @SuppressWarnings("unchecked")
         IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
-        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now(), null));
+        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now(), null, null, null, null));
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
@@ -364,6 +364,44 @@ class GenerationJobServiceTest {
     @Test
     void getStatus_emptyWhenNothingRetained() {
         assertThat(jobService.getStatus(user("owner"), exercise(123L))).isEmpty();
+    }
+
+    @Test
+    void heartbeat_refreshesOwnerLivenessWithoutProgressEvents() {
+        long exerciseId = 124L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
+        Instant before = jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt();
+
+        assertThat(jobService.heartbeat(exerciseId, jobId)).isTrue();
+
+        assertThat(jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt()).isAfterOrEqualTo(before);
+    }
+
+    @Test
+    void clearStaleJobs_marksTranscriptDoneAndReleasesSlot() {
+        long exerciseId = 125L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.recordEvent(exerciseId, jobId, progress("still running"), false);
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
+        String localNodeId = (String) ReflectionTestUtils.getField(jobService, "localNodeId");
+        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now().minus(Duration.ofMinutes(10)), null, localNodeId,
+                Instant.now().minus(Duration.ofMinutes(10)), Boolean.TRUE));
+        GenerationJobService shortTimeoutService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofMinutes(30));
+        shortTimeoutService.init();
+
+        shortTimeoutService.clearStaleJobs();
+
+        ExerciseGenerationStatusDTO status = shortTimeoutService.getStatus(owner, exercise).orElseThrow();
+        assertThat(status.running()).isFalse();
+        assertThat(status.events().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(status.events().getLast().message()).contains("heartbeats");
+        assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isFalse();
     }
 
     // --- File-snapshot store: per-file keying so a write is O(1), never a re-serialization of the whole retained set

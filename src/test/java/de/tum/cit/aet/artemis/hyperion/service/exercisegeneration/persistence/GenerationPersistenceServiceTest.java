@@ -280,6 +280,22 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_usesJobStartMetadataAsProblemStatementGuard() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(exercise.getProblemStatement()).thenReturn("manual edit while generation was running");
+        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "original statement", null)).thenReturn(0);
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "original statement", null)).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement").hasMessageContaining("INCOMPLETE");
+
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "original statement", null);
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
     void persist_restoresProblemStatement_whenTaskExtractionFailsAfterMetadataWasSaved() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(exercise.getProblemStatement()).thenReturn("old statement");

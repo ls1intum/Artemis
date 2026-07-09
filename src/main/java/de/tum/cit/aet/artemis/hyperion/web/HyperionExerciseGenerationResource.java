@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseAdaptationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -73,9 +75,11 @@ public class HyperionExerciseGenerationResource {
 
     private final RemoteInteractiveSandboxClient sandboxClient;
 
+    private final HyperionGenerationBudgetService generationBudgetService;
+
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationJobService jobService,
             AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ExerciseAdaptationRevertService adaptationRevertService, RemoteInteractiveSandboxClient sandboxClient) {
+            ExerciseAdaptationRevertService adaptationRevertService, RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jobService = jobService;
@@ -83,6 +87,7 @@ public class HyperionExerciseGenerationResource {
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
         this.adaptationRevertService = adaptationRevertService;
         this.sandboxClient = sandboxClient;
+        this.generationBudgetService = generationBudgetService;
     }
 
     /**
@@ -113,6 +118,7 @@ public class HyperionExerciseGenerationResource {
                     "generationCapacityUnavailable");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        generationBudgetService.assertWithinBudgets(user.getId(), courseIdOf(exercise));
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
         String jobId = jobService.startJob(user, exercise, prompt, request.effectiveMode());
         log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.effectiveMode(), exerciseId);
@@ -184,7 +190,7 @@ public class HyperionExerciseGenerationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         try {
-            return adaptationRevertService.revert(exercise, user).map(result -> {
+            return adaptationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
                 ExerciseAdaptationRevertResultDTO body = new ExerciseAdaptationRevertResultDTO(result.fullyReverted(),
                         result.revertedRepositories().stream().map(RepositoryType::getName).toList());
                 return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -220,6 +226,11 @@ public class HyperionExerciseGenerationResource {
             throw new BadRequestAlertException("Exercise must have a build configuration for generation", ENTITY_NAME, "missingBuildConfig");
         }
         return exercise;
+    }
+
+    private static Long courseIdOf(ProgrammingExercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course == null ? null : course.getId();
     }
 
     /**

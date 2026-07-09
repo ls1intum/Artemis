@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,9 +166,16 @@ public class GenerationPersistenceService {
      * @return whether the live exercise was left untouched and, if so, the isolated branch the draft was pushed to
      */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
+        return persistRecoveryDraft(exercise, user, outcome, jobId, () -> true);
+    }
+
+    public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), draftBranch);
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), draftBranch);
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), draftBranch);
         log.info("Recovered non-accepted draft for exercise {} onto isolated branch {} (live exercise left untouched)", exercise.getId(), draftBranch);
         return new RecoveryPersistResult(true, draftBranch);
@@ -230,6 +238,21 @@ public class GenerationPersistenceService {
      * @throws GenerationIncompleteException if a repository commit fails part-way through the sequence (the already-committed repositories are compensated first)
      */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
+        return persist(exercise, user, outcome, exercise.getProblemStatement(), exercise.getTitle());
+    }
+
+    /**
+     * Persists a verified generated exercise, refusing to overwrite problem statement/title edits made after the generation job started.
+     *
+     * @param expectedProblemStatement the problem statement observed when the job started
+     * @param expectedTitle            the title observed when the job started
+     */
+    public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle) {
+        return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, () -> true);
+    }
+
+    public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
+            BooleanSupplier stillOwnsMutationSlot) {
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
         Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
@@ -237,6 +260,7 @@ public class GenerationPersistenceService {
         String testsCommitHash = null;
         try {
             for (RepositoryType repositoryType : PERSIST_ORDER) {
+                assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), outcome.seedRepositoryHeads().get(repositoryType),
                         prePersistHashes, postPersistHashes);
                 if (commitHash != null) {
@@ -257,8 +281,8 @@ public class GenerationPersistenceService {
         }
 
         String producedProblemStatement = outcome.producedProblemStatement();
-        String originalProblemStatement = exercise.getProblemStatement();
-        String originalTitle = exercise.getTitle();
+        String originalProblemStatement = expectedProblemStatement;
+        String originalTitle = expectedTitle;
         boolean problemStatementChanged = false;
         String persistedProblemStatement = null;
         String persistedTitle = null;
@@ -274,6 +298,7 @@ public class GenerationPersistenceService {
                 }
             }
             try {
+                assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle);
                 problemStatementChanged = true;
                 persistedProblemStatement = producedProblemStatement.trim();
@@ -295,6 +320,7 @@ public class GenerationPersistenceService {
         // Trigger the canonical CI build for the tests (drives test-case sync + task binding asynchronously) and record the exercise version — only reached once every repository
         // committed.
         try {
+            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
             syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true);
         }
         catch (RuntimeException e) {
@@ -322,6 +348,12 @@ public class GenerationPersistenceService {
             }
         }
         return Map.copyOf(copy);
+    }
+
+    private static void assertStillOwnsMutationSlot(BooleanSupplier stillOwnsMutationSlot) {
+        if (!stillOwnsMutationSlot.getAsBoolean()) {
+            throw new IllegalStateException("Hyperion generation lost ownership of the exercise mutation slot; refusing to continue durable writes");
+        }
     }
 
     /**

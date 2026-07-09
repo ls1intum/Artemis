@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -34,8 +35,9 @@ public class HyperionAsyncConfiguration {
      */
     @Bean
     @Lazy
-    public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens) {
-        return new AgentLoopRunner(chatModels, contextWindowTokens);
+    public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens,
+            @Value("${artemis.hyperion.agent.provider-circuit-breaker-cooldown:PT5M}") Duration providerCircuitBreakerCooldown) {
+        return new AgentLoopRunner(chatModels, contextWindowTokens, providerCircuitBreakerCooldown);
     }
 
     /**
@@ -45,12 +47,11 @@ public class HyperionAsyncConfiguration {
     @Bean(name = "hyperionGenerationExecutor")
     public Executor hyperionGenerationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // A ThreadPoolExecutor only grows past the core size once the queue is full, so with a 64-deep backlog the effective concurrency IS the core size. Keep core and max equal
-        // to
-        // make the node's concurrent-generation bound honest — a larger max would be dead config that never activates until 64 runs are already queued.
+        // Keep generation admission honest: these jobs are long-lived and already hold a per-exercise slot, so do not accept a deep in-memory backlog that can wait far longer
+        // than the configured generation deadline before it even starts.
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(2);
-        executor.setQueueCapacity(64);
+        executor.setQueueCapacity(0);
         executor.setAllowCoreThreadTimeOut(true);
         executor.setThreadNamePrefix("hyperion-gen-");
         // On saturation, abort (throw RejectedExecutionException) rather than run on the caller: the submit path is the HTTP request thread, and CallerRunsPolicy would block it

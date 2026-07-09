@@ -1,17 +1,28 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
@@ -63,9 +74,19 @@ public class GenerationTaskService {
 
     private final ExerciseAdaptationRevertService adaptationRevertService;
 
+    private final TaskScheduler taskScheduler;
+
+    private final Duration maxJobDuration;
+
+    private final long maxTokensPerJob;
+
+    private final Duration ownerHeartbeatInterval;
+
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationRecoveryService recoveryService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseAdaptationRevertService adaptationRevertService) {
+            ExerciseAdaptationRevertService adaptationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
+            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Value("${artemis.hyperion.agent.max-tokens-per-job:250000}") long maxTokensPerJob,
+            @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.recoveryService = recoveryService;
@@ -73,6 +94,10 @@ public class GenerationTaskService {
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.adaptationRevertService = adaptationRevertService;
+        this.taskScheduler = taskScheduler;
+        this.maxJobDuration = maxJobDuration;
+        this.maxTokensPerJob = maxTokensPerJob;
+        this.ownerHeartbeatInterval = ownerHeartbeatInterval;
     }
 
     /**
@@ -99,6 +124,11 @@ public class GenerationTaskService {
             jobService.recordSnapshot(exerciseId, jobId, snapshot);
             websocket.send(login, topic, snapshot);
         };
+        AtomicBoolean deadlineExceeded = new AtomicBoolean(false);
+        AtomicBoolean tokenBudgetExceeded = new AtomicBoolean(false);
+        AtomicBoolean heartbeatLost = new AtomicBoolean(false);
+        ScheduledFuture<?> deadlineFuture;
+        ScheduledFuture<?> heartbeatFuture;
         // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
         // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
         // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
@@ -112,6 +142,12 @@ public class GenerationTaskService {
             jobService.clearJob(exerciseId, jobId);
             return;
         }
+        if (isDeadlineExceeded(event.deadlineAt())) {
+            deadlineExceeded.set(true);
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
+            jobService.clearJob(exerciseId, jobId);
+            return;
+        }
         ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
         if (exercise == null) {
             log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
@@ -119,17 +155,22 @@ public class GenerationTaskService {
             jobService.clearJob(exerciseId, jobId);
             return;
         }
+        deadlineFuture = scheduleDeadline(exerciseId, jobId, deadlineExceeded, event.deadlineAt());
+        heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId), emitter::progress,
-                fileSnapshotSink)) {
+        Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded);
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId) || heartbeatLost.get(),
+                emitter::progress, fileSnapshotSink, usageSink)) {
             switch (outcome.loopResult().status()) {
-                case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
+                        cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
                 case ERROR -> emitter.milestone(
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
                 // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                 case COMPLETED, BUDGET_EXHAUSTED -> {
                     if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
+                                cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
                         return;
                     }
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
@@ -142,9 +183,10 @@ public class GenerationTaskService {
                             // cancelled/rejected/errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing
                             // to revert to.
                             ProgrammingExercise exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                            String originalProblemStatement = exerciseToPersist.getProblemStatement();
-                            String originalTitle = exerciseToPersist.getTitle();
-                            GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome);
+                            String originalProblemStatement = event.expectedProblemStatement();
+                            String originalTitle = event.expectedTitle();
+                            GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
+                                    originalTitle, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
                             if (event.mode() == GenerationMode.ADAPT) {
                                 adaptationRevertService.recordBaseline(exerciseToPersist, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
                                         originalProblemStatement, originalTitle);
@@ -181,6 +223,8 @@ public class GenerationTaskService {
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: " + e.getMessage()));
         }
         finally {
+            cancelScheduled(deadlineFuture);
+            cancelScheduled(heartbeatFuture);
             jobService.clearJob(exerciseId, jobId);
         }
     }
@@ -202,7 +246,7 @@ public class GenerationTaskService {
         String reason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
         try {
             emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
-            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId);
+            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
             // without accidentally publishing unverified code.
@@ -225,6 +269,81 @@ public class GenerationTaskService {
                     reason + " Saving the draft for review did not complete (" + e.getMessage() + "); any partial hyperion-draft branch must be reviewed or deleted manually.",
                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
         }
+    }
+
+    private ScheduledFuture<?> scheduleDeadline(long exerciseId, String jobId, AtomicBoolean deadlineExceeded, Instant deadlineAt) {
+        Instant effectiveDeadlineAt = effectiveDeadlineAt(deadlineAt);
+        if (effectiveDeadlineAt == null) {
+            return null;
+        }
+        return taskScheduler.schedule(() -> {
+            deadlineExceeded.set(true);
+            jobService.requestSystemCancellation(exerciseId, jobId);
+        }, effectiveDeadlineAt);
+    }
+
+    private ScheduledFuture<?> scheduleHeartbeat(long exerciseId, String jobId, AtomicBoolean heartbeatLost) {
+        if (ownerHeartbeatInterval == null || ownerHeartbeatInterval.isZero() || ownerHeartbeatInterval.isNegative()) {
+            return null;
+        }
+        return taskScheduler.scheduleWithFixedDelay(() -> {
+            if (!jobService.heartbeat(exerciseId, jobId)) {
+                heartbeatLost.set(true);
+                jobService.requestSystemCancellation(exerciseId, jobId);
+            }
+        }, ownerHeartbeatInterval);
+    }
+
+    private Consumer<ChatResponse> budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded) {
+        if (maxTokensPerJob <= 0) {
+            return delegate;
+        }
+        AtomicLong tokensUsed = new AtomicLong();
+        return response -> {
+            delegate.accept(response);
+            long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
+            if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
+                jobService.requestSystemCancellation(exerciseId, jobId);
+            }
+        };
+    }
+
+    private static void cancelScheduled(ScheduledFuture<?> future) {
+        if (future != null) {
+            future.cancel(false);
+        }
+    }
+
+    private boolean isDeadlineExceeded(Instant deadlineAt) {
+        return deadlineAt != null && !Instant.now().isBefore(deadlineAt);
+    }
+
+    private Instant effectiveDeadlineAt(Instant admissionDeadlineAt) {
+        if (admissionDeadlineAt != null) {
+            return admissionDeadlineAt;
+        }
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            return null;
+        }
+        return Instant.now().plus(maxJobDuration);
+    }
+
+    private static String cancellationMessage(boolean deadlineExceeded, boolean tokenBudgetExceeded, boolean heartbeatLost) {
+        if (deadlineExceeded) {
+            return "Generation stopped because it exceeded the configured time limit. Nothing was changed.";
+        }
+        if (tokenBudgetExceeded) {
+            return "Generation stopped because it exceeded the configured token budget. Nothing was changed.";
+        }
+        if (heartbeatLost) {
+            return "Generation stopped because this node lost ownership of the job. Nothing was changed.";
+        }
+        return "Generation was cancelled. Nothing was changed.";
+    }
+
+    private static Long courseIdOf(ProgrammingExercise exercise) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return course == null ? null : course.getId();
     }
 
     private static ExerciseGenerationVerdictDTO toVerdict(VerificationResult verification) {

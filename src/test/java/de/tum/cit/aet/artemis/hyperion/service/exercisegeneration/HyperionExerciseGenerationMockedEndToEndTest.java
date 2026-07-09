@@ -193,7 +193,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 HyperionMockedLlmE2eSupport.submit("Bounded counter"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-valid", GenerationMode.GENERATE,
-                () -> false, line -> log.info("[mock-generate] {}", line), null)) {
+                () -> false, line -> log.info("[mock-generate] {}", line), null, null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (valid) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes its own tests").isTrue();
@@ -217,7 +217,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.submit("Bounded counter with one wrong binding"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-bad", GenerationMode.GENERATE,
-                () -> false, line -> log.info("[mock-generate-bad] {}", line), null)) {
+                () -> false, line -> log.info("[mock-generate-bad] {}", line), null, null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (bad binding) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the code is otherwise valid").isTrue();
@@ -237,7 +237,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
                 HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Broken bounded counter"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-failing-solution",
-                GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null)) {
+                GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null, null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (failing solution) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("a broken reference solution is rejected").isFalse();

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -28,6 +29,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import com.openai.core.http.Headers;
 import com.openai.errors.BadRequestException;
 import com.openai.errors.OpenAIIoException;
+import com.openai.errors.UnauthorizedException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
@@ -38,6 +40,11 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
  * {@link InteractiveSandbox} captures the tool calls, so the test exercises the loop control, tool dispatch, budget cap, and cancellation in isolation.
  */
 class AgentLoopRunnerTest {
+
+    @BeforeEach
+    void clearProviderCircuit() {
+        AgentLoopRunner.clearModelCircuitBreakerForTests();
+    }
 
     /** In-memory fake sandbox: write/read operate on a map, bash is a no-op success. Lets us assert the agent's tool calls deterministically. */
     private static final class FakeSandbox implements InteractiveSandbox {
@@ -178,6 +185,77 @@ class AgentLoopRunnerTest {
         assertThat(AgentLoopRunner.isRetryable(BadRequestException.builder().headers(Headers.builder().build()).build())).isFalse();
         assertThat(AgentLoopRunner.isRetryable(new RuntimeException("GPU endpoint returned HTTP 401: unauthorized"))).isFalse();
         assertThat(AgentLoopRunner.isRetryable(new RuntimeException("HTTP 422 unprocessable entity"))).isFalse();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("HTTP 408 request timeout"))).isTrue();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("HTTP 409 conflict"))).isTrue();
+        assertThat(AgentLoopRunner.isRetryable(new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota"))).isFalse();
+    }
+
+    @Test
+    void agentLoop_quotaExhaustionFailsFastAndOpensCircuit() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5));
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+
+        ChatModel secondChatModel = mock(ChatModel.class);
+        AgentLoopRunner secondRunner = new AgentLoopRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5));
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(secondChatModel, times(0)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_typedUnauthorizedFailureOpensCircuit() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(UnauthorizedException.builder().headers(Headers.builder().build()).build());
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5));
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+
+        ChatModel secondChatModel = mock(ChatModel.class);
+        AgentLoopRunner secondRunner = new AgentLoopRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5));
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(secondChatModel, times(0)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_cancellationDuringBackoffStopsRetryLadder() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 503"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10,
+                new java.util.concurrent.atomic.AtomicBoolean(true)::get, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        verify(chatModel, times(0)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_cancellationDuringRetryBackoffReportsCancelled() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 503"));
+        java.util.concurrent.atomic.AtomicInteger cancellationPolls = new java.util.concurrent.atomic.AtomicInteger();
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        runner.setModelCallRetryTimingForTests(1L, 1L);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> cancellationPolls.incrementAndGet() > 2, null,
+                null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        verify(chatModel, times(1)).call(any(Prompt.class));
     }
 
     @Test

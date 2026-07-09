@@ -151,7 +151,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     private GenerationOutcome generate(BooleanSupplier cancelled) {
-        return service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled, null, null);
+        return service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled, null, null, null);
     }
 
     /** A rejected first attempt feeds its verification report into the next prompt, and a subsequent accepted attempt yields an accepted outcome. */
@@ -194,7 +194,7 @@ class GenerationOrchestrationServiceTest {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
         when(testCaseRepository.findByExerciseId(42L)).thenReturn(Set.of(testCase("evictsLeastRecentlyUsed"), testCase("capacityIsRespected")));
 
-        try (GenerationOutcome outcome = service.generate(exercise, user, "Tighten the eviction test.", JOB_ID, GenerationMode.ADAPT, () -> false, null, null)) {
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Tighten the eviction test.", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
             assertThat(outcome.isAccepted()).isTrue();
         }
 

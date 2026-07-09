@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -117,10 +121,14 @@ public class AgentLoopRunner {
     /** HTTP status extracted from an untyped error message when no typed openai-java exception is available; used only by the {@link #isRetryable} fallback. */
     private static final Pattern HTTP_STATUS_IN_MESSAGE = Pattern.compile("(?i)(?:http|status|code|error)\\D{0,6}([1-5]\\d{2})\\b");
 
+    private static final ConcurrentMap<String, Instant> OPEN_MODEL_CIRCUITS = new ConcurrentHashMap<>();
+
     /** Exponential-backoff base/cap (ms) between model-call retries; instance fields so a test can shrink them to assert retry behaviour without real waits. */
     private long modelCallRetryBaseMillis = 1_500L;
 
     private long modelCallRetryCapMillis = 20_000L;
+
+    private final Duration modelCircuitBreakerCooldown;
 
     @Nullable
     private final ChatModel chatModel;
@@ -138,9 +146,14 @@ public class AgentLoopRunner {
      * @param contextWindowTokens the model's usable context window in tokens (override per deployment)
      */
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens) {
+        this(chatModels, contextWindowTokens, Duration.ofMinutes(5));
+    }
+
+    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration modelCircuitBreakerCooldown) {
         this.chatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.toolCallingManager = ToolCallingManager.builder().build();
         this.contextWindowTokens = contextWindowTokens;
+        this.modelCircuitBreakerCooldown = modelCircuitBreakerCooldown;
     }
 
     /**
@@ -222,14 +235,21 @@ public class AgentLoopRunner {
             }
 
             messagesAtLastCall = conversation.size();
-            ChatResponse response = callModelWithRetries(prompt, turn, stepListener);
+            ChatResponse response = callModelWithRetries(prompt, turn, cancelled, stepListener);
             if (response == null) {
+                if (cancelled.getAsBoolean()) {
+                    return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
+                }
                 return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
             }
             // Strip leaked harmony control tokens from tool names before dispatch (see normalizeToolNames).
             response = normalizeToolNames(response);
             emitUsage(usageSink, response);
             lastPromptTokens = promptTokensOf(response);
+            if (cancelled.getAsBoolean()) {
+                emit(stepListener, "Cancelled after model call on turn " + turn);
+                return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
+            }
 
             String assistantText = extractText(response);
             if (assistantText != null && !assistantText.isBlank()) {
@@ -405,10 +425,22 @@ public class AgentLoopRunner {
      * exhausted only on empty responses, so the loop can complete instead of falsely erroring. The caller turns a {@code null} into an ERROR outcome.
      */
     @Nullable
-    private ChatResponse callModelWithRetries(Prompt prompt, int turn, @Nullable Consumer<String> stepListener) {
+    private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
         RuntimeException lastError = null;
         ChatResponse lastEmptyResponse = null;
+        String circuitKey = configuredModel() != null ? configuredModel() : "default";
+        Instant openUntil = OPEN_MODEL_CIRCUITS.get(circuitKey);
+        if (openUntil != null && openUntil.isAfter(Instant.now())) {
+            emit(stepListener, "Model provider circuit is open for " + circuitKey + "; failing fast.");
+            return null;
+        }
+        if (openUntil != null) {
+            OPEN_MODEL_CIRCUITS.remove(circuitKey, openUntil);
+        }
         for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
+            if (cancelled.getAsBoolean()) {
+                return null;
+            }
             try {
                 ChatResponse response = chatModel.call(prompt);
                 if (!isEmptyResponse(response)) {
@@ -420,7 +452,7 @@ public class AgentLoopRunner {
                 log.warn("Agent loop model call returned an empty response on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS);
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "Model returned an empty response; retrying.");
-                    if (!backOffBeforeRetry(attempt, turn)) {
+                    if (!backOffBeforeRetry(attempt, turn, cancelled)) {
                         // Interrupted mid-backoff: surface cancellation as ERROR (null), symmetric with the error path below — do not hand a benign empty response to the loop as a
                         // completion.
                         return null;
@@ -432,6 +464,9 @@ public class AgentLoopRunner {
                     // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
                     log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
                     emit(stepListener, "Model call failed and will not be retried (" + e.getMessage() + ").");
+                    if (opensProviderCircuit(e)) {
+                        OPEN_MODEL_CIRCUITS.put(circuitKey, Instant.now().plus(modelCircuitBreakerCooldown));
+                    }
                     return null;
                 }
                 lastError = e;
@@ -439,7 +474,7 @@ public class AgentLoopRunner {
                 log.warn("Agent loop model call failed on turn {} (attempt {}/{}): {}", turn, attempt, MODEL_CALL_ATTEMPTS, e.getMessage());
                 if (attempt < MODEL_CALL_ATTEMPTS) {
                     emit(stepListener, "Model call failed (" + e.getMessage() + "); retrying.");
-                    if (!backOffBeforeRetry(attempt, turn)) {
+                    if (!backOffBeforeRetry(attempt, turn, cancelled)) {
                         return null;
                     }
                 }
@@ -460,16 +495,16 @@ public class AgentLoopRunner {
      *
      * @return {@code true} to continue retrying, {@code false} if the thread was interrupted (the caller must stop and let the null become an ERROR outcome)
      */
-    private boolean backOffBeforeRetry(int attempt, int turn) {
+    private boolean backOffBeforeRetry(int attempt, int turn, BooleanSupplier cancelled) {
         // Exponential backoff with jitter so retries spread across time instead of re-hitting the same failure burst.
         long backoff = Math.min(modelCallRetryCapMillis, modelCallRetryBaseMillis * (1L << (attempt - 1)));
         if (backoff <= 0) {
-            return true;
+            return !cancelled.getAsBoolean();
         }
         backoff += ThreadLocalRandom.current().nextLong(modelCallRetryBaseMillis + 1);
         try {
             Thread.sleep(backoff);
-            return true;
+            return !cancelled.getAsBoolean();
         }
         catch (InterruptedException ie) {
             // Honour the interrupt instead of swallowing it: stop retrying.
@@ -497,6 +532,9 @@ public class AgentLoopRunner {
      * fails fast. Prefers the typed openai-java exceptions (authoritative) and falls back to an HTTP status parsed from the message only when no typed signal is present.
      */
     static boolean isRetryable(Throwable error) {
+        if (isQuotaOrConfigurationFailure(error)) {
+            return false;
+        }
         Throwable cause = error;
         for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
             if (cause instanceof OpenAIServiceException serviceException) {
@@ -513,13 +551,31 @@ public class AgentLoopRunner {
         return status == null || isTransientStatus(status);
     }
 
-    private static boolean isTransientStatus(int status) {
-        return status == 429 || status >= 500;
+    private static boolean opensProviderCircuit(Throwable error) {
+        Integer status = firstOpenAiStatus(error);
+        if (status == null) {
+            status = firstHttpStatusInMessage(error);
+        }
+        return isQuotaOrConfigurationFailure(error) || status != null && (status == 401 || status == 403);
     }
 
-    /** Extracts the first HTTP status embedded in the throwable's (and its causes') messages, or {@code null} when none is discernible. */
-    @Nullable
-    private static Integer firstHttpStatusInMessage(Throwable error) {
+    private static Integer firstOpenAiStatus(Throwable error) {
+        Throwable cause = error;
+        for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
+            if (cause instanceof OpenAIServiceException serviceException) {
+                return serviceException.statusCode();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isQuotaOrConfigurationFailure(Throwable error) {
+        String message = messages(error);
+        return message.contains("insufficient_quota") || message.contains("exceeded your current quota") || message.contains("billing") || message.contains("hard limit")
+                || message.contains("monthly limit");
+    }
+
+    private static String messages(Throwable error) {
         StringBuilder messages = new StringBuilder();
         Throwable cause = error;
         for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
@@ -527,7 +583,21 @@ public class AgentLoopRunner {
                 messages.append(cause.getMessage()).append('\n');
             }
         }
-        Matcher matcher = HTTP_STATUS_IN_MESSAGE.matcher(messages.toString().toLowerCase(Locale.ROOT));
+        return messages.toString().toLowerCase(Locale.ROOT);
+    }
+
+    static void clearModelCircuitBreakerForTests() {
+        OPEN_MODEL_CIRCUITS.clear();
+    }
+
+    private static boolean isTransientStatus(int status) {
+        return status == 408 || status == 409 || status == 429 || status >= 500;
+    }
+
+    /** Extracts the first HTTP status embedded in the throwable's (and its causes') messages, or {@code null} when none is discernible. */
+    @Nullable
+    private static Integer firstHttpStatusInMessage(Throwable error) {
+        Matcher matcher = HTTP_STATUS_IN_MESSAGE.matcher(messages(error));
         return matcher.find() ? Integer.valueOf(matcher.group(1)) : null;
     }
 

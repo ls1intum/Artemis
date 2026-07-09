@@ -191,6 +191,20 @@ public class LLMTokenUsageService {
     }
 
     /**
+     * @param chatResponse the chat response containing provider usage metadata, may be null
+     * @return prompt plus completion tokens, or zero when usage metadata is unavailable
+     */
+    public static long totalTokens(@Nullable ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            return 0;
+        }
+        Usage usage = chatResponse.getMetadata().getUsage();
+        Number promptTokens = usage.getPromptTokens();
+        Number completionTokens = usage.getCompletionTokens();
+        return (promptTokens == null ? 0 : promptTokens.longValue()) + (completionTokens == null ? 0 : completionTokens.longValue());
+    }
+
+    /**
      * Finds an LLMTokenUsageTrace by its ID.
      *
      * @param id The ID of the LLMTokenUsageTrace to find.

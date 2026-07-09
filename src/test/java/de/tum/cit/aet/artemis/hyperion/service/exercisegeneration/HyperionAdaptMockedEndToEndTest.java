@@ -214,7 +214,7 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
                 HyperionMockedLlmE2eSupport.submit("Added subtraction with positive and negative-result tests"));
 
         try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Also require subtraction with positive and negative results.", "mock-adapt",
-                GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line), null)) {
+                GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line), null, null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (adapt) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes after the adapt").isTrue();

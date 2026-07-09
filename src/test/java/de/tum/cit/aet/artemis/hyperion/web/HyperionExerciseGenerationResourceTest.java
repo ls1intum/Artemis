@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -77,6 +80,9 @@ class HyperionExerciseGenerationResourceTest {
     @Mock
     private RemoteInteractiveSandboxClient sandboxClient;
 
+    @Mock
+    private HyperionGenerationBudgetService generationBudgetService;
+
     private HyperionExerciseGenerationResource resource;
 
     private User testUser;
@@ -87,7 +93,7 @@ class HyperionExerciseGenerationResourceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService, reviewCommentContextRenderer,
-                adaptationRevertService, sandboxClient);
+                adaptationRevertService, sandboxClient, generationBudgetService);
         when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(true);
 
         testUser = new User();
@@ -125,6 +131,21 @@ class HyperionExerciseGenerationResourceTest {
         when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(false);
 
         assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
+
+        verify(jobService, never()).startJob(any(), any(), any(), any());
+    }
+
+    @Test
+    void generateExercise_whenTokenBudgetExceeded_doesNotClaimJob() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "Build a bubble sort exercise.", null);
+        testUser.setId(7L);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        org.mockito.Mockito.doThrow(new TooManyRequestsAlertException("budget exceeded", "hyperionExerciseGeneration", "generationTokenBudgetExceeded"))
+                .when(generationBudgetService).assertWithinBudgets(eq(7L), any());
+
+        assertThatExceptionOfType(TooManyRequestsAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 
         verify(jobService, never()).startJob(any(), any(), any(), any());
     }
@@ -168,7 +189,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
-        when(adaptationRevertService.revert(testExercise, testUser))
+        when(adaptationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(true, List.of(RepositoryType.SOLUTION))));
 
         ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
@@ -185,7 +206,8 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
-        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(false, List.of())));
+        when(adaptationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
+                .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(false, List.of())));
 
         ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
 
@@ -200,7 +222,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
-        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.empty());
+        when(adaptationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
         ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
 
@@ -217,7 +239,7 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertAdaptation(1L));
 
-        verify(adaptationRevertService, never()).revert(any(), any());
+        verify(adaptationRevertService, never()).revert(any(), any(), any());
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
     }
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 import jakarta.annotation.PostConstruct;
 
@@ -137,11 +138,15 @@ public class ExerciseAdaptationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user) {
+        return revert(exercise, user, () -> true);
+    }
+
+    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
         AdaptationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {
             return Optional.empty();
         }
-        RevertResult result = revertToBaseline(exercise, user, baseline);
+        RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot);
         // Consume the baseline only after every captured repository was reset. On a partial failure, keep it so a retry can reset the remaining repositories instead of stranding
         // the exercise in a half-reverted state.
         if (result.fullyReverted()) {
@@ -160,6 +165,10 @@ public class ExerciseAdaptationRevertService {
      * @return which repositories were reverted and whether every captured repository was reverted successfully
      */
     RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline) {
+        return revertToBaseline(exercise, user, baseline, () -> true);
+    }
+
+    RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title())) {
             log.error("Refusing to revert adaptation metadata for exercise {} because the current problem statement/title no longer matches the captured adaptation state",
@@ -174,6 +183,11 @@ public class ExerciseAdaptationRevertService {
             LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
             if (head == null || uri == null) {
                 continue;
+            }
+            if (!stillOwnsMutationSlot.getAsBoolean()) {
+                log.error("Stopped reverting adaptation for exercise {} because this node lost the exercise mutation slot before resetting {}", exercise.getId(), repositoryType);
+                fullyReverted = false;
+                break;
             }
             try {
                 Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
@@ -202,6 +216,10 @@ public class ExerciseAdaptationRevertService {
             }
         }
         if (fullyReverted) {
+            if (!stillOwnsMutationSlot.getAsBoolean()) {
+                log.error("Stopped reverting adaptation for exercise {} because this node lost the exercise mutation slot before metadata/test-case resync", exercise.getId());
+                return new RevertResult(false, List.copyOf(reverted));
+            }
             // Re-sync grading to the reverted tests (best-effort); the tests HEAD is the captured baseline commit we just reset to. A partial revert deliberately skips this so
             // test-case/build metadata cannot be refreshed against only part of a mixed repository state.
             fullyReverted = persistenceService.resyncAfterRevert(exercise, user, baseline.headFor(RepositoryType.TESTS), baseline.problemStatement(), baseline.title(),

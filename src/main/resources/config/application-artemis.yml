@@ -89,6 +89,19 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Enable the Hyperion service on startup. Requires Spring AI (configured below).
+    agent:
+      context-window-tokens: 128000
+      max-turns: 100
+      max-job-duration: PT30M # Admission-to-cancellation deadline; provider calls and final persistence are still cooperative/bounded by their own timeouts.
+      max-tokens-per-job: 250000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
+      token-budget-window: PT24H
+      admission-max-tokens-per-user: 0 # 0 disables the rolling historical admission check; this is not an in-flight reservation.
+      admission-max-tokens-per-course: 0 # 0 disables the rolling historical admission check; this is not an in-flight reservation.
+      admission-max-tokens-global: 0 # 0 disables the rolling historical admission check; this is not an in-flight reservation.
+      owner-heartbeat-interval: PT15S
+      stale-job-timeout: PT35M
+      stale-job-scan-ms: 60000
+      provider-circuit-breaker-cooldown: PT5M
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
     # Token costs (EUR per million tokens). Baselines incl. gpt-5.4 / gpt-5.4-mini are seeded in
     # LLMModelCostConfiguration; add entries here only to override or register a model (dotted keys
