@@ -27,7 +27,7 @@ export class CourseNotificationSettingSpecificationCardComponent {
     readonly onOptionChanged = output<CourseNotificationSettingSpecification>();
 
     protected readonly titleLangKey = signal<string>(undefined!);
-    protected typeId: number;
+    protected typeId!: number; // set by the constructor effect() from the required settingSpecification input before any read
     protected readonly mockNotification = signal<CourseNotification>(undefined!);
     // channels is the deep target of a [(ngModel)]="channels[option]" two-way binding, so it is backed by a
     // signal via a getter/setter facade (a bare signal cannot be a two-way binding target).

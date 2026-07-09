@@ -835,6 +835,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setSuccessful(null);
@@ -872,6 +874,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
@@ -900,6 +904,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -917,6 +923,35 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
         assertThat(invokedResult.getScore()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestProgrammingFeedbackWithSubmittedSubmissionWithoutResult() throws Exception {
+        setupAthenaForExercise(programmingExercise, ATHENA_MODULE_PROGRAMMING_TEST);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+
+        var participation = createParticipationWithRepository(programmingExercise);
+        participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+
+        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
+        var submissions = submissionRepository.findAllByParticipationId(participation.getId());
+        assertThat(submissions).hasSize(1);
+
+        verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
+
+        Result invokedResult = resultCaptor.getAllValues().getLast();
+        assertThat(invokedResult).isNotNull();
+        assertThat(invokedResult.getId()).isNotNull();
+        assertThat(invokedResult.isSuccessful()).isTrue();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
+        assertThat(invokedResult.getFeedbacks()).hasSize(1);
+        assertThat(invokedResult.getScore()).isZero();
     }
 
     @Test
@@ -1038,6 +1073,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participation = participationUtilService.addTeamParticipationForProgrammingExercise(teamExercise, team);
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -1163,6 +1200,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        result1.getSubmission().setSubmitted(true);
+        submissionRepository.save(result1.getSubmission());
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
@@ -1874,7 +1913,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var participation = createParticipationWithRepository(programmingExercise);
 
-        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());

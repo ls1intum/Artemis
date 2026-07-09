@@ -81,13 +81,21 @@
     overflow: visible;
     pointer-events: none;
 
-    // Allow clicks on children
-    > * {
+    // Only the notification cards should catch clicks. Do not use `> *` here: under emulated view
+    // encapsulation it outranks `.course-notification-popup-overlay-collapse { pointer-events: none }`,
+    // so the invisible (opacity: 0) collapse controls would swallow clicks on the page underneath.
+    > .notification-animation-wrapper {
         pointer-events: auto;
     }
+
     transition:
         max-height 0.2s 0.2s ease-in-out,
         height 0.2s 0.2s ease-in-out;
+}
+
+// No notifications: remove the overlay entirely so it never sits on top of the page and blocks clicks.
+.course-notification-popup-overlay.hidden {
+    display: none;
 }
 
 .course-notification-popup-overlay::-webkit-scrollbar {

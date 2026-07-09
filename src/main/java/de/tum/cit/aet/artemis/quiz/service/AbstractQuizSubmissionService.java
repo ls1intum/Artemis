@@ -14,13 +14,13 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
-import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public abstract class AbstractQuizSubmissionService<T extends AbstractQuizSubmission> {
+public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
 
     private final SubmissionVersionService submissionVersionService;
 
@@ -34,9 +34,9 @@ public abstract class AbstractQuizSubmissionService<T extends AbstractQuizSubmis
      * Save the given submission to the database.
      *
      * @param quizExercise the QuizExercise of which the given submission belongs to
-     * @param submission   the AbstractQuizSubmission to be saved
+     * @param submission   the QuizSubmission to be saved
      * @param user         the User that made the given submission
-     * @return saved AbstractQuizSubmission
+     * @return saved QuizSubmission
      */
     protected abstract T save(QuizExercise quizExercise, T submission, User user);
 

@@ -68,12 +68,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     readonly repositoryLink = signal<string[]>([]);
     readonly isInCourseManagement = signal<boolean>(false);
 
-    conflictStateSubscription: Subscription;
-    submissionSubscription: Subscription;
-    routeParamsSubscription: Subscription;
+    conflictStateSubscription?: Subscription;
+    submissionSubscription?: Subscription;
+    routeParamsSubscription?: Subscription;
 
     autoSaveTimer = 0;
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
 
     private refreshModalRef?: DynamicDialogRef;
     private conflictModalRef?: DynamicDialogRef;

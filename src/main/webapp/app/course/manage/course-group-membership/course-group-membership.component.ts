@@ -28,7 +28,7 @@ export class CourseGroupMembershipComponent implements OnInit {
     courseGroup = signal<CourseGroup | undefined>(undefined);
     isLoading = signal(false);
     isAdmin = signal(false);
-    paramSub: Subscription;
+    paramSub?: Subscription;
     filteredUsersSize = signal(0);
 
     readonly capitalize = capitalize;

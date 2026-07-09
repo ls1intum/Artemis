@@ -50,7 +50,6 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -84,7 +83,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
-        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -164,9 +162,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         lineChangesLoading: false,
     };
 
-    courseId: number;
+    courseId!: number; // set in handleRouteData() from the loaded exercise before any read
     readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
-    formattedGradingInstructions: SafeHtml;
+    formattedGradingInstructions!: SafeHtml; // set in handleRouteData() from the loaded exercise before any read
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
@@ -188,9 +186,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      */
     readonly canAccessParticipationsAndScores = signal(false);
 
-    private templateAndSolutionParticipationSubscription: Subscription;
-    private exerciseStatisticsSubscription: Subscription;
-    private sharingEnabledSubscription: Subscription;
+    private templateAndSolutionParticipationSubscription?: Subscription;
+    private exerciseStatisticsSubscription?: Subscription;
+    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();

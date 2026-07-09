@@ -1,19 +1,22 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
  * Admin component for managing data cleanup operations.
@@ -23,7 +26,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
     imports: [
-        FormDateTimePickerComponent,
         ArtemisTranslatePipe,
         HelpIconComponent,
         TranslateDirective,
@@ -31,13 +33,18 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         CleanupOperationModalComponent,
+        TableModule,
+        ButtonModule,
+        FormDateTimePickerComponent,
+        FaIconComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupServiceComponent implements OnInit {
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
-
     private readonly dataCleanupService = inject(DataCleanupService);
+
+    protected readonly faTrash = faTrash;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
     /** Whether the cleanup operation modal is visible */
     showCleanupModal = signal<boolean>(false);
@@ -106,8 +113,18 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     validateDates(operation: CleanupOperation): void {
-        const datesValid = operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom));
+        const datesValid = !!(operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom)));
         operation.datesValid.set(datesValid);
+    }
+
+    onDeleteFromChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
+        operation.deleteFrom = value ? dayjs(value) : undefined;
+        this.validateDates(operation);
+    }
+
+    onDeleteToChange(operation: CleanupOperation, value: dayjs.Dayjs | Date | null | undefined): void {
+        operation.deleteTo = value ? dayjs(value) : undefined;
+        this.validateDates(operation);
     }
 
     /**

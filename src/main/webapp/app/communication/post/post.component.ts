@@ -79,13 +79,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
     override showReactionSelector = false;
     displayInlineInput = signal(false);
-    routerLink: RouteComponents;
+    routerLink: RouteComponents = [];
     queryParams = {};
     readonly showAnnouncementIcon = signal(false);
     readonly showSearchResultInAnswersHint = signal(false);
     readonly sortedAnswerPosts = signal<AnswerPost[]>(undefined!);
-    createdAnswerPost: AnswerPost;
-    isAtLeastTutorInCourse: boolean;
+    createdAnswerPost?: AnswerPost;
+    isAtLeastTutorInCourse = false;
 
     readonly pageType = signal<PageType>(undefined!);
     readonly contextInformation = signal<ContextInformation>(undefined!);

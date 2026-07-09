@@ -76,7 +76,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     deleteMessage = '';
     readonly isDeletingPasskey = signal<boolean>(false);
 
-    private authStateSubscription: Subscription;
+    private authStateSubscription!: Subscription; // assigned in loadCurrentUser() from the constructor, before ngOnDestroy() unsubscribes
 
     constructor() {
         this.loadCurrentUser();

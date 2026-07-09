@@ -114,8 +114,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     readonly isAdmin = signal(false);
 
-    private eventSubscription: Subscription;
-    private paramSub: Subscription;
+    private eventSubscription?: Subscription;
+    private paramSub?: Subscription;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.

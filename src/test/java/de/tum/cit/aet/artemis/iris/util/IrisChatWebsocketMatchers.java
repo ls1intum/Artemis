@@ -10,12 +10,11 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentResponseDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 
 public class IrisChatWebsocketMatchers {
 
-    public static ArgumentMatcher<Object> statusDTO(PyrisStageState... stageStates) {
+    public static ArgumentMatcher<Object> statusDTO(PyrisRunState runState) {
         return new ArgumentMatcher<>() {
 
             @Override
@@ -26,18 +25,12 @@ public class IrisChatWebsocketMatchers {
                 if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.STATUS) {
                     return false;
                 }
-                if (websocketDTO.stages() == null) {
-                    return stageStates == null;
-                }
-                if (websocketDTO.stages().size() != stageStates.length) {
-                    return false;
-                }
-                return websocketDTO.stages().stream().map(PyrisStageDTO::state).toList().equals(List.of(stageStates));
+                return websocketDTO.runState() == runState;
             }
 
             @Override
             public String toString() {
-                return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and stage states " + Arrays.toString(stageStates);
+                return "IrisChatWebsocketService.IrisWebsocketDTO with type STATUS and run state " + runState;
             }
         };
     }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { faPause, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ButtonModule } from 'primeng/button';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 /**
@@ -12,7 +13,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
  */
 @Component({
     selector: 'jhi-build-agent-pause-all-modal',
-    imports: [FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective, ButtonModule],
     templateUrl: './build-agent-pause-all-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
