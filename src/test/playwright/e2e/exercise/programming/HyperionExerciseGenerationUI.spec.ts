@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
-import { expect, Page } from '@playwright/test';
+import { Browser, expect, Page } from '@playwright/test';
 
 import { test } from '../../../support/fixtures';
+import { Commands } from '../../../support/commands';
 import { admin, instructor, UserCredentials } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
@@ -17,6 +18,7 @@ type GenerationRequest = {
 };
 
 test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () => {
+    test.skip(process.env.HYPERION_LLM_MODE === 'live', 'Mocked Hyperion UI tests must not send mock-control prompts to a live LLM endpoint.');
     test.describe.configure({ mode: 'serial' });
     test.use({ serviceWorkers: 'block' });
 
@@ -24,7 +26,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
     let runningJobId: string | undefined;
 
     test.beforeEach('Create unreleased Java programming exercise', async ({ login, page, exerciseAPIRequests }) => {
-        await assertHyperionGenerationEnabled(page);
+        await skipIfHyperionGenerationUnavailable(page);
         await login(admin);
         exercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
@@ -51,7 +53,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         }
     });
 
-    test('starts generation through the real Hyperion backend and cancels the running job', async ({ page, login }) => {
+    test('starts generation through the real Hyperion backend, exposes admin slot usage, and cancels the running job', async ({ browser, page, login }) => {
         test.setTimeout(180_000);
         await openEditor(page, login, exercise!);
 
@@ -63,24 +65,37 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(activity).toBeVisible();
         await expect(activity).toContainText('Generating');
         await expect(page.getByTestId('hyperion-ai-menu')).toBeDisabled();
+        await expectAdminGenerationSandboxSlots(browser, '2 / 2');
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+        await expectAdminGenerationSandboxSlots(browser, '0 / 2');
         runningJobId = undefined;
     });
 
-    test('rehydrates real retained progress after reload', async ({ page, login }) => {
+    test('rehydrates real retained file snapshots after reload', async ({ page, login }) => {
         test.setTimeout(180_000);
         await openEditor(page, login, exercise!);
 
-        const { jobId } = await startGenerationFromMenu(page, exercise!.id!);
+        await page.getByTestId('hyperion-ai-menu').click();
+        await page.getByTestId('hyperion-adapt-with-feedback').click();
+        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_WRITE_SNAPSHOT: write the deterministic preview file, then keep running.');
+
+        const startResponsePromise = waitForGenerationStart(page, exercise!.id!);
+        await page.getByRole('button', { name: 'Adapt exercise', exact: true }).click();
+        const { jobId } = await startResponsePromise;
         runningJobId = jobId;
-        await expect(page.getByTestId('hyperion-generation-activity')).toBeVisible();
+        const activity = page.getByTestId('hyperion-generation-activity');
+        await expect(activity).toBeVisible();
+        await expect(activity).toContainText('HyperionPreview.java', { timeout: 60_000 });
+        await expect(activity).toContainText('retained-preview');
 
         await page.reload();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
-        const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity).toBeVisible();
-        await expect(activity).toContainText('Starting exercise generation');
+        const rehydratedActivity = page.getByTestId('hyperion-generation-activity');
+        await expect(rehydratedActivity).toBeVisible();
+        await expect(rehydratedActivity).toContainText('Starting exercise generation');
+        await expect(rehydratedActivity).toContainText('HyperionPreview.java');
+        await expect(rehydratedActivity).toContainText('retained-preview');
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
         runningJobId = undefined;
@@ -108,15 +123,61 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
         runningJobId = undefined;
     });
+
+    test('requires nonblank free-adaptation instructions and cancels without starting a job', async ({ page, login }) => {
+        await openEditor(page, login, exercise!);
+        const unexpectedStart = page
+            .waitForRequest((request) => request.method() === 'POST' && request.url().includes(`/api/hyperion/programming-exercises/${exercise!.id}/generate-exercise`), {
+                timeout: 1_000,
+            })
+            .then(() => true)
+            .catch(() => false);
+
+        await page.getByTestId('hyperion-ai-menu').click();
+        await page.getByTestId('hyperion-adapt-with-feedback').click();
+        const adaptButton = page.getByRole('button', { name: 'Adapt exercise', exact: true });
+        await expect(adaptButton).toBeDisabled();
+
+        await page.getByLabel('Additional instructions').fill('   ');
+        await expect(adaptButton).toBeDisabled();
+
+        await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await expect(page.getByRole('dialog')).toBeHidden();
+        await expect(unexpectedStart).resolves.toBe(false);
+    });
+
+    test('surfaces external LLM failures through the real Hyperion backend and unlocks the UI', async ({ page, login }) => {
+        test.setTimeout(240_000);
+        await openEditor(page, login, exercise!);
+
+        await page.getByTestId('hyperion-ai-menu').click();
+        await page.getByTestId('hyperion-adapt-with-feedback').click();
+        await page.getByLabel('Additional instructions').fill('HYPERION_E2E_FAIL_LLM: fail the external model call for this unhappy-path browser test.');
+
+        const startResponsePromise = waitForGenerationStart(page, exercise!.id!);
+        await page.getByRole('button', { name: 'Adapt exercise', exact: true }).click();
+        const { jobId, request } = await startResponsePromise;
+        runningJobId = jobId;
+
+        expect(request).toEqual({
+            mode: 'ADAPT',
+            prompt: 'HYPERION_E2E_FAIL_LLM: fail the external model call for this unhappy-path browser test.',
+        });
+
+        const activity = page.getByTestId('hyperion-generation-activity');
+        await expect(activity).toContainText('Model call failed and will not be retried', { timeout: 180_000 });
+        await expect(activity).toContainText('The agent loop ended with an error.');
+        await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
+        await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
+        runningJobId = undefined;
+    });
 });
 
-async function assertHyperionGenerationEnabled(page: Page) {
+async function skipIfHyperionGenerationUnavailable(page: Page) {
     const response = await page.request.get('/management/info');
-    expect(response.ok()).toBeTruthy();
+    test.skip(!response.ok(), 'Hyperion generation E2E needs management info to detect active features.');
     const info = await response.json();
-    expect(info.activeProfiles).toContain('localci');
-    expect(info.activeProfiles).toContain('core');
-    expect(info.activeModuleFeatures).toContain('hyperion');
+    test.skip(!info.activeModuleFeatures?.includes('hyperion'), 'Hyperion generation is not enabled in this E2E environment.');
 }
 
 async function openEditor(page: Page, login: (credentials: UserCredentials, url?: string) => Promise<void>, programmingExercise: ProgrammingExercise) {
@@ -158,4 +219,14 @@ async function cancelRunningJobFromUi(page: Page, exerciseId: number, jobId: str
     await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Generation was cancelled', { timeout: 60_000 });
     await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
     await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
+}
+
+async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots: string) {
+    const adminPage = await browser.newPage();
+    try {
+        await Commands.login(adminPage, admin, '/admin/build-agents');
+        await expect(adminPage.locator('td.build-agents-column').filter({ hasText: expectedSlots }).first()).toBeVisible({ timeout: 60_000 });
+    } finally {
+        await adminPage.close();
+    }
 }

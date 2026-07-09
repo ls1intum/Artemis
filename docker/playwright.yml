@@ -31,16 +31,20 @@ services:
             PLAYWRIGHT_REPORT_TRIGGERED_BY: '${PLAYWRIGHT_REPORT_TRIGGERED_BY:-}'
             GITHUB_RUN_ID: '${GITHUB_RUN_ID:-}'
         command: >
-          sh -c '
-          cd /app/artemis/src/test/playwright &&
-          chmod 777 /root &&
-          chmod +x ./run-tests.sh &&
-          corepack enable &&
-          pnpm install --frozen-lockfile &&
-          pnpm run playwright:setup &&
-          rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
-          pnpm run playwright:test:filtered
-          '
+            sh -c '
+            cd /app/artemis/src/test/playwright &&
+            chmod 777 /root &&
+            chmod +x ./run-tests.sh &&
+            if env | grep -qx HYPERION_LLM_MODE=mock; then
+              mkdir -p ./test-reports &&
+              HYPERION_LLM_MOCK_PORT=1234 node ./support/hyperion-llm-mock/server.mjs > ./test-reports/hyperion-llm-mock.log 2>&1 &
+            fi &&
+            corepack enable &&
+            pnpm install --frozen-lockfile &&
+            pnpm run playwright:setup &&
+            rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
+            pnpm run playwright:test:filtered
+            '
         volumes:
             - ..:/app/artemis
         stdin_open: true

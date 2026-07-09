@@ -44,9 +44,12 @@ export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
 # Hyperion exercise-generation e2e support: keep the Artemis/Hyperion backend real
 # and replace only the external OpenAI-compatible GPU endpoint with a tiny local
-# mock. Enabled by default because Hyperion browser tests must not page.route()
-# Artemis endpoints; set RUN_HYPERION=false to run without the feature.
-RUN_HYPERION="${RUN_HYPERION:-true}"
+# mock. Enabled for full-suite runs and Hyperion-filtered runs; disabled for
+# unrelated filtered runs. Set RUN_HYPERION=true/false to override. Set
+# HYPERION_LLM_MODE=live to use server-side HYPERION_LIVE_LLM_* credentials
+# instead of the local mock; never put live keys in tracked files.
+RUN_HYPERION_REQUESTED="${RUN_HYPERION:-}"
+HYPERION_LLM_MODE="${HYPERION_LLM_MODE:-mock}"
 HYPERION_LLM_MOCK_PORT="${HYPERION_LLM_MOCK_PORT:-1234}"
 
 # Iris (AI tutor) e2e support: when RUN_IRIS=true the runner brings up the REAL
@@ -90,6 +93,14 @@ while [[ $# -gt 0 ]]; do
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
+
+if [ -n "$RUN_HYPERION_REQUESTED" ]; then
+    RUN_HYPERION="$RUN_HYPERION_REQUESTED"
+elif [ -z "$TEST_FILTER" ] || [[ "$TEST_FILTER" =~ [Hh]yperion ]]; then
+    RUN_HYPERION=true
+else
+    RUN_HYPERION=false
+fi
 
 cd "$(dirname "$0")"
 LOCAL_DIR=".e2e-local"
@@ -286,7 +297,7 @@ if [ "$SKIP_SERVER" = false ]; then
     check_port_available 8080 "Artemis server"
     check_port_available 7921 "local VC SSH server"
 
-    if [ "$RUN_HYPERION" = true ]; then
+    if [ "$RUN_HYPERION" = true ] && [ "$HYPERION_LLM_MODE" = mock ]; then
         echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting local OpenAI-compatible LLM mock...${NC}"
         check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
         HYPERION_LLM_MOCK_PORT="$HYPERION_LLM_MOCK_PORT" node src/test/playwright/support/hyperion-llm-mock/server.mjs > "$LOCAL_DIR/hyperion-llm-mock.log" 2>&1 &
@@ -306,6 +317,18 @@ if [ "$SKIP_SERVER" = false ]; then
             exit 1
         fi
         echo -e "${GREEN}Hyperion LLM mock ready.${NC}"
+    elif [ "$RUN_HYPERION" = true ] && [ "$HYPERION_LLM_MODE" = live ]; then
+        if [ -z "${HYPERION_LIVE_LLM_BASE_URL:-}" ] || [ -z "${HYPERION_LIVE_LLM_API_KEY:-}" ]; then
+            echo -e "${RED}ERROR: HYPERION_LLM_MODE=live requires HYPERION_LIVE_LLM_BASE_URL and HYPERION_LIVE_LLM_API_KEY.${NC}"
+            exit 1
+        fi
+        if [ "${GITHUB_ACTIONS:-false}" = true ]; then
+            echo "::add-mask::${HYPERION_LIVE_LLM_API_KEY}"
+        fi
+        echo -e "${BLUE}Hyperion enabled with live OpenAI-compatible LLM endpoint (server-side credentials only).${NC}"
+    elif [ "$RUN_HYPERION" = true ]; then
+        echo -e "${RED}ERROR: Unsupported HYPERION_LLM_MODE='${HYPERION_LLM_MODE}'. Use 'mock' or 'live'.${NC}"
+        exit 1
     fi
 
     # Optional: bring up the REAL Pyris stack and enable Iris on the server.
@@ -402,12 +425,19 @@ if [ "$SKIP_SERVER" = false ]; then
     if [ "$RUN_HYPERION" = true ]; then
         export ARTEMIS_HYPERION_ENABLED="true"
         export ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS="2"
-        export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
-        export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
+        if [ "$HYPERION_LLM_MODE" = live ]; then
+            export SPRING_AI_OPENAI_BASE_URL="${HYPERION_LIVE_LLM_BASE_URL}"
+            export SPRING_AI_OPENAI_API_KEY="${HYPERION_LIVE_LLM_API_KEY}"
+            export SPRING_AI_OPENAI_CHAT_MODEL="${HYPERION_LIVE_LLM_MODEL:-openai/gpt-oss-120b}"
+            export SPRING_AI_OPENAI_TIMEOUT="${HYPERION_LIVE_LLM_TIMEOUT:-10m}"
+        else
+            export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
+            export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
+            export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
+            export SPRING_AI_OPENAI_TIMEOUT="2m"
+        fi
         export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
-        export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
         export SPRING_AI_OPENAI_CHAT_TEMPERATURE="1"
-        export SPRING_AI_OPENAI_TIMEOUT="2m"
     fi
 
     # ARM64 Macs: use arm64 exercise images for LocalCI

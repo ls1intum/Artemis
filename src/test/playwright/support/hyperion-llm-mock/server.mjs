@@ -2,6 +2,8 @@ import http from 'node:http';
 
 const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
+const failMarker = 'HYPERION_E2E_FAIL_LLM';
+const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 
 function jsonResponse(res, status, body) {
     res.writeHead(status, { 'content-type': 'application/json' });
@@ -46,8 +48,25 @@ const server = http.createServer((req, res) => {
     }
 
     if (req.method === 'POST' && req.url === '/v1/chat/completions') {
-        req.resume();
+        const chunks = [];
+        req.on('data', (chunk) => chunks.push(chunk));
         req.on('end', () => {
+            const body = Buffer.concat(chunks).toString('utf8');
+            if (body.includes(failMarker)) {
+                jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
+                return;
+            }
+            if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse('write_file', {
+                        path: 'solution/src/de/test/HyperionPreview.java',
+                        content: 'package de.test;\n\npublic class HyperionPreview {\n    public String marker() {\n        return "retained-preview";\n    }\n}\n',
+                    }),
+                );
+                return;
+            }
             jsonResponse(res, 200, toolCallResponse('bash', { command: 'sleep 30' }));
         });
         return;
