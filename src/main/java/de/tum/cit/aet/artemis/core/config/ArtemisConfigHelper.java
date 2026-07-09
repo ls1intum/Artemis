@@ -226,7 +226,7 @@ public class ArtemisConfigHelper {
      * @return true if OIDC is enabled, false otherwise
      */
     public boolean isOIDCEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(OIDC_ENABLED_PROPERTY_NAME, environment);
+        return environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
