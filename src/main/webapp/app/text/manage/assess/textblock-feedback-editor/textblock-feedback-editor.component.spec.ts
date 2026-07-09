@@ -190,4 +190,12 @@ describe('TextBlockFeedbackEditorComponent', () => {
         component.didChange();
         expect(typeSpy).toHaveBeenCalledOnce();
     });
+
+    it('should not send assessment event if feedback text is unchanged', () => {
+        component.feedback().text = 'Unchanged text';
+        //@ts-ignore
+        const typeSpy = vi.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.didChange();
+        expect(typeSpy).not.toHaveBeenCalled();
+    });
 });
