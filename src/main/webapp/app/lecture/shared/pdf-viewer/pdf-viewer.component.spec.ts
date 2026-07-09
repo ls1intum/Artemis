@@ -630,7 +630,9 @@ describe('PdfViewerComponent', () => {
         await loadPdf();
         const blur = vi.fn();
         const select = vi.fn();
-        vi.spyOn(component, 'pageInputElement').mockReturnValue({ input: { nativeElement: { blur, select } } } as any);
+        // PrimeNG 22 InputNumber.input is a signal viewChild (`viewChild.required('input')`), so the
+        // component reads it as `input()`; the mock must expose `input` as a callable returning the ref.
+        vi.spyOn(component, 'pageInputElement').mockReturnValue({ input: () => ({ nativeElement: { blur, select } }) } as any);
         const preventDefault = vi.fn();
 
         component['onPageInputEnter']({ preventDefault } as unknown as Event);

@@ -30,10 +30,15 @@ minimumReleaseAgeExclude:
     - '@primeuix/*'
     - '@primeicons/*'
     - '@primeui/*'
-    # AnalogJS 2.6.x is still pre-release (2.6.3-beta.1); the Angular-22-compatible
+    # AnalogJS 2.6.x reached a stable 2.6.3 (was 2.6.3-beta.1); the Angular-22-compatible
     # vite-plugin-angular / vitest-angular were published recently. Remove once a
     # stable AnalogJS 2.6.x is older than the cutoff.
     - '@analogjs/*'
+    # The Angular 22.0.6 framework packages were published <24h before this latest-dependency
+    # bump (2026-07-09), so the frozen supply-chain gate rejects them until they age past the
+    # 24h cutoff. This is the dedicated latest-dependency branch, so the newest patch is adopted
+    # deliberately. Remove this once the versions are older than the cutoff.
+    - '@angular/*'
 
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
@@ -116,7 +121,7 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
-    'eslint@10.5.0': 'patches/eslint+10.5.0.patch'
+    'eslint@10.6.0': 'patches/eslint+10.6.0.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings
