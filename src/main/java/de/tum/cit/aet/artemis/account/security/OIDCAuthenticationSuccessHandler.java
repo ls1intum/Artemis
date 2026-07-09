@@ -44,6 +44,15 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        boolean rememberMe = false;
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            // Extract stored rememberMe field from session
+            Boolean storedRememberMe = (Boolean) session.getAttribute("OIDC_REMEMBER_ME");
+            if (storedRememberMe != null) {
+                rememberMe = storedRememberMe;
+            }
+        }
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
         String username = oidcUser.getAttribute(usernameClaimKey);
         if (username == null || username.isBlank()) {
@@ -55,7 +64,6 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         // Don't issue JWT cookie for inactive users
         if (!user.getActivated()) {
-            HttpSession session = request.getSession(false);
             if (session != null) {
                 session.invalidate();
             }
@@ -71,10 +79,9 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         // Generate JWT String
         SecurityContextHolder.getContext().setAuthentication(artemisAuth);
 
-        ResponseCookie jwtCookie = jwtCookieService.buildLoginCookie(true);
+        ResponseCookie jwtCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
         // Remove state from OIDCConfiguration
-        HttpSession session = request.getSession(false);
         if (session != null) {
             session.invalidate();
         }

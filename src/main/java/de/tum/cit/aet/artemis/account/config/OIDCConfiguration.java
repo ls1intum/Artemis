@@ -12,8 +12,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
@@ -94,6 +97,17 @@ public class OIDCConfiguration {
     @Bean
     @Order(1)
     protected SecurityFilterChain oidcFilterChain(final HttpSecurity http) throws Exception {
+        var resolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository(), "/oauth2/authorization");
+
+        // Extract rememberMe field from query and store it into session
+        resolver.setAuthorizationRequestCustomizer(builder -> {
+            // Get current request
+            var attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                var req = attrs.getRequest();
+                req.getSession(true).setAttribute("OIDC_REMEMBER_ME", "true".equalsIgnoreCase(req.getParameter("rememberMe")));
+            }
+        });
         // @formatter:off
         http
             // /oauth2/authorization/tum-login - user starts the authentication
@@ -110,6 +124,7 @@ public class OIDCConfiguration {
             // Activate Spring Security OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
                 .clientRegistrationRepository(clientRegistrationRepository())
+                .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver))
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
             );

@@ -108,7 +108,7 @@ describe('AuthServerProvider', () => {
         it('should redirect browser to OIDC authorization endpoint', async () => {
             const loginPromise = firstValueFrom(service.loginOIDC(true));
 
-            expect(window.location.href).toBe('http://localhost:9000/oauth2/authorization/oidc');
+            expect(window.location.href).toBe('http://localhost:9000/oauth2/authorization/oidc?rememberMe=true');
 
             const resp = await loginPromise;
             expect(resp).toEqual({});

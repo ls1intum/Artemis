@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -135,6 +136,56 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         httpHeaders.add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)");
 
         request.postWithoutResponseBody("/api/core/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
+    }
+
+    @Test
+    void testOidcLogin_withRememberMeTrue_issuesLongTermCookie() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // Put rememberMe to true
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REMEMBER_ME", true);
+        request.setSession(session);
+
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+        var oidcUser = oidcService.loadUser(mockUserRequest);
+        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(cookieHeader).isNotNull();
+        // Verify that cookie is longterm (1 month)
+        assertThat(cookieHeader).contains("Max-Age=2592000");
+    }
+
+    @Test
+    void testOidcLogin_withRememberMeFalse_issuesShortTermCookie() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // Put rememberMe to false
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REMEMBER_ME", false);
+        request.setSession(session);
+
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+        var oidcUser = oidcService.loadUser(mockUserRequest);
+        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+        assertThat(cookieHeader).isNotNull();
+        // Verify that cookie is shortTerm (1 day)
+        assertThat(!cookieHeader.contains("Max-Age=86400"));
     }
 
     @Test
