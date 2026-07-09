@@ -11,6 +11,7 @@ import { TextEditorService } from 'app/text/overview/service/text-editor.service
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -103,12 +104,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // answer is the text that is stored in the user interface
     readonly answer = signal<string>('');
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
+    isAfterAssessmentDueDate = false;
     readonly examMode = signal(false);
     readonly isGeneratingFeedback = signal(false);
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
-    isAfterPublishDate: boolean;
+    isAfterPublishDate = false;
     readonly isOwnerOfParticipation = signal<boolean>(false);
     readonly isReadOnlyWithShowResult = signal(false);
     // Icon
@@ -120,7 +121,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // used in the html template
     protected readonly onTextEditorTab = onTextEditorTab;
 
-    participationUpdateListener: Subscription;
+    participationUpdateListener?: Subscription;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
@@ -134,7 +135,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.textExercise.error');
+                this.alertService.error('artemisApp.textExercise.error');
+                return;
             }
 
             // When participationId is provided as input (e.g. in exam summary), route params won't contain it,
@@ -182,16 +184,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.participationUpdateListener = this.participationWebsocketService
             .subscribeForParticipationChanges()
             .pipe(skip(1))
-            .subscribe((changedParticipation: StudentParticipation) => {
+            .subscribe((updatedParticipation: Participation | undefined) => {
+                if (!updatedParticipation) {
+                    return;
+                }
                 // subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject, so every
                 // text-editor instance receives every participation change (including the ones emitted by other
                 // instances when they call addParticipation()). Without this guard, multiple editors rendered
                 // together - e.g. several text exercises in the exam result summary - would all overwrite their
                 // own exercise/submission state with whichever participation was added last, making every text
                 // summary display the last exercise. Only react to changes for our own participation.
-                if (changedParticipation?.id !== this.participation()?.id) {
+                if (updatedParticipation?.id !== this.participation()?.id) {
                     return;
                 }
+                const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const lastResult = results?.last();
@@ -500,6 +506,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     onTextEditorInput(event: Event) {
-        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+        this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 }

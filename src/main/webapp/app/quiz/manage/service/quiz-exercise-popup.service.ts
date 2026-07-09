@@ -49,9 +49,9 @@ export class QuizExercisePopupService {
         ref?.onClose.subscribe((result) => {
             this.dialogRef = undefined;
             if (result === 're-evaluate') {
-                this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
+                void this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
             } else {
-                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                void this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
             }
         });
         return ref ?? undefined;

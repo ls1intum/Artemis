@@ -105,6 +105,7 @@ export class CourseOverviewService {
         if (lectures && lectures.length) {
             return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
@@ -118,6 +119,7 @@ export class CourseOverviewService {
         if (exercises && exercises.length) {
             return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
@@ -233,7 +235,7 @@ export class CourseOverviewService {
     }
 
     groupExercisesByDueDate(sortedExercises: Exercise[]): AccordionGroups {
-        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExerciseGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const exercise of sortedExercises) {
             const exerciseGroup = this.getCorrespondingExerciseGroupByDate(exercise);
@@ -245,7 +247,7 @@ export class CourseOverviewService {
     }
 
     groupLecturesByStartDate(sortedLectures: Lecture[]): AccordionGroups {
-        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedLectureGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         for (const lecture of sortedLectures) {
             const lectureGroup = this.getCorrespondingLectureGroupByDate(lecture.startDate, lecture?.endDate);
@@ -264,7 +266,7 @@ export class CourseOverviewService {
                   directMessages: { entityData: [] },
               }
             : DEFAULT_CHANNEL_GROUPS;
-        const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
+        const groupedConversationGroups = cloneDeep(channelGroups);
 
         groupedConversationGroups.savedPosts = {
             isHideCount: true,
@@ -407,6 +409,7 @@ export class CourseOverviewService {
         if (attempts && indices) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
+        return undefined;
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {

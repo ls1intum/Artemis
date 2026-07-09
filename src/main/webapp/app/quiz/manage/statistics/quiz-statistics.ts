@@ -19,7 +19,7 @@ export abstract class AbstractQuizStatisticComponent {
     ratedData: number[] = [];
     unratedData: number[] = [];
     rated = true;
-    participants: number;
+    participants = 0;
 
     chartLabels: string[] = [];
     totalParticipants = 0;

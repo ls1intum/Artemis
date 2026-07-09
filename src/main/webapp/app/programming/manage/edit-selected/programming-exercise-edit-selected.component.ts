@@ -29,8 +29,8 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
 
     // eslint-disable-next-line localRules/prefer-signal-template-state -- backs deep [(x)] two-way targets (e.g. [(releaseDate)]="newProgrammingExercise.releaseDate") whose in-place writes come from the child timeline component and cannot be intercepted to commit a signal rebuild
-    newProgrammingExercise: ProgrammingExercise;
-    selectedProgrammingExercises: ProgrammingExercise[];
+    newProgrammingExercise!: ProgrammingExercise; // set in ngOnInit()
+    selectedProgrammingExercises!: ProgrammingExercise[]; // set by the opener via modalRef.componentInstance before use
 
     readonly isSaving = signal(false);
     savedExercises = 0;
@@ -68,7 +68,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
         this.selectedProgrammingExercises.forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }

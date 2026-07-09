@@ -120,7 +120,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         return this.programmingExercises();
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
     }
 

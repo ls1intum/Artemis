@@ -62,8 +62,9 @@ describe('HyperionWebsocketService', () => {
         const subj = mockWs.subjects.get(ch)!;
         subj.next({ type: 'STARTED' });
         subj.next({ type: 'PROGRESS', iteration: 2 });
+        subj.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 2 });
 
-        expect(events).toEqual([{ type: 'STARTED' }, { type: 'PROGRESS', iteration: 2 }]);
+        expect(events).toEqual([{ type: 'STARTED' }, { type: 'PROGRESS', iteration: 2 }, { type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 2 }]);
         expect(errors).toHaveLength(0);
         expect(completes).toHaveLength(0);
     });

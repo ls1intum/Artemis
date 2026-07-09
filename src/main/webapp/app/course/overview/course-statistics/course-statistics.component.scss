@@ -1,0 +1,10 @@
+.statistic-summary {
+    // Match the size of the other info/help icons on this page (the `?` icons live in h5
+    // elements, i.e. 1.125rem), and optically centre it: align-items-center lines the icon up
+    // with the heading's metric box, which sits slightly above the visual centre of the
+    // lowercase text, so nudge it down a touch.
+    h2 + jhi-documentation-button {
+        font-size: 1.125rem;
+        transform: translateY(0.1em);
+    }
+}

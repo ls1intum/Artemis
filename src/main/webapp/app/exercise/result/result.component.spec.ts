@@ -68,7 +68,6 @@ const preparedFeedback: FeedbackComponentPreparedParams = {
     exercise: mockExercise,
     participation: mockParticipation,
     result: mockResult,
-    exerciseType: ExerciseType.PROGRAMMING,
     showScoreChart: true,
     messageKey: 'artemisApp.result.notLatestSubmission',
     latestDueDate: dayjs().subtract(1, 'hours'),
@@ -197,10 +196,9 @@ describe('ResultComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({
+                    inputValues: expect.objectContaining({
                         exercise: preparedFeedback.exercise,
                         result: preparedFeedback.result,
-                        exerciseType: preparedFeedback.exerciseType,
                         showScoreChart: preparedFeedback.showScoreChart,
                         messageKey: preparedFeedback.messageKey,
                         latestDueDate: preparedFeedback.latestDueDate,

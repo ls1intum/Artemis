@@ -3,10 +3,11 @@ import * as monaco from 'monaco-editor';
 
 /**
  * Class representing a view zone (i.e., vertical space after a certain line) in the Monaco editor.
+ * Instantiated and populated after construction; the definite-assignment (!) field is created in addToEditor().
  */
 export class MonacoEditorViewZone extends MonacoCodeEditorElement implements monaco.editor.IViewZone {
     private linkedContentDomNode: HTMLElement;
-    private resizeObserver: ResizeObserver;
+    private resizeObserver!: ResizeObserver; // created in addToEditor(), which always runs before removeFromEditor() reads it
 
     afterLineNumber: number;
     heightInPx: number | undefined;

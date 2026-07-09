@@ -9,15 +9,15 @@ import dayjs from 'dayjs/esm';
 export class ExerciseUpdateWarningService {
     private modalService = inject(NgbModal);
 
-    private ngbModalRef: NgbModalRef;
+    private ngbModalRef!: NgbModalRef; // assigned when the warning modal is opened in checkExerciseBeforeUpdate()
 
-    instructionDeleted: boolean;
-    creditChanged: boolean;
-    usageCountChanged: boolean;
-    immediateReleaseWarning: string;
-    isSaving: boolean;
+    instructionDeleted = false;
+    creditChanged = false;
+    usageCountChanged = false;
+    immediateReleaseWarning = '';
+    isSaving = false;
 
-    isExamMode: boolean;
+    isExamMode = false;
 
     /**
      * Open the modal with the given content for the given exercise.
