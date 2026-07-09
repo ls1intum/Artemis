@@ -24,16 +24,16 @@ ci.yml                                                            (single entry 
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── version-consistency ─ uses ci-version-consistency.yml (if has_version; build.gradle/openapi/README in sync)
 ├── bean-instantiations ─ uses ci-bean-instantiations.yml (if has_beans; boots the app, checks startup bean metrics)
+├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
-├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 ├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 │
-├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory e2e/codeql/coverage-report — the required check)
+├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
@@ -51,7 +51,9 @@ The single required check is `CI / All required CI Passed`. It gates on every jo
 `docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
 the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
-so requiring them adds no merge latency. Path-skipped jobs report `skipped`, which the gate
+so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
+it is gated too, but with a flakiness-aware verdict, so it blocks only on a real, non-flaky
+regression and never on ambient flakiness. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
@@ -61,12 +63,20 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-Two jobs are deliberately **advisory** (not in the gate's `needs:`). They run for signal and
-post their own status, but never block merge:
+`e2e` **is** part of the required `all-required-ci-passed` gate, but with a flakiness-aware verdict
+so it blocks only on genuine regressions rather than on noise:
 
-- **`e2e`.** E2E takes up to ~2 hours (the gate must not wait on it) and is flaky enough that
-  requiring it would block good PRs on noise. Once it is stabilised behind a merge queue (the
-  `merge_group` trigger is already wired), it can move into the gate.
+- **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
+  good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
+  history (`classify-failures.js`): a real (non-flaky) regression fails the job and **blocks
+  merge**, while a run whose only failures are known-flaky is **exonerated and passes green**. The
+  per-test detail (✅/⚪/❌ per phase, plus Helios flakiness scores) lives in the E2E PR comment. The
+  test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
+  by any single phase job.
+
+`codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
+run on a genuine failure, but never blocks merge.
+
 - **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
   advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
   so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
