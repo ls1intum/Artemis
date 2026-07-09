@@ -42,6 +42,13 @@ PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
+# Hyperion exercise-generation e2e support: keep the Artemis/Hyperion backend real
+# and replace only the external OpenAI-compatible GPU endpoint with a tiny local
+# mock. Enabled by default because Hyperion browser tests must not page.route()
+# Artemis endpoints; set RUN_HYPERION=false to run without the feature.
+RUN_HYPERION="${RUN_HYPERION:-true}"
+HYPERION_LLM_MOCK_PORT="${HYPERION_LLM_MOCK_PORT:-1234}"
+
 # Iris (AI tutor) e2e support: when RUN_IRIS=true the runner brings up the REAL
 # Pyris stack (real Pyris + Weaviate + a mock OpenAI-compatible LLM, see
 # src/test/playwright/support/iris-stack/) and enables Iris on the Artemis server,
@@ -164,6 +171,15 @@ if [ "$STOP" = true ]; then
         docker compose -f "$IRIS_STACK_COMPOSE" down -v 2>/dev/null || true
     fi
 
+    if [ -f "$LOCAL_DIR/hyperion-llm-mock.pid" ]; then
+        HYPERION_LLM_PID=$(cat "$LOCAL_DIR/hyperion-llm-mock.pid")
+        if kill -0 "$HYPERION_LLM_PID" 2>/dev/null; then
+            echo "Stopping Hyperion LLM mock (PID $HYPERION_LLM_PID)..."
+            kill_tree "$HYPERION_LLM_PID"
+        fi
+    fi
+    check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
+
     # Stop Postgres
     echo "Stopping Postgres..."
     docker compose --env-file .env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
@@ -270,6 +286,28 @@ if [ "$SKIP_SERVER" = false ]; then
     check_port_available 8080 "Artemis server"
     check_port_available 7921 "local VC SSH server"
 
+    if [ "$RUN_HYPERION" = true ]; then
+        echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting local OpenAI-compatible LLM mock...${NC}"
+        check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
+        HYPERION_LLM_MOCK_PORT="$HYPERION_LLM_MOCK_PORT" node src/test/playwright/support/hyperion-llm-mock/server.mjs > "$LOCAL_DIR/hyperion-llm-mock.log" 2>&1 &
+        HYPERION_LLM_PID=$!
+        echo "$HYPERION_LLM_PID" > "$LOCAL_DIR/hyperion-llm-mock.pid"
+        HYPERION_READY=false
+        for _ in $(seq 1 20); do
+            if curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health" >/dev/null 2>&1; then
+                HYPERION_READY=true
+                break
+            fi
+            sleep 1
+        done
+        if [ "$HYPERION_READY" != true ]; then
+            echo -e "${RED}ERROR: Hyperion LLM mock did not become ready.${NC}"
+            cat "$LOCAL_DIR/hyperion-llm-mock.log" 2>/dev/null || true
+            exit 1
+        fi
+        echo -e "${GREEN}Hyperion LLM mock ready.${NC}"
+    fi
+
     # Optional: bring up the REAL Pyris stack and enable Iris on the server.
     # Iris is enabled purely via the property artemis.iris.enabled=true (no Spring
     # profile); that property also makes management/info activeModuleFeatures
@@ -360,6 +398,17 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
+
+    if [ "$RUN_HYPERION" = true ]; then
+        export ARTEMIS_HYPERION_ENABLED="true"
+        export ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS="2"
+        export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
+        export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
+        export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
+        export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
+        export SPRING_AI_OPENAI_CHAT_TEMPERATURE="1"
+        export SPRING_AI_OPENAI_TIMEOUT="2m"
+    fi
 
     # ARM64 Macs: use arm64 exercise images for LocalCI
     if [ "$(uname -m)" = "arm64" ]; then
