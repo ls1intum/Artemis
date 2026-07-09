@@ -91,7 +91,7 @@
             <div class="hyperion-activity-sidebar">
                 <div class="hyperion-activity-files">
                     @for (group of filesByRepo(); track group.repo) {
-                        <div class="hyperion-activity-repo">
+                        <div class="hyperion-activity-repo" data-testid="hyperion-generation-repo">
                             <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
                             @for (file of group.files; track file.path) {
                                 <button

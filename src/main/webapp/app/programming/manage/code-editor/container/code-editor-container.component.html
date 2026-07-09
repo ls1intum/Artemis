@@ -50,6 +50,7 @@
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
     <ng-container editorCenter>
+        <ng-content select="[editorCenterOverlay]" />
         <!-- Problem Statement Editor - always in DOM, hidden when not selected -->
         <jhi-code-editor-instructions
             [hidden]="!shouldShowProblemStatement()"

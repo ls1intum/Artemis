@@ -1382,8 +1382,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
         setCodeEditorContainer(comp, { actions: () => actions });
         const reload = new Subject<{ body: ProgrammingExercise }>();
-        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults')
-            .mockReturnValue(reload as any);
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
 
         (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
         comp.exercise = createMockExercise({ id: 99, problemStatement: 'Current exercise', programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
