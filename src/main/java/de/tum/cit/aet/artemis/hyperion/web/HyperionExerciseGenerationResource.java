@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -110,17 +109,23 @@ public class HyperionExerciseGenerationResource {
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language
                     + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
-        if (jobService.hasActiveJob(exerciseId)) {
-            throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
-        }
+        jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
         if (!sandboxClient.hasAvailableGenerationSandboxSlots(2)) {
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has the two free sandbox slots required to start a run.", ENTITY_NAME,
                     "generationCapacityUnavailable");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        generationBudgetService.assertWithinBudgets(user.getId(), courseIdOf(exercise));
+        Long courseId = courseIdOf(exercise);
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
-        String jobId = jobService.startJob(user, exercise, prompt, request.effectiveMode());
+        HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId);
+        String jobId;
+        try {
+            jobId = jobService.startJob(user, exercise, prompt, request.effectiveMode(), budgetReservation.id());
+        }
+        catch (RuntimeException e) {
+            generationBudgetService.releaseReservation(budgetReservation.id());
+            throw e;
+        }
         log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.effectiveMode(), exerciseId);
         return ResponseEntity.accepted().body(new ExerciseGenerationJobStartDTO(jobId));
     }

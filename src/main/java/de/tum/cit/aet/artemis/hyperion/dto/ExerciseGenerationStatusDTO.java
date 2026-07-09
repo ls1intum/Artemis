@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * The reconnection view of an exercise-generation run, returned when a client (re)loads the page so it can replay the transcript and decide whether to keep listening.
  *
@@ -11,6 +13,7 @@ import java.util.List;
  * @param events        the events produced so far, oldest first, to replay into the transcript
  * @param fileSnapshots the latest whole-file snapshot per file written so far, in write order, so a reloading client can rehydrate the live editor preview and resume the stream
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
         List<ExerciseGenerationFileSnapshotDTO> fileSnapshots) {
 }

@@ -104,7 +104,7 @@ public class GenerationOrchestrationService {
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:100}") int maxTurns) {
+            @Value("${artemis.hyperion.agent.max-turns:40}") int maxTurns) {
         this.maxTurns = maxTurns;
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;

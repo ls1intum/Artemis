@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -69,6 +70,8 @@ class GenerationTaskServiceTest {
 
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    private HyperionGenerationBudgetService generationBudgetService;
+
     private ExerciseAdaptationRevertService adaptationRevertService;
 
     private TaskScheduler taskScheduler;
@@ -89,6 +92,7 @@ class GenerationTaskServiceTest {
         websocket = mock(HyperionWebsocketService.class);
         jobService = mock(GenerationJobService.class);
         programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
+        generationBudgetService = mock(HyperionGenerationBudgetService.class);
         adaptationRevertService = mock(ExerciseAdaptationRevertService.class);
         taskScheduler = mock(TaskScheduler.class);
         sandbox = mock(InteractiveSandbox.class);
@@ -97,8 +101,8 @@ class GenerationTaskServiceTest {
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).schedule(any(Runnable.class), any(java.time.Instant.class));
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(java.time.Duration.class));
 
-        taskService = new GenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository, adaptationRevertService,
-                taskScheduler, java.time.Duration.ofMinutes(30), 250_000, java.time.Duration.ofSeconds(15));
+        taskService = new GenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
+                adaptationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 250_000, java.time.Duration.ofSeconds(15));
 
         user = new User();
         user.setLogin("instructor1");
@@ -165,7 +169,7 @@ class GenerationTaskServiceTest {
             Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink = invocation.getArgument(7);
             progress.accept("planning files");
             fileSnapshotSink.accept(new ExerciseGenerationFileSnapshotDTO(ExerciseGenerationFileSnapshotDTO.TYPE, "solution/src/Counter.java",
-                    ExerciseGenerationFileSnapshotDTO.RepositoryBucket.SOLUTION, ExerciseGenerationFileSnapshotDTO.Action.EDIT, "class Counter {}", "sha", 16, false, 1, null));
+                    ExerciseGenerationFileSnapshotDTO.REPOSITORY_SOLUTION, ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, "class Counter {}", "sha", 16, false, 1, null));
             progress.accept("running verifier");
             return outcome;
         });
@@ -238,6 +242,34 @@ class GenerationTaskServiceTest {
 
         // Only an accepted ADAPT applied in place records a revertible baseline.
         verify(adaptationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), any(), any(), any(), any());
+    }
+
+    @Test
+    void acceptedAdaptRun_recordsBaselineFromFreshlyReloadedPersistedExercise() {
+        ProgrammingExercise exerciseToPersist = new ProgrammingExercise();
+        exerciseToPersist.setId(EXERCISE_ID);
+        exerciseToPersist.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseToPersist.setProblemStatement("Original problem statement");
+        exerciseToPersist.setTitle("Original title");
+
+        ProgrammingExercise persistedExercise = new ProgrammingExercise();
+        persistedExercise.setId(EXERCISE_ID);
+        persistedExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        persistedExercise.setProblemStatement("Persisted problem statement after save hooks");
+        persistedExercise.setTitle("Original title");
+
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist),
+                Optional.of(persistedExercise));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha")));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT));
+
+        verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), any());
+        verify(adaptationRevertService).recordBaseline(eq(persistedExercise), eq(JOB_ID), any(), any(), eq(exercise.getProblemStatement()), eq(exercise.getTitle()));
+        verify(recoveryService).surfaceAdvisoryFindings(eq(persistedExercise), any());
     }
 
     @Test
@@ -364,8 +396,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenBudgetExceeded_requestsSystemCancellationAndEmitsSpecificTerminalMessage() {
-        taskService = new GenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository, adaptationRevertService,
-                taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
+        taskService = new GenerationTaskService(orchestrator, persistenceService, recoveryService, websocket, jobService, programmingExerciseRepository, generationBudgetService,
+                adaptationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10, java.time.Duration.ofSeconds(15));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);
@@ -412,5 +444,30 @@ class GenerationTaskServiceTest {
         verify(programmingExerciseRepository, never()).findWithAllParticipationsAndBuildConfigById(EXERCISE_ID);
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void cleanup_releasesBudgetReservationEvenWhenClearJobFailsOnEarlyExit() {
+        when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(false);
+        Mockito.doThrow(new RuntimeException("clear failed")).when(jobService).clearJob(EXERCISE_ID, JOB_ID);
+
+        assertThatThrownBy(() -> taskService.runAsync(
+                new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, "reservation-1")))
+                .isInstanceOf(RuntimeException.class).hasMessageContaining("clear failed");
+
+        verify(generationBudgetService).releaseReservation("reservation-1");
+    }
+
+    @Test
+    void cleanup_releasesBudgetReservationEvenWhenFinalClearJobFails() {
+        Mockito.doThrow(new RuntimeException("clear failed")).when(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, "")));
+
+        assertThatThrownBy(() -> taskService.runAsync(
+                new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, "reservation-2")))
+                .isInstanceOf(RuntimeException.class).hasMessageContaining("clear failed");
+
+        verify(generationBudgetService).releaseReservation("reservation-2");
     }
 }

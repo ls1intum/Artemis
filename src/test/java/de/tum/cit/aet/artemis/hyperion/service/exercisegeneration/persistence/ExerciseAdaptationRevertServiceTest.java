@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -70,6 +71,7 @@ class ExerciseAdaptationRevertServiceTest {
 
         gitService = mock(GitService.class);
         persistenceService = mock(GenerationPersistenceService.class);
+        when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevert(any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
         revertService = new ExerciseAdaptationRevertService(hazelcastInstance, gitService, persistenceService, DEFAULT_BRANCH);
         revertService.init();
@@ -200,6 +202,22 @@ class ExerciseAdaptationRevertServiceTest {
     }
 
     @Test
+    void revert_allowsOnlyLineEndingAndOuterWhitespaceMetadataDifferences() throws Exception {
+        when(exercise.getProblemStatement()).thenReturn("adapted statement\r\n");
+        when(exercise.getTitle()).thenReturn(" Adapted Title ");
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
+                "Old Title");
+
+        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().fullyReverted()).isTrue();
+        assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.TEMPLATE);
+        verify(persistenceService).resyncAfterRevert(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement\r\n"), eq(" Adapted Title "));
+    }
+
+    @Test
     void revert_refusesToClobberManualCommitsAfterTheAdaptation() throws Exception {
         when(gitService.getLastCommitHash(templateUri)).thenReturn("manual-template");
         revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
@@ -227,6 +245,23 @@ class ExerciseAdaptationRevertServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+        verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void revert_refusesBeforeRepositoryResetWhenPersistedMetadataChanged() throws Exception {
+        when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(false);
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
+                "Old Title");
+
+        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+
+        assertThat(result).isPresent();
+        assertThat(result.get().fullyReverted()).isFalse();
+        assertThat(result.get().revertedRepositories()).isEmpty();
+        verify(gitService, never()).getOrCheckoutRepository(any(), anyBoolean(), any(), anyBoolean());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
     }

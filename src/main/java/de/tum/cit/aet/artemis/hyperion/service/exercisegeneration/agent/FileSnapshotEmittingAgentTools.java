@@ -80,8 +80,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
                 // create vs edit is decided from this run's own write cache, so the first write of a path in an ADAPT run (where the file already exists on disk) is labelled
                 // create.
                 // This is a cosmetic live-preview label only — never persisted and irrelevant to correctness — so it is not worth a per-write sandbox stat to disambiguate.
-                ExerciseGenerationFileSnapshotDTO.Action action = latestContentByPath.containsKey(safe) ? ExerciseGenerationFileSnapshotDTO.Action.EDIT
-                        : ExerciseGenerationFileSnapshotDTO.Action.CREATE;
+                String action = latestContentByPath.containsKey(safe) ? ExerciseGenerationFileSnapshotDTO.ACTION_EDIT : ExerciseGenerationFileSnapshotDTO.ACTION_CREATE;
                 emit(safe, action, content);
             }
         }
@@ -106,7 +105,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
                 String content = reconstructEditedContent(path, safe, oldText, newText);
                 // Skip the snapshot when the fallback read failed: a delegate read can return an "ERROR: ..." sentinel, which must never be cached or streamed as file content.
                 if (content != null) {
-                    emit(safe, ExerciseGenerationFileSnapshotDTO.Action.EDIT, content);
+                    emit(safe, ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, content);
                 }
             }
         }
@@ -157,7 +156,7 @@ public class FileSnapshotEmittingAgentTools implements TurnAware {
      * Streams a whole-file snapshot to the sink, coalescing an identical consecutive write for the same path (no content change), and updates the per-path cache. Never lets a sink
      * failure disturb the agent run — streaming is best-effort UX.
      */
-    private void emit(String safe, ExerciseGenerationFileSnapshotDTO.Action action, String content) {
+    private void emit(String safe, String action, String content) {
         if (content.equals(latestContentByPath.get(safe))) {
             return;
         }

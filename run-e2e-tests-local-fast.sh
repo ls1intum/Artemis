@@ -51,6 +51,7 @@ export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 RUN_HYPERION_REQUESTED="${RUN_HYPERION:-}"
 HYPERION_LLM_MODE="${HYPERION_LLM_MODE:-mock}"
 HYPERION_LLM_MOCK_PORT="${HYPERION_LLM_MOCK_PORT:-1234}"
+export HYPERION_LLM_MODE HYPERION_LLM_MOCK_PORT
 
 # Iris (AI tutor) e2e support: when RUN_IRIS=true the runner brings up the REAL
 # Pyris stack (real Pyris + Weaviate + a mock OpenAI-compatible LLM, see

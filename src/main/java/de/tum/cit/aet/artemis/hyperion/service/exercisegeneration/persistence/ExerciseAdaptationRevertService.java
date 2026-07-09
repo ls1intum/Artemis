@@ -141,6 +141,14 @@ public class ExerciseAdaptationRevertService {
         return revert(exercise, user, () -> true);
     }
 
+    /**
+     * Reverts the most recent adaptation while aborting before durable mutations if this node no longer owns the job.
+     *
+     * @param exercise              the exercise to revert
+     * @param user                  the instructor performing the revert (exercise-version author)
+     * @param stillOwnsMutationSlot guard checked before durable mutations
+     * @return the revert result, or empty when there is no retained baseline to revert to
+     */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
         AdaptationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {
@@ -170,7 +178,8 @@ public class ExerciseAdaptationRevertService {
 
     RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
-                || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title())) {
+                || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
+                        baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
             log.error("Refusing to revert adaptation metadata for exercise {} because the current problem statement/title no longer matches the captured adaptation state",
                     exercise.getId());
             return new RevertResult(false, List.of());
@@ -229,7 +238,12 @@ public class ExerciseAdaptationRevertService {
     }
 
     private static boolean metadataCanBeReverted(String currentValue, String expectedAdaptedValue, String targetBaselineValue) {
-        return Objects.equals(currentValue, expectedAdaptedValue) || Objects.equals(currentValue, targetBaselineValue);
+        String current = normalizeMetadata(currentValue);
+        return Objects.equals(current, normalizeMetadata(expectedAdaptedValue)) || Objects.equals(current, normalizeMetadata(targetBaselineValue));
+    }
+
+    private static String normalizeMetadata(String value) {
+        return value == null ? null : value.replace("\r\n", "\n").replace('\r', '\n').trim();
     }
 
     /**

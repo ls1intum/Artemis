@@ -483,32 +483,20 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
-    /**
-     * Checks if a result for the given participation exists.
-     *
-     * @param participationId the id of the participation to check.
-     * @return true if a result for the given participation exists, false otherwise.
-     */
     boolean existsBySubmissionParticipationId(long participationId);
 
     /**
-     * Checks whether a TEST build result newer than the pre-trigger baseline exists for the given solution participation and tests commit hash.
-     * Hyperion uses this as completion signal for tests-repository builds because production result processing associates TEST results by participation, commit hash, and
-     * submission type; a later same-hash TEST submission may legally receive the result.
+     * Checks whether a TEST build result newer than the pre-trigger baseline exists.
      *
      * @param participationId        the solution participation id
-     * @param testsCommitHash        the tests repository commit hash that was built
-     * @param baselineLatestResultId the latest result id before the build was triggered; {@code null} if no result existed
-     * @return true once a matching, newer TEST result exists
+     * @param testsCommitHash        the tests commit hash
+     * @param baselineLatestResultId the latest result id observed before triggering the build, or null
+     * @return true if a newer matching TEST result exists
      */
     @Query("""
-            SELECT COUNT(r) > 0
-            FROM Result r
-                JOIN TREAT(r.submission AS ProgrammingSubmission) ps
-            WHERE ps.participation.id = :participationId
-                AND ps.type = de.tum.cit.aet.artemis.exercise.domain.SubmissionType.TEST
-                AND ps.commitHash = :testsCommitHash
-                AND (:baselineLatestResultId IS NULL OR r.id > :baselineLatestResultId)
+            SELECT COUNT(r) > 0 FROM Result r JOIN TREAT(r.submission AS ProgrammingSubmission) ps
+            WHERE ps.participation.id = :participationId AND ps.type = de.tum.cit.aet.artemis.exercise.domain.SubmissionType.TEST
+                AND ps.commitHash = :testsCommitHash AND (:baselineLatestResultId IS NULL OR r.id > :baselineLatestResultId)
             """)
     boolean existsNewerTestResultForParticipationAndCommitHash(@Param("participationId") long participationId, @Param("testsCommitHash") String testsCommitHash,
             @Param("baselineLatestResultId") Long baselineLatestResultId);

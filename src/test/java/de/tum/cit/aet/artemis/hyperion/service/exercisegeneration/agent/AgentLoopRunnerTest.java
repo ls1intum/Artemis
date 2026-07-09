@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 class AgentLoopRunnerTest {
 
     @BeforeEach
-    void clearProviderCircuit() {
-        AgentLoopRunner.clearModelCircuitBreakerForTests();
+    void clearProviderFailureCooldown() {
+        AgentLoopRunner.clearProviderFailureCooldownForTests();
     }
 
     /** In-memory fake sandbox: write/read operate on a map, bash is a no-op success. Lets us assert the agent's tool calls deterministically. */
@@ -191,7 +191,7 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_quotaExhaustionFailsFastAndOpensCircuit() {
+    void agentLoop_quotaExhaustionFailsFastAndActivatesProviderFailureCooldown() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 insufficient_quota: exceeded your current quota"));
 
@@ -211,7 +211,48 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_typedUnauthorizedFailureOpensCircuit() {
+    void agentLoop_plainRateLimitDoesNotActivateProviderFailureCooldown() {
+        ChatModel rateLimitedModel = mock(ChatModel.class);
+        when(rateLimitedModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 429 rate_limit_exceeded: too many requests"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(rateLimitedModel), 128_000, Duration.ofMinutes(5));
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(rateLimitedModel, times(6)).call(any(Prompt.class));
+
+        ChatModel secondChatModel = mock(ChatModel.class);
+        when(secondChatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        AgentLoopRunner secondRunner = new AgentLoopRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5));
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(secondChatModel, times(1)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_modelNotFoundActivatesProviderFailureCooldown() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("HTTP 404 model_not_found: requested model does not exist"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5));
+        runner.setModelCallRetryTimingForTests(0L, 0L);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(chatModel, times(1)).call(any(Prompt.class));
+
+        ChatModel secondChatModel = mock(ChatModel.class);
+        AgentLoopRunner secondRunner = new AgentLoopRunner(List.of(secondChatModel), 128_000, Duration.ofMinutes(5));
+        AgentLoopResult secondResult = secondRunner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10, () -> false, null, null);
+
+        assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        verify(secondChatModel, times(0)).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_typedUnauthorizedFailureActivatesProviderFailureCooldown() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(UnauthorizedException.builder().headers(Headers.builder().build()).build());
 

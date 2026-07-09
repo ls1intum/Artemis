@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -121,14 +119,14 @@ public class AgentLoopRunner {
     /** HTTP status extracted from an untyped error message when no typed openai-java exception is available; used only by the {@link #isRetryable} fallback. */
     private static final Pattern HTTP_STATUS_IN_MESSAGE = Pattern.compile("(?i)(?:http|status|code|error)\\D{0,6}([1-5]\\d{2})\\b");
 
-    private static final ConcurrentMap<String, Instant> OPEN_MODEL_CIRCUITS = new ConcurrentHashMap<>();
-
     /** Exponential-backoff base/cap (ms) between model-call retries; instance fields so a test can shrink them to assert retry behaviour without real waits. */
     private long modelCallRetryBaseMillis = 1_500L;
 
     private long modelCallRetryCapMillis = 20_000L;
 
-    private final Duration modelCircuitBreakerCooldown;
+    private final Duration providerHardFailureCooldown;
+
+    private final ProviderFailureCooldown providerFailureCooldown;
 
     @Nullable
     private final ChatModel chatModel;
@@ -149,11 +147,16 @@ public class AgentLoopRunner {
         this(chatModels, contextWindowTokens, Duration.ofMinutes(5));
     }
 
-    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration modelCircuitBreakerCooldown) {
+    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown) {
+        this(chatModels, contextWindowTokens, providerHardFailureCooldown, new InMemoryProviderFailureCooldown());
+    }
+
+    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
         this.chatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.toolCallingManager = ToolCallingManager.builder().build();
         this.contextWindowTokens = contextWindowTokens;
-        this.modelCircuitBreakerCooldown = modelCircuitBreakerCooldown;
+        this.providerHardFailureCooldown = providerHardFailureCooldown;
+        this.providerFailureCooldown = providerFailureCooldown;
     }
 
     /**
@@ -428,14 +431,11 @@ public class AgentLoopRunner {
     private ChatResponse callModelWithRetries(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
         RuntimeException lastError = null;
         ChatResponse lastEmptyResponse = null;
-        String circuitKey = configuredModel() != null ? configuredModel() : "default";
-        Instant openUntil = OPEN_MODEL_CIRCUITS.get(circuitKey);
-        if (openUntil != null && openUntil.isAfter(Instant.now())) {
-            emit(stepListener, "Model provider circuit is open for " + circuitKey + "; failing fast.");
+        String providerFailureKey = configuredModel() != null ? configuredModel() : "default";
+        Instant cooldownUntil = providerFailureCooldown.cooldownUntil(providerFailureKey);
+        if (cooldownUntil != null) {
+            emit(stepListener, "Model provider hard-failure cooldown is active for " + providerFailureKey + "; failing fast until " + cooldownUntil + ".");
             return null;
-        }
-        if (openUntil != null) {
-            OPEN_MODEL_CIRCUITS.remove(circuitKey, openUntil);
         }
         for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
             if (cancelled.getAsBoolean()) {
@@ -464,9 +464,7 @@ public class AgentLoopRunner {
                     // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
                     log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
                     emit(stepListener, "Model call failed and will not be retried (" + e.getMessage() + ").");
-                    if (opensProviderCircuit(e)) {
-                        OPEN_MODEL_CIRCUITS.put(circuitKey, Instant.now().plus(modelCircuitBreakerCooldown));
-                    }
+                    openProviderFailureCooldownIfNeeded(providerFailureKey, e);
                     return null;
                 }
                 lastError = e;
@@ -486,6 +484,9 @@ public class AgentLoopRunner {
             return lastEmptyResponse;
         }
         log.error("Agent loop model call failed on turn {} after {} attempts", turn, MODEL_CALL_ATTEMPTS, lastError);
+        if (lastError != null) {
+            openProviderFailureCooldownIfNeeded(providerFailureKey, lastError);
+        }
         emit(stepListener, "Model call failed after " + MODEL_CALL_ATTEMPTS + " attempts: " + (lastError == null ? "unknown error" : lastError.getMessage()));
         return null;
     }
@@ -551,12 +552,19 @@ public class AgentLoopRunner {
         return status == null || isTransientStatus(status);
     }
 
-    private static boolean opensProviderCircuit(Throwable error) {
+    private void openProviderFailureCooldownIfNeeded(String providerFailureKey, Throwable error) {
+        if (!opensProviderFailureCooldown(error) || providerHardFailureCooldown == null || !providerHardFailureCooldown.isPositive()) {
+            return;
+        }
+        providerFailureCooldown.startCooldown(providerFailureKey, Instant.now().plus(providerHardFailureCooldown));
+    }
+
+    private static boolean opensProviderFailureCooldown(Throwable error) {
         Integer status = firstOpenAiStatus(error);
         if (status == null) {
             status = firstHttpStatusInMessage(error);
         }
-        return isQuotaOrConfigurationFailure(error) || status != null && (status == 401 || status == 403);
+        return isQuotaOrConfigurationFailure(error) || isProviderConfigurationFailure(error) || status != null && (status == 401 || status == 403);
     }
 
     private static Integer firstOpenAiStatus(Throwable error) {
@@ -575,6 +583,12 @@ public class AgentLoopRunner {
                 || message.contains("monthly limit");
     }
 
+    private static boolean isProviderConfigurationFailure(Throwable error) {
+        String message = messages(error);
+        return message.contains("model_not_found") || message.contains("deployment_not_found") || message.contains("deployment not found")
+                || message.contains("model does not exist") || message.contains("no model") && message.contains("found");
+    }
+
     private static String messages(Throwable error) {
         StringBuilder messages = new StringBuilder();
         Throwable cause = error;
@@ -586,8 +600,8 @@ public class AgentLoopRunner {
         return messages.toString().toLowerCase(Locale.ROOT);
     }
 
-    static void clearModelCircuitBreakerForTests() {
-        OPEN_MODEL_CIRCUITS.clear();
+    static void clearProviderFailureCooldownForTests() {
+        InMemoryProviderFailureCooldown.clearForTests();
     }
 
     private static boolean isTransientStatus(int status) {

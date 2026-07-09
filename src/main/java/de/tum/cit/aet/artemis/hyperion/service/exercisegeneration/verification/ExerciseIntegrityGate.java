@@ -480,41 +480,91 @@ public final class ExerciseIntegrityGate {
     private record JavaTestAnnotationSummary(boolean hasTestMethods, boolean classWithMissingAresAnnotations, boolean testMethodWithoutStrictTimeout) {
     }
 
+    private static final Pattern JAVA_CLASS_DECLARATION = Pattern.compile("\\b(?:public\\s+)?(?:abstract\\s+)?class\\s+\\w+");
+
+    private static final Pattern JAVA_METHOD_DECLARATION = Pattern
+            .compile("\\b(?:public|protected|private)?\\s*(?:static\\s+)?[\\w<>\\[\\], ?]+\\s+\\w+\\s*\\([^;{}]*\\)\\s*(?:throws\\s+[^{}]+)?\\{");
+
     private static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
         String withoutComments = stripJavaComments(content);
+        String[] lines = withoutComments.split("\\R", -1);
         List<JavaClassAnnotation> classes = new ArrayList<>();
-        Matcher classMatcher = Pattern.compile("(?s)((?:\\s*@(?:[\\w.]+)(?:\\s*\\([^)]*\\))?\\s*)*)\\s*(?:public\\s+)?(?:abstract\\s+)?class\\s+\\w+").matcher(withoutComments);
-        while (classMatcher.find()) {
-            classes.add(new JavaClassAnnotation(classMatcher.start(), classMatcher.group(1)));
-        }
-
         boolean hasTestMethods = false;
         boolean missingClassAnnotations = false;
         boolean missingTimeouts = false;
-        Matcher methodMatcher = Pattern.compile(
-                "(?s)((?:\\s*@(?:[\\w.]+)(?:\\s*\\([^)]*\\))?\\s*)+)\\s*(?:public|protected|private)?\\s*(?:static\\s+)?[\\w<>\\[\\], ?]+\\s+\\w+\\s*\\([^)]*\\)\\s*(?:throws\\s+[^{]+)?\\{")
-                .matcher(withoutComments);
-        while (methodMatcher.find()) {
-            String methodAnnotations = methodMatcher.group(1);
-            if (!hasJUnitTestAnnotation(methodAnnotations)) {
+        StringBuilder annotations = new StringBuilder();
+        for (int lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            String line = lines[lineIndex].trim();
+            if (line.isEmpty()) {
                 continue;
             }
-            hasTestMethods = true;
-            String classAnnotations = enclosingClassAnnotations(classes, methodMatcher.start());
-            if (!hasAresClassAnnotations(classAnnotations)) {
-                missingClassAnnotations = true;
+            if (line.startsWith("@")) {
+                annotations.append(line).append('\n');
+                lineIndex = appendAnnotationContinuation(lines, lineIndex, annotations);
+                continue;
             }
-            if (!hasAnnotation(methodAnnotations, "StrictTimeout") && !hasAnnotation(classAnnotations, "StrictTimeout")) {
-                missingTimeouts = true;
+            if (annotations.isEmpty()) {
+                continue;
             }
+            int declarationLine = lineIndex;
+            String declaration = line;
+            while (!declaration.contains("{") && !declaration.contains(";") && lineIndex + 1 < lines.length) {
+                String nextLine = lines[lineIndex + 1].trim();
+                if (nextLine.startsWith("@")) {
+                    break;
+                }
+                declaration += " " + nextLine;
+                lineIndex++;
+            }
+            String annotationBlock = annotations.toString();
+            if (JAVA_CLASS_DECLARATION.matcher(declaration).find()) {
+                classes.add(new JavaClassAnnotation(declarationLine, annotationBlock));
+            }
+            else if (JAVA_METHOD_DECLARATION.matcher(declaration).find() && hasJUnitTestAnnotation(annotationBlock)) {
+                hasTestMethods = true;
+                String classAnnotations = enclosingClassAnnotations(classes, declarationLine);
+                if (!hasAresClassAnnotations(classAnnotations)) {
+                    missingClassAnnotations = true;
+                }
+                if (!hasAnnotation(annotationBlock, "StrictTimeout") && !hasAnnotation(classAnnotations, "StrictTimeout")) {
+                    missingTimeouts = true;
+                }
+            }
+            annotations.setLength(0);
         }
         return new JavaTestAnnotationSummary(hasTestMethods, missingClassAnnotations, missingTimeouts);
     }
 
-    private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int offset) {
+    private static int appendAnnotationContinuation(String[] lines, int startLine, StringBuilder annotations) {
+        int parenthesisBalance = parenthesisBalance(lines[startLine]);
+        int lineIndex = startLine;
+        while (parenthesisBalance > 0 && lineIndex + 1 < lines.length) {
+            lineIndex++;
+            String line = lines[lineIndex].trim();
+            annotations.append(line).append('\n');
+            parenthesisBalance += parenthesisBalance(line);
+        }
+        return lineIndex;
+    }
+
+    private static int parenthesisBalance(String line) {
+        int balance = 0;
+        for (int i = 0; i < line.length(); i++) {
+            char character = line.charAt(i);
+            if (character == '(') {
+                balance++;
+            }
+            else if (character == ')') {
+                balance--;
+            }
+        }
+        return balance;
+    }
+
+    private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int line) {
         String annotations = "";
         for (JavaClassAnnotation javaClass : classes) {
-            if (javaClass.start() > offset) {
+            if (javaClass.start() > line) {
                 break;
             }
             annotations = javaClass.annotations();

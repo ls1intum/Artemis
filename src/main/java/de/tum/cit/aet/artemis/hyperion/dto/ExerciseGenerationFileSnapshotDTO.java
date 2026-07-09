@@ -8,7 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,10 +29,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param turn      the agent turn on which the write happened (best-effort telemetry; {@code 0} if unknown)
  * @param timestamp the moment the snapshot was produced
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
 public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
-        @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket") RepositoryBucket repo,
-        @Schema(description = "Whether the file was created or edited") Action action, @Schema(description = "The whole current file content (capped)") String content,
+        @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket") String repo,
+        @Schema(description = "Whether the file was created or edited") String action, @Schema(description = "The whole current file content (capped)") String content,
         @Schema(description = "SHA-256 hex digest of the full content") String sha256, @Schema(description = "Full content size in bytes") long bytes,
         @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
         @Schema(description = "The agent turn the write happened on") int turn, @Schema(description = "The moment the snapshot was produced") Instant timestamp)
@@ -47,37 +48,17 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
     /** Hard cap on streamed content: files above this are truncated (with {@link #truncated} set) so one huge generated file cannot flood the websocket or the retained map. */
     public static final int MAX_CONTENT_BYTES = 256 * 1024;
 
-    public enum RepositoryBucket {
+    public static final String REPOSITORY_SOLUTION = "solution";
 
-        SOLUTION("solution"), TEMPLATE("template"), TESTS("tests"), OTHER("other");
+    public static final String REPOSITORY_TEMPLATE = "template";
 
-        private final String wireName;
+    public static final String REPOSITORY_TESTS = "tests";
 
-        RepositoryBucket(String wireName) {
-            this.wireName = wireName;
-        }
+    public static final String REPOSITORY_OTHER = "other";
 
-        @JsonValue
-        public String wireName() {
-            return wireName;
-        }
-    }
+    public static final String ACTION_CREATE = "create";
 
-    public enum Action {
-
-        CREATE("create"), EDIT("edit");
-
-        private final String wireName;
-
-        Action(String wireName) {
-            this.wireName = wireName;
-        }
-
-        @JsonValue
-        public String wireName() {
-            return wireName;
-        }
-    }
+    public static final String ACTION_EDIT = "edit";
 
     /**
      * Builds a snapshot for a write, classifying the repository bucket from the path, hashing the full content, and truncating the streamed content to {@link #MAX_CONTENT_BYTES}.
@@ -88,7 +69,7 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
      * @param turn        the agent turn the write happened on ({@code 0} if unknown)
      * @return the snapshot ready to stream and retain
      */
-    public static ExerciseGenerationFileSnapshotDTO of(String path, Action action, String fullContent, int turn) {
+    public static ExerciseGenerationFileSnapshotDTO of(String path, String action, String fullContent, int turn) {
         byte[] fullBytes = fullContent.getBytes(StandardCharsets.UTF_8);
         boolean truncated = fullBytes.length > MAX_CONTENT_BYTES;
         // Cut on a UTF-8 CODE-POINT boundary at or below the byte cap. Slicing at a fixed byte offset can split a multi-byte code point; decoding that head with the default
@@ -105,17 +86,17 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
      * @param path the workspace-relative path
      * @return {@code solution}, {@code template}, {@code tests} or {@code other}
      */
-    static RepositoryBucket repositoryBucket(String path) {
+    static String repositoryBucket(String path) {
         if (path.startsWith("solution/")) {
-            return RepositoryBucket.SOLUTION;
+            return REPOSITORY_SOLUTION;
         }
         if (path.startsWith("template/")) {
-            return RepositoryBucket.TEMPLATE;
+            return REPOSITORY_TEMPLATE;
         }
         if (path.startsWith("tests/")) {
-            return RepositoryBucket.TESTS;
+            return REPOSITORY_TESTS;
         }
-        return RepositoryBucket.OTHER;
+        return REPOSITORY_OTHER;
     }
 
     /**

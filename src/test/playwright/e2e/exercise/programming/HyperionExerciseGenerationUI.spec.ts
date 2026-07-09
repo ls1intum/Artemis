@@ -37,6 +37,25 @@ type BuildAgentSlots = {
     maxGenerationSandboxSlots?: number;
 };
 
+type LlmMockRequestSummary = {
+    model?: string;
+    messageCount?: number;
+    roles?: string[];
+    promptText?: string;
+    toolNames?: string[];
+    hasWriteFileTool?: boolean;
+    hasBashTool?: boolean;
+    hasSubmitTool?: boolean;
+};
+
+const correctedSeedStatementMarker = 'Use merge sort for big lists';
+const solutionMarkerPath = 'hyperion-e2e-solution-marker.txt';
+const templateMarkerPath = 'hyperion-e2e-template-marker.txt';
+const testsMarkerPath = 'hyperion-e2e-tests-marker.txt';
+const solutionMarkerText = 'hyperion-e2e-solution-marker';
+const templateMarkerText = 'hyperion-e2e-template-marker';
+const testsMarkerText = 'hyperion-e2e-tests-marker';
+
 const verifierSafeJavaProblemStatement = javaProgrammingExerciseTemplate.problemStatement
     .replace('(testClass[MergeSort],testUseMergeSortForBigList)', '(testUseMergeSortForBigList)')
     .replace('(testClass[BubbleSort],testUseBubbleSortForSmallList)', '(testUseBubbleSortForSmallList)');
@@ -92,6 +111,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(activity).toBeVisible();
         await expect(activity).toContainText('Generating');
         await expect(page.getByTestId('hyperion-ai-menu')).toBeDisabled();
+        await expectEditorActionsLockedDuringGeneration(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'GENERATE');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         const requestsAfterFirstStart = await getHyperionLlmMockRequestCount(page);
@@ -159,6 +179,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Adapting');
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
+        await expectLlmMockSawPrompt(page, 'Make the edge-case requirements explicit and keep the tests deterministic.');
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
         runningJobId = undefined;
@@ -190,7 +211,14 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
+        await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
+        await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
+        await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE');
         await expectAdminGenerationSandboxSlots(browser, '0 / 2');
+
+        await revertAcceptedAdaptationFromUi(page, exercise!.id!);
+        await expectExerciseProblemStatement(page, exercise!.id!, 'testUseMergeSortForBigList');
+        await expectAdaptationRepositoryMarkers(page, exercise!.id!, false);
         runningJobId = undefined;
     });
 
@@ -408,6 +436,108 @@ async function expectHyperionLlmMockRequestCount(page: Page, expectedCount: numb
 
 async function expectHyperionLlmMockRequestsIncreased(page: Page, previousCount: number) {
     await expect.poll(async () => getHyperionLlmMockRequestCount(page), { timeout: 60_000 }).toBeGreaterThan(previousCount);
+}
+
+async function getHyperionLlmMockRequests(page: Page): Promise<LlmMockRequestSummary[]> {
+    const port = process.env.HYPERION_LLM_MOCK_PORT ?? '1234';
+    const response = await page.request.get(`http://127.0.0.1:${port}/requests`);
+    expect(response.ok()).toBeTruthy();
+    const body = (await response.json()) as { requests?: LlmMockRequestSummary[] };
+    expect(Array.isArray(body.requests)).toBeTruthy();
+    return body.requests!;
+}
+
+async function expectLlmMockSawPrompt(page: Page, expectedPromptSnippet: string) {
+    await expect
+        .poll(async () => {
+            const requests = await getHyperionLlmMockRequests(page);
+            const matching = requests.find((request) => request.promptText?.includes(expectedPromptSnippet));
+            return matching
+                ? {
+                      hasPrompt: true,
+                      hasMessages: (matching.messageCount ?? 0) > 0,
+                      hasUserRole: matching.roles?.includes('user') ?? false,
+                      hasWriteFileTool: matching.hasWriteFileTool,
+                      hasBashTool: matching.hasBashTool,
+                      hasSubmitTool: matching.hasSubmitTool,
+                  }
+                : { hasPrompt: false };
+        })
+        .toEqual({ hasPrompt: true, hasMessages: true, hasUserRole: true, hasWriteFileTool: true, hasBashTool: true, hasSubmitTool: true });
+}
+
+async function expectEditorActionsLockedDuringGeneration(page: Page) {
+    await expect(page.locator('#submit_button')).toBeDisabled();
+    await expect(page.locator('#refresh_button')).toBeDisabled();
+}
+
+async function expectExerciseProblemStatement(page: Page, exerciseId: number, expectedSnippet: string) {
+    await expect
+        .poll(
+            async () => {
+                const response = await page.request.get(`api/programming/programming-exercises/${exerciseId}`);
+                if (!response.ok()) {
+                    return false;
+                }
+                const body = (await response.json()) as { problemStatement?: string };
+                return body.problemStatement?.includes(expectedSnippet) ?? false;
+            },
+            { timeout: 60_000 },
+        )
+        .toBeTruthy();
+}
+
+async function expectAdaptationRepositoryMarkers(page: Page, exerciseId: number, shouldExist: boolean) {
+    await expect
+        .poll(
+            async () => ({
+                solution: await repositoryFileContains(
+                    page,
+                    `api/programming/programming-exercises/${exerciseId}/solution-files-content?omitBinaries=true`,
+                    solutionMarkerPath,
+                    solutionMarkerText,
+                ),
+                template: await repositoryFileContains(
+                    page,
+                    `api/programming/programming-exercises/${exerciseId}/template-files-content?omitBinaries=true`,
+                    templateMarkerPath,
+                    templateMarkerText,
+                ),
+                tests: await testRepositoryFileContains(page, exerciseId, testsMarkerPath, testsMarkerText),
+            }),
+            { timeout: 90_000 },
+        )
+        .toEqual({ solution: shouldExist, template: shouldExist, tests: shouldExist });
+}
+
+async function repositoryFileContains(page: Page, endpoint: string, path: string, expectedContent: string): Promise<boolean> {
+    const response = await page.request.get(endpoint);
+    if (!response.ok()) {
+        return false;
+    }
+    const files = (await response.json()) as Record<string, string>;
+    return files[path]?.includes(expectedContent) ?? false;
+}
+
+async function testRepositoryFileContains(page: Page, exerciseId: number, path: string, expectedContent: string): Promise<boolean> {
+    const response = await page.request.get(`api/programming/programming-exercises/${exerciseId}/test-repository/file?file=${encodeURIComponent(path)}`);
+    if (!response.ok()) {
+        return false;
+    }
+    return (await response.text()).includes(expectedContent);
+}
+
+async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
+    await expect(page.getByTestId('hyperion-generation-revert')).toBeVisible({ timeout: 60_000 });
+    const revertResponsePromise = page.waitForResponse(
+        (response) => response.request().method() === 'POST' && response.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert-adaptation`),
+        { timeout: 120_000 },
+    );
+    await page.getByTestId('hyperion-generation-revert').click();
+    const revertResponse = await revertResponsePromise;
+    expect(revertResponse.ok()).toBeTruthy();
+    await expect(page.getByTestId('hyperion-generation-reverted')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId('hyperion-generation-revert')).toBeHidden();
 }
 
 async function cancelRunningJobFromUi(page: Page, exerciseId: number, jobId: string) {

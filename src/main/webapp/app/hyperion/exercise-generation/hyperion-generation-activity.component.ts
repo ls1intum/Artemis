@@ -145,7 +145,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     }
 
     attachToJob(jobId: string, mode: HyperionGenerationMode): void {
-        if (this.exerciseId() === undefined) {
+        const exerciseId = this.exerciseId();
+        if (exerciseId === undefined) {
             return;
         }
         // Invalidate any in-flight reconnect status fetch so its late response cannot overwrite this freshly attached live run.
@@ -155,7 +156,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.jobId.set(jobId);
         this.running.set(true);
         this.openStream(jobId);
-        this.loadStatus(this.exerciseId()!, jobId);
+        this.loadStatus(exerciseId, jobId);
     }
 
     revert(): void {

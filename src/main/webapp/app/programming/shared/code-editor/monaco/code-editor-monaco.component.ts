@@ -40,8 +40,8 @@ import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-w
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
-    getFirstCommentByCreatedDateThenId,
     firstConsistencyIssueContent,
+    getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
     mapRepositoryToThreadLocationType,
     matchesSelectedRepository,

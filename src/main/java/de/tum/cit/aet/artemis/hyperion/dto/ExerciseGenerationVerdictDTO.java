@@ -4,6 +4,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -17,12 +19,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param testCount      the number of tests discovered
  * @param reasons        human-readable explanations of any failed gate (empty when accepted)
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "The structured outcome of the differential verification, so the client can show which gates passed without parsing prose")
 public record ExerciseGenerationVerdictDTO(@Schema(description = "Whether the exercise was accepted") boolean accepted,
         @Schema(description = "Whether the solution passed all its tests") boolean solutionPassed,
         @Schema(description = "Whether the template compiled but correctly failed the tests") boolean templateFailed,
         @Schema(description = "The number of tests discovered") int testCount,
-        @Schema(description = "Human-readable explanations of any failed gate (empty when accepted)") List<String> reasons) implements Serializable {
+        @JsonInclude @Schema(description = "Human-readable explanations of any failed gate (empty when accepted)") List<String> reasons) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

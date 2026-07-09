@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -43,13 +44,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * Tests the persistence orchestration: the canonical tests build is triggered with the tests commit only after the solution was committed (so the build sees the final solution),
@@ -76,7 +77,7 @@ class GenerationPersistenceServiceTest {
 
     private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -103,7 +104,7 @@ class GenerationPersistenceServiceTest {
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         resultRepository = mock(ResultTestRepository.class);
         programmingExerciseRepositoryService = mock(ProgrammingExerciseRepositoryService.class);
-        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
+        programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         programmingExerciseTaskService = mock(ProgrammingExerciseTaskService.class);
         // The build-gate adjustment waits for the freshly triggered tests-build to be PROCESSED, keyed on a solution result newer than the pre-trigger baseline (the grading
         // pipeline saves the synced test cases strictly before it saves that result). Baseline empty, then a newer result on the first poll, so the wait flips immediately and the
@@ -124,6 +125,7 @@ class GenerationPersistenceServiceTest {
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(1L);
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(exercise));
         // Distinct URIs per repository so the tests-build trigger can be asserted to fire with the tests commit hash specifically.
         templateUri = mock(LocalVCRepositoryUri.class);
         solutionUri = mock(LocalVCRepositoryUri.class);
@@ -283,23 +285,162 @@ class GenerationPersistenceServiceTest {
     void persist_usesJobStartMetadataAsProblemStatementGuard() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(exercise.getProblemStatement()).thenReturn("manual edit while generation was running");
-        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "original statement", null)).thenReturn(0);
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome, "original statement", null)).isInstanceOf(GenerationIncompleteException.class)
                 .hasMessageContaining("problem statement").hasMessageContaining("INCOMPLETE");
 
-        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "original statement", null);
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(repositoryService, never()).commitChanges(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persist_refusesMetadataUpdateBeforeRepositoryCommits_whenExerciseRowIsMissing() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.empty());
+        when(exercise.getProblemStatement()).thenReturn("old statement");
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", null)).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement").hasMessageContaining("INCOMPLETE");
+
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(repositoryService, never()).commitChanges(any(), any());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persist_allowsLineEndingAndOuterWhitespaceMetadataDriftFromExerciseSetup() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        when(exercise.getProblemStatement()).thenReturn(" old\r\nstatement\n");
+        when(exercise.getTitle()).thenReturn("Original title");
+        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", " old\r\nstatement\n", "Original title")).thenReturn(1);
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        service.persist(exercise, user, outcome, "old\nstatement", "Original title");
+
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", " old\r\nstatement\n", "Original title");
+    }
+
+    @Test
+    void persist_allowsTaskReferenceIdNormalizationFromInitialTestCaseSync() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        when(exercise.getProblemStatement()).thenReturn("[task][Sort](<testid>7</testid>)");
+        when(exercise.getTitle()).thenReturn("Original title");
+        doAnswer(invocation -> {
+            ProgrammingExercise candidate = invocation.getArgument(0);
+            candidate.setProblemStatement(candidate.getProblemStatement().replace("<testid>7</testid>", "testBubbleSort"));
+            return null;
+        }).when(programmingExerciseTaskService).replaceTestIdsWithNames(any());
+        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", "[task][Sort](<testid>7</testid>)", "Original title"))
+                .thenReturn(1);
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        service.persist(exercise, user, outcome, "[task][Sort](testBubbleSort)", "Original title");
+
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", "[task][Sort](<testid>7</testid>)",
+                "Original title");
+    }
+
+    @Test
+    void persist_refusesMeaningfulMarkdownWhitespaceMetadataEditBeforeRepositoryCommits() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(exercise.getProblemStatement()).thenReturn("old    statement");
+        when(exercise.getTitle()).thenReturn("Original title");
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement/title changed");
+
+        verify(repositoryService, never()).commitChanges(any(), any());
+    }
+
+    @Test
+    void persist_refusesTitleEditEvenWhenProblemStatementOutputIsUnchangedBeforeRepositoryCommits() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(exercise.getProblemStatement()).thenReturn("old statement");
+        when(exercise.getTitle()).thenReturn("Edited title");
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "old statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Original title")).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement/title changed");
+
+        verify(repositoryService, never()).commitChanges(any(), any());
+    }
+
+    @Test
+    void persist_refusesMixedExpectedAndTargetMetadataDuringProblemStatementSave() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(exercise.getProblemStatement()).thenReturn("");
+        when(exercise.getTitle()).thenReturn("Brief title");
+
+        ProgrammingExercise currentAtStart = new ProgrammingExercise();
+        currentAtStart.setProblemStatement("");
+        currentAtStart.setTitle("Brief title");
+        ProgrammingExercise mixedManualEdit = new ProgrammingExercise();
+        mixedManualEdit.setProblemStatement("# Generated title\n\nnew statement");
+        mixedManualEdit.setTitle("Brief title");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentAtStart), Optional.of(mixedManualEdit));
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Generated title\n\nnew statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "", "Brief title")).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement/title changed");
+
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persist_refusesMetadataEditAfterRepositoryCommitsBeforeVersionWhenProblemStatementOutputIsUnchanged() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        when(exercise.getProblemStatement()).thenReturn("old statement");
+        when(exercise.getTitle()).thenReturn("Old title");
+
+        ProgrammingExercise currentAtStart = new ProgrammingExercise();
+        currentAtStart.setProblemStatement("old statement");
+        currentAtStart.setTitle("Old title");
+        ProgrammingExercise manualEditBeforeVersion = new ProgrammingExercise();
+        manualEditBeforeVersion.setProblemStatement("old statement");
+        manualEditBeforeVersion.setTitle("Manual edit");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentAtStart), Optional.of(manualEditBeforeVersion));
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "old statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", "Old title")).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("problem statement/title changed").hasMessageContaining("INCOMPLETE");
+
+        InOrder order = Mockito.inOrder(gitService);
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-tests", "hash-tests", "main");
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-solution", "hash-solution", "main");
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
     }
 
     @Test
     void persist_restoresProblemStatement_whenTaskExtractionFailsAfterMetadataWasSaved() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(exercise.getProblemStatement()).thenReturn("old statement");
-        Mockito.doThrow(new IllegalStateException("task extraction failed")).when(programmingExerciseTaskService).updateTasksFromProblemStatement(exercise);
+        ProgrammingExercise currentBeforeSave = new ProgrammingExercise();
+        currentBeforeSave.setProblemStatement("old statement");
+        ProgrammingExercise currentAfterSave = new ProgrammingExercise();
+        currentAfterSave.setProblemStatement("new statement");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentBeforeSave), Optional.of(currentBeforeSave), Optional.of(currentAfterSave));
+        Mockito.doThrow(new IllegalStateException("task extraction failed")).doNothing().when(programmingExerciseTaskService).updateTasksFromProblemStatement(exercise);
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
@@ -604,13 +745,78 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void resyncAfterRevert_refusesToRestoreMetadataWhenItChangedAfterTheRevertStarted() {
-        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement", "Adapted Title")).thenReturn(0);
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("manual edit");
+        currentExercise.setTitle("Adapted Title");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
 
         boolean result = service.resyncAfterRevert(exercise, user, null, "old statement", "Old Title", "adapted statement", "Adapted Title");
 
         assertThat(result).isFalse();
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(programmingExerciseTaskService, never()).updateTasksFromProblemStatement(any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void resyncAfterRevert_usesExactCurrentMetadataForNormalizedSafeRestore() {
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("adapted statement\r\n");
+        currentExercise.setTitle("Adapted Title ");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
+        when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title")).thenReturn(1);
+
+        boolean result = service.resyncAfterRevert(exercise, user, null, "old statement", "Old Title", "adapted statement\n", "Adapted Title");
+
+        assertThat(result).isTrue();
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "old statement", "Old Title", "adapted statement\r\n", "Adapted Title");
+        verify(programmingExerciseTaskService).updateTasksFromProblemStatement(exercise);
+        verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user);
+    }
+
+    @Test
+    void canRestoreProblemStatementAndTitle_refusesPersistedManualMetadataEdit() {
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("manual edit");
+        currentExercise.setTitle("Adapted Title");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
+
+        boolean result = service.canRestoreProblemStatementAndTitle(exercise, "old statement", "Old Title", "adapted statement", "Adapted Title");
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void canRestoreProblemStatementAndTitle_allowsOnlyNormalizedPersistedMetadataDifference() {
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("adapted statement\r\n");
+        currentExercise.setTitle("Adapted Title ");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
+
+        boolean result = service.canRestoreProblemStatementAndTitle(exercise, "old statement", "Old Title", "adapted statement\n", "Adapted Title");
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void canRestoreProblemStatementAndTitle_refusesMissingExerciseRow() {
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.empty());
+
+        boolean result = service.canRestoreProblemStatementAndTitle(exercise, "old statement", "Old Title", "adapted statement", "Adapted Title");
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void canRestoreProblemStatementAndTitle_refusesMixedExpectedAndTargetMetadataState() {
+        ProgrammingExercise currentExercise = new ProgrammingExercise();
+        currentExercise.setProblemStatement("adapted statement");
+        currentExercise.setTitle("Old Title");
+        when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(currentExercise));
+
+        boolean result = service.canRestoreProblemStatementAndTitle(exercise, "old statement", "Old Title", "adapted statement", "Adapted Title");
+
+        assertThat(result).isFalse();
     }
 
     @Test
@@ -628,6 +834,7 @@ class GenerationPersistenceServiceTest {
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Failed to commit");
         // A failed persist must not record a version that would imply the exercise was saved consistently.
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+        verify(gitService).resetToOriginHead(repository);
     }
 
     @Test
@@ -809,10 +1016,9 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcome);
 
-        // The title is set before the guarded metadata write, so the clean title persists in the same compare-and-set update.
-        InOrder order = Mockito.inOrder(exercise, programmingExerciseRepository);
-        order.verify(exercise).setTitle("Roman Numerals");
-        order.verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "# Roman Numerals\n\nConvert 1..3999.", "Roman Numerals", "", null);
+        // The generated title persists in the same guarded metadata write and is reflected on the in-memory exercise after the successful compare-and-set.
+        verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "# Roman Numerals\n\nConvert 1..3999.", "Roman Numerals", "", null);
+        verify(exercise).setTitle("Roman Numerals");
     }
 
     @Test

@@ -10,6 +10,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
@@ -169,6 +170,16 @@ public class GenerationPersistenceService {
         return persistRecoveryDraft(exercise, user, outcome, jobId, () -> true);
     }
 
+    /**
+     * Persists a non-accepted draft while aborting before each repository mutation if this node no longer owns the job.
+     *
+     * @param exercise              the exercise to persist the draft into
+     * @param user                  the instructor performing the generation (commit author)
+     * @param outcome               the non-accepted generation outcome holding the produced files
+     * @param jobId                 the generation job id, used to name the isolated draft branch
+     * @param stillOwnsMutationSlot guard checked before each durable mutation
+     * @return whether the live exercise was left untouched and, if so, the isolated branch the draft was pushed to
+     */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
@@ -244,13 +255,28 @@ public class GenerationPersistenceService {
     /**
      * Persists a verified generated exercise, refusing to overwrite problem statement/title edits made after the generation job started.
      *
+     * @param exercise                 the exercise to update
+     * @param user                     the instructor performing the generation (commit author)
+     * @param outcome                  the accepted generation outcome
      * @param expectedProblemStatement the problem statement observed when the job started
      * @param expectedTitle            the title observed when the job started
+     * @return the repository heads captured before and after persistence
      */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle) {
         return persist(exercise, user, outcome, expectedProblemStatement, expectedTitle, () -> true);
     }
 
+    /**
+     * Persists a verified generated exercise while aborting before durable mutations if this node no longer owns the job.
+     *
+     * @param exercise                 the exercise to update
+     * @param user                     the instructor performing the generation (commit author)
+     * @param outcome                  the accepted generation outcome
+     * @param expectedProblemStatement the problem statement observed when the job started
+     * @param expectedTitle            the title observed when the job started
+     * @param stillOwnsMutationSlot    guard checked before durable mutations
+     * @return the repository heads captured before and after persistence
+     */
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             BooleanSupplier stillOwnsMutationSlot) {
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
@@ -258,7 +284,22 @@ public class GenerationPersistenceService {
         Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
         List<RepositoryType> committed = new ArrayList<>();
         String testsCommitHash = null;
+        String producedProblemStatement = outcome.producedProblemStatement();
+        String originalProblemStatement = expectedProblemStatement;
+        String originalTitle = expectedTitle;
+        String targetTitle = exercise.getTitle();
+        boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
+        // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. An adapt run keeps the
+        // instructor's title.
+        if (shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
+            String generatedTitle = extractTitleFromH1(producedProblemStatement);
+            if (generatedTitle != null) {
+                targetTitle = generatedTitle;
+            }
+        }
         try {
+            assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+            assertMetadataUnchangedSinceJobStart(exercise, originalProblemStatement, originalTitle);
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), outcome.seedRepositoryHeads().get(repositoryType),
@@ -280,23 +321,10 @@ public class GenerationPersistenceService {
                     + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e);
         }
 
-        String producedProblemStatement = outcome.producedProblemStatement();
-        String originalProblemStatement = expectedProblemStatement;
-        String originalTitle = expectedTitle;
         boolean problemStatementChanged = false;
         String persistedProblemStatement = null;
         String persistedTitle = null;
-        if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
-            String targetTitle = exercise.getTitle();
-            // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. An adapt run keeps the
-            // instructor's title.
-            if (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank()) {
-                String generatedTitle = extractTitleFromH1(producedProblemStatement);
-                if (generatedTitle != null && !generatedTitle.equals(exercise.getTitle())) {
-                    exercise.setTitle(generatedTitle);
-                    targetTitle = generatedTitle;
-                }
-            }
+        if (shouldSaveProblemStatement) {
             try {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle);
@@ -321,6 +349,8 @@ public class GenerationPersistenceService {
         // committed.
         try {
             assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+            assertMetadataMatchesExpectedOrTarget(exercise, originalProblemStatement, originalTitle,
+                    shouldSaveProblemStatement ? producedProblemStatement.trim() : originalProblemStatement, shouldSaveProblemStatement ? targetTitle : originalTitle);
             syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true);
         }
         catch (RuntimeException e) {
@@ -388,6 +418,10 @@ public class GenerationPersistenceService {
         }
     }
 
+    public boolean canRestoreProblemStatementAndTitle(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
+        return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
+    }
+
     /**
      * Triggers the canonical tests build (when a tests commit exists) so test-case grading follows the committed tests, re-applies the build-gate zero-weighting, and records a new
      * exercise version so open editors and search see the committed state — the post-commit steps shared by {@link #persist} and {@link #resyncAfterRevert}. Accepted generation
@@ -424,8 +458,14 @@ public class GenerationPersistenceService {
 
     private boolean restoreProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
         try {
-            int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), problemStatement, title, expectedProblemStatement,
-                    expectedTitle);
+            Optional<MetadataSnapshot> currentMetadata = currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title);
+            if (currentMetadata.isEmpty()) {
+                log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
+                return false;
+            }
+            MetadataSnapshot current = currentMetadata.get();
+            int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), problemStatement, title, current.problemStatement(),
+                    current.title());
             if (updatedRows != 1) {
                 log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
                 return false;
@@ -442,10 +482,63 @@ public class GenerationPersistenceService {
         }
     }
 
+    private record MetadataSnapshot(String problemStatement, String title) {
+    }
+
+    private Optional<MetadataSnapshot> currentMetadataMatchingExpectedOrTarget(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle,
+            String targetProblemStatement, String targetTitle) {
+        Optional<ProgrammingExercise> currentExercise = programmingExerciseRepository.findById(exercise.getId());
+        if (currentExercise.isEmpty()) {
+            return Optional.empty();
+        }
+        String currentProblemStatement = currentExercise.get().getProblemStatement();
+        String currentTitle = currentExercise.get().getTitle();
+        if (metadataPairMatches(exercise.getId(), currentProblemStatement, currentTitle, expectedProblemStatement, expectedTitle)
+                || metadataPairMatches(exercise.getId(), currentProblemStatement, currentTitle, targetProblemStatement, targetTitle)) {
+            return Optional.of(new MetadataSnapshot(currentProblemStatement, currentTitle));
+        }
+        return Optional.empty();
+    }
+
+    private boolean metadataPairMatches(long exerciseId, String currentProblemStatement, String currentTitle, String expectedProblemStatement, String expectedTitle) {
+        return problemStatementMetadataMatches(exerciseId, currentProblemStatement, expectedProblemStatement)
+                && java.util.Objects.equals(normalizeMetadata(currentTitle), normalizeMetadata(expectedTitle));
+    }
+
+    private boolean problemStatementMetadataMatches(long exerciseId, String currentProblemStatement, String expectedProblemStatement) {
+        if (java.util.Objects.equals(normalizeMetadata(currentProblemStatement), normalizeMetadata(expectedProblemStatement))) {
+            return true;
+        }
+        return java.util.Objects.equals(normalizeMetadata(problemStatementWithTaskIdsRenderedAsNames(exerciseId, currentProblemStatement)),
+                normalizeMetadata(problemStatementWithTaskIdsRenderedAsNames(exerciseId, expectedProblemStatement)));
+    }
+
+    private String problemStatementWithTaskIdsRenderedAsNames(long exerciseId, String problemStatement) {
+        if (problemStatement == null) {
+            return null;
+        }
+        ProgrammingExercise copy = new ProgrammingExercise();
+        copy.setId(exerciseId);
+        copy.setProblemStatement(problemStatement);
+        try {
+            programmingExerciseTaskService.replaceTestIdsWithNames(copy);
+        }
+        catch (RuntimeException e) {
+            log.debug("Could not canonicalize task ids while comparing Hyperion problem-statement metadata for exercise {}", exerciseId, e);
+        }
+        return copy.getProblemStatement();
+    }
+
+    private static String normalizeMetadata(String value) {
+        return value == null ? null : value.replace("\r\n", "\n").replace('\r', '\n').trim();
+    }
+
     private void saveProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
         String trimmedProblemStatement = problemStatement.trim();
-        int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), trimmedProblemStatement, title, expectedProblemStatement,
-                expectedTitle);
+        MetadataSnapshot current = currentMetadataMatchingSafeSave(exercise, expectedProblemStatement, expectedTitle, trimmedProblemStatement, title).orElseThrow(
+                () -> new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits"));
+        int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), trimmedProblemStatement, title, current.problemStatement(),
+                current.title());
         if (updatedRows != 1) {
             throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
         }
@@ -453,6 +546,26 @@ public class GenerationPersistenceService {
             exercise.setTitle(title);
         }
         exercise.setProblemStatement(trimmedProblemStatement);
+    }
+
+    private void assertMetadataUnchangedSinceJobStart(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle) {
+        Optional<ProgrammingExercise> currentExercise = programmingExerciseRepository.findById(exercise.getId());
+        if (currentExercise.isEmpty()
+                || !metadataPairMatches(exercise.getId(), currentExercise.get().getProblemStatement(), currentExercise.get().getTitle(), expectedProblemStatement, expectedTitle)) {
+            throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
+        }
+    }
+
+    private void assertMetadataMatchesExpectedOrTarget(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle, String targetProblemStatement,
+            String targetTitle) {
+        if (currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, targetProblemStatement, targetTitle).isEmpty()) {
+            throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
+        }
+    }
+
+    private Optional<MetadataSnapshot> currentMetadataMatchingSafeSave(ProgrammingExercise exercise, String expectedProblemStatement, String expectedTitle,
+            String targetProblemStatement, String targetTitle) {
+        return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, targetProblemStatement, targetTitle);
     }
 
     /**
@@ -535,8 +648,9 @@ public class GenerationPersistenceService {
         if (uri == null) {
             return null;
         }
+        Repository repository = null;
         try {
-            Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
+            repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
@@ -557,6 +671,15 @@ public class GenerationPersistenceService {
             return postHash;
         }
         catch (Exception e) {
+            if (repository != null) {
+                try {
+                    gitService.resetToOriginHead(repository);
+                }
+                catch (RuntimeException resetFailure) {
+                    log.warn("Could not reset the {} repository working copy after a failed Hyperion commit for exercise {}: {}", repositoryType, exercise.getId(),
+                            resetFailure.getMessage());
+                }
+            }
             throw new IllegalStateException("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
     }

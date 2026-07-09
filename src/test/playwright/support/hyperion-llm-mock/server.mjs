@@ -1,11 +1,16 @@
+/* global Buffer, console, process */
 import http from 'node:http';
 
 const port = Number(process.env.HYPERION_LLM_MOCK_PORT ?? 1234);
 let requestCount = 0;
+const requests = [];
 const failMarker = 'HYPERION_E2E_FAIL_LLM';
 const writeSnapshotMarker = 'HYPERION_E2E_WRITE_SNAPSHOT';
 const submitSeedMarker = 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE';
 const correctedSeedStatementMarker = 'Use merge sort for big lists';
+const solutionMarkerPath = 'solution/hyperion-e2e-solution-marker.txt';
+const templateMarkerPath = 'template/hyperion-e2e-template-marker.txt';
+const testsMarkerPath = 'tests/hyperion-e2e-tests-marker.txt';
 const correctedSeedProblemStatement = `In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
 ### Part 1: Sorting
@@ -44,6 +49,26 @@ Create and implement a \`Policy\` class following the below class diagram with a
 
 4. Complete the \`Client\` class which demonstrates switching between two strategies at runtime.
 `;
+
+function summarizeRequest(rawBody) {
+    try {
+        const parsed = JSON.parse(rawBody);
+        const messages = Array.isArray(parsed.messages) ? parsed.messages : [];
+        const toolNames = [...(parsed.tools ?? []), ...(parsed.functions ?? [])].map((tool) => tool?.function?.name ?? tool?.name).filter((name) => typeof name === 'string');
+        return {
+            model: parsed.model,
+            messageCount: messages.length,
+            roles: messages.map((message) => message?.role).filter(Boolean),
+            promptText: messages.map((message) => (typeof message?.content === 'string' ? message.content : JSON.stringify(message?.content ?? ''))).join('\n'),
+            toolNames,
+            hasWriteFileTool: rawBody.includes('write_file'),
+            hasBashTool: rawBody.includes('bash'),
+            hasSubmitTool: rawBody.includes('submit'),
+        };
+    } catch (error) {
+        return { parseError: String(error), rawBodyPrefix: rawBody.slice(0, 500) };
+    }
+}
 
 function jsonResponse(res, status, body) {
     res.writeHead(status, { 'content-type': 'application/json' });
@@ -86,6 +111,11 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.method === 'GET' && req.url === '/requests') {
+        jsonResponse(res, 200, { requests });
+        return;
+    }
+
     if (req.method === 'POST' && req.url === '/v1/chat/completions') {
         const chunks = [];
         req.on('data', (chunk) => chunks.push(chunk));
@@ -93,6 +123,7 @@ const server = http.createServer((req, res) => {
             requestCount++;
             const requestNumber = requestCount;
             const body = Buffer.concat(chunks).toString('utf8');
+            requests.push(summarizeRequest(body));
             if (body.includes(failMarker)) {
                 jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
                 return;
@@ -110,6 +141,39 @@ const server = http.createServer((req, res) => {
             }
             if (body.includes(submitSeedMarker) && !body.includes(correctedSeedStatementMarker)) {
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedSeedProblemStatement }));
+                return;
+            }
+            if (body.includes(submitSeedMarker) && !body.includes(solutionMarkerPath)) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse(requestNumber, 'write_file', {
+                        path: solutionMarkerPath,
+                        content: 'hyperion-e2e-solution-marker\n',
+                    }),
+                );
+                return;
+            }
+            if (body.includes(submitSeedMarker) && !body.includes(templateMarkerPath)) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse(requestNumber, 'write_file', {
+                        path: templateMarkerPath,
+                        content: 'hyperion-e2e-template-marker\n',
+                    }),
+                );
+                return;
+            }
+            if (body.includes(submitSeedMarker) && !body.includes(testsMarkerPath)) {
+                jsonResponse(
+                    res,
+                    200,
+                    toolCallResponse(requestNumber, 'write_file', {
+                        path: testsMarkerPath,
+                        content: 'hyperion-e2e-tests-marker\n',
+                    }),
+                );
                 return;
             }
             if (body.includes(submitSeedMarker)) {

@@ -20,11 +20,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param expectedProblemStatement the problem statement as it was when the job was started; persistence refuses to overwrite later manual edits
  * @param expectedTitle            the title as it was when the job was started; persistence refuses to overwrite later manual edits
  * @param deadlineAt               the absolute admission-time deadline for this job, or {@code null} when disabled
+ * @param budgetReservationId      the in-flight budget reservation to release when the async job finishes, or {@code null} when admission budgets are disabled
  */
 public record GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
-        String expectedTitle, @Nullable Instant deadlineAt) {
+        String expectedTitle, @Nullable Instant deadlineAt, @Nullable String budgetReservationId) {
 
     public GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
-        this(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), null);
+        this(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), null, null);
+    }
+
+    public GenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, String expectedProblemStatement,
+            String expectedTitle, @Nullable Instant deadlineAt) {
+        this(jobId, user, exercise, userPrompt, mode, expectedProblemStatement, expectedTitle, deadlineAt, null);
     }
 }

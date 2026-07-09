@@ -72,6 +72,8 @@ public class GenerationTaskService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final HyperionGenerationBudgetService generationBudgetService;
+
     private final ExerciseAdaptationRevertService adaptationRevertService;
 
     private final TaskScheduler taskScheduler;
@@ -84,8 +86,9 @@ public class GenerationTaskService {
 
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationRecoveryService recoveryService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseAdaptationRevertService adaptationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Value("${artemis.hyperion.agent.max-tokens-per-job:250000}") long maxTokensPerJob,
+            HyperionGenerationBudgetService generationBudgetService, ExerciseAdaptationRevertService adaptationRevertService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
+            @Value("${artemis.hyperion.agent.max-tokens-per-job:1500000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
@@ -93,6 +96,7 @@ public class GenerationTaskService {
         this.websocket = websocket;
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.generationBudgetService = generationBudgetService;
         this.adaptationRevertService = adaptationRevertService;
         this.taskScheduler = taskScheduler;
         this.maxJobDuration = maxJobDuration;
@@ -127,106 +131,111 @@ public class GenerationTaskService {
         AtomicBoolean deadlineExceeded = new AtomicBoolean(false);
         AtomicBoolean tokenBudgetExceeded = new AtomicBoolean(false);
         AtomicBoolean heartbeatLost = new AtomicBoolean(false);
-        ScheduledFuture<?> deadlineFuture;
-        ScheduledFuture<?> heartbeatFuture;
-        // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
-        // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
-        // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
-        if (jobService.isCancelled(jobId)) {
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
-            jobService.clearJob(exerciseId, jobId);
-            return;
-        }
-        if (!jobService.isActiveJob(exerciseId, jobId)) {
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was superseded or expired. Nothing was changed."));
-            jobService.clearJob(exerciseId, jobId);
-            return;
-        }
-        if (isDeadlineExceeded(event.deadlineAt())) {
-            deadlineExceeded.set(true);
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
-            jobService.clearJob(exerciseId, jobId);
-            return;
-        }
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
-        if (exercise == null) {
-            log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
-            jobService.clearJob(exerciseId, jobId);
-            return;
-        }
-        deadlineFuture = scheduleDeadline(exerciseId, jobId, deadlineExceeded, event.deadlineAt());
-        heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
-        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-        Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded);
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId) || heartbeatLost.get(),
-                emitter::progress, fileSnapshotSink, usageSink)) {
-            switch (outcome.loopResult().status()) {
-                case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                        cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
-                case ERROR -> emitter.milestone(
-                        ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
-                // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
-                case COMPLETED, BUDGET_EXHAUSTED -> {
-                    if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
-                                cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
-                        return;
-                    }
-                    ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                    if (outcome.isAccepted()) {
-                        emitter.progress("Checks passed. Saving the exercise.");
-                        try {
-                            // persist captures each repository's pre-persist HEAD (the pre-adaptation state, since the sandbox run never touched the live repos) and returns it
-                            // only
-                            // after every repository committed successfully. Record a revertible baseline only for an accepted ADAPT applied in place — never for a
-                            // cancelled/rejected/errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing
-                            // to revert to.
-                            ProgrammingExercise exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                            String originalProblemStatement = event.expectedProblemStatement();
-                            String originalTitle = event.expectedTitle();
-                            GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
-                                    originalTitle, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
-                            if (event.mode() == GenerationMode.ADAPT) {
-                                adaptationRevertService.recordBaseline(exerciseToPersist, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
-                                        originalProblemStatement, originalTitle);
+        ScheduledFuture<?> deadlineFuture = null;
+        ScheduledFuture<?> heartbeatFuture = null;
+        try {
+            // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
+            // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
+            // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that
+            // exception.
+            if (jobService.isCancelled(jobId)) {
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                return;
+            }
+            if (!jobService.isActiveJob(exerciseId, jobId)) {
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was superseded or expired. Nothing was changed."));
+                return;
+            }
+            if (isDeadlineExceeded(event.deadlineAt())) {
+                deadlineExceeded.set(true);
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false)));
+                return;
+            }
+            ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
+            if (exercise == null) {
+                log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
+                return;
+            }
+            deadlineFuture = scheduleDeadline(exerciseId, jobId, deadlineExceeded, event.deadlineAt());
+            heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
+            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded);
+            try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId) || heartbeatLost.get(),
+                    emitter::progress, fileSnapshotSink, usageSink)) {
+                switch (outcome.loopResult().status()) {
+                    case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
+                            cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
+                    case ERROR -> emitter.milestone(
+                            ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
+                    // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
+                    case COMPLETED, BUDGET_EXHAUSTED -> {
+                        if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
+                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
+                                    cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
+                            return;
+                        }
+                        ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
+                        if (outcome.isAccepted()) {
+                            emitter.progress("Checks passed. Saving the exercise.");
+                            try {
+                                ProgrammingExercise exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
+                                String originalProblemStatement = event.expectedProblemStatement();
+                                String originalTitle = event.expectedTitle();
+                                GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
+                                        originalTitle, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
+                                ProgrammingExercise persistedExercise = reloadDraftExerciseBeforeLiveMutation(exerciseId);
+                                if (event.mode() == GenerationMode.ADAPT) {
+                                    adaptationRevertService.recordBaseline(persistedExercise, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
+                                            originalProblemStatement, originalTitle);
+                                }
+                                int advisoryCount = recoveryService.surfaceAdvisoryFindings(persistedExercise, outcome.specFidelityReport());
+                                String advisory = advisoryCount > 0
+                                        ? " " + advisoryCount + " advisory spec-fidelity note(s) were added for your review (these did not affect acceptance)."
+                                        : "";
+                                emitter.milestone(ExerciseGenerationEventDTO.done("The exercise was generated and saved. Review the changes." + advisory,
+                                        ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
                             }
-                            // Advisory only: surface any spec-fidelity / coverage gaps as review comments without changing the accepted status. The differential oracle accepted
-                            // the
-                            // exercise; these are non-blocking notes the instructor may act on. Best-effort — a failed attach never downgrades the SUCCESS.
-                            int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, outcome.specFidelityReport());
-                            String advisory = advisoryCount > 0
-                                    ? " " + advisoryCount + " advisory spec-fidelity note(s) were added for your review (these did not affect acceptance)."
-                                    : "";
-                            emitter.milestone(ExerciseGenerationEventDTO.done("The exercise was generated and saved. Review the changes." + advisory,
-                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
+                            catch (GenerationIncompleteException e) {
+                                log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
+                                emitter.milestone(ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely: " + e.getMessage(),
+                                        ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
+                            }
+                            catch (RuntimeException e) {
+                                log.error("Failed to persist generated exercise {}", exerciseId, e);
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
+                                        "Verification passed but saving the exercise failed: " + e.getMessage()));
+                            }
                         }
-                        catch (GenerationIncompleteException e) {
-                            log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                            emitter.milestone(ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely: " + e.getMessage(),
-                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
+                        else {
+                            recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter);
                         }
-                        catch (RuntimeException e) {
-                            log.error("Failed to persist generated exercise {}", exerciseId, e);
-                            emitter.milestone(
-                                    ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Verification passed but saving the exercise failed: " + e.getMessage()));
-                        }
-                    }
-                    else {
-                        recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter);
                     }
                 }
             }
-        }
-        catch (RuntimeException e) {
-            log.error("Exercise generation job {} failed", jobId, e);
-            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: " + e.getMessage()));
+            catch (RuntimeException e) {
+                log.error("Exercise generation job {} failed", jobId, e);
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: " + e.getMessage()));
+            }
         }
         finally {
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
+            clearJobAndReleaseBudget(exerciseId, jobId, event);
+        }
+    }
+
+    private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event) {
+        try {
             jobService.clearJob(exerciseId, jobId);
         }
+        finally {
+            releaseBudgetReservation(event);
+        }
+    }
+
+    private void releaseBudgetReservation(GenerationStartedEvent event) {
+        generationBudgetService.releaseReservation(event.budgetReservationId());
     }
 
     /**
