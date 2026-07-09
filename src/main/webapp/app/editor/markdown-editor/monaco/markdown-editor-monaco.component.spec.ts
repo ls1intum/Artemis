@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
@@ -57,14 +56,9 @@ describe('MarkdownEditorMonacoComponent', () => {
             // Swap the heavy editor children for lightweight mocks; the Monaco editor in particular must not load
             // real Monaco. PrimeNG components and other directives/pipes stay real.
             .overrideComponent(MarkdownEditorMonacoComponent, {
-                remove: { imports: [MonacoEditorComponent, ColorSelectorComponent, PostingButtonComponent, RedirectToIrisButtonComponent] },
+                remove: { imports: [MonacoEditorComponent, PostingButtonComponent, RedirectToIrisButtonComponent] },
                 add: {
-                    imports: [
-                        MockComponent(MonacoEditorComponent),
-                        MockComponent(ColorSelectorComponent),
-                        MockComponent(PostingButtonComponent),
-                        MockComponent(RedirectToIrisButtonComponent),
-                    ],
+                    imports: [MockComponent(MonacoEditorComponent), MockComponent(PostingButtonComponent), MockComponent(RedirectToIrisButtonComponent)],
                 },
             })
             .compileComponents();
@@ -354,15 +348,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         comp.handleActionClick(new MouseEvent('click'), action);
         expect(executeInCurrentEditorStub).toHaveBeenCalledOnce();
-    });
-
-    it('should open the color selector', () => {
-        fixture.detectChanges();
-        const openColorSelectorSpy = vi.spyOn(comp.colorSelector()!, 'openColorSelector');
-        const event = new MouseEvent('click');
-        comp.openColorSelector(event);
-        expect(openColorSelectorSpy).toHaveBeenCalledOnce();
-        expect(openColorSelectorSpy).toHaveBeenCalledWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
     });
 
     it('should pass the correct color as argument to the color action', () => {

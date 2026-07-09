@@ -55,7 +55,7 @@ describe('LogsComponent', () => {
 
     it('should change log level correctly', () => {
         const log = new Log('main', 'ERROR');
-        vi.spyOn(service, 'changeLevel').mockReturnValue(of({}));
+        vi.spyOn(service, 'changeLevel').mockReturnValue(of(undefined));
         vi.spyOn(service, 'findAll').mockReturnValue(
             of({
                 loggers: {
@@ -85,8 +85,16 @@ describe('LogsComponent', () => {
         );
         comp.ngOnInit();
 
-        // Apply filter - computed signal updates automatically
-        comp.filter.set('test');
+        // Apply filter via the debounced pipeline; computed signal updates automatically
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('test');
+            TestBed.tick();
+            vi.advanceTimersByTime(200);
+            TestBed.tick();
+        } finally {
+            vi.useRealTimers();
+        }
 
         expect(comp.filteredAndOrderedLoggers()).toEqual([{ name: 'footestbar', level: 'DEBUG' }]);
     });
@@ -152,10 +160,21 @@ describe('LogsComponent', () => {
         ]);
     });
 
-    it('should update filter via updateFilter method', () => {
-        comp.updateFilter('testFilter');
-
-        expect(comp.filter()).toBe('testFilter');
+    it('should update filter via updateFilter method (debounced)', () => {
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('testFilter');
+            // the immediate signal reflects the input right away for responsive typing
+            expect(comp.filterInput()).toBe('testFilter');
+            // the debounced filter only applies after the debounce window
+            TestBed.tick();
+            expect(comp.filter()).toBe('');
+            vi.advanceTimersByTime(200);
+            TestBed.tick();
+            expect(comp.filter()).toBe('testFilter');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should update sort via updateSort method', () => {
@@ -197,7 +216,15 @@ describe('LogsComponent', () => {
         );
         comp.ngOnInit();
 
-        comp.filter.set('TEST');
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('TEST');
+            TestBed.tick();
+            vi.advanceTimersByTime(200);
+            TestBed.tick();
+        } finally {
+            vi.useRealTimers();
+        }
 
         expect(comp.filteredAndOrderedLoggers()).toHaveLength(1);
         expect(comp.filteredAndOrderedLoggers()[0].name).toBe('TestLogger');

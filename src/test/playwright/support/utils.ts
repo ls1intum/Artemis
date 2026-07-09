@@ -55,9 +55,9 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
  * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
  */
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
+    const expectedValue = date.format(format);
     await expect(dateInputField).toBeEnabled();
-    const expected = date.format(format);
-    // PrimeNG 22's masked datepicker input can still drop the first keystroke after a clear while the
+    // PrimeNG's masked datepicker input can still drop the first keystroke after a clear while the
     // mask/focus state is settling (worse under load) — e.g. "0.09.2027" instead of "20.09.2027".
     // Retry the whole clear+type until the field holds the expected value (web-first, self-healing).
     await expect(async () => {
@@ -66,10 +66,13 @@ export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Da
         await expect(dateInputField).toBeFocused();
         await dateInputField.press('ControlOrMeta+a');
         await dateInputField.press('Delete');
+        // Ensure the clear has actually settled before typing, so the first keystroke is not swallowed while the
+        // mask is still resetting (the root cause of the dropped leading character).
+        await expect(dateInputField).toHaveValue('');
         // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type real
         // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
-        await dateInputField.pressSequentially(expected, { delay: 30 });
-        expect(await dateInputField.inputValue()).toBe(expected);
+        await dateInputField.pressSequentially(expectedValue, { delay: 30 });
+        expect(await dateInputField.inputValue()).toBe(expectedValue);
     }).toPass({ timeout: 15000 });
     await dateInputField.press('Tab');
 }
@@ -433,6 +436,11 @@ export async function addE2EInitScript(page: Page) {
  * @param droppable - Locator of the element to be dropped on.
  */
 export async function drag(page: Page, draggable: Locator, droppable: Locator) {
+    // The droppable of a drag-and-drop quiz is sized relative to its background image, which loads
+    // asynchronously. Until that image has loaded the droppable is zero-sized, which Playwright
+    // treats as not visible, so boundingBox() returns null and the drag coordinates below would be
+    // computed from `null`. Wait for the element to be visible (a non-empty box) before reading it.
+    await droppable.waitFor({ state: 'visible', timeout: 15_000 });
     const box = (await droppable.boundingBox())!;
     // By hovering over the droppable element, we ensure it's not hidden by any other element.
     await droppable.hover();

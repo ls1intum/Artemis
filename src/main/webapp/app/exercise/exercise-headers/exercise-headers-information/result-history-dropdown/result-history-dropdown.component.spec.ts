@@ -4,7 +4,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Badge, ResultService } from 'app/exercise/result/result.service';
+import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -203,9 +203,9 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('getResultColorClass', () => {
-        it('should return text-secondary when no participation on submission', () => {
+        it('should return text-muted-color when no participation on submission', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
-            expect(component.getResultColorClass(result)).toBe('text-secondary');
+            expect(component.getResultColorClass(result)).toBe('text-muted-color');
         });
     });
 
@@ -221,36 +221,6 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should return empty string when no participation', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
             expect(component.getResultText(result)).toBe('');
-        });
-    });
-
-    describe('getBadgeSeverity', () => {
-        it('should return success for bg-success class', () => {
-            const result = createResult(1, 100);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-success', text: 'graded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('success');
-        });
-
-        it('should return info for bg-info class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-info', text: 'practice', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('info');
-        });
-
-        it('should return secondary for bg-secondary class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-secondary', text: 'ungraded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('secondary');
-        });
-
-        it('should return undefined for unknown badge class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-warning', text: 'other', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBeUndefined();
         });
     });
 
@@ -392,7 +362,7 @@ describe('ResultHistoryDropdownComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    data: expect.objectContaining({ exercise: defaultExercise, result, participation }),
+                    inputValues: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );
         });

@@ -137,7 +137,6 @@ describe('ProgrammingExamSummaryComponent', () => {
 
         expect(component.feedbackComponentParameters().exercise).toEqual(programmingExercise);
         expect(component.feedbackComponentParameters().result).toEqual(result);
-        expect(component.feedbackComponentParameters().exerciseType).toEqual(programmingExercise.type);
 
         const feedbackComponent = fixture.debugElement.query(By.directive(FeedbackComponent))?.componentInstance;
         expect(feedbackComponent).toBeTruthy();

@@ -76,7 +76,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    fixedPlaceForm: FormGroup;
+    fixedPlaceForm!: FormGroup; // built in ngOnInit before any template/getter read
 
     get statusHeaderControl() {
         return this.fixedPlaceForm.get('statusHeader');

@@ -256,24 +256,21 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
 
         vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());
         vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));
         component.ngOnInit();
-        const irisUnsubSpy = vi.spyOn(component['irisSettingsSubscription'], 'unsubscribe');
-        const msgUnsubSpy = vi.spyOn(component['messagesSubscription'], 'unsubscribe');
-        const stagesUnsubSpy = vi.spyOn(component['stagesSubscription'], 'unsubscribe');
-        const errorUnsubSpy = vi.spyOn(component['errorSubscription'], 'unsubscribe');
-        const tutorSuggestionUnsubSpy = vi.spyOn(component['tutorSuggestionSubscription'], 'unsubscribe');
+        const irisUnsubSpy = vi.spyOn(component['irisSettingsSubscription']!, 'unsubscribe');
+        const msgUnsubSpy = vi.spyOn(component['messagesSubscription']!, 'unsubscribe');
+        const errorUnsubSpy = vi.spyOn(component['errorSubscription']!, 'unsubscribe');
+        const tutorSuggestionUnsubSpy = vi.spyOn(component['tutorSuggestionSubscription']!, 'unsubscribe');
 
         component.ngOnDestroy();
 
         expect(irisUnsubSpy).toHaveBeenCalled();
         expect(msgUnsubSpy).toHaveBeenCalled();
-        expect(stagesUnsubSpy).toHaveBeenCalled();
         expect(errorUnsubSpy).toHaveBeenCalled();
         expect(tutorSuggestionUnsubSpy).toHaveBeenCalled();
     });
@@ -281,7 +278,6 @@ describe('TutorSuggestionComponent', () => {
     it('should update suggestion in fetchMessages if last message is an Artifact', () => {
         const mockMessages = [{ id: 1, sender: 'USER' } as IrisMessage, { id: 2, sender: 'ARTIFACT' } as IrisMessage];
         vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());
         component['fetchMessages']();
         vi.advanceTimersByTime(0);
@@ -407,7 +403,6 @@ describe('TutorSuggestionComponent', () => {
             vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
             vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
-            vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
             vi.spyOn(chatService, 'currentError').mockReturnValue(of());
             vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
             const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
@@ -683,7 +678,6 @@ describe('TutorSuggestionComponent', () => {
     });
 
     function setUpForRequestSuggestion() {
-        vi.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
         vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());
         vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(123));

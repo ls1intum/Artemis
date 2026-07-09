@@ -19,7 +19,6 @@ import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -28,6 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
+import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 describe('GenerateCompetenciesComponent', () => {
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
@@ -132,7 +132,7 @@ describe('GenerateCompetenciesComponent', () => {
 
         comp.getCompetencyRecommendations(courseDescription);
         const websocketMessage = {
-            stages: [{ state: IrisStageStateDTO.DONE }],
+            runState: IrisRunState.FINISHED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
@@ -234,7 +234,7 @@ describe('GenerateCompetenciesComponent', () => {
         const successMock = vi.spyOn(alertService, 'success');
         comp.getCompetencyRecommendations('Cool course description');
         const websocketMessage = {
-            stages: [{ state: IrisStageStateDTO.DONE }],
+            runState: IrisRunState.FINISHED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
@@ -244,7 +244,7 @@ describe('GenerateCompetenciesComponent', () => {
         const warnMock = vi.spyOn(alertService, 'warning');
         comp.getCompetencyRecommendations('Cool course description');
         const errorMessage = {
-            stages: [{ state: IrisStageStateDTO.ERROR }],
+            runState: IrisRunState.FAILED,
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(errorMessage);

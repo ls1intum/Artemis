@@ -2,6 +2,8 @@ import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal 
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -26,7 +28,7 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -49,6 +51,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     readonly usersToImport = signal<StudentDTO[]>([]);
     readonly examUsersToImport = signal<ExamUserDTO[]>([]);
     notFoundUsers: Partial<StudentDTO>[] = [];
+    rejectedStaffUsers: Partial<StudentDTO>[] = [];
 
     readonly isParsing = signal(false);
     readonly validationError = signal<string | undefined>(undefined);
@@ -74,6 +77,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.usersToImport.set([]);
         this.examUsersToImport.set([]);
         this.notFoundUsers = [];
+        this.rejectedStaffUsers = [];
         this.hasImported.set(false);
         this.validationError.set(undefined);
         this.noUsersFoundError.set(undefined);
@@ -153,7 +157,10 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else if (!courseGroup && exam) {
             this.examManagementService.addStudentsToExam(courseId!, exam.id!, this.examUsersToImport()).subscribe({
-                next: (res) => this.onSaveSuccess(res.body || []),
+                next: (res) => {
+                    const result = res.body;
+                    this.onSaveSuccess(result?.notFoundStudents ?? [], result?.rejectedStaffUsers ?? []);
+                },
                 error: () => this.onSaveError(),
             });
         } else if (this.adminUserMode()) {
@@ -210,7 +217,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * @param user The user to be checked
      */
     wasNotImported(user: StudentDTO): boolean {
-        if (this.hasImported() && this.notFoundUsers?.length === 0) {
+        if (this.hasImported() && this.notFoundUsers?.length === 0 && this.rejectedStaffUsers?.length === 0) {
             return false;
         }
 
@@ -219,6 +226,16 @@ export class UsersImportDialogComponent implements OnDestroy {
                 (notFound.registrationNumber?.length && notFound.registrationNumber === user.registrationNumber) ||
                 (notFound.login?.length && notFound.login === user.login) ||
                 (notFound.email?.length && notFound.email === user.email)
+            ) {
+                return true;
+            }
+        }
+
+        for (const rejected of this.rejectedStaffUsers) {
+            if (
+                (rejected.registrationNumber?.length && rejected.registrationNumber === user.registrationNumber) ||
+                (rejected.login?.length && rejected.login === user.login) ||
+                (rejected.email?.length && rejected.email === user.email)
             ) {
                 return true;
             }
@@ -242,7 +259,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Number of users which could not be imported
      */
     get numberOfUsersNotImported(): number {
-        return !this.hasImported() ? 0 : this.notFoundUsers.length;
+        return !this.hasImported() ? 0 : this.notFoundUsers.length + this.rejectedStaffUsers.length;
     }
 
     get isSubmitDisabled(): boolean {
@@ -252,11 +269,13 @@ export class UsersImportDialogComponent implements OnDestroy {
     /**
      * Callback method that is called when the import request was successful
      * @param notFoundUsers - List of users that could NOT be imported since they were not found
+     * @param rejectedStaffUsers - List of users that could NOT be imported since they are staff
      */
-    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[]) {
+    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[], rejectedStaffUsers: Partial<StudentDTO>[] = []) {
         this.isImporting.set(false);
         this.hasImported.set(true);
         this.notFoundUsers = notFoundUsers || [];
+        this.rejectedStaffUsers = rejectedStaffUsers;
     }
 
     /**

@@ -43,6 +43,7 @@ describe('EditOnlineUnitComponent', () => {
                                     case 'onlineUnitId':
                                         return 1;
                                 }
+                                return null;
                             },
                         }),
                         parent: {
@@ -53,6 +54,7 @@ describe('EditOnlineUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                             },

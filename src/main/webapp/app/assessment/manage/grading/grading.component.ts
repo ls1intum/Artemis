@@ -1062,6 +1062,7 @@ export class GradingComponent implements OnInit {
 
         const gradeType = csvGradeSteps[0]['bonusPoints' as keyof CsvGradeStep] === undefined ? GradeType.GRADE : GradeType.BONUS;
         this.gradeStepsModel.update((model) => ({ ...model, gradeType, gradeSteps: this.mapCsvGradeStepsToGradeSteps(csvGradeSteps, gradeType) }));
+        return undefined;
     }
 
     parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {

@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { ConfirmationService } from 'primeng/api';
+import { Confirmation, ConfirmationService } from 'primeng/api';
 import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
@@ -60,8 +60,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should delete comment when deletion is confirmed', () => {
         let acceptCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
-            acceptCallback = confirmation.accept;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+            acceptCallback = confirmation.accept as (() => void) | undefined;
             return confirmationService;
         });
 
@@ -75,8 +75,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should not delete comment when deletion is dismissed', () => {
         let rejectCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { reject?: () => void }) => {
-            rejectCallback = confirmation.reject;
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+            rejectCallback = confirmation.reject as (() => void) | undefined;
             return confirmationService;
         });
 

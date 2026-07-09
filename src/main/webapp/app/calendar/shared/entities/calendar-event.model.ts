@@ -1,5 +1,6 @@
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 export class IdentifiableCalendarEvent {
     public id: string;
@@ -12,7 +13,7 @@ export class IdentifiableCalendarEvent {
         public location?: string,
         public facilitator?: string,
     ) {
-        this.id = window.crypto.randomUUID().toString();
+        this.id = generateUuid();
     }
 
     isOfType(type: CalendarEventTypeEnum): boolean {

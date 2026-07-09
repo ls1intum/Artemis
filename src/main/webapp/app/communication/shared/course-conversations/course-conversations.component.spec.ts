@@ -96,7 +96,7 @@ examples.forEach((activeConversation) => {
                 breakpoints: { [Breakpoints.Handset]: false },
             });
 
-            queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
+            queryParamsSubject = new BehaviorSubject<Params>({});
 
             TestBed.configureTestingModule({
                 imports: [
@@ -220,7 +220,7 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
-            postsSubject = new BehaviorSubject([]);
+            postsSubject = new BehaviorSubject<Post[]>([]);
             vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
             vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
             setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');
@@ -274,6 +274,25 @@ examples.forEach((activeConversation) => {
             expect(component.isLoading()).toBe(false);
             expect(component.conversationsOfUser()).toHaveLength(1);
             expect(component.activeConversation()).toEqual(activeConversation);
+        });
+
+        it('should store the highlight observers and disconnect them in ngOnDestroy', () => {
+            // Trigger both highlight helpers for elements that do not exist yet, so each creates and stores a MutationObserver.
+            component['scrollToAndHighlightPost'](999999);
+            component['scrollToAndHighlightReply'](999998);
+
+            const postObserver = component['highlightPostObserver'];
+            const replyObserver = component['highlightReplyObserver'];
+            expect(postObserver).toBeDefined();
+            expect(replyObserver).toBeDefined();
+
+            const postDisconnectSpy = vi.spyOn(postObserver!, 'disconnect');
+            const replyDisconnectSpy = vi.spyOn(replyObserver!, 'disconnect');
+
+            component.ngOnDestroy();
+
+            expect(postDisconnectSpy).toHaveBeenCalled();
+            expect(replyDisconnectSpy).toHaveBeenCalled();
         });
 
         describe('Dialog Opening', () => {
@@ -967,6 +986,14 @@ examples.forEach((activeConversation) => {
 
                 expect(closeSidebarSpy).toHaveBeenCalled();
             });
+        });
+
+        it('should update the page title signal via setPageTitle', () => {
+            expect(component.pageTitle()).toBe('');
+
+            component.setPageTitle('overview.communication');
+
+            expect(component.pageTitle()).toBe('overview.communication');
         });
     });
 });

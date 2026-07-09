@@ -32,7 +32,7 @@ describe('Exercise Info Component', () => {
         [{ dueDate: dateOne } as Exercise, undefined, dateOne],
         [{ dueDate: dateOne } as Exercise, {}, dateOne],
         [{ dueDate: dateOne } as Exercise, { individualDueDate: dateTwo }, dateTwo],
-    ])('should determine due date', (exercise: Exercise, studentParticipation: StudentParticipation | undefined, expectedDueDate: dayjs.Dayjs) => {
+    ])('should determine due date', (exercise: Partial<Exercise>, studentParticipation: Partial<StudentParticipation> | undefined, expectedDueDate: dayjs.Dayjs | undefined) => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('studentParticipation', studentParticipation);
 

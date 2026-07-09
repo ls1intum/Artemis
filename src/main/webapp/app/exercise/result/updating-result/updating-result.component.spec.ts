@@ -153,7 +153,7 @@ describe('UpdatingResultComponent', () => {
 
     it('should update result and establish new websocket connection on participation change', () => {
         cleanInitializeGraded();
-        const unsubscribeSpy = vi.spyOn(comp.resultSubscription, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(comp.resultSubscription!, 'unsubscribe');
         const newParticipation = { id: 80, exercise, student, submissions: [{ results: [{ id: 1, rated: true }] }] } as Participation;
         cleanInitializeGraded(newParticipation);
         expect(unsubscribeSpy).toHaveBeenNthCalledWith(1);

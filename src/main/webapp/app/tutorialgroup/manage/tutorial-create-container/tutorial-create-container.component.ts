@@ -47,7 +47,7 @@ export class TutorialCreateContainerComponent {
             .subscribe({
                 next: (newTutorialGroupId) => {
                     this.isTutorialGroupLoading.set(false);
-                    this.router.navigate(['..', newTutorialGroupId], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['..', newTutorialGroupId], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
                     this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.createGroup');

@@ -12,7 +12,7 @@ import { CustomPatternValidatorDirective } from './custom-pattern-validator.dire
     imports: [FormsModule, CustomPatternValidatorDirective],
 })
 class CustomPatternComponent {
-    pattern: string;
+    pattern!: string;
 }
 
 describe('CustomPatternValidatorDirective', () => {

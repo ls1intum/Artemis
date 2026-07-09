@@ -8,7 +8,7 @@
         "email": "krusche@tum.de",
         "url": "https://aet.cit.tum.de/krusche"
     },
-    "packageManager": "pnpm@11.8.0",
+    "packageManager": "pnpm@11.9.0",
     "dependencies": {
         "@angular/cdk": "22.0.2",
         "@angular/common": "22.0.4",
@@ -23,6 +23,9 @@
         "@ctrl/ngx-emoji-mart": "9.3.0",
         "@dagrejs/dagre": "3.0.0",
         "@e965/xlsx": "0.20.3",
+        "@embedpdf/engines": "2.14.4",
+        "@embedpdf/models": "2.14.4",
+        "@embedpdf/pdfium": "2.14.4",
         "@fingerprintjs/fingerprintjs": "5.2.0",
         "@fortawesome/angular-fontawesome": "5.0.0",
         "@fortawesome/fontawesome-svg-core": "7.2.0",
@@ -52,10 +55,7 @@
         "lodash-es": "4.18.1",
         "markdown-it": "14.2.0",
         "monaco-editor": "0.55.1",
-        "ngx-extended-pdf-viewer": "28.0.3",
         "papaparse": "5.5.3",
-        "pdf-lib": "1.17.1",
-        "pdfjs-dist": "6.0.227",
         "primeicons": "7.0.0",
         "primeng": "22.0.0-rc.1",
         "rxjs": "7.8.2",
@@ -78,6 +78,7 @@
         "@angular/compiler-cli": "22.0.4",
         "@angular/language-service": "22.0.4",
         "@eslint/js": "10.0.1",
+        "@tailwindcss/postcss": "4.3.1",
         "@types/d3-shape": "3.1.8",
         "@types/lodash-es": "4.17.12",
         "@types/markdown-it": "14.1.2",
@@ -108,6 +109,8 @@
         "stylelint-config-html": "1.1.0",
         "stylelint-config-standard-scss": "17.0.0",
         "stylelint-scss": "7.2.0",
+        "tailwindcss": "4.3.1",
+        "tailwindcss-primeui": "0.6.1",
         "ts-morph": "28.0.0",
         "typescript": "6.0.3",
         "typescript-eslint": "8.62.0",
@@ -116,7 +119,7 @@
         "vitest-canvas-mock": "1.1.4"
     },
     "engines": {
-        "node": ">=24.15.0",
+        "node": ">=24.18.0",
         "pnpm": ">=11.1.0"
     },
     "scripts": {
@@ -127,11 +130,11 @@
         "coverage:check-module": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
         "lighthouse": "node supporting_scripts/lighthouse/run-lighthouse.mjs",
-        "lint": "eslint src/main/webapp",
-        "lint:fix": "eslint --fix src/main/webapp",
+        "lint": "eslint src/main/webapp src/test/javascript",
+        "lint:fix": "eslint --fix src/main/webapp src/test/javascript",
         "lint:docs": "pnpm -C documentation run lint",
         "lint:playwright": "pnpm -C src/test/playwright run lint",
-        "postinstall": "husky && node src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs",
+        "postinstall": "husky",
         "prebuild": "node prebuild.mjs",
         "prepare": "husky",
         "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
@@ -142,6 +145,7 @@
         "test:ci": "pnpm run prebuild && pnpm run vitest:ci && pnpm run vitest:monaco",
         "test": "pnpm run prebuild && pnpm exec vitest run",
         "test:one": "pnpm run prebuild && pnpm exec vitest run",
+        "test:rules": "vitest run --config rules/vitest.config.mjs",
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
@@ -158,6 +162,8 @@
         "webapp:prod": "pnpm run clean-www && pnpm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
         "sbom:generate-full": "cross-env FETCH_LICENSE=false pnpm dlx @cyclonedx/cdxgen@12.4.0 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse --profile generic",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
-        "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped"
+        "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped",
+        "migrate:status": "node supporting_scripts/migration/migrate.mjs status",
+        "migrate:check": "node supporting_scripts/migration/migrate.mjs check"
     }
 }

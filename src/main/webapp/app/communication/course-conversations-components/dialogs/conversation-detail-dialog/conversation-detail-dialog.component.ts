@@ -46,13 +46,13 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     course = signal<Course | undefined>(undefined);
     selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
-    isInitialized = false;
+    override isInitialized = false;
     readonly isOneToOneChat = signal(false);
     readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
     readonly faPeopleGroup = faPeopleGroup;
     readonly userNameClicked = output<number>();
 
-    initialize() {
+    override initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
         const activeConversation = this.activeConversation();
         if (activeConversation) {

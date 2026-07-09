@@ -51,6 +51,7 @@ describe('CreateTextUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
+                                        return null;
                                     },
                                 }),
                                 parent: {
@@ -60,6 +61,7 @@ describe('CreateTextUnitComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
+                                            return null;
                                         },
                                     }),
                                 },

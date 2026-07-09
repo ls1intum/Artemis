@@ -104,7 +104,7 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview/course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss', './course-statistics.component.scss'],
     imports: [
         NgbDropdown,
         NgbDropdownToggle,
@@ -132,16 +132,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly documentationType: DocumentationType = 'StudentStatistics';
 
-    courseId: number;
-    private courseExercises: Exercise[];
+    courseId!: number; // set in ngOnInit() from route params
+    private courseExercises: Exercise[] = [];
     private paramSubscription?: Subscription;
-    private courseUpdatesSubscription: Subscription;
-    private translateSubscription: Subscription;
+    private courseUpdatesSubscription?: Subscription;
+    private translateSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
-    private courseExercisesNotIncludedInScore: Exercise[];
-    private courseExercisesFilteredByCategories: Exercise[];
+    private courseExercisesNotIncludedInScore: Exercise[] = [];
+    private courseExercisesFilteredByCategories: Exercise[] = [];
     readonly currentlyHidingNotIncludedInScoreExercises = signal<boolean>(false);
     readonly filteredExerciseIDs = signal<number[]>([]);
 

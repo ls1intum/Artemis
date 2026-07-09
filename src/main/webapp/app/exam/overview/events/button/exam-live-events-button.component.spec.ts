@@ -59,6 +59,8 @@ describe('ExamLiveEventsButtonComponent', () => {
         const config = dialogSpy.mock.calls[0][1];
         expect(config?.modal).toBe(true);
         expect(config?.styleClass).toBe('live-events-modal-window');
-        expect((config?.data as { examStartDate?: unknown } | undefined)?.examStartDate).toBeUndefined();
+        const examStartDateGetter = (config?.data as { examStartDate?: () => unknown } | undefined)?.examStartDate;
+        expect(examStartDateGetter).toBeTypeOf('function');
+        expect(examStartDateGetter?.()).toBeUndefined();
     });
 });

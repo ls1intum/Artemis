@@ -115,7 +115,7 @@ describe('FileUploadSubmissionComponent', () => {
     };
 
     beforeEach(async () => {
-        routeParams$ = new BehaviorSubject({ participationId: 111 });
+        routeParams$ = new BehaviorSubject<Params>({ participationId: 111 });
 
         await TestBed.configureTestingModule({
             imports: [FileUploadSubmissionComponent],

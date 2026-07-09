@@ -14,6 +14,7 @@ import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/en
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudentImportData } from 'app/openapi/models/tutorial-group-student-import-data';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -106,7 +107,7 @@ export class TutorialRegistrationsImportModalComponent {
     importParsedStudents() {
         this.isLoading.set(true);
         this.tutorialGroupApiService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
-            next: (response: Array<TutorialGroupRegisterStudentRequest>) => {
+            next: (response: Array<TutorialGroupStudentImportData>) => {
                 const nonExistingStudents = response || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {
                     return {

@@ -16,6 +16,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { captureException } from '@sentry/angular';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UMLDiagramType as UMLDiagramTypes } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -26,7 +27,6 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
-import { captureException } from '@sentry/angular';
 
 export interface CourseCompetencyRequestDTO {
     id?: number;
@@ -193,7 +193,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new QuizExercise(course, undefined);
             break;
         default:
-            captureException(new Error(`Unknown exercise type '${dto.type}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`));
+            captureException(new Error(`Unknown exercise type '${String(dto.type)}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`));
             exercise = new TextExercise(course, undefined);
             break;
     }

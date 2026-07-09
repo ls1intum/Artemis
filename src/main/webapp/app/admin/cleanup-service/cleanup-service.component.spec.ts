@@ -71,4 +71,20 @@ describe('CleanupServiceComponent', () => {
         expect(validOperation.datesValid()).toBe(true);
         expect(invalidOperation.datesValid()).toBe(false);
     });
+
+    it('should clear the model and invalidate the row when a date is cleared', () => {
+        const operation: CleanupOperation = {
+            name: 'deletePlagiarismComparisons',
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: undefined,
+            datesValid: signal(true),
+        };
+
+        // Clearing a field must drop the stale date so a deletion cannot run against a range no longer shown.
+        comp.onDeleteFromChange(operation, undefined);
+
+        expect(operation.deleteFrom).toBeUndefined();
+        expect(operation.datesValid()).toBe(false);
+    });
 });

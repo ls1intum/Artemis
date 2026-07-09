@@ -1,21 +1,29 @@
-<p-tree [value]="nodes()" class="card w-100 knowledge-area-tree">
-    <!-- PrimeNG 22 resolves a single node template by the ref name `#node` (it no longer matches per `type`).
-         We disambiguate knowledge-area vs. competency nodes here via the node's `type`. -->
+<p-tree
+    class="block w-full"
+    styleClass="w-full"
+    [pt]="{ nodeContent: { class: 'bg-surface-0 dark:bg-surface-900' } }"
+    [value]="nodes()"
+    (onNodeExpand)="onNodeExpand($event.node)"
+    (onNodeCollapse)="onNodeCollapse($event.node)"
+    data-testid="knowledge-area-tree"
+>
+    <!-- PrimeNG 22 resolves a single node template by the ref name `#node` (it no longer matches a template
+         per `type`). Branch on the node's `type` to render knowledge-area, competency, and empty rows. -->
     <ng-template let-node #node>
-        @if (node.type === TREE_NODE_TYPE_KNOWLEDGE_AREA) {
-            <div class="d-flex align-items-center knowledge-area-node">
-                <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
-                <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
-                <!-- Base the "empty" label on the raw domain arrays, not the (filtered) tree-node children: a knowledge area whose
-                     competencies are merely hidden by an active title/area filter is not empty and must not show this label. -->
-                @if (!node.data.children?.length && !node.data.competencies?.length) {
-                    <h6 class="mb-0 ms-2 text-muted" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
-                }
+        @if (node.type === KNOWLEDGE_AREA_NODE_TYPE) {
+            <div class="flex items-center" data-testid="knowledge-area-node">
+                <h5 class="mb-0 me-2 clickable" (click)="toggle(node.data)">{{ node.data.title }}</h5>
+                <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate() ?? null" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
             </div>
-        } @else if (node.type === TREE_NODE_TYPE_COMPETENCY) {
-            <div class="d-flex align-items-center competency-node">
-                <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: node.data, knowledgeArea: node.parent?.data }" />
+        } @else if (node.type === COMPETENCY_NODE_TYPE) {
+            <div class="flex items-center" data-testid="competency-node">
+                <ng-container
+                    [ngTemplateOutlet]="competencyTemplate() ?? null"
+                    [ngTemplateOutletContext]="{ competency: node.data.competency, knowledgeArea: node.data.knowledgeArea }"
+                />
             </div>
+        } @else if (node.type === EMPTY_NODE_TYPE) {
+            <h6 class="mb-0" jhiTranslate="artemisApp.knowledgeArea.empty" data-testid="empty-node"></h6>
         }
     </ng-template>
 </p-tree>

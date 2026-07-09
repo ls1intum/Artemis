@@ -288,7 +288,7 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         const updateOptionsSpy = vi.spyOn((comp as any)._editor, 'updateOptions');
         const originalGetOption = (comp as any)._editor.getOption.bind((comp as any)._editor);
-        const getOptionSpy = vi.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: monaco.editor.EditorOption) => {
+        const getOptionSpy = vi.spyOn((comp as any)._editor, 'getOption').mockImplementation((option: unknown) => {
             if (option === monaco.editor.EditorOption.folding) {
                 return false;
             }

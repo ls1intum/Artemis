@@ -27,6 +27,10 @@ export default defineConfig({
         },
     },
     css: {
+        // .postcssrc.json (Tailwind) is a production-build concern. Vitest would otherwise auto-load it and run
+        // PostCSS over every component's inline `styles`, whose SCSS `//` comments are invalid CSS and make PostCSS
+        // throw. Tests don't need Tailwind generation, so run no PostCSS plugins here.
+        postcss: { plugins: [] },
         preprocessorOptions: {
             scss: {
                 loadPaths: [path.resolve(__dirname)],

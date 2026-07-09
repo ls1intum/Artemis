@@ -242,7 +242,7 @@ describe('ExamParticipationService', () => {
         studentExam.exercises = [];
         service.saveStudentExamToLocalStorage(1, 1, studentExam);
 
-        service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
+        service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam | undefined) => {
             expect(localExam).toBeDefined();
             expect(localExam).toEqual(studentExam);
         });

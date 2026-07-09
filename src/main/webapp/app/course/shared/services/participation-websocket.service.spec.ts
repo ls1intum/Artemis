@@ -119,7 +119,7 @@ describe('ParticipationWebsocketService', () => {
 
     it('should emit rated result when received through websocket', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
-        const resultObservable = new BehaviorSubject(undefined);
+        const resultObservable = new BehaviorSubject<undefined | Result>(undefined);
         const resultSpy = vi.spyOn(resultObservable, 'next');
         participationWebsocketService.resultObservables.set(participation.id!, resultObservable);
 

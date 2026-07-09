@@ -244,7 +244,7 @@ describe('BonusComponent', () => {
         },
     ];
 
-    const bonusStrategyToOptionAndDiscretenessMappings = [
+    const bonusStrategyToOptionAndDiscretenessMappings: [BonusStrategy | undefined, BonusStrategyOption | undefined, BonusStrategyDiscreteness | undefined][] = [
         [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.CONTINUOUS],
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
@@ -349,7 +349,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
             expect(bonusSpy).toHaveBeenCalledTimes(1);
@@ -360,7 +360,7 @@ describe('BonusComponent', () => {
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings)(
         'should convert from inputs to BonusStrategy for [%p, %p, %p]',
-        (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
+        (bonusStrategy: BonusStrategy | undefined, bonusStrategyOption: BonusStrategyOption | undefined, bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined) => {
             const actualBonusStrategy = component.convertFromInputsToBonusStrategy(bonusStrategyOption, bonusStrategyDiscreteness);
             expect(actualBonusStrategy).toBe(bonusStrategy);
         },

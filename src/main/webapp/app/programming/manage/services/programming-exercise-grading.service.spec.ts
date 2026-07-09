@@ -70,6 +70,7 @@ describe('ProgrammingExerciseGradingService', () => {
                 case `${gradingService.resourceUrl}/${exercise2.id}/test-cases`:
                     return of(testCases2);
             }
+            return undefined;
         });
     });
 

@@ -55,13 +55,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     readonly authenticationError = signal(false);
     readonly account = signal<User | undefined>(undefined);
-    password: string;
+    password = '';
     rememberMe = true;
     // in case this is activated (see application-artemis.yml), users have to actively click into it
     readonly needsToAcceptTerms = signal(false);
     userAcceptedTerms = false;
-    username: string;
-    credentials: Credentials;
+    username = '';
+    credentials?: Credentials;
     readonly isRegistrationEnabled = signal(false);
     readonly isPasswordLoginDisabled = signal(false);
     readonly isPasskeyEnabled = signal(false);
@@ -82,7 +82,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
 
     ngOnInit() {
         this.initializeWithProfileInfo();
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
             // Only start conditional mediation after confirming the user is NOT logged in.
@@ -91,7 +91,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // challenge request, gets destroyed, and a new instance overwrites the cookie.
             if (!user) {
                 this.loading.set(false);
-                this.prefillPasskeysIfPossible();
+                void this.prefillPasskeysIfPossible();
             }
         });
         this.registerAuthenticationSuccess();
@@ -208,7 +208,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             // We only need to authenticate once, make sure we don't run this subscription multiple times
             this.eventManager.destroy(subscription);
 
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 this.currentUserCallback(user!);
             });
         });
@@ -259,7 +259,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.authenticationError.set(false);
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
-            this.router.navigate(['']);
+            void this.router.navigate(['']);
         }
 
         this.eventManager.broadcast({
@@ -276,9 +276,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
             if (redirect && redirect !== '') {
                 this.sessionStorageService.store('previousUrl', '');
-                this.router.navigateByUrl(redirect);
+                void this.router.navigateByUrl(redirect);
             } else {
-                this.router.navigate(['courses']);
+                void this.router.navigate(['courses']);
             }
         }
     }

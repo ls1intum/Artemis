@@ -13,17 +13,18 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private translateService = inject(TranslateService);
     private serverDateService = inject(ArtemisServerDateService);
 
-    private currentTimer: number | null;
+    private currentTimer: number | null = null;
 
-    private lastTime: number;
+    private lastTime?: number;
     private lastValue: dayjs.ConfigType;
     private lastOmitSuffix?: boolean;
-    private lastLocale: string;
-    private lastText: string;
-    private formatFn: (m: dayjs.Dayjs) => string;
+    private lastLocale?: string;
+    private lastText = '';
+    private formatFn!: (m: dayjs.Dayjs) => string; // assigned in transform() before the timer that reads it is created
 
     format(date: dayjs.Dayjs) {
-        return date.locale(this.lastLocale).from(this.serverDateService.now(), this.lastOmitSuffix);
+        // lastLocale is always assigned in transform() before format() runs; the fallback keeps the type sound for the (unreachable) unset case.
+        return date.locale(this.lastLocale ?? this.translateService.getCurrentLang() ?? 'en').from(this.serverDateService.now(), this.lastOmitSuffix);
     }
 
     transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {

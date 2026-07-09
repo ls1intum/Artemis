@@ -94,11 +94,11 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     public endIndex = 0;
 
-    scrollUnListener: () => void;
-    focusInUnListener: () => void;
+    scrollUnListener?: () => void;
+    focusInUnListener?: () => void;
 
-    screenHeight: number;
-    windowScrollTop: number;
+    screenHeight!: number; // set in constructor via getScreenSize()
+    windowScrollTop = 0;
 
     constructor() {
         this.getScreenSize();
@@ -133,7 +133,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     ngOnInit() {
         this.focusInUnListener = this.renderer.listen(window, 'focusin', this.onFocusIn.bind(this));
         this.scrollUnListener = this.renderer.listen(window, 'scroll', this.onScroll.bind(this));
-        this.router.events.forEach((event) => {
+        void this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
                 // invalidate item height cache in case user clicks to an item reference to solely display that item within the same page
                 this.forceReloadChange.emit(true);

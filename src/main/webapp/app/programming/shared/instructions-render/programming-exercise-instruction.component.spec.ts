@@ -34,7 +34,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
@@ -393,7 +392,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
             exercise,
-            exerciseType: ExerciseType.PROGRAMMING,
             feedbackFilter: [1],
             result,
             taskName: 'Implement Bubble Sort',
@@ -403,7 +401,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         mergeSortStep.nativeElement.click();
         verifyTask(2, {
             exercise,
-            exerciseType: ExerciseType.PROGRAMMING,
             feedbackFilter: [2],
             result,
             taskName: 'Implement Merge Sort',
@@ -470,7 +467,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         bubbleSortStep.nativeElement.click();
         verifyTask(1, {
             exercise,
-            exerciseType: ExerciseType.PROGRAMMING,
             feedbackFilter: [1],
             result,
             taskName: 'Bubble Sort',
@@ -559,7 +555,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: true,
-                data: expect.objectContaining(expectedData),
+                inputValues: expect.objectContaining(expectedData),
             }),
         );
     };

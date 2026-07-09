@@ -187,7 +187,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                 if (!success) {
                     return;
                 }
-                this.router.navigate(['../'], { relativeTo: this.route });
+                void this.router.navigate(['../'], { relativeTo: this.route });
                 this.isActionLoading.set(false);
             });
     }

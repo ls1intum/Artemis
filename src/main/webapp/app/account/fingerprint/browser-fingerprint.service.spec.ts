@@ -85,6 +85,19 @@ describe('BrowserFingerprintService', () => {
             expect(sessionStoreSpy).toHaveBeenCalledWith(BROWSER_SESSION_KEY, expect.any(String));
         });
 
+        it('should still initialize without throwing when crypto.randomUUID is unavailable (insecure-context bootstrap)', () => {
+            // Reproduces the fatal E2E bootstrap error: over a plain-HTTP origin window.crypto.randomUUID is undefined.
+            const realCrypto = window.crypto;
+            vi.stubGlobal('crypto', { getRandomValues: (array: Uint8Array<ArrayBuffer>) => realCrypto.getRandomValues(array) });
+            vi.spyOn(sessionStorageService, 'retrieve').mockReturnValue(undefined);
+            try {
+                expect(() => service.initialize(false)).not.toThrow();
+                expect(service.browserSessionId.value).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+            } finally {
+                vi.stubGlobal('crypto', realCrypto);
+            }
+        });
+
         it('should use existing instance identifier from localStorage', () => {
             const existingId = 'existing-instance-id';
             vi.spyOn(localStorageService, 'retrieve').mockReturnValue(existingId);

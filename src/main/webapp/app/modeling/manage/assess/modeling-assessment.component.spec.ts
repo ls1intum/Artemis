@@ -346,11 +346,12 @@ describe('ModelingAssessmentComponent', () => {
         ];
 
         // Mock translatePipe to return a meaningful value so assessmentNote gets set
-        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string, params?: any) => {
-            if (key === 'artemisApp.modelingAssessment.impactWarning' && params?.affectedSubmissionsCount) {
-                return `Warning: ${params.affectedSubmissionsCount} other submissions`;
+        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string | undefined | null, params?: object) => {
+            const affectedSubmissionsCount = (params as { affectedSubmissionsCount?: number } | undefined)?.affectedSubmissionsCount;
+            if (key === 'artemisApp.modelingAssessment.impactWarning' && affectedSubmissionsCount) {
+                return `Warning: ${affectedSubmissionsCount} other submissions`;
             }
-            return key;
+            return key ?? '';
         });
 
         fixture.componentRef.setInput('umlModel', mockModel);
