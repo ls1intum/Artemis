@@ -280,6 +280,26 @@ describe('HomeComponent', () => {
         });
     });
 
+    it('should set authenticationError and display alert if loginError=deactivated query param is present', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        // Imitate there is "loginError=deactivated" attribute
+        route.queryParams = of({ loginError: 'deactivated' });
+
+        const alertService = TestBed.inject(AlertService) as any;
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        const customFixture = TestBed.createComponent(HomeComponent);
+        const customComponent = customFixture.componentInstance;
+        customFixture.detectChanges();
+
+        // Verify red banner is shown
+        expect(customComponent.authenticationError()).toBe(true);
+        // Verify the correct error message is shown
+        expect(alertSpy).toHaveBeenCalledWith('home.errors.loginDeactivated');
+
+        customFixture.destroy();
+    });
+
     describe('ngOnDestroy', () => {
         it('should stop conditional mediation on destroy', () => {
             const stopSpy = vi.spyOn(webauthnService, 'stopConditionalMediation');

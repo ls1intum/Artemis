@@ -204,6 +204,10 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled.set(!!this.profileInfo()?.saml2 && this.profileInfo().saml2!.passwordLoginDisabled && !loginFormOverride);
+            if (params['loginError'] === 'deactivated') {
+                this.authenticationError.set(true);
+                this.alertService.error('home.errors.loginDeactivated');
+            }
         });
     }
 

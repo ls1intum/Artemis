@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -148,6 +150,31 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> oidcService.loadUser(brokenRequest));
 
         assertStudentNotExists();
+    }
+
+    @Test
+    void testOidcLogin_failsForDeactivatedUser() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        // Deactivate user
+        User student = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        student.setActivated(false);
+        userTestRepository.saveAndFlush(student);
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // Simulate successful login
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+        var oidcUser = oidcService.loadUser(mockUserRequest);
+        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        // Verify that user was redirected to /sign-in page
+        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=deactivated");
+        // Verify no access token was issued
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
     }
 
     private OidcUserRequest createMockUserRequest(Map<String, Object> claims) {

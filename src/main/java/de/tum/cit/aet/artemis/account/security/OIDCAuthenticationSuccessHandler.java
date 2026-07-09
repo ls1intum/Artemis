@@ -50,9 +50,19 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
             throw new IllegalStateException("OIDC authentication succeeded but required username claim '" + usernameClaimKey + "' is missing.");
         }
 
-        // Artemis-side authorization, get roles from database
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated OIDC user " + username + " could not be found in the database."));
+
+        // Don't issue JWT cookie for inactive users
+        if (!user.getActivated()) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+            response.sendRedirect("/sign-in?loginError=deactivated");
+            return;
+        }
+        // Artemis-side authorization, get roles from database
         var authorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList();
 
         // Generate Artemis authentication token
