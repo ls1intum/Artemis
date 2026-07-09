@@ -102,6 +102,16 @@ public class GenerationTaskService {
         // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
         // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
         // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
+        if (jobService.isCancelled(jobId)) {
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+            jobService.clearJob(exerciseId, jobId);
+            return;
+        }
+        if (!jobService.isActiveJob(exerciseId, jobId)) {
+            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was superseded or expired. Nothing was changed."));
+            jobService.clearJob(exerciseId, jobId);
+            return;
+        }
         ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
         if (exercise == null) {
             log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
@@ -118,6 +128,10 @@ public class GenerationTaskService {
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
                 // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                 case COMPLETED, BUDGET_EXHAUSTED -> {
+                    if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
+                        emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
+                        return;
+                    }
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
                     if (outcome.isAccepted()) {
                         emitter.progress("Checks passed. Saving the exercise.");

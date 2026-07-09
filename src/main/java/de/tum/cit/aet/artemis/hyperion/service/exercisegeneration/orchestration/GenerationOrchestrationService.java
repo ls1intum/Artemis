@@ -203,6 +203,10 @@ public class GenerationOrchestrationService {
                 // Seed Java structural tests when the produced solution/template structures differ. The returned set is the list of names just injected; the verifier exempts a
                 // [task] bound to one from the binding-resolution gate (the agent could not bind tests seeded after it ran) while still requiring solution-pass/template-fail.
                 Set<String> seededStructuralTestNames = structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise);
+                if (cancelled.getAsBoolean()) {
+                    destroyQuietly(sandbox, sessionId);
+                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                }
 
                 emit(progress, "Checking the exercise builds and grades (attempt " + attempt + " of " + MAX_GENERATION_ATTEMPTS + ")");
                 // Read the produced repos back for the sandbox-free integrity gates (harness immutability vs the seed snapshot, solution-leak across template/solution). The
@@ -221,16 +225,28 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
                         extractionFailed, seededStructuralTestNames, baselineGradedTestNames);
+                if (cancelled.getAsBoolean()) {
+                    destroyQuietly(sandbox, sessionId);
+                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                }
                 // The sole-acceptance verification runs in a FRESH sandbox session against the exact produced tree, so no agent-spawned background process or file planted during
                 // the
                 // in-session loop can overwrite the pristine verify.sh or forge a report between seed and copyOut. The in-loop self-check (the agent's `verify` tool) stays
                 // in-session
                 // and advisory; only WHERE this authoritative verify runs changed — the differential logic is unchanged.
-                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest);
+                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest, jobId);
                 emit(progress, verification.report());
+                if (cancelled.getAsBoolean()) {
+                    destroyQuietly(sandbox, sessionId);
+                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                }
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
                 specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), usageSink, progress);
+                if (cancelled.getAsBoolean()) {
+                    destroyQuietly(sandbox, sessionId);
+                    return GenerationOutcome.cancelled(cancelledResult(loopResult));
+                }
 
                 if (verification.accepted() && !specFidelityReport.hasFindings() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
@@ -392,10 +408,15 @@ public class GenerationOrchestrationService {
      * @param request       the produced artifacts and integrity-gate inputs to decide on
      * @return the acceptance verdict from the fresh, untamperable session
      */
-    private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request) {
+    private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request, String jobId) {
         String verifySessionId = null;
         try {
             verifySessionId = sandbox.createVerificationSession(workspace.sessionSpec(exercise), loopSessionId);
+            String activeVerifySessionId = verifySessionId;
+            jobService.registerCancelHook(jobId, () -> {
+                destroyQuietly(sandbox, loopSessionId);
+                destroyQuietly(sandbox, activeVerifySessionId);
+            });
             copyWorkspaceInto(sandbox, loopSessionId, verifySessionId);
             return verifier.verify(sandbox, verifySessionId, exercise, request);
         }

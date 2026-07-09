@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -454,6 +455,24 @@ class GenerationOrchestrationServiceTest {
         verify(sandbox).createVerificationSession(any(), eq(SESSION_ID));
         // The fresh verification session is always torn down (the loop session stays open on the returned outcome and is destroyed by the caller's close()).
         verify(sandbox).destroySession(VERIFY_SESSION_ID);
+    }
+
+    @Test
+    void cancellationDuringAuthoritativeVerify_returnsCancelledAndSkipsCritic() {
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return accepted();
+        });
+
+        GenerationOutcome outcome = generate(cancelled::get);
+
+        assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        assertThat(outcome.isAccepted()).isFalse();
+        verify(specFidelityCritic, never()).critique(any(), any(), any(), any());
+        verify(sandbox, atLeastOnce()).destroySession(VERIFY_SESSION_ID);
+        verify(sandbox, atLeastOnce()).destroySession(SESSION_ID);
     }
 
     /**

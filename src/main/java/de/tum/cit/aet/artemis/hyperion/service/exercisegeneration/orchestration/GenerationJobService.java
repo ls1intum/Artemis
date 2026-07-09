@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -59,6 +60,8 @@ public class GenerationJobService {
     private static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
 
     private static final String CANCEL_MAP_NAME = "hyperion-exercise-generation-cancellations";
+
+    private static final String CANCEL_TOPIC_NAME = "hyperion-exercise-generation-cancel-requests";
 
     private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
 
@@ -156,6 +159,8 @@ public class GenerationJobService {
         MapConfig snapshotIndexMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_INDEX_MAP_NAME);
         snapshotIndexMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         snapshotIndexMap = hazelcastInstance.getMap(SNAPSHOT_INDEX_MAP_NAME);
+        ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
+        cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
     }
 
     /**
@@ -170,7 +175,7 @@ public class GenerationJobService {
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), Instant.now());
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), Instant.now(), Boolean.TRUE);
         JobInfo existing = jobMap.putIfAbsent(key, newJob);
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
@@ -331,16 +336,30 @@ public class GenerationJobService {
      * @return {@code true} if a matching active job owned by {@code user} was found and marked for cancellation
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
-        JobInfo job = jobMap.get(key(exerciseId));
-        if (job == null || !job.jobId().equals(jobId)) {
-            return false;
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(jobId) || !job.cancellableOrDefault()) {
+                return false;
+            }
+            JobTranscript transcript = transcriptMap.get(key);
+            if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
+                return false;
+            }
+            cancellationMap.put(jobId, Boolean.TRUE);
         }
-        JobTranscript transcript = transcriptMap.get(key(exerciseId));
-        if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
-            return false;
+        finally {
+            jobMap.unlock(key);
         }
-        cancellationMap.put(jobId, Boolean.TRUE);
-        // Run the node-local interrupt once (remove-and-run) so a long in-flight build is aborted promptly.
+        // Run the node-local interrupt once on this node and publish a cluster-wide interrupt so cancellation is prompt even when the DELETE hits a different core node than the
+        // one running the sandbox. The hook remains node-local because it closes over live sandbox objects; every node simply tries remove-and-run for the job id.
+        runLocalCancelHook(jobId);
+        hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
+        return true;
+    }
+
+    private void runLocalCancelHook(String jobId) {
         Runnable hook = cancelHooks.remove(jobId);
         if (hook != null) {
             try {
@@ -350,6 +369,37 @@ public class GenerationJobService {
                 log.warn("Cancel hook for job {} failed: {}", jobId, e.getMessage());
             }
         }
+    }
+
+    /**
+     * Marks the job as past the cancellation point and returns whether it may continue into durable persistence/recovery.
+     * <p>
+     * Cancellation is meaningful while the agent is still in the disposable sandbox: the cancel hook can destroy the session and no live repository has been touched. Once the
+     * task starts saving verified or recoverable output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. The same
+     * distributed job-map lock is used by {@link #requestCancellation(long, String, User)} so a cancel cannot race with this transition across core nodes.
+     *
+     * @param exerciseId the exercise id
+     * @param jobId      the job id
+     * @return {@code true} when no cancellation was already requested and the caller may proceed; {@code false} when the run should still terminate as cancelled
+     */
+    public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        jobMap.lock(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(jobId)) {
+                return false;
+            }
+            if (isCancelled(jobId)) {
+                return false;
+            }
+            jobMap.set(key, new JobInfo(job.jobId(), job.userLogin(), job.exerciseId(), job.startedAt(), Boolean.FALSE));
+        }
+        finally {
+            jobMap.unlock(key);
+        }
+        // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
+        cancelHooks.remove(jobId);
         return true;
     }
 
@@ -365,6 +415,19 @@ public class GenerationJobService {
     }
 
     /**
+     * Checks whether the given job id still owns the exercise slot. This is a cheap stale-event guard for async work that may start after the TTL expired or after a newer job
+     * claimed the slot.
+     *
+     * @param exerciseId the exercise id
+     * @param jobId      the job id
+     * @return {@code true} if the active slot belongs to {@code jobId}
+     */
+    public boolean isActiveJob(long exerciseId, String jobId) {
+        JobInfo job = jobMap.get(key(exerciseId));
+        return job != null && job.jobId().equals(jobId);
+    }
+
+    /**
      * Atomically claims the same per-exercise mutation slot used by generation/adaptation for a destructive adaptation revert. This closes the check-then-act race where a revert
      * could observe "no active job" and a generation could start before the repositories are reset.
      *
@@ -374,7 +437,7 @@ public class GenerationJobService {
      */
     public String claimRevertSlot(User user, long exerciseId) {
         String token = REVERT_JOB_PREFIX + UUID.randomUUID();
-        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, Instant.now());
+        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, Instant.now(), Boolean.FALSE);
         JobInfo existing = jobMap.putIfAbsent(key(exerciseId), newJob);
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise; wait for it to finish before reverting an adaptation.", ENTITY_NAME,
@@ -482,7 +545,21 @@ public class GenerationJobService {
     /**
      * Metadata for an active whole-exercise generation job (claimed slot owner and claim time).
      */
-    public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt) implements Serializable {
+    public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Boolean cancellable) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Old in-flight jobs from a rolling deployment do not have the new field in their serialized value. Treat that missing field as cancellable: a generation job that has not
+         * explicitly crossed the cutoff must remain cancellable during the rollout.
+         */
+        boolean cancellableOrDefault() {
+            return cancellable == null || cancellable;
+        }
+    }
+
+    private record CancelRequest(String jobId) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

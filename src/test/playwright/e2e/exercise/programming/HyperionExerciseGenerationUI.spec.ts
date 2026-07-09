@@ -81,9 +81,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-ai-menu')).toBeDisabled();
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'GENERATE');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
+        const requestsAfterFirstStart = await getHyperionLlmMockRequestCount(page);
+        await expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page, exercise!.id!, jobId, requestsAfterFirstStart);
         await expectAdminGenerationSandboxSlots(browser, '2 / 2');
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+        await expectCancelRejected(page, exercise!.id!, jobId);
         await expectAdminGenerationSandboxSlots(browser, '0 / 2');
         runningJobId = undefined;
     });
@@ -306,6 +309,16 @@ async function expectTerminalGenerationStatus(page: Page, exerciseId: number, jo
         .toEqual({ jobId, running: false, terminalType });
 }
 
+async function expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page: Page, exerciseId: number, runningJobId: string, expectedLlmRequestCount: number) {
+    const duplicateStart = await page.request.post(`api/hyperion/programming-exercises/${exerciseId}/generate-exercise`, {
+        data: { mode: 'GENERATE' },
+    });
+
+    expect(duplicateStart.status()).toBe(409);
+    await expectRunningGenerationStatus(page, exerciseId, runningJobId, 'GENERATE');
+    await expectHyperionLlmMockRequestCount(page, expectedLlmRequestCount);
+}
+
 async function getHyperionLlmMockRequestCount(page: Page): Promise<number> {
     const port = process.env.HYPERION_LLM_MOCK_PORT ?? '1234';
     const response = await page.request.get(`http://127.0.0.1:${port}/health`);
@@ -335,6 +348,18 @@ async function cancelRunningJobFromUi(page: Page, exerciseId: number, jobId: str
     await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
     await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
     await expectTerminalGenerationStatus(page, exerciseId, jobId, 'CANCELLED');
+}
+
+async function expectCancelRejected(page: Page, exerciseId: number, jobId: string) {
+    await expect
+        .poll(
+            async () => {
+                const secondCancel = await page.request.delete(`api/hyperion/programming-exercises/${exerciseId}/generate-exercise/jobs/${jobId}`);
+                return secondCancel.status();
+            },
+            { timeout: 60_000 },
+        )
+        .toBe(404);
 }
 
 async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots: string) {

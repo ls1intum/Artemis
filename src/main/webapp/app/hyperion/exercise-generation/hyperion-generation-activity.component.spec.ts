@@ -232,6 +232,28 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.cancelRequested()).toBe(true);
     });
 
+    it('refreshes retained status when cancellation is rejected or already terminal', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        service.cancel = (exerciseId: number, jobId: string) => {
+            service.cancelCalls.push([exerciseId, jobId]);
+            return throwError(() => new HttpErrorResponse({ status: 404 }));
+        };
+        service.status = {
+            jobId: 'j1',
+            running: false,
+            mode: 'GENERATE',
+            events: [{ type: 'CANCELLED', message: 'Generation was cancelled. Nothing was changed.' }],
+            fileSnapshots: [],
+        };
+
+        fixture.componentInstance.cancel();
+
+        expect(service.cancelCalls).toEqual([[42, 'j1']]);
+        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+        expect(fixture.componentInstance.running()).toBe(false);
+        expect(fixture.componentInstance.events()).toEqual([{ type: 'CANCELLED', message: 'Generation was cancelled. Nothing was changed.' }]);
+    });
+
     it('attaches to a freshly started adapt run and shows the adapting label', () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;

@@ -204,7 +204,12 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             return;
         }
         this.cancelRequested.set(true);
-        this.service.cancel(id, job).subscribe({ error: () => this.cancelRequested.set(false) });
+        this.service.cancel(id, job).subscribe({
+            error: () => {
+                this.cancelRequested.set(false);
+                this.loadStatus(id, job);
+            },
+        });
     }
 
     private loadStatus(exerciseId: number, expectedJobId?: string): void {

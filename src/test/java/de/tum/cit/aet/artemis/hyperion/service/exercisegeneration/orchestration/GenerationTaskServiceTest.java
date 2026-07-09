@@ -93,6 +93,8 @@ class GenerationTaskServiceTest {
         exercise.setId(EXERCISE_ID);
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise));
+        when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
+        when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(true);
     }
 
     /** Builds a run-completing outcome that holds the mock orchestrator + sandbox, so try-with-resources close() is observable as a destroyQuietly call. */
@@ -162,6 +164,7 @@ class GenerationTaskServiceTest {
         when(persistenceService.persist(any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of()));
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
+        verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class));
         // A GENERATE run records no revert baseline.
         verify(adaptationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any());
@@ -204,7 +207,35 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isFalse();
         // A rejected outcome never goes through the clean persist path; recovery owns the draft save.
         verify(persistenceService, never()).persist(any(), any(), any());
+        verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
+    }
+
+    @Test
+    void completedRun_cancelledBeforePersistence_emitsCancelledAndDoesNotSave() {
+        when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(false);
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed"))));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        verify(persistenceService, never()).persist(any(), any(), any());
+        verify(recoveryService, never()).recover(any(), any(), any(), anyString());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void staleAsyncWorkerStart_emitsCancelledWithoutReloadingOrSettingUpSandbox() {
+        when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(false);
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.message()).contains("superseded or expired");
+        verify(programmingExerciseRepository, never()).findWithAllParticipationsAndBuildConfigById(EXERCISE_ID);
+        verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
 
     @Test
@@ -273,6 +304,18 @@ class GenerationTaskServiceTest {
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         // The run must not start the expensive orchestration for an exercise that no longer exists.
+        verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void cancellationBeforeAsyncWorkerStarts_emitsCancelledWithoutReloadingOrSettingUpSandbox() {
+        when(jobService.isCancelled(JOB_ID)).thenReturn(true);
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        verify(programmingExerciseRepository, never()).findWithAllParticipationsAndBuildConfigById(EXERCISE_ID);
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }

@@ -240,12 +240,11 @@ class HyperionExerciseGenerationResourceTest {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
-        when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE))
-                .thenThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
+        when(jobService.hasActiveJob(1L)).thenReturn(true);
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateExercise(1L, request));
+        verify(sandboxClient, never()).hasAvailableGenerationSandboxSlots(2);
+        verify(jobService, never()).startJob(any(), any(), any(), any());
     }
 
     @Test

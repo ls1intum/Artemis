@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -103,6 +104,9 @@ public class HyperionExerciseGenerationResource {
             // Fail clearly instead of running and producing a result the differential oracle cannot verify (best-effort/no-profile languages).
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language
                     + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
+        if (jobService.hasActiveJob(exerciseId)) {
+            throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
         if (!sandboxClient.hasAvailableGenerationSandboxSlots(2)) {
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has the two free sandbox slots required to start a run.", ENTITY_NAME,

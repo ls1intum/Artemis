@@ -6,9 +6,14 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -259,6 +264,22 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void requestCancellation_publishesCancelToOtherServiceInstances() {
+        GenerationJobService ownerNode = jobService;
+        GenerationJobService apiNode = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class));
+        apiNode.init();
+        String jobId = ownerNode.startJob(user("owner"), exercise(111L), "go", GenerationMode.GENERATE);
+        AtomicInteger ownerHookRuns = new AtomicInteger(0);
+        ownerNode.registerCancelHook(jobId, ownerHookRuns::incrementAndGet);
+
+        assertThat(apiNode.requestCancellation(111L, jobId, user("owner"))).isTrue();
+
+        await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> assertThat(ownerHookRuns).hasValue(1));
+        assertThat(apiNode.isCancelled(jobId)).isTrue();
+    }
+
+    @Test
     void requestCancellation_byANonOwner_isRefused_andDoesNotCancel() {
         String jobId = jobService.startJob(user("owner"), exercise(12L), "go", GenerationMode.GENERATE);
         AtomicInteger hookRuns = new AtomicInteger(0);
@@ -271,6 +292,73 @@ class GenerationJobServiceTest {
         // The owner can still cancel.
         assertThat(jobService.requestCancellation(12L, jobId, user("owner"))).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
+    }
+
+    @Test
+    void enterNonCancellablePhase_whenNoCancellationWasRequested_refusesLaterCancellation() {
+        long exerciseId = 13L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+        AtomicInteger hookRuns = new AtomicInteger(0);
+        jobService.registerCancelHook(jobId, hookRuns::incrementAndGet);
+
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+
+        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isFalse();
+        assertThat(jobService.isCancelled(jobId)).isFalse();
+        assertThat(hookRuns).hasValue(0);
+    }
+
+    @Test
+    void requestCancellation_treatsMissingCancellableFlagAsCancellableDuringRollingDeploy() {
+        long exerciseId = 113L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+        @SuppressWarnings("unchecked")
+        IMap<String, GenerationJobService.JobInfo> jobMap = (IMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService, "jobMap");
+        jobMap.set(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now(), null));
+
+        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
+        assertThat(jobService.isCancelled(jobId)).isTrue();
+    }
+
+    @Test
+    void enterNonCancellablePhase_whenCancellationAlreadyRequested_stopsBeforePersistence() {
+        long exerciseId = 14L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+
+        assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
+
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isFalse();
+        assertThat(jobService.isCancelled(jobId)).isTrue();
+    }
+
+    @Test
+    void cancellationAndNonCancellableCutoff_areMutuallyExclusiveUnderTheDistributedJobLock() throws Exception {
+        for (int i = 0; i < 30; i++) {
+            long exerciseId = 200L + i;
+            String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+            ExecutorService executor = Executors.newFixedThreadPool(2);
+            CyclicBarrier startTogether = new CyclicBarrier(2);
+            try {
+                Future<Boolean> cutoff = executor.submit(() -> {
+                    startTogether.await();
+                    return jobService.enterNonCancellablePhase(exerciseId, jobId);
+                });
+                Future<Boolean> cancellation = executor.submit(() -> {
+                    startTogether.await();
+                    return jobService.requestCancellation(exerciseId, jobId, user("owner"));
+                });
+
+                boolean cutoffAccepted = cutoff.get(5, TimeUnit.SECONDS);
+                boolean cancellationAccepted = cancellation.get(5, TimeUnit.SECONDS);
+
+                assertThat(cutoffAccepted).isNotEqualTo(cancellationAccepted);
+                assertThat(jobService.isCancelled(jobId)).isEqualTo(cancellationAccepted);
+            }
+            finally {
+                executor.shutdownNow();
+                jobService.clearJob(exerciseId, jobId);
+            }
+        }
     }
 
     @Test
