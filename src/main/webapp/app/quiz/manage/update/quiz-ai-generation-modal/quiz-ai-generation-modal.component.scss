@@ -2,7 +2,6 @@
     display: grid;
     grid-template-columns: minmax(18rem, 23rem) 1fr;
     gap: 1rem;
-    min-height: 33rem;
 }
 
 .quiz-ai-generation-modal .quiz-ai-generation-configuration {
@@ -10,7 +9,8 @@
     border-radius: 0.75rem;
     background: var(--surface-card);
     padding: 1rem;
-    max-height: 62vh;
+    min-height: 38rem;
+    max-height: 72vh;
     overflow-y: auto;
 }
 
@@ -19,8 +19,10 @@
     border-radius: 0.75rem;
     background: var(--surface-card);
     padding: 1rem;
-    max-height: 62vh;
+    min-height: 38rem;
+    max-height: 72vh;
     overflow-y: auto;
+    position: relative;
 }
 
 .quiz-ai-generation-modal .section-title {
@@ -135,22 +137,68 @@
     padding-bottom: 0.75rem;
 }
 
-.quiz-ai-generation-modal .preview-count {
-    color: var(--primary-color);
-    font-weight: 600;
+.quiz-ai-generation-modal .add-to-quiz-fab {
+    position: sticky;
+    bottom: 0;
+    float: right;
+    margin-top: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes quiz-ai-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .quiz-ai-generation-modal .preview-empty {
+    animation: quiz-ai-fade-in 0.2s ease-out both;
     border: 1px dashed var(--surface-border);
     border-radius: 0.75rem;
     color: var(--text-color-secondary);
     padding: 1.25rem;
 }
 
+@keyframes quiz-ai-list-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes quiz-ai-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .quiz-ai-generation-modal .question-list {
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
+    animation: quiz-ai-list-enter 0.25s ease-out both;
+}
+
+.quiz-ai-generation-modal .question-list > * {
+    animation: quiz-ai-card-enter 0.3s ease-out both;
+}
+
+@for $i from 1 through 10 {
+    .quiz-ai-generation-modal .question-list > *:nth-child(#{$i}) {
+        animation-delay: #{$i * 0.07s};
+    }
 }
 
 @media (max-width: 992px) {
