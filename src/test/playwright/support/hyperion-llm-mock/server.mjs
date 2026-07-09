@@ -10,10 +10,9 @@ function jsonResponse(res, status, body) {
     res.end(JSON.stringify(body));
 }
 
-function toolCallResponse(toolName, args) {
-    requestCount++;
+function toolCallResponse(requestNumber, toolName, args) {
     return {
-        id: `chatcmpl-hyperion-e2e-${requestCount}`,
+        id: `chatcmpl-hyperion-e2e-${requestNumber}`,
         object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
         model: 'hyperion-e2e-mock',
@@ -25,7 +24,7 @@ function toolCallResponse(toolName, args) {
                     content: '',
                     tool_calls: [
                         {
-                            id: `call_hyperion_e2e_${requestCount}`,
+                            id: `call_hyperion_e2e_${requestNumber}`,
                             type: 'function',
                             function: {
                                 name: toolName,
@@ -51,6 +50,8 @@ const server = http.createServer((req, res) => {
         const chunks = [];
         req.on('data', (chunk) => chunks.push(chunk));
         req.on('end', () => {
+            requestCount++;
+            const requestNumber = requestCount;
             const body = Buffer.concat(chunks).toString('utf8');
             if (body.includes(failMarker)) {
                 jsonResponse(res, 400, { error: { message: 'Hyperion E2E requested LLM failure' } });
@@ -60,14 +61,14 @@ const server = http.createServer((req, res) => {
                 jsonResponse(
                     res,
                     200,
-                    toolCallResponse('write_file', {
+                    toolCallResponse(requestNumber, 'write_file', {
                         path: 'solution/src/de/test/HyperionPreview.java',
                         content: 'package de.test;\n\npublic class HyperionPreview {\n    public String marker() {\n        return "retained-preview";\n    }\n}\n',
                     }),
                 );
                 return;
             }
-            jsonResponse(res, 200, toolCallResponse('bash', { command: 'sleep 30' }));
+            jsonResponse(res, 200, toolCallResponse(requestNumber, 'bash', { command: 'sleep 30' }));
         });
         return;
     }
