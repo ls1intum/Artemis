@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -31,9 +31,14 @@ export class UserSettingsContainerComponent implements OnInit {
     readonly isPasskeyEnabled = signal(false);
     readonly isAtLeastTutor = signal(false);
     readonly isAiEnabled = signal(false);
+    // The science settings live in the atlas module (server-side ScienceSettingsResource is @Conditional(AtlasEnabled)).
+    // When atlas is disabled the science-settings endpoint does not exist, so the tab must be hidden instead of opening
+    // an empty page (issue #13173).
+    readonly isScienceEnabled = signal(false);
 
     ngOnInit() {
         this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
+        this.isScienceEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
 
         this.isAiEnabled.set(this.dataGuard.isUsingLLM());
         this.accountService
