@@ -67,7 +67,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faChevronRight = faChevronRight;
 
     readonly isCollapsed = signal(false);
-    exerciseId: string;
+    exerciseId?: string;
     // Bumped whenever submission sync state is mutated in place (async callbacks) so the pure
     // template methods below re-evaluate under zoneless change detection.
     private readonly syncStateVersion = signal(0);

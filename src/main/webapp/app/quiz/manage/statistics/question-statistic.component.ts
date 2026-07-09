@@ -27,24 +27,24 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
 
-    question: QuizQuestion;
-    questionStatistic: QuizQuestionStatistic;
+    question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
+    questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
 
-    quizExercise: QuizExercise;
-    questionIdParam: number;
-    sub: Subscription;
+    quizExercise!: QuizExercise; // set in loadQuizCommon() before it is read
+    questionIdParam!: number; // set in ngOnInit() from the route params
+    sub?: Subscription;
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
     // solutionLabels is currently only used for multiple choice questions
     solutionLabels: string[] = [];
 
-    ratedCorrectData: number;
-    unratedCorrectData: number;
+    ratedCorrectData = 0;
+    unratedCorrectData = 0;
 
-    maxScore: number;
+    maxScore = 0;
     showSolution = false;
-    websocketChannelForData: string;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
     private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;

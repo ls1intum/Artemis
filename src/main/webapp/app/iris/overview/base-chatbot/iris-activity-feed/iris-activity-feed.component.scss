@@ -1,0 +1,58 @@
+.iris-activity-feed {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    width: min(800px, 100%);
+    margin-inline: auto;
+    color: var(--bs-body-color);
+}
+
+.activity-chip {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: min(28rem, 100%);
+    gap: 0.5rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    background: var(--bs-body-bg);
+    font-size: 0.875rem;
+    line-height: 1.25;
+
+    &.failed {
+        color: var(--bs-secondary-color);
+    }
+}
+
+.activity-icon {
+    flex: 0 0 auto;
+}
+
+.activity-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.activity-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-detail {
+    overflow: hidden;
+    max-width: 22rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-duration {
+    flex: 0 0 auto;
+    color: var(--bs-secondary-color);
+    font-size: 0.75rem;
+}

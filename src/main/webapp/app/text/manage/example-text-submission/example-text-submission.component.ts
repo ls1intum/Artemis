@@ -66,8 +66,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
     // Is set to true, if there are any changes to the submission.text or exampleSubmissionusedForTutorial
     readonly unsavedSubmissionChanges = signal(false);
-    private exerciseId: number;
-    private exampleSubmissionId: number;
+    private exerciseId!: number; // set in ngOnInit() from the route paramMap before any read
+    private exampleSubmissionId!: number; // set in ngOnInit() from the route paramMap before any read
     exampleSubmission = new ExampleSubmission();
     readonly assessmentsAreValid = signal(false);
     readonly result = signal<Result | undefined>(undefined);
