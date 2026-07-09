@@ -185,7 +185,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(cookieHeader).isNotNull();
         // Verify that cookie is shortTerm (1 day)
-        assertThat(!cookieHeader.contains("Max-Age=86400"));
+        assertThat(cookieHeader).contains("Max-Age=86400");
     }
 
     @Test
