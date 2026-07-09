@@ -26,6 +26,11 @@ async function enableHyperion(page: import('@playwright/test').Page) {
 }
 
 test.describe('Quiz Exercise AI Refinement', { tag: '@fast' }, () => {
+    // Block the Angular service worker: the production WAR registers ngsw-worker.js, which handles fetches before
+    // Playwright's page.route can intercept them (default serviceWorkers: 'allow'), so the mocked Hyperion responses
+    // below would be silently bypassed and the request would reach the real (non-existent) backend endpoint instead.
+    test.use({ serviceWorkers: 'block' });
+
     let quizExercise: QuizExercise;
 
     test.beforeEach('Create quiz with two MC questions and navigate to editor', async ({ page, login, exerciseAPIRequests }) => {

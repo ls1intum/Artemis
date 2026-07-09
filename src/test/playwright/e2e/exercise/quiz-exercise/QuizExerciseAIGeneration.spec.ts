@@ -23,6 +23,11 @@ async function enableHyperion(page: import('@playwright/test').Page) {
 }
 
 test.describe('Quiz Exercise AI Generation', { tag: '@fast' }, () => {
+    // Block the Angular service worker: the production WAR registers ngsw-worker.js, which handles fetches before
+    // Playwright's page.route can intercept them (default serviceWorkers: 'allow'), so the mocked Hyperion responses
+    // below would be silently bypassed and the request would reach the real (non-existent) backend endpoint instead.
+    test.use({ serviceWorkers: 'block' });
+
     // Competencies created via API during a test, deleted in afterEach to avoid accumulating in the shared seed course.
     let createdCompetencyIds: number[] = [];
 
