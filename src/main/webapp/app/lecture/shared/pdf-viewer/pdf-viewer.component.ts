@@ -604,11 +604,11 @@ export class PdfViewerComponent {
 
     protected onPageInputEnter(event: Event): void {
         event.preventDefault();
-        this.pageInputElement()?.input()?.nativeElement?.blur();
+        this.pageInputElement()?.input?.nativeElement?.blur();
     }
 
     protected onPageInputFocus(): void {
-        window.setTimeout(() => this.pageInputElement()?.input()?.nativeElement?.select(), 0);
+        window.setTimeout(() => this.pageInputElement()?.input?.nativeElement?.select(), 0);
     }
 
     protected confirmPageNavigation(): void {

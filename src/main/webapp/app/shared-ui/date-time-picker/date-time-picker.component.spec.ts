@@ -151,21 +151,21 @@ describe('FormDateTimePickerComponent', () => {
         // "changed after checked" assertion, which the picker's overlay-open focus state churn would
         // otherwise trip in the test harness (not a production concern).
         // The confirm affordance lives in the `#buttonbar` template and is wired to `applyAndClose(datePicker)`.
-        // PrimeNG 22.0.0-rc.2's overlay no longer projects the panel DOM from a bare `overlayVisible.set(true)`
+        // PrimeNG's DatePicker does not project the overlay panel DOM in the jsdom harness
         // in the jsdom harness, so drive the button's handler directly instead of clicking the panel button.
         it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
             fixture.detectChanges();
             const picker = innerPicker();
-            picker.overlayVisible.set(true);
-            expect(picker.showButtonBar()).toBe(true); // the button bar (confirm affordance) is enabled
+            picker.overlayVisible = true;
+            expect(picker.showButtonBar).toBe(true); // the button bar (confirm affordance) is enabled
             expect(component.value()).toBeUndefined(); // nothing applied yet
 
             const hideSpy = vi.spyOn(picker, 'hideOverlay');
             component.applyAndClose(picker);
 
             expect(hideSpy).toHaveBeenCalledOnce();
-            expect(picker.overlayVisible()).toBe(false);
+            expect(picker.overlayVisible).toBe(false);
             // The displayed (default / current) time is committed in a single click, instead of requiring
             // the user to first nudge a spinner field.
             expect(component.value()).toBeDefined();
@@ -177,7 +177,7 @@ describe('FormDateTimePickerComponent', () => {
             component.writeValue(chosen);
             fixture.detectChanges();
             const picker = innerPicker();
-            picker.overlayVisible.set(true);
+            picker.overlayVisible = true;
 
             component.applyAndClose(picker);
 
@@ -189,7 +189,7 @@ describe('FormDateTimePickerComponent', () => {
             fixture.detectChanges();
             const picker = innerPicker();
 
-            expect(picker.showButtonBar()).toBe(false);
+            expect(picker.showButtonBar).toBe(false);
         });
     });
 

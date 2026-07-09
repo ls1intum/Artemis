@@ -46,7 +46,7 @@
             </ng-template>
         }
         <ng-template #header let-columns>
-            <!-- Nested here so p-sorticon can inject Table from within p-table's context -->
+            <!-- Nested here so p-sortIcon can inject Table from within p-table's context -->
             <ng-template #colHeaderContent let-col="col">
                 <div class="flex justify-between items-center">
                     <div>
@@ -59,7 +59,7 @@
                             <i [class]="col.headerIcon ?? 'pi pi-question-circle'"></i>
                         }
                         @if (col?.sort && col?.field) {
-                            <p-sorticon [field]="col.field" />
+                            <p-sortIcon [field]="col.field" />
                         }
                     </div>
                     @if (col?.filterType && col?.field) {
@@ -70,7 +70,7 @@
             <tr>
                 @if (resolvedOptions().selectionMode === 'multiple') {
                     <th style="width: 3rem">
-                        <p-tableheadercheckbox [disabled]="!hasSelectableRows()" />
+                        <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
                     </th>
                 }
                 @for (col of columns; track col) {
@@ -127,7 +127,7 @@
             >
                 @if (resolvedOptions().selectionMode === 'multiple') {
                     <td style="width: 3rem">
-                        <p-tablecheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
+                        <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
                     </td>
                 }
                 @for (col of columns; track col; let colIndex = $index) {

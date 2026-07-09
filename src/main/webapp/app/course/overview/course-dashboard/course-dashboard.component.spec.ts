@@ -879,8 +879,8 @@ describe('CourseDashboardComponent', () => {
 
         const progressBar = debugElement.query(By.directive(ProgressBar));
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value()).toBe(component.progressBarValue());
-        expect(progressBar.componentInstance.value()).toBe(100);
+        expect(progressBar.componentInstance.value).toBe(component.progressBarValue());
+        expect(progressBar.componentInstance.value).toBe(100);
 
         const label = progressBar.query(By.css('span.fs-5'));
         expect(label).not.toBeNull();

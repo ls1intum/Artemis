@@ -696,7 +696,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        if (popover.overlayVisible()) {
+        if (popover.overlayVisible) {
             popover.hide();
             return;
         }
@@ -716,7 +716,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        if (popover.overlayVisible()) {
+        if (popover.overlayVisible) {
             popover.hide();
             return;
         }
@@ -1392,7 +1392,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private scheduleCodeGenerationStatusPopoverRealign() {
         const popover = this.codeGenerationStatusPopover();
         // PrimeNG 22 changed Popover.overlayVisible from a plain boolean to a signal — it must be invoked.
-        if (!popover?.overlayVisible()) {
+        if (!popover?.overlayVisible) {
             return;
         }
 
@@ -1408,7 +1408,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const popover = this.codeGenerationStatusPopover();
         const target = popover?.target as HTMLElement | undefined;
         const container = popover?.container;
-        if (!popover?.overlayVisible() || !target || !container) {
+        if (!popover?.overlayVisible || !target || !container) {
             return;
         }
 

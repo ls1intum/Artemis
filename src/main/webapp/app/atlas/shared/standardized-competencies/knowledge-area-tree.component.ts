@@ -45,12 +45,6 @@ export interface CompetencyNodeData {
 export class KnowledgeAreaTreeComponent {
     readonly dataSource = input<KnowledgeAreaTreeDataSource>({ data: [] });
 
-    // Exposed for the template: PrimeNG 22 `<p-tree>` resolves a single node template by the ref name `#node`
-    // (it no longer matches a template per `type`), so the template branches on `node.type`.
-    protected readonly KNOWLEDGE_AREA_NODE_TYPE = KNOWLEDGE_AREA_NODE_TYPE;
-    protected readonly COMPETENCY_NODE_TYPE = COMPETENCY_NODE_TYPE;
-    protected readonly EMPTY_NODE_TYPE = EMPTY_NODE_TYPE;
-
     readonly knowledgeAreaTemplate = contentChild<TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>>('knowledgeAreaTemplate');
     readonly competencyTemplate = contentChild<TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>>('competencyTemplate');
 

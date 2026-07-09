@@ -73,7 +73,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         fixture.detectChanges();
 
         const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints()).toEqual({ '850px': '95vw' });
+        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
     });
 
     it('check count for drag and drop exercise with singular values', () => {

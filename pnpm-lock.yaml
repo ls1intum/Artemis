@@ -16,7 +16,8 @@ overrides:
   '@babel/core': 7.29.7
   '@babel/runtime': 7.29.2
   '@babel/plugin-transform-modules-systemjs': 7.29.4
-  '@primeuix/styled': 1.0.0-rc.3
+  '@primeuix/styled': 0.7.4
+  '@primeuix/utils': 0.7.2
   '@sinonjs/fake-timers': 15.4.0
   ajv: 8.20.0
   braces: 3.0.3
@@ -132,8 +133,8 @@ importers:
         specifier: 18.0.0
         version: 18.0.0(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@primeuix/themes':
-        specifier: 3.0.0-rc.1
-        version: 3.0.0-rc.1
+        specifier: 2.0.3
+        version: 2.0.3
       '@sentry/angular':
         specifier: 10.64.0
         version: 10.64.0(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/router@22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2))(rxjs@7.8.2)
@@ -204,8 +205,8 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       primeng:
-        specifier: 22.0.0-rc.2
-        version: 22.0.0-rc.2(81d1ea2a9ee0ce2d6043033da69dd983)
+        specifier: 21.1.9
+        version: 21.1.9(81d1ea2a9ee0ce2d6043033da69dd983)
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
@@ -2305,9 +2306,6 @@ packages:
       '@angular/core': '>=18'
       rxjs: '>=7'
 
-  '@noble/ed25519@2.3.0':
-    resolution: {integrity: sha512-M7dvXL2B92/M7dw9+gzuydL8qn/jiqNHaoR3Q+cb1q1GHV7uwE17WCyFMG+Y+TZb5izcaXk5TdJRrDUxHXL78A==}
-
   '@noble/hashes@1.4.0':
     resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
     engines: {node: '>= 16'}
@@ -2814,33 +2812,22 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@primeicons/angular@8.0.0-rc.2':
-    resolution: {integrity: sha512-4Sv4oEwkWhmYF47bEBri+Wv3QotGX+QwBQB55grsAG0wIcGyaDrhjdiT5t6mu1ugJILckTBuITue60MD50NGTQ==}
-    peerDependencies:
-      '@angular/core': '>=21'
-
-  '@primeicons/core@8.0.0-rc.2':
-    resolution: {integrity: sha512-rQhYUXJR8zlMXlmDJFzqEtWLg1yqut2+WmpSiqESgI93A9+eqmNkmPrkO+GmkZQ9KGmvGXuXrylfvKlAhBaq3w==}
-
-  '@primeui/license-manager@1.0.0-rc.2':
-    resolution: {integrity: sha512-v85A+rsv+lNmfLjA7puZjaGHui+OTMDFMy9jmORHo1E0g+HOCewsLL7JXi8uI4BC2NtOdjbg4WFwCRi8soEw4g==}
-
-  '@primeuix/motion@1.0.0-rc.2':
-    resolution: {integrity: sha512-Fzy//d8AY3q6FpQkSn+8SksIWdNhQ0IxHSjFpwPr3+BKf1R7zmPk/lvebkUP2MGSsWGH9MCiwa6GiDaUSrlemA==}
+  '@primeuix/motion@0.0.10':
+    resolution: {integrity: sha512-PsZwOPq79Scp7/ionshRcQ5xKVf9+zuLcyY5mf6onK8chHT5C9JGphmcIZ4CzcqxuGEpsm8AIbTGy+zS3RtzLA==}
     engines: {node: '>=12.11.0'}
 
-  '@primeuix/styled@1.0.0-rc.3':
-    resolution: {integrity: sha512-OeKaUk7q6Tkpyr8RuFloQ9kWhEZMK3POENDjr8pgufZUnpz5aDjLW5Ls+bMCVlTPPw1Ae++VtSuadxlxtyrxIg==}
+  '@primeuix/styled@0.7.4':
+    resolution: {integrity: sha512-QSO/NpOQg8e9BONWRBx9y8VGMCMYz0J/uKfNJEya/RGEu7ARx0oYW0ugI1N3/KB1AAvyGxzKBzGImbwg0KUiOQ==}
     engines: {node: '>=12.11.0'}
 
-  '@primeuix/styles@3.0.0-rc.1':
-    resolution: {integrity: sha512-hqQVXTY73exs4Y7xXSsvVAI88DINShSX/Z2Xvuq22uRpEf9z99bgXnMr9NszZ/dT1TypN2kWg4GnEycDu7Rz8Q==}
+  '@primeuix/styles@2.0.3':
+    resolution: {integrity: sha512-2ykAB6BaHzR/6TwF8ShpJTsZrid6cVIEBVlookSdvOdmlWuevGu5vWOScgIwqWwlZcvkFYAGR/SUV3OHCTBMdw==}
 
-  '@primeuix/themes@3.0.0-rc.1':
-    resolution: {integrity: sha512-4/XKn2w/sLbsji2WFPdSDhAB17jLer/G+fvvl+Ruag5tp0xBFc78kOhPSDvpHEJwOfypP06yuwK+1VSa4eG2YQ==}
+  '@primeuix/themes@2.0.3':
+    resolution: {integrity: sha512-3fS1883mtCWhgUgNf/feiaaDSOND4EBIOu9tZnzJlJ8QtYyL6eFLcA6V3ymCWqLVXQ1+lTVEZv1gl47FIdXReg==}
 
-  '@primeuix/utils@0.8.0-rc.2':
-    resolution: {integrity: sha512-RNiI/sXhixasb45aRF4/iKvhryQIvXgO0xuShY0GA4HdMidrWwN+re9LI2xt1az8BwYdL3ao5tW/WMi8Pyx/wA==}
+  '@primeuix/utils@0.7.2':
+    resolution: {integrity: sha512-pmEbSfP0Phf9W9RweiM66zXnkn73ZeKyYINElbX3uZ2+stzzaba2svLAl3B1pHVcRw5t43O0VciaGe4ye2EXKw==}
     engines: {node: '>=12.11.0'}
 
   '@prisma/instrumentation@6.11.1':
@@ -6017,15 +6004,15 @@ packages:
   primeicons@7.0.0:
     resolution: {integrity: sha512-jK3Et9UzwzTsd6tzl2RmwrVY/b8raJ3QZLzoDACj+oTJ0oX7L9Hy+XnVwgo4QVKlKpnP/Ur13SXV/pVh4LzaDw==}
 
-  primeng@22.0.0-rc.2:
-    resolution: {integrity: sha512-B83kxwid1Jl8IBEPBJ685i5VyPbfz7f9Zu7TsiOc7OislITL1ki35qwPXHUiymLSEBtCmEMxN1R2CCSsKFs7MQ==}
+  primeng@21.1.9:
+    resolution: {integrity: sha512-Z76PtF08X0PNSTCNMobao8Qm71vC56mtZSdUtX/gsn4+q4x0NbUUtkeK1pc33a+kxVm2zkmOwzUIEGmb9VdoIA==}
     peerDependencies:
-      '@angular/cdk': ^22.0.0
-      '@angular/common': ^22.0.0
-      '@angular/core': ^22.0.0
-      '@angular/forms': ^22.0.0
-      '@angular/platform-browser': ^22.0.0
-      '@angular/router': ^22.0.0
+      '@angular/cdk': ^21.0.0
+      '@angular/common': ^21.0.0
+      '@angular/core': ^21.0.7
+      '@angular/forms': ^21.0.0
+      '@angular/platform-browser': ^21.0.0
+      '@angular/router': ^21.0.0
       rxjs: ^6.0.0 || ^7.8.1
 
   proc-log@6.1.0:
@@ -9348,8 +9335,6 @@ snapshots:
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@noble/ed25519@2.3.0': {}
-
   '@noble/hashes@1.4.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -9893,39 +9878,23 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@primeicons/angular@8.0.0-rc.2(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))':
+  '@primeuix/motion@0.0.10':
     dependencies:
-      '@angular/core': 22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2)
-      '@primeicons/core': 8.0.0-rc.2
-      '@primeuix/utils': 0.8.0-rc.2
-      tslib: 2.8.1
+      '@primeuix/utils': 0.7.2
 
-  '@primeicons/core@8.0.0-rc.2':
+  '@primeuix/styled@0.7.4':
     dependencies:
-      '@primeuix/utils': 0.8.0-rc.2
+      '@primeuix/utils': 0.7.2
 
-  '@primeui/license-manager@1.0.0-rc.2':
+  '@primeuix/styles@2.0.3':
     dependencies:
-      '@noble/ed25519': 2.3.0
+      '@primeuix/styled': 0.7.4
 
-  '@primeuix/motion@1.0.0-rc.2':
+  '@primeuix/themes@2.0.3':
     dependencies:
-      '@primeuix/utils': 0.8.0-rc.2
+      '@primeuix/styled': 0.7.4
 
-  '@primeuix/styled@1.0.0-rc.3':
-    dependencies:
-      '@primeui/license-manager': 1.0.0-rc.2
-      '@primeuix/utils': 0.8.0-rc.2
-
-  '@primeuix/styles@3.0.0-rc.1':
-    dependencies:
-      '@primeuix/styled': 1.0.0-rc.3
-
-  '@primeuix/themes@3.0.0-rc.1':
-    dependencies:
-      '@primeuix/styled': 1.0.0-rc.3
-
-  '@primeuix/utils@0.8.0-rc.2': {}
+  '@primeuix/utils@0.7.2': {}
 
   '@prisma/instrumentation@6.11.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -13249,7 +13218,7 @@ snapshots:
 
   primeicons@7.0.0: {}
 
-  primeng@22.0.0-rc.2(81d1ea2a9ee0ce2d6043033da69dd983):
+  primeng@21.1.9(81d1ea2a9ee0ce2d6043033da69dd983):
     dependencies:
       '@angular/cdk': 22.0.4(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
       '@angular/common': 22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
@@ -13257,12 +13226,10 @@ snapshots:
       '@angular/forms': 22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
       '@angular/platform-browser': 22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))
       '@angular/router': 22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/platform-browser@22.0.6(@angular/common@22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2)))(rxjs@7.8.2)
-      '@primeicons/angular': 8.0.0-rc.2(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2)(zone.js@0.16.2))
-      '@primeui/license-manager': 1.0.0-rc.2
-      '@primeuix/motion': 1.0.0-rc.2
-      '@primeuix/styled': 1.0.0-rc.3
-      '@primeuix/styles': 3.0.0-rc.1
-      '@primeuix/utils': 0.8.0-rc.2
+      '@primeuix/motion': 0.0.10
+      '@primeuix/styled': 0.7.4
+      '@primeuix/styles': 2.0.3
+      '@primeuix/utils': 0.7.2
       rxjs: 7.8.2
       tslib: 2.8.1
 

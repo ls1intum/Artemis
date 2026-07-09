@@ -45,6 +45,6 @@ describe('QuizScoringInfoModalComponent', () => {
         fixture.detectChanges();
 
         const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints()).toEqual({ '850px': '95vw' });
+        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
     });
 });

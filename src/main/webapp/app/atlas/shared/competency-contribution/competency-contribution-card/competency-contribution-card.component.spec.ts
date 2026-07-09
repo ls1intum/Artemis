@@ -52,7 +52,7 @@ describe('CompetencyContributionCardComponent', () => {
 
         const progressBar = fixture.debugElement.query(By.directive(ProgressBar));
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value()).toBe(50);
+        expect(progressBar.componentInstance.value).toBe(50);
     });
 
     it('should fall back to 0 for the progress bar when mastery is undefined', () => {
@@ -63,6 +63,6 @@ describe('CompetencyContributionCardComponent', () => {
 
         const progressBar = fixture.debugElement.query(By.directive(ProgressBar));
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value()).toBe(0);
+        expect(progressBar.componentInstance.value).toBe(0);
     });
 });

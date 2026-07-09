@@ -273,7 +273,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.onHide.emit({});
+            dialog.onHide.emit();
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
@@ -283,7 +283,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.visible.set(false);
+            dialog.visibleChange.emit(false);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
