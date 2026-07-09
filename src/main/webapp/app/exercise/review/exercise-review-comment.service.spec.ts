@@ -417,6 +417,14 @@ describe('ExerciseReviewCommentService', () => {
         expect(service.selectedFeedbackThreadIds()).toEqual([5, 7]);
     });
 
+    it('clearSelectedFeedback should remove all selected feedback ids', () => {
+        service.selectedFeedbackThreadIds.set([5, 7]);
+
+        service.clearSelectedFeedback();
+
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
     it('selectedFeedbackThreads should resolve selected ids against loaded threads in selection order and drop unloaded ones', () => {
         service.threads.set([
             { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO },

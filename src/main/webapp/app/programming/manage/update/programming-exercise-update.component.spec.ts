@@ -60,7 +60,7 @@ vi.mock('y-monaco', () => ({
     }),
 }));
 
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 /**
  * Typed view onto the protected `viewChild` signals so the spec can override them
@@ -413,7 +413,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(router.navigate).toHaveBeenCalledWith(
                 ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+                { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } },
             );
             expect(comp.isGeneratingWithAi()).toBe(false);
         });
@@ -444,7 +444,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(router.navigate).toHaveBeenCalledWith(
                 ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+                { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } },
             );
         });
 

@@ -104,12 +104,14 @@ class GenerationOrchestrationServiceTest {
         jobService = mock(GenerationJobService.class);
 
         when(sandbox.createSession(any())).thenReturn(SESSION_ID);
+        when(sandbox.createVerificationSession(any(), anyString())).thenReturn(VERIFY_SESSION_ID);
         // The authoritative verify copies the loop workspace into a fresh session; a valid (empty) tar keeps the copy step working for every verify-reaching test.
         when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> emptyTar());
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         // Default to a successful, empty extraction (the verifier is mocked, so files are not inspected here).
         when(workspace.extractRepository(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
+        when(workspace.seedWorkspace(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
         // Default the advisory critic to no findings; specific tests override it.
         when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         // renderForRetryPrompt is a pure renderer; delegate to the real impl so the retry prompt is folded exactly as in production.
@@ -293,20 +295,20 @@ class GenerationOrchestrationServiceTest {
         return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement, "no test covers it")));
     }
 
-    /** The critic NEVER changes the verdict: an oracle-accepted exercise stays accepted even when the critic returns findings (the core non-blocking safety property). */
+    /** The critic NEVER changes the verdict: an oracle-accepted exercise stays accepted; findings only spend a bounded polish retry while attempts remain. */
     @Test
-    void criticFindings_neverFlipAcceptedToRejected() {
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("CJK characters"));
+    void acceptedWithCriticFindings_getsPolishRetryButNeverFlipsVerdict() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(), completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted(), accepted());
+        when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(reportWith("CJK characters"), SpecFidelityReport.empty());
 
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).as("an oracle-accepted exercise stays accepted regardless of critic findings").isTrue();
-            assertThat(outcome.specFidelityReport().findings()).as("the advisory findings ride along on the outcome").extracting(SpecFidelityReport.Finding::requirement)
-                    .containsExactly("CJK characters");
-            // The critic did not trigger an extra retry on an accepted exercise.
-            verify(agentLoopRunner, times(1)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+            assertThat(outcome.specFidelityReport().hasFindings()).as("the final polished attempt's advisory report rides along on the outcome").isFalse();
         }
+        verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(promptCaptor.getAllValues().get(1)).contains("passed differential verification").contains("quality gaps").contains("CJK characters");
     }
 
     /** On rejection with attempts remaining, the critic's findings are folded into the retry prompt alongside the authoritative rejection reason. */
@@ -436,7 +438,6 @@ class GenerationOrchestrationServiceTest {
      */
     @Test
     void authoritativeVerify_runsInAFreshSession_copiesTheWorkspaceIn_andAlwaysDestroysIt() {
-        when(sandbox.createSession(any())).thenReturn(SESSION_ID, VERIFY_SESSION_ID);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
 
@@ -450,6 +451,7 @@ class GenerationOrchestrationServiceTest {
         // The exact produced tree was copied from the loop session into the fresh session.
         verify(sandbox).copyOut(SESSION_ID, GenerationWorkspaceService.WORKSPACE);
         verify(sandbox).copyIn(eq(VERIFY_SESSION_ID), eq("/"), any());
+        verify(sandbox).createVerificationSession(any(), eq(SESSION_ID));
         // The fresh verification session is always torn down (the loop session stays open on the returned outcome and is destroyed by the caller's close()).
         verify(sandbox).destroySession(VERIFY_SESSION_ID);
     }
@@ -460,7 +462,6 @@ class GenerationOrchestrationServiceTest {
      */
     @Test
     void budgetExhaustedLoop_stillRunsAuthoritativeFreshSessionVerify_andDestroysTheFreshSession() {
-        when(sandbox.createSession(any())).thenReturn(SESSION_ID, VERIFY_SESSION_ID);
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "ran out of turns"));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(rejected("template passed a graded test"));

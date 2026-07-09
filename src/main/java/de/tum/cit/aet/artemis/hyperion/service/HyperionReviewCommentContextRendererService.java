@@ -163,7 +163,7 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
-     * Serializes explicitly selected review threads into a stable JSON payload for Hyperion code generation prompts.
+     * Serializes explicitly selected review threads into a stable JSON payload for Hyperion exercise generation prompts.
      * Only active threads that belong to the selected repository type are included.
      *
      * @param exerciseId     the exercise id
@@ -192,7 +192,7 @@ public class HyperionReviewCommentContextRendererService {
 
     /**
      * Normalises the selected thread ids (deduplicated, capped at {@link #MAX_SELECTED_FEEDBACK_THREADS}, order preserved), loads their comment threads, keeps only those the
-     * {@code activeFilter} admits, and serializes each in selection order until the global comment budget is exhausted. Shared by the per-repository code-generation and the
+     * {@code activeFilter} admits, and serializes each in selection order until the global comment budget is exhausted. Shared by the per-repository generation and the
      * whole-exercise adapt renderers, which differ only in that filter and how they wrap the result.
      *
      * @param exerciseId   the exercise id

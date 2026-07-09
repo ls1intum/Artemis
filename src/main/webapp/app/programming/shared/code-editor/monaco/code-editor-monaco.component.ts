@@ -41,6 +41,7 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
     getFirstCommentByCreatedDateThenId,
+    firstConsistencyIssueContent,
     isReviewCommentsSupportedRepository,
     mapRepositoryToThreadLocationType,
     matchesSelectedRepository,
@@ -847,11 +848,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdaptThread: (threadId) => this.onAdaptReviewCommentThread.emit(threadId),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
                 showFeedbackAction: (thread) =>
-                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
-                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
-                    thread.targetType === CommentThreadLocationType.TEST_REPO,
+                    !!firstConsistencyIssueContent(thread) &&
+                    (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                        thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                        thread.targetType === CommentThreadLocationType.TEST_REPO),
                 showAdaptAction: (thread) =>
                     this.adaptReviewCommentThreadEnabled() &&
+                    !!firstConsistencyIssueContent(thread) &&
                     (thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                         thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                         thread.targetType === CommentThreadLocationType.TEST_REPO),

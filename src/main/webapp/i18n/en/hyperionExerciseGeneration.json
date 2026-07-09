@@ -34,7 +34,13 @@
                     "templateFailed": "Template fails",
                     "templatePasses": "Template passes",
                     "tests": "tests"
-                }
+                },
+                "completionStatus": {
+                    "SUCCESS": "Saved",
+                    "NEEDS_REVIEW": "Needs review",
+                    "PARTIAL": "Partial"
+                },
+                "revertPartialFailed": "The adaptation could not be fully reverted. Reverted repositories: {{repositories}}. Please review the remaining repositories manually."
             }
         }
     }

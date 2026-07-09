@@ -7,10 +7,10 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.BuildGateTestNames;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -39,10 +38,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -74,8 +74,6 @@ public class GenerationPersistenceService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingExerciseCreationUpdateService creationUpdateService;
-
     private final ExerciseVersionService exerciseVersionService;
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -84,6 +82,10 @@ public class GenerationPersistenceService {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     private final Duration testCaseSyncTimeout;
 
     private final Duration testCaseSyncPoll;
@@ -91,29 +93,32 @@ public class GenerationPersistenceService {
     @Autowired
     public GenerationPersistenceService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseCreationUpdateService creationUpdateService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
-        this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, creationUpdateService,
-                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepositoryService, TEST_CASE_SYNC_TIMEOUT, TEST_CASE_SYNC_POLL);
+            ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            ResultRepository resultRepository, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
+        this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
+                testCaseRepository, resultRepository, programmingExerciseRepositoryService, programmingExerciseRepository, programmingExerciseTaskService, TEST_CASE_SYNC_TIMEOUT,
+                TEST_CASE_SYNC_POLL);
     }
 
     // Package-private so tests can inject a shrunken sync wait and exercise the build-completion wait without sleeping for seconds.
     GenerationPersistenceService(String defaultBranch, GitService gitService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingExerciseCreationUpdateService creationUpdateService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
-            ResultRepository resultRepository, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.participationService = participationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.creationUpdateService = creationUpdateService;
         this.exerciseVersionService = exerciseVersionService;
         this.testCaseRepository = testCaseRepository;
         this.resultRepository = resultRepository;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.testCaseSyncTimeout = testCaseSyncTimeout;
         this.testCaseSyncPoll = testCaseSyncPoll;
     }
@@ -121,7 +126,7 @@ public class GenerationPersistenceService {
     /** The repositories persisted, in the order they are committed. Tests are committed last so the test-triggered build sees the final solution. */
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    /** Prefix of the isolated branch a recovery draft is diverted to for an adapt target; the job id is appended so concurrent/repeated runs never collide on the ref. */
+    /** Prefix of the isolated branch a recovery draft is diverted to; the job id is appended so concurrent/repeated runs never collide on the ref. */
     static final String RECOVERY_DRAFT_BRANCH_PREFIX = "hyperion-draft/";
 
     /** Exercise title column length; an H1 reconciled from a generated statement is capped to this. */
@@ -131,22 +136,27 @@ public class GenerationPersistenceService {
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
-    /** Unicode dashes U+2010..U+2015 the model leaks into prose/source; precompiled since {@link #normalizeTypography} runs once per produced file per persist. */
-    private static final Pattern UNICODE_DASHES = Pattern.compile("[‐-―]");
-
     /**
      * The result of persisting a non-accepted recovery draft.
      *
-     * @param liveExerciseUntouched {@code true} if the live default branch was left byte-identical (adapt target); {@code false} if committed to it (from-scratch target)
-     * @param draftBranch           the isolated branch the draft was pushed to when {@code liveExerciseUntouched}; {@code null} otherwise
+     * @param liveExerciseUntouched {@code true} if the live default branch was left byte-identical
+     * @param draftBranch           the isolated branch the draft was pushed to
      */
     public record RecoveryPersistResult(boolean liveExerciseUntouched, String draftBranch) {
     }
 
     /**
-     * Persists a non-accepted (recovered) draft WITHOUT regressing a working exercise. A from-scratch target (all repositories empty) is committed to the default branch via
-     * {@link #persist}; an adapt target (any repository carries committed content) is left byte-identical and the draft diverted to an isolated branch with no CI build. The
-     * adapt-vs-from-scratch decision is taken once up front so a later commit failure can never leave the exercise half-overwritten.
+     * Commit heads captured while persisting an accepted generation.
+     *
+     * @param prePersistHeads  the default-branch heads before Hyperion committed each changed repository
+     * @param postPersistHeads the heads immediately after Hyperion committed each changed repository
+     */
+    public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads) {
+    }
+
+    /**
+     * Persists a non-accepted (recovered) draft WITHOUT touching the live default branch. Rejected output is always diverted to an isolated branch with no CI build and no exercise
+     * version; only the accepted path may update the canonical exercise.
      *
      * @param exercise the exercise to persist the draft into
      * @param user     the instructor performing the generation (commit author)
@@ -155,46 +165,12 @@ public class GenerationPersistenceService {
      * @return whether the live exercise was left untouched and, if so, the isolated branch the draft was pushed to
      */
     public RecoveryPersistResult persistRecoveryDraft(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        if (!anyRepositoryHasContent(exercise)) {
-            persist(exercise, user, outcome);
-            return new RecoveryPersistResult(false, null);
-        }
         String draftBranch = RECOVERY_DRAFT_BRANCH_PREFIX + jobId;
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TEMPLATE, outcome.producedFiles(RepositoryType.TEMPLATE), draftBranch);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.SOLUTION, outcome.producedFiles(RepositoryType.SOLUTION), draftBranch);
         commitDraftToIsolatedBranch(exercise, user, RepositoryType.TESTS, outcome.producedFiles(RepositoryType.TESTS), draftBranch);
-        // No tests build and no exercise version: the live exercise did not change, so it must not be re-graded or re-versioned against the broken draft.
-        log.info("Recovered adapt draft for exercise {} onto isolated branch {} (live exercise left untouched)", exercise.getId(), draftBranch);
+        log.info("Recovered non-accepted draft for exercise {} onto isolated branch {} (live exercise left untouched)", exercise.getId(), draftBranch);
         return new RecoveryPersistResult(true, draftBranch);
-    }
-
-    /**
-     * @return {@code true} if any of the template/solution/tests repositories already tracks a non-{@code .git} file (an adapt target); {@code false} if all are empty.
-     *         Fails closed to {@code true} when a repository cannot be inspected, so an inspection error never lets a failing draft overwrite the live exercise.
-     */
-    private boolean anyRepositoryHasContent(ProgrammingExercise exercise) {
-        for (RepositoryType repositoryType : PERSIST_ORDER) {
-            LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
-            if (uri == null) {
-                continue;
-            }
-            try {
-                Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
-                if (repository == null) {
-                    return true;
-                }
-                Map<String, FileType> trackedFiles = repositoryService.getFiles(repository);
-                if (trackedFiles.values().stream().anyMatch(type -> type == FileType.FILE)) {
-                    return true;
-                }
-            }
-            catch (Exception e) {
-                log.warn("Could not inspect the {} repository of exercise {} for adapt detection; treating it as an adapt target (safe default): {}", repositoryType,
-                        exercise.getId(), e.getMessage());
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -215,20 +191,26 @@ public class GenerationPersistenceService {
         if (uri == null) {
             return;
         }
+        Repository repository = null;
         try {
-            Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
+            repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
             mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles);
             gitService.stageAllChanges(repository);
             gitService.commitToIsolatedBranchAndPush(repository, draftBranch, "Hyperion generation draft (needs review; NOT applied to the live exercise)", user);
-            // Reset the working copy back to the default branch so a later default-branch operation does not see the diverted commit.
-            gitService.resetToOriginHead(repository);
         }
         catch (Exception e) {
             throw new IllegalStateException(
                     "Failed to commit the " + repositoryType + " recovery draft to the isolated branch for exercise " + exercise.getId() + ": " + e.getMessage(), e);
+        }
+        finally {
+            if (repository != null) {
+                // Always reset the working copy back to the default branch so a later default-branch operation cannot see the diverted draft commit, even if the isolated push
+                // failed after creating the local commit.
+                gitService.resetToOriginHead(repository);
+            }
         }
     }
 
@@ -243,20 +225,20 @@ public class GenerationPersistenceService {
      * @param exercise the exercise to persist into
      * @param user     the instructor performing the generation (commit author)
      * @param outcome  the accepted generation outcome holding the produced files
-     * @return the pre-persist commit HEAD captured per repository BEFORE it was written (a revertible baseline for an accepted adapt applied in place); repositories with nothing
-     *         to
-     *         commit are absent. Returned only after every repository committed successfully, so the caller records a revertible baseline exclusively for a persist that actually
-     *         applied changes.
+     * @return the pre- and post-persist commit HEADs captured for each changed repository. Returned only after every repository committed successfully, so the caller records a
+     *         revertible baseline exclusively for a persist that actually applied changes.
      * @throws GenerationIncompleteException if a repository commit fails part-way through the sequence (the already-committed repositories are compensated first)
      */
-    public Map<RepositoryType, String> persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
+    public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, String> postPersistHashes = new EnumMap<>(RepositoryType.class);
         List<RepositoryType> committed = new ArrayList<>();
         String testsCommitHash = null;
         try {
             for (RepositoryType repositoryType : PERSIST_ORDER) {
-                String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), prePersistHashes);
+                String commitHash = commitRepository(exercise, user, repositoryType, outcome.producedFiles(repositoryType), outcome.seedRepositoryHeads().get(repositoryType),
+                        prePersistHashes, postPersistHashes);
                 if (commitHash != null) {
                     committed.add(repositoryType);
                     if (repositoryType == RepositoryType.TESTS) {
@@ -267,36 +249,79 @@ public class GenerationPersistenceService {
         }
         catch (RuntimeException e) {
             // Compensation: revert the already-committed repositories to their captured pre-persist commit so no publishable half-generated tree survives on the default branch.
-            boolean fullyReverted = compensate(exercise, committed, prePersistHashes);
+            boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
             String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
                     : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
             throw new GenerationIncompleteException("Saving the generated exercise failed after committing " + committed
                     + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e);
         }
 
-        String producedProblemStatement = normalizeTypography(outcome.producedProblemStatement());
+        String producedProblemStatement = outcome.producedProblemStatement();
+        String originalProblemStatement = exercise.getProblemStatement();
+        String originalTitle = exercise.getTitle();
+        boolean problemStatementChanged = false;
+        String persistedProblemStatement = null;
+        String persistedTitle = null;
         if (!producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement())) {
-            // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. updateProblemStatement saves the
-            // whole entity, so the title persists in the same write. An adapt run keeps the instructor's title.
+            String targetTitle = exercise.getTitle();
+            // From-scratch only (statement was blank): reconcile the lean AI create page's brief-derived placeholder title to the agent's own H1. An adapt run keeps the
+            // instructor's title.
             if (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank()) {
                 String generatedTitle = extractTitleFromH1(producedProblemStatement);
                 if (generatedTitle != null && !generatedTitle.equals(exercise.getTitle())) {
                     exercise.setTitle(generatedTitle);
+                    targetTitle = generatedTitle;
                 }
             }
             try {
-                creationUpdateService.updateProblemStatement(exercise, producedProblemStatement, null);
+                saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, originalProblemStatement, originalTitle);
+                problemStatementChanged = true;
+                persistedProblemStatement = producedProblemStatement.trim();
+                persistedTitle = targetTitle;
+                programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             }
             catch (RuntimeException e) {
-                log.warn("Failed to update problem statement for exercise {}: {}", exercise.getId(), e.getMessage());
+                boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
+                if (problemStatementChanged) {
+                    restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
+                }
+                String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
+                        : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
+                throw new GenerationIncompleteException("Saving the generated exercise failed while updating the problem statement after committing " + committed
+                        + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e);
             }
         }
 
         // Trigger the canonical CI build for the tests (drives test-case sync + task binding asynchronously) and record the exercise version — only reached once every repository
         // committed.
-        syncTestCasesAndRecordVersion(exercise, user, testsCommitHash);
+        try {
+            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, true);
+        }
+        catch (RuntimeException e) {
+            boolean fullyReverted = compensate(exercise, committed, prePersistHashes, postPersistHashes);
+            if (problemStatementChanged) {
+                restoreProblemStatementIfUnchanged(exercise, originalProblemStatement, originalTitle, persistedProblemStatement, persistedTitle);
+            }
+            if (fullyReverted) {
+                resyncBaselineTestsAfterCompensation(exercise, user, prePersistHashes.get(RepositoryType.TESTS));
+            }
+            String state = fullyReverted ? "the already-committed repositories were reverted to their previous state"
+                    : "compensation could not fully revert every repository (" + committed + "); manual review is required before using the exercise";
+            throw new GenerationIncompleteException("Saving the generated exercise failed while recording the exercise version after committing " + committed
+                    + "; the generation is INCOMPLETE and must not be published. " + state + ". Cause: " + e.getMessage(), e);
+        }
         log.info("Persisted generated exercise {} (test-case synchronisation will complete asynchronously via CI)", exercise.getId());
-        return prePersistHashes;
+        return new PersistResult(nonNullCopy(prePersistHashes), nonNullCopy(postPersistHashes));
+    }
+
+    private static Map<RepositoryType, String> nonNullCopy(Map<RepositoryType, String> source) {
+        Map<RepositoryType, String> copy = new EnumMap<>(RepositoryType.class);
+        for (Map.Entry<RepositoryType, String> entry : source.entrySet()) {
+            if (entry.getValue() != null) {
+                copy.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return Map.copyOf(copy);
     }
 
     /**
@@ -305,35 +330,97 @@ public class GenerationPersistenceService {
      * version so open editors and search see the reverted state — exactly the post-commit steps {@link #persist} runs. Best-effort: a failure here leaves the repositories reverted
      * (the important part) and only logs.
      *
-     * @param exercise        the exercise whose repositories were reset back to the baseline
-     * @param user            the instructor performing the revert (exercise-version author)
-     * @param testsCommitHash the tests repository's commit HEAD after the reset (drives the test-case-sync build); {@code null} skips the build
+     * @param exercise                 the exercise whose repositories were reset back to the baseline
+     * @param user                     the instructor performing the revert (exercise-version author)
+     * @param testsCommitHash          the tests repository's commit HEAD after the reset (drives the test-case-sync build); {@code null} skips the build
+     * @param problemStatement         the problem statement captured before the adaptation
+     * @param title                    the title captured before the adaptation
+     * @param expectedProblemStatement the problem statement captured immediately after the adaptation; used as a compare-and-set guard
+     * @param expectedTitle            the title captured immediately after the adaptation; used as a compare-and-set guard
+     * @return {@code true} if the metadata was restored and re-sync was attempted; {@code false} if concurrent metadata edits made the restore unsafe
      */
-    public void resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash) {
-        syncTestCasesAndRecordVersion(exercise, user, testsCommitHash);
-        log.info("Re-synchronised exercise {} after reverting an adaptation (test-case synchronisation completes asynchronously via CI)", exercise.getId());
+    public boolean resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash, String problemStatement, String title, String expectedProblemStatement,
+            String expectedTitle) {
+        if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
+            return false;
+        }
+        try {
+            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, false);
+            log.info("Re-synchronised exercise {} after reverting an adaptation (test-case synchronisation completes asynchronously via CI)", exercise.getId());
+            return true;
+        }
+        catch (RuntimeException e) {
+            log.error("Repositories and metadata were reverted for exercise {}, but the follow-up test-case sync/version update failed; manual review is required",
+                    exercise.getId(), e);
+            return false;
+        }
     }
 
     /**
      * Triggers the canonical tests build (when a tests commit exists) so test-case grading follows the committed tests, re-applies the build-gate zero-weighting, and records a new
-     * exercise version so open editors and search see the committed state — the post-commit steps shared by {@link #persist} and {@link #resyncAfterRevert}. Version recording is
-     * best-effort: a failure only logs, leaving the committed repositories (the durable part) intact.
+     * exercise version so open editors and search see the committed state — the post-commit steps shared by {@link #persist} and {@link #resyncAfterRevert}. Accepted generation
+     * treats version creation as mandatory; revert keeps it best-effort because the repository reset is already the desired recovery action.
      *
      * @param exercise        the exercise whose test cases to sync and version to record
      * @param user            the exercise-version author
      * @param testsCommitHash the tests repository's commit HEAD driving the test-case-sync build; {@code null} skips the build
      */
-    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash) {
+    private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash, boolean failOnVersionFailure) {
         if (testsCommitHash != null) {
             TestsBuildSignal signal = triggerTestsBuild(exercise, testsCommitHash);
             zeroWeightBuildGateTestCases(exercise.getId(), signal);
         }
         try {
-            exerciseVersionService.createExerciseVersion(exercise, user);
+            exerciseVersionService.createExerciseVersionOrThrow(exercise, user);
         }
         catch (RuntimeException e) {
+            if (failOnVersionFailure) {
+                throw e;
+            }
             log.warn("Failed to create exercise version for exercise {}: {}", exercise.getId(), e.getMessage());
         }
+    }
+
+    private void resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, String testsCommitHash) {
+        try {
+            syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, false);
+        }
+        catch (RuntimeException e) {
+            log.error("Could not re-sync test cases for exercise {} after compensating a failed generation persist; manual review is required", exercise.getId(), e);
+        }
+    }
+
+    private boolean restoreProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
+        try {
+            int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), problemStatement, title, expectedProblemStatement,
+                    expectedTitle);
+            if (updatedRows != 1) {
+                log.error("Could not restore the previous problem statement/title for exercise {} because it changed after the adaptation revert started", exercise.getId());
+                return false;
+            }
+            exercise.setTitle(title);
+            exercise.setProblemStatement(problemStatement);
+            programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
+            return true;
+        }
+        catch (RuntimeException restoreFailure) {
+            log.error("Could not restore the previous problem statement/title for exercise {} after reverting an adaptation; manual review is required", exercise.getId(),
+                    restoreFailure);
+            return false;
+        }
+    }
+
+    private void saveProblemStatementIfUnchanged(ProgrammingExercise exercise, String problemStatement, String title, String expectedProblemStatement, String expectedTitle) {
+        String trimmedProblemStatement = problemStatement.trim();
+        int updatedRows = programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(exercise.getId(), trimmedProblemStatement, title, expectedProblemStatement,
+                expectedTitle);
+        if (updatedRows != 1) {
+            throw new IllegalStateException("The problem statement/title changed while Hyperion was saving the generated exercise; refusing to overwrite manual edits");
+        }
+        if (!java.util.Objects.equals(exercise.getTitle(), title)) {
+            exercise.setTitle(title);
+        }
+        exercise.setProblemStatement(trimmedProblemStatement);
     }
 
     /**
@@ -349,7 +436,8 @@ public class GenerationPersistenceService {
      * @param prePersistHashes the pre-persist commit hash captured per repository before it was written
      * @return {@code true} if every committed repository was reverted; {@code false} if any could not be
      */
-    private boolean compensate(ProgrammingExercise exercise, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes) {
+    private boolean compensate(ProgrammingExercise exercise, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes,
+            Map<RepositoryType, String> postPersistHashes) {
         boolean fullyReverted = true;
         for (int i = committed.size() - 1; i >= 0; i--) {
             RepositoryType repositoryType = committed.get(i);
@@ -365,7 +453,24 @@ public class GenerationPersistenceService {
                 if (repository == null) {
                     throw new IllegalStateException("Could not check out the repository to revert it");
                 }
-                gitService.resetToCommitAndForcePush(repository, preHash, defaultBranch);
+                String currentHash = gitService.getLastCommitHash(uri);
+                String postHash = postPersistHashes.get(repositoryType);
+                if (preHash.equals(currentHash)) {
+                    continue;
+                }
+                if (postHash == null || currentHash == null) {
+                    fullyReverted = false;
+                    log.error("Refusing to compensate the {} repository of exercise {}: missing current HEAD ({}) or Hyperion's committed HEAD ({})", repositoryType,
+                            exercise.getId(), currentHash, postHash);
+                    continue;
+                }
+                if (!postHash.equals(currentHash)) {
+                    fullyReverted = false;
+                    log.error("Refusing to compensate the {} repository of exercise {}: current HEAD {} differs from Hyperion's committed HEAD {}", repositoryType,
+                            exercise.getId(), currentHash, postHash);
+                    continue;
+                }
+                gitService.resetToCommitAndForcePush(repository, preHash, postHash, defaultBranch);
                 log.info("Reverted the {} repository of exercise {} back to its pre-generation commit {} during persist compensation", repositoryType, exercise.getId(), preHash);
             }
             catch (Exception e) {
@@ -389,8 +494,8 @@ public class GenerationPersistenceService {
      * @param prePersistHashes accumulator the captured pre-persist commit hash is written into
      * @return the new commit hash, or {@code null} when there was nothing to commit
      */
-    private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles,
-            Map<RepositoryType, String> prePersistHashes) {
+    private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String seedHead,
+            Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
         if (producedFiles == null || producedFiles.isEmpty()) {
             return null;
         }
@@ -399,15 +504,25 @@ public class GenerationPersistenceService {
             return null;
         }
         try {
-            // Capture the pre-persist HEAD before mutating the repository, so this commit can be reverted if a subsequent repository fails (may be null for a repo with no commit).
-            prePersistHashes.put(repositoryType, gitService.getLastCommitHash(uri));
             Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the " + repositoryType + " repository");
             }
+            // Capture the checked-out local HEAD after pull and before mutation, so compensation reverts to the exact parent this Hyperion commit was built on.
+            String prePersistHead = gitService.getLocalHeadHash(repository);
+            prePersistHashes.put(repositoryType, prePersistHead);
+            if (seedHead != null && !seedHead.equals(prePersistHead)) {
+                throw new IllegalStateException(
+                        "The " + repositoryType + " repository changed after Hyperion verified the generated exercise; refusing to overwrite newer instructor edits");
+            }
             mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles);
             repositoryService.commitChanges(repository, user);
-            return gitService.getLastCommitHash(uri);
+            // Capture the local commit we just created. Do not re-read the remote here: a concurrent manual push after Hyperion's push must not become Hyperion-owned state.
+            String postHash = gitService.getLocalHeadHash(repository);
+            if (postHash != null) {
+                postPersistHashes.put(repositoryType, postHash);
+            }
+            return postHash;
         }
         catch (Exception e) {
             throw new IllegalStateException("Failed to commit the " + repositoryType + " repository for exercise " + exercise.getId() + ": " + e.getMessage(), e);
@@ -427,25 +542,42 @@ public class GenerationPersistenceService {
      */
     private void mirrorProducedFilesIntoWorkingCopy(ProgrammingExercise exercise, Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles)
             throws IOException {
-        deleteOrphanedFiles(repository, repositoryType, producedFiles.keySet());
-        for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
+        Map<String, String> persistableFiles = persistableProducedFiles(producedFiles);
+        deleteOrphanedFiles(repository, repositoryType, persistableFiles.keySet());
+        for (Map.Entry<String, String> entry : persistableFiles.entrySet()) {
             String path = entry.getKey();
             if (gitService.getFileByName(repository, path).isPresent()) {
                 repositoryService.deleteFile(repository, path);
             }
-            // Scrub model typography from source files too (producedFiles is always text, never binary).
-            String content = normalizeTypography(entry.getValue());
-            repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+            repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
         }
         // The produced tree can re-introduce raw ${...} placeholders (e.g. from the reference's run.sh); normalize to real-CI values as exercise creation does (idempotent if
         // clean).
         programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
     }
 
+    private static Map<String, String> persistableProducedFiles(Map<String, String> producedFiles) {
+        Map<String, String> persistableFiles = new LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : producedFiles.entrySet()) {
+            if (!"problem-statement.md".equals(normalizeRepositoryPath(entry.getKey()))) {
+                persistableFiles.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return persistableFiles;
+    }
+
+    private static String normalizeRepositoryPath(String path) {
+        String normalized = path.replace('\\', '/');
+        while (normalized.startsWith("./")) {
+            normalized = normalized.substring(2);
+        }
+        return normalized;
+    }
+
     /**
-     * Deletes every tracked file the agent did not produce, so the committed tree mirrors the sandbox-final state rather than overlaying onto the scaffolded sample (which would
-     * orphan the sample's test sources / structure oracle into real grading). Harness/manifest files (graded verbatim, immutable by contract) are never deleted, so a partial
-     * read-back cannot wipe the harness. A single-file delete failure is logged and skipped — a leftover file is a quality issue, not a reason to abort an otherwise-valid persist.
+     * Deletes every tracked text file the agent did not produce, so the committed tree mirrors the sandbox-final state rather than overlaying onto the scaffolded sample (which
+     * would orphan the sample's test sources, structure oracle, or harness into real grading). A delete failure aborts the persist: a leftover tracked file means the committed
+     * tree would differ from the sandbox tree the oracle verified.
      *
      * @param repository     the checked-out repository working copy
      * @param repositoryType the repository type (for logging)
@@ -456,7 +588,7 @@ public class GenerationPersistenceService {
         Path repositoryRoot = repository.getLocalPath();
         for (Map.Entry<String, FileType> tracked : trackedFiles.entrySet()) {
             String path = tracked.getKey();
-            if (tracked.getValue() != FileType.FILE || producedPaths.contains(path) || ExerciseIntegrityGate.isHarnessFile(path)) {
+            if (tracked.getValue() != FileType.FILE || producedPaths.contains(path)) {
                 continue;
             }
             // Never delete a scaffolded binary (e.g. gradle-wrapper.jar): it cannot survive the UTF-8 String round-trip so it is absent from producedFiles and would look orphaned.
@@ -470,16 +602,16 @@ public class GenerationPersistenceService {
                 log.debug("Removed orphaned {} file {} not produced by generation", repositoryType, path);
             }
             catch (IOException | RuntimeException e) {
-                log.warn("Could not remove orphaned {} file {} during persist: {}", repositoryType, path, e.getMessage());
+                throw new IllegalStateException("Could not remove orphaned " + repositoryType + " file " + path + " during persist", e);
             }
         }
     }
 
     /**
-     * The pre-trigger baseline needed to detect that the {@link #triggerTestsBuild triggered} tests-build has finished processing: the solution participation and the id of its
-     * latest result before the build ran. {@code baselineLatestResultId} is {@code null} when no earlier result existed; {@code null} signal means the trigger itself failed.
+     * The signal needed to detect that the {@link #triggerTestsBuild triggered} tests-build has finished processing: the solution participation, tests commit hash, and latest
+     * result before the build. Production associates TEST build results by participation + commit hash + submission type, not by the specific submission id created here.
      */
-    private record TestsBuildSignal(long solutionParticipationId, Long baselineLatestResultId) {
+    private record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
     }
 
     private TestsBuildSignal triggerTestsBuild(ProgrammingExercise exercise, String commitHash) {
@@ -490,15 +622,15 @@ public class GenerationPersistenceService {
             Long baselineLatestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(solutionParticipationId).map(Result::getId).orElse(null);
             programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
             continuousIntegrationTriggerService.triggerBuild(solutionParticipation, commitHash, RepositoryType.TESTS);
-            return new TestsBuildSignal(solutionParticipationId, baselineLatestResultId);
+            return new TestsBuildSignal(solutionParticipationId, commitHash, baselineLatestResultId);
         }
         catch (ContinuousIntegrationException e) {
             log.warn("Failed to trigger the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
-            return null;
+            throw new IllegalStateException("Failed to trigger the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
         catch (RuntimeException e) {
             log.warn("Unexpected error triggering the test-case-syncing build for exercise {}: {}", exercise.getId(), e.getMessage());
-            return null;
+            throw new IllegalStateException("Unexpected error triggering the test-case-syncing build for exercise " + exercise.getId() + ": " + e.getMessage(), e);
         }
     }
 
@@ -509,11 +641,11 @@ public class GenerationPersistenceService {
      * cases.
      *
      * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
-     * @param signal     the pre-trigger baseline identifying the triggered build to wait for; {@code null} when the trigger failed (acts on the current set)
+     * @param signal     the pre-trigger baseline identifying the triggered build to wait for
      */
     private void zeroWeightBuildGateTestCases(long exerciseId, TestsBuildSignal signal) {
         try {
-            Set<ProgrammingExerciseTestCase> testCases = signal == null ? testCaseRepository.findByExerciseId(exerciseId) : awaitBuildProcessedTestCaseSet(exerciseId, signal);
+            Set<ProgrammingExerciseTestCase> testCases = awaitBuildProcessedTestCaseSet(exerciseId, signal);
             List<ProgrammingExerciseTestCase> buildGates = testCases.stream()
                     .filter(testCase -> BuildGateTestNames.isBuildGate(testCase.getTestName()) && testCase.getWeight() != null && testCase.getWeight() != 0.0).toList();
             if (buildGates.isEmpty()) {
@@ -534,11 +666,8 @@ public class GenerationPersistenceService {
 
     /**
      * Waits (bounded by {@link #testCaseSyncTimeout}) for the tests-build triggered by {@link #triggerTestsBuild} to finish processing, then returns the re-synced test-case set.
-     * The
-     * wait keys on a strictly newer solution result than the pre-trigger baseline rather than on the test-case count: the grading pipeline saves the freshly re-synced cases
-     * ({@code saveAll}) strictly before it saves the build's result, so a newer result guarantees the complete set is already committed. This is authoritative for both a fresh
-     * generation (where the count grows as build-gate cases appear) and an adapt/revert that lands on the same count — a count-settle heuristic cannot tell the latter apart from
-     * "not synced yet" and would either race on the stale pre-build set or spin the full timeout. A failed build still saves a result, so the wait also ends promptly on failure.
+     * The wait keys on a newer TEST result for the same tests commit hash. The grading pipeline saves the freshly re-synced cases strictly before it saves that result, so seeing
+     * it guarantees the complete set is already committed while matching production's commit-hash based result association.
      *
      * @param exerciseId the exercise whose test-case set to await
      * @param signal     the pre-trigger baseline (solution participation and its latest result id) identifying the build to wait for
@@ -547,35 +676,13 @@ public class GenerationPersistenceService {
     private Set<ProgrammingExerciseTestCase> awaitBuildProcessedTestCaseSet(long exerciseId, TestsBuildSignal signal) throws InterruptedException {
         long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
         while (System.nanoTime() < deadline) {
-            Long latestResultId = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(signal.solutionParticipationId()).map(Result::getId).orElse(null);
-            if (isNewerResult(latestResultId, signal.baselineLatestResultId())) {
+            if (resultRepository.existsNewerTestResultForParticipationAndCommitHash(signal.solutionParticipationId(), signal.testsCommitHash(), signal.baselineLatestResultId())) {
                 return testCaseRepository.findByExerciseId(exerciseId);
             }
             Thread.sleep(testCaseSyncPoll.toMillis());
         }
         log.warn("Timed out waiting for the tests-build result of generated exercise {}; a build-gate case may keep its weight until reconfigured", exerciseId);
         return testCaseRepository.findByExerciseId(exerciseId);
-    }
-
-    /**
-     * True once the solution participation has a result newer than the pre-trigger baseline (any result when there was none before). Result ids are monotonic, so id order
-     * suffices.
-     */
-    private static boolean isNewerResult(Long latestResultId, Long baselineLatestResultId) {
-        return latestResultId != null && (baselineLatestResultId == null || latestResultId > baselineLatestResultId);
-    }
-
-    /**
-     * Replaces typographic punctuation the model leaks (Unicode dashes {@code U+2010..U+2015}, non-breaking/narrow spaces, smart quotes, ellipsis) with ASCII equivalents. Applied
-     * to
-     * the problem statement and every generated source file. The substitution is safe: code spans are ASCII and no generation-capable language needs these characters in a literal.
-     *
-     * @param text the produced problem statement or source-file content (never {@code null})
-     * @return the text normalised to ASCII
-     */
-    static String normalizeTypography(String text) {
-        return UNICODE_DASHES.matcher(text).replaceAll("-").replace('\u00A0', ' ').replace('\u202F', ' ').replace('\u2018', '\'').replace('\u2019', '\'').replace('\u201C', '"')
-                .replace('\u201D', '"').replace("\u2026", "...");
     }
 
     /**

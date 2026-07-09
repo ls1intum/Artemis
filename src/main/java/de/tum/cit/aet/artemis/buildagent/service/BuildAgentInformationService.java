@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.PreDestroy;
 
@@ -51,7 +52,13 @@ public class BuildAgentInformationService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private final GenerationSessionState generationSessionState;
+    private final AtomicInteger reservedGenerationSandboxSlots = new AtomicInteger();
+
+    /** The per-agent generation sandbox slot cap; {@code 0} means this agent does not host Hyperion generation sandboxes. */
+    private volatile int maxGenerationSandboxSlots;
+
+    @Value("${artemis.continuous-integration.build-agent.run-build-jobs:true}")
+    private boolean runBuildJobs;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -60,12 +67,20 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, GenerationSessionState generationSessionState) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
-        this.generationSessionState = generationSessionState;
+    }
+
+    /**
+     * Updates this agent's generation sandbox slot load. Called by the relay handler on startup and after sandbox create/destroy so admin health information is
+     * refreshed without adding another eager Spring bean to startup.
+     */
+    void updateGenerationSandboxSlotState(int reservedSlots, int maxSlots) {
+        this.reservedGenerationSandboxSlots.set(reservedSlots);
+        this.maxGenerationSandboxSlots = maxSlots;
     }
 
     /**
@@ -152,11 +167,8 @@ public class BuildAgentInformationService {
     }
 
     /**
-     * Re-publishes this agent's information after a change that is unrelated to build-job outcomes (currently: an interactive-sandbox generation session was created or destroyed,
-     * which moves the session count) without disturbing the consecutive-failure bookkeeping. The failure count and the self-paused-due-to-failures status are read back from the
-     * currently stored info and preserved, because {@link #updateLocalBuildAgentInformation(boolean)} passes {@code consecutiveFailures = 0} and would otherwise reset the
-     * displayed
-     * count to zero on every session create/destroy, hiding a genuinely failing agent.
+     * Re-publishes this agent's information after a Hyperion sandbox slot was reserved or released, without disturbing the consecutive-failure bookkeeping owned by the build-job
+     * path.
      *
      * @param isPaused whether the build agent is currently paused (the live pause state from the queue processor)
      */
@@ -180,7 +192,8 @@ public class BuildAgentInformationService {
 
     /**
      * @param preserveConsecutiveFailures when {@code true}, the {@code isPausedDueToFailures} / {@code consecutiveFailures} arguments are ignored and the values already stored for
-     *                                        this agent are re-published instead, so a refresh triggered by an unrelated change (e.g. a generation-session count change) does not
+     *                                        this agent are re-published instead, so a refresh triggered by an unrelated change (e.g. a generation sandbox slot count change) does
+     *                                        not
      *                                        clobber the failure bookkeeping owned by the build-job path.
      */
     private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
@@ -235,13 +248,16 @@ public class BuildAgentInformationService {
         // use ephemeral ports that can change, causing memberAddress filtering to fail
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(buildAgentShortName);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
-                : buildAgentConfiguration.getThreadPoolSize();
+        int maxNumberOfConcurrentBuilds = 0;
+        if (runBuildJobs) {
+            maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
+                    : buildAgentConfiguration.getThreadPoolSize();
+        }
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentStatus status;
         // Use buildAgentShortName as key since that's what we use to store the agent info
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildAgentShortName);
-        // Read the failure bookkeeping (from within the map lock held by the caller) when a refresh must not clobber it, so a session create/destroy leaves the count untouched.
+        // Read the failure bookkeeping (from within the map lock held by the caller) when a sandbox-slot refresh must not clobber it.
         boolean effectivePausedDueToFailures = preserveConsecutiveFailures ? (agent != null && agent.status() == BuildAgentStatus.SELF_PAUSED) : isPausedDueToFailures;
         int effectiveConsecutiveFailures = preserveConsecutiveFailures
                 ? (agent != null && agent.buildAgentDetails() != null ? agent.buildAgentDetails().consecutiveBuildFailures() : 0)
@@ -261,7 +277,7 @@ public class BuildAgentInformationService {
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs, generationSessionState.activeSessions(), generationSessionState.maxSessions());
+                pauseAfterConsecutiveFailedJobs, reservedGenerationSandboxSlots.get(), maxGenerationSandboxSlots);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

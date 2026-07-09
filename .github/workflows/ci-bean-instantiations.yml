@@ -26,9 +26,7 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # Under the buildagent profile this includes two eager (@Lazy(false)) sandbox-relay beans: InteractiveSandboxRelayHandler
-      # (registers its distributed-topic listener at startup) and InteractiveSandboxReaperService (starts orphaned-container cleanup).
-      MAX_INSTANTIATED_BEANS: 143
+      MAX_INSTANTIATED_BEANS: 144
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

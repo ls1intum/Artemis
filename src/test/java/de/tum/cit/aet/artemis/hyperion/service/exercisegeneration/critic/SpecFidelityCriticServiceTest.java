@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -19,6 +20,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -85,6 +87,21 @@ class SpecFidelityCriticServiceTest {
         critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"), tracked::add);
 
         assertThat(tracked).containsExactly(response);
+    }
+
+    /** The live OpenAI-compatible model rejects generic DefaultChatOptions, so the critic must send provider-specific options. */
+    @Test
+    void criticUsesOpenAiChatOptions_soOpenAiModelsAcceptTheRequestOptions() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        critic.critique(UNICODE_BRIEF, "A clean problem statement.", List.of("test_x"));
+
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOf(OpenAiChatOptions.class);
     }
 
     /** An error/edge behaviour described only in prose (no concrete fenced example) is reported as a MISSING_WORKED_EXAMPLE finding. */

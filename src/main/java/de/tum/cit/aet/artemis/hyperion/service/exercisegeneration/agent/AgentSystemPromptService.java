@@ -104,7 +104,9 @@ public class AgentSystemPromptService {
                 in the statement that no test checks is a hole that lets a wrong solution pass — so each one needs its own assertion. This rule is BIDIRECTIONAL: never state a \
                 guarantee, permitted input, or bound you do not test. If the statement says an input is permitted (null elements, an empty string, the value at a stated minimum or \
                 maximum), you MUST write a test that feeds exactly that input and asserts the stated result; if you will not test it, delete the claim from the statement rather than \
-                leave it unbacked. An unbacked claim is a latent bug the differential oracle cannot see: a stack whose statement says "null elements are permitted" but whose pop() is \
+                leave it unbacked. If a rule enumerates an allowed set (for example "only a, e, i, o, u count"), include at least one distractor outside that set (for example a \
+                consonant, space, punctuation, or digit) and assert it is ignored — never widen the solution or tests beyond the enumerated set just to make a mistaken example pass. \
+                An unbacked claim is a latent bug the differential oracle cannot see: a stack whose statement says "null elements are permitted" but whose pop() is \
                 written `if (store.poll() == null) throw ...` conflates a null element with an empty stack, so push(null); pop() wrongly throws — and the oracle accepts it because the \
                 co-authored tests never fed null. Every input the domain admits and every throws/returns promise must map to a test, and every test must map to a stated behaviour. \
                 Every behavioural assertion MUST carry a short, \
@@ -185,7 +187,8 @@ public class AgentSystemPromptService {
                 (no bold-as-heading) and name each class/method/parameter ONE consistent way matching the code. Write all prose, [task] titles, AND all authored SOURCE CODE (identifiers, comments, javadoc and string \
                 literals — including any exception message a student can trigger) in plain ASCII — use the hyphen-minus (`-`), not a typographic or non-breaking dash (U+2011/U+2013/U+2014), \
                 avoid smart quotes/ellipsis, and never emit a non-breaking space (U+00A0/U+202F). The ONLY non-ASCII allowed is a genuine data literal whose meaning requires it (e.g. a \
-                Unicode string the exercise is literally about) and the parenthesised names in a [task] line, which stay byte-identical to the verify output. A typographic dash hiding in a \
+                Unicode string the exercise is literally about) and the parenthesised names in a [task] line, which stay byte-identical to the verify output. Before submit, scan for any character \
+                outside ordinary ASCII in the problem statement, comments, Javadocs, and string literals, and replace it unless it is such a required data literal. A typographic dash hiding in a \
                 comment or exception message looks fine on screen but breaks the moment a student greps or copy-pastes it.
                 - When the exercise targets MULTIPLE classes, an interface, or a design pattern, add EITHER a precise API/signature block OR a syntactically valid @startuml/@enduml class diagram \
                 (bind each member with color:testsColor(exactTestName) using the same verbatim names as your [task] lines). For a single-function exercise do NOT add a diagram — a gratuitous \
@@ -212,6 +215,8 @@ public class AgentSystemPromptService {
                 3a. PLAIN ASCII everywhere, INCLUDING inside [task] titles: only the hyphen-minus `-` (no U+2011/U+2013/U+2014), no smart quotes, ellipsis, or non-breaking space.
                 4. STRUCTURE: exactly one `#` title; a real `## Tasks` section holds the [task] lines (they never dangle under prose); headings descend one level at a time.
                 5. CONTRACT COMPLETE: every identifier a [task] needs (constructor, collaborating class, accessor) is pinned in the contract, not only shown in an example.
+                6. COUNT CONSISTENCY: every number in prose matches the concrete list that follows it - do not say "four methods" when the contract lists three, and do not describe a broader \
+                operation set than the solution and [task]-bound tests actually cover.
 
                 WHERE FILES GO (important — the layout is NOT the language default): the verifier assembles the test project with your assignment checked out into an `assignment/` \
                 directory next to the tests. Before writing code, read the test project's build file (e.g. tests/pom.xml or tests/build.gradle) to see exactly which directories \

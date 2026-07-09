@@ -30,7 +30,7 @@
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.status"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.numberOfCurrentBuildJobs"></th>
-                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.generationSessions"></th>
+                        <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildAgents.generationSandboxSlots"></th>
                         <th scope="col" class="build-agents-column-jobs" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></th>
                         <th scope="col" class="build-agents-column" jhiTranslate="artemisApp.buildQueue.actions"></th>
                     </tr>
@@ -72,7 +72,7 @@
                         </td>
                         <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
                         <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
-                        <td class="build-agents-column">{{ agent.numberOfCurrentGenerationSessions ?? 0 }} / {{ agent.maxNumberOfConcurrentGenerationSessions ?? 0 }}</td>
+                        <td class="build-agents-column">{{ agent.reservedGenerationSandboxSlots ?? 0 }} / {{ agent.maxGenerationSandboxSlots ?? 0 }}</td>
                         <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
                             @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
                                 <div class="running-job-item">

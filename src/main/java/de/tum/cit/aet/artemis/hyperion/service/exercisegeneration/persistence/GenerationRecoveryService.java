@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.V
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Recovers a near-miss exercise-generation run instead of discarding it: persists the best-effort artifact as a <em>draft</em> through the same
- * {@link GenerationPersistenceService} path an accepted run uses, then translates every verification finding (plus the agent's final note) into
+ * Recovers a near-miss exercise-generation run instead of discarding it: persists the best-effort artifact as an isolated <em>draft</em>, then translates every verification
+ * finding (plus the agent's final note) into
  * {@code CONSISTENCY_CHECK} review-comment threads via the manual consistency-check path ({@link ExerciseReviewService#createConsistencyCheckThreads}).
  * <p>
  * Load-bearing invariant: a recovered draft is never presented as accepted — the terminal verdict is always {@code NEEDS_REVIEW} (never {@code SUCCESS})
@@ -77,22 +77,21 @@ public class GenerationRecoveryService {
      * @param reviewThreadCount     the number of review-comment threads created, or {@link #REVIEW_COMMENTS_FAILED} when the draft was persisted but its review comments could not
      *                                  be
      *                                  attached
-     * @param liveExerciseUntouched {@code true} if an adapt draft was diverted to an isolated branch leaving the live exercise byte-identical; {@code false} if committed to the
-     *                                  default branch (a from-scratch target)
-     * @param draftBranch           the isolated branch the draft was diverted to when {@code liveExerciseUntouched} is {@code true}; {@code null} otherwise
+     * @param liveExerciseUntouched {@code true} if the live exercise was left byte-identical
+     * @param draftBranch           the isolated branch the draft was diverted to
      */
     public record RecoveryResult(int reviewThreadCount, boolean liveExerciseUntouched, String draftBranch) {
     }
 
     /**
-     * Recovers a non-accepted generation run: persists the best-effort produced files as a draft (without regressing a working exercise, see
+     * Recovers a non-accepted generation run: persists the best-effort produced files as an isolated draft (see
      * {@link GenerationPersistenceService#persistRecoveryDraft}) and creates review-comment threads describing every verification gap so the instructor can finish the exercise
-     * instead of losing the work.
+     * without publishing unverified output.
      *
-     * @param exercise the target exercise (the draft is committed into its repositories or an isolated branch)
+     * @param exercise the target exercise (the draft is committed to an isolated branch)
      * @param user     the instructor who started the run (commit author and review-comment author)
      * @param outcome  the non-accepted outcome holding the produced files, verification report, and agent note
-     * @param jobId    the generation job id, used to name the isolated draft branch for an adapt target
+     * @param jobId    the generation job id, used to name the isolated draft branch
      * @return the recovery result (review-thread count and whether the live exercise was left untouched)
      * @throws RuntimeException only when the persist itself fails (nothing durable was saved); the caller maps that to {@code PARTIAL}
      */

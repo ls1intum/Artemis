@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 
 /**
- * A long-lived interactive execution sandbox: a warm Docker container an agentic exercise-generation session drives through many cheap operations (read a file, write a file, run a
+ * A long-lived interactive execution sandbox: a warm Docker container an agentic exercise-Hyperion sandbox drives through many cheap operations (read a file, write a file, run a
  * command), rather than the fire-and-forget single-script model of a regular CI build.
  * <p>
  * The primitive decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation
@@ -19,12 +19,24 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 public interface InteractiveSandbox {
 
     /**
-     * Creates and starts a warm container for a generation session.
+     * Creates and starts a warm container for a Hyperion sandbox.
      *
      * @param spec the container image, resource limits and seed inputs for the session
      * @return an opaque session handle (the container id) used by every subsequent operation
      */
     String createSession(SandboxSessionSpec spec);
+
+    /**
+     * Creates a fresh verification session for an already-running generation loop. Implementations with remote placement can use the loop handle to keep the verifier on the same
+     * agent while reserving loop capacity up front; local implementations can just create another local session.
+     *
+     * @param spec          the container image, resource limits and seed inputs for the session
+     * @param loopSessionId the already-running agent-loop session handle
+     * @return an opaque session handle used by every subsequent operation
+     */
+    default String createVerificationSession(SandboxSessionSpec spec, String loopSessionId) {
+        return createSession(spec);
+    }
 
     /**
      * Runs a command inside the session container; it is executed without a shell unless the caller passes {@code sh -c ...}, and stdout/stderr are truncated to a bounded size so

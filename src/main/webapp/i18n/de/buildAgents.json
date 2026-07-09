@@ -8,7 +8,7 @@
             "memberAddress": "Agentenadresse",
             "maxNumberOfConcurrentBuildJobs": "Max",
             "numberOfCurrentBuildJobs": "Aktuell",
-            "generationSessions": "KI-Sitzungen",
+            "generationSandboxSlots": "Hyperion-Sandbox-Slots",
             "runningBuildJobs": "Laufende Build Jobs",
             "status": "Status",
             "startDate": "Startdatum",

@@ -10,6 +10,7 @@
             "value": "Value",
             "error": "Error",
             "jobs": "Jobs:",
+            "generationSandboxSlots": "Hyperion sandbox slots:",
             "running": "Running:",
             "version": "Version:",
             "started": "Started:",

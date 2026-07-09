@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
@@ -28,6 +31,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.exception.DockerException;
@@ -101,16 +106,37 @@ class InteractiveSandboxRelayRoundTripTest {
         client.registerResponseListener();
 
         queueProcessingService = mock(SharedQueueProcessingService.class);
-        handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, queueProcessingService, new GenerationSessionState(), mock(BuildAgentInformationService.class));
+        handler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, queueProcessingService, mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
-        ReflectionTestUtils.setField(handler, "maxConcurrentSessions", 2);
+        ReflectionTestUtils.setField(handler, "maxGenerationSandboxSlots", 2);
         handler.registerRequestListener();
+    }
+
+    private static ApplicationContext applicationContext(InteractiveSandboxService sandbox) {
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(InteractiveSandboxService.class)).thenReturn(sandbox);
+        return applicationContext;
     }
 
     @AfterEach
     void tearDown() {
         handler.shutdown();
         client.removeResponseListener();
+    }
+
+    @Test
+    void springSelectsRemoteClientForHyperionOnCoLocatedCoreBuildAgentNodes_soCapacityAndDrainStayOnRelayPath() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles(PROFILE_CORE, PROFILE_LOCALCI, PROFILE_BUILDAGENT);
+            context.registerBean(DistributedDataAccessService.class, () -> clientAccess);
+            context.registerBean(de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration.class, () -> mock(de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration.class));
+            context.register(RemoteInteractiveSandboxClient.class, InteractiveSandboxService.class);
+
+            context.refresh();
+
+            assertThat(context.getBean(InteractiveSandbox.class)).isInstanceOf(RemoteInteractiveSandboxClient.class);
+            assertThat(context.getBean(InteractiveSandboxService.class)).isNotNull();
+        }
     }
 
     @Test
@@ -139,14 +165,71 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void createSession_throwsWhenNoAgentIsConfiguredToHostSessions() {
-        // Every agent has generation hosting disabled (max sessions 0): none is a candidate, so placement fails fast with an actionable message instead of broadcasting a request
+        // Every agent has generation hosting disabled (max slots 0): none is a candidate, so placement fails fast with an actionable message instead of broadcasting a request
         // no
         // agent will ever answer.
         when(clientAccess.getBuildAgentInformation())
                 .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5701", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0)));
 
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpec("some-image", null)))
-                .withMessageContaining("No build agent is configured to host");
+                .withMessageContaining("No build agent has two free Hyperion generation sandbox slots");
+    }
+
+    @Test
+    void createSessionRequiresTwoFreeSlotsForAuthoringAndVerificationSandboxes() {
+        when(clientAccess.getBuildAgentInformation()).thenReturn(List
+                .of(new BuildAgentInformation(new BuildAgentDTO(AGENT_SHORT_NAME, "127.0.0.1:5701", AGENT_SHORT_NAME), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 1, 2)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(new SandboxSessionSpec("some-image", null)))
+                .withMessageContaining("two free Hyperion generation sandbox slots");
+        verify(localSandbox, never()).createSession(any());
+    }
+
+    @Test
+    void createVerificationSession_usesTheLoopAgentReservedSlot() {
+        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container");
+
+        String loopHandle = client.createSession(new SandboxSessionSpec("some-image", null));
+        String verifyHandle = client.createVerificationSession(new SandboxSessionSpec("some-image", null), loopHandle);
+
+        assertThat(loopHandle).isEqualTo(AGENT_SHORT_NAME + "::loop-container");
+        assertThat(verifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container");
+        verify(localSandbox, times(2)).createSession(any());
+    }
+
+    @Test
+    void createVerificationSession_requiresAnOwnedAuthoringSandboxReservation() {
+        assertThatExceptionOfType(LocalCIException.class)
+                .isThrownBy(() -> client.createVerificationSession(new SandboxSessionSpec("some-image", null), AGENT_SHORT_NAME + "::missing-loop-container"))
+                .withMessageContaining("owned authoring sandbox");
+
+        verify(localSandbox, never()).createSession(any());
+    }
+
+    @Test
+    void createVerificationSession_consumesTheReservedVerificationSlotOnlyOnce() {
+        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container", "duplicate-verify-container");
+
+        String loopHandle = client.createSession(new SandboxSessionSpec("some-image", null));
+        String verifyHandle = client.createVerificationSession(new SandboxSessionSpec("some-image", null), loopHandle);
+
+        assertThat(verifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container");
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createVerificationSession(new SandboxSessionSpec("some-image", null), loopHandle))
+                .withMessageContaining("owned authoring sandbox");
+        verify(localSandbox, times(2)).createSession(any());
+    }
+
+    @Test
+    void createVerificationSession_canReuseTheReservedSlotAfterDestroyingThePreviousVerifier() {
+        when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container-1", "verify-container-2");
+
+        String loopHandle = client.createSession(new SandboxSessionSpec("some-image", null));
+        String firstVerifyHandle = client.createVerificationSession(new SandboxSessionSpec("some-image", null), loopHandle);
+        client.destroySession(firstVerifyHandle);
+        String secondVerifyHandle = client.createVerificationSession(new SandboxSessionSpec("some-image", null), loopHandle);
+
+        assertThat(secondVerifyHandle).isEqualTo(AGENT_SHORT_NAME + "::verify-container-2");
+        verify(localSandbox, times(3)).createSession(any());
     }
 
     @Test
@@ -198,6 +281,14 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(entry.getName()).isEqualTo("result.txt");
             assertThat(new String(extracted.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("produced output");
         }
+    }
+
+    @Test
+    void copyOut_rejectsLinkedEntriesInsteadOfNormalizingThemToRegularFiles() throws Exception {
+        byte[] tar = tarWithSymlink("leak", "/etc/passwd");
+        when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("linked");
     }
 
     @Test
@@ -269,14 +360,23 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void copyOut_rejectsArchiveWhoseHeadersExceedRelayLimit() {
+        byte[] headerOnlyTar = tarWithEmptyDirectories((RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES / 512) + 4);
+        when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(headerOnlyTar)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("relay limit");
+    }
+
+    @Test
     void secondCreate_atCapacity_isRefused() {
-        try (RelayHarness harness = newHarness(1)) {
+        try (RelayHarness harness = newHarness(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
-            // The first create holds the single permit; the second must be refused with a capacity failure rather than queued or silently starving CI.
+            // The first generation loop reserves both its authoring and verification sandbox slots; the second must be refused with a capacity failure rather than self-starving
+            // later.
             harness.client().createSession(new SandboxSessionSpec("some-image", null));
 
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
-                    .withMessageContaining("session capacity");
+                    .withMessageContaining("generation sandbox slot capacity");
         }
     }
 
@@ -291,35 +391,51 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void generationHostingDisabled_whenCapIsZero_doesNotEvenSubscribe() {
-        // Opt-in placement: an agent with the cap at 0 never hosts a session, so it must not subscribe to the request topic or allocate a worker pool.
-        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(localSandbox, mock(DistributedDataAccessService.class), queueProcessingService,
-                new GenerationSessionState(), mock(BuildAgentInformationService.class));
+        // Opt-in placement: an agent with the cap at 0 never hosts a sandbox, so it must not subscribe to the request topic or allocate a worker pool.
+        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), mock(DistributedDataAccessService.class),
+                queueProcessingService, mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
-        ReflectionTestUtils.setField(disabled, "maxConcurrentSessions", 0);
+        ReflectionTestUtils.setField(disabled, "maxGenerationSandboxSlots", 0);
 
         disabled.registerRequestListener();
 
         assertThat(ReflectionTestUtils.getField(disabled, "requestListenerId")).isNull();
-        assertThat(ReflectionTestUtils.getField(disabled, "sessionPermits")).isNull();
+        assertThat(ReflectionTestUtils.getField(disabled, "sandboxSlotPermits")).isNull();
         assertThat(ReflectionTestUtils.getField(disabled, "workerExecutor")).isNull();
     }
 
     @Test
+    void startupCleanupFailure_disablesHostingWithoutSubscribing() {
+        InteractiveSandboxService sandbox = mock(InteractiveSandboxService.class);
+        when(sandbox.removeSessionsFromPreviousProcess()).thenThrow(new LocalCIException("cleanup failed"));
+        BuildAgentInformationService informationService = mock(BuildAgentInformationService.class);
+        InteractiveSandboxRelayHandler disabled = new InteractiveSandboxRelayHandler(applicationContext(sandbox), mock(DistributedDataAccessService.class), queueProcessingService,
+                informationService);
+        ReflectionTestUtils.setField(disabled, "buildAgentShortName", AGENT_SHORT_NAME);
+        ReflectionTestUtils.setField(disabled, "maxGenerationSandboxSlots", 2);
+
+        disabled.registerRequestListener();
+
+        assertThat(ReflectionTestUtils.getField(disabled, "requestListenerId")).isNull();
+        assertThat(ReflectionTestUtils.getField(disabled, "workerExecutor")).isNull();
+        verify(informationService).updateGenerationSandboxSlotState(2, 2);
+    }
+
+    @Test
     void redundantDestroy_releasesPermitExactlyOnce() {
-        try (RelayHarness harness = newHarness(1)) {
+        try (RelayHarness harness = newHarness(2)) {
             when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
             String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
 
             // Two DESTROYs for the same owned session, each a distinct correlation id (so the idempotency dedup does NOT swallow the second): the permit is released exactly once,
-            // gated by ownedSessions.remove. If the second destroy wrongly released a second permit, the cap-1 semaphore would then hold two permits and BOTH creates below
-            // succeed.
+            // gated by ownedSandboxSlotPermits.remove. If the second destroy wrongly released permits again, both creates below would succeed.
             harness.client().destroySession(handle);
             harness.client().destroySession(handle);
 
             String reCreated = harness.client().createSession(new SandboxSessionSpec("some-image", null));
             assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
-                    .withMessageContaining("session capacity");
+                    .withMessageContaining("generation sandbox slot capacity");
         }
     }
 
@@ -340,12 +456,12 @@ class InteractiveSandboxRelayRoundTripTest {
         failoverClient.registerResponseListener();
 
         InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
-        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
-        // Drain agent-1's single permit so its CREATE handler declines with the capacity marker (as if a concurrent session already holds it).
-        ((Semaphore) ReflectionTestUtils.getField(handler1, "sessionPermits")).acquireUninterruptibly();
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 2, requests, responses, payloads, sandbox1);
+        // Drain agent-1's loop+verifier permits so its CREATE handler declines with the capacity marker (as if a concurrent run already holds them).
+        ((Semaphore) ReflectionTestUtils.getField(handler1, "sandboxSlotPermits")).acquireUninterruptibly(2);
         InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
         when(sandbox2.createSession(any())).thenReturn("container-2");
-        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 2, requests, responses, payloads, sandbox2);
 
         try {
             String handle = failoverClient.createSession(new SandboxSessionSpec("some-image", null));
@@ -377,10 +493,10 @@ class InteractiveSandboxRelayRoundTripTest {
 
         InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
         when(sandbox1.createSession(any())).thenThrow(new DockerException("daemon momentarily overloaded", 500));
-        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 2, requests, responses, payloads, sandbox1);
         InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
         when(sandbox2.createSession(any())).thenReturn("container-2");
-        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 2, requests, responses, payloads, sandbox2);
 
         try {
             String handle = failoverClient.createSession(new SandboxSessionSpec("some-image", null));
@@ -415,9 +531,9 @@ class InteractiveSandboxRelayRoundTripTest {
 
         InteractiveSandboxService sandbox1 = mock(InteractiveSandboxService.class);
         when(sandbox1.createSession(any())).thenThrow(new NotFoundException("no such image: bogus-image"));
-        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 1, requests, responses, payloads, sandbox1);
+        InteractiveSandboxRelayHandler handler1 = sharedHandler("agent-1", 2, requests, responses, payloads, sandbox1);
         InteractiveSandboxService sandbox2 = mock(InteractiveSandboxService.class);
-        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 1, requests, responses, payloads, sandbox2);
+        InteractiveSandboxRelayHandler handler2 = sharedHandler("agent-2", 2, requests, responses, payloads, sandbox2);
 
         try {
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> failoverClient.createSession(new SandboxSessionSpec("bogus-image", null)))
@@ -439,10 +555,10 @@ class InteractiveSandboxRelayRoundTripTest {
         when(access.getHyperionSandboxRequestsTopic()).thenReturn(requests);
         when(access.getHyperionSandboxResponsesTopic()).thenReturn(responses);
         when(access.getHyperionSandboxPayloads()).thenReturn(payloads);
-        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(sandbox, access, mock(SharedQueueProcessingService.class), new GenerationSessionState(),
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(applicationContext(sandbox), access, mock(SharedQueueProcessingService.class),
                 mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", shortName);
-        ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxSessions);
+        ReflectionTestUtils.setField(handler, "maxGenerationSandboxSlots", maxSessions);
         handler.registerRequestListener();
         return handler;
     }
@@ -460,7 +576,7 @@ class InteractiveSandboxRelayRoundTripTest {
         }
     }
 
-    private static RelayHarness newHarness(int maxConcurrentSessions) {
+    private static RelayHarness newHarness(int maxGenerationSandboxSlots) {
         LocalTopic<SandboxOpRequest> requests = new LocalTopic<>();
         LocalTopic<SandboxOpResponse> responses = new LocalTopic<>();
 
@@ -477,10 +593,10 @@ class InteractiveSandboxRelayRoundTripTest {
         RemoteInteractiveSandboxClient client = new RemoteInteractiveSandboxClient(clientAccess);
         client.registerResponseListener();
 
-        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(localSandbox, handlerAccess, mock(SharedQueueProcessingService.class),
-                new GenerationSessionState(), mock(BuildAgentInformationService.class));
+        InteractiveSandboxRelayHandler handler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, mock(SharedQueueProcessingService.class),
+                mock(BuildAgentInformationService.class));
         ReflectionTestUtils.setField(handler, "buildAgentShortName", AGENT_SHORT_NAME);
-        ReflectionTestUtils.setField(handler, "maxConcurrentSessions", maxConcurrentSessions);
+        ReflectionTestUtils.setField(handler, "maxGenerationSandboxSlots", maxGenerationSandboxSlots);
         handler.registerRequestListener();
         return new RelayHarness(client, handler, localSandbox);
     }
@@ -499,6 +615,35 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private static byte[] tarWithEntryOfSize(String name, int size) {
         return tarWithBody(name, new byte[size]);
+    }
+
+    private static byte[] tarWithSymlink(String name, String target) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            TarArchiveEntry entry = new TarArchiveEntry(name, TarArchiveEntry.LF_SYMLINK);
+            entry.setLinkName(target);
+            tar.putArchiveEntry(entry);
+            tar.closeArchiveEntry();
+            tar.finish();
+            return out.toByteArray();
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static byte[] tarWithEmptyDirectories(int count) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            for (int i = 0; i < count; i++) {
+                TarArchiveEntry entry = new TarArchiveEntry("d" + i + "/");
+                tar.putArchiveEntry(entry);
+                tar.closeArchiveEntry();
+            }
+            tar.finish();
+            return out.toByteArray();
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private static byte[] tarWithBody(String name, byte[] body) {

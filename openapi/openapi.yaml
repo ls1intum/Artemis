@@ -411,10 +411,10 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise:
     post:
-      tags: [hyperion-code-generation]
-      operationId: generateCode
+      tags: [hyperion-exercise-generation]
+      operationId: generateExercise
       parameters:
       - name: exerciseId
         in: path
@@ -423,14 +423,81 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CodeGenerationRequest'}
+            schema: {$ref: '#/components/schemas/ExerciseGenerationRequest'}
         required: true
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+        '400': {description: Bad Request}
+        '409': {description: Conflict}
+  /api/hyperion/programming-exercises/generation/supported-languages:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getSupportedGenerationLanguages
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+              schema:
+                type: array
+                items: {type: string}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getExerciseGenerationStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+        '204': {description: No Content}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
+    delete:
+      tags: [hyperion-exercise-generation]
+      operationId: cancelExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: jobId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
+        '404': {description: Not Found}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert-adaptation:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: revertAdaptation
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseAdaptationRevertResult'}
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseAdaptationRevertResult'}
+        '404': {description: Not Found}
   /api/quiz/courses/{courseId}/training-questions:
     post:
       tags: [quiz-training]
@@ -1374,13 +1441,91 @@ components:
         spotNr: {type: integer, format: int32}
         width: {type: integer, format: int32}
         invalid: {type: boolean}
-    CodeGenerationJobStart:
+    ExerciseGenerationJobStart:
       type: object
+      required: [jobId]
       properties:
         jobId: {type: string}
-        repositoryType:
+    ExerciseGenerationRequest:
+      type: object
+      properties:
+        mode:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [GENERATE, ADAPT]
+        prompt: {type: string, maxLength: 8000}
+        selectedFeedbackThreadIds:
+          type: array
+          maxItems: 25
+          items: {type: integer, format: int64}
+    ExerciseGenerationStatus:
+      type: object
+      required: [jobId, running, events, fileSnapshots]
+      properties:
+        jobId: {type: string}
+        running: {type: boolean}
+        mode:
+          type: string
+          enum: [GENERATE, ADAPT]
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationEvent'}
+        fileSnapshots:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationFileSnapshot'}
+    ExerciseGenerationEvent:
+      type: object
+      required: [type, timestamp]
+      properties:
+        type:
+          type: string
+          enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
+        message: {type: string}
+        completionStatus:
+          type: string
+          enum: [SUCCESS, NEEDS_REVIEW, PARTIAL]
+        verdict: {$ref: '#/components/schemas/ExerciseGenerationVerdict'}
+        liveExerciseChanged: {type: boolean}
+        timestamp: {type: string, format: date-time}
+    ExerciseGenerationVerdict:
+      type: object
+      required: [accepted, solutionPassed, templateFailed, testCount, reasons]
+      properties:
+        accepted: {type: boolean}
+        solutionPassed: {type: boolean}
+        templateFailed: {type: boolean}
+        testCount: {type: integer, format: int32}
+        reasons:
+          type: array
+          items: {type: string}
+    ExerciseGenerationFileSnapshot:
+      type: object
+      required: [type, path, repo, action, content, sha256, bytes, truncated, turn,
+        timestamp]
+      properties:
+        type: {type: string}
+        path: {type: string}
+        repo:
+          type: string
+          enum: [solution, template, tests, other]
+        action:
+          type: string
+          enum: [create, edit]
+        content: {type: string}
+        sha256: {type: string}
+        bytes: {type: integer, format: int64}
+        truncated: {type: boolean}
+        turn: {type: integer, format: int32}
+        timestamp: {type: string, format: date-time}
+    ExerciseAdaptationRevertResult:
+      type: object
+      required: [fullyReverted, revertedRepositories]
+      properties:
+        fullyReverted: {type: boolean}
+        revertedRepositories:
+          type: array
+          items:
+            type: string
+            enum: [exercise, solution, tests, auxiliary, user]
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -1804,17 +1949,6 @@ components:
           additionalProperties: {}
           description: Additional type-specific metadata such as courseId, dueDate,
             or points
-    CodeGenerationRequest:
-      type: object
-      properties:
-        repositoryType:
-          type: string
-          enum: [exercise, solution, tests, auxiliary, user]
-        checkOnly: {type: boolean}
-        initialAutoGeneration: {type: boolean}
-        selectedFeedbackThreadIds:
-          type: array
-          items: {type: integer, format: int64}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message

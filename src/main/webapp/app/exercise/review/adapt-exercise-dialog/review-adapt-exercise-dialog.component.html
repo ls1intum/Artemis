@@ -23,18 +23,16 @@
                     <div class="review-adapt-exercise-dialog__finding-description">{{ finding.description }}</div>
                     @if (finding.suggestedFix; as fix) {
                         @if (fix.replacementCode) {
-                            <!-- A replacement: show the current code → the suggested code as a compact before→after so the instructor can see what actually changes. -->
                             <div class="review-adapt-exercise-dialog__finding-fix">
-                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                                <small class="review-adapt-exercise-dialog__finding-fix-label" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
                                 @if (fix.expectedCode) {
                                     <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
                                 }
                                 <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--added">{{ fix.replacementCode }}</pre>
                             </div>
                         } @else if (fix.expectedCode) {
-                            <!-- A pure deletion: render the code to remove under a "Remove" label (NOT "Suggested fix"), so we never show the deleted code as if it were the fix. -->
                             <div class="review-adapt-exercise-dialog__finding-fix">
-                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
+                                <small class="review-adapt-exercise-dialog__finding-fix-label" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
                                 <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
                             </div>
                         }
@@ -52,6 +50,7 @@
         id="adaptExerciseInstructions"
         class="review-adapt-exercise-dialog__instructions"
         rows="3"
+        [attr.maxlength]="maxInstructionsLength"
         [placeholder]="(isFreeMode ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate"
         [ngModel]="instructions()"
         (ngModelChange)="instructions.set($event)"
@@ -62,7 +61,7 @@
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
         </button>
         <button pButton type="button" [disabled]="confirmDisabled()" (click)="confirm()">
-            <fa-icon [icon]="facArtemisIntelligence" class="me-1" />
+            <fa-icon [icon]="facArtemisIntelligence" class="review-adapt-exercise-dialog__action-icon" />
             {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
         </button>
     </div>

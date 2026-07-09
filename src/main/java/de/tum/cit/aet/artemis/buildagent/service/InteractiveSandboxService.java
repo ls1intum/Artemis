@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Capability;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.StreamType;
@@ -40,13 +42,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
- * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container an exercise-generation session drives through many cheap operations.
+ * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container an exercise-Hyperion sandbox drives through many cheap operations.
  * <p>
  * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()} so isolation matches a CI build container (same CPU/memory/PID limits; runs untrusted
  * code but holds no credentials or database access), and applies a small, build-safe hardening delta on top ({@code no-new-privileges} and dropping the {@code NET_RAW}
- * capability). Network egress is intentionally left at the build-agent default: instructors are trusted and the generated code must resolve build dependencies exactly as a
- * normal CI build does. Unlike the regular build path it captures and returns each command's stdout/stderr as agent observations. Containers carry the
- * {@value #SANDBOX_CONTAINER_PREFIX} prefix so {@link InteractiveSandboxReaperService} never reaps a live session as if it were a CI build container.
+ * capability). A session spec may further restrict Docker networking; Hyperion generation uses {@code network=none} by default so generated code cannot reach the network.
+ * Unlike the regular build path it captures and returns each command's stdout/stderr as agent observations. Containers carry the {@value #SANDBOX_CONTAINER_PREFIX} prefix so
+ * {@link InteractiveSandboxReaperService} never reaps a live session as if it were a CI build container.
  */
 @Lazy
 @Service
@@ -57,6 +59,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     /** Name prefix for sandbox containers, distinct from the CI {@code local-ci-} prefix so each reaper matches only its own containers. */
     public static final String SANDBOX_CONTAINER_PREFIX = "hyperion-gen-";
+
+    @Value("${artemis.continuous-integration.build-agent.short-name:build-agent}")
+    private String buildAgentShortName;
 
     private static final String WORKING_DIRECTORY = "/workspace";
 
@@ -95,15 +100,54 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         lastActivityByContainerId.remove(containerId);
     }
 
+    /**
+     * Removes sandbox containers that predate this JVM before the relay advertises fresh capacity. A restarted build agent cannot reconstruct the in-memory two-slot reservation
+     * state for old loop/verifier containers, and any core-side session handle died with the old process anyway, so fail closed by deleting leftovers before accepting new work.
+     *
+     * @return the number of leftover containers removed
+     */
+    int removeSessionsFromPreviousProcess() {
+        if (!buildAgentConfiguration.isDockerAvailable()) {
+            throw new LocalCIException("Docker is not available. Cannot reconcile previous interactive sandbox sessions.");
+        }
+        DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
+        List<Container> previousSessions = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(this::isOwnSandboxContainer).toList();
+        int removed = 0;
+        RuntimeException firstFailure = null;
+        for (Container container : previousSessions) {
+            try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
+                removeCommand.exec();
+                forgetActivity(container.getId());
+                removed++;
+            }
+            catch (NotFoundException ignored) {
+                forgetActivity(container.getId());
+            }
+            catch (RuntimeException e) {
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+                log.warn("Failed to remove previous interactive sandbox session {} during startup reconciliation: {}", container.getId(), e.getMessage());
+            }
+        }
+        if (firstFailure != null) {
+            throw new LocalCIException("Could not reconcile previous interactive sandbox sessions before advertising capacity.", firstFailure);
+        }
+        return removed;
+    }
+
     @Override
     public String createSession(SandboxSessionSpec spec) {
         if (!buildAgentConfiguration.isDockerAvailable()) {
             throw new LocalCIException("Docker is not available. Cannot create interactive sandbox session.");
         }
-        String containerName = SANDBOX_CONTAINER_PREFIX + UUID.randomUUID();
+        String containerName = containerNamePrefix() + UUID.randomUUID();
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         HostConfig hostConfig = hardenedHostConfig();
         if (spec.runConfig() != null && spec.runConfig().network() != null && !spec.runConfig().network().isBlank()) {
+            if (!"none".equals(spec.runConfig().network())) {
+                throw new LocalCIException("Interactive sandbox sessions only allow Docker network mode 'none'.");
+            }
             hostConfig.withNetworkMode(spec.runConfig().network());
         }
         try (final var createCommand = dockerClient.createContainerCmd(spec.image())) {
@@ -133,6 +177,23 @@ public class InteractiveSandboxService implements InteractiveSandbox {
      */
     private HostConfig hardenedHostConfig() {
         return buildAgentConfiguration.hostConfig().withAutoRemove(false).withSecurityOpts(List.of("no-new-privileges")).withCapDrop(Capability.NET_RAW);
+    }
+
+    private String containerNamePrefix() {
+        return SANDBOX_CONTAINER_PREFIX + sanitizedBuildAgentShortName() + "-";
+    }
+
+    boolean isOwnSandboxContainer(Container container) {
+        if (container.getNames() == null) {
+            return false;
+        }
+        String prefix = "/" + containerNamePrefix();
+        return List.of(container.getNames()).stream().anyMatch(name -> name.startsWith(prefix));
+    }
+
+    private String sanitizedBuildAgentShortName() {
+        String shortName = buildAgentShortName == null || buildAgentShortName.isBlank() ? "build-agent" : buildAgentShortName;
+        return shortName.replaceAll("[^a-zA-Z0-9_.-]", "-");
     }
 
     @Override
@@ -176,6 +237,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     latch.countDown();
                 }
             });
+            boolean destroySessionAfterTimeout = false;
             try {
                 boolean completed;
                 try {
@@ -187,10 +249,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 }
 
                 if (!completed) {
-                    // Budget exceeded: return partial output with the timeout flag so the agent can react rather than block. The underlying `docker exec` process is not killed
-                    // here
-                    // and keeps running (consuming the container's capped resources) until the session is destroyed or the container is reaped; acceptable under the
-                    // trusted-instructor model. Only the client-side stream is released, by the finally below closing the callback.
+                    destroySessionAfterTimeout = true;
+                    destroySession(sessionId);
                     return new SandboxExecResult(-1, truncateTail(stdout.toString()), truncateTail(stderr.toString()), true);
                 }
 
@@ -208,9 +268,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 return new SandboxExecResult(exitCode, truncateTail(stdout.toString()), truncateTail(stderr.toString()), false);
             }
             finally {
-                // Re-stamp on completion so a single long op (e.g. a ~10-min verify build) refreshes activity at its end, not only its start, keeping the reaper's idle window
-                // measured from when work actually stopped.
-                markActive(sessionId);
+                if (!destroySessionAfterTimeout) {
+                    markActive(sessionId);
+                }
                 // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.
                 closeQuietly(callback);
             }

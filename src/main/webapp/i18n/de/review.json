@@ -33,7 +33,7 @@
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
             "threadOutdated": "Veraltet",
-            "threadSelectedForCodeGeneration": "Für Code-Generierung ausgewählt",
+            "threadSelectedForCodeGeneration": "Für Anpassung ausgewählt",
             "threadConsistencyIssue": "Konsistenzproblem",
             "threadConsistencySeverity": "{{severity}} Schweregrad",
             "applyInlineFix": "Änderungen anwenden",

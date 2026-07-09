@@ -18,6 +18,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests the tar pack/unpack used to move the workspace in and out of the sandbox, in particular that large files survive the round trip (the per-file shell read it replaced
@@ -36,6 +37,17 @@ class WorkspaceArchiveTest {
             Map<String, String> read = WorkspaceArchive.readTar(tar, "solution");
             assertThat(read).containsOnlyKeys("src/Calculator.java", "build.gradle");
             assertThat(read.get("src/Calculator.java")).isEqualTo("public class Calculator {}\n");
+        }
+    }
+
+    @Test
+    void readTar_rejectsEntriesOutsideExpectedPrefix() throws Exception {
+        Map<String, String> files = new LinkedHashMap<>();
+        files.put("solution/A.java", "class A {}\n");
+        files.put("other/B.java", "class B {}\n");
+
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, "solution"));
         }
     }
 
@@ -188,6 +200,58 @@ class WorkspaceArchiveTest {
         assertThat(sawBinary).as("binary jar bytes preserved").isTrue();
         assertThat(gradlewExecutable).as("gradlew keeps its executable bit").isTrue();
         assertThat(sawGitConfig).as(".git metadata excluded").isFalse();
+    }
+
+    @Test
+    void buildWorkspaceTar_skipsSymlinksInsteadOfFollowingThem(@TempDir Path repo, @TempDir Path outside) throws Exception {
+        Path secret = outside.resolve("secret.txt");
+        FileUtils.writeStringToFile(secret.toFile(), "host secret", StandardCharsets.UTF_8);
+        Files.createSymbolicLink(repo.resolve("leak.txt"), secret);
+        FileUtils.writeStringToFile(repo.resolve("A.java").toFile(), "class A {}\n", StandardCharsets.UTF_8);
+
+        byte[] packed;
+        try (var in = WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo))) {
+            packed = in.readAllBytes();
+        }
+
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(packed))) {
+            Map<String, String> read = WorkspaceArchive.readTar(tar, "");
+            assertThat(read).containsEntry("solution/A.java", "class A {}\n").doesNotContainKey("solution/leak.txt");
+            assertThat(read.values()).doesNotContain("host secret");
+        }
+    }
+
+    @Test
+    void buildWorkspaceTar_rejectsOversizedSeedFileBeforePacking(@TempDir Path repo) throws Exception {
+        FileUtils.writeByteArrayToFile(repo.resolve("Huge.java").toFile(), new byte[(int) WorkspaceArchive.MAX_FILE_BYTES + 1]);
+
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class)
+                .isThrownBy(() -> WorkspaceArchive.buildWorkspaceTarStream(Map.of(), Map.of("solution", repo)));
+    }
+
+    @Test
+    void readWorkingTreeTextFiles_skipsSymlinksInsteadOfSnapshottingTheirTargets(@TempDir Path repo, @TempDir Path outside) throws Exception {
+        Path secret = outside.resolve("secret.txt");
+        FileUtils.writeStringToFile(secret.toFile(), "host secret", StandardCharsets.UTF_8);
+        Files.createSymbolicLink(repo.resolve("leak.txt"), secret);
+        FileUtils.writeStringToFile(repo.resolve("Test.java").toFile(), "class Test {}\n", StandardCharsets.UTF_8);
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> files = (Map<String, String>) ReflectionTestUtils.invokeMethod(GenerationWorkspaceService.class, "readWorkingTreeTextFiles", repo);
+
+        assertThat(files).containsEntry("Test.java", "class Test {}\n").doesNotContainKey("leak.txt");
+        assertThat(files.values()).doesNotContain("host secret");
+    }
+
+    @Test
+    void readWorkingTreeTextFiles_skipsOversizedTextFiles(@TempDir Path repo) throws Exception {
+        FileUtils.writeByteArrayToFile(repo.resolve("Huge.java").toFile(), new byte[(int) WorkspaceArchive.MAX_FILE_BYTES + 1]);
+        FileUtils.writeStringToFile(repo.resolve("Test.java").toFile(), "class Test {}\n", StandardCharsets.UTF_8);
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> files = (Map<String, String>) ReflectionTestUtils.invokeMethod(GenerationWorkspaceService.class, "readWorkingTreeTextFiles", repo);
+
+        assertThat(files).containsEntry("Test.java", "class Test {}\n").doesNotContainKey("Huge.java");
     }
 
     private static boolean assertArrayEquals(byte[] expected, byte[] actual) {

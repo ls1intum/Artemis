@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 /**
  * The explicit intent of an agentic whole-exercise run, chosen by the client and never inferred from the exercise's contents.
  * <p>
- * A single endpoint and a single engine drive both modes; the mode only selects the seed and prompt framing (and, for {@link #ADAPT}, relaxes the tests-repository immutability
- * gate so an existing test suite can be revised). Keeping it explicit avoids a heuristic that would guess "adapt" from a present problem statement — a from-scratch
+ * A single endpoint and a single engine drive both modes; the mode selects the seed, prompt framing, and adaptation-specific destructive-rewrite guardrails. Keeping it explicit
+ * avoids a heuristic that would guess "adapt" from a present problem statement — a from-scratch
  * {@link #GENERATE} run may legitimately start against a drafted statement.
  */
 @JsonFormat(shape = JsonFormat.Shape.STRING)

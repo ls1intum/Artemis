@@ -97,12 +97,12 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void harness_acceptsChangesToNonLayoutPlaceholderLines() {
+    void harness_rejectsChangesToNonLayoutPlaceholderLines() {
         // The real Dart-class case: the agent/scaffold substituted a NON-layout creation-time placeholder (${packageName} -> test_package) that the sandbox does not substitute.
-        // This is not build-layout, so it must NOT be flagged — only the hs-source-dirs/path lines are enforced.
+        // Even this is rejected now: harness files are graded verbatim, so only CI checkout-placeholder substitution is normalized.
         String seedPubspec = "name: ${packageName}\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
         String producedPubspec = "name: test_package\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n";
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("pubspec.yaml", seedPubspec), map("pubspec.yaml", producedPubspec), false)).isEmpty();
+        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("pubspec.yaml", seedPubspec), map("pubspec.yaml", producedPubspec), false)).hasSize(1);
     }
 
     @Test
@@ -151,6 +151,230 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isHarnessFile("test/fixtures/data.yml")).isFalse();
     }
 
+    // --- Java/Ares convention gate ---
+
+    @Test
+    void javaAresConvention_acceptsArtemisStyleJavaTests() {
+        String pom = aresPom();
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class StackTest {
+
+                    @Test
+                    @StrictTimeout(1)
+                    void pushesAndPops() {
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", pom, "test/de/test/StackTest.java", test))).isEmpty();
+    }
+
+    @Test
+    void javaAresConvention_rejectsPlainJunitTestsThatBypassArtemisSandbox() {
+        String pom = """
+                <project>
+                    <dependencies>
+                        <dependency><artifactId>junit-jupiter</artifactId></dependency>
+                    </dependencies>
+                </project>
+                """;
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+
+                class CalculatorTest {
+
+                    @Test
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", pom, "test/de/test/CalculatorTest.java", test));
+
+        assertThat(reasons).hasSize(4);
+        assertThat(reasons).anyMatch(reason -> reason.contains("artemis-java-test-sandbox"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("enforcer plugin"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void javaAresConvention_rejectsPlainJunitTestsInGradleBehaviorSourceSet() {
+        String gradle = """
+                dependencies {
+                    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
+                }
+                def forbiddenPackageFolders = ["$studentOutputDir/de/tum/in/test/api/", "$studentOutputDir/org/junit/"]
+                """;
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+
+                class CalculatorTest {
+
+                    @Test
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "behavior/test/de/test/CalculatorTest.java", test));
+
+        assertThat(reasons).hasSize(2);
+        assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void javaAresConvention_acceptsGradleAresHarnessAndClassLevelTimeout() {
+        String gradle = """
+                dependencies {
+                    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
+                }
+                def forbiddenPackageFolders = ["$studentOutputDir/de/tum/in/test/api/", "$studentOutputDir/org/junit/"]
+                """;
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.params.ParameterizedTest;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                @StrictTimeout(1)
+                class StackTest {
+
+                    @ParameterizedTest
+                    void pushesAndPops(int value) {
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/StackTest.java", test))).isEmpty();
+    }
+
+    @Test
+    void javaAresConvention_rejectsCommentSpoofedAnnotationsAndGeneratedBuildOutput() {
+        String pom = aresPom();
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+
+                // @Public @WhitelistPath("target") @BlacklistPath("target/test-classes")
+                class CalculatorTest {
+
+                    @Test
+                    // @StrictTimeout(1)
+                    void addsNumbers() {
+                    }
+                }
+                """;
+
+        var reasons = ExerciseIntegrityGate
+                .javaAresConventionReasons(map("pom.xml", pom, "test/de/test/CalculatorTest.java", test, "target/test-classes/CalculatorTest.java", test));
+
+        assertThat(reasons).anyMatch(reason -> reason.contains("target/"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void javaAresConvention_rejectsParameterizedAndFactoryTestsWithoutTimeout() {
+        String pom = aresPom();
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.TestFactory;
+                import org.junit.jupiter.params.ParameterizedTest;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class CalculatorTest {
+
+                    @ParameterizedTest
+                    void parameterized(int value) {
+                    }
+
+                    @TestFactory
+                    java.util.stream.Stream<org.junit.jupiter.api.DynamicTest> dynamicTests() {
+                        return java.util.stream.Stream.empty();
+                    }
+                }
+                """;
+
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", pom, "test/de/test/CalculatorTest.java", test)))
+                .anyMatch(reason -> reason.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void javaAresConvention_rejectsCommentSpoofedMavenHarnessAndTrustedPackageSources() {
+        String pom = """
+                <project>
+                    <!--
+                    <dependency>
+                        <groupId>de.tum.in.ase</groupId>
+                        <artifactId>artemis-java-test-sandbox</artifactId>
+                    </dependency>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <file>de/tum/in/test/api/</file>
+                        <file>org/junit/</file>
+                    </plugin>
+                    -->
+                </project>
+                """;
+        String test = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+                import de.tum.in.test.api.BlacklistPath;
+                import de.tum.in.test.api.StrictTimeout;
+                import de.tum.in.test.api.WhitelistPath;
+                import de.tum.in.test.api.jupiter.Public;
+
+                @Public
+                @WhitelistPath("target")
+                @BlacklistPath("target/test-classes")
+                class StackTest {
+
+                    @Test
+                    @StrictTimeout(1)
+                    void pushesAndPops() {
+                    }
+                }
+                """;
+
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("pom.xml", pom, "test/de/test/StackTest.java", test, "behavior/test/org/junit/FakeTest.java", "fake"));
+
+        assertThat(reasons).anyMatch(reason -> reason.contains("artemis-java-test-sandbox"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("enforcer plugin"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("trusted framework packages"));
+    }
+
     // --- Adapt total-wipe (zero-retention) gate ---
 
     @Test
@@ -177,13 +401,13 @@ class ExerciseIntegrityGateTest {
     @Test
     void adaptWipe_isInertWhenBaselineNormalizesToBlank() {
         // A non-empty baseline whose entries all normalize to blank must stay inert, not fabricate a "retained NONE of 0" rejection.
-        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("  ", "()"), List.of("testAnything"))).isEmpty();
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("  "), List.of("testAnything"))).isEmpty();
     }
 
     @Test
-    void adaptWipe_matchesRetentionModuloTrailingParentheses() {
-        // Name normalization: baseline "testEvictsLru" is retained by a produced "testEvictsLru()" (Artemis treats them as the same test), so this is not a wipe.
-        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).isEmpty();
+    void adaptWipe_usesProductionExactTestNames() {
+        // Production task binding is exact: "testEvictsLru" and "testEvictsLru()" are different names, so an adapt that only keeps the parenthesized variant wiped the old test.
+        assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).hasSize(1);
     }
 
     // --- Solution-leak gate ---
@@ -356,5 +580,36 @@ class ExerciseIntegrityGateTest {
         var reasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", cabal, "test/Test.hs", testHs));
         assertThat(reasons).hasSize(1);
         assertThat(reasons.get(0)).contains("import qualified Reference as Sol").doesNotContain("import qualified Solution as Sol");
+    }
+
+    private static String aresPom() {
+        return """
+                <project>
+                    <dependencies>
+                        <dependency>
+                            <groupId>de.tum.in.ase</groupId>
+                            <artifactId>artemis-java-test-sandbox</artifactId>
+                        </dependency>
+                    </dependencies>
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-enforcer-plugin</artifactId>
+                                <configuration>
+                                    <rules>
+                                        <requireFilesDontExist>
+                                            <files>
+                                                <file>${project.build.outputDirectory}/de/tum/in/test/api/</file>
+                                                <file>${project.build.outputDirectory}/org/junit/</file>
+                                            </files>
+                                        </requireFilesDontExist>
+                                    </rules>
+                                </configuration>
+                            </plugin>
+                        </plugins>
+                    </build>
+                </project>
+                """;
     }
 }

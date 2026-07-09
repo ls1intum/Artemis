@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.D
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -76,8 +77,8 @@ public class SandboxBuildCommandService {
      * JUnit-XML report locations covering all shipped languages, independent of phase-declared paths (Maven surefire/failsafe, Gradle test-results, and the test-reports/ dir
      * pytest/C/OCaml write to). The phase's own resultPaths are added on top.
      */
-    private static final List<String> DEFAULT_REPORT_GLOBS = List.of("surefire-reports/*.xml", "failsafe-reports/*.xml", "test-results/*.xml", "test-results/*/*.xml",
-            "test-reports/*.xml", "test-results.xml");
+    private static final List<String> DEFAULT_REPORT_GLOBS = List.of("target/surefire-reports/*.xml", "target/failsafe-reports/*.xml", "surefire-reports/*.xml",
+            "failsafe-reports/*.xml", "test-results/*.xml", "test-results/*/*.xml", "test-reports/*.xml", "test-results.xml");
 
     // Optional: present only on LocalCI-orchestration nodes (profile localci). Generation requires a co-located build agent anyway, so absence is reported at call time rather than
     // blocking a core-only node from starting.
@@ -125,6 +126,9 @@ public class SandboxBuildCommandService {
         // Tests go at the language's real checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
+        String javaSecurityManagerAllow = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? "export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"\nexport MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"\nexport GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\""
+                : ": # no Java/Ares security-manager compatibility flags needed";
         // CI placeholder values for the seeded harness, mapped to the real checkout layout. With no solution checkout the solution placeholder never appears, so its fallback is
         // moot.
         String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
@@ -174,6 +178,7 @@ public class SandboxBuildCommandService {
                 # Reference marker; collection takes only reports NEWER than it, so a planted report that escaped the delete still cannot be collected.
                 BUILD_START_MARKER="$BUILD_DIR/.hyperion-build-start"
                 : > "$BUILD_START_MARKER"
+                @@JAVA_SECURITY_MANAGER_ALLOW@@
                 # Run the exercise's real build phases, each from the build root. A non-zero exit (failing tests or a compile error) is expected for the template.
                 rc=0
                 run_phase() {
@@ -196,17 +201,21 @@ public class SandboxBuildCommandService {
                     cp -P "$src" "$REPORTS_DIR/$(printf '%04d' "$seq")@@NAME_SEP@@$canonical" 2>/dev/null || true
                 }
                 seq=0
-                for report in $(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( @@REPORT_FIND@@ \\) 2>/dev/null); do
+                junit_report_list=$(mktemp /tmp/hyperion-junit-reports.XXXXXX) || exit 70
+                find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( @@REPORT_FIND@@ \\) > "$junit_report_list" 2>/dev/null || true
+                while IFS= read -r report; do
                     seq=$((seq + 1)); collect_one "$seq" "$report" "@@JUNIT_TOKEN@@"; collected_tests=$((collected_tests + 1))
-                done
+                done < "$junit_report_list"
+                rm -f "$junit_report_list"
                 @@SCA_COLLECT@@
                 echo "@@COLLECTED_MARKER@@ tests=$collected_tests sca=$collected_sca exit=$rc"
                 exit $rc
                 """;
         return script.replace("@@WORKSPACE@@", GenerationWorkspaceService.WORKSPACE).replace("@@REPORTS_DIR@@", REPORTS_DIR).replace("@@TEST_DEST@@", testDestination)
                 .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
-                .replace("@@REPORT_FIND@@", findExpression).replace("@@PHASES@@", phaseSection).replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression))
-                .replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER);
+                .replace("@@REPORT_FIND@@", findExpression).replace("@@JAVA_SECURITY_MANAGER_ALLOW@@", javaSecurityManagerAllow).replace("@@PHASES@@", phaseSection)
+                .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
+                .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER);
     }
 
     /**
@@ -237,9 +246,13 @@ public class SandboxBuildCommandService {
             return "";
         }
         return """
-                for report in $(find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) 2>/dev/null); do
+                sca_report_list=$(mktemp /tmp/hyperion-sca-reports.XXXXXX) || exit 70
+                find "$BUILD_DIR" -type f -newer "$BUILD_START_MARKER" \\( %s \\) > "$sca_report_list" 2>/dev/null || true
+                while IFS= read -r report; do
                     seq=$((seq + 1)); collect_one "$seq" "$report" "$(basename "$report")"; collected_sca=$((collected_sca + 1))
-                done""".formatted(scaFindExpression);
+                done < "$sca_report_list"
+                rm -f "$sca_report_list"
+                """.formatted(scaFindExpression);
     }
 
     /**

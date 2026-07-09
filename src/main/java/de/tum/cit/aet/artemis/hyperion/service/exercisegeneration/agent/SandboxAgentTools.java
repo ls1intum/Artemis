@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -120,6 +121,9 @@ public class SandboxAgentTools {
         if (safe == null) {
             return invalidPathError(path);
         }
+        if (isImmutableTestsHarnessPath(safe)) {
+            return immutableHarnessError(safe);
+        }
         // base64-encode the content so arbitrary source (quotes, newlines) is written verbatim; the path is allowlisted above so it cannot break the shell.
         String encoded = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
         String target = WORKSPACE + "/" + safe;
@@ -183,6 +187,9 @@ public class SandboxAgentTools {
         // landed and thrashes. Reject loudly without touching the sandbox so the agent switches to write_file / edit_file.
         if (isApplyPatchInvocation(command)) {
             return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
+        }
+        if (mutatesImmutableTestsHarness(command)) {
+            return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/ instead.";
         }
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
@@ -293,13 +300,31 @@ public class SandboxAgentTools {
         return MANGLED_ARRAY.matcher(command.strip()).matches();
     }
 
+    private static boolean isImmutableTestsHarnessPath(String safe) {
+        return safe.startsWith("tests/") && ExerciseIntegrityGate.isHarnessFile(safe.substring("tests/".length()));
+    }
+
+    private static String immutableHarnessError(String safe) {
+        return "ERROR: do not modify " + safe + ". Tests-repository build/harness files are seeded by Artemis and graded verbatim; edit only test source files under tests/test/.";
+    }
+
+    static boolean mutatesImmutableTestsHarness(String command) {
+        String lower = command.toLowerCase();
+        if (!lower.matches("(?s).*tests/(pom\\.xml|build\\.gradle|build\\.gradle\\.kts|settings\\.gradle|settings\\.gradle\\.kts|gradle\\.properties|package\\.json|"
+                + "package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock|.*\\.cabal).*")) {
+            return false;
+        }
+        return lower.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ") || lower.contains(" rm ")
+                || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+    }
+
     private static String invalidPathError(String path) {
         return "ERROR: invalid path '" + path + "'. Use a workspace-relative path containing only letters, digits, '_', '.', '/', '-' and no '..'.";
     }
 
     /**
-     * Normalises a model-supplied path to a workspace-relative one and validates it against the same allowlist the build agent uses for container paths
-     * ({@code [a-zA-Z0-9_*./-]} and no {@code ..}), which by construction rejects shell metacharacters including quotes.
+     * Normalises a model-supplied path to a workspace-relative one and validates it against a conservative source-file path allowlist
+     * ({@code [a-zA-Z0-9_./-]} and no {@code ..}), which rejects shell metacharacters including quotes.
      *
      * @return the relative path, or {@code null} if it is unsafe
      */
@@ -311,7 +336,7 @@ public class SandboxAgentTools {
         if (trimmed.startsWith(WORKSPACE + "/")) {
             trimmed = trimmed.substring((WORKSPACE + "/").length());
         }
-        if (trimmed.startsWith("/") || trimmed.contains("..") || !trimmed.matches("[a-zA-Z0-9_*./-]+")) {
+        if (trimmed.startsWith("/") || trimmed.contains("..") || !trimmed.matches("[a-zA-Z0-9_./-]+")) {
             return null;
         }
         return trimmed;

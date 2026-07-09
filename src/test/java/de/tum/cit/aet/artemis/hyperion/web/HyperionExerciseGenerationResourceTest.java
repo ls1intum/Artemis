@@ -6,11 +6,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,10 +26,14 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseAdaptationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
@@ -40,6 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ex
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
@@ -67,6 +74,9 @@ class HyperionExerciseGenerationResourceTest {
     @Mock
     private ExerciseAdaptationRevertService adaptationRevertService;
 
+    @Mock
+    private RemoteInteractiveSandboxClient sandboxClient;
+
     private HyperionExerciseGenerationResource resource;
 
     private User testUser;
@@ -77,7 +87,8 @@ class HyperionExerciseGenerationResourceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService, reviewCommentContextRenderer,
-                adaptationRevertService);
+                adaptationRevertService, sandboxClient);
+        when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(true);
 
         testUser = new User();
         testUser.setLogin("testuser");
@@ -86,12 +97,13 @@ class HyperionExerciseGenerationResourceTest {
         testExercise.setId(1L);
         testExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         testExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        testExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
     }
 
     @Test
     void generateExercise_withValidGenerateRequest_returns202AndJobId() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "Build a bubble sort exercise.", null);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
@@ -106,9 +118,21 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
+    void generateExercise_withoutTwoFreeSandboxSlots_returnsServiceUnavailableBeforeClaimingJob() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "Build a bubble sort exercise.", null);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
+        when(sandboxClient.hasAvailableGenerationSandboxSlots(2)).thenReturn(false);
+
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
+
+        verify(jobService, never()).startJob(any(), any(), any(), any());
+    }
+
+    @Test
     void generateExercise_withAdaptMode_forwardsModeToJobService() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "Fix the off-by-one.", List.of(5L, 9L));
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
@@ -124,7 +148,7 @@ class HyperionExerciseGenerationResourceTest {
     @Test
     void generateExercise_withAdaptModeAndSelectedFeedback_foldsRenderedFeedbackIntoPrompt() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "Fix the off-by-one.", List.of(5L, 9L));
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
@@ -141,30 +165,66 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void revertAdaptation_whenBaselineExists_returns200() {
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
-        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(true, List.of())));
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(adaptationRevertService.revert(testExercise, testUser))
+                .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(true, List.of(RepositoryType.SOLUTION))));
 
-        ResponseEntity<Void> response = resource.revertAdaptation(1L);
+        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().fullyReverted()).isTrue();
+        assertThat(response.getBody().revertedRepositories()).containsExactly("solution");
+        verify(jobService).clearRevertSlot(1L, "revert-slot");
+    }
+
+    @Test
+    void revertAdaptation_whenRevertIsPartial_returns409() {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(false, List.of())));
+
+        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().fullyReverted()).isFalse();
+        verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
     @Test
     void revertAdaptation_whenNothingToRevert_returns404() {
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.empty());
 
-        ResponseEntity<Void> response = resource.revertAdaptation(1L);
+        ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(jobService).clearRevertSlot(1L, "revert-slot");
+    }
+
+    @Test
+    void revertAdaptation_whenMutationSlotIsAlreadyClaimed_returnsConflict() {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L))
+                .thenThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertAdaptation(1L));
+
+        verify(adaptationRevertService, never()).revert(any(), any());
+        verify(jobService, never()).clearRevertSlot(eq(1L), any());
     }
 
     @Test
     void generateExercise_withNullMode_defaultsToGenerate() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, null, null);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
@@ -178,7 +238,7 @@ class HyperionExerciseGenerationResourceTest {
     @Test
     void generateExercise_whenRunAlreadyActive_propagatesConflict() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
@@ -192,7 +252,7 @@ class HyperionExerciseGenerationResourceTest {
     void generateExercise_withUnsupportedLanguage_throwsBadRequest() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
         testExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.PYTHON)).thenReturn(false);
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class)
@@ -201,10 +261,30 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
+    void generateExercise_whenExerciseIsReleased_rejectsLiveMutation() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
+        testExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+
+        assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("unreleased draft");
+        verify(jobService, never()).startJob(any(), any(), any(), any());
+    }
+
+    @Test
+    void generateExercise_whenExerciseHasStudentParticipations_rejectsLiveMutation() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, null, null);
+        testExercise.setStudentParticipations(Set.of(mock(StudentParticipation.class)));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+
+        assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("without student participations");
+        verify(jobService, never()).startJob(any(), any(), any(), any());
+    }
+
+    @Test
     void generateExercise_withMissingBuildConfig_throwsBadRequest() {
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null);
         testExercise.setBuildConfig(null);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("build configuration");
         verify(jobService, never()).startJob(any(), any(), any(), any());
@@ -234,7 +314,7 @@ class HyperionExerciseGenerationResourceTest {
     void getExerciseGenerationStatus_whenRunRetained_returns200WithTranscript() {
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", true, GenerationMode.ADAPT,
                 List.of(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")), List.of());
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
 
@@ -249,7 +329,7 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void getExerciseGenerationStatus_whenNothingRetained_returns204() {
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.empty());
 

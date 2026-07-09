@@ -457,7 +457,7 @@ public class HyperionProgrammingExerciseContextRendererService {
     }
 
     /**
-     * Reads the existing test sources from the test repository so code generation can match the exact API and behaviour
+     * Reads the existing test sources from the test repository so exercise generation can match the exact API and behaviour
      * the tests require. Returns a "no tests" marker (never throws) when the repository is absent or empty, so generation
      * still proceeds from the problem statement alone.
      *

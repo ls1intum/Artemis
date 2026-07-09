@@ -60,6 +60,10 @@
     }
 }
 
+.ai-menu-item-inline-icon {
+    margin-right: 0.5rem;
+}
+
 .ai-menu-item-group {
     display: flex;
     align-items: stretch;
@@ -245,6 +249,47 @@
     border: 1px solid var(--p-content-border-color);
     border-radius: var(--p-border-radius);
     background: var(--p-content-background);
+}
+
+.code-generation-status-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.code-generation-status-card__repository,
+.code-generation-status-card__state {
+    font-weight: 600;
+}
+
+.code-generation-status-card__state,
+.code-generation-status-card__message {
+    font-size: 0.875rem;
+}
+
+.code-generation-status-card__message {
+    color: var(--p-text-muted-color);
+}
+
+.code-generation-state--idle {
+    color: var(--p-text-muted-color);
+}
+
+.code-generation-state--warning {
+    color: var(--color-state-warning);
+}
+
+.code-generation-state--running {
+    color: var(--p-primary-color);
+}
+
+.code-generation-state--success {
+    color: var(--color-state-success);
+}
+
+.code-generation-state--error {
+    color: var(--color-state-danger);
 }
 
 .code-generation-activity-list {

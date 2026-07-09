@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.GenerationWorkspaceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.SandboxBuildCommandService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.WorkspaceArchive;
 import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -172,19 +173,11 @@ public class DifferentialVerificationService {
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
 
         // Integrity gates the build cannot see. Post-loop only (the self-check skips them): they need the seed snapshot and read-back files the agent loop lacks mid-session.
-        // Adapt relaxes only the tests-repo harness-immutability gate (a feedback item may legitimately add or adjust a test, or the manifest registering it); the differential
-        // oracle, which rebuilds pristine from the produced tree, stays the backstop and the solution-leak/self-comparison/extraction gates below remain enforced.
-        boolean harnessIntact;
-        if (request.relaxTestsRepoImmutability()) {
-            harnessIntact = true;
-        }
-        else {
-            // Java always ships a build harness (pom.xml/build.gradle), so an empty seed snapshot is a failed capture, not a harness-free exercise — fail closed there.
-            boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-            List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired);
-            harnessIntact = harnessTamperingReasons.isEmpty();
-            reasons.addAll(harnessTamperingReasons);
-        }
+        // Adaptation may change test source files, but never the seeded build harness/manifest layout that production grading trusts verbatim.
+        boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired);
+        boolean harnessIntact = harnessTamperingReasons.isEmpty();
+        reasons.addAll(harnessTamperingReasons);
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
@@ -192,6 +185,11 @@ public class DifferentialVerificationService {
         List<String> selfComparisonReasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(request.producedTestsFiles());
         boolean noSelfComparison = selfComparisonReasons.isEmpty();
         reasons.addAll(selfComparisonReasons);
+        List<String> javaAresConventionReasons = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
+                ? ExerciseIntegrityGate.javaAresConventionReasons(request.producedTestsFiles())
+                : List.of();
+        boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
+        reasons.addAll(javaAresConventionReasons);
 
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
@@ -201,12 +199,12 @@ public class DifferentialVerificationService {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound && noAdaptWipe;
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && javaAresConventionsHold && extractionSound && noAdaptWipe;
         if (!accepted) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
-                            + "extractionSound={}, noAdaptWipe={}",
-                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound, noAdaptWipe);
+                            + "javaAresConventionsHold={}, extractionSound={}, noAdaptWipe={}",
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, javaAresConventionsHold, extractionSound, noAdaptWipe);
         }
         return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
     }
@@ -233,10 +231,29 @@ public class DifferentialVerificationService {
         boolean templateCompiled = !template.timedOut() && template.tests() > 0;
         // Reuse the production-parity gate's computation so the agent sees the tests that would block acceptance (the Go/no-exception zero-value-stub trap).
         List<String> templateWronglyPassing = templateCompiled ? gradableTestsThatPassOnTemplate(solution, template) : List.of();
+        List<String> reasons = new ArrayList<>(analysis.actionableReasons());
+        boolean javaAresConventionsHold = true;
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            Map<String, String> testsRepositoryFiles = readTestsRepositoryFiles(sandbox, sessionId);
+            List<String> javaAresConventionReasons = testsRepositoryFiles.isEmpty()
+                    ? List.of("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.")
+                    : ExerciseIntegrityGate.javaAresConventionReasons(testsRepositoryFiles);
+            javaAresConventionsHold = javaAresConventionReasons.isEmpty();
+            reasons.addAll(javaAresConventionReasons);
+        }
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), template.tests(), templateCompiled, analysis.templateFailed(),
-                templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(), analysis.possiblyDeadFiles(), analysis.actionableGatesPass(),
-                analysis.actionableReasons());
+                templateWronglyPassing, List.copyOf(solution.testNames()), analysis.unresolvedTaskBindings(), analysis.possiblyDeadFiles(),
+                analysis.actionableGatesPass() && javaAresConventionsHold, reasons);
+    }
+
+    private static Map<String, String> readTestsRepositoryFiles(InteractiveSandbox sandbox, String sessionId) {
+        try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, GenerationWorkspaceService.WORKSPACE + "/" + GenerationWorkspaceService.directoryFor(RepositoryType.TESTS))) {
+            return tar == null ? Map.of() : WorkspaceArchive.readTar(tar, GenerationWorkspaceService.directoryFor(RepositoryType.TESTS));
+        }
+        catch (IOException | RuntimeException e) {
+            return Map.of();
+        }
     }
 
     /**
@@ -260,6 +277,7 @@ public class DifferentialVerificationService {
 
         int testCount = solution.tests();
         boolean solutionPassed = checkSolutionPasses(solution, reasons);
+        boolean noDuplicateTestNames = checkNoDuplicateTestNames(solution, reasons);
         boolean templateFailed = checkTemplateFails(solution, template, reasons);
 
         // The exercise must bind its tests to the problem statement via [task][title](testNames), else the student sees no task checklist.
@@ -281,6 +299,10 @@ public class DifferentialVerificationService {
         // Compute once and let the gate decide; surfaced to the agent verbatim (guards the C++/Catch2 bare-name trap).
         List<String> unresolvedTaskBindings = ProblemStatementBindingChecker.unresolvedTaskBindings(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, solution, problemStatementHasTasks, reasons);
+        List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
+        boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, reasons);
+        List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, seededStructuralTestNames);
+        boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean noTaskTestPassesTemplate = checkNoTaskBoundTestPassesTemplate(problemStatement, solution, template, problemStatementHasTasks, taskBindingsResolve, reasons);
         boolean noGradableTestPassesTemplate = checkNoGradableTestPassesTemplate(solution, template, reasons);
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
@@ -294,8 +316,9 @@ public class DifferentialVerificationService {
                     + "only via [task][Title](testName) lines.");
         }
 
-        boolean actionableGatesPass = solutionPassed && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed && taskBindingsResolve
-                && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean && proseHygienic;
+        boolean actionableGatesPass = solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0 && problemStatementHasTasks && taskKeywordsWellFormed
+                && taskBindingsResolve && noDuplicateTaskBindings && allGradableTestsBound && noTaskTestPassesTemplate && noGradableTestPassesTemplate && solutionScaClean
+                && proseHygienic;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, actionableGatesPass, reasons, unresolvedTaskBindings, possiblyDeadFiles);
@@ -360,6 +383,24 @@ public class DifferentialVerificationService {
         return solutionPassed;
     }
 
+    private static boolean checkNoDuplicateTestNames(BuildSummary solution, List<String> reasons) {
+        Set<String> seen = new LinkedHashSet<>();
+        Set<String> duplicates = new LinkedHashSet<>();
+        for (String name : solution.testNames()) {
+            String key = name.toLowerCase(Locale.ROOT);
+            if (!seen.add(key)) {
+                duplicates.add(name);
+            }
+        }
+        if (!duplicates.isEmpty()) {
+            reasons.add("Duplicate test names are not production-gradeable: " + duplicates
+                    + ". Rename the generated tests so every test case name is unique (case-insensitive), otherwise Artemis production grading marks duplicates and keeps the "
+                    + "result at zero.");
+            return false;
+        }
+        return true;
+    }
+
     /**
      * The template gate: the template must compile and run the same tests as the solution but fail at least half of the gradable ones (a near-complete template is not a real
      * starting point; {@code tests()==0} means it did not compile). Both the threshold and the failure count exclude the build/compile/configure gate tests
@@ -422,6 +463,24 @@ public class DifferentialVerificationService {
                     + solution.testNames() + ". Fix the [task] lines (or rename the tests) so every binding references a real test name.");
         }
         return taskBindingsResolve;
+    }
+
+    private static boolean checkNoDuplicateTaskBindings(List<String> duplicateTaskBindings, boolean problemStatementHasTasks, List<String> reasons) {
+        boolean noDuplicateTaskBindings = duplicateTaskBindings.isEmpty();
+        if (problemStatementHasTasks && !noDuplicateTaskBindings) {
+            reasons.add("These tests are bound more than once by [task] entries: " + duplicateTaskBindings
+                    + ". Bind each graded test exactly once so the student-facing checklist is unambiguous and matches production grading.");
+        }
+        return noDuplicateTaskBindings;
+    }
+
+    private static boolean checkAllGradableTestsBound(List<String> unboundGradableTests, boolean problemStatementHasTasks, boolean taskBindingsResolve, List<String> reasons) {
+        boolean allGradableTestsBound = unboundGradableTests.isEmpty();
+        if (problemStatementHasTasks && taskBindingsResolve && !allGradableTestsBound) {
+            reasons.add("These real gradable tests are not bound by any [task] entry even though production will grade them: " + unboundGradableTests
+                    + ". Add each non-build-gate test to exactly one [task][Title](testName) binding, or remove/rename tests that should not be graded.");
+        }
+        return allGradableTestsBound;
     }
 
     /**
@@ -615,10 +674,6 @@ public class DifferentialVerificationService {
             return new BuildSummary(0, 0, exitCode == 0 ? 1 : exitCode, false, List.of(), List.of(), List.of());
         }
 
-        /**
-         * Builds the summary from the collected report files (flat name -> bytes): JUnit-token files are parsed by {@link TestResultXmlParser}, recognised SCA reports by
-         * {@link ReportParser}. A report that fails to parse is skipped (fail-open per file), so one malformed report cannot crash the verdict.
-         */
         static BuildSummary fromReports(Map<String, byte[]> reports, int exitCode) {
             List<LocalCITestJobDTO> failed = new ArrayList<>();
             List<LocalCITestJobDTO> successful = new ArrayList<>();
@@ -631,11 +686,14 @@ public class DifferentialVerificationService {
                         TestResultXmlParser.processTestResultFile(content, failed, successful);
                     }
                     catch (IOException | RuntimeException e) {
-                        log.warn("Skipping an unparseable JUnit report ({}): {}", report.getKey(), e.getMessage());
+                        log.warn("Rejecting an unparseable JUnit report ({}): {}", report.getKey(), e.getMessage());
+                        return BuildSummary.unparseable(exitCode);
                     }
                 }
                 else {
-                    parseScaReport(content, canonical, scaFindings);
+                    if (!parseScaReport(content, canonical, scaFindings)) {
+                        return BuildSummary.unparseable(exitCode);
+                    }
                 }
             }
             List<String> testNames = new ArrayList<>();
@@ -649,26 +707,25 @@ public class DifferentialVerificationService {
             return new BuildSummary(tests, failed.size(), exitCode, false, List.copyOf(testNames), List.copyOf(failedNames), List.copyOf(scaFindings));
         }
 
-        /**
-         * Parses one collected SCA report with the production {@link ReportParser} (routed by its canonical report file name) and appends each issue's {@code (tool, derived
-         * category)} to {@code scaFindings}. An unsupported tool or a malformed report is skipped (fail-open), so a stray non-SCA file cannot break the verdict.
-         */
-        private static void parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
+        private static boolean parseScaReport(String content, String canonicalFileName, List<ScaPenaltyParity.ScaFinding> scaFindings) {
             try {
                 StaticCodeAnalysisReportDTO report = ReportParser.getReport(content, canonicalFileName);
                 if (report == null || report.issues() == null || report.tool() == null) {
-                    return;
+                    return true;
                 }
                 String tool = report.tool().name();
                 for (StaticCodeAnalysisIssue issue : report.issues()) {
                     scaFindings.add(new ScaPenaltyParity.ScaFinding(tool, issue.category()));
                 }
+                return true;
             }
             catch (UnsupportedToolException e) {
                 log.debug("No SCA parser for collected report {}: {}", canonicalFileName, e.getMessage());
+                return true;
             }
             catch (RuntimeException e) {
-                log.warn("Skipping an unparseable SCA report ({}): {}", canonicalFileName, e.getMessage());
+                log.warn("Rejecting an unparseable SCA report ({}): {}", canonicalFileName, e.getMessage());
+                return false;
             }
         }
 

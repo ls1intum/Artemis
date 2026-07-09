@@ -165,7 +165,7 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Drives the agent loop for one generation session.
+     * Drives the agent loop for one Hyperion sandbox.
      * <p>
      * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn,
      * so a
@@ -358,7 +358,7 @@ public class AgentLoopRunner {
     /**
      * Renders a tool call as a single transcript line: tool name plus its most informative argument (path for file tools, command for bash), truncated to keep large bodies out.
      * <p>
-     * Cross-cutting contract: the client ({@code generation-progress.model.ts}) parses this line for the "files changed" view, so tool names must stay stable and for file tools
+     * Cross-cutting contract: the client generation stream parser uses this line for the "files changed" view, so tool names must stay stable and for file tools
      * the {@code path} must be rendered first and in full — otherwise a large {@code content} argument would push it past the truncation point and the UI would miss the file.
      */
     private static String describeToolCall(AssistantMessage.ToolCall toolCall) {

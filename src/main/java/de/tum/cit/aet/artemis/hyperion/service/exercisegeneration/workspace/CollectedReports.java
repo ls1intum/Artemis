@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -8,32 +9,16 @@ import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
-/**
- * Hardened reader for the {@code copyOut} tar of the verifier-owned reports directory. The directory is written by the pristine {@code verify.sh} (collecting only build-fresh
- * regular files), but the tar stream the container hands back is untrusted: a compromised or buggy collection — or a Docker quirk — must not let an entry escape the expected
- * directory, dereference a planted symlink, or exhaust memory. So before any byte is handed to a production parser, every entry is validated:
- * <ul>
- * <li>regular files only — a symbolic link ({@link TarArchiveEntry#isSymbolicLink()}), a hard link ({@link TarArchiveEntry#isLink()}), a directory, or any other
- * non-regular entry ({@link TarArchiveEntry#isFile()} is {@code false}) is rejected, so a planted link cannot redirect the verifier to read a file outside the reports dir;</li>
- * <li>no path escape — the entry's normalized, prefix-stripped path must not be absolute and must not contain a {@code ..} segment, so it cannot point above the
- * reports directory;</li>
- * <li>bounded size — each entry is capped at {@link #MAX_FILE_BYTES} and the whole archive at {@link #MAX_TOTAL_BYTES}, so a hostile report cannot exhaust memory.</li>
- * </ul>
- * Only the surviving entries' bytes are returned, keyed by their flat collected file name (the verifier routes each name to the JUnit or the SCA parser). Any violation throws
- * {@link RejectedReportException}; the verifier treats that as a failed (rejected) verification rather than parsing partial, possibly-forged input.
- */
+/** Validates and reads the verifier reports tar returned by the sandbox. */
 public final class CollectedReports {
 
-    /** Per-file cap. A single test/SCA report far larger than this is pathological; 32 MiB comfortably covers a verbose multi-suite JUnit XML or a large SARIF file. */
     static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
 
-    /** Whole-archive cap, so a flood of many files cannot exhaust memory even if each is individually under the per-file cap. */
     static final long MAX_TOTAL_BYTES = 128L * 1024 * 1024;
 
     private CollectedReports() {
     }
 
-    /** Signals that a {@code copyOut} reports archive contained an entry that failed validation (symlink, hardlink, non-regular, path escape, or oversize). */
     public static final class RejectedReportException extends RuntimeException {
 
         RejectedReportException(String message) {
@@ -42,14 +27,12 @@ public final class CollectedReports {
     }
 
     /**
-     * Reads and validates the reports tar, returning each surviving regular file's bytes keyed by its flat collected name (the segment after {@code expectedPrefix}).
+     * Reads the flat verifier report directory from a tar stream while rejecting path escapes, links, special files, duplicate names, and oversized entries.
      *
-     * @param tar            the copyOut archive (closed by the caller)
-     * @param expectedPrefix the directory-name prefix Docker prepends to every entry (the reports subdir name, e.g. {@code solution}); entries are required to sit directly under
-     *                           it
-     * @return the validated regular files keyed by their flat name within the reports directory
-     * @throws IOException             if reading the archive fails
-     * @throws RejectedReportException if any entry is a symlink/hardlink/non-regular/path-escaping/oversize entry
+     * @param tar            the report archive stream
+     * @param expectedPrefix the directory prefix the sandbox wrote the reports under
+     * @return report file contents keyed by file name
+     * @throws IOException if the tar stream cannot be read
      */
     public static Map<String, byte[]> read(TarArchiveInputStream tar, String expectedPrefix) throws IOException {
         Map<String, byte[]> result = new LinkedHashMap<>();
@@ -71,47 +54,53 @@ public final class CollectedReports {
             if (name.isEmpty()) {
                 continue;
             }
-            // The collected files are flat (one level under the reports dir). Reject anything absolute or containing a parent-dir hop, so a crafted name cannot escape the prefix.
-            if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
-                throw new RejectedReportException("Refusing a report entry whose path escapes the reports directory: " + entry.getName());
+            if (name.startsWith("/") || name.contains("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
+                throw new RejectedReportException("Refusing a report entry outside the flat reports directory: " + entry.getName());
             }
             long declaredSize = entry.getSize();
             if (declaredSize > MAX_FILE_BYTES) {
                 throw new RejectedReportException("Refusing an oversized report entry (" + declaredSize + " bytes): " + entry.getName());
             }
-            byte[] bytes = tar.readAllBytes();
-            if (bytes.length > MAX_FILE_BYTES) {
-                throw new RejectedReportException("Refusing an oversized report entry (" + bytes.length + " bytes): " + entry.getName());
-            }
+            byte[] bytes = readEntryBytes(tar, entry.getName());
             total += bytes.length;
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedReportException("Refusing to read the verifier reports archive: total report size exceeds " + MAX_TOTAL_BYTES + " bytes");
             }
-            // A later entry with the same flat name would only happen on a buggy/forged collection; keep the first deterministically.
-            result.putIfAbsent(name, bytes);
+            if (result.putIfAbsent(name, bytes) != null) {
+                throw new RejectedReportException("Refusing duplicate report entry: " + name);
+            }
         }
         return result;
     }
 
-    /**
-     * Decodes a collected report's bytes as UTF-8 (the production parsers consume the report content as a String).
-     *
-     * @param bytes the collected report's raw bytes
-     * @return the report content decoded as UTF-8
-     */
     public static String asString(byte[] bytes) {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    /** Drops a leading {@code ./} and the expected directory prefix Docker prepends, leaving the flat collected name. */
+    private static byte[] readEntryBytes(TarArchiveInputStream tar, String name) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = tar.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+            if (out.size() > MAX_FILE_BYTES) {
+                throw new RejectedReportException("Refusing an oversized report entry (" + out.size() + " bytes): " + name);
+            }
+        }
+        return out.toByteArray();
+    }
+
     private static String stripPrefix(String rawName, String normalizedPrefix) {
         String name = rawName;
         while (name.startsWith("./")) {
             name = name.substring(2);
         }
-        if (!normalizedPrefix.isEmpty() && name.startsWith(normalizedPrefix)) {
-            name = name.substring(normalizedPrefix.length());
+        if (normalizedPrefix.isEmpty()) {
+            return name;
         }
-        return name;
+        if (!name.startsWith(normalizedPrefix)) {
+            throw new RejectedReportException("Refusing a report entry outside the expected reports directory: " + rawName);
+        }
+        return name.substring(normalizedPrefix.length());
     }
 }

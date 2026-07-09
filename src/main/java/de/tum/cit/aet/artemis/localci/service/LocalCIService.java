@@ -167,7 +167,8 @@ public class LocalCIService implements ContinuousIntegrationService {
             var status = agent.status() != null ? agent.status().name() : "UNKNOWN";
             var runningJobs = agent.runningBuildJobs().stream().map(job -> job.name() != null ? job.name() : job.id()).map(String::valueOf).toList();
             return Map.of("name", name, "displayName", displayName, "memberAddress", memberAddress, "status", status, "maxJobs", agent.maxNumberOfConcurrentBuildJobs(),
-                    "currentJobs", agent.numberOfCurrentBuildJobs(), "runningJobs", runningJobs);
+                    "currentJobs", agent.numberOfCurrentBuildJobs(), "reservedGenerationSandboxSlots", agent.reservedGenerationSandboxSlots(), "maxGenerationSandboxSlots",
+                    agent.maxGenerationSandboxSlots(), "runningJobs", runningJobs);
         }).toList();
         return new ConnectorHealth(true, Map.of("buildAgents", buildAgentsSummary));
     }

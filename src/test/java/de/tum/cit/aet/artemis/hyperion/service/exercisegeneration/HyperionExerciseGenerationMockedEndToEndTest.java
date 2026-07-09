@@ -28,16 +28,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
- * Deterministic, committed end-to-end test of agentic exercise generation. It replaces the live-GPU {@code HyperionExerciseGenerationEndToEndTest} for CI: instead of an external
- * LLM, a mocked {@code azureOpenAiChatModel} returns a fixed sequence of tool-calling turns that drive the real agent loop, the real Docker sandbox, and the real differential
- * oracle. Only the model is faked; the container build and the acceptance verdict are authentic. Docker-gated (not GPU-gated).
- * <p>
- * The fixture is a minimal-but-real Java {@code Calculator}: the solution passes its one JUnit test, the template compiles but fails it (a {@code return 0} stub), and the problem
- * statement binds the test with a {@code [task]}. Two scenarios:
- * <ul>
- * <li>a valid exercise the oracle must accept (solution passes, template fails, at least one test);</li>
- * <li>a bad exercise whose reference solution fails its own test, which the oracle must reject — proving the differential acceptance gate is real, not rubber-stamped.</li>
- * </ul>
+ * Deterministic end-to-end test of agentic exercise generation. The LLM is scripted, but the agent loop, Docker sandbox, structured verify tool, and differential verifier are
+ * real.
  */
 @EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isDockerAvailable")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -49,58 +41,90 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
 
     private static final String TEST_PREFIX = "hypgenmock";
 
-    // ---- The known-good Java Calculator fixture (package de.test, flat tests/test layout, Ares @Public test with direct calls) --------------------------------------------------
-
     private static final String PROBLEM_STATEMENT = """
-            # Calculator
+            # Bounded Counter
 
-            Implement a `Calculator` with an `add` method that returns the sum of its two integer arguments.
+            Implement `BoundedCounter`, a small counter with a configurable positive maximum.
 
-            [task][Add two numbers](addsTwoNumbers)
+            - A new counter starts at 0.
+            - `increment()` increases the value by one until the maximum is reached, then keeps it at the maximum.
+            - `decrement()` decreases the value by one until 0 is reached, then keeps it at 0.
+            - Constructing a counter with a maximum below 1 throws `IllegalArgumentException`.
+
+            ```text
+            new BoundedCounter(2), increment(), increment(), increment() -> getValue() == 2
+            new BoundedCounter(3), decrement() -> getValue() == 0
+            new BoundedCounter(0) -> IllegalArgumentException
+            ```
+
+            [task][Start at zero](startsAtZeroAndExposesValue)
+            [task][Increment up to maximum](incrementsUntilMaximum)
+            [task][Decrement down to zero](decrementNeverDropsBelowZero)
+            [task][Reject invalid maximum](rejectsNonPositiveMaximum)
             """;
 
-    private static final String SOLUTION_CALCULATOR = """
+    private static final String PROBLEM_STATEMENT_WITH_BAD_BINDING = PROBLEM_STATEMENT.replace("(incrementsUntilMaximum)", "(incrementAtUpperBound)");
+
+    private static final String SOLUTION_BOUNDED_COUNTER = """
             package de.test;
 
-            public class Calculator {
+            public class BoundedCounter {
 
-                public int add(int a, int b) {
-                    return a + b;
+                private final int max;
+                private int value;
+
+                public BoundedCounter(int max) {
+                    if (max < 1) {
+                        throw new IllegalArgumentException("max must be positive");
+                    }
+                    this.max = max;
+                }
+
+                public int getValue() {
+                    return value;
+                }
+
+                public void increment() {
+                    if (value < max) {
+                        value++;
+                    }
+                }
+
+                public void decrement() {
+                    if (value > 0) {
+                        value--;
+                    }
                 }
             }
             """;
 
-    /** The template keeps the same signature but a wrong placeholder body, so the test fails on it while it still compiles. */
-    private static final String TEMPLATE_CALCULATOR = """
+    private static final String BROKEN_SOLUTION_BOUNDED_COUNTER = SOLUTION_BOUNDED_COUNTER.replace("value++;", "value--;");
+
+    private static final String TEMPLATE_BOUNDED_COUNTER = """
             package de.test;
 
-            public class Calculator {
+            public class BoundedCounter {
 
-                public int add(int a, int b) {
-                    return 0;
+                public BoundedCounter(int max) {
+                }
+
+                public int getValue() {
+                    return -1;
+                }
+
+                public void increment() {
+                }
+
+                public void decrement() {
                 }
             }
             """;
 
-    /**
-     * A reference solution that fails its own test ({@code a - b} instead of {@code a + b}): {@code add(2, 3) == -1 != 5}. Compiles, but the differential oracle must reject the
-     * exercise because the solution does not pass.
-     */
-    private static final String BROKEN_SOLUTION_CALCULATOR = """
-            package de.test;
-
-            public class Calculator {
-
-                public int add(int a, int b) {
-                    return a - b;
-                }
-            }
-            """;
-
-    private static final String CALCULATOR_TEST = """
+    private static final String BOUNDED_COUNTER_TEST = """
             package de.test;
 
             import static org.junit.jupiter.api.Assertions.assertEquals;
+            import static org.junit.jupiter.api.Assertions.assertThrows;
 
             import org.junit.jupiter.api.Test;
 
@@ -112,21 +136,45 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
             @Public
             @WhitelistPath("target")
             @BlacklistPath("target/test-classes")
-            class CalculatorTest {
+            class BoundedCounterTest {
 
                 @Test
-                @StrictTimeout(5)
-                void addsTwoNumbers() {
-                    assertEquals(5, new Calculator().add(2, 3));
+                @StrictTimeout(1)
+                void startsAtZeroAndExposesValue() {
+                    assertEquals(0, new BoundedCounter(3).getValue(), "A new counter must start at zero.");
+                }
+
+                @Test
+                @StrictTimeout(1)
+                void incrementsUntilMaximum() {
+                    BoundedCounter counter = new BoundedCounter(2);
+                    counter.increment();
+                    counter.increment();
+                    counter.increment();
+                    assertEquals(2, counter.getValue(), "increment must clamp the value at the configured maximum.");
+                }
+
+                @Test
+                @StrictTimeout(1)
+                void decrementNeverDropsBelowZero() {
+                    BoundedCounter counter = new BoundedCounter(3);
+                    counter.decrement();
+                    assertEquals(0, counter.getValue(), "decrement must keep the value at zero when the counter is already empty.");
+                }
+
+                @Test
+                @StrictTimeout(1)
+                void rejectsNonPositiveMaximum() {
+                    assertThrows(IllegalArgumentException.class, () -> new BoundedCounter(0), "max <= 0 must be rejected.");
                 }
             }
             """;
 
-    private static final String SOLUTION_PATH = "solution/src/de/test/Calculator.java";
+    private static final String SOLUTION_PATH = "solution/src/de/test/BoundedCounter.java";
 
-    private static final String TEMPLATE_PATH = "template/src/de/test/Calculator.java";
+    private static final String TEMPLATE_PATH = "template/src/de/test/BoundedCounter.java";
 
-    private static final String TEST_PATH = "tests/test/de/test/CalculatorTest.java";
+    private static final String TEST_PATH = "tests/test/de/test/BoundedCounterTest.java";
 
     private static final String PROBLEM_STATEMENT_PATH = "problem-statement.md";
 
@@ -139,45 +187,62 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generatesValidExercise_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMOK");
-        // The scripted agent: write the four artifacts, self-check with verify.sh against both assignments, then submit. The post-loop verifier is the authoritative gate.
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_CALCULATOR), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_CALCULATOR),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, CALCULATOR_TEST), HyperionMockedLlmE2eSupport.bash("sh verify.sh solution"),
-                HyperionMockedLlmE2eSupport.bash("sh verify.sh template"), HyperionMockedLlmE2eSupport.submit("Add two integers"));
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.verify(),
+                HyperionMockedLlmE2eSupport.submit("Bounded counter"));
 
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a Java Calculator exercise.", "mock-generate-valid", GenerationMode.GENERATE,
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-valid", GenerationMode.GENERATE,
                 () -> false, line -> log.info("[mock-generate] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (valid) ===\n{}", outcome.verification().report());
-            assertThat(outcome.verification().solutionPassed()).as("the solution passes its own test").isTrue();
-            assertThat(outcome.verification().templateFailed()).as("the template compiles but fails the test").isTrue();
-            assertThat(outcome.verification().testCount()).as("at least one test was discovered").isGreaterThan(0);
+            assertThat(outcome.verification().solutionPassed()).as("the solution passes its own tests").isTrue();
+            assertThat(outcome.verification().templateFailed()).as("the template compiles but fails the tests").isTrue();
+            assertThat(outcome.verification().testCount()).as("all four behavior tests were discovered").isEqualTo(4);
             assertThat(outcome.isAccepted()).as("the differential oracle accepts the exercise").isTrue();
-            assertThat(outcome.producedFiles(RepositoryType.SOLUTION).keySet()).as("the solution repository carries the produced Calculator")
-                    .anyMatch(path -> path.endsWith("Calculator.java"));
-            assertThat(outcome.producedFiles(RepositoryType.TESTS).keySet()).as("the tests repository carries the produced CalculatorTest")
-                    .anyMatch(path -> path.endsWith("CalculatorTest.java"));
+            assertThat(outcome.specFidelityReport().hasFindings()).as("the accepted mocked exercise has no deterministic quality findings").isFalse();
+            assertThat(outcome.producedProblemStatement()).contains("[task][Start at zero](startsAtZeroAndExposesValue)", "[task][Increment up to maximum](incrementsUntilMaximum)",
+                    "[task][Decrement down to zero](decrementNeverDropsBelowZero)", "[task][Reject invalid maximum](rejectsNonPositiveMaximum)");
+            assertThat(outcome.producedFiles(RepositoryType.SOLUTION).keySet()).anyMatch(path -> path.endsWith("BoundedCounter.java"));
+            assertThat(outcome.producedFiles(RepositoryType.TESTS).keySet()).anyMatch(path -> path.endsWith("BoundedCounterTest.java"));
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void rejectsExerciseWhoseSolutionFailsItsOwnTest_deterministic_endToEnd() throws Exception {
+    void rejectsExerciseWithUnresolvedTaskBinding_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMBAD");
-        // Same fixture but the reference solution returns a - b, so it fails its own addsTwoNumbers test and the oracle must reject (fail-closed). On rejection the orchestrator
-        // retries up to its bound; the mock replays only the final submit turn, so each retry re-runs the verifier's two pristine Maven builds and rejects again. The assertion
-        // holds regardless of the per-attempt sandbox lifecycle: whether a retry re-verifies the bad-solution workspace or a freshly-seeded empty one, the differential fails
-        // either way. This drives the full retry budget, so it is the slowest leg of the Docker-gated suite.
-        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
-                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_CALCULATOR), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_CALCULATOR),
-                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, CALCULATOR_TEST), HyperionMockedLlmE2eSupport.submit("Add two integers"));
+        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT_WITH_BAD_BINDING),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, SOLUTION_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER),
+                HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST), HyperionMockedLlmE2eSupport.submit("Bounded counter with one wrong binding"));
 
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a Java Calculator exercise.", "mock-generate-bad", GenerationMode.GENERATE,
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-bad", GenerationMode.GENERATE,
                 () -> false, line -> log.info("[mock-generate-bad] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
-            log.info("=== VERIFICATION (bad) ===\n{}", outcome.verification().report());
-            assertThat(outcome.verification().solutionPassed()).as("the broken solution does NOT pass its own test").isFalse();
-            assertThat(outcome.isAccepted()).as("the differential oracle rejects an exercise whose solution fails").isFalse();
+            log.info("=== VERIFICATION (bad binding) ===\n{}", outcome.verification().report());
+            assertThat(outcome.verification().solutionPassed()).as("the code is otherwise valid").isTrue();
+            assertThat(outcome.verification().templateFailed()).as("the template still fails the tests").isTrue();
+            assertThat(outcome.isAccepted()).as("unresolved task bindings are rejected even when builds pass").isFalse();
+            assertThat(outcome.verification().reasons()).anyMatch(reason -> reason.contains("match no actual test") && reason.contains("incrementAtUpperBound"));
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void rejectsExerciseWhoseSolutionFailsItsOwnTests_deterministic_endToEnd() throws Exception {
+        ProgrammingExercise exercise = scaffoldEmptyJavaExercise("HGMFAIL");
+        when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile(PROBLEM_STATEMENT_PATH, PROBLEM_STATEMENT),
+                HyperionMockedLlmE2eSupport.writeFile(SOLUTION_PATH, BROKEN_SOLUTION_BOUNDED_COUNTER),
+                HyperionMockedLlmE2eSupport.writeFile(TEMPLATE_PATH, TEMPLATE_BOUNDED_COUNTER), HyperionMockedLlmE2eSupport.writeFile(TEST_PATH, BOUNDED_COUNTER_TEST),
+                HyperionMockedLlmE2eSupport.verify(), HyperionMockedLlmE2eSupport.submit("Broken bounded counter"));
+
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Create a bounded counter exercise.", "mock-generate-failing-solution",
+                GenerationMode.GENERATE, () -> false, line -> log.info("[mock-generate-failing] {}", line), null)) {
+            assertThat(outcome.verification()).as("verification ran").isNotNull();
+            log.info("=== VERIFICATION (failing solution) ===\n{}", outcome.verification().report());
+            assertThat(outcome.verification().solutionPassed()).as("a broken reference solution is rejected").isFalse();
+            assertThat(outcome.verification().testCount()).as("the verifier still discovered the behavior tests").isEqualTo(4);
+            assertThat(outcome.isAccepted()).as("the differential oracle rejects exercises whose solution fails").isFalse();
         }
     }
 
@@ -189,9 +254,7 @@ class HyperionExerciseGenerationMockedEndToEndTest extends AbstractHyperionMocke
         exercise.setShortName(shortName);
         exercise.setTitle("Hyperion Mocked E2E " + shortName);
         exercise.setChannelName("hyp-mock-" + shortName.toLowerCase());
-        // emptyRepositories=true: scaffold the flat Java skeleton and clear the template/solution sources and the sample tests (exactly as production does before from-scratch AI
-        // generation), so the agent writes into a clean workspace.
-        return creationService.createProgrammingExercise(exercise, true);
+        return useOfflineMavenPluginVersions(creationService.createProgrammingExercise(exercise, true));
     }
 
     private User instructor() {

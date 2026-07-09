@@ -1,11 +1,9 @@
-/**
- * Vitest tests for HealthModalComponent.
- */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('HealthModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -15,10 +13,8 @@ describe('HealthModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [HealthModalComponent],
-        })
-            .overrideTemplate(HealthModalComponent, '<button data-testid="dismiss-button" (click)="dismiss()"></button>')
-            .compileComponents();
+            imports: [HealthModalComponent, TranslateModule.forRoot()],
+        }).compileComponents();
 
         fixture = TestBed.createComponent(HealthModalComponent);
         comp = fixture.componentInstance;
@@ -59,6 +55,13 @@ describe('HealthModalComponent', () => {
         expect(comp.isBuildAgentsArray('notAnArray', 'buildAgents')).toBe(false);
     });
 
+    it('should reject malformed build agent entries', () => {
+        const malformed = [{ error: 'agent unreachable' }];
+
+        expect(comp.isBuildAgentsArray(malformed, 'buildAgents')).toBe(false);
+        expect(comp.formatBuildAgents(malformed, 'buildAgents')).toEqual([]);
+    });
+
     it('should format simplified build agent data', () => {
         const buildAgents = [
             {
@@ -68,6 +71,8 @@ describe('HealthModalComponent', () => {
                 status: 'ACTIVE',
                 currentJobs: 1,
                 maxJobs: 4,
+                reservedGenerationSandboxSlots: 2,
+                maxGenerationSandboxSlots: 6,
                 runningJobs: ['job-1', 2],
             },
         ];
@@ -82,6 +87,8 @@ describe('HealthModalComponent', () => {
                 status: 'ACTIVE',
                 currentJobs: 1,
                 maxJobs: 4,
+                reservedGenerationSandboxSlots: 2,
+                maxGenerationSandboxSlots: 6,
                 runningJobNames: ['job-1', '2'],
             },
         ]);
@@ -98,6 +105,8 @@ describe('HealthModalComponent', () => {
                 status: 'IDLE',
                 numberOfCurrentBuildJobs: 0,
                 maxNumberOfConcurrentBuildJobs: 2,
+                reservedGenerationSandboxSlots: 1,
+                maxGenerationSandboxSlots: 5,
                 runningBuildJobs: [{ name: 'job-a', id: 'job-a-id' }, { id: 'job-b-id' }],
                 buildAgentDetails: {
                     gitRevision: 'abc123',
@@ -116,11 +125,69 @@ describe('HealthModalComponent', () => {
                 status: 'IDLE',
                 currentJobs: 0,
                 maxJobs: 2,
+                reservedGenerationSandboxSlots: 1,
+                maxGenerationSandboxSlots: 5,
                 runningJobNames: ['job-a', 'job-b-id'],
                 gitRevision: 'abc123',
                 startDate: '2025-01-01T12:00:00Z',
             },
         ]);
+    });
+
+    it('should not invent generation sandbox slot capacity for legacy build agent data without generation fields', () => {
+        const result = comp.formatBuildAgents([{ buildAgent: { name: 'legacy-agent' }, maxNumberOfConcurrentBuildJobs: 2 }], 'buildAgents');
+
+        expect(result[0].reservedGenerationSandboxSlots).toBeUndefined();
+        expect(result[0].maxGenerationSandboxSlots).toBeUndefined();
+        expect(comp.hasHyperionSandboxCapacity(result[0])).toBe(false);
+    });
+
+    it('should show reported zero generation sandbox slot capacity for agents that do not host Hyperion sandboxes', () => {
+        expect(
+            comp.hasHyperionSandboxCapacity({
+                name: 'agent-1',
+                displayName: '',
+                memberAddress: '',
+                status: 'ACTIVE',
+                currentJobs: 0,
+                maxJobs: 1,
+                runningJobNames: [],
+                reservedGenerationSandboxSlots: 0,
+                maxGenerationSandboxSlots: 0,
+            }),
+        ).toBe(true);
+    });
+
+    it('should render reported Hyperion sandbox slots in the build agent modal', async () => {
+        fixture.componentRef.setInput('health', {
+            key: 'continuousIntegrationServer' as HealthKey,
+            value: {
+                status: 'UP',
+                details: {
+                    buildAgents: [
+                        {
+                            name: 'agent-1',
+                            displayName: 'Agent One',
+                            memberAddress: '10.0.0.1',
+                            status: 'ACTIVE',
+                            currentJobs: 1,
+                            maxJobs: 4,
+                            reservedGenerationSandboxSlots: 2,
+                            maxGenerationSandboxSlots: 6,
+                            runningJobs: [],
+                        },
+                    ],
+                },
+            } as HealthDetails,
+        });
+        comp.visible.set(true);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const text = document.body.textContent ?? '';
+        expect(text).toContain('Agent One');
+        expect(text).toContain('2 / 6');
     });
 
     it('should map build agent status to the correct badge severity', () => {

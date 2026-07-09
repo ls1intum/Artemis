@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -320,7 +321,6 @@ class TestResultXmlParserTest {
         String input = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <!-- comment describing <testsuites> -->
-                <!DOCTYPE testsuites>
                 <testsuites>
                     <testsuite>
                         <testcase name="Test"/>
@@ -332,6 +332,21 @@ class TestResultXmlParserTest {
 
         assertThat(successfulTests).singleElement().extracting(LocalCITestJobDTO::name).isEqualTo("Test");
         assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void rejectsDtdDeclarations() {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE testsuites>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="Test"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests));
     }
 
     @Test

@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,7 @@ public class SpecFidelityCriticService {
     private static final Logger log = LoggerFactory.getLogger(SpecFidelityCriticService.class);
 
     /** Hard cap on the critic's output so the single LLM pass can never explode cost. */
-    private static final int CRITIC_MAX_OUTPUT_TOKENS = 1_500;
+    private static final int CRITIC_MAX_OUTPUT_TOKENS = 3_000;
 
     /** Defensive cap on how many model-reported uncovered requirements are surfaced, so a degenerate response can never flood the retry prompt or the review panel. */
     private static final int MAX_COVERAGE_FINDINGS = 12;
@@ -93,6 +93,7 @@ public class SpecFidelityCriticService {
             {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}], \
             "missingExamples": [{"behaviour": "<the error/edge behaviour>", "reason": "<which concrete fenced example is missing>"}], \
             "invented": [{"requirement": "<the requirement the statement adds>", "reason": "<why it is not in the brief>"}]}
+            Keep each requirement, behaviour, and reason concise (one short sentence, no markdown) so the JSON is never truncated. \
             If everything is covered, every error/edge behaviour has a concrete fenced example, and the statement adds nothing beyond the brief, respond with \
             {"uncovered": [], "missingExamples": [], "invented": []}.""";
 
@@ -192,9 +193,9 @@ public class SpecFidelityCriticService {
             return List.of();
         }
         try {
-            // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop. A plain ChatOptions means the critic cannot call tools.
+            // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop.
             ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames))
-                    .options(ChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS)).call().chatResponse();
+                    .options(OpenAiChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS)).call().chatResponse();
             if (usageSink != null) {
                 // Count the critic's own token usage against the generation run; without this its spend goes entirely unrecorded.
                 usageSink.accept(response);

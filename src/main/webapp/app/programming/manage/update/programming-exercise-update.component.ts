@@ -65,7 +65,7 @@ import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/servic
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -1042,7 +1042,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.onSaveSuccess(exercise);
             return;
         }
-        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
+        const navigationExtras = { state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true } };
         if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
             void this.router.navigate(
                 [

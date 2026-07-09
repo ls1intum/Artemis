@@ -33,7 +33,7 @@
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
             "threadOutdated": "Outdated",
-            "threadSelectedForCodeGeneration": "Selected for code generation",
+            "threadSelectedForCodeGeneration": "Selected for adaptation",
             "threadConsistencyIssue": "Consistency issue",
             "threadConsistencySeverity": "{{severity}} Severity",
             "applyInlineFix": "Apply changes",

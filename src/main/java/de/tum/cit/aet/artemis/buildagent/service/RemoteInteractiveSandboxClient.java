@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
@@ -28,6 +27,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +44,8 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
 
 /**
  * Core-node {@link InteractiveSandbox} that drives a sandbox container living on a remote build agent — the multi-node counterpart of the co-located
- * {@link InteractiveSandboxService}. A core-only node has no Docker, so every operation is relayed to the owning agent over two broadcast topics ({@code hyperion-sandbox-requests}
+ * {@link InteractiveSandboxService}. A core node (including a core/build-agent co-location) relays every operation to the owning agent over two broadcast topics
+ * ({@code hyperion-sandbox-requests}
  * / {@code hyperion-sandbox-responses}); agents commonly run as Hazelcast clients rather than members, so a member-targeted RPC is impossible and the owning agent self-filters on
  * its short name.
  * <p>
@@ -58,7 +59,8 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  */
 @Lazy
 @Component
-@Profile(PROFILE_CORE + " & !" + PROFILE_BUILDAGENT + " & " + PROFILE_LOCALCI)
+@Primary
+@Profile(PROFILE_CORE + " & " + PROFILE_LOCALCI)
 public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteInteractiveSandboxClient.class);
@@ -135,17 +137,18 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     @Override
     public String createSession(SandboxSessionSpec spec) {
-        List<String> candidates = selectCandidateAgents();
+        List<String> candidates = selectCandidateAgents(2);
         if (candidates.isEmpty()) {
             throw new LocalCIException(
-                    "No build agent is configured to host interactive sandbox sessions (set artemis.continuous-integration.build-agent.max-concurrent-generation-sessions > 0 on a spare agent).");
+                    "No build agent has two free Hyperion generation sandbox slots. A successful generation run temporarily needs an authoring sandbox and a verification sandbox, "
+                            + "so set artemis.continuous-integration.build-agent.max-generation-sandbox-slots accordingly on spare agents.");
         }
         // Failover: try the least session-loaded agent first, then the next, skipping any that declines (at capacity, draining, or a transient/agent-local Docker error) or is
         // unreachable (timeout); a deterministic failure (bad image, malformed spec) throws immediately from attemptCreate rather than storming every candidate. Bounded by the
         // candidate count so a burst of concurrent creates contending for the same scarce permits spreads across agents instead of every loser eating a timeout or a hard failure.
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
-            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec);
+            SandboxOpRequest request = SandboxOpRequest.create(newCorrelationId(), targetAgent, spec, 2);
             CreateAttempt attempt = attemptCreate(request);
             if (attempt.containerId() != null) {
                 // Encode the owning agent into the handle so every later op can route back to the same agent without any shared lookup state.
@@ -155,6 +158,17 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         }
         throw new LocalCIException("Could not place an interactive sandbox session on any of the " + candidates.size()
                 + " candidate build agent(s); all declined or were unreachable: " + String.join(", ", declines) + ".");
+    }
+
+    @Override
+    public String createVerificationSession(SandboxSessionSpec spec, String loopSessionId) {
+        String targetAgent = agentOf(loopSessionId);
+        SandboxOpRequest request = SandboxOpRequest.createVerification(newCorrelationId(), targetAgent, spec, containerOf(loopSessionId));
+        CreateAttempt attempt = attemptCreate(request);
+        if (attempt.containerId() == null) {
+            throw new LocalCIException("Could not place the verification sandbox on agent " + targetAgent + " next to the authoring sandbox: " + attempt.declineReason());
+        }
+        return targetAgent + SESSION_HANDLE_SEPARATOR + attempt.containerId();
     }
 
     /**
@@ -345,19 +359,24 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /**
-     * Orders the build agents eligible to host a new session, least session-loaded first, so {@link #createSession} can try them in turn and fail over. Generation hosting is
-     * opt-in
-     * per agent ({@code max-concurrent-generation-sessions}, default 0), and an agent with the cap at 0 never subscribes to the request topic — so selection MUST filter on
-     * generation-session headroom, not build-job headroom, or a CREATE routed to a non-hosting agent would hang unanswered until the control-op timeout. Only active, non-paused
-     * agents that host generation and still have a free session permit are included.
+     * Orders the build agents eligible to start a new generation loop, least slot-loaded first, so {@link #createSession} can try them in turn and fail over. Generation hosting
+     * is opt-in per agent ({@code max-generation-sandbox-slots}, default 0), and an agent with the cap at 0 never subscribes to the request topic — so selection MUST filter
+     * on generation sandbox slot headroom, not build-job headroom, or a CREATE routed to a non-hosting agent would hang unanswered until the control-op timeout. A loop is admitted
+     * only when the agent has at least two free permits: one for the authoring sandbox and one for the verification sandbox that will be created on the same agent via
+     * {@link #createVerificationSession(SandboxSessionSpec, String)}.
      *
+     * @param requiredFreeSlots the number of free generation sandbox slots required on the agent
      * @return the short names of the candidate agents, ascending by current session load
      */
-    private List<String> selectCandidateAgents() {
+    private List<String> selectCandidateAgents(int requiredFreeSlots) {
         List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
         return agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
-                .filter(agent -> agent.maxNumberOfConcurrentGenerationSessions() > 0 && agent.numberOfCurrentGenerationSessions() < agent.maxNumberOfConcurrentGenerationSessions())
-                .sorted(Comparator.comparingInt(BuildAgentInformation::numberOfCurrentGenerationSessions)).map(agent -> agent.buildAgent().name()).toList();
+                .filter(agent -> agent.maxGenerationSandboxSlots() > 0 && agent.maxGenerationSandboxSlots() - agent.reservedGenerationSandboxSlots() >= requiredFreeSlots)
+                .sorted(Comparator.comparingInt(BuildAgentInformation::reservedGenerationSandboxSlots)).map(agent -> agent.buildAgent().name()).toList();
+    }
+
+    public boolean hasAvailableGenerationSandboxSlots(int requiredFreeSlots) {
+        return !selectCandidateAgents(requiredFreeSlots).isEmpty();
     }
 
     private static String newCorrelationId() {

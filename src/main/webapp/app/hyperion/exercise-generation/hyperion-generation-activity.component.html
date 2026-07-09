@@ -22,6 +22,11 @@
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.cancel"></span>
                     </p-button>
                 }
+                @if (completionStatus(); as status) {
+                    <p-tag [severity]="completionSeverity(status)" data-testid="hyperion-generation-completion-status">
+                        <span [jhiTranslate]="'artemisApp.hyperion.generationActivity.completionStatus.' + status"></span>
+                    </p-tag>
+                }
                 @if (verdict(); as currentVerdict) {
                     <p-tag [severity]="currentVerdict.accepted ? 'success' : 'danger'" data-testid="hyperion-generation-verdict">
                         <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
@@ -92,8 +97,8 @@
                                 <button
                                     type="button"
                                     class="hyperion-activity-file"
-                                    [class.active]="file.path === activePath()"
-                                    (click)="selectFile(file.path)"
+                                    [class.active]="file.path === activePath() && file.repo === activeSnapshot()?.repo"
+                                    (click)="selectFile(file.path, file.repo)"
                                     data-testid="hyperion-generation-file"
                                 >
                                     <span class="hyperion-activity-file-path">{{ file.path }}</span>
@@ -107,7 +112,9 @@
                 </div>
                 <ul class="hyperion-activity-timeline">
                     @for (event of events(); track $index) {
-                        <li>{{ event.message }}</li>
+                        @if (event.message) {
+                            <li>{{ event.message }}</li>
+                        }
                     }
                 </ul>
             </div>

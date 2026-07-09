@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
@@ -86,20 +87,40 @@ public class ExerciseAdaptationRevertService {
      * run
      * cannot be reverted, never that the persisted adaptation is unsound — so it never throws.
      *
-     * @param exercise           the exercise that was adapted
-     * @param jobId              the adaptation job id
-     * @param preAdaptationHeads the per-repository commit HEAD captured immediately before the accepted adaptation was committed in place
+     * @param exercise            the exercise that was adapted
+     * @param jobId               the adaptation job id
+     * @param preAdaptationHeads  the per-repository commit HEAD captured immediately before the accepted adaptation was committed in place
+     * @param postAdaptationHeads the per-repository commit HEAD captured immediately after Hyperion committed the accepted adaptation
+     * @param problemStatement    the problem statement before the adaptation
+     * @param title               the title before the adaptation
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads) {
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads, Map<RepositoryType, String> postAdaptationHeads,
+            String problemStatement, String title) {
         try {
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
+            Map<RepositoryType, String> expectedCurrentHeads = new LinkedHashMap<>();
             for (RepositoryType repositoryType : REVERT_ORDER) {
                 String head = preAdaptationHeads.get(repositoryType);
                 if (head != null) {
+                    LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
+                    if (uri == null) {
+                        log.warn(
+                                "Could not record the adaptation baseline for the {} repository of exercise {} because the repository URI is missing; this run will not be revertible",
+                                repositoryType, exercise.getId());
+                        return;
+                    }
+                    String expectedCurrentHead = postAdaptationHeads.get(repositoryType);
+                    if (expectedCurrentHead == null) {
+                        log.warn("Could not record the adaptation baseline for the {} repository of exercise {} because Hyperion's post-adaptation HEAD is missing", repositoryType,
+                                exercise.getId());
+                        return;
+                    }
                     heads.put(repositoryType, head);
+                    expectedCurrentHeads.put(repositoryType, expectedCurrentHead);
                 }
             }
-            baselineMap.put(exercise.getId(), new AdaptationBaseline(jobId, heads));
+            baselineMap.put(exercise.getId(),
+                    new AdaptationBaseline(jobId, heads, expectedCurrentHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle()));
             log.info("Recorded revertible adaptation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
         }
         catch (RuntimeException e) {
@@ -121,8 +142,11 @@ public class ExerciseAdaptationRevertService {
             return Optional.empty();
         }
         RevertResult result = revertToBaseline(exercise, user, baseline);
-        // Consume the baseline so the same adaptation cannot be reverted twice (a second revert would reset onto an unrelated state).
-        baselineMap.remove(exercise.getId());
+        // Consume the baseline only after every captured repository was reset. On a partial failure, keep it so a retry can reset the remaining repositories instead of stranding
+        // the exercise in a half-reverted state.
+        if (result.fullyReverted()) {
+            baselineMap.remove(exercise.getId(), baseline);
+        }
         return Optional.of(result);
     }
 
@@ -136,6 +160,13 @@ public class ExerciseAdaptationRevertService {
      * @return which repositories were reverted and whether every captured repository was reverted successfully
      */
     RevertResult revertToBaseline(ProgrammingExercise exercise, User user, AdaptationBaseline baseline) {
+        if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
+                || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title())) {
+            log.error("Refusing to revert adaptation metadata for exercise {} because the current problem statement/title no longer matches the captured adaptation state",
+                    exercise.getId());
+            return new RevertResult(false, List.of());
+        }
+
         List<RepositoryType> reverted = new ArrayList<>();
         boolean fullyReverted = true;
         for (RepositoryType repositoryType : REVERT_ORDER) {
@@ -149,7 +180,19 @@ public class ExerciseAdaptationRevertService {
                 if (repository == null) {
                     throw new IllegalStateException("Could not check out the repository to revert it");
                 }
-                gitService.resetToCommitAndForcePush(repository, head, defaultBranch);
+                String currentHead = gitService.getLastCommitHash(uri);
+                if (head.equals(currentHead)) {
+                    reverted.add(repositoryType);
+                    continue;
+                }
+                String expectedCurrentHead = baseline.expectedCurrentHeadFor(repositoryType);
+                if (expectedCurrentHead == null) {
+                    throw new IllegalStateException("No post-adaptation HEAD was captured for this repository; refusing to force-push without clobber protection");
+                }
+                if (!expectedCurrentHead.equals(currentHead)) {
+                    throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the adaptation commit " + expectedCurrentHead);
+                }
+                gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, defaultBranch);
                 reverted.add(repositoryType);
                 log.info("Reverted the {} repository of exercise {} back to its pre-adaptation commit {}", repositoryType, exercise.getId(), head);
             }
@@ -158,9 +201,17 @@ public class ExerciseAdaptationRevertService {
                 log.error("Failed to revert the {} repository of exercise {} back to {}; the exercise may be inconsistent", repositoryType, exercise.getId(), head, e);
             }
         }
-        // Re-sync grading to the reverted tests (best-effort); the tests HEAD is the captured baseline commit we just reset to.
-        persistenceService.resyncAfterRevert(exercise, user, baseline.headFor(RepositoryType.TESTS));
+        if (fullyReverted) {
+            // Re-sync grading to the reverted tests (best-effort); the tests HEAD is the captured baseline commit we just reset to. A partial revert deliberately skips this so
+            // test-case/build metadata cannot be refreshed against only part of a mixed repository state.
+            fullyReverted = persistenceService.resyncAfterRevert(exercise, user, baseline.headFor(RepositoryType.TESTS), baseline.problemStatement(), baseline.title(),
+                    baseline.expectedProblemStatement(), baseline.expectedTitle());
+        }
         return new RevertResult(fullyReverted, List.copyOf(reverted));
+    }
+
+    private static boolean metadataCanBeReverted(String currentValue, String expectedAdaptedValue, String targetBaselineValue) {
+        return Objects.equals(currentValue, expectedAdaptedValue) || Objects.equals(currentValue, targetBaselineValue);
     }
 
     /**

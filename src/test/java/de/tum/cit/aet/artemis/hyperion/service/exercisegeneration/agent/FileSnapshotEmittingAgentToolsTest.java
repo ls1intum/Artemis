@@ -53,8 +53,8 @@ class FileSnapshotEmittingAgentToolsTest {
         ExerciseGenerationFileSnapshotDTO snapshot = emitted.getFirst();
         assertThat(snapshot.type()).isEqualTo(ExerciseGenerationFileSnapshotDTO.TYPE);
         assertThat(snapshot.path()).isEqualTo("solution/src/A.java");
-        assertThat(snapshot.repo()).isEqualTo("solution");
-        assertThat(snapshot.action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.ACTION_CREATE);
+        assertThat(snapshot.repo()).isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.SOLUTION);
+        assertThat(snapshot.action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.Action.CREATE);
         assertThat(snapshot.content()).isEqualTo("abc");
         assertThat(snapshot.bytes()).isEqualTo(3);
         assertThat(snapshot.turn()).isEqualTo(4);
@@ -71,9 +71,9 @@ class FileSnapshotEmittingAgentToolsTest {
 
         assertThat(emitted).hasSize(2);
         assertThat(emitted.get(0).path()).isEqualTo("tests/T.java");
-        assertThat(emitted.get(0).repo()).isEqualTo("tests");
-        assertThat(emitted.get(0).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.ACTION_CREATE);
-        assertThat(emitted.get(1).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.ACTION_EDIT);
+        assertThat(emitted.get(0).repo()).isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.TESTS);
+        assertThat(emitted.get(0).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.Action.CREATE);
+        assertThat(emitted.get(1).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.Action.EDIT);
         assertThat(emitted.get(1).content()).isEqualTo("two");
     }
 
@@ -133,7 +133,7 @@ class FileSnapshotEmittingAgentToolsTest {
         assertThat(result).isEqualTo(WRITE_OK);
         // The edit's whole-file snapshot is rebuilt from the cached previous content by applying the single replacement — no read-back through the delegate.
         assertThat(emitted).hasSize(2);
-        assertThat(emitted.get(1).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.ACTION_EDIT);
+        assertThat(emitted.get(1).action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.Action.EDIT);
         assertThat(emitted.get(1).content()).isEqualTo("hello there");
         verify(delegate, never()).readFile(anyString());
     }

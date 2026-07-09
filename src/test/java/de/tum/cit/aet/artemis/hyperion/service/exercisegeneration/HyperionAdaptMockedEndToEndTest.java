@@ -36,13 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
- * Deterministic, committed end-to-end test of the {@link GenerationMode#ADAPT} flow, the mocked-LLM counterpart of the live-GPU {@code HyperionAdaptWithFeedbackEndToEndTest}. A
- * mocked {@code azureOpenAiChatModel} drives the real agent loop, sandbox, and differential oracle; only the model is faked. Docker-gated, not GPU-gated.
- * <p>
- * It seeds a flat add-only {@code Calculator} exercise into the live solution/template/tests repositories (the exercise an instructor would be adapting), which the orchestrator
- * then seeds the sandbox from. The scripted feedback adds a subtraction operation and a new subtraction test file without ever rewriting the seeded addition test. The proof is
- * non-tautological: the seeded {@code addsTwoNumbers} test — which the scripted turns never write — survives into the produced tests repo, so the run adapted the existing harness
- * rather than degenerating into from-scratch generation (where that test would be absent).
+ * Deterministic end-to-end test of the ADAPT flow. The LLM is scripted, but sandbox seeding, structured verify, and differential verification are real.
  */
 @EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isDockerAvailable")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -54,14 +48,18 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
 
     private static final String TEST_PREFIX = "hypadaptmock";
 
-    // ---- The pre-existing (add-only) exercise seeded into the live repositories before the adapt runs --------------------------------------------------------------------------
-
     private static final String SEED_PROBLEM_STATEMENT = """
             # Calculator
 
             Implement a `Calculator` that can add two integers.
 
-            [task][Add two numbers](addsTwoNumbers)
+            ```text
+            add(2, 3) -> 5
+            add(-2, -3) -> -5
+            ```
+
+            [task][Add positive numbers](addsTwoNumbers)
+            [task][Add negative numbers](addsNegativeNumbers)
             """;
 
     private static final String SEED_SOLUTION_CALCULATOR = """
@@ -86,7 +84,6 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             }
             """;
 
-    /** The single pre-existing test. The scripted adapt turns never write this file or its {@code addsTwoNumbers} name — its survival into the produced tests proves adaptation. */
     private static final String SEED_CALCULATOR_TEST = """
             package de.test;
 
@@ -105,23 +102,35 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             class CalculatorTest {
 
                 @Test
-                @StrictTimeout(5)
+                @StrictTimeout(1)
                 void addsTwoNumbers() {
-                    assertEquals(5, new Calculator().add(2, 3));
+                    assertEquals(5, new Calculator().add(2, 3), "add must sum two positive numbers.");
+                }
+
+                @Test
+                @StrictTimeout(1)
+                void addsNegativeNumbers() {
+                    assertEquals(-5, new Calculator().add(-2, -3), "add must preserve the sign when summing negative numbers.");
                 }
             }
             """;
-
-    // ---- The scripted adapt: add a subtraction operation and its own new test, keeping the pre-existing addition test intact
-    // ------------------------------------------------------
 
     private static final String ADAPTED_PROBLEM_STATEMENT = """
             # Calculator
 
             Implement a `Calculator` that can add and subtract two integers.
 
-            [task][Add two numbers](addsTwoNumbers)
-            [task][Subtract two numbers](subtractsTwoNumbers)
+            ```text
+            add(2, 3) -> 5
+            add(-2, -3) -> -5
+            subtract(4, 3) -> 1
+            subtract(3, 4) -> -1
+            ```
+
+            [task][Add positive numbers](addsTwoNumbers)
+            [task][Add negative numbers](addsNegativeNumbers)
+            [task][Subtract positive numbers](subtractsTwoNumbers)
+            [task][Subtract to a negative result](subtractsToNegativeResult)
             """;
 
     private static final String ADAPTED_SOLUTION_CALCULATOR = """
@@ -154,7 +163,6 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             }
             """;
 
-    /** The new test the adapt adds; kept in its own class so the scripted turns never touch (and therefore never re-author) the seeded {@code CalculatorTest}. */
     private static final String ADDED_SUBTRACT_TEST = """
             package de.test;
 
@@ -173,9 +181,15 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
             class SubtractCalculatorTest {
 
                 @Test
-                @StrictTimeout(5)
+                @StrictTimeout(1)
                 void subtractsTwoNumbers() {
-                    assertEquals(1, new Calculator().subtract(4, 3));
+                    assertEquals(1, new Calculator().subtract(4, 3), "subtract must compute the positive difference.");
+                }
+
+                @Test
+                @StrictTimeout(1)
+                void subtractsToNegativeResult() {
+                    assertEquals(-1, new Calculator().subtract(3, 4), "subtract must allow negative results.");
                 }
             }
             """;
@@ -187,47 +201,41 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void adaptsExistingExerciseAddingATest_deterministic_endToEnd() throws Exception {
-        // 1. Build an existing add-only exercise: scaffold the flat Java skeleton, then commit the add-only sources/tests into the live repos the sandbox will be seeded from.
+    void adaptsExistingExerciseAddingTests_deterministic_endToEnd() throws Exception {
         ProgrammingExercise exercise = scaffoldJavaExercise();
         seedRepository(exercise, RepositoryType.TESTS, Map.of("test/de/test/CalculatorTest.java", SEED_CALCULATOR_TEST));
         seedRepository(exercise, RepositoryType.SOLUTION, Map.of("src/de/test/Calculator.java", SEED_SOLUTION_CALCULATOR));
         seedRepository(exercise, RepositoryType.TEMPLATE, Map.of("src/de/test/Calculator.java", SEED_TEMPLATE_CALCULATOR));
-        // The problem statement seed is not strictly required (it is overwritten below) but keeps the seeded exercise self-consistent.
-        seedRepository(exercise, RepositoryType.TESTS, Map.of("problem-statement.md", SEED_PROBLEM_STATEMENT));
 
-        // 2. The scripted adapt: extend the solution and template with subtraction, add a new subtraction test file, rebind both tasks in the problem statement, then submit. It
-        // never writes the seeded CalculatorTest, so the pre-existing addition test can only reach the oracle via the seed-from-live-repo path the ADAPT flow drives.
         when(azureOpenAiChatModel.call(any(Prompt.class))).thenReturn(HyperionMockedLlmE2eSupport.writeFile("solution/src/de/test/Calculator.java", ADAPTED_SOLUTION_CALCULATOR),
                 HyperionMockedLlmE2eSupport.writeFile("template/src/de/test/Calculator.java", ADAPTED_TEMPLATE_CALCULATOR),
                 HyperionMockedLlmE2eSupport.writeFile("tests/test/de/test/SubtractCalculatorTest.java", ADDED_SUBTRACT_TEST),
-                HyperionMockedLlmE2eSupport.writeFile("problem-statement.md", ADAPTED_PROBLEM_STATEMENT), HyperionMockedLlmE2eSupport.bash("sh verify.sh solution"),
-                HyperionMockedLlmE2eSupport.bash("sh verify.sh template"), HyperionMockedLlmE2eSupport.submit("Added a subtraction operation and its test"));
+                HyperionMockedLlmE2eSupport.writeFile("problem-statement.md", ADAPTED_PROBLEM_STATEMENT), HyperionMockedLlmE2eSupport.verify(),
+                HyperionMockedLlmE2eSupport.submit("Added subtraction with positive and negative-result tests"));
 
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Also require the calculator to subtract, and add a test for it.", "mock-adapt",
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, instructor(), "Also require subtraction with positive and negative results.", "mock-adapt",
                 GenerationMode.ADAPT, () -> false, line -> log.info("[mock-adapt] {}", line), null)) {
             assertThat(outcome.verification()).as("verification ran").isNotNull();
             log.info("=== VERIFICATION (adapt) ===\n{}", outcome.verification().report());
             assertThat(outcome.verification().solutionPassed()).as("the solution passes after the adapt").isTrue();
             assertThat(outcome.verification().templateFailed()).as("the template still fails after the adapt").isTrue();
+            assertThat(outcome.verification().testCount()).as("the two seeded tests and two added tests all run").isEqualTo(4);
             assertThat(outcome.isAccepted()).as("the adapted exercise is accepted by the differential oracle").isTrue();
-            // The oracle-derived count: both the seeded addition test and the added subtraction test were discovered and run in the real container.
-            assertThat(outcome.verification().testCount()).as("the added subtraction test grew the suite from the one seeded test to two").isEqualTo(2);
-            // Non-tautological adaptation proof: the seeded CalculatorTest/addsTwoNumbers test — which the scripted adapt turns never wrote — survived into the produced tests, so
-            // the run adapted the existing seeded harness rather than generating a fresh workspace (where addsTwoNumbers would be absent).
+            assertThat(outcome.specFidelityReport().hasFindings()).as("the adapted mocked exercise has no deterministic quality findings").isFalse();
+            assertThat(outcome.producedProblemStatement()).contains("[task][Add positive numbers](addsTwoNumbers)", "[task][Add negative numbers](addsNegativeNumbers)",
+                    "[task][Subtract positive numbers](subtractsTwoNumbers)", "[task][Subtract to a negative result](subtractsToNegativeResult)");
+
             Map<String, String> producedTests = outcome.producedFiles(RepositoryType.TESTS);
-            assertThat(producedTests.keySet()).as("the pre-existing CalculatorTest survived the adapt (seeded, never written by the adapt script)")
-                    .anyMatch(path -> path.endsWith("CalculatorTest.java"));
-            assertThat(producedTests.keySet()).as("the added SubtractCalculatorTest is present").anyMatch(path -> path.endsWith("SubtractCalculatorTest.java"));
-            assertThat(String.join("\n", producedTests.values())).as("both the seeded addition test and the added subtraction test are present").contains("addsTwoNumbers")
-                    .contains("subtractsTwoNumbers");
+            assertThat(producedTests.entrySet()).anySatisfy(entry -> {
+                assertThat(entry.getKey()).endsWith("CalculatorTest.java");
+                assertThat(entry.getValue()).isEqualTo(SEED_CALCULATOR_TEST);
+            });
+            assertThat(producedTests.keySet()).anyMatch(path -> path.endsWith("SubtractCalculatorTest.java"));
+            assertThat(String.join("\n", producedTests.values())).contains("addsTwoNumbers", "addsNegativeNumbers", "subtractsTwoNumbers", "subtractsToNegativeResult");
+            assertThat(producedTests.keySet()).noneMatch(path -> path.endsWith("problem-statement.md"));
         }
     }
 
-    /**
-     * Commits the given files into the exercise's live {@code repositoryType} repository (relative to its root), simulating pre-existing content the ADAPT run seeds its sandbox
-     * from. Multiple calls for the same repository accumulate additively (each stages and pushes its own commit).
-     */
     private void seedRepository(ProgrammingExercise exercise, RepositoryType repositoryType, Map<String, String> filesByRelativePath) throws Exception {
         LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
         Repository repository = gitService.getOrCheckoutRepository(uri, true, localVCLocalCITestService.getDefaultBranch(), true);
@@ -235,7 +243,6 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
         for (Map.Entry<String, String> file : new LinkedHashMap<>(filesByRelativePath).entrySet()) {
             Path target = root.resolve(file.getKey());
             Files.createDirectories(target.getParent());
-            // FileUtils (not Files.writeString) per the architecture rule: it creates missing parent directories.
             FileUtils.writeStringToFile(target.toFile(), file.getValue(), StandardCharsets.UTF_8);
         }
         gitService.stageAllChanges(repository);
@@ -250,7 +257,8 @@ class HyperionAdaptMockedEndToEndTest extends AbstractHyperionMockedLlmEndToEndT
         exercise.setShortName("HAMOK");
         exercise.setTitle("Hyperion Adapt Mocked E2E");
         exercise.setChannelName("hyp-adapt-mock");
-        return creationService.createProgrammingExercise(exercise, true);
+        exercise.setProblemStatement(SEED_PROBLEM_STATEMENT);
+        return useOfflineMavenPluginVersions(creationService.createProgrammingExercise(exercise, true));
     }
 
     private User instructor() {

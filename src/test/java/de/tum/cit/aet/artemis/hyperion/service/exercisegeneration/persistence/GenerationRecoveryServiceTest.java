@@ -57,8 +57,7 @@ class GenerationRecoveryServiceTest {
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);
-        // Default: a from-scratch target — the draft was committed to the live exercise in place (nothing to lose). Adapt-specific tests override this.
-        when(persistenceService.persistRecoveryDraft(any(), any(), any(), any())).thenReturn(new GenerationPersistenceService.RecoveryPersistResult(false, null));
+        when(persistenceService.persistRecoveryDraft(any(), any(), any(), any())).thenReturn(new GenerationPersistenceService.RecoveryPersistResult(true, "hyperion-draft/job-1"));
     }
 
     private GenerationOutcome outcome(VerificationResult verification, String agentNote) {
@@ -112,7 +111,7 @@ class GenerationRecoveryServiceTest {
         int created = recoveryService.recover(exercise, user, outcome, "job-1").reviewThreadCount();
 
         assertThat(created).isEqualTo(2);
-        // The best-effort draft is persisted through the recovery-safe path (which never regresses a working exercise) — for a from-scratch target this commits it in place.
+        // The best-effort draft is persisted through the recovery-safe path, which never touches the live default branch.
         verify(persistenceService).persistRecoveryDraft(exercise, user, outcome, "job-1");
         // The findings are created through the EXISTING consistency-check thread path (no parallel mechanism).
         ArgumentCaptor<List<ConsistencyIssueDTO>> captor = ArgumentCaptor.forClass(List.class);
@@ -168,12 +167,12 @@ class GenerationRecoveryServiceTest {
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
     }
 
-    /** An adapt draft diverted to an isolated branch surfaces {@code liveExerciseUntouched=true} and the draft branch up to the caller. */
+    /** An isolated draft surfaces {@code liveExerciseUntouched=true} and the draft branch up to the caller. */
     @Test
     void recover_adaptTargetDivertedToIsolatedBranch_resultCarriesUntouchedFlagAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one"));
         GenerationOutcome outcome = outcome(verification, "");
-        // The persistence layer detected an adapt target and diverted the draft to an isolated branch, leaving the live exercise byte-identical.
+        // The persistence layer diverted the draft to an isolated branch, leaving the live exercise byte-identical.
         when(persistenceService.persistRecoveryDraft(any(), any(), any(), eq("job-9")))
                 .thenReturn(new GenerationPersistenceService.RecoveryPersistResult(true, "hyperion-draft/job-9"));
         when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any())).thenReturn(List.of(threadWithComment()));
@@ -187,7 +186,7 @@ class GenerationRecoveryServiceTest {
         assertThat(result.reviewThreadCount()).isEqualTo(1);
     }
 
-    /** The adapt diversion survives a degraded annotation: the result still carries {@code liveExerciseUntouched=true} and the branch even when thread creation fails. */
+    /** The isolated draft result still carries {@code liveExerciseUntouched=true} and the branch even when thread creation fails. */
     @Test
     void recover_adaptDiverted_thenAnnotationFails_stillReportsUntouchedAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 1, List.of("gap"));

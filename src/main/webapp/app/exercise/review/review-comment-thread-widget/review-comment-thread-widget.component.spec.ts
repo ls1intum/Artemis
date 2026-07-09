@@ -240,6 +240,33 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
     });
 
+    it('should not offer the adapt action for resolved consistency threads', () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: true,
+            outdated: false,
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'issue',
+                    },
+                },
+            ],
+        } as any);
+        fixture.componentRef.setInput('showAdaptAction', true);
+
+        fixture.detectChanges();
+
+        expect(comp.canAdaptExercise()).toBe(false);
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');
+    });
+
     it('should not offer the adapt action for non-consistency threads', () => {
         fixture.componentRef.setInput('showAdaptAction', true);
         fixture.detectChanges();

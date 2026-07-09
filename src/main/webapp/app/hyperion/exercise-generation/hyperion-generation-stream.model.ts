@@ -5,6 +5,8 @@
 
 export type HyperionGenerationEventType = 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
 
+export type HyperionGenerationCompletionStatus = 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
+
 export type HyperionSnapshotRepo = 'solution' | 'template' | 'tests' | 'other';
 
 export type HyperionSnapshotAction = 'create' | 'edit';
@@ -23,7 +25,10 @@ export interface HyperionGenerationVerdict {
 export interface HyperionGenerationEvent {
     type: HyperionGenerationEventType;
     message?: string;
+    completionStatus?: HyperionGenerationCompletionStatus;
     verdict?: HyperionGenerationVerdict;
+    /** Terminal hint from the server: refresh the authoritative editor state when the live exercise was changed. */
+    liveExerciseChanged?: boolean;
     timestamp?: string;
 }
 
@@ -57,6 +62,12 @@ export interface HyperionGenerationStatus {
     mode?: HyperionGenerationMode;
     events: HyperionGenerationEvent[];
     fileSnapshots?: ExerciseGenerationFileSnapshot[];
+}
+
+/** Result returned by the adaptation-revert endpoint. */
+export interface ExerciseAdaptationRevertResult {
+    fullyReverted: boolean;
+    revertedRepositories: string[];
 }
 
 /** The explicit intent of a run, mirroring the server {@code GenerationMode}. Chosen by the client, never inferred from the exercise's contents. */

@@ -188,6 +188,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
+    @Value("${artemis.continuous-integration.build-agent.run-build-jobs:true}")
+    private boolean runBuildJobs;
+
     /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
@@ -1168,6 +1171,10 @@ public class SharedQueueProcessingService {
      * </p>
      */
     private boolean nodeIsAvailable() {
+        if (!runBuildJobs) {
+            log.debug("Build agent {} is configured with run-build-jobs=false and will not consume CI build jobs.", buildAgentShortName);
+            return false;
+        }
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
         if (buildExecutorService == null) {
             log.warn("build node is not available yet because buildExecutorService is null!");

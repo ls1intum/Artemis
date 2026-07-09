@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.V
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * The result of an agentic generation session, returned to the caller (the async task) so it can decide whether to persist and then close the session.
+ * The result of an agentic Hyperion sandbox, returned to the caller (the async task) so it can decide whether to persist and then close the session.
  * <p>
  * It is {@link AutoCloseable}: closing it destroys the underlying sandbox container. Verification already reads each repository's produced files (and the problem statement) out of
  * the session to run the integrity gates, so those extractions are captured on the outcome and reused at persist — no second full-repo read of the sandbox. Persist only runs on a
@@ -43,6 +43,8 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     private final Map<RepositoryType, Map<String, String>> capturedProducedFiles;
 
+    private final Map<RepositoryType, String> seedRepositoryHeads;
+
     /**
      * The verification-time produced problem statement, captured to avoid re-reading it at persist. {@code null} when verification never ran (such outcomes are never persisted;
      * {@link #producedProblemStatement} then returns an empty string).
@@ -58,7 +60,7 @@ public final class GenerationOutcome implements AutoCloseable {
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
             @Nullable InteractiveSandbox sandbox, Map<RepositoryType, Map<String, String>> capturedProducedFiles, @Nullable String capturedProblemStatement,
-            SpecFidelityReport specFidelityReport) {
+            SpecFidelityReport specFidelityReport, Map<RepositoryType, String> seedRepositoryHeads) {
         this.loopResult = loopResult;
         this.verification = verification;
         this.sessionId = sessionId;
@@ -68,6 +70,7 @@ public final class GenerationOutcome implements AutoCloseable {
         this.capturedProducedFiles = Map.copyOf(capturedProducedFiles);
         this.capturedProblemStatement = capturedProblemStatement;
         this.specFidelityReport = specFidelityReport;
+        this.seedRepositoryHeads = Map.copyOf(seedRepositoryHeads);
     }
 
     private GenerationOutcome(AgentLoopResult loopResult, @Nullable String errorMessage) {
@@ -80,6 +83,7 @@ public final class GenerationOutcome implements AutoCloseable {
         this.capturedProducedFiles = Map.of();
         this.capturedProblemStatement = null;
         this.specFidelityReport = SpecFidelityReport.empty();
+        this.seedRepositoryHeads = Map.of();
     }
 
     static GenerationOutcome cancelled(AgentLoopResult loopResult) {
@@ -127,6 +131,10 @@ public final class GenerationOutcome implements AutoCloseable {
      */
     public Map<String, String> producedFiles(RepositoryType repositoryType) {
         return capturedProducedFiles.getOrDefault(repositoryType, Map.of());
+    }
+
+    public Map<RepositoryType, String> seedRepositoryHeads() {
+        return seedRepositoryHeads;
     }
 
     /**

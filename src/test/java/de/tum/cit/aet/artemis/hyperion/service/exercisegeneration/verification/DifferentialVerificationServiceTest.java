@@ -105,7 +105,7 @@ class DifferentialVerificationServiceTest {
     private static BuildReportSpec result(int tests, int failures, int errors, int exit) {
         List<String> names = new ArrayList<>();
         for (int i = 0; i < tests; i++) {
-            names.add(i < DEFAULT_BOUND_NAMES.length ? DEFAULT_BOUND_NAMES[i] : "hyperionTest" + i);
+            names.add(i < DEFAULT_BOUND_NAMES.length ? DEFAULT_BOUND_NAMES[i] : "BuildHyperion" + i);
         }
         List<String> failed = (failures + errors) > 0 ? names : List.of();
         return BuildReportSpec.of(names, failed, exit);
@@ -181,7 +181,7 @@ class DifferentialVerificationServiceTest {
 
     /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
     private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
-        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
+        return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
     }
 
     /** Runs the in-loop self-check (the agent's {@code verify} tool) against the same scripted sandbox, so its report shares the differential with the post-loop {@code verify}. */
@@ -192,7 +192,7 @@ class DifferentialVerificationServiceTest {
     /** Runs verify with the authoritative auto-seeded structural test names, so the structural-binding exemption is exercised with (and without) that set. */
     private static VerificationResult verifyWithSeededStructural(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> seededStructural) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of(), false));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), seededStructural, Set.of()));
     }
 
     /** Records every exec so a test can assert the verifier ran the PRISTINE path and never the agent's {@code /workspace} copy. */
@@ -283,6 +283,16 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
+    void shouldRejectDuplicateTestNamesBecauseProductionGradingZeroesThem() {
+        List<String> names = List.of("sortsUnsortedArray", "sortsUnsortedArray", "sortsArrayWithDuplicates");
+
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names));
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("Duplicate test names"));
+    }
+
+    @Test
     void shouldRejectWhenStudentProseLeaksGraderMechanics() {
         // Otherwise-valid exercise must still be rejected when student prose explains how the exercise is rigged.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
@@ -348,34 +358,34 @@ class DifferentialVerificationServiceTest {
         assertThat(result.testCount()).isEqualTo(2);
     }
 
-    /** The no-parentheses binding form (the prompt example: {@code (sortsAscendingArray)}) must keep resolving against a {@code sortsAscendingArray()} the runner reported. */
+    /** Task binding names must match production task extraction exactly; {@code testFoo} must not be accepted for a reported {@code testFoo()}. */
     @Test
-    void shouldAcceptWhenTaskBindingOmitsParenthesesButTestNameHasThem() {
+    void shouldRejectWhenTaskBindingOmitsParenthesesButTestNameHasThem() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort,testMergeSort)\n";
         List<String> names = List.of("testBubbleSort()", "testMergeSort()");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
-        assertThat(result.reasons()).noneMatch(reason -> reason.contains("match no actual test"));
-        assertThat(result.accepted()).isTrue();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("match no actual test"));
+        assertThat(result.accepted()).isFalse();
     }
 
     /** Runs verify with integrity-gate inputs in GENERATE mode, so the harness-immutability and solution-leak gates run alongside the differential. */
     private static VerificationResult verifyWithFiles(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), false));
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()));
     }
 
-    /** Same as {@link #verifyWithFiles} but in ADAPT mode (the tests-repo harness-immutability gate is relaxed); every other gate still runs. */
+    /** Same as {@link #verifyWithFiles} but with an ADAPT-style caller; harness immutability still applies because production grading trusts it verbatim. */
     private static VerificationResult verifyWithFilesAdapt(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
             Map<String, String> producedTemplate, Map<String, String> producedSolution) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of(), true));
+                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()));
     }
 
     /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
     private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames, true));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), baselineGradedTestNames));
     }
 
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
@@ -402,23 +412,53 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void adaptMode_relaxesTestsRepoImmutabilityGate_acceptsAHarnessLayoutChangeThatGenerateRejects() {
-        // The SAME tampered tests harness that GENERATE rejects above is ACCEPTED in ADAPT mode: a feedback item may legitimately adjust a test (and the manifest registering it),
-        // and the differential (solution passes, template fails) still holds, so the oracle remains the backstop.
+    void integrityGates_rejectPlainJunitJavaTestsThatBypassAres() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String pom = """
+                <project>
+                    <dependencies><dependency><artifactId>junit-jupiter</artifactId></dependency></dependencies>
+                </project>
+                """;
+        String plainJunitTest = """
+                package de.test;
+
+                import org.junit.jupiter.api.Test;
+
+                class SortTest {
+
+                    @Test
+                    void sortsUnsortedArray() {
+                    }
+                }
+                """;
+        var producedTests = Map.of("pom.xml", pom, "test/de/test/SortTest.java", plainJunitTest);
+
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+                new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("@StrictTimeout"));
+    }
+
+    @Test
+    void adaptMode_stillRejectsHarnessLayoutChange() {
+        // ADAPT may change test source files, but not the seeded harness layout: production grading trusts the harness verbatim, so accepting a rewritten source path is unsafe.
         var seedTests = Map.of("test.cabal", SEED_CABAL);
         var producedTests = Map.of("test.cabal", SEED_CABAL.replace("${solutionWorkingDirectory}/src", "assignment/solution/src"));
         VerificationResult result = verifyWithFilesAdapt(result(5, 0, 0, 0), result(5, 3, 0, 1), seedTests, producedTests, Map.of(), Map.of());
-        assertThat(result.accepted()).as("ADAPT relaxes the tests-repo harness-immutability gate").isTrue();
-        assertThat(result.reasons()).noneMatch(r -> r.contains("harness is graded"));
+        assertThat(result.accepted()).as("ADAPT keeps the tests-repo harness-immutability gate").isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("harness is graded"));
     }
 
     @Test
     void adaptMode_stillEnforcesTheSolutionLeakGate() {
-        // ADAPT relaxes ONLY the tests-repo harness gate; a template leaking the reference solution to a non-graded path must still be rejected even in ADAPT mode.
+        // A template leaking the reference solution to a non-graded path must still be rejected in ADAPT mode.
         var producedTemplate = Map.of("src/Exercise.hs", "factorial _ = error \"todo: implement the factorial function here\"\n", "doc/reference_solution.hs", SOLUTION_BODY);
         var producedSolution = Map.of("src/Exercise.hs", SOLUTION_BODY);
         VerificationResult result = verifyWithFilesAdapt(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), Map.of(), producedTemplate, producedSolution);
-        assertThat(result.accepted()).as("the solution-leak gate is not relaxed by ADAPT").isFalse();
+        assertThat(result.accepted()).as("the solution-leak gate is enforced by ADAPT").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("template leaks the reference solution"));
     }
 
@@ -444,7 +484,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
         assertThat(result.accepted()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
     }
@@ -455,7 +495,7 @@ class DifferentialVerificationServiceTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
+                new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
         assertThat(result.accepted()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
 
@@ -563,7 +603,8 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldAcceptWhenTaskBindingsResolveToRealTestNames() {
         List<String> names = List.of("sortsUnsortedArray()", "sortsArrayWithDuplicates()");
-        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names));
+        String problemStatement = "# Sort\n[task][Sort an array](sortsUnsortedArray(),sortsArrayWithDuplicates())\n";
+        VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
         assertThat(result.accepted()).isTrue();
     }
 
@@ -709,6 +750,24 @@ class DifferentialVerificationServiceTest {
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("production grades EVERY discovered test") && r.contains("peek_returns_top"));
+    }
+
+    @Test
+    void shouldRejectWhenBehaviourTestIsUnboundEvenIfItFailsOnTemplate() {
+        List<String> all = List.of("push_grows", "peek_returns_top");
+        String ps = "# Stack\n[task][Push](push_grows)\n";
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
+        assertThat(result.accepted()).as("every real gradable behaviour test must be visible in the Artemis task checklist").isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("not bound by any [task]") && r.contains("peek_returns_top"));
+    }
+
+    @Test
+    void shouldRejectDuplicateTaskBindings() {
+        List<String> all = List.of("push_grows", "peek_returns_top");
+        String ps = "# Stack\n[task][Push](push_grows)\n[task][Duplicate push](push_grows)\n[task][Peek](peek_returns_top)\n";
+        VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
+        assertThat(result.accepted()).as("duplicate [task] bindings make the student checklist ambiguous").isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
     }
 
     @Test
@@ -900,7 +959,7 @@ class DifferentialVerificationServiceTest {
             // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
         }
 
         @Test
@@ -933,7 +992,7 @@ class DifferentialVerificationServiceTest {
             var harness = Map.of("pom.xml", "<project><groupId>x</groupId><artifactId>x</artifactId><version>1</version></project>\n");
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of(), false));
+                    new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), Set.of(), Set.of()));
             assertThat(result.accepted()).as("the SCA gate fails open when the category repository is absent").isTrue();
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
@@ -1022,13 +1081,9 @@ class DifferentialVerificationServiceTest {
 
         private static Stream<Arguments> structuralBindingAcceptCases() {
             List<String> behaviourPlusStructural = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
-            return Stream.of(Arguments.of("unbound auto-seeded structural tests", PROBLEM_STATEMENT_WITH_TASK, behaviourPlusStructural, Set.of()),
-                    Arguments.of("structural binding resolves to nothing because the seeder declined",
-                            "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Helper structure](testClass[Helper],testMethods[Helper])\n",
-                            List.of("sortsUnsortedArray", "sortsArrayWithDuplicates"), Set.of()),
-                    Arguments.of("structural binding resolves via the authoritative seeded set",
-                            "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n",
-                            behaviourPlusStructural, Set.of("testClass[Sorter]", "testMethods[Sorter]")));
+            return Stream.of(Arguments.of("structural binding resolves via the authoritative seeded set",
+                    "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n", behaviourPlusStructural,
+                    Set.of("testClass[Sorter]", "testMethods[Sorter]")));
         }
 
         @Test

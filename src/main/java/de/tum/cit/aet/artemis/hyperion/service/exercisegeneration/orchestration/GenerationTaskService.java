@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -12,18 +12,19 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRecoveryService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -101,7 +102,7 @@ public class GenerationTaskService {
         // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
         // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
         // initialized — and fail closed with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
-        ProgrammingExercise exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(exerciseId).orElse(null);
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
         if (exercise == null) {
             log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: the exercise no longer exists."));
@@ -126,19 +127,28 @@ public class GenerationTaskService {
                             // after every repository committed successfully. Record a revertible baseline only for an accepted ADAPT applied in place — never for a
                             // cancelled/rejected/errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing
                             // to revert to.
-                            Map<RepositoryType, String> preAdaptationHeads = persistenceService.persist(exercise, user, outcome);
+                            ProgrammingExercise exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
+                            String originalProblemStatement = exerciseToPersist.getProblemStatement();
+                            String originalTitle = exerciseToPersist.getTitle();
+                            GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome);
                             if (event.mode() == GenerationMode.ADAPT) {
-                                adaptationRevertService.recordBaseline(exercise, jobId, preAdaptationHeads);
+                                adaptationRevertService.recordBaseline(exerciseToPersist, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
+                                        originalProblemStatement, originalTitle);
                             }
                             // Advisory only: surface any spec-fidelity / coverage gaps as review comments without changing the accepted status. The differential oracle accepted
                             // the
                             // exercise; these are non-blocking notes the instructor may act on. Best-effort — a failed attach never downgrades the SUCCESS.
-                            int advisoryCount = recoveryService.surfaceAdvisoryFindings(exercise, outcome.specFidelityReport());
+                            int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, outcome.specFidelityReport());
                             String advisory = advisoryCount > 0
                                     ? " " + advisoryCount + " advisory spec-fidelity note(s) were added for your review (these did not affect acceptance)."
                                     : "";
                             emitter.milestone(ExerciseGenerationEventDTO.done("The exercise was generated and saved. Review the changes." + advisory,
-                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict));
+                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
+                        }
+                        catch (GenerationIncompleteException e) {
+                            log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
+                            emitter.milestone(ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely: " + e.getMessage(),
+                                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
                         }
                         catch (RuntimeException e) {
                             log.error("Failed to persist generated exercise {}", exerciseId, e);
@@ -168,7 +178,7 @@ public class GenerationTaskService {
      * @param exercise   the target exercise
      * @param user       the requesting instructor (commit and review-comment author)
      * @param exerciseId the exercise id (for logging)
-     * @param jobId      the generation job id, used to name the isolated draft branch for an adapt target
+     * @param jobId      the generation job id, used to name the isolated draft branch
      * @param outcome    the non-accepted outcome holding the produced files, verification report, and agent note
      * @param verdict    the structured verdict mirrored to the client
      * @param emitter    the progress emitter for the live transcript
@@ -180,11 +190,10 @@ public class GenerationTaskService {
             emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
             GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId);
             int issueCount = result.reviewThreadCount();
-            // Where the draft landed: for an adapt of a working exercise it is diverted to an isolated branch and the live exercise is left untouched (it keeps working); for a
-            // from-scratch target it is committed to the exercise in place. The message makes this explicit so the instructor knows whether their working exercise was preserved.
-            String placement = result.liveExerciseUntouched()
-                    ? " Your existing working exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch()
-                            + "' for you to review and merge if you want it."
+            // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
+            // without accidentally publishing unverified code.
+            String placement = result.draftBranch() != null
+                    ? " The live exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch() + "' for you to review and merge if you want it."
                     : "";
             // recover only throws when persist itself failed, so reaching here means the draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save (review comments
             // could not be attached), which the message states explicitly.
@@ -193,12 +202,13 @@ public class GenerationTaskService {
                             + "open the exercise and review it manually before grading." + placement + " " + reason
                     : "A draft exercise was generated but did not pass verification, so it needs your review before use. " + issueCount + " issue(s) to review were added to the "
                             + "exercise." + placement + " " + reason;
-            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict));
+            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict, !result.liveExerciseUntouched()));
         }
         catch (RuntimeException e) {
-            // Recovery failed at the persist step: nothing durable was saved, so report PARTIAL (the instructor can retry).
-            log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft could not be persisted)", exerciseId, e);
-            emitter.milestone(ExerciseGenerationEventDTO.done(reason + " Saving the draft for review failed (" + e.getMessage() + ").",
+            // Recovery failed at the isolated-branch persist step. Earlier repository draft branches may already exist, so report PARTIAL and avoid claiming a clean draft.
+            log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft persist did not complete)", exerciseId, e);
+            emitter.milestone(ExerciseGenerationEventDTO.done(
+                    reason + " Saving the draft for review did not complete (" + e.getMessage() + "); any partial hyperion-draft branch must be reviewed or deleted manually.",
                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
         }
     }
@@ -209,5 +219,18 @@ public class GenerationTaskService {
         }
         return new ExerciseGenerationVerdictDTO(verification.accepted(), verification.solutionPassed(), verification.templateFailed(), verification.testCount(),
                 verification.reasons());
+    }
+
+    private ProgrammingExercise reloadDraftExerciseBeforeLiveMutation(long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId)
+                .orElseThrow(() -> new IllegalStateException("Generation cannot be saved because the exercise no longer exists."));
+        if (exercise.isReleased()) {
+            throw new IllegalStateException("Hyperion generation can only modify unreleased draft exercises.");
+        }
+        Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
+        if (studentParticipations != null && !studentParticipations.isEmpty()) {
+            throw new IllegalStateException("Hyperion generation can only modify exercises without student participations.");
+        }
+        return exercise;
     }
 }

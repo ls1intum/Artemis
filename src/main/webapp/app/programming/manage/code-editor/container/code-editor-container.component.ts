@@ -381,6 +381,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      */
     onRefreshFiles() {
         this.unsavedFiles = {};
+        this.commitState = CommitState.CLEAN;
+        this.onCommitStateChange.emit(this.commitState);
     }
 
     /**

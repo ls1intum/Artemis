@@ -492,6 +492,28 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionParticipationId(long participationId);
 
     /**
+     * Checks whether a TEST build result newer than the pre-trigger baseline exists for the given solution participation and tests commit hash.
+     * Hyperion uses this as completion signal for tests-repository builds because production result processing associates TEST results by participation, commit hash, and
+     * submission type; a later same-hash TEST submission may legally receive the result.
+     *
+     * @param participationId        the solution participation id
+     * @param testsCommitHash        the tests repository commit hash that was built
+     * @param baselineLatestResultId the latest result id before the build was triggered; {@code null} if no result existed
+     * @return true once a matching, newer TEST result exists
+     */
+    @Query("""
+            SELECT COUNT(r) > 0
+            FROM Result r
+                JOIN TREAT(r.submission AS ProgrammingSubmission) ps
+            WHERE ps.participation.id = :participationId
+                AND ps.type = de.tum.cit.aet.artemis.exercise.domain.SubmissionType.TEST
+                AND ps.commitHash = :testsCommitHash
+                AND (:baselineLatestResultId IS NULL OR r.id > :baselineLatestResultId)
+            """)
+    boolean existsNewerTestResultForParticipationAndCommitHash(@Param("participationId") long participationId, @Param("testsCommitHash") String testsCommitHash,
+            @Param("baselineLatestResultId") Long baselineLatestResultId);
+
+    /**
      * Checks if a result exists for the given submission ID.
      *
      * @param submissionId the ID of the submission to check.

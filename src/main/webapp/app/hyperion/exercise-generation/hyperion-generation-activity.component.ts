@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import type * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,7 +14,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
+    ExerciseAdaptationRevertResult,
     ExerciseGenerationFileSnapshot,
+    HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationMode,
@@ -24,17 +27,20 @@ import {
 
 const REPO_ORDER: HyperionSnapshotRepo[] = ['solution', 'template', 'tests', 'other'];
 const TERMINAL_EVENT_TYPES = new Set<HyperionGenerationEvent['type']>(['DONE', 'CANCELLED', 'ERROR']);
+const MAX_RETAINED_EVENTS = 50;
 
 interface RepoFileGroup {
     repo: HyperionSnapshotRepo;
     files: ExerciseGenerationFileSnapshot[];
 }
 
-/**
- * Owner-only "Generation activity" drawer embedded in the editor while an agentic whole-exercise generation/adaptation runs. It fetches the current run status for reconnect,
- * subscribes to the live progress + whole-file-snapshot stream, and renders a phase timeline, a live file tree (folded from the stream), a read-only auto-following Monaco preview
- * (text-only sink — the file contents are LLM-authored and untrusted), a terminal verdict, and a cancel button. It self-hides when there is no run to show.
- */
+export interface HyperionGenerationCompletedEvent {
+    mode?: HyperionGenerationMode;
+    verdict?: HyperionGenerationVerdict;
+    completionStatus?: HyperionGenerationCompletionStatus;
+    liveExerciseChanged?: boolean;
+}
+
 @Component({
     selector: 'jhi-hyperion-generation-activity',
     templateUrl: './hyperion-generation-activity.component.html',
@@ -46,37 +52,35 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     private readonly service = inject(HyperionExerciseGenerationService);
     private readonly alertService = inject(AlertService);
 
-    /** The exercise whose active run to show; the drawer self-hides while it is undefined or no run is retained. */
     readonly exerciseId = input<number | undefined>();
+    readonly adaptationReverted = output<void>();
+    readonly generationCompleted = output<HyperionGenerationCompletedEvent>();
 
     private readonly monacoPreview = viewChild(MonacoEditorComponent);
 
-    // Run state, folded from the status endpoint and the live stream.
     readonly jobId = signal<string | undefined>(undefined);
     readonly mode = signal<HyperionGenerationMode | undefined>(undefined);
     readonly running = signal<boolean>(false);
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly snapshots = signal<ExerciseGenerationFileSnapshot[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
+    readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
 
     readonly follow = signal<boolean>(true);
-    readonly pinnedPath = signal<string | undefined>(undefined);
+    readonly pinnedSnapshotKey = signal<string | undefined>(undefined);
     // The path of the file the agent last wrote (created OR re-edited in place). Following tracks this, not array order,
     // so re-editing an earlier file jumps the preview back to it (upsertSnapshot replaces in place, keeping array order).
-    readonly lastWrittenPath = signal<string | undefined>(undefined);
+    readonly lastWrittenSnapshotKey = signal<string | undefined>(undefined);
     readonly cancelRequested = signal<boolean>(false);
 
     // Revert affordance for a completed, accepted in-place adaptation.
     readonly reverting = signal<boolean>(false);
     readonly reverted = signal<boolean>(false);
 
-    /** The drawer is visible only once a run (live or recently finished) is known. */
     readonly visible = computed(() => this.jobId() !== undefined);
 
-    /** The header status label reflects the intent: an adapt run reads "Adapting…", a generate run "Generating…". */
     readonly runningLabelKey = computed(() => (this.mode() === 'ADAPT' ? 'artemisApp.hyperion.generationActivity.adapting' : 'artemisApp.hyperion.generationActivity.running'));
 
-    /** The revert button is offered only once an in-place adaptation has finished and was accepted (the server holds a captured pre-run baseline for it). */
     readonly canRevert = computed(() => this.mode() === 'ADAPT' && !this.running() && !this.reverted() && (this.verdict()?.accepted ?? false));
 
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
@@ -84,11 +88,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         return REPO_ORDER.map((repo) => ({ repo, files: files.filter((file) => file.repo === repo) })).filter((group) => group.files.length > 0);
     });
 
-    /** The file currently shown in the preview: the pinned file, otherwise the most-recently-written file while following. */
     readonly activeSnapshot = computed<ExerciseGenerationFileSnapshot | undefined>(() => {
         const files = this.snapshots();
-        const targetPath = this.follow() ? this.lastWrittenPath() : this.pinnedPath();
-        return files.find((file) => file.path === targetPath) ?? (this.follow() ? files.at(-1) : undefined);
+        const targetKey = this.follow() ? this.lastWrittenSnapshotKey() : this.pinnedSnapshotKey();
+        return files.find((file) => this.snapshotKey(file) === targetKey) ?? (this.follow() ? files.at(-1) : undefined);
     });
 
     readonly activePath = computed(() => this.activeSnapshot()?.path);
@@ -103,16 +106,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     private streamSubscription?: Subscription;
+    private streamLossRefreshTimeout?: ReturnType<typeof setTimeout>;
     private loadedExerciseId?: number;
     // Monotonic token guarding the async status fetch: a newer load or a freshly attached live run (attachToJob) bumps it so a
     // late getStatus response cannot clobber the current run.
     private loadToken = 0;
     private changedLineDecorations?: monaco.editor.IEditorDecorationsCollection;
     private readonly previousContentByPath = new Map<string, string>();
+    private readonly emittedTerminalJobs = new Set<string>();
 
     constructor() {
-        // Reconnect whenever the target exercise changes: fetch its status, rehydrate the preview, and resume the stream if it is still running.
-        // When the exercise clears (id -> undefined) the drawer must reset and self-hide rather than keep showing the previous run.
         effect(() => {
             const id = this.exerciseId();
             if (id === this.loadedExerciseId) {
@@ -124,7 +127,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 this.loadStatus(id);
             }
         });
-        // Render the active file into the read-only preview whenever it changes (text-only Monaco sink; never innerHTML — file contents are untrusted).
+        // Text-only Monaco sink; never innerHTML because file contents are LLM-authored.
         effect(() => {
             const snapshot = this.activeSnapshot();
             const editor = this.monacoPreview();
@@ -138,12 +141,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.streamSubscription?.unsubscribe();
+        this.clearStreamLossRefresh();
     }
 
-    /**
-     * Attaches the drawer to a freshly started run so it streams live on the same surface that triggered it. The mode drives the header label ("Adapting…" vs "Generating…") and
-     * whether the revert affordance is offered when the run completes.
-     */
     attachToJob(jobId: string, mode: HyperionGenerationMode): void {
         if (this.exerciseId() === undefined) {
             return;
@@ -155,9 +155,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.jobId.set(jobId);
         this.running.set(true);
         this.openStream(jobId);
+        this.loadStatus(this.exerciseId()!, jobId);
     }
 
-    /** Reverts the completed in-place adaptation, resetting the exercise repositories to the captured pre-run baseline. */
     revert(): void {
         const id = this.exerciseId();
         if (id === undefined || !this.canRevert() || this.reverting()) {
@@ -165,13 +165,16 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         }
         this.reverting.set(true);
         this.service.revertAdaptation(id).subscribe({
-            next: () => {
+            next: (result) => {
                 this.reverting.set(false);
-                this.reverted.set(true);
-                this.alertService.success('artemisApp.hyperion.generationActivity.revertSuccess');
+                this.handleRevertResult(result);
             },
-            error: () => {
+            error: (error: unknown) => {
                 this.reverting.set(false);
+                if (error instanceof HttpErrorResponse && error.status === 409 && this.isRevertResult(error.error)) {
+                    this.handleRevertResult(error.error);
+                    return;
+                }
                 this.alertService.error('artemisApp.hyperion.generationActivity.revertFailed');
             },
         });
@@ -182,14 +185,15 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         const nowFollowing = !this.follow();
         this.follow.set(nowFollowing);
         if (!nowFollowing) {
-            this.pinnedPath.set(this.activePath());
+            this.pinnedSnapshotKey.set(this.snapshotKey(this.activeSnapshot()));
         }
     }
 
     /** Pins a file: clicking it stops auto-following and shows it. */
-    selectFile(path: string): void {
+    selectFile(path: string, repo?: HyperionSnapshotRepo): void {
         this.follow.set(false);
-        this.pinnedPath.set(path);
+        const matchingSnapshot = repo ? undefined : this.snapshots().find((snapshot) => snapshot.path === path);
+        this.pinnedSnapshotKey.set(this.snapshotKey(matchingSnapshot ?? (repo ? { repo, path } : undefined)));
     }
 
     /** Requests cooperative cancellation of the running job (owner only). */
@@ -203,7 +207,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.service.cancel(id, job).subscribe({ error: () => this.cancelRequested.set(false) });
     }
 
-    private loadStatus(exerciseId: number): void {
+    private loadStatus(exerciseId: number, expectedJobId?: string): void {
         const token = ++this.loadToken;
         this.service.getStatus(exerciseId).subscribe({
             next: (response) => {
@@ -212,23 +216,37 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                 }
                 const status = response.body ?? undefined;
                 if (!status) {
-                    this.reset();
+                    if (expectedJobId === undefined) {
+                        this.reset();
+                    }
                     return;
                 }
+                if (expectedJobId !== undefined && status.jobId !== expectedJobId) {
+                    return;
+                }
+                const sameJob = this.jobId() === status.jobId;
                 this.jobId.set(status.jobId);
-                this.mode.set(status.mode);
-                this.events.set(status.events ?? []);
+                this.mode.set(status.mode ?? this.mode());
+                const events = this.mergeEvents(sameJob ? this.events() : [], status.events ?? []);
+                this.events.set(events);
                 const fileSnapshots = status.fileSnapshots ?? [];
-                this.snapshots.set(fileSnapshots);
-                this.lastWrittenPath.set(fileSnapshots.at(-1)?.path);
-                this.restoreTerminalState(status.events ?? []);
+                const snapshots = this.mergeSnapshots(sameJob ? this.snapshots() : [], fileSnapshots);
+                this.snapshots.set(snapshots);
+                this.lastWrittenSnapshotKey.set(this.snapshotKey(this.latestSnapshot(snapshots)));
+                const terminalEvent = this.latestTerminalEvent(events);
+                if (terminalEvent) {
+                    this.restoreTerminalState(terminalEvent);
+                    this.running.set(false);
+                    this.emitGenerationCompleted(status.jobId, terminalEvent);
+                    return;
+                }
                 this.running.set(status.running);
                 if (status.running) {
                     this.openStream(status.jobId);
                 }
             },
             error: () => {
-                if (token === this.loadToken) {
+                if (token === this.loadToken && expectedJobId === undefined) {
                     this.reset();
                 }
             },
@@ -239,7 +257,8 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.streamSubscription?.unsubscribe();
         this.streamSubscription = this.service.subscribeToStream(jobId).subscribe({
             next: (message) => this.handleMessage(message),
-            error: () => this.running.set(false),
+            error: () => this.refreshStatusAfterStreamLoss(),
+            complete: () => this.refreshStatusAfterStreamLoss(),
         });
     }
 
@@ -248,17 +267,21 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
             this.upsertSnapshot(message);
             return;
         }
-        this.events.update((list) => [...list, message]);
+        this.events.update((list) => [...list, message].slice(-MAX_RETAINED_EVENTS));
         if (TERMINAL_EVENT_TYPES.has(message.type)) {
             this.running.set(false);
             this.verdict.set(message.verdict);
+            this.completionStatus.set(message.completionStatus);
+            this.streamSubscription?.unsubscribe();
+            this.streamSubscription = undefined;
+            this.emitGenerationCompleted(this.jobId(), message);
         }
     }
 
     private upsertSnapshot(snapshot: ExerciseGenerationFileSnapshot): void {
-        this.lastWrittenPath.set(snapshot.path);
+        this.lastWrittenSnapshotKey.set(this.snapshotKey(snapshot));
         this.snapshots.update((list) => {
-            const index = list.findIndex((file) => file.path === snapshot.path);
+            const index = list.findIndex((file) => this.snapshotKey(file) === this.snapshotKey(snapshot));
             if (index < 0) {
                 return [...list, snapshot];
             }
@@ -268,20 +291,133 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         });
     }
 
-    private restoreTerminalState(events: HyperionGenerationEvent[]): void {
+    private latestTerminalEvent(events: HyperionGenerationEvent[]): HyperionGenerationEvent | undefined {
         for (let index = events.length - 1; index >= 0; index--) {
             const event = events[index];
             if (TERMINAL_EVENT_TYPES.has(event.type)) {
-                this.verdict.set(event.verdict);
-                return;
+                return event;
             }
+        }
+        return undefined;
+    }
+
+    private restoreTerminalState(event: HyperionGenerationEvent): void {
+        this.verdict.set(event.verdict);
+        this.completionStatus.set(event.completionStatus);
+    }
+
+    private emitGenerationCompleted(jobId: string | undefined, event: HyperionGenerationEvent): void {
+        if (jobId === undefined || this.emittedTerminalJobs.has(jobId)) {
+            return;
+        }
+        this.emittedTerminalJobs.add(jobId);
+        this.generationCompleted.emit({
+            mode: this.mode(),
+            verdict: event.verdict,
+            completionStatus: event.completionStatus,
+            liveExerciseChanged: event.liveExerciseChanged,
+        });
+    }
+
+    private mergeEvents(current: HyperionGenerationEvent[], retained: HyperionGenerationEvent[]): HyperionGenerationEvent[] {
+        const byKey = new Map<string, HyperionGenerationEvent>();
+        for (const event of [...retained, ...current]) {
+            byKey.set(`${event.type}|${event.timestamp ?? ''}|${event.completionStatus ?? ''}|${event.message ?? ''}`, event);
+        }
+        return [...byKey.values()].slice(-MAX_RETAINED_EVENTS);
+    }
+
+    private mergeSnapshots(current: ExerciseGenerationFileSnapshot[], retained: ExerciseGenerationFileSnapshot[]): ExerciseGenerationFileSnapshot[] {
+        const byPath = new Map<string, ExerciseGenerationFileSnapshot>();
+        for (const snapshot of [...retained, ...current]) {
+            const key = this.snapshotKey(snapshot)!;
+            const previous = byPath.get(key);
+            byPath.set(key, previous ? this.newerSnapshot(previous, snapshot) : snapshot);
+        }
+        return [...byPath.values()];
+    }
+
+    private newerSnapshot(first: ExerciseGenerationFileSnapshot, second: ExerciseGenerationFileSnapshot): ExerciseGenerationFileSnapshot {
+        if (second.turn !== first.turn) {
+            return second.turn > first.turn ? second : first;
+        }
+        const firstTime = first.timestamp ? Date.parse(first.timestamp) : Number.NaN;
+        const secondTime = second.timestamp ? Date.parse(second.timestamp) : Number.NaN;
+        if (Number.isFinite(firstTime) && Number.isFinite(secondTime) && secondTime !== firstTime) {
+            return secondTime > firstTime ? second : first;
+        }
+        return second;
+    }
+
+    private latestSnapshot(snapshots: ExerciseGenerationFileSnapshot[]): ExerciseGenerationFileSnapshot | undefined {
+        return snapshots.reduce<ExerciseGenerationFileSnapshot | undefined>((latest, current) => {
+            if (!latest) {
+                return current;
+            }
+            const latestTime = latest.timestamp ? Date.parse(latest.timestamp) : Number.NaN;
+            const currentTime = current.timestamp ? Date.parse(current.timestamp) : Number.NaN;
+            if (Number.isFinite(currentTime) && (!Number.isFinite(latestTime) || currentTime >= latestTime)) {
+                return current;
+            }
+            return latest;
+        }, snapshots.at(-1));
+    }
+
+    protected completionSeverity(status: HyperionGenerationCompletionStatus): 'success' | 'warn' | 'danger' {
+        if (status === 'SUCCESS') {
+            return 'success';
+        }
+        if (status === 'NEEDS_REVIEW') {
+            return 'warn';
+        }
+        return 'danger';
+    }
+
+    private handleRevertResult(result: ExerciseAdaptationRevertResult): void {
+        if (!result.fullyReverted) {
+            this.alertService.error('artemisApp.hyperion.generationActivity.revertPartialFailed', { repositories: result.revertedRepositories.join(', ') || '-' });
+            return;
+        }
+        this.reverted.set(true);
+        this.clearPreview();
+        this.adaptationReverted.emit();
+        this.alertService.success('artemisApp.hyperion.generationActivity.revertSuccess');
+    }
+
+    private isRevertResult(value: unknown): value is ExerciseAdaptationRevertResult {
+        return (
+            typeof value === 'object' &&
+            value !== null &&
+            typeof (value as ExerciseAdaptationRevertResult).fullyReverted === 'boolean' &&
+            Array.isArray((value as ExerciseAdaptationRevertResult).revertedRepositories)
+        );
+    }
+
+    private refreshStatusAfterStreamLoss(): void {
+        if (this.streamLossRefreshTimeout !== undefined) {
+            return;
+        }
+        this.streamLossRefreshTimeout = setTimeout(() => {
+            this.streamLossRefreshTimeout = undefined;
+            const id = this.exerciseId();
+            if (id !== undefined && this.running()) {
+                this.loadStatus(id);
+            }
+        }, 1_000);
+    }
+
+    private clearStreamLossRefresh(): void {
+        if (this.streamLossRefreshTimeout !== undefined) {
+            clearTimeout(this.streamLossRefreshTimeout);
+            this.streamLossRefreshTimeout = undefined;
         }
     }
 
     /** Cosmetic gutter hint marking lines that changed versus the previous streamed content of this file. Heuristic (line-set membership), so moved/duplicate lines can be missed. */
     private applyDiffDecorations(editor: MonacoEditorComponent, snapshot: ExerciseGenerationFileSnapshot): void {
-        const previous = this.previousContentByPath.get(snapshot.path);
-        this.previousContentByPath.set(snapshot.path, snapshot.content);
+        const key = this.snapshotKey(snapshot)!;
+        const previous = this.previousContentByPath.get(key);
+        this.previousContentByPath.set(key, snapshot.content);
         this.changedLineDecorations?.clear();
         this.changedLineDecorations = undefined;
         if (snapshot.action !== 'edit' || previous === undefined || previous === snapshot.content) {
@@ -313,20 +449,42 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     private reset(): void {
         this.streamSubscription?.unsubscribe();
         this.streamSubscription = undefined;
+        this.clearStreamLossRefresh();
         this.jobId.set(undefined);
         this.mode.set(undefined);
         this.running.set(false);
         this.reverting.set(false);
         this.reverted.set(false);
+        this.emittedTerminalJobs.clear();
         this.events.set([]);
-        this.snapshots.set([]);
         this.verdict.set(undefined);
+        this.completionStatus.set(undefined);
         this.follow.set(true);
-        this.pinnedPath.set(undefined);
-        this.lastWrittenPath.set(undefined);
         this.cancelRequested.set(false);
+        this.clearPreview();
+    }
+
+    private clearPreview(): void {
+        this.snapshots.set([]);
+        this.pinnedSnapshotKey.set(undefined);
+        this.lastWrittenSnapshotKey.set(undefined);
         this.changedLineDecorations?.clear();
         this.changedLineDecorations = undefined;
+        this.monacoPreview()?.changeModel('', '');
         this.previousContentByPath.clear();
+    }
+
+    private snapshotKey(snapshot: Pick<ExerciseGenerationFileSnapshot, 'repo' | 'path'> | undefined): string | undefined {
+        if (!snapshot) {
+            return undefined;
+        }
+        return this.snapshotKeyForParts(snapshot.repo, snapshot.path);
+    }
+
+    private snapshotKeyForParts(repo: HyperionSnapshotRepo | undefined, path: string | undefined): string | undefined {
+        if (!path) {
+            return undefined;
+        }
+        return `${repo ?? ''}\0${path}`;
     }
 }

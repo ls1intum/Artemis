@@ -316,7 +316,7 @@ class AgentLoopRunnerTest {
         ChatModel chatModel = mock(ChatModel.class);
         String longContent = "x".repeat(500);
         // Arguments deliberately put a large "content" BEFORE "path" (the model controls key order); the transcript line must still surface the full, untruncated path, because the
-        // client's "files changed" view parses the path as the file tool's argument. This is the contract with generation-progress.model.ts. The path carries a space to also pin
+        // client's "files changed" view parses the path as the file tool's argument. This is the contract with the generation stream parser. The path carries a space to also pin
         // that
         // an internal space is kept verbatim (the display must not split or trim on whitespace).
         String args = "{\"content\":\"" + longContent + "\",\"path\":\"solution/src/de/tum/My Example/VeryLongClassNameThatExceedsTheTruncationLimit.java\"}";

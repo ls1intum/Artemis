@@ -56,9 +56,10 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
-    void unresolvedTaskBindings_resolvesRegardlessOfParenthesesOnEitherSide() {
+    void unresolvedTaskBindings_requiresProductionExactNames() {
         List<String> actual = List.of("testBubbleSort()", "testMergeSort()");
-        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Sort](testBubbleSort,testMergeSort)\n", actual, 2, Set.of())).isEmpty();
+        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Sort](testBubbleSort,testMergeSort)\n", actual, 2, Set.of())).containsExactly("testBubbleSort",
+                "testMergeSort");
     }
 
     @Test
@@ -69,10 +70,16 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
-    void unresolvedTaskBindings_exemptsStructuralShapedNamesFromResolution() {
-        // The seeder injects testClass[X] tests after the agent submits, so a structural-shaped binding need not resolve against the current names.
+    void unresolvedTaskBindings_rejectsUnseededStructuralShapedNames() {
+        // A structural-looking name only resolves if the authoritative seeder produced it. Otherwise the statement can invent non-grading structural tasks.
         List<String> actual = List.of("testSortsAscending");
-        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Structure](testClass[Sorter])\n", actual, 1, Set.of())).isEmpty();
+        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Structure](testClass[Sorter])\n", actual, 1, Set.of())).containsExactly("testClass[Sorter]");
+    }
+
+    @Test
+    void unresolvedTaskBindings_exemptsAuthoritativeStructuralSeededNamesFromResolution() {
+        List<String> actual = List.of("testSortsAscending");
+        assertThat(ProblemStatementBindingChecker.unresolvedTaskBindings("[task][Structure](testClass[Sorter])\n", actual, 1, Set.of("testClass[Sorter]"))).isEmpty();
     }
 
     @Test
@@ -108,8 +115,8 @@ class ProblemStatementBindingCheckerTest {
     }
 
     @Test
-    void normalizeTestName_dropsATrailingParenthesesPairAndTrims() {
-        assertThat(ProblemStatementBindingChecker.normalizeTestName("  testFoo()  ")).isEqualTo("testFoo");
+    void normalizeTestName_trimsOnlyToMatchProductionTaskExtraction() {
+        assertThat(ProblemStatementBindingChecker.normalizeTestName("  testFoo()  ")).isEqualTo("testFoo()");
         assertThat(ProblemStatementBindingChecker.normalizeTestName("testFoo")).isEqualTo("testFoo");
     }
 }

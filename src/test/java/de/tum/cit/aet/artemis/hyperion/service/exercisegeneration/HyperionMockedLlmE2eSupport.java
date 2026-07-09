@@ -202,6 +202,11 @@ final class HyperionMockedLlmE2eSupport {
         return toolCall("bash", "{\"command\":\"" + jsonEscape(command) + "\"}");
     }
 
+    /** A {@code verify} turn running the agent-facing verifier tool. */
+    static ChatResponse verify() {
+        return toolCall("verify", "{}");
+    }
+
     /** A {@code submit} turn declaring completion; the loop ends this turn and hands off to the authoritative verifier. */
     static ChatResponse submit(String summary) {
         return toolCall("submit", "{\"summary\":\"" + jsonEscape(summary) + "\"}");

@@ -36,6 +36,7 @@ export class ReviewAdaptExerciseDialogComponent {
     private readonly dialogConfig = inject(DynamicDialogConfig);
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly maxInstructionsLength = 8000;
 
     /** Severity order so the most important findings surface first when there are many to triage. */
     private static readonly SEVERITY_ORDER: Record<string, number> = {
@@ -45,7 +46,7 @@ export class ReviewAdaptExerciseDialogComponent {
     };
 
     /** The structured review-comment findings to address (rendered read-only as cards, highest severity first); empty in the finding-free "free adapt" mode (no open review comments). */
-    readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData).findings ?? [])].sort(
+    readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData | undefined)?.findings ?? [])].sort(
         (a, b) => ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[a.severity] - ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[b.severity],
     );
     /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */

@@ -10,3 +10,15 @@ api.module.ts
 index.ts
 model/models.ts
 api/api.ts
+api/quizTrainingApi.service.ts
+model/answerOptionWithSolution.ts
+model/dragAndDrop*.ts
+model/dragItem.ts
+model/dropLocation.ts
+model/entityIdRef.ts
+model/leaderboard*.ts
+model/multipleChoice*.ts
+model/quizQuestionTraining.ts
+model/quizQuestionWithSolution.ts
+model/shortAnswer*.ts
+model/submittedAnswer*.ts

@@ -1,8 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { HyperionExerciseGenerationApiService } from 'app/openapi/api/hyperionExerciseGenerationApi.service';
+import { ExerciseGenerationRequest } from 'app/openapi/model/exerciseGenerationRequest';
 import {
+    ExerciseAdaptationRevertResult,
     HyperionGenerationJobStart,
     HyperionGenerationMessage,
     HyperionGenerationRequest,
@@ -15,10 +18,8 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationService {
-    private readonly http = inject(HttpClient);
+    private readonly api = inject(HyperionExerciseGenerationApiService);
     private readonly websocketService = inject(WebsocketService);
-
-    private readonly resourceUrl = 'api/hyperion/programming-exercises';
 
     /**
      * Starts an agentic whole-exercise generation/adaptation run in the request's explicit mode and returns the started job id (also the websocket topic suffix).
@@ -26,7 +27,8 @@ export class HyperionExerciseGenerationService {
      * @param request the explicit mode plus the optional prompt / selected feedback threads
      */
     generate(exerciseId: number, request: HyperionGenerationRequest): Observable<HyperionGenerationJobStart> {
-        return this.http.post<HyperionGenerationJobStart>(`${this.resourceUrl}/${exerciseId}/generate-exercise`, request);
+        const generatedRequest: ExerciseGenerationRequest = request;
+        return this.api.generateExercise(exerciseId, generatedRequest);
     }
 
     /**
@@ -35,7 +37,7 @@ export class HyperionExerciseGenerationService {
      * @param exerciseId the exercise id
      */
     getStatus(exerciseId: number): Observable<HttpResponse<HyperionGenerationStatus>> {
-        return this.http.get<HyperionGenerationStatus>(`${this.resourceUrl}/${exerciseId}/generate-exercise/status`, { observe: 'response' });
+        return this.api.getExerciseGenerationStatus(exerciseId, 'response') as Observable<HttpResponse<HyperionGenerationStatus>>;
     }
 
     /**
@@ -44,15 +46,15 @@ export class HyperionExerciseGenerationService {
      * @param jobId the running job id
      */
     cancel(exerciseId: number, jobId: string): Observable<void> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/generate-exercise/jobs/${jobId}`);
+        return this.api.cancelExerciseGeneration(exerciseId, jobId);
     }
 
     /**
      * Reverts the last in-place adaptation of the exercise, resetting its repositories back to the commit state captured at the start of that adaptation run.
      * @param exerciseId the exercise id
      */
-    revertAdaptation(exerciseId: number): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${exerciseId}/generate-exercise/revert-adaptation`, undefined);
+    revertAdaptation(exerciseId: number): Observable<ExerciseAdaptationRevertResult> {
+        return this.api.revertAdaptation(exerciseId);
     }
 
     /**

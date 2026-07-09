@@ -71,6 +71,7 @@ class SandboxAgentToolsTest {
         assertThat(SandboxAgentTools.workspaceRelativePath("foo'.java")).isNull();
         assertThat(SandboxAgentTools.workspaceRelativePath("a; rm -rf /")).isNull();
         assertThat(SandboxAgentTools.workspaceRelativePath("$(whoami).java")).isNull();
+        assertThat(SandboxAgentTools.workspaceRelativePath("solution/*.java")).isNull();
         assertThat(SandboxAgentTools.workspaceRelativePath("/absolute")).isNull();
         assertThat(SandboxAgentTools.workspaceRelativePath("")).isNull();
     }
@@ -109,6 +110,17 @@ class SandboxAgentToolsTest {
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
         String result = tools.editFile("solution/A.java", "return 0;", "return a + b;");
         assertThat(result).startsWith("Wrote ");
+    }
+
+    @Test
+    void writeFile_rejectsTestsRepositoryHarnessFiles() {
+        RecordingSandbox sandbox = new RecordingSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        String result = tools.writeFile("tests/pom.xml", "<project/>");
+
+        assertThat(result).startsWith("ERROR: do not modify tests/pom.xml");
+        assertThat(sandbox.execCount).isZero();
     }
 
     /** Records the exec script and returns a scripted result, to test the bash spill wrapper and output composition without Docker. */
@@ -239,6 +251,16 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void bash_harnessMutationCommand_shortCircuitsLoudlyWithoutTouchingTheSandbox() {
+        ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "should not run"));
+
+        String out = new SandboxAgentTools(sandbox, "s").bash("cat > tests/pom.xml <<'EOF'\n<project/>\nEOF");
+
+        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(sandbox.lastScript).isNull();
+    }
+
+    @Test
     void bash_commandMentioningApplyPatch_isNotMistakenForAnInvocation() {
         // A command that merely mentions apply_patch (e.g. grepping for it) must run normally; only the first shell word matters.
         ScriptedSandbox sandbox = new ScriptedSandbox(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
@@ -272,6 +294,14 @@ class SandboxAgentToolsTest {
         assertThat(SandboxAgentTools.isMangledArrayCommand("[ls]")).isFalse();
         assertThat(SandboxAgentTools.isMangledArrayCommand("ls -R solution template tests")).isFalse();
         assertThat(SandboxAgentTools.isMangledArrayCommand("grep -n 'a,b' tests/Foo.java")).isFalse();
+    }
+
+    @Test
+    void mutatesImmutableTestsHarness_flagsOnlyLikelyWrites() {
+        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat > tests/pom.xml")).isTrue();
+        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("sed -i 's/a/b/' tests/package.json")).isTrue();
+        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat tests/pom.xml")).isFalse();
+        assertThat(SandboxAgentTools.mutatesImmutableTestsHarness("cat > tests/test/de/test/CalculatorTest.java")).isFalse();
     }
 
     @Test

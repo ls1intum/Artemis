@@ -133,62 +133,82 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
-        if (author == null) {
-            log.error("No active user during exercise version creation check");
-            return;
-        }
-        if (targetExercise == null || targetExercise.getId() == null) {
-            log.error("createExerciseVersion called with null");
-            return;
-        }
         try {
-            Exercise exercise = fetchExerciseEagerly(targetExercise);
-            if (exercise == null) {
-                log.error("Exercise with id {} not found", targetExercise.getId());
-                return;
-            }
-            ExerciseVersion exerciseVersion = new ExerciseVersion();
-            exerciseVersion.setExerciseId(targetExercise.getId());
-            exerciseVersion.setAuthorId(author.getId());
-            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
-            // Normalize through JSON round-trip to ensure consistent null/empty list handling
-            // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
-            ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
-            Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-            if (previousVersion.isPresent()) {
-                ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
-                if (equal) {
-                    log.info("Exercise {} has no versionable changes from last version", exercise.getId());
-                    return;
-                }
-            }
-            exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
-            this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
-                    savedExerciseVersion.getId());
-            log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
-            previousVersion.ifPresent(prev -> {
-                try {
-                    List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
-                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).toList();
-                    for (CommentThreadDTO updatedThread : updatedThreads) {
-                        exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
-                    }
-                }
-                catch (Exception ex) {
-                    log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
-                }
-            });
-            // Publish event to notify listeners (e.g., search indexing services)
-            eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
+            createExerciseVersionOrThrow(targetExercise, author);
         }
-        catch (Exception e) {
+        catch (RuntimeException e) {
             // Intentionally swallowed: exercise version creation is a non-critical side effect
             // of saving an exercise. Failures here (e.g. serialization issues, DB errors) must
             // not prevent the exercise save itself from succeeding.
-            log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);
+            Long exerciseId = targetExercise == null ? null : targetExercise.getId();
+            log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
         }
+    }
+
+    /**
+     * Creates an exercise version and propagates failures to the caller. Use this from workflows where the version/synchronization event is part of the consistency contract.
+     *
+     * @param targetExercise the exercise to create a version of
+     * @param author         the user who created the version
+     */
+    public void createExerciseVersionOrThrow(Exercise targetExercise, User author) {
+        if (author == null) {
+            throw new IllegalArgumentException("No active user during exercise version creation check");
+        }
+        if (targetExercise == null || targetExercise.getId() == null) {
+            throw new IllegalArgumentException("createExerciseVersion called with null");
+        }
+        try {
+            createExerciseVersionUnchecked(targetExercise, author);
+        }
+        catch (RuntimeException e) {
+            throw e;
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Error creating exercise version for exercise with id " + targetExercise.getId(), e);
+        }
+    }
+
+    private void createExerciseVersionUnchecked(Exercise targetExercise, User author) throws Exception {
+        Exercise exercise = fetchExerciseEagerly(targetExercise);
+        if (exercise == null) {
+            throw new IllegalStateException("Exercise with id " + targetExercise.getId() + " not found");
+        }
+        ExerciseVersion exerciseVersion = new ExerciseVersion();
+        exerciseVersion.setExerciseId(targetExercise.getId());
+        exerciseVersion.setAuthorId(author.getId());
+        ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+        // Normalize through JSON round-trip to ensure consistent null/empty list handling
+        // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
+        ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
+        Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+        if (previousVersion.isPresent()) {
+            ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+            boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
+            if (equal) {
+                log.info("Exercise {} has no versionable changes from last version", exercise.getId());
+                return;
+            }
+        }
+        exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
+        ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+        this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null), author,
+                savedExerciseVersion.getId());
+        log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
+        previousVersion.ifPresent(prev -> {
+            try {
+                List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
+                        .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).toList();
+                for (CommentThreadDTO updatedThread : updatedThreads) {
+                    exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
+                }
+            }
+            catch (Exception ex) {
+                log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
+            }
+        });
+        // Publish event to notify listeners (e.g., search indexing services)
+        eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
     }
 
     /**
@@ -244,44 +264,38 @@ public class ExerciseVersionService {
 
         ProgrammingExerciseSnapshotDTO newProgrammingData = newSnapshot.programmingData();
         ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
-        ExerciseEditorSyncTarget target = null;
-        Long auxiliaryRepositoryId = null;
+        Set<ExerciseEditorSyncTarget> changedRepositoryTargets = EnumSet.noneOf(ExerciseEditorSyncTarget.class);
+        Long changedAuxiliaryRepositoryId = null;
 
-        // Repository commits cannot change simultaneously because each commit triggers a separate
-        // version creation. The if-else chain intentionally detects only the first changed repository.
         if (newProgrammingData != null && previousProgrammingData != null) {
             if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
-                target = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+                changedRepositoryTargets.add(ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
             }
-            else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
-                target = ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
+                changedRepositoryTargets.add(ExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
             }
-            else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
-                target = ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+            if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
+                changedRepositoryTargets.add(ExerciseEditorSyncTarget.TESTS_REPOSITORY);
             }
-            else {
-                Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
-                        .filter(auxiliary -> auxiliary.commitId() != null).collect(Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id,
-                                ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
-                for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories())
-                        .orElseGet(List::of)) {
-                    String previousCommitId = previousAuxiliaries.get(auxiliary.id());
-                    if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
-                        target = ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
-                        auxiliaryRepositoryId = auxiliary.id();
-                        break;
-                    }
+            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
+                    .filter(auxiliary -> auxiliary.commitId() != null).collect(Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id,
+                            ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
+            for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
+                String previousCommitId = previousAuxiliaries.get(auxiliary.id());
+                if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
+                    changedRepositoryTargets.add(ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+                    changedAuxiliaryRepositoryId = auxiliary.id();
                 }
             }
         }
 
         Set<String> changedFields = collectChangedFields(newSnapshot, previousSnapshot);
 
-        if (target != null) {
-            // For repository commits, send a new commit alert so clients can notify users
-            // to refresh
+        for (ExerciseEditorSyncTarget target : changedRepositoryTargets) {
+            // For repository commits, send a new commit alert so clients can notify users to refresh.
             // For problem statement changes, changes are broadcasted via client-to-client
             // messages.
+            Long auxiliaryRepositoryId = target == ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? changedAuxiliaryRepositoryId : null;
             exerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
         }
         if (!changedFields.isEmpty()) {

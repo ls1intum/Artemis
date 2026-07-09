@@ -2,9 +2,13 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import static org.mockito.Mockito.doReturn;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +21,19 @@ import org.testcontainers.utility.DockerImageName;
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
+import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandboxRelayHandler;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOrchestrationService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultListenerService;
 import de.tum.cit.aet.artemis.localci.service.LocalCIResultProcessingService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 
 /**
@@ -57,6 +66,9 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
 
     @Autowired
     protected BuildAgentDockerService buildAgentDockerService;
+
+    @Autowired
+    protected InteractiveSandboxRelayHandler interactiveSandboxRelayHandler;
 
     @Autowired
     protected ApplicationContext applicationContext;
@@ -94,6 +106,8 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         sharedQueueProcessingService.resetInitializedState();
         sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
+        ReflectionTestUtils.setField(interactiveSandboxRelayHandler, "maxGenerationSandboxSlots", 2);
+        interactiveSandboxRelayHandler.registerRequestListener();
         sharedQueueProcessingService.updateBuildAgentInformation();
 
         // The interactive sandbox creates its container directly from this image and never pulls it, so ensure it is present locally before any test body runs.
@@ -102,6 +116,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
 
     @AfterEach
     void tearDownRealDockerClient() {
+        interactiveSandboxRelayHandler.shutdown();
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -141,5 +156,55 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
             case "x86_64" -> "amd64";
             default -> dockerArchitecture;
         };
+    }
+
+    protected ProgrammingExercise useOfflineMavenPluginVersions(ProgrammingExercise exercise) throws Exception {
+        LocalVCRepositoryUri uri = exercise.getRepositoryURI(RepositoryType.TESTS);
+        Repository repository = gitService.getOrCheckoutRepository(uri, true, localVCLocalCITestService.getDefaultBranch(), true);
+        Path pom = repository.getLocalPath().resolve("pom.xml");
+        String original = Files.readString(pom);
+        String updated = original;
+        updated = replaceRequiredPomFragment(original, updated, "<version>3.13.0</version>", "<version>3.14.0</version>");
+        updated = replaceRequiredPomFragment(original, updated, "<version>3.2.5</version>", "<version>3.5.3</version>");
+        updated = replaceRequiredPomFragment(original, updated, "<version>3.4.1</version>", "<version>3.6.1</version>");
+        updated = replaceRequiredPomFragment(original, updated, "<argLine>-Dfile.encoding=UTF-8</argLine>",
+                "<argLine>-Dfile.encoding=UTF-8 -Djava.security.manager=allow</argLine>");
+        if (updated.contains("artemis-java-test-sandbox") && !updated.contains("<artifactId>slf4j-api</artifactId>")) {
+            updated = updated.replaceFirst("(?m)^\\s*<dependencies>\\s*$", """
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.slf4j</groupId>
+                                <artifactId>slf4j-api</artifactId>
+                                <version>2.0.12</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>net.bytebuddy</groupId>
+                                <artifactId>byte-buddy</artifactId>
+                                <version>1.17.7</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                    <dependencies>""");
+        }
+        if (updated.contains("artemis-java-test-sandbox") && !updated.contains("<artifactId>slf4j-api</artifactId>")) {
+            throw new IllegalStateException("Could not inject offline dependency management into generated Java test pom.xml.");
+        }
+        if (!updated.equals(original)) {
+            FileUtils.writeStringToFile(pom.toFile(), updated, StandardCharsets.UTF_8);
+            gitService.stageAllChanges(repository);
+            gitService.commitAndPush(repository, "Use Maven plugins cached in the Docker verifier image", false, null);
+        }
+        return exercise;
+    }
+
+    private String replaceRequiredPomFragment(String original, String updated, String oldFragment, String newFragment) {
+        if (original.contains(oldFragment)) {
+            return updated.replace(oldFragment, newFragment);
+        }
+        if (original.contains(newFragment)) {
+            return updated;
+        }
+        throw new IllegalStateException("Generated Java test pom.xml no longer contains the expected Maven fragment: " + oldFragment);
     }
 }

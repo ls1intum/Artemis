@@ -366,11 +366,15 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should clear unsaved files after refresh', () => {
+        const commitStateChanged = vi.fn();
+        component.onCommitStateChange.subscribe(commitStateChanged);
         component.unsavedFiles = { 'src/main/App.java': 'x' };
 
         component.onRefreshFiles();
 
         expect(component.unsavedFiles).toEqual({});
+        expect(component.commitState).toBe(CommitState.CLEAN);
+        expect(commitStateChanged).toHaveBeenCalledWith(CommitState.CLEAN);
     });
 
     it('should keep only files with errors after saving and show alert', () => {

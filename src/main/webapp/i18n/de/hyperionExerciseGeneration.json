@@ -34,7 +34,13 @@
                     "templateFailed": "Vorlage schlägt fehl",
                     "templatePasses": "Vorlage besteht",
                     "tests": "Tests"
-                }
+                },
+                "completionStatus": {
+                    "SUCCESS": "Gespeichert",
+                    "NEEDS_REVIEW": "Prüfung nötig",
+                    "PARTIAL": "Teilweise"
+                },
+                "revertPartialFailed": "Die Anpassung konnte nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Bitte prüfen Sie die übrigen Repositories manuell."
             }
         }
     }

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
@@ -46,13 +47,13 @@ public class InteractiveSandboxReaperService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    private final InteractiveSandboxService interactiveSandboxService;
+    private final ApplicationContext applicationContext;
 
     /**
      * The relay handler that owns the per-agent session permits. It is unconditionally present on a build-agent node (same {@link Profile}), so a plain dependency is correct; the
      * reaper calls back into it to release the permit of any orphaned relay session it reaps, so lost CREATE responses / failovers / lost DESTROYs cannot slowly deplete the
      * agent's
-     * generation-session capacity between restarts.
+     * generation sandbox slot capacity between restarts.
      */
     private final InteractiveSandboxRelayHandler relayHandler;
 
@@ -62,16 +63,16 @@ public class InteractiveSandboxReaperService {
      * A sandbox container idle (no operation) for longer than this is considered orphaned. The threshold need only exceed the longest single operation an agent can drive (a
      * multi-minute build or verify), not the whole session wall-clock, because any activity refreshes the stamp — so a healthy but hours-long session is never reaped.
      */
-    @Value("${artemis.continuous-integration.build-agent.generation-container-expiry-minutes:90}")
+    @Value("${artemis.continuous-integration.build-agent.generation-sandbox-idle-timeout-minutes:90}")
     private int sandboxContainerExpiryMinutes;
 
-    @Value("${artemis.continuous-integration.build-agent.generation-cleanup-schedule-minutes:15}")
+    @Value("${artemis.continuous-integration.build-agent.generation-sandbox-cleanup-interval-minutes:15}")
     private int sandboxCleanupScheduleMinutes;
 
-    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, @Lazy InteractiveSandboxService interactiveSandboxService,
-            @Lazy InteractiveSandboxRelayHandler relayHandler, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, ApplicationContext applicationContext, InteractiveSandboxRelayHandler relayHandler,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.interactiveSandboxService = interactiveSandboxService;
+        this.applicationContext = applicationContext;
         this.relayHandler = relayHandler;
         this.taskScheduler = taskScheduler;
     }
@@ -98,9 +99,7 @@ public class InteractiveSandboxReaperService {
 
         List<Container> orphanedSandboxContainers;
         try {
-            orphanedSandboxContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                    .filter(container -> container.getNames() != null && container.getNames().length > 0
-                            && container.getNames()[0].startsWith("/" + InteractiveSandboxService.SANDBOX_CONTAINER_PREFIX))
+            orphanedSandboxContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream().filter(interactiveSandboxService()::isOwnSandboxContainer)
                     .filter(container -> (now - lastActivityEpochSecond(container)) > idleThreshold).toList();
         }
         catch (Exception ex) {
@@ -119,7 +118,7 @@ public class InteractiveSandboxReaperService {
         for (Container container : orphanedSandboxContainers) {
             try (final var removeCommand = dockerClient.removeContainerCmd(container.getId()).withForce(true)) {
                 removeCommand.exec();
-                interactiveSandboxService.forgetActivity(container.getId());
+                interactiveSandboxService().forgetActivity(container.getId());
                 // Reclaim the relay session permit if this container was an orphaned relay session, so repeated orphaning cannot slowly starve the agent of generation capacity.
                 relayHandler.releaseIfOwned(container.getId());
             }
@@ -129,12 +128,16 @@ public class InteractiveSandboxReaperService {
         }
     }
 
+    private InteractiveSandboxService interactiveSandboxService() {
+        return applicationContext.getBean(InteractiveSandboxService.class);
+    }
+
     /**
      * The epoch-second of a container's last recorded activity, falling back to its creation time when this process has no activity record for it (e.g. a container left behind
      * by a previous agent process). Reading the lock-free registry keeps the sweep cheap.
      */
     private long lastActivityEpochSecond(Container container) {
-        Optional<Instant> lastActivity = interactiveSandboxService.lastActivity(container.getId());
+        Optional<Instant> lastActivity = interactiveSandboxService().lastActivity(container.getId());
         return lastActivity.map(Instant::getEpochSecond).orElseGet(container::getCreated);
     }
 }

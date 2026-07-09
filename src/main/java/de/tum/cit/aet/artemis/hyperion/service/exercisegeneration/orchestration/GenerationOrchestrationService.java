@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 /**
- * Top-level driver of agentic exercise generation and adaptation. Owns one generation session: create a sandbox, seed it with the exercise's components, run the agent loop, then
+ * Top-level driver of agentic exercise generation and adaptation. Owns one Hyperion sandbox: create a sandbox, seed it with the exercise's components, run the agent loop, then
  * run the differential verifier. The verdict and produced files are returned to the caller, which decides whether to persist. The session container is always destroyed, even on
  * failure.
  */
@@ -64,6 +63,10 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class GenerationOrchestrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationOrchestrationService.class);
+
+    private static final long VERIFY_WORKSPACE_MAX_FILE_BYTES = 64L * 1024 * 1024;
+
+    private static final long VERIFY_WORKSPACE_MAX_TOTAL_BYTES = 256L * 1024 * 1024;
 
     /**
      * Hard cap on agent turns per attempt ({@code artemis.hyperion.agent.max-turns}); generous so slow multi-file languages finish in one attempt, still bounded against runaways.
@@ -86,8 +89,8 @@ public class GenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Advisory critic for the brief-coverage axis the differential verifier is blind to. Non-blocking: never affects the verdict; only feeds the retry prompt while attempts remain
-    // and surfaces as advisory review comments otherwise.
+    // Advisory critic for the brief-coverage axis the differential verifier is blind to. Non-blocking: never affects the final verdict; while attempts remain it can still trigger
+    // a polish retry for an otherwise accepted exercise, and any remaining findings surface as advisory review comments.
     private final SpecFidelityCriticService specFidelityCritic;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
@@ -137,9 +140,6 @@ public class GenerationOrchestrationService {
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             Consumer<String> progress, @Nullable Consumer<ExerciseGenerationFileSnapshotDTO> fileSnapshotSink) {
-        // ADAPT re-runs against the seeded live repositories, so a feedback item may legitimately add or adjust a test; the tests-repo harness-immutability gate is relaxed for it
-        // (the differential oracle remains the backstop). GENERATE keeps every gate enforced.
-        boolean relaxTestsRepoImmutability = mode == GenerationMode.ADAPT;
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
@@ -156,7 +156,8 @@ public class GenerationOrchestrationService {
 
             emit(progress, "Loading the example exercise");
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
-            Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
+            GenerationWorkspaceService.WorkspaceSeed workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise);
+            Map<String, String> testsSeedSnapshot = workspaceSeed.testsSeedSnapshot();
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
@@ -219,7 +220,7 @@ public class GenerationOrchestrationService {
                 addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
                 addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
                 VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames, relaxTestsRepoImmutability);
+                        extractionFailed, seededStructuralTestNames, baselineGradedTestNames);
                 // The sole-acceptance verification runs in a FRESH sandbox session against the exact produced tree, so no agent-spawned background process or file planted during
                 // the
                 // in-session loop can overwrite the pristine verify.sh or forge a report between seed and copyOut. The in-loop self-check (the agent's `verify` tool) stays
@@ -231,8 +232,15 @@ public class GenerationOrchestrationService {
                 // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
                 specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), usageSink, progress);
 
-                if (verification.accepted() || attempt == MAX_GENERATION_ATTEMPTS) {
+                if (verification.accepted() && !specFidelityReport.hasFindings() || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
+                }
+                if (verification.accepted()) {
+                    emit(progress, "Verification accepted the exercise, but the spec-fidelity review found quality gaps; asking the agent to polish the exercise.");
+                    currentPrompt = "Your previous attempt passed differential verification, but the spec-fidelity review found quality gaps. Keep the accepted behaviour intact, "
+                            + "fix only these quality gaps, re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again."
+                            + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
+                    continue;
                 }
                 emit(progress, "Verification rejected the exercise; asking the agent to fix the issues and try again.");
                 // The hard rejection (must fix) plus the advisory findings, the latter framed so the rejection is prioritised.
@@ -241,7 +249,8 @@ public class GenerationOrchestrationService {
                         + "`sh verify.sh template` to confirm, then call submit again." + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
             }
 
-            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport);
+            return new GenerationOutcome(loopResult, verification, sessionId, this, sandbox, producedFilesByType, producedProblemStatement, specFidelityReport,
+                    workspaceSeed.repositoryHeads());
         }
         catch (RuntimeException e) {
             // The caller gets no usable outcome to close, so tear down here.
@@ -386,7 +395,7 @@ public class GenerationOrchestrationService {
     private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request) {
         String verifySessionId = null;
         try {
-            verifySessionId = sandbox.createSession(workspace.sessionSpec(exercise));
+            verifySessionId = sandbox.createVerificationSession(workspace.sessionSpec(exercise), loopSessionId);
             copyWorkspaceInto(sandbox, loopSessionId, verifySessionId);
             return verifier.verify(sandbox, verifySessionId, exercise, request);
         }
@@ -396,10 +405,7 @@ public class GenerationOrchestrationService {
         }
     }
 
-    /**
-     * Copies the entire {@code /workspace} tree from one session into another, preserving directories, symlinks, executable bits and binary content, so the fresh verification
-     * session holds the exact produced tree the loop session ended with (including the Gradle wrapper JAR a text-only extraction would drop).
-     */
+    /** Copies the regular-file {@code /workspace} tree into the fresh verification session. */
     private static void copyWorkspaceInto(InteractiveSandbox sandbox, String fromSessionId, String toSessionId) {
         byte[] repacked;
         try (TarArchiveInputStream tar = sandbox.copyOut(fromSessionId, GenerationWorkspaceService.WORKSPACE)) {
@@ -413,42 +419,67 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * Repacks a copied-out tar verbatim (names, modes, sizes, symlink targets and bytes) into a fresh archive that can be fed straight into {@code copyIn}. The decoding
-     * {@link TarArchiveInputStream} cannot be piped directly because reading it without {@code getNextEntry} yields no bytes.
+     * Repacks the copied-out workspace into a fresh archive for {@code copyIn}. The stream is untrusted: reject path escapes, links, special entries, and oversized content before
+     * materializing bytes for the verification sandbox.
      */
     private static byte[] repackTar(TarArchiveInputStream in) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
+        long[] totalBytes = { 0 };
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
             TarArchiveEntry entry;
             while ((entry = in.getNextEntry()) != null) {
-                String name = entry.getName();
-                if (entry.isSymbolicLink()) {
-                    TarArchiveEntry link = new TarArchiveEntry(name, TarConstants.LF_SYMLINK);
-                    link.setLinkName(entry.getLinkName());
-                    link.setMode(entry.getMode());
-                    tar.putArchiveEntry(link);
-                    tar.closeArchiveEntry();
-                }
-                else if (entry.isDirectory()) {
+                String name = verifiedWorkspaceEntryName(entry);
+                if (entry.isDirectory()) {
                     TarArchiveEntry directory = new TarArchiveEntry(name.endsWith("/") ? name : name + "/");
                     directory.setMode(entry.getMode());
                     tar.putArchiveEntry(directory);
                     tar.closeArchiveEntry();
+                    continue;
                 }
-                else if (entry.isFile()) {
-                    byte[] content = in.readAllBytes();
-                    TarArchiveEntry copy = new TarArchiveEntry(name);
-                    copy.setMode(entry.getMode());
-                    copy.setSize(content.length);
-                    tar.putArchiveEntry(copy);
-                    tar.write(content);
-                    tar.closeArchiveEntry();
+                if (!entry.isFile() || entry.isSymbolicLink() || entry.isLink() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice()) {
+                    throw new IOException("Refusing non-regular workspace entry in verifier copy: " + entry.getName());
                 }
-                // Devices/FIFOs/other special entries never belong to a source tree and are skipped.
+                byte[] content = readBoundedEntry(in, entry.getSize(), totalBytes);
+                TarArchiveEntry copy = new TarArchiveEntry(name);
+                copy.setMode(entry.getMode());
+                copy.setSize(content.length);
+                tar.putArchiveEntry(copy);
+                tar.write(content);
+                tar.closeArchiveEntry();
             }
         }
         return out.toByteArray();
+    }
+
+    private static String verifiedWorkspaceEntryName(TarArchiveEntry entry) throws IOException {
+        String name = entry.getName();
+        while (name.startsWith("./")) {
+            name = name.substring(2);
+        }
+        if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../") || !name.startsWith("workspace/")) {
+            throw new IOException("Refusing workspace entry outside /workspace in verifier copy: " + entry.getName());
+        }
+        return name;
+    }
+
+    private static byte[] readBoundedEntry(TarArchiveInputStream in, long declaredSize, long[] totalBytes) throws IOException {
+        if (declaredSize > VERIFY_WORKSPACE_MAX_FILE_BYTES) {
+            throw new IOException("Refusing oversized workspace entry in verifier copy: " + declaredSize + " bytes");
+        }
+        ByteArrayOutputStream content = new ByteArrayOutputStream(declaredSize > 0 && declaredSize <= Integer.MAX_VALUE ? (int) declaredSize : 8192);
+        byte[] buffer = new byte[8192];
+        long entryBytes = 0;
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            entryBytes += read;
+            totalBytes[0] += read;
+            if (entryBytes > VERIFY_WORKSPACE_MAX_FILE_BYTES || totalBytes[0] > VERIFY_WORKSPACE_MAX_TOTAL_BYTES) {
+                throw new IOException("Refusing oversized workspace archive in verifier copy");
+            }
+            content.write(buffer, 0, read);
+        }
+        return content.toByteArray();
     }
 
     GenerationWorkspaceService workspace() {

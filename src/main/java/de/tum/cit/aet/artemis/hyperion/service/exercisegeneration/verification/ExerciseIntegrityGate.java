@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -19,10 +18,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.Gene
  * Pure (sandbox-free) correctness gates {@link DifferentialVerificationService} applies on top of the differential build oracle, catching two broken-exercise classes the build
  * oracle alone cannot see (the sandbox build can pass while production is broken or the solution is leaked):
  * <ul>
- * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one's source layout (e.g. a
- * {@code *.cabal} {@code hs-source-dirs} or a {@code tsconfig.json} project reference) away from the CI layout, the sandbox build can still pass while production fails because CI
- * lays the tree out differently. We snapshot those files at seed time and reject any post-generation layout change, modulo the CI placeholder substitution the pipeline applies (so
- * an agent that does not touch the harness is not penalized).</li>
+ * <li><b>Harness tampering.</b> The seeded tests-repo build/harness/manifest files are graded verbatim in production. If the agent rewrites one, the sandbox build can still pass
+ * while production fails because CI lays the tree out differently or because dependencies/plugins/scripts changed. We snapshot those files at seed time and reject any
+ * post-generation harness change, modulo only the CI checkout-placeholder substitution the pipeline applies (so an agent that does not touch the harness is not penalized).</li>
  * <li><b>Solution leak.</b> The template repository ships to students. A reference-solution implementation copied into a non-graded template path hands students the answer while
  * the
  * build still passes. The residue strip is the primary defence; this gate is the backstop, rejecting such a copy without flagging shared interfaces/headers or git config that are
@@ -165,20 +163,8 @@ public final class ExerciseIntegrityGate {
         return lines;
     }
 
-    /** The 0-based indices of the seed lines that are build-layout-relevant (the lines the agent must not move the source/solution path on). */
-    private static List<Integer> layoutLineIndices(List<String> seedRawLines) {
-        List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < seedRawLines.size(); i++) {
-            if (isBuildLayoutLine(seedRawLines.get(i))) {
-                indices.add(i);
-            }
-        }
-        return indices;
-    }
-
     /**
-     * Detects harness tampering (see class javadoc): only the seed's build-layout lines are compared positionally, after placeholder normalization, so a deleted harness file or a
-     * moved source/solution/template path is flagged while creation-time placeholders the sandbox does not substitute never count.
+     * Detects harness tampering (see class javadoc): seeded build/harness/manifest files must stay byte-equivalent after line-ending and CI checkout-placeholder normalization.
      * <p>
      * The gate fails open on an empty seed snapshot (a harness-free language, or a best-effort snapshot that read nothing). But for a language whose tests repository always ships
      * a
@@ -206,12 +192,6 @@ public final class ExerciseIntegrityGate {
             if (!isHarnessFile(path)) {
                 continue;
             }
-            List<String> seedRawLines = Arrays.asList(seed.getValue().replace("\r\n", "\n").split("\n", -1));
-            List<Integer> layoutIndices = layoutLineIndices(seedRawLines);
-            if (layoutIndices.isEmpty()) {
-                // No build-layout directive to protect (e.g. a lockfile, or a package.json with no path/workspaces entries).
-                continue;
-            }
             String produced = producedTestsFiles == null ? null : producedTestsFiles.get(path);
             if (produced == null) {
                 reasons.add("you deleted the seeded test harness file tests/" + path + "; the harness is graded verbatim in production — restore it unchanged.");
@@ -219,19 +199,10 @@ public final class ExerciseIntegrityGate {
             }
             List<String> seedNormalized = normalizedLines(seed.getValue());
             List<String> producedNormalized = normalizedLines(produced);
-            boolean tampered = false;
-            for (int index : layoutIndices) {
-                // A removed/inserted line ahead of this index, or a changed directive at it, means the seeded source/solution path no longer resolves the way production expects.
-                if (index >= producedNormalized.size() || !seedNormalized.get(index).equals(producedNormalized.get(index))) {
-                    tampered = true;
-                    break;
-                }
-            }
-            if (tampered) {
-                reasons.add(
-                        "you modified the build layout of the seeded test harness file tests/" + path + " (the source/solution paths the build resolves against); the harness is "
-                                + "graded verbatim in production with the CI directory layout, so rewriting these paths breaks the real build — revert tests/" + path
-                                + " to the seed and edit only the test source files.");
+            if (!seedNormalized.equals(producedNormalized)) {
+                reasons.add("you modified the seeded test harness file tests/" + path
+                        + "; the harness is graded verbatim in production, so changing dependencies, plugins, scripts, lockfiles, or build layout can make verified results differ "
+                        + "from real grading — revert tests/" + path + " to the seed and edit only the test source files.");
             }
         }
         return reasons;
@@ -245,9 +216,8 @@ public final class ExerciseIntegrityGate {
      * every
      * partial edit (renaming, adding, or removing some tests while keeping at least one graded name) is a legitimate adapt and passes untouched.
      * <p>
-     * Fails open on an empty baseline (generate, or a never-graded exercise). Names are normalized (trimmed, a trailing {@code ()} dropped) so {@code testFoo} and
-     * {@code testFoo()}
-     * match. Post-loop only: the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does not have mid-session, so this gate lives alongside
+     * Fails open on an empty baseline (generate, or a never-graded exercise). Names are trimmed but otherwise kept exact, matching Artemis task-binding semantics. Post-loop only:
+     * the baseline graded names come from the authoritative pre-adapt persisted state the agent loop does not have mid-session, so this gate lives alongside
      * the other read-back integrity gates, not the in-loop self-check.
      *
      * @param baselineGradedTestNames   the exercise's graded test names captured before the adapt ran (empty for generate or a never-graded exercise; the gate is then inert)
@@ -379,6 +349,249 @@ public final class ExerciseIntegrityGate {
             // Fail open on any unexpected parse problem — never block on a gate we could not evaluate confidently.
             return List.of();
         }
+    }
+
+    /**
+     * Java/JUnit exercises in Artemis are graded through the Ares test sandbox. A plain JUnit suite can pass the differential oracle while bypassing Ares' public-test and
+     * sandbox/timeout conventions.
+     *
+     * @param producedTestsFiles the read-back tests repository (repository-relative path -> content)
+     * @return actionable rejection reasons when Java tests do not follow the Artemis/Ares conventions
+     */
+    static List<String> javaAresConventionReasons(Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<Map.Entry<String, String>> javaTests = producedTestsFiles.entrySet().stream().filter(entry -> isJavaTestSourcePath(entry.getKey())).toList();
+        if (javaTests.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> reasons = new ArrayList<>();
+        List<String> generatedBuildOutput = producedTestsFiles.keySet().stream().filter(path -> path.startsWith("target/") || path.startsWith("build/")).toList();
+        if (!generatedBuildOutput.isEmpty()) {
+            reasons.add("Java tests repository must not contain generated build output such as target/ or build/ files; remove "
+                    + sampleNames(new LinkedHashSet<>(generatedBuildOutput)) + ".");
+        }
+        List<String> trustedPackageSources = producedTestsFiles.keySet().stream().filter(ExerciseIntegrityGate::isTrustedJavaPackageSourcePath).toList();
+        if (!trustedPackageSources.isEmpty()) {
+            reasons.add("Java tests must not define sources in trusted framework packages such as de.tum.in.test.api or org.junit; remove "
+                    + sampleNames(new LinkedHashSet<>(trustedPackageSources)) + ".");
+        }
+
+        String pom = producedTestsFiles.get("pom.xml");
+        String gradle = firstNonNull(producedTestsFiles.get("build.gradle"), producedTestsFiles.get("build.gradle.kts"));
+        if (pom != null) {
+            String pomWithoutComments = stripXmlComments(pom);
+            if (!hasMavenDependency(pomWithoutComments, "de.tum.in.ase", "artemis-java-test-sandbox")) {
+                reasons.add(
+                        "Java Maven tests must keep the Artemis Ares dependency in tests/pom.xml (de.tum.in.ase:artemis-java-test-sandbox); do not replace it with plain JUnit.");
+            }
+            if (!hasMavenPlugin(pomWithoutComments, "org.apache.maven.plugins", "maven-enforcer-plugin") || !hasXmlElementText(pomWithoutComments, "file", "de/tum/in/test/api/")
+                    || !hasXmlElementText(pomWithoutComments, "file", "org/junit/")) {
+                reasons.add("Java Maven tests must keep the seeded Maven enforcer plugin in tests/pom.xml so student code cannot shadow trusted packages.");
+            }
+        }
+        else if (gradle != null) {
+            String gradleWithoutComments = stripJavaComments(gradle);
+            if (!Pattern.compile("(?m)^\\s*(?:testImplementation|implementation)\\s+['\"]de\\.tum\\.in\\.ase:artemis-java-test-sandbox:").matcher(gradleWithoutComments).find()) {
+                reasons.add(
+                        "Java Gradle tests must keep the Artemis Ares dependency in tests/build.gradle (de.tum.in.ase:artemis-java-test-sandbox); do not replace it with plain JUnit.");
+            }
+            if (!Pattern.compile("(?m)^\\s*def\\s+forbiddenPackageFolders\\s*=").matcher(gradleWithoutComments).find() || !gradleWithoutComments.contains("de/tum/in/test/api/")
+                    || !gradleWithoutComments.contains("org/junit/")) {
+                reasons.add("Java Gradle tests must keep the seeded forbidden-package checks in tests/build.gradle so student code cannot shadow trusted packages.");
+            }
+        }
+        else {
+            reasons.add("Java tests must keep the seeded Maven or Gradle harness file containing the Artemis Ares dependency and trusted-package protections.");
+        }
+
+        List<String> missingClassAnnotations = new ArrayList<>();
+        List<String> missingTimeouts = new ArrayList<>();
+        for (Map.Entry<String, String> javaTest : javaTests) {
+            String path = javaTest.getKey();
+            String content = javaTest.getValue();
+            JavaTestAnnotationSummary annotationSummary = javaTestAnnotationSummary(content);
+            if (annotationSummary.hasTestMethods() && annotationSummary.classWithMissingAresAnnotations()) {
+                missingClassAnnotations.add(path);
+            }
+            if (annotationSummary.testMethodWithoutStrictTimeout()) {
+                missingTimeouts.add(path);
+            }
+        }
+        if (!missingClassAnnotations.isEmpty()) {
+            reasons.add("Java test classes must use Ares annotations @Public, @WhitelistPath(\"target\"), and @BlacklistPath(\"target/test-classes\"); missing in "
+                    + sampleNames(new LinkedHashSet<>(missingClassAnnotations)) + ".");
+        }
+        if (!missingTimeouts.isEmpty()) {
+            reasons.add("Every Java @Test method must carry @StrictTimeout(...) so an infinite loop cannot hang grading; missing in "
+                    + sampleNames(new LinkedHashSet<>(missingTimeouts)) + ".");
+        }
+        return reasons;
+    }
+
+    private static boolean isJavaTestSourcePath(String path) {
+        return path.endsWith(".java") && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
+    }
+
+    private static boolean isTrustedJavaPackageSourcePath(String path) {
+        return isJavaTestSourcePath(path) && (path.contains("/de/tum/in/test/api/") || path.contains("/org/junit/"));
+    }
+
+    private static String firstNonNull(String first, String second) {
+        return first != null ? first : second;
+    }
+
+    private static boolean hasMavenDependency(String pom, String groupId, String artifactId) {
+        return xmlBlocks(pom, "dependency").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
+    }
+
+    private static boolean hasMavenPlugin(String pom, String groupId, String artifactId) {
+        return xmlBlocks(pom, "plugin").stream().anyMatch(block -> hasXmlElementText(block, "groupId", groupId) && hasXmlElementText(block, "artifactId", artifactId));
+    }
+
+    private static List<String> xmlBlocks(String content, String element) {
+        Matcher matcher = Pattern.compile("(?s)<" + Pattern.quote(element) + "\\b[^>]*>.*?</" + Pattern.quote(element) + ">").matcher(content);
+        List<String> blocks = new ArrayList<>();
+        while (matcher.find()) {
+            blocks.add(matcher.group());
+        }
+        return blocks;
+    }
+
+    private static boolean hasXmlElementText(String content, String element, String expectedText) {
+        Matcher matcher = Pattern.compile("(?s)<" + Pattern.quote(element) + "\\b[^>]*>\\s*([^<]*?)\\s*</" + Pattern.quote(element) + ">").matcher(content);
+        while (matcher.find()) {
+            if (matcher.group(1).contains(expectedText)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String stripXmlComments(String content) {
+        return content.replaceAll("(?s)<!--.*?-->", "");
+    }
+
+    private record JavaClassAnnotation(int start, String annotations) {
+    }
+
+    private record JavaTestAnnotationSummary(boolean hasTestMethods, boolean classWithMissingAresAnnotations, boolean testMethodWithoutStrictTimeout) {
+    }
+
+    private static JavaTestAnnotationSummary javaTestAnnotationSummary(String content) {
+        String withoutComments = stripJavaComments(content);
+        List<JavaClassAnnotation> classes = new ArrayList<>();
+        Matcher classMatcher = Pattern.compile("(?s)((?:\\s*@(?:[\\w.]+)(?:\\s*\\([^)]*\\))?\\s*)*)\\s*(?:public\\s+)?(?:abstract\\s+)?class\\s+\\w+").matcher(withoutComments);
+        while (classMatcher.find()) {
+            classes.add(new JavaClassAnnotation(classMatcher.start(), classMatcher.group(1)));
+        }
+
+        boolean hasTestMethods = false;
+        boolean missingClassAnnotations = false;
+        boolean missingTimeouts = false;
+        Matcher methodMatcher = Pattern.compile(
+                "(?s)((?:\\s*@(?:[\\w.]+)(?:\\s*\\([^)]*\\))?\\s*)+)\\s*(?:public|protected|private)?\\s*(?:static\\s+)?[\\w<>\\[\\], ?]+\\s+\\w+\\s*\\([^)]*\\)\\s*(?:throws\\s+[^{]+)?\\{")
+                .matcher(withoutComments);
+        while (methodMatcher.find()) {
+            String methodAnnotations = methodMatcher.group(1);
+            if (!hasJUnitTestAnnotation(methodAnnotations)) {
+                continue;
+            }
+            hasTestMethods = true;
+            String classAnnotations = enclosingClassAnnotations(classes, methodMatcher.start());
+            if (!hasAresClassAnnotations(classAnnotations)) {
+                missingClassAnnotations = true;
+            }
+            if (!hasAnnotation(methodAnnotations, "StrictTimeout") && !hasAnnotation(classAnnotations, "StrictTimeout")) {
+                missingTimeouts = true;
+            }
+        }
+        return new JavaTestAnnotationSummary(hasTestMethods, missingClassAnnotations, missingTimeouts);
+    }
+
+    private static String enclosingClassAnnotations(List<JavaClassAnnotation> classes, int offset) {
+        String annotations = "";
+        for (JavaClassAnnotation javaClass : classes) {
+            if (javaClass.start() > offset) {
+                break;
+            }
+            annotations = javaClass.annotations();
+        }
+        return annotations;
+    }
+
+    private static boolean hasAresClassAnnotations(String annotations) {
+        return hasAnnotation(annotations, "Public") && Pattern.compile("@(?:[\\w.]+\\.)?WhitelistPath\\s*\\(\\s*\"target\"\\s*\\)").matcher(annotations).find()
+                && Pattern.compile("@(?:[\\w.]+\\.)?BlacklistPath\\s*\\(\\s*\"target/test-classes\"\\s*\\)").matcher(annotations).find();
+    }
+
+    private static boolean hasJUnitTestAnnotation(String annotations) {
+        return hasAnnotation(annotations, "Test") || hasAnnotation(annotations, "ParameterizedTest") || hasAnnotation(annotations, "RepeatedTest")
+                || hasAnnotation(annotations, "TestFactory") || hasAnnotation(annotations, "TestTemplate");
+    }
+
+    private static boolean hasAnnotation(String annotations, String simpleName) {
+        return Pattern.compile("@(?:[\\w.]+\\.)?" + Pattern.quote(simpleName) + "\\b").matcher(annotations).find();
+    }
+
+    private static String stripJavaComments(String content) {
+        StringBuilder stripped = new StringBuilder(content.length());
+        boolean inLineComment = false;
+        boolean inBlockComment = false;
+        boolean inString = false;
+        boolean inChar = false;
+        for (int i = 0; i < content.length(); i++) {
+            char current = content.charAt(i);
+            char next = i + 1 < content.length() ? content.charAt(i + 1) : '\0';
+            if (inLineComment) {
+                if (current == '\n') {
+                    inLineComment = false;
+                    stripped.append(current);
+                }
+                else {
+                    stripped.append(' ');
+                }
+            }
+            else if (inBlockComment) {
+                if (current == '*' && next == '/') {
+                    inBlockComment = false;
+                    stripped.append("  ");
+                    i++;
+                }
+                else {
+                    stripped.append(current == '\n' ? '\n' : ' ');
+                }
+            }
+            else if (inString || inChar) {
+                stripped.append(current);
+                if (current == '\\' && next != '\0') {
+                    stripped.append(next);
+                    i++;
+                }
+                else if ((inString && current == '"') || (inChar && current == '\'')) {
+                    inString = false;
+                    inChar = false;
+                }
+            }
+            else if (current == '/' && next == '/') {
+                inLineComment = true;
+                stripped.append("  ");
+                i++;
+            }
+            else if (current == '/' && next == '*') {
+                inBlockComment = true;
+                stripped.append("  ");
+                i++;
+            }
+            else {
+                inString = current == '"';
+                inChar = current == '\'';
+                stripped.append(current);
+            }
+        }
+        return stripped.toString();
     }
 
     /** Removes Haskell comments from a line (inline {@code &#123;- ... -&#125;} blocks and {@code --} line comments), so a commented-out import can never trip the gate. */

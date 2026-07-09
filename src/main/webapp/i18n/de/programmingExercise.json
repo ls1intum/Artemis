@@ -331,61 +331,8 @@
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "codeGeneration": {
-                "creationAssistance": "Erstellungsassistenz",
-                "generateCode": "Code generieren",
-                "generateWithAi": "Mit KI generieren",
-                "generating": "Generiere...",
-                "runningTitle": "Code-Generierung läuft",
-                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
-                "description": "Generiere Lösung, Template und Test-Code mit KI",
-                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
-                "confirmTitle": "Code-Generierung bestätigen",
-                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
-                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
-                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
-                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
-                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
-                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
-                "settingsTitle": "Generierungs-Einstellungen",
-                "settingsTooltip": "Repositories für die Generierung auswählen",
-                "statusTitle": "Generierungsstatus",
-                "statusTooltip": "Live-Status der Generierung anzeigen",
-                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Lösung, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Ausgewählte Feedback-Threads",
-                    "description": "Diese ausgewählten Threads werden der Code-Generierung als Feedback-Kontext mitgegeben.",
-                    "count": "{{count}} ausgewählt",
-                    "empty": "Aktuell sind keine Threads als Feedback ausgewählt.",
-                    "showThreads": "Threads anzeigen",
-                    "hideThreads": "Threads ausblenden",
-                    "viewThread": "Thread anzeigen",
-                    "line": "Zeile {{line}}",
-                    "unknownLocation": "Unbekannte Position"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "Dateiaktivität",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
-                "attempts": "Versuche: {{attempts}}",
-                "status": {
-                    "idle": "Nicht gestartet",
-                    "queued": "In Warteschlange",
-                    "running": "Läuft",
-                    "success": "Abgeschlossen",
-                    "warning": "Mit Problemen abgeschlossen",
-                    "error": "Fehlgeschlagen",
-                    "skipped": "Übersprungen",
-                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
-                    "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert",
-                    "fileDeleted": "entfernt"
-                }
+                "generateCode": "Aufgabe generieren",
+                "generateWithAi": "Mit KI generieren"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

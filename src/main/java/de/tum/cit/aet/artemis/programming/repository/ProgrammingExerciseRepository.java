@@ -19,9 +19,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
@@ -47,6 +49,27 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Lazy
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise pe
+            SET pe.problemStatement = :targetProblemStatement,
+                pe.title = :targetTitle
+            WHERE pe.id = :exerciseId
+                AND (
+                    (
+                        (pe.problemStatement = :expectedProblemStatement OR (:expectedProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :expectedTitle OR (:expectedTitle IS NULL AND pe.title IS NULL))
+                    )
+                    OR (
+                        (pe.problemStatement = :targetProblemStatement OR (:targetProblemStatement IS NULL AND pe.problemStatement IS NULL))
+                        AND (pe.title = :targetTitle OR (:targetTitle IS NULL AND pe.title IS NULL))
+                    )
+                )
+            """)
+    int updateProblemStatementAndTitleIfUnchanged(@Param("exerciseId") long exerciseId, @Param("targetProblemStatement") String targetProblemStatement,
+            @Param("targetTitle") String targetTitle, @Param("expectedProblemStatement") String expectedProblemStatement, @Param("expectedTitle") String expectedTitle);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
     Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);

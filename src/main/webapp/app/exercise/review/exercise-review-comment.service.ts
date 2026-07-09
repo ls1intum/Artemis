@@ -40,7 +40,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly threads = signal<CommentThread[]>([]);
 
     /**
-     * Local-only selection of review threads that should be forwarded to Hyperion code generation as feedback.
+     * Local-only selection of review threads that should be forwarded to Hyperion exercise adaptation as feedback.
      * This state is scoped to the active exercise/editor session and is never persisted independently.
      */
     readonly selectedFeedbackThreadIds = signal<number[]>([]);
@@ -89,7 +89,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
+                this.setThreads(this.applyQueuedSyncUpdates(threads, this.pendingSyncUpdates));
                 this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.ensureSynchronizationSubscription(exerciseId);
@@ -99,7 +99,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {
                     return;
                 }
-                this.threads.set(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
+                this.setThreads(this.applyQueuedSyncUpdates([], this.pendingSyncUpdates));
                 this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.alertService.error('artemisApp.review.loadFailed');
@@ -120,7 +120,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
     });
 
     /**
-     * Toggles whether a thread should be included as feedback in the next Hyperion generation request.
+     * Toggles whether a thread should be included as feedback in the next Hyperion exercise adaptation request.
      *
      * @param threadId The thread id to toggle.
      */
@@ -144,7 +144,14 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
-     * Checks whether a thread is currently selected for Hyperion code generation.
+     * Clears the local feedback selection after it has been consumed by an adaptation run.
+     */
+    clearSelectedFeedback(): void {
+        this.selectedFeedbackThreadIds.set([]);
+    }
+
+    /**
+     * Checks whether a thread is currently selected for Hyperion exercise adaptation.
      *
      * @param threadId The thread id to inspect.
      * @returns True if the thread is part of the local feedback selection.

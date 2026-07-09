@@ -4,8 +4,8 @@ title: Hyperion Service
 sidebar_label: Hyperion Setup
 ---
 
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Callout from "../../src/components/Callout/Callout";
+import { CalloutVariant } from '../../src/components/Callout/Callout.types';
+import Callout from '../../src/components/Callout/Callout';
 
 # Hyperion Service
 
@@ -22,7 +22,12 @@ Hyperion extends Artemis with AI-assisted authoring features for programming exe
 - A valid API key for the chosen provider.
 
 <Callout variant={CalloutVariant.warning}>
-    <strong>Agentic whole-exercise generation and adaptation require the integrated LocalCI/LocalVC lifecycle (the <code>localci</code> profile).</strong> They drive a hardened sandbox on a LocalCI build agent, persist through LocalVC with a LocalCI trigger, and verify with the production LocalCI test/SCA parsers, so they are automatically disabled on Jenkins deployments (the endpoints are not registered and the client hides the entry points). The other Hyperion features — consistency check and problem-statement rewriting — do not depend on LocalCI and work under any supported CI backend.
+    <strong>
+        Agentic whole-exercise generation and adaptation require the integrated LocalCI/LocalVC lifecycle (the <code>localci</code> profile).
+    </strong>{' '}
+    They drive a hardened sandbox on a LocalCI build agent, persist through LocalVC with a LocalCI trigger, and verify with the production LocalCI test/SCA parsers, so they are
+    automatically disabled on Jenkins deployments (the endpoints are not registered and the client hides the entry points). The other Hyperion features — consistency check and
+    problem-statement rewriting — do not depend on LocalCI and work under any supported CI backend.
 </Callout>
 
 ## Enable the Hyperion module
@@ -31,8 +36,8 @@ Hyperion is disabled by default. Activate it by overriding the `artemis.hyperion
 
 ```yaml
 artemis:
-  hyperion:
-    enabled: true
+    hyperion:
+        enabled: true
 ```
 
 ## Configure Spring AI
@@ -43,52 +48,34 @@ Hyperion delegates all model interactions to Spring AI. Artemis ships the single
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <openai-api-key>
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: gpt-5-mini # Or another (reasonably capable) model
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <openai-api-key>
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: gpt-5-mini # Or another (reasonably capable) model
+                temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
+
+Hyperion's agent loop applies its own bounded retry handling for transient model-call failures. `spring.ai.retry.*` is not used for OpenAI chat calls in this setup.
 
 ### Azure OpenAI / Microsoft Foundry
 
 ```yaml
 spring:
-  ai:
-    model:
-      chat: openai
-    openai:
-      api-key: <azure-openai-api-key>
-      base-url: https://<your-resource-name>.openai.azure.com
-      microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
-      timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
-      chat:
-        model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
-        temperature: 1.0 # Required to be 1.0 for gpt-5
-    # Retry/response handling tuning for AI providers
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
+    ai:
+        model:
+            chat: openai
+        openai:
+            api-key: <azure-openai-api-key>
+            base-url: https://<your-resource-name>.openai.azure.com
+            microsoft-foundry: true # routes auth as an Azure api-key header; keep false/omitted for plain OpenAI or OpenAI-compatible endpoints
+            timeout: 5m # Connection-level HTTP timeout (default 60s); reasoning models and tool-calling loops can exceed it
+            chat:
+                model: <azure-deployment> # the Azure deployment name; used as the request model. gpt-5-mini deployment recommended
+                temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
 
 ### Token Usage Tracking
@@ -97,11 +84,11 @@ Artemis tracks LLM token usage and costs per request. Configure model pricing un
 
 ```yaml
 artemis:
-  llm:
-    model-costs:
-      gpt-5-mini:
-        input-cost-per-million-eur: 0.23
-        output-cost-per-million-eur: 1.84
+    llm:
+        model-costs:
+            gpt-5-mini:
+                input-cost-per-million-eur: 0.23
+                output-cost-per-million-eur: 1.84
 ```
 
 Add entries for each model you use. The key must match the model name returned by your provider (without date suffixes like `-2024-07-18`). If a model has no cost entry, costs default to zero but token counts are still recorded.
@@ -124,32 +111,36 @@ Key benefits of adding observability:
 Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
 
 #### Setup Guide
+
 1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
 
 2. Request to join a Organization from an Edutelligence maintainer.
 
 3. You will be added to the Project as **Member**.
-> ℹ️ **Note**
-> Project Members can *use* Langfuse and access existing API keys.
-> Only **Project Admins** can create new API keys.
-> If you cannot view API keys, ask the maintainer to generate them for you.
+
+    > ℹ️ **Note**
+    > Project Members can _use_ Langfuse and access existing API keys.
+    > Only **Project Admins** can create new API keys.
+    > If you cannot view API keys, ask the maintainer to generate them for you.
 
 4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
-These keys authenticate your application when sending observability data to Langfuse.
+   These keys authenticate your application when sending observability data to Langfuse.
 
 5. Identify your Langfuse host URL.
-It appears in the Langfuse UI as: **https://\<host\>**.
+   It appears in the Langfuse UI as: **https://\<host\>**.
 
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
 **https://\<host\>/api/public/otel/v1/traces**
+
 - `/api/public/otel` → Langfuse OTLP receiver root
 - `/v1/traces` → Standard OTLP HTTP route
-> For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
+    > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
 
 6. Generate the Basic Authentication token for Langfuse.
-Use Base64 encoding with the format: base64(public_key:secret_key)
+   Use Base64 encoding with the format: base64(public_key:secret_key)
 
 Example generation command:
+
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
 ```
@@ -172,30 +163,30 @@ To avoid committing secrets, prefer supplying these values via environment varia
 
 ```yaml
 management:
-  # Set true to display contextual name in @Observed on Langfuse
-  observations:
-    annotations:
-      enabled: true
-  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
-  langfuse:
-    enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
-  otlp:
+    # Set true to display contextual name in @Observed on Langfuse
+    observations:
+        annotations:
+            enabled: true
+    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+    langfuse:
+        enabled: true
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-      endpoint: https://example.com
-      transport: http
-      headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-        Authorization: "Basic <base64(public_key:secret_key)>"
-      # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-      # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-      # so disabling the default exporter will NOT stop LLM trace export.
-      export:
-        enabled: false
+        sampling:
+            probability: 1.0
+    otlp:
+        tracing:
+            # LangFuse accepts OTLP over HTTP at the traces path only
+            # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+            endpoint: https://example.com
+            transport: http
+            headers:
+                # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+                Authorization: 'Basic <base64(public_key:secret_key)>'
+            # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+            # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
+            # so disabling the default exporter will NOT stop LLM trace export.
+            export:
+                enabled: false
 ```
 
 ## Verifying the integration
@@ -206,28 +197,34 @@ management:
 
 ## Build-agent placement (multi-node)
 
-Agentic exercise generation runs the agent's work inside a **hardened, CI-sized Docker sandbox on a LocalCI build agent** — the same hosts that run student and exam builds. A generation session is long-lived (several minutes) and consumes real CPU, memory, and Docker resources for its whole duration.
+Agentic exercise generation runs the agent's work inside a **hardened, CI-sized Docker sandbox on a LocalCI build agent** — the same hosts that run student and exam builds. A Hyperion sandbox is long-lived (several minutes) and consumes real CPU, memory, and Docker resources for its whole duration.
 
 To keep generation from ever competing with exam builds by accident, **hosting is opt-in per build agent and off by default**:
 
 ```yaml
 artemis:
-  continuous-integration:
-    build-agent:
-      # 0 = this agent never hosts a generation sandbox (default). Set > 0 only on agents you dedicate to generation.
-      max-concurrent-generation-sessions: 0
+    continuous-integration:
+        build-agent:
+            # 0 = this agent never hosts a generation sandbox (default). A successful run temporarily needs two free slots.
+            max-generation-sandbox-slots: 0
+            # Keep true on normal CI agents. Set false only on dedicated Hyperion sandbox hosts that should not run student/exam builds.
+            run-build-jobs: true
 ```
 
 <Callout variant={CalloutVariant.warning}>
-    Leave <code>max-concurrent-generation-sessions</code> at <strong>0</strong> on every exam-critical build agent. Enable it (a small positive number) only on spare agents you are comfortable dedicating to generation. On a single-node integrated deployment (core + build agent on one host) the co-located node runs generation directly, so set the value there if you use the feature.
+    Leave <code>max-generation-sandbox-slots</code> at <strong>0</strong> on every exam-critical build agent. Enable it only on spare agents you are comfortable dedicating to
+    generation. A successful generation run temporarily needs two free sandbox slots (authoring sandbox + verification sandbox), so size the setting as roughly{' '}
+    <code>2 × desired concurrent runs</code>. On a single-node integrated deployment (core + build agent on one host), the co-located node still uses the relay and this capacity
+    setting.
 </Callout>
 
 Additional controls:
-- **Pausing a build agent** (from the LocalCI build-agent admin page) now also stops it accepting **new** generation sessions, so you can drain an agent before maintenance or an exam. In-flight sessions finish and tear down cleanly.
-- Orphaned sandbox containers are reaped automatically after `generation-container-expiry-minutes` (default 90).
+
+- **Pausing a build agent** (from the LocalCI build-agent admin page) now also stops it accepting **new** Hyperion sandboxes, so you can drain an agent before maintenance or an exam. In-flight sessions finish and tear down cleanly.
+- Orphaned sandbox containers are reaped automatically after `generation-sandbox-idle-timeout-minutes` (default 90).
 
 ## Operational considerations
 
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the full problem statement, so costs scale with exercise size.
 - **Data protection:** Model providers receive exercise content. Obtain consent and align with institutional policies before enabling Hyperion in production.
-- **Exam safety:** Because generation shares build-agent hosts with exam builds, keep `max-concurrent-generation-sessions` at 0 on exam agents (see *Build-agent placement*).
+- **Exam safety:** Because generation shares build-agent hosts with exam builds, keep `max-generation-sandbox-slots` at 0 on exam agents (see _Build-agent placement_).

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashSet;
@@ -85,14 +86,14 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and uses the regular build network so dependencies resolve.
+     * Builds the session spec from the exercise's LocalCI execution image. The container holds no secrets and disables Docker networking; generated code must not have egress.
      *
      * @param exercise the exercise whose language/project type selects the image
      * @return the sandbox session spec
      */
     public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
-        return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), null, 0, 0, 0));
+        return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), "none", 0, 0, 0));
     }
 
     /**
@@ -102,22 +103,26 @@ public class GenerationWorkspaceService {
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
      * @param exercise  the exercise whose components are seeded
-     * @return the seeded TESTS-repo text files keyed by repository-relative path (the harness snapshot used later by the immutability gate); empty if the tests repo was absent
+     * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
      */
-    public Map<String, String> seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+    public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
+        Map<RepositoryType, String> repositoryHeads = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
         for (RepositoryType repositoryType : SEEDED_REPOSITORIES) {
-            Path workingTree = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
-            if (workingTree != null) {
-                repositoryTrees.put(directoryFor(repositoryType), workingTree);
+            SeededRepository seededRepository = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
+            if (seededRepository != null) {
+                repositoryTrees.put(directoryFor(repositoryType), seededRepository.workingTree());
+                if (seededRepository.headHash() != null) {
+                    repositoryHeads.put(repositoryType, seededRepository.headHash());
+                }
                 // Snapshot the seeded tests harness so the verifier can later reject tampering against this baseline; read from the same tree packed into the sandbox.
                 if (repositoryType == RepositoryType.TESTS) {
-                    testsSeedSnapshot = readWorkingTreeTextFiles(workingTree);
+                    testsSeedSnapshot = readWorkingTreeTextFiles(seededRepository.workingTree());
                 }
             }
         }
@@ -125,7 +130,10 @@ public class GenerationWorkspaceService {
         textFiles.putAll(referenceSample);
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
         log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
-        return testsSeedSnapshot;
+        return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads));
+    }
+
+    public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads) {
     }
 
     /**
@@ -180,7 +188,7 @@ public class GenerationWorkspaceService {
                     continue;
                 }
                 byte[] content = resource.getInputStream().readAllBytes();
-                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || BinaryContent.isBinary(content)) {
+                if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || content.length > remainingBytes[0] || BinaryContent.isBinary(content)) {
                     continue;
                 }
                 reference.put(REFERENCE_DIR + "/" + relativePath, new String(content, StandardCharsets.UTF_8));
@@ -247,14 +255,23 @@ public class GenerationWorkspaceService {
      */
     private static Map<String, String> readWorkingTreeTextFiles(Path workingTree) {
         Map<String, String> files = new LinkedHashMap<>();
+        long total = 0;
         try (var paths = Files.walk(workingTree)) {
-            for (Path path : (Iterable<Path>) paths.filter(Files::isRegularFile)::iterator) {
+            for (Path path : (Iterable<Path>) paths.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))::iterator) {
                 String relative = workingTree.relativize(path).toString().replace('\\', '/');
                 if (relative.isEmpty() || relative.equals(".git") || relative.startsWith(".git/") || relative.contains("/.git/")) {
                     continue;
                 }
                 try {
-                    files.put(relative, Files.readString(path));
+                    long size = Files.size(path);
+                    if (size > WorkspaceArchive.MAX_FILE_BYTES || total + size > WorkspaceArchive.MAX_TOTAL_BYTES) {
+                        continue;
+                    }
+                    byte[] content = Files.readAllBytes(path);
+                    total += content.length;
+                    if (!BinaryContent.isBinary(content)) {
+                        files.put(relative, new String(content, StandardCharsets.UTF_8));
+                    }
                 }
                 catch (IOException | RuntimeException e) {
                     // Binary or unreadable file: not part of the text harness, skip.
@@ -370,19 +387,22 @@ public class GenerationWorkspaceService {
         }
     }
 
-    private Path checkoutWorkingTree(ProgrammingExercise exercise, RepositoryType repositoryType, String defaultBranch) {
+    private SeededRepository checkoutWorkingTree(ProgrammingExercise exercise, RepositoryType repositoryType, String defaultBranch) {
         LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
         if (uri == null) {
             return null;
         }
         try {
             Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
-            return repository == null ? null : repository.getLocalPath();
+            return repository == null ? null : new SeededRepository(repository.getLocalPath(), gitService.getLocalHeadHash(repository));
         }
         catch (Exception e) {
             log.warn("Could not check out {} repository for exercise {}: {}", repositoryType, exercise.getId(), e.getMessage());
             return null;
         }
+    }
+
+    private record SeededRepository(Path workingTree, String headHash) {
     }
 
     /**

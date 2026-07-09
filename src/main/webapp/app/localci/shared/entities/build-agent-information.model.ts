@@ -20,10 +20,10 @@ export class BuildAgentInformation implements BaseEntity {
     public recentBuildJobs?: BuildJob[];
     public buildAgentDetails?: BuildAgentDetails;
     public pauseAfterConsecutiveBuildFailures?: number;
-    /** Interactive Hyperion generation sandbox sessions this agent is currently hosting (0 when it hosts none). */
-    public numberOfCurrentGenerationSessions?: number;
-    /** Per-agent cap on hosted generation sessions; 0 means this agent never hosts generation. */
-    public maxNumberOfConcurrentGenerationSessions?: number;
+    /** Hyperion generation sandbox slots this agent has currently reserved (0 when it hosts none). */
+    public reservedGenerationSandboxSlots?: number;
+    /** Per-agent cap on reserved Hyperion sandbox slots; 0 means this agent never hosts generation. */
+    public maxGenerationSandboxSlots?: number;
 }
 
 export class BuildAgentDetails {

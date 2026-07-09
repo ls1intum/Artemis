@@ -36,22 +36,26 @@ class ExerciseGenerationDtoTest {
 
     @Test
     void fileSnapshot_classifiesRepositoryBucketFromTopLevelDirectory() {
-        assertThat(ExerciseGenerationFileSnapshotDTO.of("solution/src/A.java", "create", "x", 1).repo()).isEqualTo("solution");
-        assertThat(ExerciseGenerationFileSnapshotDTO.of("template/src/A.java", "create", "x", 1).repo()).isEqualTo("template");
-        assertThat(ExerciseGenerationFileSnapshotDTO.of("tests/test/ATest.java", "create", "x", 1).repo()).isEqualTo("tests");
+        assertThat(ExerciseGenerationFileSnapshotDTO.of("solution/src/A.java", ExerciseGenerationFileSnapshotDTO.Action.CREATE, "x", 1).repo())
+                .isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.SOLUTION);
+        assertThat(ExerciseGenerationFileSnapshotDTO.of("template/src/A.java", ExerciseGenerationFileSnapshotDTO.Action.CREATE, "x", 1).repo())
+                .isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.TEMPLATE);
+        assertThat(ExerciseGenerationFileSnapshotDTO.of("tests/test/ATest.java", ExerciseGenerationFileSnapshotDTO.Action.CREATE, "x", 1).repo())
+                .isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.TESTS);
         // Anything not under one of the three repository roots (e.g. the top-level problem statement) is bucketed as "other".
-        assertThat(ExerciseGenerationFileSnapshotDTO.of("problem-statement.md", "create", "x", 1).repo()).isEqualTo("other");
+        assertThat(ExerciseGenerationFileSnapshotDTO.of("problem-statement.md", ExerciseGenerationFileSnapshotDTO.Action.CREATE, "x", 1).repo())
+                .isEqualTo(ExerciseGenerationFileSnapshotDTO.RepositoryBucket.OTHER);
     }
 
     @Test
     void fileSnapshot_hashesFullContentAndReportsFullByteSize_forSmallContent() {
         String content = "int add(int a, int b) { return a + b; }";
 
-        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/Calc.java", ExerciseGenerationFileSnapshotDTO.ACTION_CREATE, content, 7);
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/Calc.java", ExerciseGenerationFileSnapshotDTO.Action.CREATE, content, 7);
 
         assertThat(snapshot.type()).isEqualTo(ExerciseGenerationFileSnapshotDTO.TYPE);
         assertThat(snapshot.path()).isEqualTo("solution/Calc.java");
-        assertThat(snapshot.action()).isEqualTo("create");
+        assertThat(snapshot.action()).isEqualTo(ExerciseGenerationFileSnapshotDTO.Action.CREATE);
         assertThat(snapshot.content()).isEqualTo(content);
         assertThat(snapshot.truncated()).isFalse();
         assertThat(snapshot.bytes()).isEqualTo(content.getBytes(StandardCharsets.UTF_8).length);
@@ -64,7 +68,7 @@ class ExerciseGenerationDtoTest {
         // A file larger than the cap must be truncated for streaming, but the sha256 and bytes must reflect the WHOLE file so a client can still detect change despite truncation.
         String fullContent = "a".repeat(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES + 5000);
 
-        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("tests/Big.java", ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, fullContent, 0);
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("tests/Big.java", ExerciseGenerationFileSnapshotDTO.Action.EDIT, fullContent, 0);
 
         assertThat(snapshot.truncated()).isTrue();
         // Content is capped at the byte limit (ASCII: one byte per char) while bytes/sha256 describe the untruncated file.
@@ -81,7 +85,7 @@ class ExerciseGenerationDtoTest {
         String head = "a".repeat(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES - 2);
         String fullContent = head + "😀".repeat(100); // a 4-byte emoji straddles the byte cap (its lead byte sits at MAX_CONTENT_BYTES - 2)
 
-        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, fullContent, 0);
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.Action.EDIT, fullContent, 0);
 
         assertThat(snapshot.truncated()).isTrue();
         byte[] contentBytes = snapshot.content().getBytes(StandardCharsets.UTF_8);
@@ -101,7 +105,7 @@ class ExerciseGenerationDtoTest {
         String head = "a".repeat(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES - 4);
         String fullContent = head + "😀".repeat(100); // first emoji occupies bytes [MAX-4, MAX): it ends exactly at the cap
 
-        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.ACTION_EDIT, fullContent, 0);
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/E.java", ExerciseGenerationFileSnapshotDTO.Action.EDIT, fullContent, 0);
 
         byte[] contentBytes = snapshot.content().getBytes(StandardCharsets.UTF_8);
         assertThat(contentBytes).hasSize(ExerciseGenerationFileSnapshotDTO.MAX_CONTENT_BYTES);
@@ -110,7 +114,7 @@ class ExerciseGenerationDtoTest {
 
     @Test
     void fileSnapshot_serialisesWithTheFileSnapshotDiscriminatorSoItIsToldApartOnTheSharedTopic() throws Exception {
-        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/A.java", ExerciseGenerationFileSnapshotDTO.ACTION_CREATE, "x", 3);
+        ExerciseGenerationFileSnapshotDTO snapshot = ExerciseGenerationFileSnapshotDTO.of("solution/A.java", ExerciseGenerationFileSnapshotDTO.Action.CREATE, "x", 3);
 
         JsonNode json = mapper.readTree(mapper.writeValueAsString(snapshot));
 
@@ -130,6 +134,7 @@ class ExerciseGenerationDtoTest {
         assertThat(event.message()).isEqualTo("working");
         assertThat(event.completionStatus()).isNull();
         assertThat(event.verdict()).isNull();
+        assertThat(event.liveExerciseChanged()).isNull();
         assertThat(event.timestamp()).isNotNull();
     }
 
@@ -137,11 +142,12 @@ class ExerciseGenerationDtoTest {
     void event_doneFactory_carriesCompletionStatusAndVerdict() {
         ExerciseGenerationVerdictDTO verdict = new ExerciseGenerationVerdictDTO(true, true, true, 3, List.of());
 
-        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict);
+        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true);
 
         assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
         assertThat(event.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
         assertThat(event.verdict()).isEqualTo(verdict);
+        assertThat(event.liveExerciseChanged()).isTrue();
     }
 
     @Test
@@ -153,15 +159,15 @@ class ExerciseGenerationDtoTest {
         // NON_EMPTY: the fields only a terminal DONE carries must not appear on a non-terminal event.
         assertThat(json.has("completionStatus")).isFalse();
         assertThat(json.has("verdict")).isFalse();
+        assertThat(json.has("liveExerciseChanged")).isFalse();
     }
 
     // ---- ExerciseGenerationVerdictDTO ------------------------------------------------------------------------------------------------------------------------------------------
 
     @Test
-    void verdict_omitsReasons_whenEmpty_butIncludesThemWhenPresent() throws Exception {
+    void verdict_serializesReasonsEvenWhenEmpty_toMatchOpenApiContract() throws Exception {
         JsonNode accepted = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationVerdictDTO(true, true, true, 5, List.of())));
-        // NON_EMPTY: an accepted verdict has no reasons, so the array must be absent from the wire (not an empty []).
-        assertThat(accepted.has("reasons")).isFalse();
+        assertThat(accepted.get("reasons")).isEmpty();
         assertThat(accepted.get("accepted").asBoolean()).isTrue();
         assertThat(accepted.get("testCount").asInt()).isEqualTo(5);
 

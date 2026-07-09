@@ -35,7 +35,7 @@ describe('HyperionExerciseGenerationService', () => {
 
     it('starts an adaptation run with the explicit mode and selected feedback threads', () => {
         service.generate(42, { mode: 'ADAPT', prompt: 'do it', selectedFeedbackThreadIds: [7, 9] }).subscribe();
-        const request = httpMock.expectOne('api/hyperion/programming-exercises/42/generate-exercise');
+        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise');
         expect(request.request.method).toBe('POST');
         expect(request.request.body).toEqual({ mode: 'ADAPT', prompt: 'do it', selectedFeedbackThreadIds: [7, 9] });
         request.flush({ jobId: 'j1' });
@@ -43,23 +43,23 @@ describe('HyperionExerciseGenerationService', () => {
 
     it('requests the run status with observed response', () => {
         service.getStatus(42).subscribe();
-        const request = httpMock.expectOne('api/hyperion/programming-exercises/42/generate-exercise/status');
+        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/status');
         expect(request.request.method).toBe('GET');
         request.flush({ jobId: 'j1', running: false, events: [] });
     });
 
     it('deletes the job to cancel it for the owner', () => {
         service.cancel(42, 'j1').subscribe();
-        const request = httpMock.expectOne('api/hyperion/programming-exercises/42/generate-exercise/jobs/j1');
+        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/jobs/j1');
         expect(request.request.method).toBe('DELETE');
         request.flush(null);
     });
 
     it('reverts the last adaptation', () => {
-        service.revertAdaptation(42).subscribe();
-        const request = httpMock.expectOne('api/hyperion/programming-exercises/42/generate-exercise/revert-adaptation');
+        service.revertAdaptation(42).subscribe((result) => expect(result.fullyReverted).toBe(true));
+        const request = httpMock.expectOne('http://localhost:8080/api/hyperion/programming-exercises/42/generate-exercise/revert-adaptation');
         expect(request.request.method).toBe('POST');
-        request.flush(null);
+        request.flush({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'] });
     });
 
     it('subscribes to the owner-private stream topic', () => {

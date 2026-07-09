@@ -8,7 +8,7 @@
             "memberAddress": "Member Address",
             "maxNumberOfConcurrentBuildJobs": "Max",
             "numberOfCurrentBuildJobs": "Current",
-            "generationSessions": "AI Sessions",
+            "generationSandboxSlots": "Hyperion sandbox slots",
             "runningBuildJobs": "Running Build Jobs",
             "status": "Status",
             "startDate": "Start Date",

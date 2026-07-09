@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,11 +69,14 @@ public final class WorkspaceArchive {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            long total = 0;
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
-                writeFileEntry(tar, entry.getKey(), entry.getValue().getBytes(StandardCharsets.UTF_8), MODE_FILE);
+                byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
+                total = addToSeedTotal(total, content.length, entry.getKey());
+                writeFileEntry(tar, entry.getKey(), content, MODE_FILE);
             }
             for (Map.Entry<String, Path> tree : directoryTrees.entrySet()) {
-                appendDirectory(tar, tree.getValue(), tree.getKey());
+                total = appendDirectory(tar, tree.getValue(), tree.getKey(), total);
             }
         }
         catch (IOException e) {
@@ -84,20 +88,31 @@ public final class WorkspaceArchive {
     /**
      * Recursively adds all regular files under {@code root} to the archive under {@code prefix}, skipping the {@code .git} metadata and preserving the executable bit.
      */
-    private static void appendDirectory(TarArchiveOutputStream tar, Path root, String prefix) throws IOException {
+    private static long appendDirectory(TarArchiveOutputStream tar, Path root, String prefix, long total) throws IOException {
         if (!Files.isDirectory(root)) {
-            return;
+            return total;
         }
         try (Stream<Path> files = Files.walk(root)) {
-            for (Path path : (Iterable<Path>) files.filter(Files::isRegularFile)::iterator) {
+            for (Path path : (Iterable<Path>) files.filter(WorkspaceArchive::isRegularFileNoFollow)::iterator) {
                 String relative = root.relativize(path).toString().replace('\\', '/');
                 if (relative.isEmpty() || relative.equals(".git") || relative.startsWith(".git/") || relative.contains("/.git/")) {
                     continue;
                 }
                 int mode = Files.isExecutable(path) ? MODE_EXECUTABLE : MODE_FILE;
-                writeFileEntry(tar, prefix + "/" + relative, Files.readAllBytes(path), mode);
+                String entryName = prefix + "/" + relative;
+                long size = Files.size(path);
+                if (size > MAX_FILE_BYTES) {
+                    throw new RejectedWorkspaceEntryException("Refusing an oversized workspace seed file (" + size + " bytes): " + entryName);
+                }
+                total = addToSeedTotal(total, size, entryName);
+                writeFileEntry(tar, entryName, path, size, mode);
             }
         }
+        return total;
+    }
+
+    private static boolean isRegularFileNoFollow(Path path) {
+        return Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS);
     }
 
     private static void writeFileEntry(TarArchiveOutputStream tar, String name, byte[] content, int mode) throws IOException {
@@ -107,6 +122,25 @@ public final class WorkspaceArchive {
         tar.putArchiveEntry(entry);
         tar.write(content);
         tar.closeArchiveEntry();
+    }
+
+    private static void writeFileEntry(TarArchiveOutputStream tar, String name, Path file, long size, int mode) throws IOException {
+        TarArchiveEntry entry = new TarArchiveEntry(name);
+        entry.setSize(size);
+        entry.setMode(mode);
+        tar.putArchiveEntry(entry);
+        try (InputStream input = Files.newInputStream(file)) {
+            input.transferTo(tar);
+        }
+        tar.closeArchiveEntry();
+    }
+
+    private static long addToSeedTotal(long total, long size, String name) {
+        long nextTotal = total + size;
+        if (nextTotal > MAX_TOTAL_BYTES) {
+            throw new RejectedWorkspaceEntryException("Refusing to build the workspace archive: total seed size exceeds " + MAX_TOTAL_BYTES + " bytes at " + name);
+        }
+        return nextTotal;
     }
 
     /**
@@ -124,7 +158,7 @@ public final class WorkspaceArchive {
      * @return the text file contents keyed by their path relative to {@code prefixToStrip} (binary files omitted)
      * @throws IOException if reading the archive fails
      */
-    static Map<String, String> readTar(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
+    public static Map<String, String> readTar(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
         Map<String, String> result = new LinkedHashMap<>();
         TarArchiveEntry entry;
         String normalizedPrefix = prefixToStrip.isEmpty() || prefixToStrip.endsWith("/") ? prefixToStrip : prefixToStrip + "/";
@@ -142,7 +176,10 @@ public final class WorkspaceArchive {
             if (name.startsWith("./")) {
                 name = name.substring(2);
             }
-            if (!normalizedPrefix.isEmpty() && name.startsWith(normalizedPrefix)) {
+            if (!normalizedPrefix.isEmpty() && !name.startsWith(normalizedPrefix)) {
+                throw new RejectedWorkspaceEntryException("Refusing a workspace entry outside the expected archive prefix: " + entry.getName());
+            }
+            if (!normalizedPrefix.isEmpty()) {
                 name = name.substring(normalizedPrefix.length());
             }
             // No path escape: the produced map is keyed by this path and later written into a git repo, so an absolute or ..-traversing path must never reach the commit.
@@ -158,10 +195,7 @@ public final class WorkspaceArchive {
             if (declaredSize > MAX_FILE_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + declaredSize + " declared bytes): " + entry.getName());
             }
-            byte[] bytes = tar.readAllBytes();
-            if (bytes.length > MAX_FILE_BYTES) {
-                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + bytes.length + " bytes): " + entry.getName());
-            }
+            byte[] bytes = readEntryBytes(tar, entry.getName());
             total += bytes.length;
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
@@ -173,5 +207,18 @@ public final class WorkspaceArchive {
             result.put(name, new String(bytes, StandardCharsets.UTF_8));
         }
         return result;
+    }
+
+    private static byte[] readEntryBytes(TarArchiveInputStream tar, String name) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        while ((read = tar.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+            if (out.size() > MAX_FILE_BYTES) {
+                throw new RejectedWorkspaceEntryException("Refusing an oversized workspace entry (" + out.size() + " bytes): " + name);
+            }
+        }
+        return out.toByteArray();
     }
 }

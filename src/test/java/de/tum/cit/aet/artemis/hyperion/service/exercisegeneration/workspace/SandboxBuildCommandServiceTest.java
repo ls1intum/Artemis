@@ -120,6 +120,16 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void verifyScript_setsJavaSecurityManagerAllowForForkedJavaTestRunners() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
+
+        assertThat(script).contains("export JAVA_TOOL_OPTIONS=\"${JAVA_TOOL_OPTIONS:-} -Djava.security.manager=allow\"")
+                .contains("export MAVEN_OPTS=\"${MAVEN_OPTS:-} -Djava.security.manager=allow\"").contains("export GRADLE_OPTS=\"${GRADLE_OPTS:-} -Djava.security.manager=allow\"");
+    }
+
+    @Test
     void pristineBuildCommands_targetTheVerifierOwnedScript() {
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
         // The verifier runs the PRISTINE copy outside /workspace (unreachable by the agent's tools).
@@ -235,7 +245,8 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void collectsTheJUnitReport_andProductionParserSeesTheRightTests(@TempDir Path tempDir) throws Exception {
-            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), new ProgrammingExercise(), tempDir, "junit", Map.of("test-results/results.xml", SUREFIRE));
+            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), new ProgrammingExercise(), tempDir, "junit",
+                    Map.of("target/surefire-reports/TEST-StackTest.xml", SUREFIRE));
             assertThat(collected).hasSize(1);
             String collectedXml = collected.values().iterator().next();
             assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
@@ -246,6 +257,15 @@ class SandboxBuildCommandServiceTest {
             TestResultXmlParser.processTestResultFile(collectedXml, failed, ok);
             assertThat(ok.stream().map(LocalCITestJobDTO::name)).containsExactlyInAnyOrder("stack_initially_empty", "push_then_pop");
             assertThat(failed.stream().map(LocalCITestJobDTO::name)).containsExactly("size_tracks_elements");
+        }
+
+        @Test
+        void collectsJUnitReportWithWhitespaceInPath(@TempDir Path tempDir) throws Exception {
+            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), new ProgrammingExercise(), tempDir, "junit spaces",
+                    Map.of("target/surefire-reports/TEST StackTest.xml", SUREFIRE));
+
+            assertThat(collected).hasSize(1);
+            assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
         }
 
         @Test

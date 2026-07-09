@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseAdaptationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
@@ -33,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -64,15 +70,18 @@ public class HyperionExerciseGenerationResource {
 
     private final ExerciseAdaptationRevertService adaptationRevertService;
 
+    private final RemoteInteractiveSandboxClient sandboxClient;
+
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationJobService jobService,
             AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ExerciseAdaptationRevertService adaptationRevertService) {
+            ExerciseAdaptationRevertService adaptationRevertService, RemoteInteractiveSandboxClient sandboxClient) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jobService = jobService;
         this.agentSystemPromptService = agentSystemPromptService;
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
         this.adaptationRevertService = adaptationRevertService;
+        this.sandboxClient = sandboxClient;
     }
 
     /**
@@ -88,11 +97,16 @@ public class HyperionExerciseGenerationResource {
         log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.effectiveMode(), exerciseId);
         validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
         ProgrammingExercise exercise = loadExercise(exerciseId);
+        validateDraftExercise(exercise);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         if (!agentSystemPromptService.isGenerationSupported(language)) {
             // Fail clearly instead of running and producing a result the differential oracle cannot verify (best-effort/no-profile languages).
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language
                     + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
+        if (!sandboxClient.hasAvailableGenerationSandboxSlots(2)) {
+            throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has the two free sandbox slots required to start a run.", ENTITY_NAME,
+                    "generationCapacityUnavailable");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
@@ -155,15 +169,26 @@ public class HyperionExerciseGenerationResource {
      * repositories back to the commit state captured at the start of that adaptation run. The deliberately simple alternative to a staging workflow.
      *
      * @param exerciseId the programming exercise id
-     * @return 200 if an adaptation baseline was found and reverted; 404 if there is nothing to revert (no retained baseline)
+     * @return 200 if an adaptation baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
      */
     @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert-adaptation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Void> revertAdaptation(@PathVariable long exerciseId) {
+    public ResponseEntity<ExerciseAdaptationRevertResultDTO> revertAdaptation(@PathVariable long exerciseId) {
         log.debug("REST request to revert the last agentic adaptation of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
+        validateDraftExercise(exercise);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return adaptationRevertService.revert(exercise, user).map(result -> ResponseEntity.ok().<Void>build()).orElseGet(() -> ResponseEntity.notFound().build());
+        String revertSlot = jobService.claimRevertSlot(user, exerciseId);
+        try {
+            return adaptationRevertService.revert(exercise, user).map(result -> {
+                ExerciseAdaptationRevertResultDTO body = new ExerciseAdaptationRevertResultDTO(result.fullyReverted(),
+                        result.revertedRepositories().stream().map(RepositoryType::getName).toList());
+                return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+            }).orElseGet(() -> ResponseEntity.notFound().build());
+        }
+        finally {
+            jobService.clearRevertSlot(exerciseId, revertSlot);
+        }
     }
 
     /**
@@ -185,11 +210,27 @@ public class HyperionExerciseGenerationResource {
     }
 
     private ProgrammingExercise loadExercise(long exerciseId) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         if (exercise.getBuildConfig() == null) {
             throw new BadRequestAlertException("Exercise must have a build configuration for generation", ENTITY_NAME, "missingBuildConfig");
         }
         return exercise;
+    }
+
+    /**
+     * Hyperion writes directly to the exercise repositories on accepted runs, so it must only run on unreleased instructor drafts without student participations. Released/null
+     * release-date exercises are considered live in Artemis; instructors should clone or move the release date into the future before asking the agent to rewrite the exercise.
+     *
+     * @param exercise the exercise to validate
+     */
+    private void validateDraftExercise(ProgrammingExercise exercise) {
+        if (exercise.isReleased()) {
+            throw new BadRequestAlertException("Hyperion generation can only modify unreleased draft exercises.", ENTITY_NAME, "exerciseAlreadyReleased");
+        }
+        if (exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty()) {
+            throw new BadRequestAlertException("Hyperion generation can only modify exercises without student participations.", ENTITY_NAME, "exerciseHasParticipations");
+        }
     }
 
     /**

@@ -260,7 +260,7 @@ public class DistributedDataAccessService {
 
         // Return enriched agent info with current processing jobs
         return new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), currentJobCount, agentJobs, status, agent.publicSshKey(),
-                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures(), agent.numberOfCurrentGenerationSessions(), agent.maxNumberOfConcurrentGenerationSessions());
+                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures(), agent.reservedGenerationSandboxSlots(), agent.maxGenerationSandboxSlots());
     }
 
     /**

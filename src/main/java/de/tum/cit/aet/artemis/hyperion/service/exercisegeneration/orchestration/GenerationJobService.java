@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
@@ -62,7 +63,8 @@ public class GenerationJobService {
     private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
 
     /**
-     * The per-file snapshot store: one {@link ExerciseGenerationFileSnapshotDTO} per {@code <exerciseId>::<path>} key (latest-per-file), so a write updates exactly that file's
+     * The per-file snapshot store: one {@link ExerciseGenerationFileSnapshotDTO} per {@code <exerciseId>::<jobId>::<path>} key (latest-per-file), so a write updates exactly that
+     * file's
      * key instead of re-serializing the whole retained set. Kept out of the replay transcript so a reloading client can rehydrate the live editor preview without bloating it.
      */
     static final String SNAPSHOT_MAP_NAME = "hyperion-exercise-generation-file-snapshots";
@@ -71,6 +73,8 @@ public class GenerationJobService {
     static final String SNAPSHOT_INDEX_MAP_NAME = "hyperion-exercise-generation-file-snapshot-index";
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
+
+    private static final String REVERT_JOB_PREFIX = "revert-";
 
     /** Pipeline id under which a generation run's model-call token usage is recorded. */
     private static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
@@ -174,10 +178,10 @@ public class GenerationJobService {
         // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise). With per-file keying a previous run's snapshots would
         // otherwise linger under their own keys, so drop them explicitly before installing the empty index.
         JobTranscript transcript = new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false);
-        transcriptMap.put(key, transcript);
+        transcriptMap.set(key, transcript, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         removeSnapshotFiles(exercise.getId(), snapshotIndexMap.get(key));
         JobFileSnapshotIndex snapshotIndex = new JobFileSnapshotIndex(jobId, user.getLogin(), new ArrayList<>());
-        snapshotIndexMap.put(key, snapshotIndex);
+        snapshotIndexMap.set(key, snapshotIndex, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         try {
             eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         }
@@ -217,6 +221,27 @@ public class GenerationJobService {
             }
             return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, terminal || transcript.done());
         });
+        refreshActiveJobRetainedStateTtl(exerciseId, jobId);
+    }
+
+    private void refreshActiveJobRetainedStateTtl(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        JobInfo job = jobMap.get(key);
+        if (job == null || !job.jobId().equals(jobId)) {
+            return;
+        }
+        jobMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        JobTranscript transcript = transcriptMap.get(key);
+        if (transcript != null && transcript.jobId().equals(jobId)) {
+            transcriptMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+        }
+        JobFileSnapshotIndex snapshotIndex = snapshotIndexMap.get(key);
+        if (snapshotIndex != null && snapshotIndex.jobId().equals(jobId)) {
+            snapshotIndexMap.setTtl(key, JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            for (String path : snapshotIndex.orderedPaths()) {
+                snapshotMap.setTtl(fileKey(exerciseId, jobId, path), JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            }
+        }
     }
 
     /**
@@ -236,8 +261,9 @@ public class GenerationJobService {
         }
         // O(1) per write: store only this one file's snapshot under its own key, never re-serializing the other retained files. A repeat write to the same path overwrites its
         // single key in place (latest-per-file), leaving the write order and the bounded index untouched — the whole point of the per-file keying.
-        snapshotMap.set(fileKey(exerciseId, snapshot.path()), snapshot);
+        snapshotMap.set(fileKey(exerciseId, jobId, snapshot.path()), snapshot);
         if (index.orderedPaths().contains(snapshot.path())) {
+            refreshActiveJobRetainedStateTtl(exerciseId, jobId);
             return;
         }
         // A genuinely new path: append it to the small ordered index and, when over the cap, evict the eldest file (dropping its own per-file key too so the store stays bounded).
@@ -246,9 +272,10 @@ public class GenerationJobService {
         orderedPaths.add(snapshot.path());
         while (orderedPaths.size() > MAX_RETAINED_SNAPSHOT_FILES) {
             String evicted = orderedPaths.removeFirst();
-            snapshotMap.delete(fileKey(exerciseId, evicted));
+            snapshotMap.delete(fileKey(exerciseId, index.jobId(), evicted));
         }
         snapshotIndexMap.set(exerciseKey, new JobFileSnapshotIndex(index.jobId(), index.userLogin(), orderedPaths));
+        refreshActiveJobRetainedStateTtl(exerciseId, jobId);
     }
 
     /**
@@ -279,13 +306,13 @@ public class GenerationJobService {
         }
         Set<String> keys = new LinkedHashSet<>();
         for (String path : index.orderedPaths()) {
-            keys.add(fileKey(exerciseId, path));
+            keys.add(fileKey(exerciseId, jobId, path));
         }
         // One batched read of just the retained files (bounded by the cap), then re-projected into write order.
         Map<String, ExerciseGenerationFileSnapshotDTO> byKey = snapshotMap.getAll(keys);
         List<ExerciseGenerationFileSnapshotDTO> snapshots = new ArrayList<>();
         for (String path : index.orderedPaths()) {
-            ExerciseGenerationFileSnapshotDTO snapshot = byKey.get(fileKey(exerciseId, path));
+            ExerciseGenerationFileSnapshotDTO snapshot = byKey.get(fileKey(exerciseId, jobId, path));
             if (snapshot != null) {
                 snapshots.add(snapshot);
             }
@@ -324,6 +351,49 @@ public class GenerationJobService {
             }
         }
         return true;
+    }
+
+    /**
+     * Checks whether a generation/adaptation job currently owns the exercise slot. Used by destructive operations, such as reverting an adaptation, to avoid interleaving a reset
+     * with a still-running persist.
+     *
+     * @param exerciseId the exercise id
+     * @return {@code true} if a job is currently active for the exercise
+     */
+    public boolean hasActiveJob(long exerciseId) {
+        return jobMap.get(key(exerciseId)) != null;
+    }
+
+    /**
+     * Atomically claims the same per-exercise mutation slot used by generation/adaptation for a destructive adaptation revert. This closes the check-then-act race where a revert
+     * could observe "no active job" and a generation could start before the repositories are reset.
+     *
+     * @param user       the requesting instructor
+     * @param exerciseId the exercise id
+     * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
+     */
+    public String claimRevertSlot(User user, long exerciseId) {
+        String token = REVERT_JOB_PREFIX + UUID.randomUUID();
+        JobInfo newJob = new JobInfo(token, user.getLogin(), exerciseId, Instant.now());
+        JobInfo existing = jobMap.putIfAbsent(key(exerciseId), newJob);
+        if (existing != null) {
+            throw new ConflictException("Exercise generation is already running for this exercise; wait for it to finish before reverting an adaptation.", ENTITY_NAME,
+                    "exerciseGenerationRunning");
+        }
+        return token;
+    }
+
+    /**
+     * Releases a revert slot claimed with {@link #claimRevertSlot(User, long)}. Value-guarded so a delayed cleanup cannot clear a newer generation job.
+     *
+     * @param exerciseId the exercise id
+     * @param token      the token returned from {@link #claimRevertSlot(User, long)}
+     */
+    public void clearRevertSlot(long exerciseId, String token) {
+        JobInfo job = jobMap.get(key(exerciseId));
+        if (job != null && job.jobId().equals(token)) {
+            jobMap.remove(key(exerciseId), job);
+        }
     }
 
     /**
@@ -367,17 +437,19 @@ public class GenerationJobService {
         }
         cancellationMap.remove(jobId);
         // Keep the transcript (TTL-bounded) for replay but mark it done, so a reconnecting client knows the run finished even if the terminal event was never recorded.
-        transcriptMap.computeIfPresent(key,
+        JobTranscript retainedTranscript = transcriptMap.computeIfPresent(key,
                 (k, transcript) -> transcript.jobId().equals(jobId) && !transcript.done()
                         ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true)
                         : transcript);
-        // Delete every retained per-file snapshot key and the index (guarded by jobId so a newer run's store is never wiped by an older job's cleanup). Unlike the single-value
-        // store this had before, per-file keys multiply per run, so leaving them to the TTL alone would accumulate; the live preview is a during-run affordance, and a client
-        // reconnecting after the run reads the persisted repositories, not the snapshots.
+        if (retainedTranscript != null && retainedTranscript.jobId().equals(jobId)) {
+            transcriptMap.setTtl(key, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+        }
+        // Keep the latest-per-file snapshots for the same short replay window as the transcript. A reconnecting client may miss the terminal websocket event and still needs the
+        // preview/status replay to be self-consistent; the next run for the exercise deletes these retained keys before installing its own index.
         JobFileSnapshotIndex snapshotIndex = snapshotIndexMap.get(key);
         if (snapshotIndex != null && snapshotIndex.jobId().equals(jobId)) {
-            removeSnapshotFiles(exerciseId, snapshotIndex);
-            snapshotIndexMap.remove(key, snapshotIndex);
+            snapshotIndexMap.setTtl(key, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+            retainSnapshotFilesForReplay(exerciseId, snapshotIndex);
         }
     }
 
@@ -387,7 +459,14 @@ public class GenerationJobService {
             return;
         }
         for (String path : index.orderedPaths()) {
-            snapshotMap.delete(fileKey(exerciseId, path));
+            snapshotMap.delete(fileKey(exerciseId, index.jobId(), path));
+        }
+    }
+
+    /** Shortens every retained per-file snapshot key to the transcript replay TTL after the job finished. */
+    private void retainSnapshotFilesForReplay(long exerciseId, JobFileSnapshotIndex index) {
+        for (String path : index.orderedPaths()) {
+            snapshotMap.setTtl(fileKey(exerciseId, index.jobId(), path), TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
         }
     }
 
@@ -395,9 +474,9 @@ public class GenerationJobService {
         return String.valueOf(exerciseId);
     }
 
-    /** The per-file snapshot map key for a file: the exercise id and the workspace-relative path, so each file occupies exactly one distributed-map entry. */
-    static String fileKey(long exerciseId, String path) {
-        return exerciseId + "::" + path;
+    /** The per-file snapshot map key for a file in one run. */
+    static String fileKey(long exerciseId, String jobId, String path) {
+        return exerciseId + "::" + jobId + "::" + path;
     }
 
     /**
@@ -428,7 +507,8 @@ public class GenerationJobService {
 
     /**
      * The small ordered index of a run's retained file snapshots. It holds only the write-ordered path list (bounded to {@link #MAX_RETAINED_SNAPSHOT_FILES}) plus the ownership
-     * guard; the whole-file snapshots themselves live one-per-key in the per-file snapshot map ({@code <exerciseId>::<path>}). Keeping the bulky content out of this value is what
+     * guard; the whole-file snapshots themselves live one-per-key in the per-file snapshot map ({@code <exerciseId>::<jobId>::<path>}). Keeping the bulky content out of this value
+     * is what
      * makes a write O(1) — it updates one file's key and, only for a genuinely new path, appends to this small list — instead of re-serializing the whole retained set on every
      * write. Kept separate from {@link JobTranscript} so the write stream never bloats the replay transcript.
      *

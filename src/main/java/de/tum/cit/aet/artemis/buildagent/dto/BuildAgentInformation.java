@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildAgentInformation(@NonNull BuildAgentDTO buildAgent, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs,
         @NonNull List<BuildJobQueueItem> runningBuildJobs, @Nullable BuildAgentStatus status, String publicSshKey, @Nullable BuildAgentDetailsDTO buildAgentDetails,
-        int pauseAfterConsecutiveBuildFailures, int numberOfCurrentGenerationSessions, int maxNumberOfConcurrentGenerationSessions) implements Serializable {
+        int pauseAfterConsecutiveBuildFailures, int reservedGenerationSandboxSlots, int maxGenerationSandboxSlots) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -29,7 +29,7 @@ public record BuildAgentInformation(@NonNull BuildAgentDTO buildAgent, int maxNu
     public BuildAgentInformation(BuildAgentInformation agentInformation) {
         this(agentInformation.buildAgent(), agentInformation.maxNumberOfConcurrentBuildJobs(), agentInformation.numberOfCurrentBuildJobs(), agentInformation.runningBuildJobs,
                 agentInformation.status(), agentInformation.publicSshKey(), agentInformation.buildAgentDetails(), agentInformation.pauseAfterConsecutiveBuildFailures(),
-                agentInformation.numberOfCurrentGenerationSessions(), agentInformation.maxNumberOfConcurrentGenerationSessions());
+                agentInformation.reservedGenerationSandboxSlots(), agentInformation.maxGenerationSandboxSlots());
     }
 
 }

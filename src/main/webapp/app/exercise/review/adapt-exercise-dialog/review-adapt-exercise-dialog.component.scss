@@ -11,7 +11,7 @@
     }
 
     &__brand-icon {
-        color: var(--primary);
+        color: var(--p-primary-color);
     }
 
     &__label {
@@ -19,10 +19,6 @@
         margin-bottom: -0.25rem;
     }
 
-    // The review comments to address, rendered as one card per finding (severity tag + category + location, description, optional suggested fix) — the same visual language as the
-    // editor's review-comment threads, instead of a single raw text blob.
-    // Scrolls within the dialog so a large number of review comments stays readable without pushing the instructions field and actions off-screen. The cap is viewport-relative so it
-    // uses the space available on tall screens and stays bounded on short ones; a little right padding keeps the scrollbar off the cards.
     &__findings-list {
         display: flex;
         flex-direction: column;
@@ -34,9 +30,9 @@
 
     &__finding-card {
         padding: 0.5rem 0.75rem;
-        border: 1px solid var(--bs-border-color);
-        border-radius: var(--bs-border-radius);
-        background-color: var(--bs-tertiary-bg);
+        border: 1px solid var(--p-content-border-color);
+        border-radius: var(--p-form-field-border-radius);
+        background-color: var(--p-content-background);
     }
 
     &__finding-header {
@@ -53,36 +49,39 @@
 
     &__finding-location {
         font-size: 0.8rem;
-        color: var(--bs-secondary-color);
+        color: var(--p-text-muted-color);
     }
 
     &__finding-description {
         white-space: pre-wrap;
-        color: var(--bs-body-color);
+        color: var(--p-text-color);
     }
 
     &__finding-fix {
         margin-top: 0.4rem;
 
+        .review-adapt-exercise-dialog__finding-fix-label {
+            display: block;
+            font-weight: 600;
+        }
+
         .review-adapt-exercise-dialog__finding-fix-code {
             margin: 0.15rem 0 0;
             padding: 0.4rem 0.6rem;
-            border-radius: var(--bs-border-radius);
-            background-color: var(--bs-secondary-bg);
+            border-radius: var(--p-form-field-border-radius);
+            background-color: var(--p-content-hover-background);
             font-size: 0.8rem;
             white-space: pre-wrap;
-            word-break: break-word;
+            overflow-wrap: anywhere;
 
-            // before→after affordance: the current code to remove is tinted red, the suggested replacement green — matching the editor's diff language so a pure deletion is never
-            // mistaken for the fix.
             &--removed {
-                background-color: var(--bs-danger-bg-subtle);
-                border-left: 3px solid var(--bs-danger-border-subtle);
+                background-color: color-mix(in srgb, var(--color-state-danger) 10%, transparent);
+                border-left: 3px solid color-mix(in srgb, var(--color-state-danger) 40%, transparent);
             }
 
             &--added {
-                background-color: var(--bs-success-bg-subtle);
-                border-left: 3px solid var(--bs-success-border-subtle);
+                background-color: color-mix(in srgb, var(--color-state-success) 10%, transparent);
+                border-left: 3px solid color-mix(in srgb, var(--color-state-success) 40%, transparent);
             }
         }
     }
@@ -97,5 +96,9 @@
         justify-content: flex-end;
         gap: 0.5rem;
         margin-top: 0.25rem;
+    }
+
+    &__action-icon {
+        margin-right: 0.25rem;
     }
 }

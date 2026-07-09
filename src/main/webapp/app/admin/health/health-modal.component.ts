@@ -7,9 +7,6 @@ import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 
-/**
- * Represents a formatted build agent for display in the health modal.
- */
 interface FormattedBuildAgent {
     displayName: string;
     name: string;
@@ -17,6 +14,8 @@ interface FormattedBuildAgent {
     status: string;
     currentJobs: number;
     maxJobs: number;
+    reservedGenerationSandboxSlots?: number;
+    maxGenerationSandboxSlots?: number;
     runningJobNames: string[];
     gitRevision?: string;
     startDate?: string;
@@ -29,6 +28,8 @@ interface SimplifiedBuildAgent {
     status?: string;
     currentJobs?: number;
     maxJobs?: number;
+    reservedGenerationSandboxSlots?: number;
+    maxGenerationSandboxSlots?: number;
     runningJobs?: unknown[];
 }
 
@@ -41,6 +42,8 @@ interface LegacyBuildAgent {
     status?: string;
     numberOfCurrentBuildJobs?: number;
     maxNumberOfConcurrentBuildJobs?: number;
+    reservedGenerationSandboxSlots?: number;
+    maxGenerationSandboxSlots?: number;
     runningBuildJobs?: Array<{ name?: string; id?: string | number }>;
     buildAgentDetails?: {
         gitRevision?: string;
@@ -50,9 +53,6 @@ interface LegacyBuildAgent {
 
 type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
 
-/**
- * Modal component for displaying detailed health information of a specific health indicator.
- */
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
@@ -89,34 +89,19 @@ export class HealthModalComponent {
         return 'undefined';
     }
 
-    /**
-     * Checks if a value is a LocalCI build agents array.
-     * Supports both the simplified format (name, displayName, status, maxJobs, currentJobs, runningJobs)
-     * and the legacy format (buildAgent object, maxNumberOfConcurrentBuildJobs, etc.)
-     */
     isBuildAgentsArray(value: unknown, detailKey?: string): value is BuildAgentDetail[] {
         if (!Array.isArray(value)) {
             return false;
         }
         if (detailKey === 'buildAgents') {
-            return value.length === 0 || value.every((entry) => this.isRecord(entry));
+            return value.length === 0 || value.every((entry) => this.isBuildAgentDetail(entry));
         }
         if (value.length === 0) {
             return false;
         }
-        // Check if the first element has the expected build agent structure
-        const first = value[0];
-        if (!this.isRecord(first)) {
-            return false;
-        }
-        // Check for simplified format (name, maxJobs) or legacy format (buildAgent, maxNumberOfConcurrentBuildJobs)
-        return ('name' in first && 'maxJobs' in first) || ('buildAgent' in first && 'maxNumberOfConcurrentBuildJobs' in first);
+        return value.every((entry) => this.isBuildAgentDetail(entry));
     }
 
-    /**
-     * Formats a build agents array into a structured, readable format.
-     * Handles both simplified format from the health endpoint and legacy format.
-     */
     formatBuildAgents(value: unknown, detailKey?: string): FormattedBuildAgent[] {
         if (!this.isBuildAgentsArray(value, detailKey)) {
             return [];
@@ -134,6 +119,8 @@ export class HealthModalComponent {
             status: this.coerceString(agent.status, 'UNKNOWN'),
             currentJobs: this.coerceNumber(agent.currentJobs),
             maxJobs: this.coerceNumber(agent.maxJobs),
+            reservedGenerationSandboxSlots: this.coerceOptionalNumber(agent.reservedGenerationSandboxSlots),
+            maxGenerationSandboxSlots: this.coerceOptionalNumber(agent.maxGenerationSandboxSlots),
             runningJobNames: this.normalizeRunningJobs(agent.runningJobs),
         };
     }
@@ -148,6 +135,8 @@ export class HealthModalComponent {
             status: this.coerceString(agent.status, 'UNKNOWN'),
             currentJobs,
             maxJobs: this.coerceNumber(agent.maxNumberOfConcurrentBuildJobs),
+            reservedGenerationSandboxSlots: this.coerceOptionalNumber(agent.reservedGenerationSandboxSlots),
+            maxGenerationSandboxSlots: this.coerceOptionalNumber(agent.maxGenerationSandboxSlots),
             runningJobNames: (agent.runningBuildJobs ?? []).map((job) => this.coerceString(job.name ?? job.id, 'Unknown')),
             gitRevision: this.coerceOptionalString(agent.buildAgentDetails?.gitRevision),
             startDate: this.coerceOptionalString(agent.buildAgentDetails?.startDate),
@@ -188,12 +177,30 @@ export class HealthModalComponent {
         return fallback;
     }
 
+    private coerceOptionalNumber(value: unknown): number | undefined {
+        if (typeof value === 'number' && Number.isFinite(value)) {
+            return value;
+        }
+        return undefined;
+    }
+
     private isRecord(value: unknown): value is Record<string, unknown> {
         return value !== null && typeof value === 'object' && !Array.isArray(value);
     }
 
+    private isBuildAgentDetail(value: unknown): value is BuildAgentDetail {
+        if (!this.isRecord(value)) {
+            return false;
+        }
+        return this.isSimplifiedBuildAgent(value) || this.isLegacyBuildAgent(value);
+    }
+
     private isSimplifiedBuildAgent(agent: BuildAgentDetail): agent is SimplifiedBuildAgent {
         return 'maxJobs' in agent || 'currentJobs' in agent || 'runningJobs' in agent;
+    }
+
+    private isLegacyBuildAgent(agent: BuildAgentDetail): agent is LegacyBuildAgent {
+        return 'buildAgent' in agent || 'maxNumberOfConcurrentBuildJobs' in agent || 'runningBuildJobs' in agent;
     }
 
     getStatusBadgeSeverity(status: string): 'success' | 'secondary' | 'warn' {
@@ -206,6 +213,10 @@ export class HealthModalComponent {
             default:
                 return 'secondary';
         }
+    }
+
+    hasHyperionSandboxCapacity(agent: FormattedBuildAgent): boolean {
+        return agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined;
     }
 
     dismiss(): void {

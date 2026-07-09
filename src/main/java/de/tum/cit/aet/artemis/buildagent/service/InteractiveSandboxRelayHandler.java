@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +27,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -48,10 +49,9 @@ import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedT
  * only hands the request to a small worker pool, so no heavy work runs on the distributed event thread.
  * <p>
  * Handling is idempotent per correlation id: a redelivered broadcast is dropped rather than performed twice. Hosting is opt-in per agent:
- * {@code max-concurrent-generation-sessions}
- * defaults to {@code 0} (the agent hosts nothing and does not even subscribe), a paused agent refuses new sessions, and a per-agent semaphore caps concurrent sessions — so
- * generation
- * never silently competes with CI or exam builds on an agent an operator did not deliberately dedicate to it. The permit is released on {@code DESTROY}.
+ * {@code max-generation-sandbox-slots}
+ * defaults to {@code 0} (the agent hosts nothing and does not even subscribe), a paused agent refuses new sandboxes, and a per-agent semaphore caps reserved slots — so generation
+ * never silently competes with CI or exam builds on an agent an operator did not deliberately opt in. The permit is released on {@code DESTROY}.
  *
  * @see RemoteInteractiveSandboxClient the core-node client whose requests this handler serves
  * @see InteractiveSandboxService the local implementation that actually performs each operation
@@ -64,16 +64,17 @@ public class InteractiveSandboxRelayHandler {
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxRelayHandler.class);
 
     /**
-     * Stable fragment embedded in the CREATE failure message when this agent declines because it is at its session capacity. The core client matches on it to fail a create over to
+     * Stable fragment embedded in the CREATE failure message when this agent declines because it is out of generation sandbox slots. The core client matches on it to fail a create
+     * over to
      * another candidate agent rather than surface the refusal, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
      */
-    static final String CAPACITY_REFUSAL_MARKER = "is at its interactive sandbox session capacity";
+    static final String CAPACITY_REFUSAL_MARKER = "is at its generation sandbox slot capacity";
 
     /**
      * Stable fragment embedded in the CREATE failure message when this agent declines because it is paused/draining. The core client matches on it to fail a create over to another
      * candidate agent, so keep it in sync between the message here and {@link RemoteInteractiveSandboxClient}.
      */
-    static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new interactive sandbox sessions";
+    static final String DRAINING_REFUSAL_MARKER = "is paused and is not accepting new generation sandboxes";
 
     /**
      * Stable fragment embedded in the CREATE failure message when this agent's create failed for a transient, agent-local reason (Docker daemon overload, an image-pull network
@@ -83,41 +84,36 @@ public class InteractiveSandboxRelayHandler {
      * another candidate agent — exactly like a capacity/draining decline — instead of surfacing it as fatal, so keep it in sync between the message here and
      * {@link RemoteInteractiveSandboxClient}. Deterministic failures stay untagged so they surface fast rather than storming every candidate with a retry that fails identically.
      */
-    static final String RETRYABLE_REFUSAL_MARKER = "encountered a transient error creating an interactive sandbox session";
+    static final String RETRYABLE_REFUSAL_MARKER = "encountered a transient error creating a generation sandbox";
 
-    private final InteractiveSandboxService interactiveSandboxService;
+    private final ApplicationContext applicationContext;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    /** Consulted so a paused/draining agent sheds generation load too: pausing a build agent stops it accepting new sessions, not just new CI build jobs. */
+    /** Consulted so a paused/draining agent sheds generation load too: pausing a build agent stops it accepting new sandboxes, not just new CI build jobs. */
     private final SharedQueueProcessingService sharedQueueProcessingService;
 
-    /** Neutral seam this handler writes the current session load to, read back when the agent's info is assembled — so admins see generation load on the build-agent page. */
-    private final GenerationSessionState generationSessionState;
-
-    /** Triggered on session create/destroy so the broadcast agent info reflects the new session count promptly, not only on the next CI-driven refresh. */
+    /** Triggered on sandbox create/destroy so the broadcast agent info reflects the slot count promptly, not only on the next CI-driven refresh. */
     private final BuildAgentInformationService buildAgentInformationService;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
     /**
-     * Maximum number of concurrent interactive sandbox sessions this agent will host, on top of its CI build jobs. A session is a long-lived (several-minute), CI-sized container,
-     * so
-     * hosting one adds real CPU/memory/Docker load that the build-job scheduler does not account for. It therefore defaults to {@code 0}: an agent hosts generation only when an
-     * operator explicitly opts it in, so enabling Hyperion never silently adds load to exam-critical build agents. Set a positive value on the spare agents you dedicate to
-     * generation; {@code 0} means this agent never hosts a relayed session (the relay listener is not even registered).
+     * Maximum number of generation sandbox slots this agent will reserve, on top of its CI build jobs. A sandbox is a long-lived, CI-sized container, so hosting one adds real
+     * CPU/memory/Docker load that the build-job scheduler does not account for. It therefore defaults to {@code 0}: an agent hosts generation only when an operator explicitly opts
+     * it in, so enabling Hyperion never silently adds load to exam-critical build agents. Set a positive value on spare agents; {@code 0} means this agent never hosts a relayed
+     * sandbox (the relay listener is not even registered).
      */
-    @Value("${artemis.continuous-integration.build-agent.max-concurrent-generation-sessions:0}")
-    private int maxConcurrentSessions;
+    @Value("${artemis.continuous-integration.build-agent.max-generation-sandbox-slots:0}")
+    private int maxGenerationSandboxSlots;
 
     /**
-     * Caps concurrent hosted sessions: acquired on CREATE, released on DESTROY. If a CREATE succeeds but its response is lost in transit, the core client never learns the
-     * container
-     * id and can never issue DESTROY; the {@link InteractiveSandboxReaperService} reaps the orphaned container and calls back into {@link #releaseIfOwned(String)} to reclaim the
-     * held permit, so repeated orphaning cannot slowly starve the agent of session capacity between restarts.
+     * Caps reserved generation sandbox slots: acquired on CREATE, released on DESTROY. If a CREATE succeeds but its response is lost in transit, the core client never learns the
+     * container id and can never issue DESTROY; the {@link InteractiveSandboxReaperService} reaps the orphaned container and calls back into {@link #releaseIfOwned(String)} to
+     * reclaim the held permit, so repeated orphaning cannot slowly starve the agent of slot capacity between restarts.
      */
-    private Semaphore sessionPermits;
+    private Semaphore sandboxSlotPermits;
 
     /** Bound on {@link #handledCorrelationIds}: far more than any realistic in-flight + recently-completed redelivery window, yet bounded on a long-lived agent. */
     private static final int MAX_REMEMBERED_CORRELATION_IDS = 10_000;
@@ -128,8 +124,11 @@ public class InteractiveSandboxRelayHandler {
      */
     private final LinkedHashSet<String> handledCorrelationIds = new LinkedHashSet<>();
 
-    /** Container ids of sessions this agent owns and for which a session permit is held, so DESTROY releases a permit at most once. */
-    private final Set<String> ownedSessions = ConcurrentHashMap.newKeySet();
+    /** Container ids this agent owns mapped to the number of generation sandbox slots DESTROY must release exactly once. */
+    private final Map<String, Integer> ownedSandboxSlotPermits = new ConcurrentHashMap<>();
+
+    /** Verification sandbox container ids mapped to the authoring sandbox whose reserved slot they temporarily consume. */
+    private final Map<String, String> verificationSandboxOwners = new ConcurrentHashMap<>();
 
     private DistributedTopic<SandboxOpRequest> requestsTopic;
 
@@ -139,13 +138,11 @@ public class InteractiveSandboxRelayHandler {
 
     private ExecutorService workerExecutor;
 
-    public InteractiveSandboxRelayHandler(InteractiveSandboxService interactiveSandboxService, DistributedDataAccessService distributedDataAccessService,
-            @Lazy SharedQueueProcessingService sharedQueueProcessingService, GenerationSessionState generationSessionState,
-            @Lazy BuildAgentInformationService buildAgentInformationService) {
-        this.interactiveSandboxService = interactiveSandboxService;
+    public InteractiveSandboxRelayHandler(ApplicationContext applicationContext, DistributedDataAccessService distributedDataAccessService,
+            SharedQueueProcessingService sharedQueueProcessingService, BuildAgentInformationService buildAgentInformationService) {
+        this.applicationContext = applicationContext;
         this.distributedDataAccessService = distributedDataAccessService;
         this.sharedQueueProcessingService = sharedQueueProcessingService;
-        this.generationSessionState = generationSessionState;
         this.buildAgentInformationService = buildAgentInformationService;
     }
 
@@ -154,16 +151,31 @@ public class InteractiveSandboxRelayHandler {
      */
     @PostConstruct
     public void registerRequestListener() {
-        // Opt-in placement: an agent with the cap at 0 never hosts a relayed generation session, so it adds no generation load to CI/exam builds. Do not even subscribe.
-        if (maxConcurrentSessions <= 0) {
-            log.info("Interactive sandbox relay hosting disabled on build agent '{}' (max-concurrent-generation-sessions=0); it will not host generation sessions.",
-                    buildAgentShortName);
+        // Opt-in placement: an agent with the cap at 0 never hosts a relayed Hyperion sandbox, so it adds no generation load to CI/exam builds. Do not even subscribe.
+        if (maxGenerationSandboxSlots <= 0) {
+            log.info("Interactive sandbox relay hosting disabled on build agent '{}' (max-generation-sandbox-slots=0); it will not host Hyperion sandboxes.", buildAgentShortName);
             return;
         }
-        this.sessionPermits = new Semaphore(maxConcurrentSessions);
-        this.workerExecutor = Executors.newFixedThreadPool(maxConcurrentSessions + 1, namedDaemonThreadFactory());
+        this.sandboxSlotPermits = new Semaphore(maxGenerationSandboxSlots);
+        this.workerExecutor = Executors.newFixedThreadPool(maxGenerationSandboxSlots + 1, namedDaemonThreadFactory());
+        try {
+            int removedPreviousSessions = interactiveSandboxService().removeSessionsFromPreviousProcess();
+            if (removedPreviousSessions > 0) {
+                log.info("Removed {} leftover interactive sandbox session(s) before advertising generation capacity on build agent '{}'.", removedPreviousSessions,
+                        buildAgentShortName);
+            }
+        }
+        catch (RuntimeException e) {
+            workerExecutor.shutdownNow();
+            workerExecutor = null;
+            sandboxSlotPermits.acquireUninterruptibly(maxGenerationSandboxSlots);
+            buildAgentInformationService.updateGenerationSandboxSlotState(maxGenerationSandboxSlots, maxGenerationSandboxSlots);
+            buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
+            log.error("Interactive sandbox relay hosting stays disabled on build agent '{}' because previous sessions could not be reconciled.", buildAgentShortName, e);
+            return;
+        }
         // Publish the cap (0 active) so admins see "0 / N" on an opted-in-but-idle agent, distinct from "0 / 0" on an agent that never hosts.
-        generationSessionState.update(0, maxConcurrentSessions);
+        buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
         this.requestsTopic = distributedDataAccessService.getHyperionSandboxRequestsTopic();
         this.responsesTopic = distributedDataAccessService.getHyperionSandboxResponsesTopic();
         this.requestListenerId = requestsTopic.addMessageListener(request -> {
@@ -174,7 +186,7 @@ public class InteractiveSandboxRelayHandler {
             // Never do Docker work on the topic-listener (distributed event) thread: hand off to the worker pool.
             workerExecutor.submit(() -> handle(request));
         });
-        log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max concurrent generation sessions: {})", buildAgentShortName, maxConcurrentSessions);
+        log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
     }
 
     /**
@@ -245,14 +257,36 @@ public class InteractiveSandboxRelayHandler {
         if (sharedQueueProcessingService.isPaused()) {
             return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + DRAINING_REFUSAL_MARKER + ".");
         }
-        // Capacity guard: refuse rather than silently starve CI when this agent is already at its session cap.
-        if (!sessionPermits.tryAcquire()) {
-            return SandboxOpResponse.failure(request.correlationId(), "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxConcurrentSessions + ").");
+        // Capacity guard: refuse rather than silently starve CI when this agent is already at its sandbox-slot cap.
+        int permitsToAcquire = request.createPermits();
+        if (permitsToAcquire < 0) {
+            return SandboxOpResponse.failure(request.correlationId(), "CREATE requested a negative generation sandbox slot count.");
+        }
+        if (!sandboxSlotPermits.tryAcquire(permitsToAcquire)) {
+            return SandboxOpResponse.failure(request.correlationId(),
+                    "Build agent '" + buildAgentShortName + "' " + CAPACITY_REFUSAL_MARKER + " (" + maxGenerationSandboxSlots + ").");
         }
         boolean created = false;
         try {
-            String containerId = interactiveSandboxService.createSession(request.sessionSpec());
-            ownedSessions.add(containerId);
+            String containerId;
+            if (permitsToAcquire == 0) {
+                synchronized (ownedSandboxSlotPermits) {
+                    if (!hasReservedVerificationSlot(request.sessionId())) {
+                        return SandboxOpResponse.failure(request.correlationId(),
+                                "Verification sandbox CREATE must reference an owned authoring sandbox with a reserved verification slot.");
+                    }
+                    containerId = interactiveSandboxService().createSession(request.sessionSpec());
+                    ownedSandboxSlotPermits.computeIfPresent(request.sessionId(), (ignored, permits) -> permits - 1);
+                    ownedSandboxSlotPermits.put(containerId, 1);
+                    verificationSandboxOwners.put(containerId, request.sessionId());
+                }
+            }
+            else {
+                containerId = interactiveSandboxService().createSession(request.sessionSpec());
+                synchronized (ownedSandboxSlotPermits) {
+                    ownedSandboxSlotPermits.put(containerId, permitsToAcquire);
+                }
+            }
             created = true;
             publishSessionState();
             return SandboxOpResponse.created(request.correlationId(), containerId);
@@ -269,9 +303,17 @@ public class InteractiveSandboxRelayHandler {
         finally {
             // Release the permit if the container never came up, so a failed create does not leak capacity.
             if (!created) {
-                sessionPermits.release();
+                sandboxSlotPermits.release(permitsToAcquire);
             }
         }
+    }
+
+    private boolean hasReservedVerificationSlot(String authoringSessionId) {
+        if (authoringSessionId == null || authoringSessionId.isBlank()) {
+            return false;
+        }
+        Integer reservedPermits = ownedSandboxSlotPermits.get(authoringSessionId);
+        return reservedPermits != null && reservedPermits > 1;
     }
 
     /**
@@ -294,7 +336,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
-        SandboxExecResult result = interactiveSandboxService.exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
+        SandboxExecResult result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
         return SandboxOpResponse.exec(request.correlationId(), request.sessionId(), result);
     }
 
@@ -308,7 +350,7 @@ public class InteractiveSandboxRelayHandler {
                     "Copy-in payload for correlation id " + request.correlationId() + " was not staged (already consumed or evicted).");
         }
         try (InputStream tar = new ByteArrayInputStream(payload)) {
-            interactiveSandboxService.copyIn(request.sessionId(), request.workspacePath(), tar);
+            interactiveSandboxService().copyIn(request.sessionId(), request.workspacePath(), tar);
         }
         catch (IOException e) {
             return SandboxOpResponse.failure(request.correlationId(), "Failed to read copy-in payload: " + e.getMessage());
@@ -317,7 +359,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleCopyOut(SandboxOpRequest request) {
-        try (TarArchiveInputStream tar = interactiveSandboxService.copyOut(request.sessionId(), request.workspacePath())) {
+        try (TarArchiveInputStream tar = interactiveSandboxService().copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
             // Stage the repacked archive in the keyed map rather than on the response topic, so only the originating core node fetches the bytes instead of every response
             // subscriber
@@ -340,42 +382,94 @@ public class InteractiveSandboxRelayHandler {
      * @throws IOException if reading or repacking fails, or the archive exceeds the relay payload limit
      */
     private static byte[] repackTar(TarArchiveInputStream source) throws IOException {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream(); TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+        try (BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES);
+                TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
             long total = 0;
+            byte[] buffer = new byte[8192];
             TarArchiveEntry entry;
             while ((entry = source.getNextEntry()) != null) {
-                byte[] content = entry.isDirectory() ? new byte[0] : source.readAllBytes();
-                total += content.length;
-                if (total > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES) {
+                if (entry.isSymbolicLink() || entry.isLink()) {
+                    throw new IOException("Interactive sandbox copy-out archive contains a linked entry: " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    TarArchiveEntry directory = new TarArchiveEntry(entry.getName().endsWith("/") ? entry.getName() : entry.getName() + "/");
+                    directory.setMode(entry.getMode());
+                    tar.putArchiveEntry(directory);
+                    tar.closeArchiveEntry();
+                    continue;
+                }
+                if (!entry.isFile()) {
+                    throw new IOException("Interactive sandbox copy-out archive contains an unsupported non-regular entry: " + entry.getName());
+                }
+                long declaredSize = entry.getSize();
+                if (declaredSize < 0 || declaredSize > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES
+                        || total > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES - declaredSize) {
                     throw new IOException("Interactive sandbox copy-out archive exceeds the " + RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + " byte relay limit.");
                 }
                 TarArchiveEntry copy = new TarArchiveEntry(entry.getName());
                 copy.setMode(entry.getMode());
-                if (!entry.isDirectory()) {
-                    copy.setSize(content.length);
-                }
+                copy.setSize(declaredSize);
                 tar.putArchiveEntry(copy);
-                if (!entry.isDirectory()) {
-                    tar.write(content);
+                int read;
+                while ((read = source.read(buffer)) != -1) {
+                    total += read;
+                    if (total > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES) {
+                        throw new IOException("Interactive sandbox copy-out archive exceeds the " + RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + " byte relay limit.");
+                    }
+                    tar.write(buffer, 0, read);
                 }
                 tar.closeArchiveEntry();
             }
             tar.finish();
             return out.toByteArray();
         }
+        catch (PayloadLimitExceededException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private static final class BoundedByteArrayOutputStream extends ByteArrayOutputStream {
+
+        private final int maxBytes;
+
+        private BoundedByteArrayOutputStream(int maxBytes) {
+            this.maxBytes = maxBytes;
+        }
+
+        @Override
+        public synchronized void write(byte[] bytes, int offset, int length) {
+            checkLimit(length);
+            super.write(bytes, offset, length);
+        }
+
+        @Override
+        public synchronized void write(int byteValue) {
+            checkLimit(1);
+            super.write(byteValue);
+        }
+
+        private void checkLimit(int bytesToAdd) {
+            if (count > maxBytes - bytesToAdd) {
+                throw new PayloadLimitExceededException("Interactive sandbox copy-out archive exceeds the " + maxBytes + " byte relay limit.");
+            }
+        }
+    }
+
+    private static final class PayloadLimitExceededException extends RuntimeException {
+
+        private PayloadLimitExceededException(String message) {
+            super(message);
+        }
     }
 
     private SandboxOpResponse handleDestroy(SandboxOpRequest request) {
         try {
-            interactiveSandboxService.destroySession(request.sessionId());
+            interactiveSandboxService().destroySession(request.sessionId());
         }
         finally {
-            // Release the session permit exactly once per owned session, even if the destroy was redundant.
-            if (ownedSessions.remove(request.sessionId())) {
-                sessionPermits.release();
-                publishSessionState();
-            }
+            // Release the sandbox slot permit exactly once per owned sandbox, even if the destroy was redundant.
+            releaseOwnedPermits(request.sessionId());
         }
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
@@ -383,29 +477,50 @@ public class InteractiveSandboxRelayHandler {
     /**
      * Reconciles the session permit for a container the {@link InteractiveSandboxReaperService} force-removed out from under this handler. An orphaned container — a CREATE whose
      * response was lost in transit (so the core client never learned the id and can never DESTROY it), a create that succeeded after the client already failed over, or a lost
-     * DESTROY — otherwise keeps its permit held until this agent restarts, so repeated orphaning would monotonically deplete {@link #sessionPermits} until the agent refuses all
-     * new
-     * sessions. This releases exactly one permit if and only if this handler currently owns the session, gated on the {@link #ownedSessions} removal — identical semantics to the
-     * DESTROY release path, so a foreign or already-reclaimed container reconciles nothing and repeated calls never over-release.
+     * DESTROY — otherwise keeps its permit held until this agent restarts, so repeated orphaning would monotonically deplete {@link #sandboxSlotPermits} until the agent refuses
+     * all
+     * new sandboxes. This releases the sandbox's recorded permits if and only if this handler currently owns it, gated on the {@link #ownedSandboxSlotPermits} removal — identical
+     * semantics to the DESTROY release path, so a foreign or already-reclaimed container reconciles nothing and repeated calls never over-release.
      *
      * @param containerId the container id of the reaped session (as this agent understands it)
      */
     void releaseIfOwned(String containerId) {
-        // Release the session permit exactly once per owned session, gated by the ownedSessions removal, exactly as handleDestroy does.
-        if (ownedSessions.remove(containerId)) {
-            sessionPermits.release();
+        // Release the generation sandbox slots exactly once per owned sandbox, gated by the ownedSandboxSlotPermits removal, exactly as handleDestroy does.
+        releaseOwnedPermits(containerId);
+    }
+
+    private void releaseOwnedPermits(String containerId) {
+        Integer permits;
+        boolean restoredToAuthoringReservation = false;
+        synchronized (ownedSandboxSlotPermits) {
+            permits = ownedSandboxSlotPermits.remove(containerId);
+            String authoringSessionId = verificationSandboxOwners.remove(containerId);
+            if (permits != null && authoringSessionId != null && ownedSandboxSlotPermits.containsKey(authoringSessionId)) {
+                ownedSandboxSlotPermits.computeIfPresent(authoringSessionId, (ignored, authoringPermits) -> authoringPermits + permits);
+                restoredToAuthoringReservation = true;
+            }
+        }
+        if (permits != null) {
+            if (!restoredToAuthoringReservation) {
+                sandboxSlotPermits.release(permits);
+            }
             publishSessionState();
         }
     }
 
     /**
-     * Publishes the current session load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. Refreshes without
-     * touching the consecutive-failure bookkeeping: a session create/destroy is unrelated to build-job outcomes, so it must not reset the displayed failure count (which
+     * Publishes the current slot load to the seam bean and refreshes the broadcast agent info so admins see the change on the build-agent page promptly. Refreshes without
+     * touching the consecutive-failure bookkeeping: a sandbox create/destroy is unrelated to build-job outcomes, so it must not reset the displayed failure count (which
      * {@link BuildAgentInformationService#updateLocalBuildAgentInformation(boolean)} would).
      */
     private void publishSessionState() {
-        generationSessionState.update(ownedSessions.size(), maxConcurrentSessions);
+        int usedPermits = ownedSandboxSlotPermits.values().stream().mapToInt(Integer::intValue).sum();
+        buildAgentInformationService.updateGenerationSandboxSlotState(usedPermits, maxGenerationSandboxSlots);
         buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
+    }
+
+    private InteractiveSandboxService interactiveSandboxService() {
+        return applicationContext.getBean(InteractiveSandboxService.class);
     }
 
     private static ThreadFactory namedDaemonThreadFactory() {

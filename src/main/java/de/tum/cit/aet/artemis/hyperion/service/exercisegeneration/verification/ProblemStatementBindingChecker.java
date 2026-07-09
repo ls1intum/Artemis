@@ -22,9 +22,8 @@ final class ProblemStatementBindingChecker {
 
     /**
      * Matches a problem-statement task binding and captures its parenthesised, comma-separated test names: {@code [task][Some title](testA,testB)}. The capture is greedy (up to
-     * the
-     * last {@code )} on the line) because a test identifier can itself contain parentheses (a JVM/Ares name is reported as {@code testFoo()}); {@link #normalizeTestName} strips a
-     * trailing {@code ()} so paren and no-paren binding forms resolve to the same test.
+     * the last {@code )} on the line) because a test identifier can itself contain parentheses. Matching stays production-exact: {@code testFoo} and {@code testFoo()} are
+     * different names unless the production task extractor also maps them.
      */
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task\\]\\[[^\\]]*\\]\\((.*)\\)");
 
@@ -36,12 +35,8 @@ final class ProblemStatementBindingChecker {
     private static final Pattern TASK_LIKE_BINDING = Pattern.compile("\\[(\\w+)\\]\\[[^\\]]*\\]\\([^)]*\\)");
 
     /**
-     * The shape of an Ares auto-generated structural test-case name ({@code testClass[X]}, {@code testMethods[X]}, …). Relaxes binding resolution only (the seeder injects these
-     * after the agent submits), not the differential — a behaviour test named {@code testClass[Evil]} still must fail on the template.
+     * A bare {@code [task]}/{@code [tasks]} marker not in binding position (negative lookahead excludes a real {@code [task][Title](test)} binding) — a prose leak.
      */
-    private static final Pattern STRUCTURAL_TEST_NAME = Pattern.compile("test(?:Class|Methods|Attributes|Constructors)\\[[^\\]]+\\]");
-
-    /** A bare {@code [task]}/{@code [tasks]} marker not in binding position (negative lookahead excludes a real {@code [task][Title](test)} binding) — a prose leak. */
     private static final Pattern BARE_TASK_KEYWORD = Pattern.compile("\\[tasks?\\](?!\\s*\\[[^\\]]*\\]\\s*\\()", Pattern.CASE_INSENSITIVE);
 
     /**
@@ -66,7 +61,7 @@ final class ProblemStatementBindingChecker {
     /**
      * The trimmed, non-empty test names bound by every {@code [task][Title](names)} line, in encounter order and preserving duplicates. Shared parsing for the binding-resolution
      * and
-     * per-test differential gates so both read exactly the same names (still un-normalized: callers apply {@link #normalizeTestName} when matching against runner-reported names).
+     * per-test differential gates so both read exactly the same names.
      */
     static List<String> boundTestNames(String problemStatement) {
         List<String> names = new ArrayList<>();
@@ -96,14 +91,11 @@ final class ProblemStatementBindingChecker {
     }
 
     /**
-     * The {@code [task]}-bound names that resolve to no real test, so the verifier can reject a checklist that binds to nothing. Forward-only (not every test must be bound) and
-     * fails
-     * open when the extracted name set is missing or shorter than the test count.
+     * The {@code [task]}-bound names that resolve to no real test, so the verifier can reject a checklist that binds to nothing. Fails open when the extracted name set is missing
+     * or shorter than the test count.
      * <p>
-     * Structural-test exemption: a structural-shaped binding need not resolve, since the seeder injects {@code testClass[X]} tests after the agent submits and only for a class
-     * absent
-     * from the template. Sound because the differential is keyed to real test names regardless of binding shape. A binding in the authoritative seeded set is also treated as
-     * resolved.
+     * Structural-test exemption: only names in the authoritative seeded set are treated as resolved without appearing in the current build report. A merely structural-shaped name
+     * is not trusted; otherwise a problem statement could invent a fake non-grading structural task.
      */
     static List<String> unresolvedTaskBindings(String problemStatement, List<String> actualTestNames, int testCount, Set<String> seededStructuralTestNames) {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
@@ -118,11 +110,45 @@ final class ProblemStatementBindingChecker {
             if (actual.contains(normalized) || seededStructural.contains(normalized)) {
                 continue;
             }
-            if (!isStructuralTestName(name) && !unresolved.contains(name)) {
+            if (!unresolved.contains(name)) {
                 unresolved.add(name);
             }
         }
         return unresolved;
+    }
+
+    /** The normalized test names bound more than once by {@code [task]} entries. */
+    static List<String> duplicateTaskBindings(String problemStatement) {
+        Set<String> seen = new java.util.LinkedHashSet<>();
+        List<String> duplicates = new ArrayList<>();
+        for (String name : boundTestNames(problemStatement)) {
+            String normalized = normalizeTestName(name);
+            if (!seen.add(normalized) && !duplicates.contains(normalized)) {
+                duplicates.add(normalized);
+            }
+        }
+        return duplicates;
+    }
+
+    /** Real gradable tests that production will grade but the problem statement does not expose via any {@code [task]} binding. */
+    static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount, Set<String> seededStructuralTestNames) {
+        if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
+            return List.of();
+        }
+        Set<String> bound = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        Set<String> seededStructural = seededStructuralTestNames == null ? Set.of()
+                : seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        List<String> unbound = new ArrayList<>();
+        for (String rawName : actualTestNames) {
+            String normalized = normalizeTestName(rawName);
+            if (BuildGateTestNames.isBuildGate(normalized) || seededStructural.contains(normalized) || bound.contains(normalized)) {
+                continue;
+            }
+            if (!unbound.contains(normalized)) {
+                unbound.add(normalized);
+            }
+        }
+        return unbound;
     }
 
     /**
@@ -147,17 +173,8 @@ final class ProblemStatementBindingChecker {
         return leaks;
     }
 
-    /** Whether a name has the Ares structural-test shape ({@code testClass[X]} / {@code testMethods[X]} / …). */
-    private static boolean isStructuralTestName(String name) {
-        return STRUCTURAL_TEST_NAME.matcher(name.trim()).matches();
-    }
-
-    /** Normalises a test name for matching: trims whitespace and drops a trailing {@code ()}, so {@code testFoo} and {@code testFoo()} compare equal (as Artemis treats them). */
+    /** Normalises only surrounding whitespace; production task extraction matches test names exactly after trimming the comma-separated binding entries. */
     static String normalizeTestName(String name) {
-        String normalized = name.trim();
-        if (normalized.endsWith("()")) {
-            normalized = normalized.substring(0, normalized.length() - 2).trim();
-        }
-        return normalized;
+        return name.trim();
     }
 }

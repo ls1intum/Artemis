@@ -9,19 +9,19 @@
  */
 
 
-export interface CodeGenerationJobStart { 
-    jobId?: string;
-    repositoryType?: CodeGenerationJobStart.RepositoryTypeEnum;
+export interface ExerciseAdaptationRevertResult { 
+    fullyReverted: boolean;
+    revertedRepositories: Array<ExerciseAdaptationRevertResult.RevertedRepositoriesEnum>;
 }
-export namespace CodeGenerationJobStart {
-    export const RepositoryTypeEnum = {
+export namespace ExerciseAdaptationRevertResult {
+    export const RevertedRepositoriesEnum = {
         Exercise: 'exercise',
         Solution: 'solution',
         Tests: 'tests',
         Auxiliary: 'auxiliary',
         User: 'user'
     } as const;
-    export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
+    export type RevertedRepositoriesEnum = typeof RevertedRepositoriesEnum[keyof typeof RevertedRepositoriesEnum];
 }
 
 

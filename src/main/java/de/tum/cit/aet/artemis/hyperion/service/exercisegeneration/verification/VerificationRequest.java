@@ -20,11 +20,7 @@ import java.util.Set;
  *                                         name-shape exemption)
  * @param baselineGradedTestNames      the pre-adapt baseline for the adapt total-wipe gate (see {@link ExerciseIntegrityGate#adaptWipedGradedTestsReasons}); empty for generate
  *                                         leaves the gate inert (fail-open)
- * @param relaxTestsRepoImmutability   whether to skip the tests-repo harness-immutability gate (adapt mode only): a feedback item may legitimately add or adjust a test, and for
- *                                         some build systems the manifest that registers it. The differential oracle (rebuilding pristine from the produced tree) remains the
- *                                         backstop, and the solution-leak, self-comparison, extraction, and adapt total-wipe gates stay in force
  */
 public record VerificationRequest(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles,
-        Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames,
-        boolean relaxTestsRepoImmutability) {
+        Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories, Set<String> seededStructuralTestNames, Set<String> baselineGradedTestNames) {
 }
