@@ -69,11 +69,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
     hasAthenaResultForLatestSubmission = input<boolean>(false);
-    isGeneratingFeedback = input<boolean>();
+    isGeneratingFeedback = input<boolean>(false);
+    readonly isFeedbackGenerationInProgress = computed(() => this.isGeneratingFeedback() || this.isFeedbackRequestPending());
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     generatingFeedback = output<void>();
 
+    private readonly isFeedbackRequestPending = signal(false);
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
 
@@ -188,6 +190,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (result.completionDate && result.successful) {
             this.currentFeedbackRequestCount.update((count) => count + 1);
         }
+        this.isFeedbackRequestPending.set(false);
     }
 
     requestFeedback() {
@@ -212,6 +215,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.courseExerciseService.requestFeedback(this.exercise().id!, this.participation!.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
+                    this.isFeedbackRequestPending.set(true);
                     this.generatingFeedback.emit();
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }

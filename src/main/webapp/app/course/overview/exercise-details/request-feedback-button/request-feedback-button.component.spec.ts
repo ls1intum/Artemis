@@ -631,6 +631,28 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestSent');
     });
 
+    it('should disable the button after feedback request succeeds while feedback is generating', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise);
+
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
+
+        await initAndTick();
+
+        const button = debugElement.query(By.css('button'));
+        expect(button.nativeElement.disabled).toBe(false);
+
+        component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+        fixture.detectChanges();
+
+        expect(button.nativeElement.disabled).toBe(true);
+    });
+
     it('should display programming exercise button without disabled attribute', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);

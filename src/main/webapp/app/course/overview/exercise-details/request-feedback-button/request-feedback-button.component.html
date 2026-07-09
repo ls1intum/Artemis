@@ -5,7 +5,7 @@
                 class="btn btn-primary"
                 (click)="requestAIFeedback()"
                 [class.btn-sm]="smallButtons()"
-                [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isGeneratingFeedback() || isFeedbackLimitReached()"
+                [disabled]="(exercise().type !== ExerciseType.PROGRAMMING && !isSubmitted()) || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
                 [id]="'request-feedback-' + exercise().id"
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
@@ -16,7 +16,7 @@
                 class="btn btn-primary"
                 (click)="requestAIFeedback()"
                 [class.btn-sm]="smallButtons()"
-                [disabled]="isGeneratingFeedback() || isFeedbackLimitReached()"
+                [disabled]="isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
                 [id]="'request-feedback-' + exercise().id"
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
