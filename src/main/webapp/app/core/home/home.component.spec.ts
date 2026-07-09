@@ -201,7 +201,7 @@ describe('HomeComponent', () => {
 
         it('should handle successful OIDC login with rememberMe false', async () => {
             const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
-            vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
 
             component.rememberMe = false;
 
@@ -209,6 +209,7 @@ describe('HomeComponent', () => {
             await fixture.whenStable();
 
             expect(loginOidcSpy).toHaveBeenCalledWith(false);
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
             expect(component.authenticationError()).toBe(false);
             expect(component.isSubmittingLogin()).toBe(false);
         });
