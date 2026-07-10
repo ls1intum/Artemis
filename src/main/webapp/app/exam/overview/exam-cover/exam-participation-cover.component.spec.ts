@@ -122,6 +122,28 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.endEnabled()).toBe(false);
     });
 
+    it('should not reset the confirmation on a live schedule update while waiting for the exam start (issue #13071)', () => {
+        flushInputs();
+
+        // Student has confirmed and is counting down to the (pre-start) exam start.
+        component.confirmed = true;
+        component.startEnabled.set(true);
+        component.waitingForExamStart.set(true);
+
+        // A live schedule update replaces the exam object with a new start date.
+        const rescheduledExam = new Exam();
+        rescheduledExam.course = course;
+        rescheduledExam.id = 123;
+        rescheduledExam.testExam = false;
+        rescheduledExam.startDate = dayjs().add(2, 'minutes');
+        fixture.componentRef.setInput('exam', rescheduledExam);
+        flushInputs();
+
+        // The confirmation must survive so the countdown is not interrupted.
+        expect(component.confirmed).toBe(true);
+        expect(component.startEnabled()).toBe(true);
+    });
+
     it('should start exam', async () => {
         vi.useFakeTimers();
         const localStudentExam = new StudentExam();
