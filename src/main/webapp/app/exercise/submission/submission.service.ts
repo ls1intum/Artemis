@@ -17,9 +17,9 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
 
-export class SubmissionWithComplaintDTO {
-    public submission: Submission;
-    public complaint: Complaint;
+export interface SubmissionWithComplaintDTO {
+    submission: Submission;
+    complaint: Complaint;
 }
 
 @Injectable({ providedIn: 'root' })

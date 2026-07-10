@@ -20,8 +20,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyS
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -79,9 +78,20 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        var normalizedStatusUpdate = withRunState(statusUpdate, runState);
+        if (statusUpdate.partialResult() != null && runState == PyrisRunState.RUNNING) {
+            irisChatSessionService.handlePartialStatusUpdate(job, statusUpdate);
+            return;
+        }
+        if (statusUpdate.partialResult() != null) {
+            removeJobIfTerminatedElseUpdate(runState, job);
+            return;
+        }
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+        var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate);
+
+        removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
 
     /**
@@ -92,9 +102,10 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
-        var updatedJob = competencyGenerationService.handleStatusUpdate(job, statusUpdate);
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        var updatedJob = competencyGenerationService.handleStatusUpdate(job, withRunState(statusUpdate, runState));
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+        removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
 
     /**
@@ -102,18 +113,17 @@ public class PyrisStatusUpdateService {
      * <p>
      * Logic (matching the webhook contract):
      * <ul>
-     * <li>Thinking callback ({@code stages[0].state == IN_PROGRESS}): sends {@code isThinking=true} to the user via WebSocket.</li>
-     * <li>Result callback (all stages terminal): sends {@code isThinking=false} with the final answer (or null) via WebSocket, then removes the job.</li>
+     * <li>Thinking callback ({@code runState == RUNNING}): sends {@code isThinking=true} to the user via WebSocket.</li>
+     * <li>Result callback (terminal {@code runState}): sends {@code isThinking=false} with the final answer (or null) via WebSocket, then removes the job.</li>
      * </ul>
      *
      * @param job          the global search answer job
      * @param statusUpdate the status update payload from Pyris
      */
     public void handleStatusUpdate(GlobalSearchAnswerJob job, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) {
-        var stages = statusUpdate.stages();
-        boolean hasStages = stages != null && !stages.isEmpty();
-        boolean isTerminal = hasStages && stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-        boolean isThinking = hasStages && stages.getFirst().state() == PyrisStageState.IN_PROGRESS;
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        boolean isTerminal = runState.isTerminal();
+        boolean isThinking = runState == PyrisRunState.RUNNING;
 
         if (isThinking) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
@@ -131,17 +141,16 @@ public class PyrisStatusUpdateService {
 
     /**
      * Removes the job from the job service if the status update indicates that the job is terminated; updates it to distribute changes otherwise.
-     * A job is terminated if all stages are in a terminal state.
+     * A job is terminated if the Pyris run state is terminal.
      * <p>
      *
-     * @see PyrisStageState#isTerminal()
+     * @see PyrisRunState#isTerminal()
      *
-     * @param stages the stages of the status update
-     * @param job    the job to remove or to update
+     * @param runState the run state of the status update
+     * @param job      the job to remove or to update
      */
-    private void removeJobIfTerminatedElseUpdate(List<PyrisStageDTO> stages, PyrisJob job) {
-        var isDone = stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
-        if (isDone) {
+    private void removeJobIfTerminatedElseUpdate(PyrisRunState runState, PyrisJob job) {
+        if (runState.isTerminal()) {
             pyrisJobService.removeJob(job);
         }
         else {
@@ -162,17 +171,18 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
         log.debug("[Ingestion] Status update for unitId={}, hasResult={}", job.lectureUnitId(), statusUpdate.result() != null && !statusUpdate.result().isBlank());
+        var runState = resolveRunState(statusUpdate.runState(), job);
 
         // Process checkpoint data on every callback (transcription results, heartbeats, etc.)
         if (statusUpdate.result() != null && !statusUpdate.result().isBlank()) {
             processingStateCallbackApi.ifPresent(api -> api.handleCheckpointData(job.lectureUnitId(), job.jobId(), statusUpdate.result()));
         }
 
-        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+        var isDone = runState.isTerminal();
 
         if (isDone) {
-            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            String rawCode = statusUpdate.errorCode();
+            boolean success = runState == PyrisRunState.FINISHED;
+            String rawCode = statusUpdate.error() != null ? statusUpdate.error().code() : null;
             String errorCode = success ? null : (rawCode != null && !rawCode.isBlank() ? rawCode : null);
             List<Integer> displayPageNumbers = success ? statusUpdate.displayPageNumbers() : null;
             log.info("[Ingestion] Terminal callback for unitId={}, success={}, errorCode={}", job.lectureUnitId(), success, errorCode);
@@ -194,7 +204,7 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(FaqIngestionWebhookJob job, PyrisFaqIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+        removeJobIfTerminatedElseUpdate(resolveRunState(statusUpdate.runState(), job), job);
     }
 
     /**
@@ -204,9 +214,10 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update received
      */
     public void handleStatusUpdate(TutorSuggestionJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
-        var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, withRunState(statusUpdate, runState));
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
+        removeJobIfTerminatedElseUpdate(runState, updatedJob);
     }
 
     /**
@@ -216,9 +227,49 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update received
      */
     public void handleStatusUpdate(AutonomousTutorJob job, PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate) {
-        autonomousTutorService.handleStatusUpdate(job, statusUpdate);
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        autonomousTutorService.handleStatusUpdate(job, withRunState(statusUpdate, runState));
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+        removeJobIfTerminatedElseUpdate(runState, job);
+    }
+
+    private PyrisRunState resolveRunState(PyrisRunState runState, PyrisJob job) {
+        if (runState != null) {
+            return runState;
+        }
+        log.warn("Received Pyris status update without runState for job {} of type {}; treating it as terminal failure", job.jobId(), job.getClass().getSimpleName());
+        return PyrisRunState.FAILED;
+    }
+
+    private PyrisChatStatusUpdateDTO withRunState(PyrisChatStatusUpdateDTO statusUpdate, PyrisRunState runState) {
+        if (statusUpdate.runState() == runState) {
+            return statusUpdate;
+        }
+        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
+                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
+                statusUpdate.activitySeq(), statusUpdate.finalResult());
+    }
+
+    private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {
+        if (statusUpdate.runState() == runState) {
+            return statusUpdate;
+        }
+        return new PyrisCompetencyStatusUpdateDTO(runState, statusUpdate.error(), statusUpdate.result(), statusUpdate.tokens());
+    }
+
+    private TutorSuggestionStatusUpdateDTO withRunState(TutorSuggestionStatusUpdateDTO statusUpdate, PyrisRunState runState) {
+        if (statusUpdate.runState() == runState) {
+            return statusUpdate;
+        }
+        return new TutorSuggestionStatusUpdateDTO(statusUpdate.artifact(), statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.tokens());
+    }
+
+    private PyrisAutonomousTutorPipelineStatusUpdateDTO withRunState(PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdate, PyrisRunState runState) {
+        if (statusUpdate.runState() == runState) {
+            return statusUpdate;
+        }
+        return new PyrisAutonomousTutorPipelineStatusUpdateDTO(statusUpdate.result(), statusUpdate.shouldPostDirectly(), statusUpdate.confidence(), runState, statusUpdate.error(),
+                statusUpdate.tokens());
     }
 
 }

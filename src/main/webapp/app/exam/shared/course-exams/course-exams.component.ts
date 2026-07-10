@@ -58,12 +58,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
-    private studentExams: StudentExam[];
+    private studentExams?: StudentExam[];
     studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
-    studentExamState: Subscription;
+    studentExamState?: Subscription;
 
     // Icons
     faAngleUp = faAngleUp;
@@ -80,7 +80,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     isCollapsed = signal(false);
     readonly pageTitle = signal<string>('');
     isExamStarted = signal(false);
-    withinWorkingTime: boolean;
+    withinWorkingTime = false;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -116,7 +116,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
         ])
             .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate === true && !!studentExam && studentExam.exam?.course?.id === this.courseId()))
             .subscribe(([_, latestExam]) => {
-                const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id);
+                const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id) ?? -1;
                 if (index !== -1 && this.studentExams) {
                     this.studentExams[index] = latestExam;
                 } else {

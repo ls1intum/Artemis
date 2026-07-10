@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { StandardizedCompetencyEditComponent } from 'app/admin/standardized-competencies/standardized-competency-edit.component';
@@ -19,6 +19,11 @@ import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxono
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
 
 describe('StandardizedCompetencyEditComponent', () => {
     setupTestBed({ zoneless: true });
@@ -63,10 +68,15 @@ describe('StandardizedCompetencyEditComponent', () => {
                     FaIconComponent,
                     MockComponent(ButtonComponent),
                     MockPipe(HtmlForMarkdownPipe),
+                    MockPipe(ArtemisTranslatePipe),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(TaxonomySelectComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
+                    MockModule(ButtonModule),
+                    MockModule(InputTextModule),
+                    MockModule(SelectModule),
+                    MockModule(MessageModule),
                 ],
             },
         });

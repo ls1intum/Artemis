@@ -106,7 +106,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     stepWizard = viewChild<ElementRef>('stepWizard');
     private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
 
-    private routeAndDataSubscription: Subscription;
+    private routeAndDataSubscription?: Subscription;
 
     runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
 
@@ -168,8 +168,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
-    quizId: number;
-    courseId: number;
+    quizId!: number; // set in ngOnInit() from route params / inputs
+    courseId!: number; // set in ngOnInit() from route params / inputs
     interval?: number;
     autoSaveInterval?: number;
     autoSaveTimer = 0;
@@ -183,9 +183,9 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     /**
      * Websocket channels
      */
-    participationChannel: string;
-    quizExerciseChannel: string;
-    quizBatchChannel: string;
+    participationChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizExerciseChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizBatchChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
     websocketSubscription?: Subscription;
     private participationSubscription?: Subscription;
     private quizExerciseSubscription?: Subscription;

@@ -110,8 +110,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     showPopover = viewChild.required<NgbPopover>('showPopover');
 
-    attachmentSub: Subscription;
-    attachmentVideoUnitSub: Subscription;
+    attachmentSub?: Subscription;
+    attachmentVideoUnitSub?: Subscription;
 
     FOREVER = dayjs('9999-12-31');
 

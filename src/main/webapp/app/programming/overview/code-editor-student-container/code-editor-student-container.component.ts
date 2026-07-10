@@ -62,7 +62,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
-    paramSub: Subscription;
+    paramSub?: Subscription;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
