@@ -84,6 +84,19 @@ describe('ExerciseGroupSyncService', () => {
 
             expect((updated as QuizExercise).visibleToStudents).toBeUndefined();
         });
+
+        it('resets stale quiz flags when the group cleared the timeline dates', () => {
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.INVISIBLE);
+            // A quiz that was previously visible and ended, whose group no longer defines a start/release or due date.
+            const quiz = { id: 1, type: ExerciseType.QUIZ, visibleToStudents: true, quizEnded: true } as QuizExercise;
+            const clearedGroupDto: ExerciseVariantGroupDTO = { id: 5 };
+
+            const updated = service.applyGroupTimelineToMember(quiz, clearedGroupDto, dayjs('2026-01-05T00:00:00Z')) as QuizExercise;
+
+            expect(updated.visibleToStudents).toBe(false);
+            expect(updated.quizEnded).toBe(false);
+            expect(updated.status).toBe(QuizStatus.INVISIBLE);
+        });
     });
 
     describe('mergeGroupsIntoExercises', () => {

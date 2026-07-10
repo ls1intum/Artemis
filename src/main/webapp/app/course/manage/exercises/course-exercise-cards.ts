@@ -36,23 +36,50 @@ const TYPE_TITLE_KEYS: Record<string, string> = {
     [ExerciseType.FILE_UPLOAD]: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
 };
 
+/** The context enriched with a precomputed exercise-id → owning-group lookup, so the hot paths avoid re-scanning. */
+interface ResolvedContext extends CourseExerciseCardContext {
+    readonly owningGroupByExerciseId: ReadonlyMap<number, CourseExerciseGroup>;
+}
+
 /** Builds the panels for the requested view from the current exercises, groups and search term. */
 export function buildCourseExerciseCards(view: ExerciseManagementView, context: CourseExerciseCardContext): CourseExerciseCard[] {
+    const resolved = resolveContext(context);
     switch (view) {
         case 'group':
-            return buildGroupCards(context);
+            return buildGroupCards(resolved);
         case 'type':
-            return buildTypeCards(context);
+            return buildTypeCards(resolved);
         case 'week':
-            return buildWeekCards(context);
+            return buildWeekCards(resolved);
         case 'list':
-            return buildListCards(context);
+            return buildListCards(resolved);
     }
+}
+
+/**
+ * Precomputes the exercise-id → owning-group lookup once so the sort comparator and week grouping resolve an
+ * exercise's group in O(1) instead of re-scanning every group (and its members) on each comparison.
+ */
+function resolveContext(context: CourseExerciseCardContext): ResolvedContext {
+    const owningGroupByExerciseId = new Map<number, CourseExerciseGroup>();
+    for (const group of context.groups) {
+        for (const member of group.exercises ?? []) {
+            if (member.id !== undefined) {
+                owningGroupByExerciseId.set(member.id, group);
+            }
+        }
+    }
+    return { ...context, owningGroupByExerciseId };
 }
 
 /** The group whose shared timeline governs the exercise, or undefined for ungrouped exercises. */
 export function owningGroup(exercise: Exercise, groups: CourseExerciseGroup[]): CourseExerciseGroup | undefined {
     return groups.find((group) => group.exercises?.some((member) => member.id === exercise.id));
+}
+
+/** O(1) equivalent of {@link owningGroup} using the precomputed lookup, for use inside comparators and hot loops. */
+function owningGroupOf(exercise: Exercise, context: ResolvedContext): CourseExerciseGroup | undefined {
+    return exercise.id === undefined ? undefined : context.owningGroupByExerciseId.get(exercise.id);
 }
 
 function hasSearch(context: CourseExerciseCardContext): boolean {
@@ -68,10 +95,10 @@ function visibleExercises(context: CourseExerciseCardContext): Exercise[] {
     return context.exercises.filter((exercise) => matches(exercise, context));
 }
 
-function sortExercises(exercises: Exercise[], context: CourseExerciseCardContext): Exercise[] {
+function sortExercises(exercises: Exercise[], context: ResolvedContext): Exercise[] {
     return [...exercises].sort((a, b) => {
-        const da = effectiveDate(a, owningGroup(a, context.groups), 'dueDate');
-        const db = effectiveDate(b, owningGroup(b, context.groups), 'dueDate');
+        const da = effectiveDate(a, owningGroupOf(a, context), 'dueDate');
+        const db = effectiveDate(b, owningGroupOf(b, context), 'dueDate');
         // Exercises without an (effective) due date sort last rather than as if due at the epoch, so an undated
         // exercise is not presented as the most urgent one.
         if (da === undefined && db === undefined) return 0;
@@ -81,13 +108,13 @@ function sortExercises(exercises: Exercise[], context: CourseExerciseCardContext
     });
 }
 
-function buildListCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
+function buildListCards(context: ResolvedContext): CourseExerciseCard[] {
     const exercises = sortExercises(visibleExercises(context), context);
     if (exercises.length === 0) return [];
     return [{ id: 'all', title: context.translate('artemisApp.exerciseManagement.card.all'), exercises }];
 }
 
-function buildGroupCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
+function buildGroupCards(context: ResolvedContext): CourseExerciseCard[] {
     const groupedIds = new Set<number>();
     const searching = hasSearch(context);
     const cards: CourseExerciseCard[] = context.groups
@@ -118,7 +145,7 @@ function buildGroupCards(context: CourseExerciseCardContext): CourseExerciseCard
     return cards;
 }
 
-function buildTypeCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
+function buildTypeCards(context: ResolvedContext): CourseExerciseCard[] {
     return TYPE_ORDER.map((type) => ({
         id: `type-${type}`,
         title: TYPE_TITLE_KEYS[type] ? context.translate(TYPE_TITLE_KEYS[type]) : type,
@@ -131,9 +158,11 @@ function buildTypeCards(context: CourseExerciseCardContext): CourseExerciseCard[
     })).filter((card) => card.exercises.length > 0);
 }
 
-function buildWeekCards(context: CourseExerciseCardContext): CourseExerciseCard[] {
-    const startOf = (exercise: Exercise): dayjs.Dayjs | undefined =>
-        effectiveDate(exercise, owningGroup(exercise, context.groups), 'startDate') ?? effectiveDate(exercise, owningGroup(exercise, context.groups), 'releaseDate');
+function buildWeekCards(context: ResolvedContext): CourseExerciseCard[] {
+    const startOf = (exercise: Exercise): dayjs.Dayjs | undefined => {
+        const group = owningGroupOf(exercise, context);
+        return effectiveDate(exercise, group, 'startDate') ?? effectiveDate(exercise, group, 'releaseDate');
+    };
 
     const visible = visibleExercises(context);
     const dated = visible.filter((exercise) => startOf(exercise));

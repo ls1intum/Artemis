@@ -126,12 +126,11 @@ export class ExerciseGroupSyncService {
         }
         const quiz = exercise as QuizExercise;
         const startDate = quiz.startDate ?? quiz.releaseDate;
-        if (startDate !== undefined) {
-            quiz.visibleToStudents = startDate.isBefore(now);
-        }
-        if (quiz.dueDate !== undefined) {
-            quiz.quizEnded = quiz.dueDate.isBefore(now);
-        }
+        // Recompute unconditionally: a grouped quiz's timeline is fully governed by its group, so when the group clears a
+        // date the derived flag must be reset too. A missing start/release date means not-yet-visible, a missing due date
+        // means not-yet-ended (guarding on `!== undefined` here would leave a stale `true` after the group unset a date).
+        quiz.visibleToStudents = startDate !== undefined && startDate.isBefore(now);
+        quiz.quizEnded = quiz.dueDate !== undefined && quiz.dueDate.isBefore(now);
         this.applyQuizClientState(quiz);
     }
 }

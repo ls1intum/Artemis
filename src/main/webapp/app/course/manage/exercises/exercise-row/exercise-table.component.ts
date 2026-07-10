@@ -168,6 +168,23 @@ export class ExerciseTableComponent {
         return this.sortedExercises().some((e) => e.id !== undefined && ids.has(e.id)) && !this.allSelected();
     });
 
+    /**
+     * Precomputed exercise-id → owning-group lookup, rebuilt only when {@link groups} changes. Keeps
+     * {@link owningGroupForExercise} O(1) instead of re-scanning every group (and its members) per call — it is invoked
+     * from the sort comparator (once per comparison) and from every effective-date cell binding on each row.
+     */
+    private readonly owningGroupByExerciseId = computed<ReadonlyMap<number, CourseExerciseGroup>>(() => {
+        const map = new Map<number, CourseExerciseGroup>();
+        for (const group of this.groups()) {
+            for (const member of group.exercises ?? []) {
+                if (member.id !== undefined) {
+                    map.set(member.id, group);
+                }
+            }
+        }
+        return map;
+    });
+
     readonly groupOptions = computed(() => [
         { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
         ...this.groups().map((g) => ({
@@ -266,7 +283,11 @@ export class ExerciseTableComponent {
     }
 
     owningGroupForExercise(exercise: Exercise): CourseExerciseGroup | undefined {
-        return this.groups().find((g) => g.exercises?.some((e) => (exercise.id !== undefined && e.id !== undefined ? e.id === exercise.id : e === exercise)));
+        if (exercise.id !== undefined) {
+            return this.owningGroupByExerciseId().get(exercise.id);
+        }
+        // Unsaved drafts have no id yet, so fall back to reference identity to still resolve their owning group.
+        return this.groups().find((g) => g.exercises?.some((e) => e === exercise));
     }
 
     owningGroupId(exercise: Exercise): number | undefined {
