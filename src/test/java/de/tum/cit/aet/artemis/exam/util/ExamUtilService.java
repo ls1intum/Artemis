@@ -430,7 +430,7 @@ public class ExamUtilService {
         Exam exam = ExamFactory.generateTestExam(course);
         exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
-        exam.setWorkingTime(600); // 10 minutes working time
+        exam.setWorkingTime(6000); // 100 minutes working time
         return examRepository.save(exam);
     }
 

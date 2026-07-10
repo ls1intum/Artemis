@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { enterDate, setMonacoEditorContent } from '../../utils';
+import { enterDate, fillDateTimePicker, setMonacoEditorContent } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -33,21 +33,21 @@ export class ExamCreationPage {
      * @param date the date from when the exam should be visible
      */
     async setVisibleDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#visibleDate', date);
+        await fillDateTimePicker(this.page.locator('jhi-exam-conduction #datepicker-0'), date);
     }
 
     /**
      * @param date the date when the exam starts
      */
     async setStartDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#startDate', date);
+        await fillDateTimePicker(this.page.locator('jhi-exam-conduction #datepicker-1'), date);
     }
 
     /**
      * @param date the date when the exam will end
      */
     async setEndDate(date: dayjs.Dayjs) {
-        await enterDate(this.page, '#endDate', date);
+        await fillDateTimePicker(this.page.locator('jhi-exam-conduction #datepicker-2'), date);
     }
 
     /**
