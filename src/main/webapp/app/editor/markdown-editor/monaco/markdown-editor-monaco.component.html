@@ -1,18 +1,18 @@
-<div #fullElement class="h-100 d-flex flex-column">
+<div #fullElement class="h-full flex flex-col">
     @if (showMarkdownInfoText()) {
-        <div class="pb-1 text-muted small flex-shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
+        <div class="pb-1 text-muted-color text-sm shrink-0" jhiTranslate="artemisApp.markdownEditor.infoText"></div>
     }
     <div
         #wrapper
-        class="markdown-editor-wrapper flex-grow-1"
+        class="markdown-editor-wrapper grow flex flex-col"
         [style.overflow]="inEditMode() ? 'visible' : 'auto'"
         [style.height]="inEditMode() && targetWrapperHeight() ? targetWrapperHeight() + 'px' : 'auto'"
         [style.cursor]="isResizing() ? 'ns-resize' : undefined"
         [style.min-height.px]="minWrapperHeight()"
     >
         <!-- Tab header row: tabs, close button and (in edit mode) the action toolbar share one wrapping flex row. -->
-        <div #actionPalette class="md-action-palette d-flex align-items-center flex-wrap">
-            <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs flex-shrink-0">
+        <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
+            <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs shrink-0">
                 <p-tablist>
                     @if (showEditButton()) {
                         <p-tab [value]="TAB_EDIT"><span jhiTranslate="entity.action.edit"></span></p-tab>
@@ -27,13 +27,13 @@
             </p-tabs>
 
             @if (showCloseButton()) {
-                <button type="button" class="btn btn-sm close-btn p-0 ms-auto" (click)="onCloseButtonClick()">
+                <button type="button" pButton [text]="true" [rounded]="true" severity="secondary" size="small" class="close-btn ml-auto" (click)="onCloseButtonClick()">
                     <fa-icon [icon]="faTimes" />
                 </button>
             }
 
             @if (inEditMode()) {
-                <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
+                <div class="flex items-center flex-wrap">
                     <!-- Standard -->
                     @if (showTextStyleActions()) {
                         @for (action of displayedActions().style; track action.id) {
@@ -42,7 +42,7 @@
                     } @else {
                         <button
                             type="button"
-                            class="btn btn-sm py-0 text-style-icon"
+                            class="md-toolbar-btn inline-block leading-[0.75em] text-[1.1em]"
                             [pTooltip]="'artemisApp.multipleChoiceQuestion.editor.textFormat' | artemisTranslate"
                             (click)="showTextStyleActions.set(true)"
                         >
@@ -55,13 +55,13 @@
                         }
                         <!-- Headers -->
                         @if (displayedActions().header.length) {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" (click)="headerPopover.toggle($event)">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                                <button class="md-toolbar-btn" type="button" (click)="headerPopover.toggle($event)">
                                     <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
                                 </button>
                                 <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
                                     @for (action of displayedActions().header; track action.id) {
-                                        <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
+                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
                                     }
@@ -69,11 +69,22 @@
                             </div>
                         }
                         @if (displayedActions().color; as color) {
-                            <div class="btn-group col-xs-6">
-                                <button type="button" class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)">
+                            <div class="flex">
+                                <button type="button" class="color-preview md-toolbar-btn" (click)="colorPopover.toggle($event)">
                                     <span [jhiTranslate]="color.translationKey"></span>
                                 </button>
-                                <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
+                                <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
+                                    <div class="flex flex-wrap gap-1 w-[13.75rem]">
+                                        @for (tagColor of colorSignal(); track tagColor) {
+                                            <button
+                                                type="button"
+                                                class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                                [style.background-color]="tagColor"
+                                                (click)="onSelectColor(tagColor); colorPopover.hide()"
+                                            ></button>
+                                        }
+                                    </div>
+                                </p-popover>
                             </div>
                         }
                         <!-- Domain (without options) -->
@@ -82,28 +93,28 @@
                         }
                         <!-- Domain (with options) -->
                         @for (action of displayedActions().domain.withOptions; track action.id) {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                <button class="btn btn-sm px-2 py-0" type="button" (click)="domainPopover.toggle($event)">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
+                                <button class="md-toolbar-btn" type="button" (click)="domainPopover.toggle($event)">
                                     <span [jhiTranslate]="action.translationKey"></span>
                                 </button>
                                 <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
                                     @if (action.values.length) {
                                         @for (value of action.values; track value.id) {
-                                            <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
+                                            <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
                                                 <span>{{ value.value }}</span>
                                             </button>
                                         }
                                     } @else {
-                                        <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                                        <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
                                     }
                                 </p-popover>
                             </div>
                         }
                         <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
                         @if (displayedActions().lecture; as lectureAction) {
-                            <button type="button" class="btn btn-sm py-0 m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
+                            <button type="button" class="md-toolbar-btn m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
                                 <span [jhiTranslate]="lectureAction.translationKey"></span>
-                                <fa-icon [icon]="faAngleDown" class="ms-1" />
+                                <fa-icon [icon]="faAngleDown" class="ml-1" />
                             </button>
                             <p-tieredMenu #lectureMenu [model]="lectureMenuModel()" [popup]="true" appendTo="body" />
                         }
@@ -113,9 +124,9 @@
                         @if (artemisIntelligenceService.isLoading() || isAiLoading()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         } @else {
-                            <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                            <div class="flex" role="group" aria-label="Button group with nested dropdown">
                                 <button
-                                    class="btn btn-sm px-2 py-0"
+                                    class="md-toolbar-btn"
                                     type="button"
                                     (click)="aiPopover.toggle($event)"
                                     [pTooltip]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate"
@@ -124,7 +135,7 @@
                                 </button>
                                 <p-popover #aiPopover [dismissable]="true" styleClass="md-action-popover">
                                     @for (action of displayedActions().artemisIntelligence; track action.id) {
-                                        <button type="button" class="dropdown-item" (click)="action.executeInCurrentEditor(); aiPopover.hide()">
+                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); aiPopover.hide()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
                                     }
@@ -141,29 +152,29 @@
         </div>
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
-        <div class="markdown-editor markdown-editor-wrapper flex-column" [ngClass]="{ 'd-flex': inEditMode(), 'd-none': !inEditMode() }">
+        <div class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]" [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }">
             @if (mode() === 'diff') {
                 @if (renderSideBySide()) {
                     <!-- Split-view column headers so users know which side is which -->
-                    <div #diffHeader class="diff-pane-headers">
-                        <div class="diff-pane-header" [style.width.px]="diffOriginalPaneWidth()">
+                    <div #diffHeader class="flex border-b">
+                        <div class="flex items-center shrink-0 px-2 py-1 bg-[var(--p-content-background)]" [style.width.px]="diffOriginalPaneWidth()">
                             <p-tag severity="danger" [value]="diffOriginalLabel()" />
                         </div>
-                        <div class="diff-pane-header diff-pane-header--right">
+                        <div class="flex items-center shrink-0 flex-1 border-l px-2 py-1 bg-[var(--p-content-background)]">
                             <p-tag severity="success" [value]="diffSuggestionLabel()" />
                         </div>
                     </div>
                 } @else {
                     <!-- Inline/unified diff: single explanatory row -->
-                    <div #diffHeader class="diff-pane-unified-hint">
+                    <div #diffHeader class="flex items-center gap-2 px-2 py-1 border-b bg-[var(--p-content-background)]">
                         <p-tag severity="danger" [value]="diffOriginalLabel()" />
-                        <span class="diff-pane-unified-hint__text">{{ diffUnifiedHint() }}</span>
+                        <span class="text-[0.78rem] text-muted-color">{{ diffUnifiedHint() }}</span>
                         <p-tag severity="success" [value]="diffSuggestionLabel()" />
                     </div>
                 }
             }
             <jhi-monaco-editor
-                class="h-100"
+                class="h-full"
                 [mode]="mode()"
                 [shrinkToFit]="false"
                 [stickyScroll]="false"
@@ -178,11 +189,12 @@
                 (onBlurEditor)="onBlurEditor.emit()"
             />
             @if (enableFileUpload()) {
-                <div class="d-flex align-items-center border-top" #fileUploadFooter>
+                <div class="flex items-center border-t" #fileUploadFooter>
+                    <!-- Visually hidden: a file input cannot use display:none (some browsers then block uploads), so it is shrunk and pushed out of view instead. -->
                     <input
                         #fileUploadInput
                         [id]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="file-upload-footer-input"
+                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0 overflow-hidden"
                         type="file"
                         [accept]="allowedFileExtensions()"
                         [multiple]="true"
@@ -190,24 +202,24 @@
                     />
                     <label
                         [for]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="file-upload-footer-label d-inline"
+                        class="inline w-full cursor-pointer rounded-r-[0.15em]"
                         [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
                     >
-                        <div class="row mx-0 align-items-baseline">
+                        <div class="flex mx-0 items-baseline">
                             <span
-                                class="col upload-subtitle"
+                                class="grow text-xs text-muted-color"
                                 [jhiTranslate]="wrapper.getBoundingClientRect().width < 500 ? 'artemisApp.markdownEditor.fileUploadShort' : 'artemisApp.markdownEditor.fileUpload'"
                             ></span>
                         </div>
                     </label>
                     @if (!showMarkdownInfoText()) {
-                        <a class="col-auto mx-1" href="https://markdown-it.github.io/">
+                        <a class="shrink-0 mx-1" href="https://markdown-it.github.io/">
                             <fa-icon [icon]="faQuestionCircle" [pTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                         </a>
                     }
                     @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
-                        <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
+                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0' }" />
+                        <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ml-1 shrink-0', testId: 'save' }" />
                     }
                 </div>
             }
@@ -215,28 +227,28 @@
 
         <!-- Visual content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
         @if (visualTabActivated()) {
-            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ 'd-none': !inVisualMode() }">
+            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inVisualMode() }">
                 <ng-content select="[#visual]" />
             </div>
         }
 
         <!-- Preview content: lazily rendered on first activation, then kept in the DOM (toggled via visibility). -->
         @if (previewTabActivated()) {
-            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ 'd-none': !inPreviewMode() }">
+            <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
                 <ng-content class="overflow-auto p-1" select="#previewMonaco">
                     @if (showDefaultPreview()) {
-                        <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
+                        <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                     }
                 </ng-content>
                 @if (editType() !== EditType.UPDATE && isInCommunication()) {
-                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
-                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
+                    <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
+                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-auto' }" />
                 }
             </div>
         }
     </div>
     @if (enableResize() && inEditMode()) {
-        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"
@@ -253,7 +265,7 @@
 </div>
 
 <ng-template #simpleActionButton let-action="action">
-    <button type="button" class="btn btn-sm py-0" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
+    <button type="button" class="md-toolbar-btn" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {

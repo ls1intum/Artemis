@@ -12,9 +12,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { MockExamManagementService } from 'test/helpers/mocks/service/mock-exam-management.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Course } from 'app/course/shared/entities/course.model';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     setupTestBed({ zoneless: true });
@@ -72,44 +69,6 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             component.ngOnInit();
 
             expect(component.upcomingExams()).toEqual([]);
-        });
-    });
-
-    describe('trackByExercise', () => {
-        it('should return course id and exercise id as tracking key', () => {
-            const course = { id: 10 } as Course;
-            const exercise = { id: 5, course } as Exercise;
-
-            const result = component.trackByExercise(0, exercise);
-
-            expect(result).toBe('10_5');
-        });
-
-        it('should handle exercise without course', () => {
-            const exercise = { id: 5 } as Exercise;
-
-            const result = component.trackByExercise(0, exercise);
-
-            expect(result).toBe('undefined_5');
-        });
-    });
-
-    describe('trackByExam', () => {
-        it('should return course id and exam id as tracking key', () => {
-            const course = { id: 20 } as Course;
-            const exam = { id: 15, course } as Exam;
-
-            const result = component.trackByExam(0, exam);
-
-            expect(result).toBe('20_15');
-        });
-
-        it('should handle exam without course', () => {
-            const exam = { id: 15 } as Exam;
-
-            const result = component.trackByExam(0, exam);
-
-            expect(result).toBe('undefined_15');
         });
     });
 });

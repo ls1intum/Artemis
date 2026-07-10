@@ -22,7 +22,7 @@
                 "count": "{{ count }} ausgewählt",
                 "deselectAll": "Auswahl aufheben"
             },
-            "bucket": {
+            "card": {
                 "all": "Alle Aufgaben",
                 "ungrouped": "Ohne Gruppe",
                 "unscheduled": "Ohne Termin",

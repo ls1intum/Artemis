@@ -29,11 +29,11 @@ export class SidebarCardLargeComponent {
     }
 
     refreshChildComponent(): void {
-        this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
+        void this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
             if (this.itemSelected()) {
-                this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
+                void this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
             } else {
-                this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
+                void this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
             }
         });
     }

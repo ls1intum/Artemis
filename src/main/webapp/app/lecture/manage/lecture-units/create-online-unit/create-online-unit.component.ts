@@ -24,8 +24,8 @@ export class CreateOnlineUnitComponent implements OnInit {
 
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();
     readonly isLoading = signal<boolean>(undefined!);
-    lectureId: number;
-    courseId: number;
+    lectureId!: number; // set in ngOnInit() from route params
+    courseId!: number; // set in ngOnInit() from route params
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;
@@ -60,7 +60,7 @@ export class CreateOnlineUnitComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

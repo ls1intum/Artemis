@@ -238,7 +238,7 @@ export class ExerciseActionsComponent {
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
-            if (q.quizEnded) {
+            if (q.quizEnded && ex.isAtLeastInstructor) {
                 items.push({
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
@@ -259,7 +259,9 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
-        if (ex.type === ExerciseType.PROGRAMMING) {
+        // Editing (in-editor and the plain edit form) requires editor rights. Tutors can reach this page but must not
+        // see edit controls for routes they cannot use.
+        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
@@ -269,39 +271,44 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
         }
-        if (ex.type !== ExerciseType.QUIZ) {
-            items.push({
-                id: 'edit',
-                labelKey: 'entity.action.edit',
-                icon: faWrench,
-                styleClass: 'btn-warning',
-                kind: 'link',
-                link: ['/course-management', cid, seg, ex.id!, 'edit'],
-            });
-        } else {
-            const q2 = ex as QuizExercise;
-            // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
-            // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
-            const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
-            const editDisabled = !editable || !!q2.quizEnded;
-            items.push({
-                id: 'edit',
-                labelKey: 'entity.action.edit',
-                icon: faWrench,
-                styleClass: 'btn-warning',
-                kind: 'link',
-                link: ['/course-management', cid, seg, ex.id!, 'edit'],
-                disabled: editDisabled || undefined,
-                disabledTooltip: q2.quizEnded
-                    ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
-                    : !editable && q2.status === QuizStatus.ACTIVE
-                      ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
-                      : !editable
-                        ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
-                        : undefined,
-            });
+        if (ex.isAtLeastEditor) {
+            if (ex.type !== ExerciseType.QUIZ) {
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faWrench,
+                    styleClass: 'btn-warning',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                });
+            } else {
+                const q2 = ex as QuizExercise;
+                // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
+                // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
+                const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
+                const editDisabled = !editable || !!q2.quizEnded;
+                items.push({
+                    id: 'edit',
+                    labelKey: 'entity.action.edit',
+                    icon: faWrench,
+                    styleClass: 'btn-warning',
+                    kind: 'link',
+                    link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                    disabled: editDisabled || undefined,
+                    disabledTooltip: q2.quizEnded
+                        ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
+                        : !editable && q2.status === QuizStatus.ACTIVE
+                          ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
+                          : !editable
+                            ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
+                            : undefined,
+                });
+            }
         }
-        items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
+        // Deleting an exercise is an instructor-only action.
+        if (ex.isAtLeastInstructor) {
+            items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
+        }
         return items;
     });
 
@@ -393,14 +400,13 @@ export class ExerciseActionsComponent {
         });
 
         // Measure the always-visible quiz buttons' width whenever the quiz state or language changes (they never
-        // collapse, so their reserved width just needs to stay accurate).
+        // collapse, so their reserved width just needs to stay accurate). Reset to 0 when a quiz transition removes the
+        // button group, so the overflow logic does not keep reserving space for buttons that are no longer rendered.
         afterRenderEffect(() => {
             this.quizExercise();
             this.languageVersion();
             const quizEl = this.quizGroup()?.nativeElement;
-            if (quizEl) {
-                this.quizWidth.set(quizEl.offsetWidth);
-            }
+            this.quizWidth.set(quizEl ? quizEl.offsetWidth : 0);
         });
 
         // Measure each distinct button's natural width once (while it is visible) and cache it. Hidden buttons read 0,
@@ -489,6 +495,10 @@ export class ExerciseActionsComponent {
 
     protected onDelete(event: { [key: string]: boolean }): void {
         const exercise = this.exercise();
+        const exerciseId = exercise.id;
+        if (exerciseId === undefined) {
+            return;
+        }
         const finish = (obs: Observable<unknown>, evtName: string) =>
             obs.subscribe({
                 next: () => {
@@ -502,20 +512,20 @@ export class ExerciseActionsComponent {
 
         switch (exercise.type) {
             case ExerciseType.TEXT:
-                finish(this.textExerciseService.delete(exercise.id!), 'textExerciseListModification');
+                finish(this.textExerciseService.delete(exerciseId), 'textExerciseListModification');
                 break;
             case ExerciseType.FILE_UPLOAD:
-                finish(this.fileUploadExerciseService.delete(exercise.id!), 'fileUploadExerciseListModification');
+                finish(this.fileUploadExerciseService.delete(exerciseId), 'fileUploadExerciseListModification');
                 break;
             case ExerciseType.QUIZ:
-                finish(this.quizExerciseService.delete(exercise.id!), 'quizExerciseListModification');
+                finish(this.quizExerciseService.delete(exerciseId), 'quizExerciseListModification');
                 break;
             case ExerciseType.MODELING:
-                finish(this.modelingExerciseService.delete(exercise.id!), 'modelingExerciseListModification');
+                finish(this.modelingExerciseService.delete(exerciseId), 'modelingExerciseListModification');
                 break;
             case ExerciseType.PROGRAMMING:
                 finish(
-                    this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
+                    this.programmingExerciseService.delete(exerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
                     'programmingExerciseListModification',
                 );
                 break;

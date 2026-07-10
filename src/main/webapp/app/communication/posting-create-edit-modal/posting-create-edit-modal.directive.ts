@@ -5,12 +5,12 @@ import { PostingCreateEditDirective } from 'app/communication/directive/posting-
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> extends PostingCreateEditDirective<T> implements OnInit {
     readonly postingEditor = viewChild<TemplateRef<unknown>>('postingEditor');
-    modalTitle: string;
+    modalTitle!: string; // set via updateModalTitle() in ngOnInit()
 
     /**
      * on initialization: sets the content, and the modal title (edit or create)
      */
-    ngOnInit(): void {
+    override ngOnInit(): void {
         super.ngOnInit();
         this.updateModalTitle();
     }

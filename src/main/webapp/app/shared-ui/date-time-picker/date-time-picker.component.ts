@@ -3,7 +3,8 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 import { faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,7 +26,7 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaStackComponent, TooltipModule, ButtonModule, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
     protected readonly faGlobe = faGlobe;
@@ -36,6 +37,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
+    // Suppress the inline "missing/invalid" message. Filters (e.g. the audits from/to range) convey invalid
+    // input through the red border alone and must not grow taller when it appears; the invalid border still shows.
+    hideValidationMessage = input<boolean>(false);
+    // Id of the inner input, so a consumer can pair its own <label for> and keep ids unique when several
+    // pickers share a page (e.g. the audits from/to filter).
+    inputId = input<string>('date-input-field');
     labelTooltip = input<string>();
     value = model<dayjs.Dayjs | Date | null>();
     disabled = input<boolean>(false);
@@ -65,6 +72,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // keepInvalid). Without this flag the `unchanged` guard in updateField would swallow the
     // re-emission when the user corrects the input back to the previously held date.
     private needsParentSync = false;
+    // Set by onPickerKeydown when Ctrl/Cmd+V is detected; cleared in onPickerPaste.
+    // Avoids relying on PrimeNG's picker.isKeydown, which is set by ANY keydown (arrow, Home/End…)
+    // and would remain stale-true when a context-menu paste follows a non-paste keydown.
+    private isKeyboardPaste = false;
 
     /** DEFAULT renders date + time; CALENDAR renders date only; TIMER renders time only. */
     protected showTime = computed(() => this.pickerType() === DateTimePickerType.DEFAULT);
@@ -98,7 +109,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * template) so the two never disagree. The wrapper class is the load-bearing one: under zoneless
      * change detection the OnPush picker view can stay stale when validity flips as a result of the
      * picker's own `ngModelChange` (the message, rendered by this wrapper, updates but the picker's
-     * border does not — see PR #13009 review). Driving the border from a wrapper class lets plain CSS
+     * border does not). Driving the border from a wrapper class lets plain CSS
      * cascade onto the (existing) input element, so the border always matches the message regardless of
      * the inner picker's change-detection timing.
      */
@@ -150,8 +161,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      *
      * The inner `[ngModel]="value()"` one-way binding does NOT reliably update the OnPush p-datepicker
      * when this wrapper lives inside an OnPush parent under zoneless change detection: the parent is not
-     * re-checked after `writeValue`, so an edit form opens with the picker blank (PR #13009 review — the
-     * tutorial free-period form). This only runs on the programmatic (form patch / reset) path; user
+     * re-checked after `writeValue`, so an edit form opens with the picker blank (e.g. the tutorial
+     * free-period form). This only runs on the programmatic (form patch / reset) path; user
      * typing flows through `updateField` and must NOT be reformatted here (it would erase keepInvalid text).
      */
     private reflectValueInPicker(next: Date | null) {
@@ -268,6 +279,38 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         this.valueChanged();
     }
 
+    /** Records whether the current paste was triggered by a keyboard shortcut (Ctrl/Cmd+V or Shift+Insert). */
+    onPickerKeydown(event: KeyboardEvent) {
+        this.isKeyboardPaste = (event.key.toLowerCase() === 'v' && (event.ctrlKey || event.metaKey)) || (event.key === 'Insert' && event.shiftKey);
+    }
+
+    /**
+     * Context-menu paste has no preceding keydown, so PrimeNG's `isKeydown` guard in `onUserInput`
+     * is never set and the pasted text is silently ignored. We fix two things here:
+     *
+     * 1. If no text is currently selected in the input (cursor is just positioned), select all first
+     *    so the browser's native paste replaces the entire field value instead of inserting at the
+     *    cursor. We only do this for context-menu paste — Ctrl/Cmd+V is tracked separately via
+     *    onPickerKeydown so we leave the user's cursor/selection intact in that case.
+     *    We intentionally avoid relying on picker.isKeydown here: PrimeNG sets that flag for ANY
+     *    keydown (including Arrow/Home/End), leaving it stale-true until the next input event.
+     *
+     * 2. Set isKeydown = true so PrimeNG's onUserInput actually processes the pasted text.
+     */
+    onPickerPaste(event: ClipboardEvent) {
+        const picker = this.innerPicker();
+        if (picker) {
+            if (!this.isKeyboardPaste) {
+                const input = event.target as HTMLInputElement;
+                if (input.tagName === 'INPUT' && input.selectionStart === input.selectionEnd) {
+                    input.select();
+                }
+            }
+            this.isKeyboardPaste = false;
+            picker.isKeydown = true;
+        }
+    }
+
     /**
      * Recomputes the validity signals from the currently bound value. Called after `writeValue`,
      * and exposed publicly so parents can refresh validation after programmatically patching the
@@ -283,7 +326,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
 
     /**
      * p-datepicker accepts a valid *prefix* and silently ignores trailing characters, so
-     * "13.06.2026 18:30adasdasdsad" parses to 13.06.2026 18:30 and looks valid (PR #13009 review).
+     * "13.06.2026 18:30adasdasdsad" parses to 13.06.2026 18:30 and looks valid.
      * On blur, reject input whose full text does not match the field's display format so such entries
      * are flagged instead of accepted. Time-only pickers keep PrimeNG's lenient parsing (decided
      * separately in review), and empty input is handled as valid-but-missing elsewhere.
@@ -310,7 +353,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * Confirm button for the time picker. A time-only picker shows the default time (startAt / current
      * time) in its spinner but does not write it to the model until the user nudges a spinner field, so
      * applying the shown time previously took two clicks (nudge + close). When the field is still empty,
-     * commit the displayed time here so a single click applies it; otherwise just close (PR #13009 review).
+     * commit the displayed time here so a single click applies it; otherwise just close.
      */
     applyAndClose(picker: DatePicker) {
         if (this.timeOnly() && this.value() == undefined) {

@@ -75,7 +75,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     private initTestCaseStateSubscription(programmingExerciseId: number) {
         const testCaseTopic = `/topic/programming-exercises/${programmingExerciseId}/test-cases-changed`;
-        this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);
+        this.subjects[programmingExerciseId] = new BehaviorSubject<boolean | undefined>(undefined);
         this.connections[programmingExerciseId] = this.websocketService
             .subscribe<boolean>(testCaseTopic)
             .pipe(tap((testCasesChanged) => this.notifySubscribers(programmingExerciseId, testCasesChanged)))

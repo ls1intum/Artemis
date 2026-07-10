@@ -22,7 +22,7 @@ export class IrisStatusService implements OnDestroy {
     private profileService = inject(ProfileService);
 
     intervalId: ReturnType<typeof setInterval> | undefined;
-    websocketStatusSubscription: Subscription;
+    websocketStatusSubscription?: Subscription;
     disconnected = false;
 
     active = false;
@@ -92,7 +92,7 @@ export class IrisStatusService implements OnDestroy {
      */
     private checkHeartbeat(): void {
         if (this.disconnected || !this.currentCourseId) return;
-        firstValueFrom(this.getIrisStatus(this.currentCourseId)).then((response: HttpResponse<IrisStatusDTO>) => {
+        void firstValueFrom(this.getIrisStatus(this.currentCourseId)).then((response: HttpResponse<IrisStatusDTO>) => {
             if (response.body) {
                 this.active = Boolean(response.body.active);
 

@@ -204,7 +204,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
             } else {
                 this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },
@@ -230,7 +230,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
                 this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
             } else {
                 this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                    void this.router.navigate(['courses', course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },

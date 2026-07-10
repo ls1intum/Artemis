@@ -38,11 +38,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     // Consumers should re-announce their full local state in response.
     readonly reconnected = output<void>();
 
-    currentUser: User;
-    websocketTopic: string;
+    currentUser?: User;
+    websocketTopic!: string; // set in ngOnInit() before any read
 
     constructor() {
-        this.accountService.identity().then((user: User) => (this.currentUser = user));
+        void this.accountService.identity().then((user: User | undefined) => (this.currentUser = user));
     }
 
     /**

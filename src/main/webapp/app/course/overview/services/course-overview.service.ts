@@ -34,6 +34,9 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 type StartDateGroup = 'none' | 'past' | 'future';
 type EndDateGroup = StartDateGroup | 'soon';
 
+/** The subset of {@link Exercise} fields that determine an exercise's time-group category. */
+type ExerciseDateInfo = Pick<Exercise, 'type' | 'releaseDate' | 'startDate' | 'dueDate'>;
+
 /**
  * Decides which time category group an exercise should be put into based on its start and end dates.
  */
@@ -106,6 +109,7 @@ export class CourseOverviewService {
         if (lectures && lectures.length) {
             return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
@@ -119,9 +123,10 @@ export class CourseOverviewService {
         if (exercises && exercises.length) {
             return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
         }
+        return undefined;
     }
 
-    getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
+    getCorrespondingExerciseGroupByDate(exercise: ExerciseDateInfo): TimeGroupCategory {
         const now = dayjs();
 
         if (exercise.type === ExerciseType.QUIZ) {
@@ -145,7 +150,7 @@ export class CourseOverviewService {
         return GROUP_DECISION_MATRIX[startGroup][endGroup];
     }
 
-    private getStartDateGroup(exercise: Exercise, now: Dayjs): StartDateGroup {
+    private getStartDateGroup(exercise: ExerciseDateInfo, now: Dayjs): StartDateGroup {
         const start = exercise.startDate ?? exercise.releaseDate;
 
         if (start === undefined) {
@@ -159,7 +164,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    private getEndDateGroup(exercise: Exercise, now: Dayjs): EndDateGroup {
+    private getEndDateGroup(exercise: ExerciseDateInfo, now: Dayjs): EndDateGroup {
         const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
 
         if (dueDate === undefined) {
@@ -255,7 +260,7 @@ export class CourseOverviewService {
             }
         }
 
-        const groupedData = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedData = cloneDeep(DEFAULT_UNIT_GROUPS);
         const ungroupedData: SidebarCardElement[] = [];
         const emittedGroups = new Set<number>();
 
@@ -299,12 +304,12 @@ export class CourseOverviewService {
 
     private categorizeGroup(group: CourseExerciseGroup, members: Exercise[]): TimeGroupCategory {
         const first = members[0];
-        const representative = {
+        const representative: ExerciseDateInfo = {
             type: first?.type,
             releaseDate: group.releaseDate ?? first?.releaseDate,
             startDate: group.startDate ?? first?.startDate,
             dueDate: group.dueDate ?? first?.dueDate,
-        } as Exercise;
+        };
         return this.getCorrespondingExerciseGroupByDate(representative);
     }
 
@@ -471,6 +476,7 @@ export class CourseOverviewService {
         if (attempts && indices) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
+        return undefined;
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {

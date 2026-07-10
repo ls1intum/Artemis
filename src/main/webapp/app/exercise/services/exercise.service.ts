@@ -314,6 +314,18 @@ export class ExerciseService {
             exercise.dueDate = convertDateFromServer(exercise.dueDate);
             exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
             exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
+            // The embedded variant group carries the shared group timeline. Convert its dates too so the group-timeline
+            // lock dialog opens with real dayjs values; otherwise it would save the group back with missing dates and
+            // wipe the shared timeline.
+            const group = exercise.exerciseVariantGroup;
+            if (group) {
+                group.releaseDate = convertDateFromServer(group.releaseDate);
+                group.startDate = convertDateFromServer(group.startDate);
+                group.dueDate = convertDateFromServer(group.dueDate);
+                group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
+                group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
+                group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
+            }
         }
         return exercise;
     }
@@ -370,9 +382,9 @@ export class ExerciseService {
      * Replace dates in http-response including an array of exercises with the corresponding client time
      * @param res - Response from server including an array of exercise
      */
-    static convertExerciseArrayDatesFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseArrayDatesFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: E) => {
+            res.body.forEach((exercise: Exercise) => {
                 ExerciseService.convertExerciseDatesFromServer(exercise);
             });
         }
@@ -407,9 +419,9 @@ export class ExerciseService {
      * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
      */
-    static convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseCategoryArrayFromServer<EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: E) => ExerciseService.parseExerciseCategories(exercise));
+            res.body.forEach((exercise: Exercise) => ExerciseService.parseExerciseCategories(exercise));
         }
         return res;
     }

@@ -74,7 +74,7 @@ export class ExerciseTableComponent {
     readonly showCheckbox = input<boolean>(false);
     readonly selectedIds = input<Set<number>>(new Set());
     readonly groups = input<CourseExerciseGroup[]>([]);
-    /** CDK drop-list id for this table's exercises (the owning bucket's id). */
+    /** CDK drop-list id for this table's exercises (the owning card's id). */
     readonly dropListId = input<string>('');
     /** Ids of the sibling exercise tables this one can exchange exercises with (enables cross-group drag-and-drop). */
     readonly connectedDropLists = input<string[]>([]);
@@ -116,7 +116,15 @@ export class ExerciseTableComponent {
                 case 'dueDate': {
                     const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
                     const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
-                    cmp = (da?.valueOf() ?? 0) - (db?.valueOf() ?? 0);
+                    if (da === undefined || db === undefined) {
+                        // Undated exercises must sort last regardless of asc/desc. The shared `asc ? cmp : -cmp` flip
+                        // below negates cmp for desc, so pre-negate here for desc to cancel that out and keep the
+                        // "undefined sorts last" result stable in both directions (mirrors course-exercise-cards.ts).
+                        const undefinedLast = da === undefined && db === undefined ? 0 : da === undefined ? 1 : -1;
+                        cmp = asc ? undefinedLast : -undefinedLast;
+                    } else {
+                        cmp = da.valueOf() - db.valueOf();
+                    }
                     break;
                 }
                 case 'points':
@@ -161,10 +169,27 @@ export class ExerciseTableComponent {
         return this.sortedExercises().some((e) => e.id !== undefined && ids.has(e.id)) && !this.allSelected();
     });
 
+    /**
+     * Precomputed exercise-id → owning-group lookup, rebuilt only when {@link groups} changes. Keeps
+     * {@link owningGroupForExercise} O(1) instead of re-scanning every group (and its members) per call — it is invoked
+     * from the sort comparator (once per comparison) and from every effective-date cell binding on each row.
+     */
+    private readonly owningGroupByExerciseId = computed<ReadonlyMap<number, CourseExerciseGroup>>(() => {
+        const map = new Map<number, CourseExerciseGroup>();
+        for (const group of this.groups()) {
+            for (const member of group.exercises ?? []) {
+                if (member.id !== undefined) {
+                    map.set(member.id, group);
+                }
+            }
+        }
+        return map;
+    });
+
     readonly groupOptions = computed(() => [
         { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
         ...this.groups().map((g) => ({
-            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: g.id }),
+            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
             value: g.id,
         })),
     ]);
@@ -181,6 +206,18 @@ export class ExerciseTableComponent {
     sortIcon(col: SortColumn) {
         if (this.sortColumn() !== col) return this.faSort;
         return this.sortAsc() ? this.faCaretUp : this.faCaretDown;
+    }
+
+    /** Current sort state of a column for `aria-sort`, so assistive tech announces the active order. */
+    ariaSort(col: SortColumn): 'ascending' | 'descending' | 'none' {
+        if (this.sortColumn() !== col) return 'none';
+        return this.sortAsc() ? 'ascending' : 'descending';
+    }
+
+    /** Keyboard equivalent of the header click; prevents default so Space does not scroll the page. */
+    onSortKeydown(event: Event, col: SortColumn): void {
+        event.preventDefault();
+        this.sortBy(col);
     }
 
     onDrop(event: CdkDragDrop<Exercise[]>): void {
@@ -200,8 +237,12 @@ export class ExerciseTableComponent {
         return getExerciseUrlSegment(exercise.type);
     }
 
-    titleLink(exercise: Exercise): (string | number)[] {
-        return ['/course-management', this.courseId(), this.urlSegment(exercise), exercise.id!];
+    /** Detail-page link for the exercise, or `undefined` for unsaved drafts (RouterLink disables navigation for null/undefined). */
+    titleLink(exercise: Exercise): (string | number)[] | undefined {
+        if (exercise.id === undefined) {
+            return undefined;
+        }
+        return ['/course-management', this.courseId(), this.urlSegment(exercise), exercise.id];
     }
 
     icon(exercise: Exercise) {
@@ -209,8 +250,8 @@ export class ExerciseTableComponent {
     }
 
     /**
-     * The group whose timeline governs this exercise. In the group view the bucket's group is passed in
-     * directly; in the type/week/list views the bucket has no single group, so we resolve the exercise's
+     * The group whose timeline governs this exercise. In the group view the card's group is passed in
+     * directly; in the type/week/list views the card has no single group, so we resolve the exercise's
      * owning group from the full groups list. This keeps the displayed dates consistent across all views.
      */
     private effectiveGroupFor(exercise: Exercise): CourseExerciseGroup | undefined {
@@ -243,7 +284,11 @@ export class ExerciseTableComponent {
     }
 
     owningGroupForExercise(exercise: Exercise): CourseExerciseGroup | undefined {
-        return this.groups().find((g) => g.exercises?.some((e) => e.id === exercise.id));
+        if (exercise.id !== undefined) {
+            return this.owningGroupByExerciseId().get(exercise.id);
+        }
+        // Unsaved drafts have no id yet, so fall back to reference identity to still resolve their owning group.
+        return this.groups().find((g) => g.exercises?.some((e) => e === exercise));
     }
 
     owningGroupId(exercise: Exercise): number | undefined {
@@ -260,7 +305,7 @@ export class ExerciseTableComponent {
     }
 
     protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {
-        if (exercise.type !== ExerciseType.QUIZ) return exercise.id ?? exercise;
+        if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) return exercise.id ?? exercise;
         const q = exercise as QuizExercise;
         // In zoneless Angular, ngFor embedded views may not re-evaluate when let-exercise gets a new
         // object reference with the same id. Including the properties that drive lifecycle-button

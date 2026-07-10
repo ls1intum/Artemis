@@ -39,7 +39,7 @@ export class LearningPathLectureUnitComponent {
     constructor() {
         effect(() => {
             const lectureUnitId = this.lectureUnitId();
-            untracked(() => this.loadLectureUnit(lectureUnitId));
+            void untracked(() => this.loadLectureUnit(lectureUnitId));
         });
     }
 

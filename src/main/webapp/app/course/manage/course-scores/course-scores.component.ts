@@ -199,7 +199,7 @@ export class CourseScoresComponent implements OnInit {
         this.initializeExerciseTitles();
         this.includedExercises.set(this.determineExercisesIncludedInScore(course));
         this.numberOfReleasedExercises.set(this.determineReleasedExercises(course).length);
-        this.calculateCourseStatistics(course.id!);
+        void this.calculateCourseStatistics(course.id!);
     }
 
     /**
@@ -315,7 +315,10 @@ export class CourseScoresComponent implements OnInit {
 
             // Non-variant exercises: summed up exactly as before exercise variants were introduced.
             const nonVariantMaxPoints = sum(includedExercisesOfType.filter((exercise) => !this.isExerciseVariant(exercise)).map((exercise) => exercise.maxPoints!));
-            // Exercise variants: each group contributes at most its configured maxPoints.
+            // Exercise variants: each group contributes at most its configured maxPoints. Known quirk for groups that
+            // deliberately mix exercise types: each type bucket caps the group's members of that type at the full group
+            // cap, so the per-type columns can jointly exceed it. Only the overall total (computed below across all
+            // types) is authoritative for the course score.
             const variantGroupMaxPoints = this.variantGroupCappedPoints(includedExercisesOfType.map((exercise) => ({ exercise, value: exercise.maxPoints! })));
             maxPointsPerType.set(exerciseType, nonVariantMaxPoints + variantGroupMaxPoints);
         }
@@ -1116,7 +1119,7 @@ export class CourseScoresComponent implements OnInit {
 
         // average points and score total
         const achievedPointsTotal = statistics.map((student) => {
-            const participatedExercises = allCourseExercises.filter((exercise) => student.pointsPerExercise.has(exercise.id!));
+            const participatedExercises = allCourseExercises.filter((exercise) => exercise.id !== undefined && student.pointsPerExercise.has(exercise.id));
             const pointsAchieved = (exercise: Exercise) => student.pointsPerExercise.get(exercise.id!)!;
             // Non-variant exercises: summed up exactly as before exercise variants were introduced.
             const nonVariantPoints = sum(participatedExercises.filter((exercise) => !this.isExerciseVariant(exercise)).map(pointsAchieved));

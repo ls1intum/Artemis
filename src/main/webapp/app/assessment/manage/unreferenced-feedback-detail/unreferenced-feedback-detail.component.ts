@@ -68,7 +68,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
-        this.loadLongFeedback();
+        void this.loadLongFeedback();
     }
 
     /**

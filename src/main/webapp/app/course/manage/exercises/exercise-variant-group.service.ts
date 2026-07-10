@@ -96,8 +96,30 @@ export class ExerciseVariantGroupService {
             assessmentDueDate: convertDateFromClient(group.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(group.exampleSolutionPublicationDate),
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate),
-        } as T;
+        };
     }
+}
+
+/**
+ * Maps the edit dialog's view model to the create payload. The caller guarantees a non-empty title (the dialog's Save
+ * button enforces this).
+ */
+export function toCreateGroupPayload(group: CourseExerciseGroup): CreateExerciseVariantGroupDTO {
+    return {
+        title: group.title!,
+        maxPoints: group.maxPoints,
+        releaseDate: group.releaseDate,
+        startDate: group.startDate,
+        dueDate: group.dueDate,
+        assessmentDueDate: group.assessmentDueDate,
+        exampleSolutionPublicationDate: group.exampleSolutionPublicationDate,
+        buildAndTestStudentSubmissionsAfterDueDate: group.buildAndTestStudentSubmissionsAfterDueDate,
+    };
+}
+
+/** Maps the edit dialog's view model to the update payload; the caller guarantees id and title are set. */
+export function toUpdateGroupPayload(group: CourseExerciseGroup): ExerciseVariantGroupDTO {
+    return { id: group.id!, ...toCreateGroupPayload(group) };
 }
 
 /**

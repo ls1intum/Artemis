@@ -22,7 +22,7 @@
                 "count": "{{ count }} selected",
                 "deselectAll": "Deselect all"
             },
-            "bucket": {
+            "card": {
                 "all": "All Exercises",
                 "ungrouped": "Ungrouped",
                 "unscheduled": "Unscheduled",

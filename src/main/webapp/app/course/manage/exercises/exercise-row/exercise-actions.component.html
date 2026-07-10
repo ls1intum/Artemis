@@ -22,6 +22,7 @@
         [class.d-none]="!hasOverflow()"
         (click)="toggleMenu($event)"
         [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
+        [attr.aria-label]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
     >
         <fa-icon [icon]="faEllipsis" />
     </button>

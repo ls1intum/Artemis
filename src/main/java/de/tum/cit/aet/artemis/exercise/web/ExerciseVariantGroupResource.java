@@ -173,6 +173,10 @@ public class ExerciseVariantGroupResource {
      * PUT /courses/:courseId/exercises/:exerciseId/variant-group : Assign an exercise to a variant group, or remove it
      * from its current group. Membership is edited from the exercise side, so moving an exercise between groups is a
      * single request.
+     * <p>
+     * A group may deliberately mix exercise types (the variants of one task can come in different formats, e.g. a text
+     * and a modeling version). Scoring caps such a group once across all types in the overall course score; only the
+     * per-exercise-type breakdown on the instructor scores page applies the cap per type bucket.
      *
      * @param assignmentDTO the target group ({@code groupId == null} removes the exercise from its group)
      * @param exerciseId    the id of the exercise to (re-)assign
@@ -184,6 +188,12 @@ public class ExerciseVariantGroupResource {
     public ResponseEntity<Void> setExerciseVariantGroup(@RequestBody ExerciseVariantGroupAssignmentDTO assignmentDTO, @PathVariable Long exerciseId, @PathVariable Long courseId) {
         log.debug("REST request to assign exercise {} in course {} to variant group {}", exerciseId, courseId, assignmentDTO.groupId());
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isExamExercise()) {
+            // Variant groups are course-owned and carry a course timeline. An exam exercise reports its exam's course via
+            // getCourseViaExerciseGroupOrCourseMember(), so it would otherwise pass the ownership check below and be
+            // assigned to a course group, later breaking group timeline updates. Reject it up front.
+            throw new BadRequestAlertException("Exam exercises cannot be assigned to a variant group", ENTITY_NAME, "examExerciseNotAllowed");
+        }
         Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (exerciseCourse == null || !Objects.equals(exerciseCourse.getId(), courseId)) {
             throw new BadRequestAlertException("The exercise does not belong to the course in the path", ENTITY_NAME, "courseIdMismatch");
