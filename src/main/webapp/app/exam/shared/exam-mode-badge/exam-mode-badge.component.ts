@@ -3,13 +3,14 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { Tag } from 'primeng/tag';
 
 export type ExamModeBadgeSize = 'default' | 'large';
 
 @Component({
     selector: 'jhi-exam-mode-badge',
     templateUrl: './exam-mode-badge.component.html',
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, Tag],
 })
 export class ExamModeBadgeComponent {
     readonly exam = input.required<Exam>();

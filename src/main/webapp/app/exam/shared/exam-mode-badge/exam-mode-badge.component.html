@@ -1,1 +1,3 @@
-<span class="badge text-wrap text-start" [class.bg-success]="isRealExam()" [class.bg-primary]="!isRealExam()" [class.fs-4]="isLarge()" [jhiTranslate]="translationKey()"></span>
+<p-tag [severity]="isRealExam() ? 'success' : 'info'" [class.text-xl]="isLarge()" data-testid="exam-mode-tag">
+    <span [jhiTranslate]="translationKey()"></span>
+</p-tag>
