@@ -476,6 +476,7 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
+        checkExamTitleLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
@@ -497,6 +498,18 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Checks that the exam title does not exceed the database column limit. The client caps this too, but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTitleLengthElseThrow(Exam exam) {
+        if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
+                    "examTitleTooLong");
         }
     }
 
