@@ -135,7 +135,7 @@ describe('ExamParticipationCoverComponent', () => {
         const rescheduledExam = new Exam();
         rescheduledExam.course = course;
         rescheduledExam.id = 123;
-        rescheduledExam.testExam = false;
+        rescheduledExam.examMode = ExamMode.REAL;
         rescheduledExam.startDate = dayjs().add(2, 'minutes');
         fixture.componentRef.setInput('exam', rescheduledExam);
         flushInputs();
