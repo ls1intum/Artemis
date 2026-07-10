@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import jakarta.ws.rs.ext.ParamConverter.Lazy;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -28,6 +30,7 @@ class OIDCConfigurationTest {
             .withUserConfiguration(MockDependenciesConfiguration.class, OIDCConfiguration.class);
 
     @Configuration
+    @Lazy
     static class MockDependenciesConfiguration {
 
         @Bean
