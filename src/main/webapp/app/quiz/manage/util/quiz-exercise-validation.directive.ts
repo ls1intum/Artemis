@@ -25,7 +25,7 @@ export abstract class QuizExerciseValidationDirective {
     readonly quizIsValid = signal<boolean>(false);
     readonly quizExercise = signal<QuizExercise>(undefined!);
 
-    savedEntity: QuizExercise;
+    savedEntity!: QuizExercise; // assigned in the subclass init()/save flow before pending-change checks read it
     readonly isExamMode = signal<boolean>(false);
     readonly isImport = signal<boolean>(false);
 

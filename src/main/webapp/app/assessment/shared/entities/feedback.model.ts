@@ -54,16 +54,17 @@ export enum FeedbackCorrectionErrorType {
 /**
  * Wraps the information returned by the server upon validating tutor feedbacks.
  */
-export class FeedbackCorrectionError {
+export interface FeedbackCorrectionError {
     // Corresponds to `Feedback.reference`. Reference to the assessed element.
-    public reference: string;
+    reference: string;
 
     // The correction type of the corresponding feedback.
-    public type: FeedbackCorrectionErrorType;
+    type: FeedbackCorrectionErrorType;
 }
 
 export type FeedbackCorrectionStatus = FeedbackCorrectionErrorType | 'CORRECT';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Feedback implements BaseEntity {
     public id?: number;
     public gradingInstruction?: GradingInstruction;
@@ -337,18 +338,18 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
 /**
  * DTO representing feedback returned by the server.
  */
-export class FeedbackDTO {
-    public id?: number;
-    public text?: string;
-    public detailText?: string;
-    public hasLongFeedbackText?: boolean;
-    public reference?: string;
-    public credits?: number;
-    public positive?: boolean;
-    public type?: FeedbackType;
-    public visibility?: Visibility;
-    public testCaseName?: string;
-    public gradingInstruction?: GradingInstructionDTO;
+export interface FeedbackDTO {
+    id?: number;
+    text?: string;
+    detailText?: string;
+    hasLongFeedbackText?: boolean;
+    reference?: string;
+    credits?: number;
+    positive?: boolean;
+    type?: FeedbackType;
+    visibility?: Visibility;
+    testCaseName?: string;
+    gradingInstruction?: GradingInstructionDTO;
 }
 
 export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {

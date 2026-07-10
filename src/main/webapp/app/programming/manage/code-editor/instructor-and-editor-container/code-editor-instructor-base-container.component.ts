@@ -69,23 +69,23 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId -> Load exercise and select template repository
     // :exerciseId/:participationId -> Load exercise and select repository according to participationId
     // :exerciseId/test -> Load exercise and select test repository
-    paramSub: Subscription;
+    paramSub?: Subscription;
 
     // Contains all participations (template, solution, assignment)
-    exercise: ProgrammingExercise;
-    course: Course;
+    exercise!: ProgrammingExercise; // set in ngOnInit() from the loadExercise() route flow
+    course!: Course; // set in ngOnInit() from the loaded exercise
     // Can only be undefined when the test repository is selected.
     selectedParticipation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation | ProgrammingExerciseStudentParticipation;
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     // I am not sure if I can default initialize it like this, but I need to, to correctly show issues
-    selectedRepository: RepositoryType;
-    selectedRepositoryId: number;
+    selectedRepository!: RepositoryType; // set in ngOnInit() during domain selection before template/methods read it
+    selectedRepositoryId!: number; // set in ngOnInit() during domain selection (auxiliary repository)
     selectedAuxiliaryRepositoryName?: string;
 
     // Fires when the selected domain changes.
     // This can either be a participation (solution, template, assignment) or the test repository.
-    domainChangeSubscription: Subscription;
+    domainChangeSubscription?: Subscription;
 
     // State variables.
     // Signal-backed so its async transitions (set inside the participation-fetch subscribe and the
@@ -94,7 +94,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // stuck and the editor page blank.
     readonly loadingState = signal(LOADING_STATE.CLEAR);
 
-    protected isCreateAssignmentRepoDisabled: boolean;
+    protected isCreateAssignmentRepoDisabled!: boolean; // set in ngOnInit()'s participation-fetch subscribe
     /** Debounced tick stream consumed by the sidebar preview */
     previewEvents$ = this.problemStatementChanges$.pipe(
         debounceTime(200),

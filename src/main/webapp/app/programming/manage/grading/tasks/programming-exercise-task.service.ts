@@ -20,14 +20,14 @@ export class ProgrammingExerciseTaskService {
     private alertService = inject(AlertService);
     private gradingService = inject(ProgrammingExerciseGradingService);
 
-    exercise: ProgrammingExercise;
-    course: Course;
-    gradingStatistics: ProgrammingExerciseGradingStatistics;
+    exercise!: ProgrammingExercise; // set in configure() before any other method is called
+    course!: Course; // set in configure() before any other method is called
+    gradingStatistics!: ProgrammingExerciseGradingStatistics; // set in configure() before any other method is called
 
-    maxPoints: number;
+    maxPoints!: number; // set in configure() before any other method is called
 
-    currentTasks: ProgrammingExerciseTask[];
-    tasks: ProgrammingExerciseTask[];
+    currentTasks!: ProgrammingExerciseTask[]; // populated by initializeTasks() during configure(); hasUnsavedChanges() guards against unconfigured access
+    tasks!: ProgrammingExerciseTask[]; // populated by initializeTasks() during configure(); hasUnsavedChanges() guards against unconfigured access
 
     ignoreInactive = true;
 

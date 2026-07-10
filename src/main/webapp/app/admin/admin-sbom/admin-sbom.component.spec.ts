@@ -307,15 +307,15 @@ describe('AdminSbomComponent', () => {
             expect(components[2].name).toBe('spring-core');
         });
 
-        it('should toggle sort direction when clicking same field', () => {
+        it('should apply descending order from a sort event', () => {
             expect(component.sortAscending()).toBe(true);
-            component.updateSortField('name');
+            component.onTableSort({ field: 'name', order: -1 });
+            expect(component.sortField()).toBe('name');
             expect(component.sortAscending()).toBe(false);
         });
 
-        it('should reset to ascending when clicking different field', () => {
-            component.updateSortField('name'); // Toggle to descending
-            component.updateSortField('version');
+        it('should switch the sort field from a sort event', () => {
+            component.onTableSort({ field: 'version', order: 1 });
             expect(component.sortField()).toBe('version');
             expect(component.sortAscending()).toBe(true);
         });
@@ -338,21 +338,25 @@ describe('AdminSbomComponent', () => {
         });
     });
 
-    describe('getSeverityClass', () => {
-        it('should return bg-danger for CRITICAL', () => {
-            expect(component.getSeverityClass('CRITICAL')).toBe('bg-danger');
+    describe('getSeverityLevel', () => {
+        it('should return danger for CRITICAL', () => {
+            expect(component.getSeverityLevel('CRITICAL')).toBe('danger');
         });
 
-        it('should return bg-warning for HIGH', () => {
-            expect(component.getSeverityClass('HIGH')).toBe('bg-warning text-dark');
+        it('should return warn for HIGH', () => {
+            expect(component.getSeverityLevel('HIGH')).toBe('warn');
         });
 
-        it('should return bg-info for LOW', () => {
-            expect(component.getSeverityClass('LOW')).toBe('bg-info');
+        it('should return warn for MEDIUM', () => {
+            expect(component.getSeverityLevel('MEDIUM')).toBe('warn');
         });
 
-        it('should return bg-secondary for unknown', () => {
-            expect(component.getSeverityClass('UNKNOWN')).toBe('bg-secondary');
+        it('should return info for LOW', () => {
+            expect(component.getSeverityLevel('LOW')).toBe('info');
+        });
+
+        it('should return secondary for unknown', () => {
+            expect(component.getSeverityLevel('UNKNOWN')).toBe('secondary');
         });
     });
 
@@ -601,31 +605,6 @@ describe('AdminSbomComponent', () => {
         });
     });
 
-    describe('trackByName', () => {
-        it('should return unique key for component', () => {
-            const mockComponent: SbomComponent = {
-                name: 'test-lib',
-                version: '1.0.0',
-                group: 'com.example',
-            };
-
-            const result = component.trackByName(0, mockComponent);
-
-            expect(result).toBe('com.example:test-lib:1.0.0');
-        });
-
-        it('should handle component without group', () => {
-            const mockComponent: SbomComponent = {
-                name: 'test-lib',
-                version: '1.0.0',
-            };
-
-            const result = component.trackByName(0, mockComponent);
-
-            expect(result).toBe(':test-lib:1.0.0');
-        });
-    });
-
     describe('getHighestSeverity additional cases', () => {
         it('should return MEDIUM when no CRITICAL or HIGH', () => {
             const vulns: Vulnerability[] = [{ severity: 'MEDIUM' } as Vulnerability, { severity: 'LOW' } as Vulnerability];
@@ -645,12 +624,6 @@ describe('AdminSbomComponent', () => {
         it('should return UNKNOWN for unrecognized severity', () => {
             const vulns: Vulnerability[] = [{ severity: 'OTHER' } as unknown as Vulnerability];
             expect(component.getHighestSeverity(vulns)).toBe('UNKNOWN');
-        });
-    });
-
-    describe('getSeverityClass additional cases', () => {
-        it('should return bg-warning for MEDIUM', () => {
-            expect(component.getSeverityClass('MEDIUM')).toBe('bg-warning text-dark');
         });
     });
 
@@ -693,7 +666,7 @@ describe('AdminSbomComponent', () => {
         });
 
         it('should sort descending when sortAscending is false', () => {
-            component.updateSortAscending(false);
+            component.onTableSort({ field: 'name', order: -1 });
             const components = component.filteredComponents();
 
             expect(components[0].name).toBe('spring-core');
@@ -702,7 +675,7 @@ describe('AdminSbomComponent', () => {
         });
 
         it('should sort by group field', () => {
-            component.updateSortField('group');
+            component.onTableSort({ field: 'group', order: 1 });
             const components = component.filteredComponents();
 
             expect(components[0].group).toBe('@angular');

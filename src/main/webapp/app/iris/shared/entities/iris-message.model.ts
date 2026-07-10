@@ -15,11 +15,12 @@ export enum IrisSender {
     COMMAND = 'COMMAND',
 }
 
+/** Kept as a class because it is used as a value (constructor) with the `as` pipe in templates; fields are populated from server data after construction, hence the definite-assignment (!) markers. */
 export class IrisAssistantMessage implements BaseEntity {
-    id: number;
-    content: IrisMessageContent[];
-    sentAt: dayjs.Dayjs;
-    sender: IrisSender.LLM;
+    id!: number;
+    content!: IrisMessageContent[];
+    sentAt!: dayjs.Dayjs;
+    sender!: IrisSender.LLM;
     helpful?: boolean;
     accessedMemories?: MemirisMemory[];
     createdMemories?: MemirisMemory[];
@@ -27,7 +28,7 @@ export class IrisAssistantMessage implements BaseEntity {
     final?: boolean;
 }
 
-export class IrisUserMessage implements BaseEntity {
+export interface IrisUserMessage extends BaseEntity {
     id?: number;
     content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;
@@ -37,7 +38,7 @@ export class IrisUserMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
-export class IrisArtifactMessage implements BaseEntity {
+export interface IrisArtifactMessage extends BaseEntity {
     id?: number;
     content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;

@@ -80,7 +80,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     readonly competency = signal<Competency | undefined>(undefined);
     readonly competencyProgress = signal<CompetencyProgress | undefined>(undefined);
     readonly showFireworks = signal(false);
-    paramsSubscription: Subscription;
+    paramsSubscription?: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
     protected readonly ConfidenceReason = ConfidenceReason;
