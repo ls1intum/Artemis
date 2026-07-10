@@ -88,6 +88,7 @@
                                                 [class.quiz-toggle-btn--easy]="opt.colorClass === 'easy'"
                                                 [class.quiz-toggle-btn--medium]="opt.colorClass === 'medium'"
                                                 [class.quiz-toggle-btn--hard]="opt.colorClass === 'hard'"
+                                                [attr.aria-pressed]="(quizExercise().difficulty ?? null) === opt.value"
                                                 (click)="quizExercise().difficulty = opt.value ?? undefined; cacheValidation()"
                                             >
                                                 {{ opt.label }}
@@ -102,12 +103,19 @@
                                         class="form-control-label label--truncate"
                                         jhiTranslate="artemisApp.quizExercise.includedInOverallScore{{ quizExercise().course ? 'Course' : 'Exam' }}LabelShort"
                                     ></label>
-                                    <div class="quiz-toggle-group" role="group">
+                                    <div
+                                        class="quiz-toggle-group"
+                                        role="group"
+                                        [attr.aria-label]="
+                                            'artemisApp.quizExercise.includedInOverallScore' + (quizExercise().course ? 'Course' : 'Exam') + 'LabelShort' | artemisTranslate
+                                        "
+                                    >
                                         @for (opt of isExamMode() ? scoreOptionsExam() : scoreOptionsCourse(); track opt.label) {
                                             <button
                                                 type="button"
                                                 class="quiz-toggle-btn"
                                                 [class.quiz-toggle-btn--active]="quizExercise().includedInOverallScore === opt.value"
+                                                [attr.aria-pressed]="quizExercise().includedInOverallScore === opt.value"
                                                 (click)="includedInOverallScoreChange(opt.value)"
                                             >
                                                 {{ opt.label }}
@@ -119,12 +127,13 @@
                             <div class="col-lg-4 col-sm-12">
                                 <div class="form-group">
                                     <label class="form-control-label label--truncate" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
-                                    <div class="quiz-toggle-group" role="group">
+                                    <div class="quiz-toggle-group" role="group" [attr.aria-label]="'artemisApp.quizExercise.randomizeQuestionOrder' | artemisTranslate">
                                         @for (opt of randomizeOptions(); track opt.label) {
                                             <button
                                                 type="button"
                                                 class="quiz-toggle-btn"
                                                 [class.quiz-toggle-btn--active]="quizExercise().randomizeQuestionOrder === opt.value"
+                                                [attr.aria-pressed]="quizExercise().randomizeQuestionOrder === opt.value"
                                                 (click)="quizExercise().randomizeQuestionOrder = opt.value; cacheValidation()"
                                             >
                                                 {{ opt.label }}

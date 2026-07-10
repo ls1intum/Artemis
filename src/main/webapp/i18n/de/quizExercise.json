@@ -25,7 +25,7 @@
                     "topic": "Thema",
                     "competencies": "Kompetenzen",
                     "competenciesPlaceholder": "Zu prüfende Kompetenzen auswählen...",
-                    "competenciesTooltip": "Das Quiz wird anhand der ausgewählten Kompetenzen, deren Beziehungen zueinander sowie verknüpfter Vorlesungs- oder Übungsinhalte generiert. Verknüpfen Sie Materialien mit Kompetenzen, um sie hier einzubeziehen.",
+                    "competenciesTooltip": "Das Quiz wird anhand der ausgewählten Kompetenzen, deren Beziehungen zueinander sowie verknüpfter Vorlesungs- oder Übungsinhalte generiert. Verknüpfe Materialien mit Kompetenzen, um sie hier einzubeziehen.",
                     "optionalPrompt": "Optionaler Prompt",
                     "optionalPromptTooltip": "Füge optionale Anweisungen, Einschränkungen oder Erwartungen hinzu, um die generierten Fragen gezielt zu steuern.",
                     "language": "Sprache",

@@ -288,9 +288,11 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
         await login(admin);
         createdCompetencyIds = [];
         const alpha = await courseManagementAPIRequests.createCompetency(course, competencyTitles.alpha, undefined, competencyTaxonomies.alpha);
+        createdCompetencyIds.push(alpha.id);
         const beta = await courseManagementAPIRequests.createCompetency(course, competencyTitles.beta, undefined, competencyTaxonomies.beta);
+        createdCompetencyIds.push(beta.id);
         const gamma = await courseManagementAPIRequests.createCompetency(course, competencyTitles.gamma, undefined, competencyTaxonomies.gamma);
-        createdCompetencyIds.push(alpha.id, beta.id, gamma.id);
+        createdCompetencyIds.push(gamma.id);
         await competencyManagement.goto(course!.id!);
         // Wait for all three competencies to be visible before tests proceed
         await expect(page.getByRole('link', { name: competencyTitles.alpha })).toBeVisible({ timeout: 15000 });
@@ -337,7 +339,7 @@ test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' 
         const searchInput = page.locator('.competency-search-input').first();
         await searchInput.fill('ZZZNOMATCH_' + filterSortUid);
 
-        await expect(page.locator('td[colspan]')).toBeVisible({ timeout: 5000 });
+        await expect(page.locator('jhi-competency-management-table').first().locator('td[colspan]')).toBeVisible({ timeout: 5000 });
         await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
     });
 
