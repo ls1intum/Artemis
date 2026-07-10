@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.assessment.dto;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -34,8 +36,9 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
-        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
-        @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
+        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable @Min(1) @Max(9999) Integer presentationsNumber, @Nullable Double presentationsWeight,
+        @Nullable Set<GradeStepDTO> gradeSteps, @Nullable @Min(0) @Max(9999) Integer courseMaxPoints, @Nullable @Min(0) @Max(9999) Integer coursePresentationScore,
+        @Nullable @Min(0) @Max(9999) Integer examMaxPoints) {
 
     /**
      * Returns the grade steps, defaulting to an empty set if null.
