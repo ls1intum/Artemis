@@ -22,7 +22,7 @@
             SET new_start_date = (SELECT start_date FROM exam WHERE exam.id = exam_live_event.exam_id),
                 new_end_date = (SELECT end_date FROM exam WHERE exam.id = exam_live_event.exam_id)
             WHERE discriminator = 'W' AND new_start_date IS NULL
-                AND EXISTS (SELECT 1 FROM exam WHERE exam.id = exam_live_event.exam_id AND exam.test_exam = FALSE);
+                AND EXISTS (SELECT 1 FROM exam WHERE exam.id = exam_live_event.exam_id AND exam.exam_mode = 'REAL');
         </sql>
     </changeSet>
 </databaseChangeLog>
