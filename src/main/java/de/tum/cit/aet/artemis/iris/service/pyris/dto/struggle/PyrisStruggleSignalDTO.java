@@ -14,29 +14,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * value validation, so new client-side values must be introduced Pyris-first.
  * <p>
  * Annotated with a bare {@code @JsonInclude()} (no value) rather than {@code @JsonInclude(NON_EMPTY)}: Pyris
- * declares {@code trajectory} and {@code dominantComponents} as required fields with no defaults, so an empty
- * list must still be serialized ({@code NON_EMPTY} would drop the key and make Pyris reject the payload with a
- * 422). The bare form inherits Jackson's default {@code ALWAYS} inclusion, keeping empty collections on the
- * wire, while still satisfying both iris-DTO architecture rules (every DTO must carry {@code @JsonInclude}, and
- * any explicitly declared value must be {@code NON_EMPTY}). The {@code emptyCollectionsAreNotDroppedFromWire}
- * test guards this contract.
+ * declares {@code trajectory} as a required field with no default, so an empty list must still be serialized
+ * ({@code NON_EMPTY} would drop the key and make Pyris reject the payload with a 422). The bare form inherits
+ * Jackson's default {@code ALWAYS} inclusion, keeping the empty collection on the wire, while still satisfying
+ * both iris-DTO architecture rules (every DTO must carry {@code @JsonInclude}, and any explicitly declared value
+ * must be {@code NON_EMPTY}). The {@code emptyCollectionsAreNotDroppedFromWire} test guards this contract.
  */
 @JsonInclude
-public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, List<ComponentDTO> dominantComponents, double sessionSeconds) {
+public record PyrisStruggleSignalDTO(AlertDTO alert, List<TickDTO> trajectory, double sessionSeconds) {
 
     @JsonInclude
     public record AlertDTO(double tSessionS, String primaryBoundary, List<String> boundaryTypes, double severity, String path, boolean inWarmup, boolean inGrace) {
     }
 
     /**
-     * One 10-s engine tick of the severity trajectory. {@code severity} on the alert is the decision signal
-     * sBase at the firing tick.
+     * One 10-s engine tick of the severity trajectory: {@code s} is the severity sBase at tick {@code t}.
      */
     @JsonInclude
     public record TickDTO(double t, double s) {
-    }
-
-    @JsonInclude
-    public record ComponentDTO(String name, double value) {
     }
 }

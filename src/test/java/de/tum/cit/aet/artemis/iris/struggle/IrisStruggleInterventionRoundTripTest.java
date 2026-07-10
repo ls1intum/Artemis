@@ -169,7 +169,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         });
 
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
-                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), List.of(new PyrisStruggleSignalDTO.ComponentDTO("feedbackViewing", 0.8)), 540);
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
         var body = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED);
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
@@ -208,8 +208,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         AtomicReference<String> runId = new AtomicReference<>();
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> runId.set(dto.settings().authenticationToken()));
 
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "STATE", List.of("STATE"), 0.65, "armed", false, false), List.of(),
-                List.of(new PyrisStruggleSignalDTO.ComponentDTO("regionPersistence", 0.7)), 540);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "STATE", List.of("STATE"), 0.65, "armed", false, false), List.of(), 540);
         var body = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, HttpStatus.ACCEPTED);
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);

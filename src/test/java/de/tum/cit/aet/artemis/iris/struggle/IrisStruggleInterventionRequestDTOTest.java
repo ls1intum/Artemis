@@ -18,7 +18,7 @@ class IrisStruggleInterventionRequestDTOTest {
     void deserializesRequest() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
-                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                   "trajectory":[],"sessionSeconds":540},
                  "uncommittedFiles":{"src/A.java":"class A {}"}}""";
         var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
         assertThat(dto.struggleSignal().alert().primaryBoundary()).isEqualTo("FM");
@@ -35,7 +35,7 @@ class IrisStruggleInterventionRequestDTOTest {
     void defaultProactivityModeIsPush_whenNotPresent() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
-                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                   "trajectory":[],"sessionSeconds":540},
                  "uncommittedFiles":{}}""";
         var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
         assertThat(dto.proactivityMode()).isEqualTo("push");
@@ -45,7 +45,7 @@ class IrisStruggleInterventionRequestDTOTest {
     void deserializesProactivityModePull() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
-                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                   "trajectory":[],"sessionSeconds":540},
                  "uncommittedFiles":{},"proactivityMode":"pull"}""";
         var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
         assertThat(dto.proactivityMode()).isEqualTo("pull");
@@ -55,7 +55,7 @@ class IrisStruggleInterventionRequestDTOTest {
     void defaultIntentIsDecide_whenNotPresent() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
-                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                   "trajectory":[],"sessionSeconds":540},
                  "uncommittedFiles":{}}""";
         var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
         assertThat(dto.intent()).isEqualTo("decide");
@@ -65,7 +65,7 @@ class IrisStruggleInterventionRequestDTOTest {
     void deserializesIntent_episode_confirmReason_requestToken() throws Exception {
         String json = """
                 {"struggleSignal":{"alert":{"tSessionS":540,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.7,"path":"armed","inWarmup":false,"inGrace":false},
-                   "trajectory":[],"dominantComponents":[],"sessionSeconds":540},
+                   "trajectory":[],"sessionSeconds":540},
                  "uncommittedFiles":{},
                  "intent":"confirm_close","confirmReason":"progress","requestToken":"rt-1",
                  "episode":{"episodeId":"ep-1","isNew":false,"hints":[{"level":"ambient","text":"x","atSessionS":42.0}]}}""";
@@ -87,7 +87,7 @@ class IrisStruggleInterventionRequestDTOTest {
         for (String reason : List.of("progress", "parked_progress")) {
             String json = """
                     {"struggleSignal":{"alert":{"tSessionS":1,"primaryBoundary":"FM","boundaryTypes":["FM"],"severity":0.1,"path":"armed","inWarmup":false,"inGrace":false},
-                       "trajectory":[],"dominantComponents":[],"sessionSeconds":1},
+                       "trajectory":[],"sessionSeconds":1},
                      "uncommittedFiles":{},"confirmReason":"%s"}""".formatted(reason);
             var dto = mapper.readValue(json, IrisStruggleInterventionRequestDTO.class);
             assertThat(dto.confirmReason()).as("confirmReason '%s' must round-trip exactly", reason).isEqualTo(reason);

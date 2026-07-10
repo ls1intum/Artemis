@@ -179,7 +179,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
         var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", null, null, null, null, null);
-        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
 
