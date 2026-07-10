@@ -21,6 +21,7 @@
                     [(title)]="exam.title"
                     [(channelName)]="exam.channelName"
                     channelNamePrefix="exam-"
+                    [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
                 />
