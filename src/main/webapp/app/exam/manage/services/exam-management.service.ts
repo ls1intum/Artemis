@@ -8,7 +8,6 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -275,24 +274,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Add a student to the registered users for an exam
-     * @param courseId The course id.
-     * @param examId The id of the exam to which to add the student
-     * @param studentLogin Login of the student
-     */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
-        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
-    }
-
-    /**
      * Add students to the registered users for an exam
      * @param courseId The course id.
      * @param examId The id of the exam to which to add the student
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<ExamRegistrationResultDTO>> {
+        return this.http.post<ExamRegistrationResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -725,4 +714,9 @@ interface ExamImportDTO {
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
+}
+
+export interface ExamRegistrationResultDTO {
+    notFoundStudents?: ExamUserDTO[];
+    rejectedStaffUsers?: ExamUserDTO[];
 }

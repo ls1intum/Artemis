@@ -63,7 +63,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     readonly course = signal<Course>(undefined!);
     readonly onlineCourseConfiguration = signal<OnlineCourseConfiguration>(undefined!);
-    onlineCourseConfigurationForm: FormGroup;
+    onlineCourseConfigurationForm!: FormGroup; // built in ngOnInit()
     readonly ltiConfiguredPlatforms = signal<LtiPlatformConfiguration[]>([]);
 
     readonly page = signal(1);

@@ -120,7 +120,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     set textExercise(value: TextExercise) {
         this._textExercise.set(value);
     }
-    backupExercise: TextExercise;
+    backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);

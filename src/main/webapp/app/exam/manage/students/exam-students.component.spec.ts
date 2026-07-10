@@ -27,6 +27,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { ConfirmationService } from 'primeng/api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamStudentsComponent', () => {
@@ -399,6 +400,79 @@ describe('ExamStudentsComponent', () => {
 
             expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
             expect(reloadSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('exam student registration', () => {
+        it('should search users through the exam management service', () => {
+            fixture.detectChanges();
+            const searchSpy = vi.spyOn(examManagementService, 'searchUsersForExamRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.searchUsersForExamFn('alice', 0, 10).subscribe();
+
+            expect(searchSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, 'alice', 0, 10);
+        });
+
+        it('should return empty search result when exam id is missing', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined } as Exam);
+
+            let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+            component.searchUsersForExamFn('alice', 0, 10).subscribe((searchResult) => {
+                result = searchResult;
+            });
+
+            expect(result).toEqual({ content: [], totalElements: 0 });
+        });
+
+        it('should register users and show alerts for not found and rejected staff users', () => {
+            fixture.detectChanges();
+            const addSpy = vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                            rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                        },
+                    }),
+                ),
+            );
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component
+                .registerUsersForExamFn([
+                    {
+                        id: 1,
+                        login: 'student1',
+                        name: 'Student',
+                        email: 's@t.de',
+                        registrationNumber: '123',
+                        isRegistered: false,
+                    },
+                ])
+                .subscribe();
+
+            expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, [
+                {
+                    login: 'student1',
+                    firstName: '',
+                    lastName: '',
+                    registrationNumber: '123',
+                    email: 's@t.de',
+                },
+            ]);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins: 'missing' });
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins: 'staff' });
+        });
+
+        it('should open the add students dialog', () => {
+            fixture.detectChanges();
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+
+            component.openAddStudentsDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
         });
     });
 

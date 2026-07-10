@@ -153,30 +153,39 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly isTestExam = computed(() => isActingAsTestExam(this.exam()));
     readonly isLoading = signal(true);
 
-    readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {
+    readonly searchUsersForExamFn = (term: string, page: number, size: number): Observable<UserSearchResult> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (term: string, page: number, size: number) => {
-            if (!examId) return of({ content: [], totalElements: 0 });
-            return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
-        };
-    });
+        if (!examId) return of({ content: [], totalElements: 0 });
+        return this.examManagementService.searchUsersForExamRegistration(courseId, examId, term, page, size);
+    };
 
-    readonly registerUsersForExamFn = computed((): ((users: UserForRegistration[]) => Observable<void>) => {
+    readonly registerUsersForExamFn = (users: UserForRegistration[]): Observable<void> => {
         const courseId = this.courseId();
         const examId = this.exam().id;
-        return (users: UserForRegistration[]) => {
-            if (!examId) return of(void 0);
-            const dtos: ExamUserDTO[] = users.map((u) => ({
-                login: u.login,
-                firstName: '',
-                lastName: '',
-                registrationNumber: u.registrationNumber ?? '',
-                email: u.email ?? '',
-            }));
-            return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(map(() => void 0));
-        };
-    });
+        if (!examId) return of(void 0);
+        const dtos: ExamUserDTO[] = users.map((u) => ({
+            login: u.login,
+            firstName: '',
+            lastName: '',
+            registrationNumber: u.registrationNumber ?? '',
+            email: u.email ?? '',
+        }));
+        return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
+            tap((res) => {
+                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
+                if (notFoundStudents?.length) {
+                    const logins = notFoundStudents.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
+                }
+                if (rejectedStaffUsers?.length) {
+                    const logins = rejectedStaffUsers.map((u) => u.login).join(', ');
+                    this.alertService.error('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins });
+                }
+            }),
+            map(() => undefined),
+        );
+    };
 
     readonly activeFilter = signal('All');
     readonly examStudentFilterGroups = computed<FilterGroup[]>(() => {

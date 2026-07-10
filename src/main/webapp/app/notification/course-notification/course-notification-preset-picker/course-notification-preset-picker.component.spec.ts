@@ -114,4 +114,14 @@ describe('CourseNotificationPresetPickerComponent', () => {
         expect(component.selectedCourseSettingPreset()?.identifier).toBe('preset1');
         expect(component.selectedCourseSettingPreset() !== null).toBe(true);
     });
+
+    it('should only bold the selected preset title in the dropdown', () => {
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[0]);
+        fixture.detectChanges();
+
+        const presetItems = fixture.nativeElement.querySelectorAll('.course-notification-preset-picker-item');
+        expect(presetItems[0].querySelector('strong')).not.toBeNull();
+        expect(presetItems[1].querySelector('strong')).toBeNull();
+        expect(presetItems[2].querySelector('strong')).toBeNull();
+    });
 });

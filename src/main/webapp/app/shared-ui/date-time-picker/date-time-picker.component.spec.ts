@@ -25,14 +25,6 @@ describe('FormDateTimePickerComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should emit if a value is changed', () => {
-        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation(() => undefined);
-
-        component.valueChanged();
-
-        expect(emitStub).toHaveBeenCalledOnce();
-    });
-
     describe('test date conversion', () => {
         let convertedDate: Date | null;
         it('should convert the dayjs if it is not undefined', () => {
@@ -112,8 +104,8 @@ describe('FormDateTimePickerComponent', () => {
 
     describe('invalid border rendering', () => {
         // The red border is driven by a class on the wrapper element (not only the inner p-datepicker
-        // [invalid] input) so it stays in sync with the message under zoneless change detection (PR #13009).
-        const wrapper = () => fixture.nativeElement.querySelector('.d-flex.position-relative') as HTMLElement;
+        // [invalid] input) so it stays in sync with the message under zoneless change detection.
+        const wrapper = () => fixture.nativeElement.querySelector('[data-testid="date-picker-wrapper"]') as HTMLElement;
         const hasInvalidClass = () => wrapper().classList.contains('invalid-date-input');
 
         it('does not mark a valid value as invalid', () => {

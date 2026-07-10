@@ -44,11 +44,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     // If true, the trigger button is also displayed for successful submissions.
     readonly showForSuccessfulSubmissions = signal(false);
 
-    private submissionSubscription: Subscription;
-    private resultSubscription: Subscription;
+    private submissionSubscription?: Subscription;
+    private resultSubscription?: Subscription;
 
     // True if the student triggers. false if an instructor triggers it
-    protected personalParticipation: boolean;
+    protected personalParticipation!: boolean; // set in the concrete subclass constructor (student/instructor) right after super()
 
     private previousParticipationId: number | undefined;
 

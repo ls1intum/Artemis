@@ -29,7 +29,7 @@ export class ManualTextSelectionComponent {
     didSelectWord = output<wordSelection[]>();
 
     public submissionWords = signal<string[] | undefined>(undefined);
-    public currentWordIndex: number;
+    public currentWordIndex = 0;
     public selectedWords = new Array<wordSelection>();
     public ready = false;
 

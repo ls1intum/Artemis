@@ -34,6 +34,11 @@ class StubThemeSwitchComponent {
 class StubImageComponent {
     src = input<string>();
 }
+
+@Component({ selector: 'jhi-course-notification-overview', template: '' })
+class StubCourseNotificationOverviewComponent {
+    courseId = input.required<number>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -67,12 +72,13 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 class MockBreadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }
 
 describe('NavbarComponent', () => {
@@ -141,10 +147,16 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
                 },
                 add: {
-                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent, StubImageComponent],
+                    imports: [
+                        StubThemeSwitchComponent,
+                        StubConnectionWarningComponent,
+                        StubLoadingNotificationComponent,
+                        StubImageComponent,
+                        StubCourseNotificationOverviewComponent,
+                    ],
                 },
             })
             .compileComponents();
@@ -994,6 +1006,82 @@ describe('NavbarComponent', () => {
                 label: 'artemisApp.courseOverview.menu.exercises',
             });
             expect(component.breadcrumbs()[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+        });
+    });
+
+    describe('course controls in navbar', () => {
+        it('should render the notification overview when a course is active', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
+            router.setUrl('/courses/1/exercises');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+        });
+
+        it('should render the notification overview for instructors in course management view', () => {
+            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+            router.setUrl('/course-management/1/exercises');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+        });
+
+        it('should not render the notification overview when no course is active', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+        });
+
+        it('should not render the notification overview during an active or started exam', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
+            router.setUrl('/courses/1/exercises');
+            component.isExamActive.set(true);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+
+            component.isExamActive.set(false);
+            component.isExamStarted.set(true);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+        });
+
+        it.each([
+            { url: '/course-management/123/exams/1/edit', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'exams'] },
+            { url: '/course-management/123/exercises/new', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'exercises'] },
+            { url: '/course-management/123/lectures/1/details', course: { id: 123, isAtLeastEditor: true }, expected: ['/course-management', '123', 'lectures'] },
+            { url: '/course-management/123/communication?conversationId=123', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'communication'] },
+            { url: '/course-management/123/learning-path', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'learning-path-management'] },
+            { url: '/course-management/123/competencies', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'competency-management'] },
+            { url: '/course-management/123/faq', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'faqs'] },
+            { url: '/course-management/123/statistics', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'course-statistics'] },
+            { url: '/course-management/123/tutorial-groups', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'tutorial-groups-checklist'] },
+            {
+                url: '/course-management/123/tutorial-groups',
+                course: { id: 123, tutorialGroupsConfiguration: {} },
+                expected: ['/course-management', '123', 'tutorial-groups-checklist'],
+            },
+            { url: '/courses/123/settings', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123'] },
+        ])('should compute the correct management view link for $url', ({ url, course, expected }) => {
+            currentCourseContextService.setCourse(course as Course);
+            router.setUrl(url);
+
+            expect(component.managementViewLink()).toEqual(expected);
+        });
+
+        it('should fall back to course management without a course id when there is no current course', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses/1/exercises');
+
+            expect(component.managementViewLink()).toEqual(['/course-management', 'exercises']);
         });
     });
 

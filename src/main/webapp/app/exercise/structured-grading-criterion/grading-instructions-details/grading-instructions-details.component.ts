@@ -33,10 +33,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
     readonly exercise = input.required<Exercise>();
-    private instructions: GradingInstruction[];
+    private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
 
-    backupExercise: Exercise;
+    backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
 

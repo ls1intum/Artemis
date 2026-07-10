@@ -33,7 +33,7 @@ enum AssessmentAction {
 }
 
 class ExerciseForTeam extends Exercise {
-    team: Team;
+    team!: Team; // assigned in transformExercisesFromServer() before the row is rendered
     participation?: StudentParticipation;
     submission?: Submission;
     individualDueDate?: dayjs.Dayjs;
