@@ -50,13 +50,12 @@ describe('IdeSettingsComponent', () => {
             [ProgrammingLanguage.EMPTY, predefinedIdes[0]],
         ]);
 
-        const idePreferencesPromise = Promise.resolve(idePreferences);
         mockIdeSettingsService.loadPredefinedIdes.mockReturnValue(of(predefinedIdes));
-        mockIdeSettingsService.loadIdePreferences.mockReturnValue(idePreferencesPromise);
+        mockIdeSettingsService.loadIdePreferences.mockReturnValue(Promise.resolve(idePreferences));
 
-        component.ngOnInit();
+        expect(component.isLoading()).toBe(true);
 
-        await idePreferencesPromise;
+        await component.ngOnInit();
 
         expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
         expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
@@ -66,6 +65,8 @@ describe('IdeSettingsComponent', () => {
         expect(component.remainingProgrammingLanguages()).toEqual(
             Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA && x !== ProgrammingLanguage.EMPTY),
         );
+        // Rendering is only unblocked after both async loads have completed.
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should add a programming language and update the lists', () => {
