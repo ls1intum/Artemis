@@ -544,6 +544,28 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(debugElement.query(By.css('button')).nativeElement.disabled).toBe(false);
     });
 
+    it('should stay disabled for a pending websocket result without a completion date', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise, true);
+        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        await initAndTick();
+        resultSubject.next({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined } as Result);
+        fixture.detectChanges();
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
+        expect(debugElement.query(By.css('button')).nativeElement.disabled).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
+    });
+
     it.each([true, false])('should re-enable after a terminal websocket result with successful=%s', async (successful) => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
@@ -583,6 +605,26 @@ describe('RequestFeedbackButtonComponent', () => {
         const button = debugElement.query(By.css('button'));
         expect(button.nativeElement.disabled).toBe(true);
         expect(component.isFeedbackGenerationInProgress()).toBe(true);
+    });
+
+    it('should restore a pending feedback state without a completion date from the participation', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        participation.submissions![0].results = [
+            {
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+            } as Result,
+        ];
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise, true);
+
+        await initAndTick();
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
+        expect(debugElement.query(By.css('button')).nativeElement.disabled).toBe(true);
     });
 
     it('should not increment feedback count for unsuccessful Athena assessment', async () => {

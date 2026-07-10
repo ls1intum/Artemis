@@ -25,7 +25,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
+import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
@@ -36,6 +36,10 @@ export function countSuccessfulAthenaFeedbackRequests(participation?: StudentPar
         getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true)
             .length ?? 0
     );
+}
+
+function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
+    return !!result && isAthenaAIResult(result) && result.successful === undefined && (!result.completionDate || dayjs().isSameOrBefore(result.completionDate));
 }
 
 @Component({
@@ -111,7 +115,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
                         this.currentFeedbackRequestCount.set(countSuccessfulAthenaFeedbackRequests(this.participation));
-                        const pendingAthenaResult = getAllResultsOfAllSubmissions(this.participation.submissions).find(isAIResultAndIsBeingProcessed);
+                        const pendingAthenaResult = getAllResultsOfAllSubmissions(this.participation.submissions).find(isPendingAthenaFeedbackResult);
                         this.syncFeedbackRequestPendingState(pendingAthenaResult);
                         this.subscribeToResultUpdates();
                     }
@@ -199,7 +203,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private syncFeedbackRequestPendingState(result: Result | undefined): void {
         clearTimeout(this.feedbackRequestTimeout);
-        const isPending = isAIResultAndIsBeingProcessed(result);
+        const isPending = isPendingAthenaFeedbackResult(result);
         this.isFeedbackRequestPending.set(isPending);
         if (isPending && result?.completionDate) {
             const timeout = Math.max(0, dayjs(result.completionDate).diff(dayjs(), 'milliseconds'));
