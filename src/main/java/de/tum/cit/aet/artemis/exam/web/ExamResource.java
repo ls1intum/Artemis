@@ -334,7 +334,7 @@ public class ExamResource {
                     && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
             // Test exams have no instructor-controlled pre-start countdown and their clients do not subscribe to these
             // updates, so skip them to avoid persisting unused events.
-            if ((startDateChanged || endDateChanged) && withinConductionWindow && !savedExam.isTestExam()) {
+            if ((startDateChanged || endDateChanged) && withinConductionWindow && savedExam.getExamMode().isReal()) {
                 Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
                 examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
             }
