@@ -591,6 +591,34 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithStartTextTooLong() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examStartTextTest");
+        exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithConfirmationEndTextTooLong() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examConfirmationTextTest");
+        exam.setConfirmationEndText("a".repeat(10001)); // Max allowed is 10000 characters
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_succeedsWithTextAtMaxLength() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examMaxTextTest");
+        exam.setStartText("a".repeat(10000)); // Exactly the maximum allowed
+        exam.setConfirmationEndText("b".repeat(10000));
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_failsWithExamMaxPointsTooHigh() throws Exception {
         exam1.setExamMaxPoints(10000); // Max allowed is 9999
 
@@ -666,6 +694,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         testExam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(testExam), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithTextTooLong() throws Exception {
+        exam1.setEndText("a".repeat(10001)); // Max allowed is 10000 characters
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1964,6 +2000,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final Exam examC = ExamFactory.generateExam(course1);
         examC.setStartDate(ZonedDateTime.now().plusHours(2));
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(examC, course1.getId()), HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithExercises_failsWithTextTooLong() throws Exception {
+        final Exam exam = ExamFactory.generateExam(course1);
+        exam.setStartText("a".repeat(10001)); // Max allowed is 10000 characters
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", ExamImportDTO.of(exam, course1.getId()), HttpStatus.BAD_REQUEST, null);
     }
 
     @Test

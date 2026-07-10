@@ -208,6 +208,33 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(true);
         });
 
+        it('should invalidate the configuration when any of the individual exam texts exceeds the maximum length', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const tooLong = 'a'.repeat(10001);
+            expect(component.areExamTextsValid).toBe(true);
+
+            examWithoutExercises.startText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.startText = undefined;
+
+            examWithoutExercises.endText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.endText = undefined;
+
+            examWithoutExercises.confirmationEndText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.confirmationEndText = undefined;
+
+            expect(component.areExamTextsValid).toBe(true);
+        });
+
+        it('should treat missing or exactly-limit exam texts as within the limit', () => {
+            expect(component.isExamTextTooLong(undefined)).toBe(false);
+            expect(component.isExamTextTooLong('')).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10000))).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10001))).toBe(true);
+        });
+
         it('should show channel name input for test exams', async () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.channelName = 'test-exam';
