@@ -9,8 +9,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -31,13 +36,19 @@ public final class WorkspaceArchive {
 
     private static final int MODE_EXECUTABLE = 0755;
 
-    /** Per-file cap on read-back. Any single produced source file above this is pathological; 32 MiB matches {@link CollectedReports} and covers any legitimate source file. */
-    static final long MAX_FILE_BYTES = 32L * 1024 * 1024;
+    private static final long WORKSPACE_CONTENT_LIMIT_BYTES = 30L * 1024 * 1024;
+
+    private static final int MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
+
+    private static final int MAX_ARCHIVE_ENTRIES = 10_000;
+
+    /** Leaves room for tar headers below the relay's 32 MiB payload limit. */
+    static final long MAX_FILE_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
     /**
      * Whole-archive cap on read-back, so a flood of files (each under the per-file cap) still cannot exhaust node memory when the whole copyOut tar is materialised into Strings.
      */
-    static final long MAX_TOTAL_BYTES = 128L * 1024 * 1024;
+    static final long MAX_TOTAL_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
     private WorkspaceArchive() {
     }
@@ -66,17 +77,19 @@ public final class WorkspaceArchive {
     }
 
     private static byte[] build(Map<String, String> textFiles, Map<String, Path> directoryTrees) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        BoundedByteArrayOutputStream out = new BoundedByteArrayOutputStream(MAX_ARCHIVE_BYTES);
         try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
             tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
             long total = 0;
+            int[] entryCount = { 0 };
             for (Map.Entry<String, String> entry : textFiles.entrySet()) {
+                incrementEntryCount(entryCount);
                 byte[] content = entry.getValue().getBytes(StandardCharsets.UTF_8);
                 total = addToSeedTotal(total, content.length, entry.getKey());
                 writeFileEntry(tar, entry.getKey(), content, MODE_FILE);
             }
             for (Map.Entry<String, Path> tree : directoryTrees.entrySet()) {
-                total = appendDirectory(tar, tree.getValue(), tree.getKey(), total);
+                total = appendDirectory(tar, tree.getValue(), tree.getKey(), total, entryCount);
             }
         }
         catch (IOException e) {
@@ -88,7 +101,7 @@ public final class WorkspaceArchive {
     /**
      * Recursively adds all regular files under {@code root} to the archive under {@code prefix}, skipping the {@code .git} metadata and preserving the executable bit.
      */
-    private static long appendDirectory(TarArchiveOutputStream tar, Path root, String prefix, long total) throws IOException {
+    private static long appendDirectory(TarArchiveOutputStream tar, Path root, String prefix, long total, int[] entryCount) throws IOException {
         if (!Files.isDirectory(root)) {
             return total;
         }
@@ -98,6 +111,7 @@ public final class WorkspaceArchive {
                 if (relative.isEmpty() || relative.equals(".git") || relative.startsWith(".git/") || relative.contains("/.git/")) {
                     continue;
                 }
+                incrementEntryCount(entryCount);
                 int mode = Files.isExecutable(path) ? MODE_EXECUTABLE : MODE_FILE;
                 String entryName = prefix + "/" + relative;
                 long size = Files.size(path);
@@ -109,6 +123,12 @@ public final class WorkspaceArchive {
             }
         }
         return total;
+    }
+
+    private static void incrementEntryCount(int[] entryCount) {
+        if (++entryCount[0] > MAX_ARCHIVE_ENTRIES) {
+            throw new RejectedWorkspaceEntryException("Refusing a workspace archive with more than " + MAX_ARCHIVE_ENTRIES + " entries");
+        }
     }
 
     private static boolean isRegularFileNoFollow(Path path) {
@@ -159,18 +179,24 @@ public final class WorkspaceArchive {
      * @throws IOException if reading the archive fails
      */
     public static Map<String, String> readTar(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
-        Map<String, String> result = new LinkedHashMap<>();
+        return readTarContents(tar, prefixToStrip).textFiles();
+    }
+
+    static ArchiveContents readTarContents(TarArchiveInputStream tar, String prefixToStrip) throws IOException {
+        Map<String, String> textFiles = new LinkedHashMap<>();
+        Map<String, String> binaryDigests = new LinkedHashMap<>();
+        Set<String> executableFiles = new LinkedHashSet<>();
         TarArchiveEntry entry;
         String normalizedPrefix = prefixToStrip.isEmpty() || prefixToStrip.endsWith("/") ? prefixToStrip : prefixToStrip + "/";
         long total = 0;
+        int[] entryCount = { 0 };
         while ((entry = tar.getNextEntry()) != null) {
+            incrementEntryCount(entryCount);
             if (entry.isDirectory()) {
                 continue;
             }
-            // The copyOut tar is agent-controlled. A symbolic or hard link could redirect a read to a file outside the workspace; reject it (mirrors CollectedReports.read on the
-            // verifier's report archive). commons-compress's isFile() is true for FIFO/device entries, so link entries are rejected explicitly by their link flags.
-            if (entry.isSymbolicLink() || entry.isLink()) {
-                throw new RejectedWorkspaceEntryException("Refusing a linked workspace entry from the copyOut archive: " + entry.getName());
+            if (!entry.isFile() || entry.isSymbolicLink() || entry.isLink() || entry.isFIFO() || entry.isCharacterDevice() || entry.isBlockDevice() || entry.isSparse()) {
+                throw new RejectedWorkspaceEntryException("Refusing a non-regular workspace entry from the copyOut archive: " + entry.getName());
             }
             String name = entry.getName();
             if (name.startsWith("./")) {
@@ -186,7 +212,10 @@ public final class WorkspaceArchive {
             if (name.startsWith("/") || name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../")) {
                 throw new RejectedWorkspaceEntryException("Refusing a workspace entry whose path escapes the archive root: " + entry.getName());
             }
-            if (name.isEmpty() || name.contains(".git/")) {
+            if (name.equals(".git") || name.startsWith(".git/") || name.endsWith("/.git") || name.contains("/.git/")) {
+                throw new RejectedWorkspaceEntryException("Refusing workspace Git metadata: " + entry.getName());
+            }
+            if (name.isEmpty()) {
                 continue;
             }
             // The copyOut tar is agent-controlled: bound reads by the header-declared size BEFORE materialising the body so a multi-GB entry is refused, not read into memory and
@@ -200,13 +229,56 @@ public final class WorkspaceArchive {
             if (total > MAX_TOTAL_BYTES) {
                 throw new RejectedWorkspaceEntryException("Refusing to read the workspace archive: total size exceeds " + MAX_TOTAL_BYTES + " bytes");
             }
-            // A binary file cannot be represented losslessly as a String; drop it so persist preserves the scaffolded original byte-exact instead of writing a mangled re-encode.
             if (BinaryContent.isBinary(bytes)) {
-                continue;
+                binaryDigests.put(name, sha256(bytes));
             }
-            result.put(name, new String(bytes, StandardCharsets.UTF_8));
+            else {
+                textFiles.put(name, new String(bytes, StandardCharsets.UTF_8));
+            }
+            if ((entry.getMode() & 0111) != 0) {
+                executableFiles.add(name);
+            }
         }
-        return result;
+        return new ArchiveContents(textFiles, binaryDigests, executableFiles);
+    }
+
+    static String sha256(byte[] bytes) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
+    }
+
+    record ArchiveContents(Map<String, String> textFiles, Map<String, String> binaryDigests, Set<String> executableFiles) {
+    }
+
+    private static final class BoundedByteArrayOutputStream extends ByteArrayOutputStream {
+
+        private final int maxBytes;
+
+        private BoundedByteArrayOutputStream(int maxBytes) {
+            this.maxBytes = maxBytes;
+        }
+
+        @Override
+        public synchronized void write(byte[] bytes, int offset, int length) {
+            checkLimit(length);
+            super.write(bytes, offset, length);
+        }
+
+        @Override
+        public synchronized void write(int value) {
+            checkLimit(1);
+            super.write(value);
+        }
+
+        private void checkLimit(int bytesToAdd) {
+            if (count > maxBytes - bytesToAdd) {
+                throw new RejectedWorkspaceEntryException("Refusing a workspace archive larger than " + maxBytes + " bytes");
+            }
+        }
     }
 
     private static byte[] readEntryBytes(TarArchiveInputStream tar, String name) throws IOException {

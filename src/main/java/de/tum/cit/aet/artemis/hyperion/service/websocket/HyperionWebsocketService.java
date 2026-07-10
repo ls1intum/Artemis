@@ -37,7 +37,7 @@ public class HyperionWebsocketService {
         String topic = TOPIC_PREFIX + topicSuffix;
         try {
             websocketMessagingService.sendMessageToUser(userLogin, topic, payload).get();
-            log.debug("Sent Hyperion message to {} on topic {}: {}", userLogin, topic, payload);
+            log.debug("Sent Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic);
         }
         catch (InterruptedException e) {
             // Restore the interrupt flag so the running generation loop can still observe the interruption (e.g. a cancellation) instead of silently swallowing it.
@@ -45,7 +45,7 @@ public class HyperionWebsocketService {
             log.warn("Interrupted while sending Hyperion message to {} on topic {}", userLogin, topic, e);
         }
         catch (ExecutionException e) {
-            log.error("Error sending Hyperion message to {} on topic {}: {}", userLogin, topic, payload, e);
+            log.error("Error sending Hyperion {} message to {} on topic {}", payload.getClass().getSimpleName(), userLogin, topic, e);
         }
     }
 }

@@ -434,15 +434,17 @@ describe('CodeEditorActionsComponent', () => {
     it('should execute refresh and set clean state on successful pull', () => {
         const pullObservable = new Subject<void>();
         const refreshFilesEmitStub = vi.spyOn(comp.onRefreshFiles, 'emit');
+        const onComplete = vi.fn();
         pullStub.mockReturnValue(pullObservable);
 
-        comp.executeRefresh();
+        comp.executeRefresh(onComplete);
         expect(comp.editorState()).toEqual(EditorState.REFRESHING);
 
         pullObservable.next();
 
         expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
         expect(comp.editorState()).toEqual(EditorState.CLEAN);
+        expect(onComplete).toHaveBeenCalledOnce();
     });
 
     it('should emit internet-disconnected refresh error on pull failure', () => {
@@ -460,13 +462,15 @@ describe('CodeEditorActionsComponent', () => {
     it('should emit generic refresh error on pull failure', () => {
         const pullObservable = new Subject<void>();
         const onErrorStub = vi.spyOn(comp.onError, 'emit');
+        const onComplete = vi.fn();
         pullStub.mockReturnValue(pullObservable);
 
-        comp.executeRefresh();
+        comp.executeRefresh(onComplete);
         pullObservable.error(new Error('something'));
 
         expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         expect(onErrorStub).toHaveBeenCalledWith('refreshFailed');
+        expect(onComplete).toHaveBeenCalledOnce();
     });
 
     it('should reset repository and refresh after modal confirmation', () => {

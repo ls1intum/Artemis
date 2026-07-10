@@ -39,8 +39,7 @@ public class HyperionAsyncConfiguration {
     @Bean
     @Lazy
     public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens,
-            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:${artemis.hyperion.agent.provider-circuit-breaker-cooldown:PT5M}}") Duration providerHardFailureCooldown,
-            ProviderFailureCooldown providerFailureCooldown) {
+            @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
         return new AgentLoopRunner(chatModels, contextWindowTokens, providerHardFailureCooldown, providerFailureCooldown);
     }
 

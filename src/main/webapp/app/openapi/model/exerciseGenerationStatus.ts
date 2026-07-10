@@ -11,12 +11,13 @@ import { ExerciseGenerationFileSnapshot } from './exerciseGenerationFileSnapshot
 import { ExerciseGenerationEvent } from './exerciseGenerationEvent';
 
 
-export interface ExerciseGenerationStatus { 
+export interface ExerciseGenerationStatus {
     jobId: string;
     running: boolean;
     mode?: ExerciseGenerationStatus.ModeEnum;
     events: Array<ExerciseGenerationEvent>;
     fileSnapshots: Array<ExerciseGenerationFileSnapshot>;
+    revertAvailable: boolean;
 }
 export namespace ExerciseGenerationStatus {
     export const ModeEnum = {
@@ -25,5 +26,3 @@ export namespace ExerciseGenerationStatus {
     } as const;
     export type ModeEnum = typeof ModeEnum[keyof typeof ModeEnum];
 }
-
-

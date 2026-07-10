@@ -50,7 +50,6 @@
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
     <ng-container editorCenter>
-        <ng-content select="[editorCenterOverlay]" />
         <!-- Problem Statement Editor - always in DOM, hidden when not selected -->
         <jhi-code-editor-instructions
             [hidden]="!shouldShowProblemStatement()"
@@ -106,7 +105,53 @@
         </jhi-code-editor-instructions>
     </ng-container>
     <ng-container editorBottomArea>
-        @if (buildable()) {
+        @if (editorBottomPanelTitle(); as bottomPanelTitle) {
+            <p-tabs class="editor-bottom-tabs" [value]="activeBottomPanel()" (valueChange)="selectBottomPanel($event)" data-testid="code-editor-bottom-tabs">
+                <div class="editor-bottom-tabs-header">
+                    <p-tablist>
+                        @if (buildable()) {
+                            <p-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab">
+                                <fa-icon [icon]="faTerminal" />
+                                <span jhiTranslate="artemisApp.editor.buildOutput"></span>
+                            </p-tab>
+                        }
+                        <p-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab">
+                            <span [jhiTranslate]="bottomPanelTitle"></span>
+                        </p-tab>
+                    </p-tablist>
+                    <button
+                        pButton
+                        type="button"
+                        text
+                        severity="secondary"
+                        class="editor-bottom-collapse"
+                        (click)="onToggleCollapse({ event: $event, horizontal: false }, CollapsableCodeEditorElement.BuildOutput)"
+                        [attr.aria-expanded]="!bottomPanelCollapsed()"
+                        aria-controls="code-editor-bottom-panel-content"
+                        data-testid="code-editor-bottom-collapse"
+                    >
+                        <fa-icon [icon]="bottomPanelCollapsed() ? faChevronUp : faChevronDown" />
+                        <span class="sr-only" [jhiTranslate]="bottomPanelCollapsed() ? 'artemisApp.editor.expandBottomPanel' : 'artemisApp.editor.collapseBottomPanel'"></span>
+                    </button>
+                </div>
+                <p-tabpanels id="code-editor-bottom-panel-content" [hidden]="bottomPanelCollapsed()">
+                    @if (buildable()) {
+                        <p-tabpanel [value]="CodeEditorBottomPanel.BUILD_OUTPUT">
+                            <jhi-code-editor-build-output
+                                [participation]="participation()"
+                                [secondaryHeader]="!showNavbar()"
+                                [showHeader]="false"
+                                (onAnnotations)="onAnnotations($event)"
+                                (onError)="onError($event)"
+                            />
+                        </p-tabpanel>
+                    }
+                    <p-tabpanel [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel">
+                        <ng-content select="[editorBottomPanel]" />
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
+        } @else if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"
                 [secondaryHeader]="!showNavbar()"

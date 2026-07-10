@@ -133,6 +133,26 @@ class WorkspaceArchiveTest {
     }
 
     @Test
+    void readTar_rejectsNonRegularEntries() throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
+            TarArchiveEntry fifo = new TarArchiveEntry("solution/pipe", TarArchiveEntry.LF_FIFO);
+            tarOut.putArchiveEntry(fifo);
+            tarOut.closeArchiveEntry();
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+        }
+    }
+
+    @Test
+    void readTar_rejectsAFileNamedGit() throws Exception {
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(packTar(Map.of(".git", "not metadata".getBytes(StandardCharsets.UTF_8))))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
+        }
+    }
+
+    @Test
     void readTar_rejectsAPathTraversingEntry_soNoAbsoluteOrDotDotPathReachesTheCommit() throws Exception {
         // The produced map is keyed by the entry path and later written into a git repo, so a ..-traversing path must never be accepted (it would escape the repository root).
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -150,14 +170,13 @@ class WorkspaceArchiveTest {
     }
 
     @Test
-    void readTar_skipsGitMetadata() throws Exception {
+    void readTar_rejectsGitMetadata() throws Exception {
         Map<String, String> files = new LinkedHashMap<>();
         files.put("A.java", "a");
         files.put(".git/config", "should be skipped");
 
         try (TarArchiveInputStream tar = new TarArchiveInputStream(WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()))) {
-            Map<String, String> read = WorkspaceArchive.readTar(tar, "");
-            assertThat(read).containsOnlyKeys("A.java");
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
         }
     }
 

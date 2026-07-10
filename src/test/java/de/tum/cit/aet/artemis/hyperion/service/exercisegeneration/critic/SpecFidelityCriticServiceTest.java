@@ -129,21 +129,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     /**
-     * A grader-mechanics phrase in the problem statement ("make the tests fail" / "NotImplementedError in the template") is flagged WITHOUT any model call — the leak check is a
-     * deterministic regex pass, so it fires even when the model returns nothing.
-     */
-    @Test
-    void graderMechanicsLeak_isFlaggedWithoutModel() {
-        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[]}"));
-
-        String leakyStatement = "Implement the sorter.\n\nAll functions should raise NotImplementedError in the template file to make the tests fail.";
-        SpecFidelityReport report = critic.critique(UNICODE_BRIEF, leakyStatement, List.of("test_sort"));
-
-        assertThat(report.findings()).isNotEmpty();
-        assertThat(report.findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.MECHANICS_LEAK);
-    }
-
-    /**
      * The mechanics-leak pass needs NO model at all: even with no ChatClient configured (null), the deterministic leak check still fires while the coverage pass is silently
      * skipped. Proves the model-free check is independent of the LLM pass.
      */
@@ -190,11 +175,11 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.hasFindings()).isFalse();
     }
 
-    /** JSON embedded in prose / a code fence is still parsed (defensive payload extraction). */
+    /** Harmony framing outside the JSON is harmless because payload extraction selects the fenced object. */
     @Test
-    void jsonWrappedInProse_isStillParsed() {
+    void jsonWrappedInHarmonyTokens_isStillParsed() {
         SpecFidelityCriticService critic = criticReturning(
-                jsonResponse("Sure, here is the result:\n```json\n{\"uncovered\":[{\"requirement\":\"empty input\",\"reason\":\"none\"}]}\n```\nHope that helps!"));
+                jsonResponse("<|start|>assistant<|channel|>final<|message|>\n```json\n{\"uncovered\":[{\"requirement\":\"empty input\",\"reason\":\"none\"}]}\n```\n<|end|>"));
 
         SpecFidelityReport report = critic.critique(UNICODE_BRIEF, "Clean statement.", List.of("test_happy"));
 

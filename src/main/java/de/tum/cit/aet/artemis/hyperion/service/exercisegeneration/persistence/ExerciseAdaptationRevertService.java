@@ -1,15 +1,18 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 import jakarta.annotation.PostConstruct;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,11 +21,11 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -31,8 +34,9 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Provides the safety net for {@code ADAPT} runs: capture each repository's pre-run commit HEAD at job start, and later reset the template/solution/tests repositories back to that
- * captured state ("revert this adaptation"). This is the deliberately simple alternative to a staging/approval state machine — an accepted adaptation is applied to the live
+ * Provides the safety net for {@code ADAPT} runs: retain each changed repository's pre-adaptation commit while the accepted result is persisted, and later reset the
+ * template/solution/tests repositories back to that captured state. This is the deliberately simple alternative to a staging/approval state machine — an accepted adaptation is
+ * applied to the live
  * exercise immediately (like a manual instructor edit), and this service lets the instructor undo it in one click.
  * <p>
  * The captured baselines live in a TTL-bounded Hazelcast map keyed by exercise id (the most recent adaptation wins), so a revert works from any node and after the generation job's
@@ -61,22 +65,24 @@ public class ExerciseAdaptationRevertService {
 
     private final GenerationPersistenceService persistenceService;
 
+    private final TempFileUtilService tempFileUtilService;
+
     private final String defaultBranch;
 
     private IMap<Long, AdaptationBaseline> baselineMap;
 
     public ExerciseAdaptationRevertService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, GitService gitService,
-            GenerationPersistenceService persistenceService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            GenerationPersistenceService persistenceService, TempFileUtilService tempFileUtilService,
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.hazelcastInstance = hazelcastInstance;
         this.gitService = gitService;
         this.persistenceService = persistenceService;
+        this.tempFileUtilService = tempFileUtilService;
         this.defaultBranch = defaultBranch;
     }
 
     @PostConstruct
     public void init() {
-        MapConfig baselineMapConfig = hazelcastInstance.getConfig().getMapConfig(BASELINE_MAP_NAME);
-        baselineMapConfig.setTimeToLiveSeconds(BASELINE_TTL_SECONDS);
         baselineMap = hazelcastInstance.getMap(BASELINE_MAP_NAME);
     }
 
@@ -97,7 +103,25 @@ public class ExerciseAdaptationRevertService {
      */
     public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads, Map<RepositoryType, String> postAdaptationHeads,
             String problemStatement, String title) {
+        recordBaseline(exercise, jobId, preAdaptationHeads, postAdaptationHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
+    }
+
+    /**
+     * Records a baseline using the metadata captured inside the guarded persistence operation, avoiding a post-persist reload race with manual edits.
+     *
+     * @param exercise                        the exercise that was adapted
+     * @param jobId                           the adaptation job id
+     * @param preAdaptationHeads              repository heads before the adaptation
+     * @param postAdaptationHeads             repository heads after the adaptation
+     * @param problemStatement                the problem statement before the adaptation
+     * @param title                           the title before the adaptation
+     * @param expectedCurrentProblemStatement the exact problem statement persisted by the adaptation
+     * @param expectedCurrentTitle            the exact title persisted by the adaptation
+     */
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads, Map<RepositoryType, String> postAdaptationHeads,
+            String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
         try {
+            baselineMap.delete(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
             Map<RepositoryType, String> expectedCurrentHeads = new LinkedHashMap<>();
             for (RepositoryType repositoryType : REVERT_ORDER) {
@@ -120,13 +144,33 @@ public class ExerciseAdaptationRevertService {
                     expectedCurrentHeads.put(repositoryType, expectedCurrentHead);
                 }
             }
-            baselineMap.put(exercise.getId(),
-                    new AdaptationBaseline(jobId, heads, expectedCurrentHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle()));
+            baselineMap.set(exercise.getId(),
+                    new AdaptationBaseline(jobId, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle),
+                    BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
             log.info("Recorded revertible adaptation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
         }
         catch (RuntimeException e) {
             log.warn("Could not record the adaptation baseline for exercise {} (job {}); this run will not be revertible: {}", exercise.getId(), jobId, e.getMessage());
         }
+    }
+
+    /**
+     * Returns the job whose retained baseline can currently be undone.
+     *
+     * @param exerciseId the exercise whose baseline should be inspected
+     * @return the revertible adaptation job id, or empty when no baseline remains
+     */
+    public Optional<String> findRevertibleJobId(long exerciseId) {
+        return Optional.ofNullable(baselineMap.get(exerciseId)).map(AdaptationBaseline::jobId);
+    }
+
+    /**
+     * Removes a baseline that predates a newly persisted live-exercise mutation.
+     *
+     * @param exerciseId the exercise whose older baseline should be removed
+     */
+    public void discardBaseline(long exerciseId) {
+        baselineMap.delete(exerciseId);
     }
 
     /**
@@ -198,13 +242,17 @@ public class ExerciseAdaptationRevertService {
                 fullyReverted = false;
                 break;
             }
+            Repository repository = null;
+            Path temporaryCheckout = null;
             try {
-                Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
+                temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-revert-");
+                repository = gitService.getOrCheckoutRepository(uri, uri, temporaryCheckout.resolve("repository"), true, defaultBranch, false);
                 if (repository == null) {
                     throw new IllegalStateException("Could not check out the repository to revert it");
                 }
                 String currentHead = gitService.getLastCommitHash(uri);
                 if (head.equals(currentHead)) {
+                    refreshCachedCheckout(uri);
                     reverted.add(repositoryType);
                     continue;
                 }
@@ -216,12 +264,21 @@ public class ExerciseAdaptationRevertService {
                     throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the adaptation commit " + expectedCurrentHead);
                 }
                 gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, defaultBranch);
+                refreshCachedCheckout(uri);
                 reverted.add(repositoryType);
                 log.info("Reverted the {} repository of exercise {} back to its pre-adaptation commit {}", repositoryType, exercise.getId(), head);
             }
             catch (Exception e) {
                 fullyReverted = false;
                 log.error("Failed to revert the {} repository of exercise {} back to {}; the exercise may be inconsistent", repositoryType, exercise.getId(), head, e);
+            }
+            finally {
+                if (repository != null) {
+                    repository.closeBeforeDelete();
+                }
+                if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
+                    log.warn("Could not delete temporary Hyperion adaptation-revert checkout {}", temporaryCheckout);
+                }
             }
         }
         if (fullyReverted) {
@@ -235,6 +292,20 @@ public class ExerciseAdaptationRevertService {
                     baseline.expectedProblemStatement(), baseline.expectedTitle());
         }
         return new RevertResult(fullyReverted, List.copyOf(reverted));
+    }
+
+    private void refreshCachedCheckout(LocalVCRepositoryUri uri) {
+        try {
+            Repository cachedRepository = gitService.getOrCheckoutRepository(uri, false, defaultBranch, false);
+            if (cachedRepository != null) {
+                gitService.fetchAll(cachedRepository);
+                gitService.reset(cachedRepository, "origin/" + defaultBranch);
+            }
+        }
+        catch (Exception e) {
+            log.warn("Could not refresh the cached repository after reverting {}", uri, e);
+            gitService.deleteLocalRepository(uri);
+        }
     }
 
     private static boolean metadataCanBeReverted(String currentValue, String expectedAdaptedValue, String targetBaselineValue) {

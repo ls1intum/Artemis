@@ -9,7 +9,7 @@
  */
 
 
-export interface ExerciseGenerationRequest { 
+export interface ExerciseGenerationRequest {
     mode?: ExerciseGenerationRequest.ModeEnum;
     prompt?: string;
     selectedFeedbackThreadIds?: Array<number>;
@@ -21,5 +21,3 @@ export namespace ExerciseGenerationRequest {
     } as const;
     export type ModeEnum = typeof ModeEnum[keyof typeof ModeEnum];
 }
-
-

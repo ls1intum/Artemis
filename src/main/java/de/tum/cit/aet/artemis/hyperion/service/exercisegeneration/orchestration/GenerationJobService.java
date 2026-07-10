@@ -32,7 +32,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
@@ -139,11 +138,11 @@ public class GenerationJobService {
         this.maxJobDuration = maxJobDuration;
     }
 
-    public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
         this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30));
     }
 
-    public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService, Duration staleJobTimeout,
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService, Duration staleJobTimeout,
             Duration maxJobDuration) {
         this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration);
     }
@@ -167,24 +166,10 @@ public class GenerationJobService {
      */
     @PostConstruct
     public void init() {
-        MapConfig jobMapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
-        jobMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
-        MapConfig cancelMapConfig = hazelcastInstance.getConfig().getMapConfig(CANCEL_MAP_NAME);
-        cancelMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        // The transcript outlives the slot (not removed on clearJob) so a client reloading as the run finishes can still fetch the terminal outcome; a TTL bounds it.
-        MapConfig transcriptMapConfig = hazelcastInstance.getConfig().getMapConfig(TRANSCRIPT_MAP_NAME);
-        transcriptMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
         transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
-        // The per-file snapshot store and its ordered index are actively deleted at clearJob (see clearJob), so their TTL is only a crash safety net (a node dying without
-        // clearing). It matches the job-slot TTL so a long-running generation's live preview is never expired mid-run — a shorter TTL would silently drop the retained files while
-        // the run is still writing them.
-        MapConfig snapshotMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_MAP_NAME);
-        snapshotMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         snapshotMap = hazelcastInstance.getMap(SNAPSHOT_MAP_NAME);
-        MapConfig snapshotIndexMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_INDEX_MAP_NAME);
-        snapshotIndexMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
         snapshotIndexMap = hazelcastInstance.getMap(SNAPSHOT_INDEX_MAP_NAME);
         ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
         cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
@@ -357,18 +342,17 @@ public class GenerationJobService {
             if (!isActiveJob(exerciseId, jobId)) {
                 return;
             }
-            transcriptMap.computeIfPresent(key, (k, transcript) -> {
-                if (!transcript.jobId().equals(jobId) || transcript.done()) {
-                    return transcript;
-                }
+            JobTranscript transcript = transcriptMap.get(key);
+            if (transcript != null && transcript.jobId().equals(jobId) && !transcript.done()) {
                 List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
                 events.add(event);
-                // Keep events[0] (the STARTED head, needed for a faithful replay) and drop from the front of the remainder when over the cap.
                 while (events.size() > MAX_RETAINED_EVENTS) {
                     events.remove(1);
                 }
-                return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, terminal || transcript.done());
-            });
+                transcriptMap.set(key,
+                        new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, terminal || transcript.done()),
+                        JOB_TTL_SECONDS, TimeUnit.SECONDS);
+            }
             refreshActiveJobRetainedStateTtl(exerciseId, jobId);
         }
         finally {
@@ -415,7 +399,7 @@ public class GenerationJobService {
             }
             // O(1) per write: store only this one file's snapshot under its own key, never re-serializing the other retained files. A repeat write to the same path overwrites its
             // single key in place (latest-per-file), leaving the write order and the bounded index untouched — the whole point of the per-file keying.
-            snapshotMap.set(fileKey(exerciseId, jobId, snapshot.path()), snapshot);
+            snapshotMap.set(fileKey(exerciseId, jobId, snapshot.path()), snapshot, JOB_TTL_SECONDS, TimeUnit.SECONDS);
             if (index.orderedPaths().contains(snapshot.path())) {
                 refreshActiveJobRetainedStateTtl(exerciseId, jobId);
                 return;
@@ -429,7 +413,7 @@ public class GenerationJobService {
                 String evicted = orderedPaths.removeFirst();
                 snapshotMap.delete(fileKey(exerciseId, index.jobId(), evicted));
             }
-            snapshotIndexMap.set(exerciseKey, new JobFileSnapshotIndex(index.jobId(), index.userLogin(), orderedPaths));
+            snapshotIndexMap.set(exerciseKey, new JobFileSnapshotIndex(index.jobId(), index.userLogin(), orderedPaths), JOB_TTL_SECONDS, TimeUnit.SECONDS);
             refreshActiveJobRetainedStateTtl(exerciseId, jobId);
         }
         finally {
@@ -451,8 +435,26 @@ public class GenerationJobService {
         }
         JobInfo active = jobMap.get(key(exercise.getId()));
         boolean running = active != null && active.jobId().equals(transcript.jobId()) && !transcript.done();
-        return Optional
-                .of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.mode(), transcript.events(), latestSnapshotsFor(exercise.getId(), transcript.jobId())));
+        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.mode(), transcript.events(),
+                latestSnapshotsFor(exercise.getId(), transcript.jobId()), false));
+    }
+
+    /**
+     * Removes a matching completed run replay after its live changes were undone.
+     *
+     * @param exerciseId the exercise whose replay should be removed
+     * @param jobId      the completed run to remove
+     */
+    public void discardRetainedRun(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        JobTranscript transcript = transcriptMap.get(key);
+        if (transcript != null && transcript.jobId().equals(jobId)) {
+            transcriptMap.remove(key, transcript);
+        }
+        JobFileSnapshotIndex index = snapshotIndexMap.get(key);
+        if (index != null && index.jobId().equals(jobId) && snapshotIndexMap.remove(key, index)) {
+            removeSnapshotFiles(exerciseId, index);
+        }
     }
 
     /**
@@ -501,7 +503,7 @@ public class GenerationJobService {
             if (transcript == null || !transcript.jobId().equals(jobId) || !transcript.userLogin().equals(user.getLogin())) {
                 return false;
             }
-            cancellationMap.put(jobId, Boolean.TRUE);
+            cancellationMap.set(jobId, Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         }
         finally {
             jobMap.unlock(key);
@@ -526,7 +528,7 @@ public class GenerationJobService {
             if (job == null || !job.jobId().equals(jobId) || !job.cancellableOrDefault()) {
                 return false;
             }
-            cancellationMap.put(jobId, Boolean.TRUE);
+            cancellationMap.set(jobId, Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         }
         finally {
             jobMap.unlock(key);
@@ -738,19 +740,17 @@ public class GenerationJobService {
             if (job != null && job.jobId().equals(jobId)) {
                 jobMap.remove(key, job);
             }
+            JobTranscript transcript = transcriptMap.get(key);
+            if (transcript != null && transcript.jobId().equals(jobId)) {
+                JobTranscript retainedTranscript = transcript.done() ? transcript
+                        : new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true);
+                transcriptMap.set(key, retainedTranscript, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+            }
         }
         finally {
             jobMap.unlock(key);
         }
         cancellationMap.remove(jobId);
-        // Keep the transcript (TTL-bounded) for replay but mark it done, so a reconnecting client knows the run finished even if the terminal event was never recorded.
-        JobTranscript retainedTranscript = transcriptMap.computeIfPresent(key,
-                (k, transcript) -> transcript.jobId().equals(jobId) && !transcript.done()
-                        ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true)
-                        : transcript);
-        if (retainedTranscript != null && retainedTranscript.jobId().equals(jobId)) {
-            transcriptMap.setTtl(key, TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
-        }
         // Keep the latest-per-file snapshots for the same short replay window as the transcript. A reconnecting client may miss the terminal websocket event and still needs the
         // preview/status replay to be self-consistent; the next run for the exercise deletes these retained keys before installing its own index.
         JobFileSnapshotIndex snapshotIndex = snapshotIndexMap.get(key);
@@ -788,7 +788,7 @@ public class GenerationJobService {
     }
 
     private void stopActiveJob(String key, JobInfo current, Instant now) {
-        cancellationMap.put(current.jobId(), Boolean.TRUE);
+        cancellationMap.set(current.jobId(), Boolean.TRUE, JOB_TTL_SECONDS, TimeUnit.SECONDS);
         markStoppedTranscript(current.exerciseId(), current.jobId(), stoppedMessage(current, now));
         retainSnapshotsForTerminalReplay(current.exerciseId(), current.jobId());
         jobMap.remove(key, current);
@@ -822,18 +822,17 @@ public class GenerationJobService {
     }
 
     private void markStoppedTranscript(long exerciseId, String jobId, String message) {
-        transcriptMap.computeIfPresent(key(exerciseId), (k, transcript) -> {
-            if (!transcript.jobId().equals(jobId) || transcript.done()) {
-                return transcript;
-            }
+        String key = key(exerciseId);
+        JobTranscript transcript = transcriptMap.get(key);
+        if (transcript != null && transcript.jobId().equals(jobId) && !transcript.done()) {
             List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
             events.add(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message));
             while (events.size() > MAX_RETAINED_EVENTS) {
                 events.remove(1);
             }
-            return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true);
-        });
-        transcriptMap.setTtl(key(exerciseId), TRANSCRIPT_TTL_SECONDS, TimeUnit.SECONDS);
+            transcriptMap.set(key, new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true), TRANSCRIPT_TTL_SECONDS,
+                    TimeUnit.SECONDS);
+        }
     }
 
     private void retainSnapshotsForTerminalReplay(long exerciseId, String jobId) {

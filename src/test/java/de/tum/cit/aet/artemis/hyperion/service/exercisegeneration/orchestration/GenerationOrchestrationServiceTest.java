@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,7 +112,7 @@ class GenerationOrchestrationServiceTest {
         when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> emptyTar());
         when(systemPromptService.build(any(), any())).thenReturn("SYSTEM_PROMPT");
         // Default to a successful, empty extraction (the verifier is mocked, so files are not inspected here).
-        when(workspace.extractRepository(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
+        when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         when(workspace.seedWorkspace(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
         // Default the advisory critic to no findings; specific tests override it.
@@ -370,24 +372,6 @@ class GenerationOrchestrationServiceTest {
 
     // --- Turn-0 workspace layout seeding (Fix #2) ----------------------------------------------------------------------------------------------------------------------------
 
-    /** The seeded workspace layout is prepended to the first attempt's prompt as a delimited observation; the instructor brief still follows verbatim. */
-    @Test
-    void seededWorkspaceLayout_isPrependedToTheFirstPrompt() {
-        when(workspace.probeWorkspaceLayout(any(), anyString())).thenReturn("--- ls -R solution template tests ---\nsolution:\nsrc");
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
-        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-
-        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
-        try (GenerationOutcome ignored = generate(() -> false)) {
-        }
-
-        verify(agentLoopRunner).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
-        String firstPrompt = promptCaptor.getValue();
-        assertThat(firstPrompt).startsWith("=== INITIAL WORKSPACE (seeded; you do not need to re-list it) ===");
-        assertThat(firstPrompt).contains("ls -R solution template tests").contains("=== END INITIAL WORKSPACE ===");
-        assertThat(firstPrompt).as("the instructor brief still follows the seeded layout").endsWith("Build a bubble sort exercise.");
-    }
-
     /** The seeded layout is prepended ONLY to the first attempt; a retry's prompt is rebuilt from the rejection report and must not re-inject the stale turn-0 snapshot. */
     @Test
     void seededLayout_isOnTheFirstPromptOnly_andNotReplayedOnRetry() {
@@ -401,7 +385,7 @@ class GenerationOrchestrationServiceTest {
 
         verify(agentLoopRunner, times(2)).run(anyString(), promptCaptor.capture(), any(), anyInt(), any(), any(), any());
         List<String> prompts = promptCaptor.getAllValues();
-        assertThat(prompts.get(0)).as("attempt 1 carries the seeded layout").startsWith("=== INITIAL WORKSPACE");
+        assertThat(prompts.get(0)).as("attempt 1 carries the seeded layout").startsWith("=== INITIAL WORKSPACE").endsWith("Build a bubble sort exercise.");
         assertThat(prompts.get(1)).as("the retry is rebuilt from the rejection report and does NOT replay the stale turn-0 layout").doesNotContain("INITIAL WORKSPACE")
                 .contains("template unexpectedly passed all tests");
     }
@@ -431,6 +415,34 @@ class GenerationOrchestrationServiceTest {
             throw new UncheckedIOException(e);
         }
         return new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()));
+    }
+
+    @Test
+    void verifierCopy_containsOnlyNormalizedPersistableRepositories() throws Exception {
+        ByteArrayOutputStream source = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(source)) {
+            for (String name : List.of("workspace/reference/Reference.java", "workspace/problem-statement.md", "workspace/rogue.txt", "workspace/solution/Solution.java")) {
+                String value = name.endsWith("Solution.java") ? "${placeholder}" : name.equals("workspace/problem-statement.md") ? "${placeholder} statement" : name;
+                byte[] content = value.getBytes(StandardCharsets.UTF_8);
+                TarArchiveEntry entry = new TarArchiveEntry(name);
+                entry.setSize(content.length);
+                tar.putArchiveEntry(entry);
+                tar.write(content);
+                tar.closeArchiveEntry();
+            }
+        }
+
+        byte[] repacked;
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(source.toByteArray()))) {
+            repacked = GenerationOrchestrationService.repackTar(tar, Map.of("${placeholder}", "normalized"));
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(repacked))) {
+            assertThat(tar.getNextEntry().getName()).isEqualTo("workspace/problem-statement.md");
+            assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("${placeholder} statement");
+            assertThat(tar.getNextEntry().getName()).isEqualTo("workspace/solution/Solution.java");
+            assertThat(new String(tar.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("normalized");
+            assertThat(tar.getNextEntry()).isNull();
+        }
     }
 
     /**
@@ -505,27 +517,27 @@ class GenerationOrchestrationServiceTest {
     void acceptedOutcome_reusesVerificationExtractions_soPersistDoesNotReReadTheSandbox() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
-        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS))
-                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("tests/T.java", "t"), false));
-        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE))
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("tests/T.java", "t ${testWorkingDirectory}"), false));
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("template/M.java", "m"), false));
-        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION))
+        when(workspace.extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("solution/S.java", "s"), false));
         when(workspace.extractProblemStatement(sandbox, SESSION_ID)).thenReturn("# Title\n\nStatement");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).isTrue();
             // What persist consumes — served from the captured verification-time extraction.
-            assertThat(outcome.producedFiles(RepositoryType.TESTS)).containsExactlyEntriesOf(Map.of("tests/T.java", "t"));
+            assertThat(outcome.producedFiles(RepositoryType.TESTS)).containsExactlyEntriesOf(Map.of("tests/T.java", "t tests"));
             assertThat(outcome.producedFiles(RepositoryType.TEMPLATE)).containsExactlyEntriesOf(Map.of("template/M.java", "m"));
             assertThat(outcome.producedFiles(RepositoryType.SOLUTION)).containsExactlyEntriesOf(Map.of("solution/S.java", "s"));
             assertThat(outcome.producedProblemStatement()).isEqualTo("# Title\n\nStatement");
         }
 
         // Each repo read back exactly once (for the integrity gates); the lazy re-read path is never taken.
-        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS);
-        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE);
-        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION);
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TESTS, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.TEMPLATE, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
+        verify(workspace, times(1)).extractRepository(sandbox, SESSION_ID, RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY);
         verify(workspace, never()).extractRepositoryFiles(any(), anyString(), any());
     }
 }

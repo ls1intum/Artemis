@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jspecify.annotations.Nullable;
 
@@ -57,6 +58,8 @@ public final class GenerationOutcome implements AutoCloseable {
      * when the critic found nothing or was skipped.
      */
     private final SpecFidelityReport specFidelityReport;
+
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     GenerationOutcome(AgentLoopResult loopResult, @Nullable VerificationResult verification, @Nullable String sessionId, @Nullable GenerationOrchestrationService orchestrator,
             @Nullable InteractiveSandbox sandbox, Map<RepositoryType, Map<String, String>> capturedProducedFiles, @Nullable String capturedProblemStatement,
@@ -148,7 +151,7 @@ public final class GenerationOutcome implements AutoCloseable {
 
     @Override
     public void close() {
-        if (orchestrator != null) {
+        if (orchestrator != null && closed.compareAndSet(false, true)) {
             orchestrator.destroyQuietly(sandbox, sessionId);
         }
     }

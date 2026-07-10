@@ -48,9 +48,9 @@ export namespace ConsistencyIssue {
         ConstructorParameterMismatch: 'CONSTRUCTOR_PARAMETER_MISMATCH',
         AttributeTypeMismatch: 'ATTRIBUTE_TYPE_MISMATCH',
         VisibilityMismatch: 'VISIBILITY_MISMATCH',
-        IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY'
+        IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY',
+        GenerationReviewRequired: 'GENERATION_REVIEW_REQUIRED'
     } as const;
     export type CategoryEnum = typeof CategoryEnum[keyof typeof CategoryEnum];
 }
-
 

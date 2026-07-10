@@ -85,10 +85,6 @@ import hyperionDifficultyAssessment from './assets/programming/hyperion-difficul
 import hyperionLearningGoals from './assets/programming/hyperion-learning-goals.png';
 import hyperionLinkedCompetencies from './assets/programming/hyperion-linked-competencies.png';
 import hyperionGenerateWithAi from './assets/programming/hyperion-generate-with-ai.png';
-import hyperionGenerateCode from './assets/programming/hyperion-generate-code.png';
-import hyperionGeneratingCode from './assets/programming/hyperion-generating-code.png';
-import hyperionGenerationSettings from './assets/programming/hyperion-generation-settings.png';
-import hyperionGenerationStatus from './assets/programming/hyperion-generation-status.png';
 import hyperionApplyWithAi from './assets/programming/hyperion-apply-with-ai.png';
 import hyperionRemoveSelection from './assets/programming/hyperion-remove-selection.png';
 import hyperionSelectionTag from './assets/programming/hyperion-selection-tag.png';
@@ -748,15 +744,16 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 <Callout variant={CalloutVariant.info}>
 
-    This feature requires the Hyperion module to be enabled by the administrator (<code>artemis.hyperion.enabled=true</code>). Exercise generation requires at least the <strong>Editor</strong> role within the course.
+    This feature requires Hyperion (<code>artemis.hyperion.enabled=true</code>) and the Local CI/Local VC setup. It is not available with Jenkins. Starting a run requires at least the <strong>Editor</strong> role.
 
 </Callout>
 
-Artemis can use Hyperion to generate or adapt complete Java programming exercises, including the template, solution, tests, and problem statement. Exercise generation is currently only available for unreleased Java draft exercises without student participations. Accepted results are written to the exercise repositories, committed, and built through the configured CI setup. Treat the generated result as a draft: review the changed files, inspect the build result, and adapt the exercise before releasing it to students.
+Hyperion can generate or adapt a complete Java programming exercise: problem statement, template, solution, and tests. The action is limited to unreleased draft exercises without student participations. Treat every result as a draft and review it before release.
 
-There are two ways to start exercise generation:
+There are two entry points:
 
-**During exercise creation:** For new Java programming exercises, click **Generate with AI** instead of the regular generate action. Artemis creates the exercise with prepared repositories, opens the online editor, and starts generation for the exercise.
+- **During exercise creation:** For a new Java programming exercise, choose **Generate with AI**. Artemis creates the exercise and repositories, opens the online editor, and starts generation.
+- **From the online editor:** Use **Artemis Intelligence** → **Generate exercise**. For an existing exercise, **Adapt exercise** can apply selected consistency-review feedback plus optional instructions.
 
 <Image
     src={hyperionGenerateWithAi}
@@ -765,61 +762,27 @@ There are two ways to start exercise generation:
     caption="Generate with AI action during programming exercise creation"
 />
 
-**From the online editor:** Open the exercise with <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and use **Artemis Intelligence** → **Generate exercise**. Hyperion streams progress and file snapshots while the exercise is generated or adapted.
-
-<Image
-    src={hyperionGenerateCode}
-    alt="Artemis Intelligence menu with Generate exercise action"
-    size={ImageSize.small}
-    caption="Generate exercise action in the Artemis Intelligence menu"
-/>
-
-Before starting, make sure the problem statement describes the expected behavior clearly and that the programming language and build configuration are already selected. Hyperion uses the problem statement, the current repository structure, build environment context, and known consistency issues as generation context.
-
 #### Human Feedback Support
 
-Instructors and editors can mark active repository review threads with **Apply with AI** before starting generation. Selected review threads give Hyperion targeted human feedback for the next generation run.
+Use **Apply with AI** on active consistency-review threads to include them in the next adaptation. Resolved, outdated, unrelated, and unauthorized threads are excluded. The adaptation dialog shows the selected findings and accepts additional instructions.
 
 <Image src={hyperionApplyWithAi} alt="Apply with AI button in a review thread" size={ImageSize.large} caption="Apply with AI action in a review thread" />
 
-After selecting a thread, the thread header shows that it is selected for exercise adaptation and the action changes to **Remove Selection**.
-
-<Image src={hyperionSelectionTag} alt="Review thread marked as selected for exercise adaptation" size={ImageSize.large} caption="Selected review thread indicator" />
+<Image src={hyperionSelectionTag} alt="Review thread selected for exercise adaptation" size={ImageSize.large} caption="Selected review thread indicator" />
 
 <Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
 
-Selected feedback is passed to Hyperion when you start **Adapt exercise**. Hyperion uses the selected thread comments together with any additional instructions as targeted human feedback while updating the problem statement, template, solution, and tests.
+The activity panel streams progress and changed-file previews. A reload reconnects to the retained job state. You can cancel a running job; cancellation is cooperative and can take effect after the current model or build operation returns.
 
-Only valid feedback is forwarded: resolved and outdated threads are excluded, thread IDs are validated, and feedback is filtered to the current exercise and repository. Feedback that is irrelevant, conflicts with the exercise context, or would introduce inconsistencies should be ignored during generation. The selected feedback flow is intended for targeted follow-up generation after instructors have reviewed existing generated or manually written code.
+Hyperion accepts generated content only after an isolated verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. Only accepted output can update the live exercise. A rejected but recoverable draft can instead be saved to isolated review branches; review and merge all three repositories with an external Git client because Artemis does not expose custom branches. A partial live update is reported as requiring manual review and cannot be reverted automatically.
 
-After confirmation, Artemis starts an asynchronous generation job. While the job is running:
-
-- The status popover shows queued, running, completed, warning, failed, and skipped states
-- File activity lists newly created or updated files
-- The currently open repository is refreshed as generated files are committed
-- Build feedback can be used for an additional improvement attempt
-
-<Image
-    src={hyperionGenerationStatus}
-    alt="Generation status popover with repository states and file activity"
-    size={ImageSize.large}
-    caption="Live generation status with repository states and file activity"
-/>
-
-Generation can finish with a warning even when files were committed, for example if the build failed, timed out, or the CI build could not be triggered. In that case, inspect the status details, open the generated repository, and check the latest build result before continuing manually.
+A successfully persisted adaptation offers **Undo adaptation** for up to seven days while the in-memory baseline remains available, provided the repositories have not changed again. Undo restores the captured pre-adaptation commits and problem statement; a full cluster restart can make the action unavailable earlier.
 
 <Callout variant={CalloutVariant.warning}>
 
-    Avoid editing the same exercise repositories manually while exercise generation is running. If another generation job is already active for the exercise, Artemis blocks the new request until the active job has finished.
+    Do not edit or push to the exercise repositories while generation is running. The online editor is read-only while it knows the status of a run, but external Git pushes and other repository writers are not globally locked.
 
 </Callout>
-
-<Image
-    src={hyperionGeneratingCode}
-    alt="Exercise generation in progress dialog"
-    size={ImageSize.small}
-    caption="Dialog shown when exercise generation is already running for the exercise"
-/>
 
 ### Review Comments
 

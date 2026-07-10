@@ -3,7 +3,7 @@ import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { Alert, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 import {
     ExerciseEditorSyncEvent,
@@ -98,6 +98,9 @@ export class CodeEditorFileSyncService {
     private alertService = inject(AlertService);
 
     private exerciseId?: number;
+    private expectedRepositoryUpdate = false;
+    private expectedRepositoryUpdateCompletedAt?: number;
+    private readonly newCommitAlerts = new Set<Alert>();
     private currentTarget?: ExerciseEditorSyncTarget;
     private auxiliaryRepositoryId?: number;
     private incomingMessageSubscription?: Subscription;
@@ -181,7 +184,24 @@ export class CodeEditorFileSyncService {
         this.exerciseId = undefined;
         this.currentTarget = undefined;
         this.auxiliaryRepositoryId = undefined;
+        this.expectedRepositoryUpdate = false;
+        this.expectedRepositoryUpdateCompletedAt = undefined;
         clearRemoteSelectionStyles();
+    }
+
+    /**
+     * Suppresses commit warnings while this editor deliberately refreshes repositories changed by
+     * an accepted server-side operation such as Hyperion generation.
+     */
+    beginExpectedRepositoryUpdate(operationCompletedAt?: number): void {
+        this.expectedRepositoryUpdate = true;
+        this.expectedRepositoryUpdateCompletedAt = operationCompletedAt;
+        this.dismissNewCommitAlerts();
+    }
+
+    endExpectedRepositoryUpdate(): void {
+        this.expectedRepositoryUpdate = false;
+        this.dismissNewCommitAlerts();
     }
 
     /**
@@ -764,12 +784,25 @@ export class CodeEditorFileSyncService {
 
     // ── Private: Commit alert handler ────────────────────────────────────
 
-    private handleNewCommitAlert(_message: ExerciseNewCommitAlertEvent): void {
-        this.alertService.addAlert({
+    private handleNewCommitAlert(message: ExerciseNewCommitAlertEvent): void {
+        if (
+            this.expectedRepositoryUpdate ||
+            (this.expectedRepositoryUpdateCompletedAt !== undefined && message.timestamp !== undefined && message.timestamp <= this.expectedRepositoryUpdateCompletedAt)
+        ) {
+            return;
+        }
+        const alert = this.alertService.addAlert({
             type: AlertType.WARNING,
             message: 'artemisApp.exercise.codeEditorSync.newCommitAlert',
             timeout: 0,
+            onClose: (closedAlert) => this.newCommitAlerts.delete(closedAlert),
         });
+        this.newCommitAlerts.add(alert);
+    }
+
+    private dismissNewCommitAlerts(): void {
+        [...this.newCommitAlerts].forEach((alert) => alert.close());
+        this.newCommitAlerts.clear();
     }
 
     // ── Private: Message routing ─────────────────────────────────────────

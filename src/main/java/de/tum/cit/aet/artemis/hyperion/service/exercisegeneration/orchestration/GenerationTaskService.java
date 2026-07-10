@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,17 +37,19 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ge
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
  * <p>
  * It owns the end-to-end flow: drive the {@link GenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
- * clean, verified exercise; and when it does not accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist the best-effort draft and
+ * clean, verified exercise; and when it does not accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist changed repository files and
  * surface
  * every verification finding as review comments so a near-miss is recoverable instead of discarded.
  * <p>
- * Every terminal state emits a clear, distinct event: {@code SUCCESS} (verified and saved), {@code NEEDS_REVIEW} (draft saved with review comments to resolve), {@code PARTIAL}
+ * Every terminal state emits a clear, distinct event: {@code SUCCESS} (verified and saved), {@code NEEDS_REVIEW} (repository draft saved with review comments to resolve),
+ * {@code PARTIAL}
  * (nothing usable was produced, or recovery itself failed — the exercise is left untouched and the run can be retried), plus cancellation and error. A recovered draft is never
  * presented as a verified exercise: only the {@code SUCCESS} path is clean; {@code NEEDS_REVIEW} always carries the gaps the instructor must fix. The {@link GenerationOutcome} is
  * always closed here so the sandbox container is destroyed on every path.
@@ -170,6 +173,8 @@ public class GenerationTaskService {
                             ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
                     // A budget-exhausted run is still verified: it may have produced an acceptable exercise before the turn cap, or a recoverable near-miss.
                     case COMPLETED, BUDGET_EXHAUSTED -> {
+                        // Verification already captured every artifact needed below. Release the scarce build-agent sandbox before Git persistence and CI synchronization.
+                        outcome.close();
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
                             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED,
                                     cancellationMessage(deadlineExceeded.get(), tokenBudgetExceeded.get(), heartbeatLost.get())));
@@ -183,28 +188,30 @@ public class GenerationTaskService {
                                 String originalProblemStatement = event.expectedProblemStatement();
                                 String originalTitle = event.expectedTitle();
                                 GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
-                                        originalTitle, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
-                                ProgrammingExercise persistedExercise = reloadDraftExerciseBeforeLiveMutation(exerciseId);
+                                        originalTitle, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
                                 if (event.mode() == GenerationMode.ADAPT) {
-                                    adaptationRevertService.recordBaseline(persistedExercise, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
-                                            originalProblemStatement, originalTitle);
+                                    adaptationRevertService.recordBaseline(exerciseToPersist, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
+                                            originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle());
                                 }
-                                int advisoryCount = recoveryService.surfaceAdvisoryFindings(persistedExercise, outcome.specFidelityReport());
-                                String advisory = advisoryCount > 0
-                                        ? " " + advisoryCount + " advisory spec-fidelity note(s) were added for your review (these did not affect acceptance)."
-                                        : "";
-                                emitter.milestone(ExerciseGenerationEventDTO.done("The exercise was generated and saved. Review the changes." + advisory,
-                                        ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
+                                else {
+                                    discardOlderBaselineAfterPersist(exerciseId);
+                                }
+                                int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, user, outcome.specFidelityReport());
+                                String advisory = advisoryCount == 1 ? " 1 review note was added for your attention."
+                                        : advisoryCount > 1 ? " " + advisoryCount + " review notes were added for your attention." : "";
+                                String savedMessage = event.mode() == GenerationMode.ADAPT ? "The exercise was adapted and saved. Review the changes."
+                                        : "The exercise was generated and saved. Review the changes.";
+                                emitter.milestone(ExerciseGenerationEventDTO.done(savedMessage + advisory, ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true));
                             }
                             catch (GenerationIncompleteException e) {
                                 log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                                emitter.milestone(ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely: " + e.getMessage(),
-                                        ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
+                                emitter.milestone(
+                                        ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely. Please review the exercise.",
+                                                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
                             }
                             catch (RuntimeException e) {
                                 log.error("Failed to persist generated exercise {}", exerciseId, e);
-                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                        "Verification passed but saving the exercise failed: " + e.getMessage()));
+                                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Verification passed, but saving the exercise failed."));
                             }
                         }
                         else {
@@ -215,7 +222,7 @@ public class GenerationTaskService {
             }
             catch (RuntimeException e) {
                 log.error("Exercise generation job {} failed", jobId, e);
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed: " + e.getMessage()));
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed."));
             }
         }
         finally {
@@ -231,6 +238,15 @@ public class GenerationTaskService {
         }
         finally {
             releaseBudgetReservation(event);
+        }
+    }
+
+    private void discardOlderBaselineAfterPersist(long exerciseId) {
+        try {
+            adaptationRevertService.discardBaseline(exerciseId);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not discard an older adaptation baseline after persisting exercise {}", exerciseId, e);
         }
     }
 
@@ -259,23 +275,24 @@ public class GenerationTaskService {
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
             // without accidentally publishing unverified code.
-            String placement = result.draftBranch() != null
-                    ? " The live exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch() + "' for you to review and merge if you want it."
-                    : "";
-            // recover only throws when persist itself failed, so reaching here means the draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save (review comments
+            String repositories = result.savedRepositories().stream().sorted().map(RepositoryType::getName).collect(Collectors.joining(", "));
+            String placement = " The live exercise was left unchanged; generated repository files for " + repositories + " were saved to branch '" + result.draftBranch()
+                    + "'. The generated problem statement was not saved. Review the notes and merge the repository branch manually in an external Git client if you want it.";
+            // recover only throws when persist itself failed, so reaching here means the repository draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save
+            // (review comments
             // could not be attached), which the message states explicitly.
             String message = issueCount < 0
                     ? "A draft exercise was generated but did not pass verification, so it needs your review before use. The review notes could not be attached automatically — "
                             + "open the exercise and review it manually before grading." + placement + " " + reason
                     : "A draft exercise was generated but did not pass verification, so it needs your review before use. " + issueCount + " issue(s) to review were added to the "
                             + "exercise." + placement + " " + reason;
-            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict, !result.liveExerciseUntouched()));
+            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict, false));
         }
         catch (RuntimeException e) {
             // Recovery failed at the isolated-branch persist step. Earlier repository draft branches may already exist, so report PARTIAL and avoid claiming a clean draft.
             log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft persist did not complete)", exerciseId, e);
             emitter.milestone(ExerciseGenerationEventDTO.done(
-                    reason + " Saving the draft for review did not complete (" + e.getMessage() + "); any partial hyperion-draft branch must be reviewed or deleted manually.",
+                    reason + " Saving the draft for review did not complete; any partial hyperion-draft branch must be reviewed or deleted manually.",
                     ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
         }
     }

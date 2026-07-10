@@ -163,9 +163,9 @@ describe('BuildAgentSummaryComponent', () => {
         fixture.detectChanges();
 
         const text = fixture.nativeElement.textContent;
-        // Agent 1 reserves 1 of 3 Hyperion sandbox slots; agent 2 has no slot fields, so it renders the opt-out default 0 / 0.
         expect(text).toContain('1 / 3');
-        expect(text).toContain('0 / 0');
+        expect(text).toContain('—');
+        expect(text).not.toContain('0 / 0');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {

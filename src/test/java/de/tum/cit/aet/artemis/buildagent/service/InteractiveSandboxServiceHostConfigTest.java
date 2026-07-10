@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -109,5 +110,30 @@ class InteractiveSandboxServiceHostConfigTest {
 
         assertThat(removed).isOne();
         verify(dockerClient).removeContainerCmd("own-sandbox-id");
+    }
+
+    @Test
+    void capturedOutput_keepsTheLatestOutputWhenTheLimitIsExceeded() {
+        StringBuilder output = new StringBuilder();
+
+        InteractiveSandboxService.appendBounded(output, "a".repeat(80_000));
+        InteractiveSandboxService.appendBounded(output, "b".repeat(80_000));
+        InteractiveSandboxService.appendBounded(output, "final compiler error");
+        String truncated = InteractiveSandboxService.truncateTail(output.toString());
+
+        assertThat(truncated.endsWith("final compiler error")).isTrue();
+    }
+
+    @Test
+    void destroySession_keepsTrackingAndReportsDockerRemovalFailure() {
+        RemoveContainerCmd removeContainerCmd = mock(RemoveContainerCmd.class);
+        when(dockerClient.removeContainerCmd("container-1")).thenReturn(removeContainerCmd);
+        when(removeContainerCmd.withForce(true)).thenReturn(removeContainerCmd);
+        doThrow(new RuntimeException("Docker daemon unavailable")).when(removeContainerCmd).exec();
+        InteractiveSandboxService service = new InteractiveSandboxService(buildAgentConfiguration);
+        service.markActive("container-1");
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> service.destroySession("container-1")).withMessageContaining("container-1");
+        assertThat(service.lastActivity("container-1")).isPresent();
     }
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -45,7 +45,7 @@ describe('CodeEditorGridComponent', () => {
 
             expect(draggableIconForWindow).not.toBeNull();
 
-            const blur = () => {};
+            const blur = vi.fn();
             const pointerEvent: PointerEvent = { type: 'click', target: { blur } as unknown as HTMLElement } as unknown as PointerEvent;
 
             const windowCollapseEvent: InteractableEvent = { event: pointerEvent, horizontal: true };
@@ -53,6 +53,8 @@ describe('CodeEditorGridComponent', () => {
             expectWindowToBeCollapsed(windowName, false);
 
             comp.toggleCollapse(windowCollapseEvent, collapsableElement);
+
+            expect(blur).not.toHaveBeenCalled();
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -105,5 +107,21 @@ describe('CodeEditorGridComponent', () => {
                 }
             }
         };
+    });
+
+    it('expands the bottom panel idempotently', () => {
+        fixture.detectChanges();
+        const bottomPanel = fixture.nativeElement.querySelector('.editor-bottom') as HTMLElement;
+        bottomPanel.classList.add('collapsed--vertical');
+        comp.buildOutputIsCollapsed.set(true);
+
+        comp.expandBottomPanel();
+
+        expect(comp.buildOutputIsCollapsed()).toBe(false);
+        expect(bottomPanel.classList.contains('collapsed--vertical')).toBe(false);
+
+        const removeClass = vi.spyOn((comp as any).renderer, 'removeClass');
+        comp.expandBottomPanel();
+        expect(removeClass).not.toHaveBeenCalled();
     });
 });

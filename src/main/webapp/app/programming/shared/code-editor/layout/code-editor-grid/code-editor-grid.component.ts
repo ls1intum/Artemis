@@ -125,13 +125,7 @@ export class CodeEditorGridComponent {
      * @param collapsableElement an enum to decide which card is collapsed
      */
     toggleCollapse(interactableEvent: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
-        const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
-        // The collapse buttons emit a plain DOM event; blur the clicked control so it doesn't keep focus styling.
-        // (The old `event.event?.toElement || event.relatedTarget` chain was interact.js's wrapped-event shape and
-        // is dead now that interact.js is gone.)
-        const target = event.target as HTMLElement | undefined;
-        target?.blur();
         const cardElement = this.elementRefForCollapsableElement(collapsableElement);
 
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;
@@ -160,6 +154,16 @@ export class CodeEditorGridComponent {
         }
 
         // A collapse changes the space available to the other panels; refresh the sum-aware maxima.
+        this.recomputeMaxConstraints();
+    }
+
+    /** Opens the shared bottom area without toggling an already-open panel closed. */
+    expandBottomPanel(): void {
+        if (!this.buildOutputIsCollapsed()) {
+            return;
+        }
+        this.renderer.removeClass(this.buildOutputElement().nativeElement, 'collapsed--vertical');
+        this.buildOutputIsCollapsed.set(false);
         this.recomputeMaxConstraints();
     }
 }

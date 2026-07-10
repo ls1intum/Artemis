@@ -10,19 +10,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.mockito.ArgumentCaptor;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -33,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * Unit test for {@link ExerciseAdaptationRevertService}'s capture-and-revert invariants against a real isolated embedded Hazelcast instance, with the git and persistence
  * collaborators mocked so the reset-to-captured-SHA behaviour is exercised deterministically without a real repository.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExerciseAdaptationRevertServiceTest {
 
     private static final String DEFAULT_BRANCH = "main";
@@ -42,6 +48,8 @@ class ExerciseAdaptationRevertServiceTest {
     private GitService gitService;
 
     private GenerationPersistenceService persistenceService;
+
+    private TempFileUtilService tempFileUtilService;
 
     private ExerciseAdaptationRevertService revertService;
 
@@ -61,19 +69,24 @@ class ExerciseAdaptationRevertServiceTest {
 
     private Repository testsRepo;
 
-    @BeforeEach
-    void setUp() throws Exception {
+    @BeforeAll
+    void startHazelcast() {
         Config config = new Config();
         config.setClusterName("hyperion-revert-service-test-" + System.nanoTime());
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+    }
 
+    @BeforeEach
+    void setUp() throws Exception {
+        hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
         gitService = mock(GitService.class);
         persistenceService = mock(GenerationPersistenceService.class);
+        tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevert(any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
-        revertService = new ExerciseAdaptationRevertService(hazelcastInstance, gitService, persistenceService, DEFAULT_BRANCH);
+        revertService = new ExerciseAdaptationRevertService(hazelcastInstance, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
         revertService.init();
 
         templateUri = mock(LocalVCRepositoryUri.class);
@@ -91,19 +104,17 @@ class ExerciseAdaptationRevertServiceTest {
         when(exercise.getRepositoryURI(RepositoryType.SOLUTION)).thenReturn(solutionUri);
         when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
 
-        when(gitService.getOrCheckoutRepository(templateUri, true, DEFAULT_BRANCH, false)).thenReturn(templateRepo);
-        when(gitService.getOrCheckoutRepository(solutionUri, true, DEFAULT_BRANCH, false)).thenReturn(solutionRepo);
-        when(gitService.getOrCheckoutRepository(testsUri, true, DEFAULT_BRANCH, false)).thenReturn(testsRepo);
+        when(gitService.getOrCheckoutRepository(eq(templateUri), eq(templateUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false))).thenReturn(templateRepo);
+        when(gitService.getOrCheckoutRepository(eq(solutionUri), eq(solutionUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false))).thenReturn(solutionRepo);
+        when(gitService.getOrCheckoutRepository(eq(testsUri), eq(testsUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false))).thenReturn(testsRepo);
 
         user = new User();
         user.setLogin("instructor");
     }
 
-    @AfterEach
-    void tearDown() {
-        if (hazelcastInstance != null) {
-            hazelcastInstance.shutdown();
-        }
+    @AfterAll
+    void stopHazelcast() {
+        hazelcastInstance.shutdown();
     }
 
     @Test
@@ -136,9 +147,19 @@ class ExerciseAdaptationRevertServiceTest {
         templateAndSolution.put(RepositoryType.SOLUTION, "sha-solution");
         revertService.recordBaseline(exercise, "job-1", templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement", "Old Title");
 
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user)).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void recordBaseline_whenNewBaselineCannotBeRecorded_removesOlderBaseline() {
+        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+
+        revertService.recordBaseline(exercise, "job-2", preAdaptationHeads(), Map.of(), "adapted statement", "Adapted Title");
+
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
     }
 
     @Test
@@ -147,6 +168,7 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests");
         revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
 
         Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
@@ -160,7 +182,43 @@ class ExerciseAdaptationRevertServiceTest {
         // Grading is re-synced against the reverted tests commit.
         verify(persistenceService).resyncAfterRevert(eq(exercise), eq(user), eq("sha-tests"), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"));
         // The baseline is consumed so the same adaptation cannot be reverted twice.
+        assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user)).isEmpty();
+    }
+
+    @Test
+    void revert_checksOutRepositoryIntoAnIsolatedTemporaryPath() throws Exception {
+        Repository cachedTemplateRepo = mock(Repository.class);
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
+        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
+                "Old Title");
+
+        revertService.revert(exercise, user);
+
+        ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
+        verify(gitService).getOrCheckoutRepository(eq(templateUri), eq(templateUri), checkoutPath.capture(), eq(true), eq(DEFAULT_BRANCH), eq(false));
+        assertThat(checkoutPath.getValue().getFileName()).hasToString("repository");
+        assertThat(checkoutPath.getValue().getParent()).doesNotExist();
+        verify(templateRepo).closeBeforeDelete();
+        verify(gitService).fetchAll(cachedTemplateRepo);
+        verify(gitService).reset(cachedTemplateRepo, "origin/" + DEFAULT_BRANCH);
+    }
+
+    @Test
+    void revert_deletesCachedCheckoutWhenRefreshFails() throws Exception {
+        Repository cachedTemplateRepo = mock(Repository.class);
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
+        org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.GitAPIException("fetch failed") {
+        }).when(gitService).fetchAll(cachedTemplateRepo);
+        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
+                "Old Title");
+
+        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+
+        assertThat(result).hasValueSatisfying(revertResult -> assertThat(revertResult.fullyReverted()).isTrue());
+        verify(gitService).deleteLocalRepository(templateUri);
     }
 
     @Test
@@ -187,7 +245,8 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests", "sha-tests");
         revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
-        when(gitService.getOrCheckoutRepository(solutionUri, true, DEFAULT_BRANCH, false)).thenThrow(new IllegalStateException("checkout failed")).thenReturn(solutionRepo);
+        when(gitService.getOrCheckoutRepository(eq(solutionUri), eq(solutionUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false)))
+                .thenThrow(new IllegalStateException("checkout failed")).thenReturn(solutionRepo);
 
         Optional<ExerciseAdaptationRevertService.RevertResult> partial = revertService.revert(exercise, user);
         Optional<ExerciseAdaptationRevertService.RevertResult> retry = revertService.revert(exercise, user);
@@ -230,6 +289,10 @@ class ExerciseAdaptationRevertServiceTest {
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
+        ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
+        verify(gitService).getOrCheckoutRepository(eq(templateUri), eq(templateUri), checkoutPath.capture(), eq(true), eq(DEFAULT_BRANCH), eq(false));
+        assertThat(checkoutPath.getValue().getParent()).doesNotExist();
+        verify(templateRepo).closeBeforeDelete();
     }
 
     @Test
@@ -261,7 +324,7 @@ class ExerciseAdaptationRevertServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
-        verify(gitService, never()).getOrCheckoutRepository(any(), anyBoolean(), any(), anyBoolean());
+        verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(Path.class), anyBoolean(), any(), anyBoolean());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
     }

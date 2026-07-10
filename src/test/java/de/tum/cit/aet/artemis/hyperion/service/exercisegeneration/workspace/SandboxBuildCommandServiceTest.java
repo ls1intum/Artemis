@@ -113,6 +113,19 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void verifyScript_materializesAssignmentAtConfiguredCheckoutPath() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setAssignmentCheckoutPath("student-code");
+        exercise.setBuildConfig(buildConfig);
+
+        String script = factoryWithPhases(List.of()).verifyScriptContent(exercise);
+
+        assertThat(script).contains("ASSIGNMENT_DEST=\"$BUILD_DIR/student-code\"").contains("s#${studentWorkingDirectory}#/student-code/src#g")
+                .contains("s#${studentParentWorkingDirectoryName}#student-code#g");
+    }
+
+    @Test
     void verifyScript_fallsBackToConventionalBuild_whenNoPhases() {
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
         String script = factory.verifyScriptContent(new ProgrammingExercise());

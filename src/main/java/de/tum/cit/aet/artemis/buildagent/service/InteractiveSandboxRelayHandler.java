@@ -37,6 +37,7 @@ import com.github.dockerjava.api.exception.DockerException;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 
@@ -336,11 +337,16 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleExec(SandboxOpRequest request) {
+        requireOwnedSession(request.sessionId());
         SandboxExecResult result = interactiveSandboxService().exec(request.sessionId(), Duration.ofSeconds(request.timeoutSeconds()), request.command());
+        if (result.timedOut()) {
+            releaseOwnedPermits(request.sessionId());
+        }
         return SandboxOpResponse.exec(request.correlationId(), request.sessionId(), result);
     }
 
     private SandboxOpResponse handleCopyIn(SandboxOpRequest request) {
+        requireOwnedSession(request.sessionId());
         // The tar payload rides the keyed staging map, not the broadcast request itself, so only this (target) agent transfers the bytes. This worker is the sole reader and
         // removes
         // the entry on consumption; the client re-removes it defensively if we never got here.
@@ -359,6 +365,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleCopyOut(SandboxOpRequest request) {
+        requireOwnedSession(request.sessionId());
         try (TarArchiveInputStream tar = interactiveSandboxService().copyOut(request.sessionId(), request.workspacePath())) {
             byte[] payload = repackTar(tar);
             // Stage the repacked archive in the keyed map rather than on the response topic, so only the originating core node fetches the bytes instead of every response
@@ -464,14 +471,24 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleDestroy(SandboxOpRequest request) {
-        try {
-            interactiveSandboxService().destroySession(request.sessionId());
+        if (!ownsSession(request.sessionId())) {
+            return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
         }
-        finally {
-            // Release the sandbox slot permit exactly once per owned sandbox, even if the destroy was redundant.
-            releaseOwnedPermits(request.sessionId());
-        }
+        interactiveSandboxService().destroySession(request.sessionId());
+        releaseOwnedPermits(request.sessionId());
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
+    }
+
+    private void requireOwnedSession(String sessionId) {
+        if (!ownsSession(sessionId)) {
+            throw new LocalCIException("Interactive sandbox session " + sessionId + " is not owned by this relay");
+        }
+    }
+
+    private boolean ownsSession(String sessionId) {
+        synchronized (ownedSandboxSlotPermits) {
+            return ownedSandboxSlotPermits.containsKey(sessionId);
+        }
     }
 
     /**

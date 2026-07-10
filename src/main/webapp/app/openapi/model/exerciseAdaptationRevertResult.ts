@@ -9,9 +9,10 @@
  */
 
 
-export interface ExerciseAdaptationRevertResult { 
+export interface ExerciseAdaptationRevertResult {
     fullyReverted: boolean;
     revertedRepositories: Array<ExerciseAdaptationRevertResult.RevertedRepositoriesEnum>;
+    completedAt: string;
 }
 export namespace ExerciseAdaptationRevertResult {
     export const RevertedRepositoriesEnum = {
@@ -23,5 +24,3 @@ export namespace ExerciseAdaptationRevertResult {
     } as const;
     export type RevertedRepositoriesEnum = typeof RevertedRepositoriesEnum[keyof typeof RevertedRepositoriesEnum];
 }
-
-

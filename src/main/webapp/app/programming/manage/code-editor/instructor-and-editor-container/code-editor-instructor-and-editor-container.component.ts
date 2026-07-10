@@ -70,6 +70,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { HyperionGenerationActivityComponent, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
+import { ExerciseGenerationFileSnapshot } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -275,17 +276,56 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService.reloadThreads();
     }
 
-    protected onHyperionAdaptationReverted(): void {
-        this.refreshAfterHyperionRepositoryChange();
+    protected onHyperionAdaptationReverted(completedAt: string): void {
+        this.refreshAfterHyperionRepositoryChange(Date.parse(completedAt));
     }
 
     protected onHyperionGenerationCompleted(event: HyperionGenerationCompletedEvent): void {
         if (event.liveExerciseChanged ?? event.verdict?.accepted) {
-            this.refreshAfterHyperionRepositoryChange();
+            this.refreshAfterHyperionRepositoryChange(event.completedAt ? Date.parse(event.completedAt) : undefined);
         }
     }
 
-    private refreshAfterHyperionRepositoryChange(): void {
+    protected onHyperionSnapshotSelected(snapshot: ExerciseGenerationFileSnapshot): void {
+        if (!this.generationActivity()?.canNavigateSnapshots()) {
+            return;
+        }
+        let targetType: CommentThreadLocationType;
+        switch (snapshot.repo) {
+            case 'solution':
+                targetType = CommentThreadLocationType.SOLUTION_REPO;
+                break;
+            case 'template':
+                targetType = CommentThreadLocationType.TEMPLATE_REPO;
+                break;
+            case 'tests':
+                targetType = CommentThreadLocationType.TEST_REPO;
+                break;
+            case 'other':
+                if (snapshot.path !== 'problem-statement.md') {
+                    return;
+                }
+                targetType = CommentThreadLocationType.PROBLEM_STATEMENT;
+                break;
+        }
+        const prefix = `${snapshot.repo}/`;
+        const filePath = snapshot.path.startsWith(prefix) ? snapshot.path.slice(prefix.length) : snapshot.path;
+        this.navigateToLocation({ targetType, filePath });
+    }
+
+    protected openHyperionPanel(): void {
+        this.codeEditorContainer()?.openEditorBottomPanel();
+    }
+
+    protected onAiToolbarClick(event: Event, popover: Popover): void {
+        if (this.isExerciseGenerationRunning()) {
+            this.openHyperionPanel();
+            return;
+        }
+        popover.toggle(event);
+    }
+
+    private refreshAfterHyperionRepositoryChange(operationCompletedAt?: number): void {
         const exerciseId = this.exercise?.id;
         if (exerciseId === undefined) {
             return;
@@ -294,13 +334,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('pendingChanges');
             return;
         }
-        this.codeEditorContainer()?.actions()?.executeRefresh();
+        const actions = this.codeEditorContainer()?.actions();
+        this.fileSyncService.beginExpectedRepositoryUpdate(operationCompletedAt);
+        if (actions) {
+            actions.executeRefresh(() => this.fileSyncService.endExpectedRepositoryUpdate());
+        } else {
+            this.fileSyncService.endExpectedRepositoryUpdate();
+        }
         this.reloadExerciseFromServer(exerciseId)
             .pipe(take(1))
             .subscribe((exercise) => {
                 if (this.exercise?.id !== exerciseId) {
                     return;
                 }
+                this.editableInstructions()?.acceptServerBaseline(exercise);
                 this.exercise = exercise;
                 this.onInstructionChanged(exercise.problemStatement ?? '');
             });
@@ -333,7 +380,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 finalize(() => this.generationStartPending.set(false)),
             )
             .subscribe({
-                next: ({ jobId }) => this.generationActivity()?.attachToJob(jobId, 'GENERATE'),
+                next: ({ jobId }) => {
+                    this.generationActivity()?.attachToJob(jobId, 'GENERATE');
+                    this.openHyperionPanel();
+                },
                 error: () => this.alertService.error('artemisApp.hyperion.generationActivity.startFailed'),
             });
     }
@@ -349,7 +399,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected isExerciseGenerationRunning(): boolean {
-        return this.generationStartPending() || (this.generationActivity()?.running() ?? false);
+        const activity = this.generationActivity();
+        return (
+            this.generationStartPending() ||
+            (this.showGenerationActivity() && (activity === undefined || activity.statusLoading() || activity.statusLoadFailed() || activity.running()))
+        );
     }
 
     protected showGenerationActivity(): boolean {
@@ -415,6 +469,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: ({ jobId }) => {
                     this.exerciseReviewCommentService.clearSelectedFeedback();
                     this.generationActivity()?.attachToJob(jobId, 'ADAPT');
+                    this.openHyperionPanel();
                 },
                 error: () => this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed'),
             });

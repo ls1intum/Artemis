@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -247,7 +248,7 @@ class InteractiveSandboxRelayRoundTripTest {
         SandboxExecResult agentResult = new SandboxExecResult(0, "hello stdout", "", false);
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("hello"))).thenReturn(agentResult);
 
-        SandboxExecResult result = client.exec(handle(), Duration.ofSeconds(30), "echo", "hello");
+        SandboxExecResult result = client.exec(createOwnedHandle(), Duration.ofSeconds(30), "echo", "hello");
 
         assertThat(result.exitCode()).isZero();
         assertThat(result.stdout()).isEqualTo("hello stdout");
@@ -266,7 +267,7 @@ class InteractiveSandboxRelayRoundTripTest {
         }).when(localSandbox).copyIn(eq(CONTAINER_ID), eq("/workspace"), any());
 
         byte[] tar = tarWithSingleFile("greeting.txt", "hi there");
-        client.copyIn(handle(), "/workspace", new ByteArrayInputStream(tar));
+        client.copyIn(createOwnedHandle(), "/workspace", new ByteArrayInputStream(tar));
 
         assertThat(received.get()).isEqualTo(tar);
     }
@@ -276,7 +277,7 @@ class InteractiveSandboxRelayRoundTripTest {
         byte[] tar = tarWithSingleFile("result.txt", "produced output");
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
 
-        try (TarArchiveInputStream extracted = client.copyOut(handle(), "/workspace/out")) {
+        try (TarArchiveInputStream extracted = client.copyOut(createOwnedHandle(), "/workspace/out")) {
             TarArchiveEntry entry = extracted.getNextEntry();
             assertThat(entry.getName()).isEqualTo("result.txt");
             assertThat(new String(extracted.readAllBytes(), StandardCharsets.UTF_8)).isEqualTo("produced output");
@@ -288,17 +289,22 @@ class InteractiveSandboxRelayRoundTripTest {
         byte[] tar = tarWithSymlink("leak", "/etc/passwd");
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("linked");
+        String handle = createOwnedHandle();
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle, "/workspace/out")).withMessageContaining("linked");
     }
 
     @Test
-    void destroySession_forwardsEachCallToOwningAgent() {
-        client.destroySession(handle());
+    void destroySession_ignoresAnUnownedContainerId() {
         client.destroySession(handle());
 
-        // The client always forwards: two distinct relay requests (different correlation ids) both reach the owning agent. (Idempotency of destroy itself lives in
-        // InteractiveSandboxService, which is mocked here.)
-        verify(localSandbox, times(2)).destroySession(CONTAINER_ID);
+        verify(localSandbox, never()).destroySession(CONTAINER_ID);
+    }
+
+    @Test
+    void exec_rejectsAnUnownedContainerId() {
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.exec(handle(), Duration.ofSeconds(1), "echo", "unsafe")).withMessageContaining("not owned");
+
+        verify(localSandbox, never()).exec(anyString(), any(), any(String[].class));
     }
 
     @Test
@@ -323,6 +329,7 @@ class InteractiveSandboxRelayRoundTripTest {
 
     @Test
     void duplicateCorrelationId_isHandledOnlyOnce() {
+        createOwnedHandle();
         // A redelivered broadcast carries the same correlation id; the handler's idempotency guard must perform the operation exactly once.
         SandboxOpRequest request = SandboxOpRequest.destroy("corr-dup", AGENT_SHORT_NAME, CONTAINER_ID);
         requestsTopic.publish(request);
@@ -343,7 +350,7 @@ class InteractiveSandboxRelayRoundTripTest {
         });
 
         Thread callerThread = Thread.currentThread();
-        client.exec(handle(), Duration.ofSeconds(5), "echo", "x");
+        client.exec(createOwnedHandle(), Duration.ofSeconds(5), "echo", "x");
 
         assertThat(execThread.get()).isNotSameAs(callerThread);
         assertThat(execThread.get().getName()).startsWith("hyperion-sandbox-relay-");
@@ -356,7 +363,8 @@ class InteractiveSandboxRelayRoundTripTest {
         byte[] oversizeTar = tarWithEntryOfSize("big.bin", RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + 1);
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(oversizeTar)));
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("relay limit");
+        String handle = createOwnedHandle();
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle, "/workspace/out")).withMessageContaining("relay limit");
     }
 
     @Test
@@ -364,7 +372,8 @@ class InteractiveSandboxRelayRoundTripTest {
         byte[] headerOnlyTar = tarWithEmptyDirectories((RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES / 512) + 4);
         when(localSandbox.copyOut(eq(CONTAINER_ID), eq("/workspace/out"))).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(headerOnlyTar)));
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle(), "/workspace/out")).withMessageContaining("relay limit");
+        String handle = createOwnedHandle();
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyOut(handle, "/workspace/out")).withMessageContaining("relay limit");
     }
 
     @Test
@@ -436,6 +445,31 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(reCreated).isEqualTo(AGENT_SHORT_NAME + "::" + CONTAINER_ID);
             assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
                     .withMessageContaining("generation sandbox slot capacity");
+        }
+    }
+
+    @Test
+    void failedDestroy_keepsTheSandboxPermitReserved() {
+        try (RelayHarness harness = newHarness(2)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+            doThrow(new LocalCIException("remove failed")).when(harness.localSandbox()).destroySession(CONTAINER_ID);
+
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().destroySession(handle)).withMessageContaining("remove failed");
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> harness.client().createSession(new SandboxSessionSpec("some-image", null)))
+                    .withMessageContaining("generation sandbox slot capacity");
+        }
+    }
+
+    @Test
+    void timedOutExec_releasesThePermitForTheContainerDestroyedByTheService() {
+        try (RelayHarness harness = newHarness(2)) {
+            when(harness.localSandbox().createSession(any())).thenReturn(CONTAINER_ID);
+            when(harness.localSandbox().exec(eq(CONTAINER_ID), any(), any(String[].class))).thenReturn(new SandboxExecResult(-1, "", "", true));
+            String handle = harness.client().createSession(new SandboxSessionSpec("some-image", null));
+
+            assertThat(harness.client().exec(handle, Duration.ofSeconds(1), "sleep", "10").timedOut()).isTrue();
+            assertThat(harness.client().createSession(new SandboxSessionSpec("some-image", null))).isEqualTo(handle);
         }
     }
 
@@ -603,6 +637,11 @@ class InteractiveSandboxRelayRoundTripTest {
 
     private static String handle() {
         return AGENT_SHORT_NAME + "::" + CONTAINER_ID;
+    }
+
+    private String createOwnedHandle() {
+        when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
+        return client.createSession(new SandboxSessionSpec("some-image", null));
     }
 
     private static BuildAgentInformation idleAgent(String name, int currentJobs, int maxJobs) {

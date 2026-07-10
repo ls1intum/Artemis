@@ -6,8 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -28,6 +31,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -77,12 +81,15 @@ public class GenerationWorkspaceService {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    private final TempFileUtilService tempFileUtilService;
+
     public GenerationWorkspaceService(GitService gitService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService) {
+            SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService, TempFileUtilService tempFileUtilService) {
         this.gitService = gitService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.resourceLoaderService = resourceLoaderService;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -112,28 +119,42 @@ public class GenerationWorkspaceService {
         textFiles.put(SandboxBuildCommandService.VERIFY_SCRIPT_NAME, sandboxBuildCommandService.verifyScriptContent(exercise));
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
         Map<RepositoryType, String> repositoryHeads = new LinkedHashMap<>();
+        Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
-        for (RepositoryType repositoryType : SEEDED_REPOSITORIES) {
-            SeededRepository seededRepository = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
-            if (seededRepository != null) {
+        List<SeededRepository> temporaryCheckouts = new ArrayList<>();
+        try {
+            for (RepositoryType repositoryType : SEEDED_REPOSITORIES) {
+                SeededRepository seededRepository = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
+                temporaryCheckouts.add(seededRepository);
                 repositoryTrees.put(directoryFor(repositoryType), seededRepository.workingTree());
-                if (seededRepository.headHash() != null) {
-                    repositoryHeads.put(repositoryType, seededRepository.headHash());
-                }
-                // Snapshot the seeded tests harness so the verifier can later reject tampering against this baseline; read from the same tree packed into the sandbox.
+                repositoryHeads.put(repositoryType, seededRepository.headHash());
+                repositoryMetadata.put(repositoryType, readWorkingTreeMetadata(seededRepository.workingTree()));
                 if (repositoryType == RepositoryType.TESTS) {
                     testsSeedSnapshot = readWorkingTreeTextFiles(seededRepository.workingTree());
                 }
             }
+            Map<String, String> referenceSample = readReferenceSample(exercise);
+            textFiles.putAll(referenceSample);
+            sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
+            log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
+            return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata));
         }
-        Map<String, String> referenceSample = readReferenceSample(exercise);
-        textFiles.putAll(referenceSample);
-        sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
-        log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
-        return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads));
+        finally {
+            temporaryCheckouts.forEach(GenerationWorkspaceService::closeAndDeleteTemporaryCheckout);
+        }
     }
 
-    public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads) {
+    public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads,
+            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
+
+        public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads) {
+            this(testsSeedSnapshot, repositoryHeads, Map.of());
+        }
+    }
+
+    public record RepositorySeedMetadata(Map<String, String> binaryDigests, Set<String> executableFiles) {
+
+        public static final RepositorySeedMetadata EMPTY = new RepositorySeedMetadata(Map.of(), Set.of());
     }
 
     /**
@@ -284,14 +305,39 @@ public class GenerationWorkspaceService {
         return files;
     }
 
+    private static RepositorySeedMetadata readWorkingTreeMetadata(Path workingTree) {
+        Map<String, String> digests = new LinkedHashMap<>();
+        Set<String> executableFiles = new LinkedHashSet<>();
+        try (var paths = Files.walk(workingTree)) {
+            for (Path path : (Iterable<Path>) paths.filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))::iterator) {
+                String relative = workingTree.relativize(path).toString().replace('\\', '/');
+                if (relative.equals(".git") || relative.startsWith(".git/") || relative.contains("/.git/")) {
+                    continue;
+                }
+                if (Files.size(path) > WorkspaceArchive.MAX_FILE_BYTES) {
+                    throw new IllegalStateException("The seeded repository contains an oversized file: " + relative);
+                }
+                if (Files.isExecutable(path)) {
+                    executableFiles.add(relative);
+                }
+                byte[] content = Files.readAllBytes(path);
+                if (BinaryContent.isBinary(content)) {
+                    digests.put(relative, WorkspaceArchive.sha256(content));
+                }
+            }
+        }
+        catch (IOException | RuntimeException e) {
+            throw new IllegalStateException("Could not fingerprint the seeded repository binaries", e);
+        }
+        return new RepositorySeedMetadata(Map.copyOf(digests), Set.copyOf(executableFiles));
+    }
+
     /**
-     * The produced files of a repository read back out of the sandbox, plus whether the read-back failed. A failed read-back ({@code extractionFailed=true}) is distinct from a
-     * genuinely empty repository (extraction succeeded, {@code files} empty): the verifier fails closed on the former (it cannot run the integrity gates on missing files) but
-     * stays
-     * fail-open on the latter.
+     * The produced files of a repository read back out of the sandbox, plus whether the result could not be represented safely for persistence. The verifier fails closed when
+     * {@code extractionFailed} is true.
      *
      * @param files            the produced files keyed by repository-relative path (empty if the repo is genuinely empty OR extraction failed)
-     * @param extractionFailed {@code true} if reading the repository out of the sandbox threw — an error, not a genuinely empty repo
+     * @param extractionFailed {@code true} when extraction failed or the produced tree contains unsupported residue or binary changes
      */
     public record RepositoryExtraction(Map<String, String> files, boolean extractionFailed) {
     }
@@ -305,28 +351,33 @@ public class GenerationWorkspaceService {
      * @return the produced files keyed by repository-relative path
      */
     public Map<String, String> extractRepositoryFiles(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
-        return extractRepository(sandbox, sessionId, repositoryType).files();
+        return extractRepository(sandbox, sessionId, repositoryType, null).files();
     }
 
     /**
-     * Reads the produced files of a repository back out of the sandbox, reporting whether the read-back failed (so the verifier can fail closed on a genuine extraction error while
-     * staying fail-open on a genuinely empty repo). Uses the tar API rather than per-file reads so large files are never truncated.
+     * Reads the produced files of a repository back out of the sandbox. Uses the tar API rather than per-file reads so large files are never truncated.
      *
-     * @param sandbox        the sandbox session
-     * @param sessionId      the session handle
-     * @param repositoryType the repository whose files to read back
+     * @param sandbox          the sandbox session
+     * @param sessionId        the session handle
+     * @param repositoryType   the repository whose files to read back
+     * @param expectedMetadata the seeded binary digests and executable paths, or {@code null} for an advisory text-only read
      * @return the produced files and an extraction-failed flag
      */
-    public RepositoryExtraction extractRepository(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType) {
+    public RepositoryExtraction extractRepository(InteractiveSandbox sandbox, String sessionId, RepositoryType repositoryType, RepositorySeedMetadata expectedMetadata) {
         String dir = directoryFor(repositoryType);
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + dir)) {
             // Docker prefixes copied-out entries with the source directory's own name.
-            Map<String, String> files = stripRedundantGitkeeps(WorkspaceArchive.readTar(tar, dir));
-            // For TEMPLATE and SOLUTION, drop source residue outside the canonical roots (e.g. a nested template/assignment/solution/src) that would leak the solution to students
-            // or
-            // inflate the solution-vs-template diff. The tests repo keeps everything (its harness lives at the root).
+            WorkspaceArchive.ArchiveContents contents = WorkspaceArchive.readTarContents(tar, dir);
+            Map<String, String> files = contents.textFiles();
+            if (expectedMetadata != null
+                    && (!expectedMetadata.binaryDigests().equals(contents.binaryDigests()) || !expectedMetadata.executableFiles().equals(contents.executableFiles()))) {
+                return new RepositoryExtraction(files, true);
+            }
             if (repositoryType == RepositoryType.TEMPLATE || repositoryType == RepositoryType.SOLUTION) {
-                files = ExerciseIntegrityGate.stripResidueOutsideCanonicalRoots(files);
+                Map<String, String> cleanedFiles = ExerciseIntegrityGate.stripResidueOutsideCanonicalRoots(files);
+                if (!cleanedFiles.equals(files)) {
+                    return new RepositoryExtraction(cleanedFiles, true);
+                }
             }
             return new RepositoryExtraction(files, false);
         }
@@ -337,72 +388,70 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * Drops every {@code .gitkeep} sitting in a directory that now also contains a real produced file (the scaffold seeds them only to keep emptied dirs under version control;
-     * once
-     * a real source lands the marker is clutter that would ship to students). A {@code .gitkeep} in a still-empty directory is kept.
-     *
-     * @param files the produced files keyed by repository-relative path
-     * @return the same map without redundant {@code .gitkeep} markers
-     */
-    static Map<String, String> stripRedundantGitkeeps(Map<String, String> files) {
-        Set<String> directoriesWithRealFiles = new HashSet<>();
-        for (String path : files.keySet()) {
-            if (!isGitkeep(path)) {
-                directoriesWithRealFiles.add(parentDirectory(path));
-            }
-        }
-        Map<String, String> cleaned = new LinkedHashMap<>();
-        for (Map.Entry<String, String> entry : files.entrySet()) {
-            if (isGitkeep(entry.getKey()) && directoriesWithRealFiles.contains(parentDirectory(entry.getKey()))) {
-                continue;
-            }
-            cleaned.put(entry.getKey(), entry.getValue());
-        }
-        return cleaned;
-    }
-
-    private static boolean isGitkeep(String path) {
-        return path.equals(".gitkeep") || path.endsWith("/.gitkeep");
-    }
-
-    private static String parentDirectory(String path) {
-        int lastSlash = path.lastIndexOf('/');
-        return lastSlash < 0 ? "" : path.substring(0, lastSlash);
-    }
-
-    /**
      * Reads the produced problem statement back out of the sandbox.
      *
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
-     * @return the produced problem statement, or an empty string if it could not be read
+     * @return the produced problem statement
      */
     public String extractProblemStatement(InteractiveSandbox sandbox, String sessionId) {
         try (TarArchiveInputStream tar = sandbox.copyOut(sessionId, WORKSPACE + "/" + PROBLEM_STATEMENT_FILE)) {
-            return WorkspaceArchive.readTar(tar, "").getOrDefault(PROBLEM_STATEMENT_FILE, "");
+            String statement = WorkspaceArchive.readTar(tar, "").get(PROBLEM_STATEMENT_FILE);
+            if (statement == null) {
+                throw new IllegalStateException("The generated problem statement is missing");
+            }
+            return statement;
         }
         catch (RuntimeException | IOException e) {
-            log.warn("Could not extract the problem statement for exercise generation: {}", e.getMessage());
-            return "";
+            throw new IllegalStateException("Could not extract the generated problem statement", e);
         }
     }
 
     private SeededRepository checkoutWorkingTree(ProgrammingExercise exercise, RepositoryType repositoryType, String defaultBranch) {
         LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
         if (uri == null) {
-            return null;
+            throw new IllegalStateException("The " + repositoryType.name() + " repository is missing");
         }
+        Path temporaryRoot = null;
+        Repository repository = null;
         try {
-            Repository repository = gitService.getOrCheckoutRepository(uri, true, defaultBranch, false);
-            return repository == null ? null : new SeededRepository(repository.getLocalPath(), gitService.getLocalHeadHash(repository));
+            temporaryRoot = tempFileUtilService.createTempDirectory("hyperion-seed-");
+            repository = gitService.getOrCheckoutRepository(uri, uri, temporaryRoot.resolve("repository"), true, defaultBranch, false);
+            if (repository == null) {
+                throw new IllegalStateException("checkout returned no repository");
+            }
+            String headHash = gitService.getLocalHeadHash(repository);
+            if (headHash == null) {
+                throw new IllegalStateException("repository has no HEAD");
+            }
+            return new SeededRepository(repository, repository.getLocalPath(), headHash, temporaryRoot);
         }
         catch (Exception e) {
-            log.warn("Could not check out {} repository for exercise {}: {}", repositoryType, exercise.getId(), e.getMessage());
-            return null;
+            if (repository != null) {
+                repository.closeBeforeDelete();
+            }
+            deleteTemporaryCheckout(temporaryRoot);
+            throw new IllegalStateException("Could not check out the " + repositoryType.name() + " repository for exercise " + exercise.getId(), e);
         }
     }
 
-    private record SeededRepository(Path workingTree, String headHash) {
+    private static void deleteTemporaryCheckout(@Nullable Path path) {
+        if (path != null) {
+            try {
+                FileUtils.deleteDirectory(path.toFile());
+            }
+            catch (IOException e) {
+                log.warn("Could not delete temporary Hyperion repository checkout {}: {}", path, e.getMessage());
+            }
+        }
+    }
+
+    private static void closeAndDeleteTemporaryCheckout(SeededRepository seededRepository) {
+        seededRepository.repository().closeBeforeDelete();
+        deleteTemporaryCheckout(seededRepository.temporaryRoot());
+    }
+
+    private record SeededRepository(Repository repository, Path workingTree, String headHash, Path temporaryRoot) {
     }
 
     /**

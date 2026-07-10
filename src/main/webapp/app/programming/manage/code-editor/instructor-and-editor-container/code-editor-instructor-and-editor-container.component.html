@@ -29,6 +29,7 @@
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
             [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback()"
+            [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.title' : undefined"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
@@ -169,11 +170,10 @@
                                 severity="primary"
                                 [outlined]="true"
                                 type="button"
-                                (click)="aiMenuPopover.toggle($event)"
+                                (click)="onAiToolbarClick($event, aiMenuPopover)"
                                 data-testid="hyperion-ai-menu"
                                 [disabled]="
                                     isAiApplying() ||
-                                    isExerciseGenerationRunning() ||
                                     isCheckingConsistency() ||
                                     loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
                                     loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO
@@ -474,13 +474,14 @@
                     </div>
                 }
             </div>
-            <ng-container editorCenterOverlay>
+            <ng-container editorBottomPanel>
                 @if (showGenerationActivity()) {
-                    <!-- Owner-only live "Generation activity" panel. -->
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
-                        (adaptationReverted)="onHyperionAdaptationReverted()"
+                        (adaptationReverted)="onHyperionAdaptationReverted($event)"
                         (generationCompleted)="onHyperionGenerationCompleted($event)"
+                        (snapshotSelected)="onHyperionSnapshotSelected($event)"
+                        (startRequested)="startGeneration()"
                     />
                 }
             </ng-container>

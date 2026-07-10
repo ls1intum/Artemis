@@ -268,4 +268,3 @@ deferredEagerBeanInstantiationViolations.dot
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/
-

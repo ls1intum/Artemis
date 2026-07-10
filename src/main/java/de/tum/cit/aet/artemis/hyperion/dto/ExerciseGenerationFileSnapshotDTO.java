@@ -8,8 +8,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -29,15 +27,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param turn      the agent turn on which the write happened (best-effort telemetry; {@code 0} if unknown)
  * @param timestamp the moment the snapshot was produced
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
-public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
-        @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket") String repo,
-        @Schema(description = "Whether the file was created or edited") String action, @Schema(description = "The whole current file content (capped)") String content,
-        @Schema(description = "SHA-256 hex digest of the full content") String sha256, @Schema(description = "Full content size in bytes") long bytes,
-        @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
+public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic", allowableValues = TYPE) String type,
+        @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket", allowableValues = {
+                REPOSITORY_SOLUTION, REPOSITORY_TEMPLATE, REPOSITORY_TESTS, REPOSITORY_OTHER }) String repo,
+        @Schema(description = "Whether the file was created or edited", allowableValues = { ACTION_CREATE, ACTION_EDIT }) String action,
+        @Schema(description = "The whole current file content (capped)") String content, @Schema(description = "SHA-256 hex digest of the full content") String sha256,
+        @Schema(description = "Full content size in bytes") long bytes, @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
         @Schema(description = "The agent turn the write happened on") int turn, @Schema(description = "The moment the snapshot was produced") Instant timestamp)
-        implements Serializable {
+        implements Serializable{
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -1,139 +1,216 @@
 @if (visible()) {
-    <div class="hyperion-activity" data-testid="hyperion-generation-activity">
-        <div class="hyperion-activity-header">
-            <span class="hyperion-activity-title">
-                <fa-icon [icon]="facArtemisIntelligence" />
-                <span jhiTranslate="artemisApp.hyperion.generationActivity.title"></span>
-            </span>
-            <span class="hyperion-activity-status">
-                @if (running()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                    <span [jhiTranslate]="runningLabelKey()"></span>
-                    <p-button
-                        size="small"
-                        severity="danger"
-                        [text]="true"
-                        [disabled]="cancelRequested()"
-                        (onClick)="cancel()"
-                        [pTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
-                        data-testid="hyperion-generation-cancel"
-                    >
-                        <fa-icon [icon]="faBan" />
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.cancel"></span>
-                    </p-button>
+    <section class="hyperion-activity" aria-labelledby="hyperion-generation-activity-title" data-testid="hyperion-generation-activity">
+        @if (canRevert()) {
+            <p-confirmDialog />
+        }
+
+        <header class="hyperion-activity-header">
+            <div class="hyperion-activity-heading">
+                <h3 id="hyperion-generation-activity-title" class="hyperion-activity-title">
+                    <fa-icon [icon]="facArtemisIntelligence" />
+                    <span [jhiTranslate]="titleLabelKey()"></span>
+                </h3>
+                @if (liveStatus(); as status) {
+                    <span class="hyperion-activity-running-status" role="status" aria-atomic="true" data-testid="hyperion-generation-live-status">
+                        @if (status.busy) {
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        }
+                        @if (status.message) {
+                            <span>{{ status.message }}</span>
+                        } @else {
+                            <span [jhiTranslate]="status.labelKey"></span>
+                        }
+                    </span>
                 }
-                @if (completionStatus(); as status) {
-                    <p-tag [severity]="completionSeverity(status)" data-testid="hyperion-generation-completion-status">
-                        <span [jhiTranslate]="'artemisApp.hyperion.generationActivity.completionStatus.' + status"></span>
+            </div>
+
+            <div class="hyperion-activity-actions">
+                @if (terminalStatus(); as terminal) {
+                    <p-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
+                        <span [jhiTranslate]="terminal.labelKey"></span>
                     </p-tag>
                 }
-                @if (verdict(); as currentVerdict) {
-                    <p-tag [severity]="currentVerdict.accepted ? 'success' : 'danger'" data-testid="hyperion-generation-verdict">
-                        <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
-                        <span
-                            [jhiTranslate]="
-                                currentVerdict.accepted ? 'artemisApp.hyperion.generationActivity.verdict.accepted' : 'artemisApp.hyperion.generationActivity.verdict.rejected'
-                            "
-                        ></span>
+                @if (persistenceState(); as persistence) {
+                    <p-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
+                        <span [jhiTranslate]="persistence.labelKey"></span>
                     </p-tag>
-                    <p-tag [severity]="currentVerdict.solutionPassed ? 'success' : 'danger'">
-                        <fa-icon [icon]="currentVerdict.solutionPassed ? faCircleCheck : faCircleXmark" />
-                        <span
-                            [jhiTranslate]="
-                                currentVerdict.solutionPassed
-                                    ? 'artemisApp.hyperion.generationActivity.verdict.solutionPassed'
-                                    : 'artemisApp.hyperion.generationActivity.verdict.solutionFailed'
-                            "
-                        ></span>
-                    </p-tag>
-                    <p-tag [severity]="currentVerdict.templateFailed ? 'success' : 'danger'">
-                        <fa-icon [icon]="currentVerdict.templateFailed ? faCircleCheck : faCircleXmark" />
-                        <span
-                            [jhiTranslate]="
-                                currentVerdict.templateFailed
-                                    ? 'artemisApp.hyperion.generationActivity.verdict.templateFailed'
-                                    : 'artemisApp.hyperion.generationActivity.verdict.templatePasses'
-                            "
-                        ></span>
-                    </p-tag>
-                    <p-tag severity="secondary">{{ currentVerdict.testCount }} {{ 'artemisApp.hyperion.generationActivity.verdict.tests' | artemisTranslate }}</p-tag>
-                    @if (!currentVerdict.accepted && currentVerdict.reasons?.length) {
-                        <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
-                            @for (reason of currentVerdict.reasons ?? []; track $index) {
-                                <li>{{ reason }}</li>
-                            }
-                        </ul>
-                    }
-                }
-                @if (canRevert()) {
-                    <p-button
-                        size="small"
-                        severity="secondary"
-                        [text]="true"
-                        [disabled]="reverting()"
-                        (onClick)="revert()"
-                        [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
-                        data-testid="hyperion-generation-revert"
-                    >
-                        <fa-icon [icon]="reverting() ? faSpinner : faRotateLeft" [animation]="reverting() ? 'spin' : undefined" />
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.revert"></span>
-                    </p-button>
                 }
                 @if (reverted()) {
                     <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.reverted"></span>
                     </p-tag>
                 }
-            </span>
-        </div>
+                @if (jobId() && hasDetails()) {
+                    <button
+                        pButton
+                        type="button"
+                        size="small"
+                        text
+                        severity="secondary"
+                        [attr.aria-expanded]="detailsExpanded()"
+                        aria-controls="hyperion-generation-details"
+                        (click)="toggleDetails()"
+                        data-testid="hyperion-generation-details-toggle"
+                    >
+                        <fa-icon [icon]="detailsExpanded() ? faChevronUp : faChevronDown" />
+                        <span [jhiTranslate]="detailsLabelKey()"></span>
+                    </button>
+                }
+                @if (running()) {
+                    <p-button
+                        size="small"
+                        severity="danger"
+                        [text]="true"
+                        [loading]="cancelRequested()"
+                        [disabled]="cancelRequested()"
+                        (onClick)="cancel()"
+                        [pTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
+                        data-testid="hyperion-generation-cancel"
+                    >
+                        <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
+                    </p-button>
+                }
+                @if (canRevert()) {
+                    <p-button
+                        size="small"
+                        severity="secondary"
+                        [text]="true"
+                        [loading]="reverting()"
+                        [disabled]="reverting()"
+                        (onClick)="confirmRevert()"
+                        [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
+                        data-testid="hyperion-generation-revert"
+                    >
+                        @if (!reverting()) {
+                            <fa-icon [icon]="faRotateLeft" />
+                        }
+                        <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : 'artemisApp.hyperion.generationActivity.revert'"></span>
+                    </p-button>
+                }
+            </div>
+        </header>
 
-        <div class="hyperion-activity-body">
-            <div class="hyperion-activity-sidebar">
-                <div class="hyperion-activity-files">
-                    @for (group of filesByRepo(); track group.repo) {
-                        <div class="hyperion-activity-repo" data-testid="hyperion-generation-repo">
-                            <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
-                            @for (file of group.files; track file.path) {
-                                <button
-                                    type="button"
-                                    class="hyperion-activity-file"
-                                    [class.active]="file.path === activePath() && file.repo === activeSnapshot()?.repo"
-                                    (click)="selectFile(file.path, file.repo)"
-                                    data-testid="hyperion-generation-file"
-                                >
-                                    <span class="hyperion-activity-file-path">{{ file.path }}</span>
-                                    <span class="hyperion-activity-file-action" [jhiTranslate]="'artemisApp.hyperion.generationActivity.action.' + file.action"></span>
-                                </button>
+        @if (idle()) {
+            <div class="hyperion-activity-empty" data-testid="hyperion-generation-empty">
+                <strong jhiTranslate="artemisApp.hyperion.generationActivity.emptyTitle"></strong>
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
+                <p-button size="small" (onClick)="requestStart()" data-testid="hyperion-generation-start">
+                    <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
+                </p-button>
+            </div>
+        }
+
+        @if (statusLoadFailed()) {
+            <p-message severity="error" class="hyperion-activity-message" [closable]="false">
+                <div class="hyperion-activity-message-content">
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
+                    <p-button size="small" severity="secondary" [text]="true" (onClick)="retryStatus()">
+                        <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
+                    </p-button>
+                </div>
+            </p-message>
+        }
+
+        @if (revertPartialRepositories(); as repositories) {
+            <p-message severity="error" class="hyperion-activity-message" [closable]="false" data-testid="hyperion-generation-revert-partial">
+                <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
+            </p-message>
+        }
+
+        @if (verdict(); as currentVerdict) {
+            <div class="hyperion-activity-verification" data-testid="hyperion-generation-verdict">
+                <span [class]="currentVerdict.accepted ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                    <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
+                    <strong
+                        [jhiTranslate]="
+                            currentVerdict.accepted ? 'artemisApp.hyperion.generationActivity.verdict.checksPassed' : 'artemisApp.hyperion.generationActivity.verdict.checksFailed'
+                        "
+                    ></strong>
+                </span>
+                <span [class]="currentVerdict.solutionPassed ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                    <fa-icon [icon]="currentVerdict.solutionPassed ? faCircleCheck : faCircleXmark" />
+                    <span
+                        [jhiTranslate]="
+                            currentVerdict.solutionPassed
+                                ? 'artemisApp.hyperion.generationActivity.verdict.solutionPassedExpected'
+                                : 'artemisApp.hyperion.generationActivity.verdict.solutionFailed'
+                        "
+                    ></span>
+                </span>
+                <span [class]="currentVerdict.templateFailed ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                    <fa-icon [icon]="currentVerdict.templateFailed ? faCircleCheck : faCircleXmark" />
+                    <span
+                        [jhiTranslate]="
+                            currentVerdict.templateFailed
+                                ? 'artemisApp.hyperion.generationActivity.verdict.templateFailedExpected'
+                                : 'artemisApp.hyperion.generationActivity.verdict.templatePassedUnexpected'
+                        "
+                    ></span>
+                </span>
+                <span class="hyperion-verification-count">
+                    {{ currentVerdict.testCount }}
+                    <span
+                        [jhiTranslate]="
+                            currentVerdict.testCount === 1 ? 'artemisApp.hyperion.generationActivity.verdict.oneTest' : 'artemisApp.hyperion.generationActivity.verdict.tests'
+                        "
+                    ></span>
+                </span>
+            </div>
+            @if (!currentVerdict.accepted && currentVerdict.reasons.length) {
+                <p-message severity="error" class="hyperion-activity-message" [closable]="false">
+                    <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
+                        @for (reason of currentVerdict.reasons; track $index) {
+                            <li>{{ reason }}</li>
+                        }
+                    </ul>
+                </p-message>
+            }
+        }
+
+        @if (jobId() && hasDetails() && detailsExpanded()) {
+            <div id="hyperion-generation-details" class="hyperion-activity-body" data-testid="hyperion-generation-details">
+                @if (snapshots().length) {
+                    <section class="hyperion-activity-files" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
+                        <h4 id="hyperion-changed-files-title" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
+                        @for (group of filesByRepo(); track group.repo) {
+                            <div class="hyperion-activity-repo" data-testid="hyperion-generation-repo">
+                                <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
+                                @for (file of group.files; track file.repo + ':' + file.path) {
+                                    @if (canNavigateSnapshot(file)) {
+                                        <p-button
+                                            class="hyperion-activity-file"
+                                            size="small"
+                                            severity="secondary"
+                                            [text]="true"
+                                            [fluid]="true"
+                                            [pTooltip]="file.path"
+                                            tooltipPosition="right"
+                                            (onClick)="selectFile(file)"
+                                            data-testid="hyperion-generation-file"
+                                        >
+                                            <span class="hyperion-activity-file-path">{{ displayPath(file) }}</span>
+                                        </p-button>
+                                    } @else {
+                                        <div class="hyperion-activity-file-static" data-testid="hyperion-generation-file-static">
+                                            {{ displayPath(file) }}
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+                @if (previousProgress().length) {
+                    <section class="hyperion-activity-progress" aria-labelledby="hyperion-activity-progress-title">
+                        <h4 id="hyperion-activity-progress-title" jhiTranslate="artemisApp.hyperion.generationActivity.recentActivity"></h4>
+                        <ol class="hyperion-activity-timeline">
+                            @for (event of previousProgress(); track $index) {
+                                <li>{{ event.message }}</li>
                             }
-                        </div>
-                    } @empty {
-                        <div class="hyperion-activity-empty" jhiTranslate="artemisApp.hyperion.generationActivity.noFiles"></div>
-                    }
-                </div>
-                <ul class="hyperion-activity-timeline">
-                    @for (event of events(); track $index) {
-                        @if (event.message) {
-                            <li>{{ event.message }}</li>
-                        }
-                    }
-                </ul>
+                        </ol>
+                    </section>
+                }
             </div>
-
-            <div class="hyperion-activity-preview">
-                <div class="hyperion-activity-preview-header">
-                    <span class="hyperion-activity-preview-path">{{ activePath() ?? ('artemisApp.hyperion.generationActivity.noPreview' | artemisTranslate) }}</span>
-                    <span class="hyperion-activity-preview-controls">
-                        @if (activeSnapshot()?.truncated) {
-                            <fa-icon [icon]="faTriangleExclamation" [pTooltip]="'artemisApp.hyperion.generationActivity.truncated' | artemisTranslate" />
-                        }
-                        <p-button size="small" [text]="true" [severity]="follow() ? 'primary' : 'secondary'" (onClick)="toggleFollow()" data-testid="hyperion-generation-follow">
-                            <fa-icon [icon]="faThumbTack" />
-                            <span jhiTranslate="artemisApp.hyperion.generationActivity.followAgent"></span>
-                        </p-button>
-                    </span>
-                </div>
-                <jhi-monaco-editor class="hyperion-activity-monaco" [readOnly]="true" [shrinkToFit]="false" />
-            </div>
-        </div>
-    </div>
+        }
+    </section>
 }

@@ -2,3 +2,37 @@
     margin-bottom: 0;
     line-height: 1;
 }
+
+.editor-bottom-tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+
+    p-tabpanels {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    p-tabpanel {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+        padding: 0;
+    }
+}
+
+.editor-bottom-tabs-header {
+    display: flex;
+    align-items: center;
+
+    p-tablist {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+.editor-bottom-collapse {
+    flex: 0 0 auto;
+}

@@ -1,11 +1,13 @@
 <div id="cardBuildOutput" class="card border build-output">
-    <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header d-flex bg-primary text-white'" (click)="toggleEditorCollapse($event)">
-        <h3 class="card-title">
-            <fa-icon [icon]="faTerminal" />
-            <span jhiTranslate="artemisApp.editor.buildOutput"></span>
-        </h3>
-        <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
-    </div>
+    @if (showHeader()) {
+        <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header d-flex bg-primary text-white'" (click)="toggleEditorCollapse($event)">
+            <h3 class="card-title">
+                <fa-icon [icon]="faTerminal" />
+                <span jhiTranslate="artemisApp.editor.buildOutput"></span>
+            </h3>
+            <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
+        </div>
+    }
     @if (!isBuilding() && !rawBuildLogs().length) {
         <div class="card-body">
             <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput"></p>

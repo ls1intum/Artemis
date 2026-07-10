@@ -440,6 +440,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.markdownEditorMonaco()?.clearReviewCommentDrafts();
     }
 
+    /** Accepts content reloaded from the server as the editor's clean baseline. */
+    acceptServerBaseline(exercise: ProgrammingExercise): void {
+        this.previousExercise = exercise;
+        this.unsavedChanges = false;
+        if (exercise.id) {
+            this.testCaseService
+                .refreshTestCases(exercise.id)
+                .pipe(catchError(() => EMPTY))
+                .subscribe();
+        }
+    }
+
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
         return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, repeatedTestCases }) =>
             this.mapIssuesToAnnotations(lineNumber, invalidTestCases, repeatedTestCases),

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -208,6 +209,19 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         var content = generatedConsistencyThread.getComments().iterator().next().getContent();
         assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
         assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    void shouldCreateConsistencyCheckThreadsWithExplicitAuthorWithoutSecurityContext() {
+        var author = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Generated consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+
+        SecurityContextHolder.clearContext();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue), author);
+
+        assertThat(createdThreads).singleElement()
+                .satisfies(thread -> assertThat(thread.getComments()).singleElement().satisfies(comment -> assertThat(comment.getAuthor().getId()).isEqualTo(author.getId())));
     }
 
     @Test

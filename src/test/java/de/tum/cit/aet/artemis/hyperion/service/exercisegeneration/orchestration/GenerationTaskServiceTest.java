@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
@@ -145,21 +146,6 @@ class GenerationTaskServiceTest {
     }
 
     @Test
-    void acceptedRun_persistsAndEmitsSuccess_thenClosesTheOutcome() {
-        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
-
-        List<ExerciseGenerationEventDTO> events = sentEvents();
-        assertThat(events.stream().map(ExerciseGenerationEventDTO::type)).startsWith(ExerciseGenerationEventDTO.Type.STARTED).endsWith(ExerciseGenerationEventDTO.Type.DONE);
-        ExerciseGenerationEventDTO terminal = events.getLast();
-        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
-        assertThat(terminal.verdict()).isNotNull();
-        assertThat(terminal.verdict().accepted()).isTrue();
-        assertThat(terminal.liveExerciseChanged()).isTrue();
-        // At least one PROGRESS line (e.g. the "saving" step) precedes the terminal DONE on the accepted path.
-        assertThat(events).anyMatch(event -> event.type() == ExerciseGenerationEventDTO.Type.PROGRESS);
-    }
-
-    @Test
     void mixedProgressAndFileSnapshots_arePushedInProductionOrderOnTheSameStream() {
         GenerationOutcome outcome = outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
@@ -191,16 +177,24 @@ class GenerationTaskServiceTest {
 
     @Test
     void acceptedRun_persistsExactlyOnceAndDestroysTheSandbox() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of()));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle()));
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
-        verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), any(), any(), any());
-        // A GENERATE run records no revert baseline.
-        verify(adaptationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any());
-        // The outcome is always closed → the sandbox is destroyed on the accepted path.
-        verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
+        var order = Mockito.inOrder(orchestrator, persistenceService);
+        order.verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
+        order.verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), any());
+        verify(adaptationRevertService).discardBaseline(EXERCISE_ID);
+        verify(adaptationRevertService, never()).recordBaseline(any(), anyString(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        List<ExerciseGenerationEventDTO> events = sentEvents();
+        assertThat(events.stream().map(ExerciseGenerationEventDTO::type)).startsWith(ExerciseGenerationEventDTO.Type.STARTED).endsWith(ExerciseGenerationEventDTO.Type.DONE);
+        ExerciseGenerationEventDTO terminal = events.getLast();
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
+        assertThat(terminal.verdict().accepted()).isTrue();
+        assertThat(terminal.liveExerciseChanged()).isTrue();
+        assertThat(events).anyMatch(event -> event.type() == ExerciseGenerationEventDTO.Type.PROGRESS);
     }
 
     @Test
@@ -210,20 +204,31 @@ class GenerationTaskServiceTest {
         GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT);
         exercise.setProblemStatement("Manual edit while Hyperion was running");
         exercise.setTitle("Manual title edit while Hyperion was running");
-        when(persistenceService.persist(any(), any(), any(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha")));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
+                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Persisted statement", "Persisted title"));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         taskService.runAsync(event);
 
-        verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Original problem statement"), eq("Original title"), any());
-        verify(adaptationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), any(), any(), eq("Original problem statement"), eq("Original title"));
+        verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Original problem statement"), eq("Original title"), eq(JOB_ID), any());
+        verify(adaptationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), any(), any(), eq("Original problem statement"), eq("Original title"), eq("Persisted statement"),
+                eq("Persisted title"));
+        assertThat(sentEvents().getLast().message()).contains("adapted and saved").doesNotContain("generated and saved");
+    }
+
+    @Test
+    void acceptedRun_describesAdvisoryReviewNotesInPlainLanguage() {
+        when(recoveryService.surfaceAdvisoryFindings(any(), any(), any())).thenReturn(1);
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        assertThat(sentEvents().getLast().message()).contains("1 review note was added").doesNotContain("spec-fidelity").doesNotContain("note(s)");
     }
 
     @Test
     void acceptedRun_whenMultiRepoPersistIsIncomplete_emitsStructuredPartial() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), any()))
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
                 .thenThrow(new GenerationIncompleteException("already-committed repositories were reverted", new RuntimeException()));
 
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
@@ -232,49 +237,47 @@ class GenerationTaskServiceTest {
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
         assertThat(terminal.verdict().accepted()).isTrue();
+        assertThat(terminal.message()).doesNotContain("already-committed repositories");
     }
 
     @Test
-    void acceptedAdaptRun_recordsARevertBaseline() {
-        when(persistenceService.persist(any(), any(), any(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha")));
-        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
-
-        // Only an accepted ADAPT applied in place records a revertible baseline.
-        verify(adaptationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), any(), any(), any(), any());
-    }
-
-    @Test
-    void acceptedAdaptRun_recordsBaselineFromFreshlyReloadedPersistedExercise() {
+    void acceptedAdaptRun_recordsExactPersistedMetadataWithoutARacyReload() {
         ProgrammingExercise exerciseToPersist = new ProgrammingExercise();
         exerciseToPersist.setId(EXERCISE_ID);
         exerciseToPersist.setReleaseDate(ZonedDateTime.now().plusDays(1));
         exerciseToPersist.setProblemStatement("Original problem statement");
         exerciseToPersist.setTitle("Original title");
 
-        ProgrammingExercise persistedExercise = new ProgrammingExercise();
-        persistedExercise.setId(EXERCISE_ID);
-        persistedExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        persistedExercise.setProblemStatement("Persisted problem statement after save hooks");
-        persistedExercise.setTitle("Original title");
-
-        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist),
-                Optional.of(persistedExercise));
-        when(persistenceService.persist(any(), any(), any(), any(), any(), any()))
-                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha")));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
+                Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Exact persisted statement", "Exact persisted title"));
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT));
 
-        verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), any());
-        verify(adaptationRevertService).recordBaseline(eq(persistedExercise), eq(JOB_ID), any(), any(), eq(exercise.getProblemStatement()), eq(exercise.getTitle()));
-        verify(recoveryService).surfaceAdvisoryFindings(eq(persistedExercise), any());
+        verify(persistenceService).persist(eq(exerciseToPersist), eq(user), any(GenerationOutcome.class), any(), any(), eq(JOB_ID), any());
+        verify(adaptationRevertService).recordBaseline(eq(exerciseToPersist), eq(JOB_ID), any(), any(), eq(exercise.getProblemStatement()), eq(exercise.getTitle()),
+                eq("Exact persisted statement"), eq("Exact persisted title"));
+        verify(recoveryService).surfaceAdvisoryFindings(eq(exerciseToPersist), eq(user), any());
+    }
+
+    @Test
+    void acceptedRun_doesNotReportFailureAfterPersistenceSucceeded() {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exercise));
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle()));
+
+        run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        verify(adaptationRevertService).recordBaseline(eq(exercise), eq(JOB_ID), any(), any(), any(), any(), eq(exercise.getProblemStatement()), eq(exercise.getTitle()));
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
     }
 
     @Test
     void nonAcceptedButRecoverableRun_savesDraftAndEmitsNeedsReview() {
-        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(new GenerationRecoveryService.RecoveryResult(2, true, "hyperion-draft/job-1"));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(
+                new GenerationRecoveryService.RecoveryResult(2, "hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS)));
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed"))));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
@@ -282,8 +285,9 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
         assertThat(terminal.verdict().accepted()).isFalse();
         assertThat(terminal.liveExerciseChanged()).isFalse();
+        assertThat(terminal.message()).contains("repository files", "problem statement was not saved");
         // A rejected outcome never goes through the clean persist path; recovery owns the draft save.
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
     }
@@ -296,7 +300,7 @@ class GenerationTaskServiceTest {
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(recoveryService, never()).recover(any(), any(), any(), anyString());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
@@ -337,11 +341,13 @@ class GenerationTaskServiceTest {
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
         // Only when the draft persist itself fails does the run report PARTIAL (nothing durable saved; the instructor can retry).
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(terminal.message()).doesNotContain("draft persist failed");
     }
 
     @Test
     void budgetExhaustedNotAcceptedRun_savesDraftEmitsNeedsReview_andDestroysSession() {
-        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(new GenerationRecoveryService.RecoveryResult(1, true, "hyperion-draft/job-1"));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE)));
         // A budget-exhausted run is still verified: a rejected verdict flows through the recovery path exactly like a COMPLETED near-miss, never the clean persist.
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.BUDGET_EXHAUSTED, new VerificationResult(false, false, true, 3, List.of("template passed a graded test"))));
 
@@ -350,7 +356,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
         assertThat(terminal.verdict().accepted()).isFalse();
         assertThat(terminal.liveExerciseChanged()).isFalse();
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         // The outcome is always closed → the sandbox is destroyed even on the budget-exhausted path, and the slot is cleared.
         verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
@@ -358,7 +364,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void nonAcceptedAdaptDraftOnIsolatedBranch_emitsNeedsReviewWithoutLiveRefreshHint() {
-        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(new GenerationRecoveryService.RecoveryResult(1, true, "hyperion-draft/job"));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any()))
+                .thenReturn(new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job", Set.of(RepositoryType.TEMPLATE)));
         run(GenerationMode.ADAPT, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(false, false, true, 3, List.of("solution failed"))));
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
@@ -372,7 +379,7 @@ class GenerationTaskServiceTest {
 
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(recoveryService, never()).recover(any(), any(), any(), anyString());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
@@ -418,7 +425,7 @@ class GenerationTaskServiceTest {
         run(GenerationMode.GENERATE, GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, "")));
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
-        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), any());
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
         verify(recoveryService, never()).recover(any(), any(), any(), anyString());
     }
 

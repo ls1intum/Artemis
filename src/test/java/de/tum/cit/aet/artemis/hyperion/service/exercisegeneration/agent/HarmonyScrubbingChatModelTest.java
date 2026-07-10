@@ -109,7 +109,6 @@ class HarmonyScrubbingChatModelTest {
         when(delegate.stream(prompt)).thenReturn(Flux.just(dirtyChunk));
         HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
 
-        // stream() scrubs each emitted chunk with the same routine as call(): a harmony token leaked mid-stream is stripped, so any ChatClient streaming consumer stays protected.
         List<ChatResponse> chunks = model.stream(prompt).collectList().block();
         assertThat(chunks).hasSize(1);
         assertThat(chunks.getFirst().getResult().getOutput().getText()).isEqualTo("chunk");

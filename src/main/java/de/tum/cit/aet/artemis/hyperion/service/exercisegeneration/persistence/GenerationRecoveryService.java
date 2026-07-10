@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import org.slf4j.Logger;
@@ -27,10 +28,11 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Recovers a near-miss exercise-generation run instead of discarding it: persists the best-effort artifact as an isolated <em>draft</em>, then translates every verification
- * finding (plus the agent's final note) into
+ * Recovers a near-miss exercise-generation run instead of discarding it: persists changed repository files on isolated branches, then translates every verification finding
+ * (plus the agent's final note) into
  * {@code CONSISTENCY_CHECK} review-comment threads via the manual consistency-check path ({@link ExerciseReviewService#createConsistencyCheckThreads}).
  * <p>
  * Load-bearing invariant: a recovered draft is never presented as accepted — the terminal verdict is always {@code NEEDS_REVIEW} (never {@code SUCCESS})
@@ -44,11 +46,7 @@ public class GenerationRecoveryService {
 
     private static final Logger log = LoggerFactory.getLogger(GenerationRecoveryService.class);
 
-    /**
-     * Category chip on every recovery finding. The verification gates don't map onto the structural categories, so the most generic one is used; the description carries the
-     * detail.
-     */
-    private static final ConsistencyIssueCategory RECOVERY_CATEGORY = ConsistencyIssueCategory.IDENTIFIER_NAMING_INCONSISTENCY;
+    private static final ConsistencyIssueCategory RECOVERY_CATEGORY = ConsistencyIssueCategory.GENERATION_REVIEW_REQUIRED;
 
     /** Recovery findings anchor to the problem statement's first line: it always exists (unlike a repository file path), so the thread reliably lands in the editor. */
     private static final int ANCHOR_LINE = 1;
@@ -75,13 +73,17 @@ public class GenerationRecoveryService {
     /**
      * The result of recovering a non-accepted generation run.
      *
-     * @param reviewThreadCount     the number of review-comment threads created, or {@link #REVIEW_COMMENTS_FAILED} when the draft was persisted but its review comments could not
-     *                                  be
-     *                                  attached
-     * @param liveExerciseUntouched {@code true} if the live exercise was left byte-identical
-     * @param draftBranch           the isolated branch the draft was diverted to
+     * @param reviewThreadCount the number of review-comment threads created, or {@link #REVIEW_COMMENTS_FAILED} when the draft was persisted but its review comments could not
+     *                              be
+     *                              attached
+     * @param draftBranch       the isolated branch the repository drafts were diverted to
+     * @param savedRepositories the repositories for which a draft commit was pushed
      */
-    public record RecoveryResult(int reviewThreadCount, boolean liveExerciseUntouched, String draftBranch) {
+    public record RecoveryResult(int reviewThreadCount, String draftBranch, Set<RepositoryType> savedRepositories) {
+
+        public RecoveryResult {
+            savedRepositories = Set.copyOf(savedRepositories);
+        }
     }
 
     /**
@@ -93,34 +95,35 @@ public class GenerationRecoveryService {
      * @param user     the instructor who started the run (commit author and review-comment author)
      * @param outcome  the non-accepted outcome holding the produced files, verification report, and agent note
      * @param jobId    the generation job id, used to name the isolated draft branch
-     * @return the recovery result (review-thread count and whether the live exercise was left untouched)
-     * @throws RuntimeException only when the persist itself fails (nothing durable was saved); the caller maps that to {@code PARTIAL}
+     * @return the recovery result
+     * @throws RuntimeException when the repository draft persist does not complete; the caller maps that to {@code PARTIAL}
      */
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId) {
-        return recoverAfterPersist(exercise, outcome, persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId));
+        return recoverAfterPersist(exercise, user, outcome, persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId));
     }
 
     public RecoveryResult recover(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String jobId, BooleanSupplier stillOwnsMutationSlot) {
-        // A persist failure means nothing durable was saved, so it propagates and the caller reports PARTIAL.
+        // A persist failure propagates so the caller reports PARTIAL rather than claiming a complete repository draft.
         GenerationPersistenceService.RecoveryPersistResult persistResult = persistenceService.persistRecoveryDraft(exercise, user, outcome, jobId, stillOwnsMutationSlot);
-        return recoverAfterPersist(exercise, outcome, persistResult);
+        return recoverAfterPersist(exercise, user, outcome, persistResult);
     }
 
-    private RecoveryResult recoverAfterPersist(ProgrammingExercise exercise, GenerationOutcome outcome, GenerationPersistenceService.RecoveryPersistResult persistResult) {
+    private RecoveryResult recoverAfterPersist(ProgrammingExercise exercise, User user, GenerationOutcome outcome,
+            GenerationPersistenceService.RecoveryPersistResult persistResult) {
         // The draft is now committed, so a failed annotation must not be reported as "nothing saved": swallow it and return REVIEW_COMMENTS_FAILED for a degraded NEEDS_REVIEW.
         try {
             List<ConsistencyIssueDTO> findings = toFindings(outcome);
             if (findings.isEmpty()) {
-                return new RecoveryResult(0, persistResult.liveExerciseUntouched(), persistResult.draftBranch());
+                return new RecoveryResult(0, persistResult.draftBranch(), persistResult.savedRepositories());
             }
-            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings);
+            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings, user);
             log.info("Recovered generation draft for exercise {} with {} review-comment thread(s) from verification findings", exercise.getId(), createdThreads.size());
-            return new RecoveryResult(createdThreads.size(), persistResult.liveExerciseUntouched(), persistResult.draftBranch());
+            return new RecoveryResult(createdThreads.size(), persistResult.draftBranch(), persistResult.savedRepositories());
         }
         catch (RuntimeException e) {
             // The draft IS saved; only the annotation failed. Do not let that masquerade as "nothing saved".
             log.error("Generation draft for exercise {} was persisted but its review comments could not be attached; surfacing as a degraded NEEDS_REVIEW", exercise.getId(), e);
-            return new RecoveryResult(REVIEW_COMMENTS_FAILED, persistResult.liveExerciseUntouched(), persistResult.draftBranch());
+            return new RecoveryResult(REVIEW_COMMENTS_FAILED, persistResult.draftBranch(), persistResult.savedRepositories());
         }
     }
 
@@ -180,16 +183,17 @@ public class GenerationRecoveryService {
      * on or dismiss. Best-effort and never throws: a failed attach must not turn a successful generation into a failure.
      *
      * @param exercise the accepted, persisted exercise
+     * @param user     the instructor who started the run
      * @param report   the advisory spec-fidelity report (no threads are created when it is empty)
      * @return the number of advisory threads created (zero when there were no findings or attachment failed)
      */
-    public int surfaceAdvisoryFindings(ProgrammingExercise exercise, SpecFidelityReport report) {
+    public int surfaceAdvisoryFindings(ProgrammingExercise exercise, User user, SpecFidelityReport report) {
         List<ConsistencyIssueDTO> findings = specFidelityFindings(report);
         if (findings.isEmpty()) {
             return 0;
         }
         try {
-            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings);
+            List<CommentThread> createdThreads = createAndBroadcastThreads(exercise.getId(), findings, user);
             log.info("Attached {} advisory spec-fidelity review thread(s) to accepted exercise {}", createdThreads.size(), exercise.getId());
             return createdThreads.size();
         }
@@ -204,10 +208,11 @@ public class GenerationRecoveryService {
      *
      * @param exerciseId the exercise the threads belong to
      * @param findings   the findings to persist (non-empty)
+     * @param author     the review-comment author
      * @return the created threads
      */
-    private List<CommentThread> createAndBroadcastThreads(long exerciseId, List<ConsistencyIssueDTO> findings) {
-        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, findings);
+    private List<CommentThread> createAndBroadcastThreads(long exerciseId, List<ConsistencyIssueDTO> findings, User author) {
+        List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, findings, author);
         for (CommentThread thread : createdThreads) {
             CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
             exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));

@@ -9,11 +9,10 @@
  */
 
 
-export interface ExerciseGenerationVerdict { 
+export interface ExerciseGenerationVerdict {
     accepted: boolean;
     solutionPassed: boolean;
     templateFailed: boolean;
     testCount: number;
     reasons: Array<string>;
 }
-

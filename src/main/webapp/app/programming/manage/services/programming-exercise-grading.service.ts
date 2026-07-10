@@ -35,6 +35,7 @@ export class StaticCodeAnalysisCategoryUpdate {
 
 export interface IProgrammingExerciseGradingService {
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined>;
+    refreshTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined>;
     notifyTestCases(exerciseId: number, testCases: ProgrammingExerciseTestCase[]): void;
     updateTestCase(exerciseId: number, testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): Observable<ProgrammingExerciseTestCase[]>;
     resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]>;
@@ -84,6 +85,21 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
                     this.testCases.set(exerciseId, testCases);
                 }
                 return this.initTestCaseSubscription(exerciseId, testCases);
+            }),
+        );
+    }
+
+    /** Reloads test cases from the server and updates the existing shared subscription. */
+    refreshTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`).pipe(
+            map((testCases) => (testCases.length ? testCases : undefined)),
+            tap((testCases) => {
+                if (testCases) {
+                    this.testCases.set(exerciseId, testCases);
+                } else {
+                    this.testCases.delete(exerciseId);
+                }
+                this.subjects[exerciseId]?.next(testCases);
             }),
         );
     }

@@ -227,7 +227,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
                 @Override
                 public void onError(Throwable throwable) {
-                    log.error("Error while executing sandbox command: {} in session {}", String.join(" ", command), sessionId, throwable);
+                    log.error("Error while executing a sandbox command in session {}", sessionId, throwable);
                     errorRef.set(throwable);
                     latch.countDown();
                 }
@@ -304,21 +304,19 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     @Override
     public void destroySession(String sessionId) {
-        forgetActivity(sessionId);
         if (!buildAgentConfiguration.isDockerAvailable()) {
-            return;
+            throw new LocalCIException("Cannot remove interactive sandbox session " + sessionId + " because Docker is unavailable");
         }
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
-        // Force-remove directly: the container holds no state worth flushing (it only ran untrusted generated code) and withForce SIGKILLs it regardless — a graceful stop-sentinel
-        // touch would only add a synchronous exec round-trip (and a stall on a wedged container) for no behavioural gain.
         try (final var removeCommand = dockerClient.removeContainerCmd(sessionId).withForce(true)) {
             removeCommand.exec();
+            forgetActivity(sessionId);
         }
         catch (NotFoundException e) {
-            // Already gone.
+            forgetActivity(sessionId);
         }
         catch (RuntimeException e) {
-            log.warn("Failed to remove interactive sandbox session {}: {}", sessionId, e.getMessage());
+            throw new LocalCIException("Failed to remove interactive sandbox session " + sessionId, e);
         }
     }
 
@@ -331,14 +329,20 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    private static void appendBounded(StringBuilder builder, String payload) {
-        // Cap memory at 2x the limit; only the tail is kept at the end anyway.
-        if (builder.length() < MAX_CAPTURED_OUTPUT_CHARS * 2) {
-            builder.append(payload);
+    static void appendBounded(StringBuilder builder, String payload) {
+        int retainedCharacters = MAX_CAPTURED_OUTPUT_CHARS * 2;
+        if (payload.length() >= retainedCharacters) {
+            builder.setLength(0);
+            builder.append(payload, payload.length() - retainedCharacters, payload.length());
+            return;
+        }
+        builder.append(payload);
+        if (builder.length() > retainedCharacters) {
+            builder.delete(0, builder.length() - retainedCharacters);
         }
     }
 
-    private static String truncateTail(String value) {
+    static String truncateTail(String value) {
         if (value.length() <= MAX_CAPTURED_OUTPUT_CHARS) {
             return value;
         }

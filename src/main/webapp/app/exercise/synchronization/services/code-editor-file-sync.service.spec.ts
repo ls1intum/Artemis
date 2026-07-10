@@ -26,6 +26,7 @@ describe('CodeEditorFileSyncService', () => {
     let syncService: Mocked<ExerciseEditorSyncService>;
     let incomingMessages$: Subject<ExerciseEditorSyncEvent>;
     let userIdentitySignal: WritableSignal<any>;
+    let alertService: AlertService;
 
     const EXERCISE_ID = 42;
     const TARGET = ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
@@ -60,6 +61,7 @@ describe('CodeEditorFileSyncService', () => {
 
         service = TestBed.inject(CodeEditorFileSyncService);
         syncService = TestBed.inject(ExerciseEditorSyncService) as Mocked<ExerciseEditorSyncService>;
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -159,6 +161,51 @@ describe('CodeEditorFileSyncService', () => {
             expect(destroySpy).toHaveBeenCalled();
             expect(clearStylesSpy).toHaveBeenCalled();
             clearStylesSpy.mockRestore();
+        });
+    });
+
+    describe('expected repository updates', () => {
+        const newCommitEvent = {
+            eventType: ExerciseEditorSyncEventType.NEW_COMMIT_ALERT,
+            target: TARGET,
+            timestamp: 1,
+        } as ExerciseEditorSyncEvent;
+
+        it('suppresses Hyperion-owned commit warnings only until the repository refresh completes', () => {
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            service.init(EXERCISE_ID, TARGET);
+
+            service.beginExpectedRepositoryUpdate();
+            incomingMessages$.next(newCommitEvent);
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            service.endExpectedRepositoryUpdate();
+            incomingMessages$.next(newCommitEvent);
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('dismisses an already delivered commit warning when the expected update begins', () => {
+            const close = vi.fn();
+            vi.spyOn(alertService, 'addAlert').mockReturnValue({ close } as any);
+            service.init(EXERCISE_ID, TARGET);
+            incomingMessages$.next(newCommitEvent);
+
+            service.beginExpectedRepositoryUpdate();
+
+            expect(close).toHaveBeenCalledOnce();
+        });
+
+        it('suppresses an expected commit event delivered after refresh completion without hiding a later external commit', () => {
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            service.init(EXERCISE_ID, TARGET);
+
+            service.beginExpectedRepositoryUpdate(100);
+            service.endExpectedRepositoryUpdate();
+            incomingMessages$.next({ ...newCommitEvent, timestamp: 99 } as ExerciseEditorSyncEvent);
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            incomingMessages$.next({ ...newCommitEvent, timestamp: 101 } as ExerciseEditorSyncEvent);
+            expect(addAlertSpy).toHaveBeenCalledOnce();
         });
     });
 

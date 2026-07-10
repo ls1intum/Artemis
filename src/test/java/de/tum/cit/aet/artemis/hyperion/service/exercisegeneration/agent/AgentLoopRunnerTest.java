@@ -115,6 +115,19 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_scrubsHarmonyTokensFromModelResponses() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE<|end|>"));
+
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
+        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
+
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+
+        assertThat(result.finalMessage()).isEqualTo("DONE");
+    }
+
+    @Test
     void agentLoop_backsOffAndRetriesTransientModelFailures_thenRecovers() {
         ChatModel chatModel = mock(ChatModel.class);
         // Transient transport failures the loop must re-sample WITHIN the turn rather than aborting the whole generation: first a read timeout (typed openai-java IO error), then
@@ -133,7 +146,7 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
         verify(chatModel, times(3)).call(any(Prompt.class)); // 2 transient failures + 1 success
-        assertThat(steps).contains("Model call failed (read timed out); retrying.");
+        assertThat(steps).contains("The AI service is temporarily unavailable. Retrying.").noneMatch(step -> step.contains("read timed out"));
     }
 
     @Test
@@ -153,23 +166,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class)); // fail fast: a deterministic 4xx is never retried
-        assertThat(steps).anyMatch(s -> s.startsWith("Model call failed and will not be retried"));
-    }
-
-    @Test
-    void agentLoop_untyped401Message_failsFastWithoutRetrying() {
-        ChatModel chatModel = mock(ChatModel.class);
-        // Even when the provider surfaces the rejection as an untyped runtime exception, the HTTP-status fallback recognises the deterministic 401 and fails fast (no retries).
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 401: unauthorized"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        runner.setModelCallRetryTimingForTests(0L, 0L);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(1)).call(any(Prompt.class));
+        assertThat(steps).contains("The AI service could not complete the request.");
     }
 
     @Test
@@ -271,20 +268,6 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void agentLoop_cancellationDuringBackoffStopsRetryLadder() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 503"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        runner.setModelCallRetryTimingForTests(0L, 0L);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeSandbox(), "fake-session"), 10,
-                new java.util.concurrent.atomic.AtomicBoolean(true)::get, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
-        verify(chatModel, times(0)).call(any(Prompt.class));
-    }
-
-    @Test
     void agentLoop_cancellationDuringRetryBackoffReportsCancelled() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("GPU endpoint returned HTTP 503"));
@@ -356,7 +339,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(6)).call(any(Prompt.class)); // transient 5xx retried up to MODEL_CALL_ATTEMPTS, all exhausted
-        assertThat(steps).anyMatch(s -> s.startsWith("Model call failed after 6 attempts"));
+        assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("GPU endpoint"));
     }
 
     @Test
@@ -374,8 +357,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
-        // The transcript shows the normalized name, confirming dispatch went to the real tool (not the leaked one).
-        assertThat(steps).contains("Turn 1: bash {\"command\":\"ls\"}");
+        assertThat(steps).contains("Running a workspace command.").noneMatch(step -> step.contains("{\"command\""));
     }
 
     @Test
@@ -392,12 +374,14 @@ class AgentLoopRunnerTest {
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
         FakeSandbox sandbox = new FakeSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "fake-session");
+        List<String> steps = new ArrayList<>();
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
         // The loop ends after exactly one turn via submit — were submit only honoured as the SOLE call, the loop would never terminate here and run to maxTurns instead.
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.turns()).isEqualTo(1);
+        assertThat(steps).filteredOn("Submitting the exercise for verification."::equals).hasSize(1);
         // And the co-requested bash call really executed (reached the sandbox) before the loop ended — proving the batch runs, not just that submit short-circuits.
         assertThat(sandbox.execCommands).as("the co-requested bash command was executed before the loop ended").anyMatch(command -> command.contains("ls"));
     }
@@ -431,14 +415,11 @@ class AgentLoopRunnerTest {
     }
 
     @Test
-    void describeToolCall_rendersFullPathFirstForFileTools_soTheClientCanParseIt() {
+    void toolProgress_namesTheUpdatedFileWithoutExposingFileContent() {
         ChatModel chatModel = mock(ChatModel.class);
         String longContent = "x".repeat(500);
-        // Arguments deliberately put a large "content" BEFORE "path" (the model controls key order); the transcript line must still surface the full, untruncated path, because the
-        // client's "files changed" view parses the path as the file tool's argument. This is the contract with the generation stream parser. The path carries a space to also pin
-        // that
-        // an internal space is kept verbatim (the display must not split or trim on whitespace).
-        String args = "{\"content\":\"" + longContent + "\",\"path\":\"solution/src/de/tum/My Example/VeryLongClassNameThatExceedsTheTruncationLimit.java\"}";
+        String unsafePath = "solution/\\n\\u" + "001B\u2028\u2029\u202E" + "p".repeat(1_000) + ".java";
+        String args = "{\"content\":\"" + longContent + "\",\"path\":\"" + unsafePath + "\"}";
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", args), textResponse("DONE"));
 
         AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
@@ -447,11 +428,12 @@ class AgentLoopRunnerTest {
 
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
-        assertThat(steps).contains("Turn 1: write_file solution/src/de/tum/My Example/VeryLongClassNameThatExceedsTheTruncationLimit.java");
+        String fileProgress = steps.stream().filter(step -> step.startsWith("Working on solution/")).findFirst().orElseThrow();
+        assertThat(fileProgress).hasSizeLessThanOrEqualTo(180).doesNotContain(longContent, "\n", "\u001B", "\u2028", "\u2029", "\u202E").endsWith("….");
     }
 
     @Test
-    void describeToolCall_unescapesJsonEscapesInThePath() {
+    void toolProgress_unescapesJsonEscapesInThePath() {
         ChatModel chatModel = mock(ChatModel.class);
         // The JSON path "a\\b\"c.java" decodes to the literal path a\b"c.java; the transcript must show that unescaped path (guards the replace-chain order in
         // extractJsonStringValue).
@@ -464,7 +446,7 @@ class AgentLoopRunnerTest {
 
         runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
-        assertThat(steps).contains("Turn 1: write_file a\\b\"c.java");
+        assertThat(steps).contains("Working on a\\b\"c.java.");
     }
 
     @Test
@@ -479,21 +461,6 @@ class AgentLoopRunnerTest {
         AgentLoopResult result = runner.run("system", "do it", tools, 20, () -> false, null, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-    }
-
-    @Test
-    void agentLoop_submitTool_endsLoopImmediately() {
-        ChatModel chatModel = mock(ChatModel.class);
-        // Calling submit declares completion; the loop must end that very turn and hand off to the verifier, not wait for a further no-tool-call turn.
-        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{\"summary\":\"bubble sort done\"}"));
-
-        AgentLoopRunner runner = new AgentLoopRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeSandbox(), "fake-session");
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(result.turns()).isEqualTo(1);
     }
 
     @Test

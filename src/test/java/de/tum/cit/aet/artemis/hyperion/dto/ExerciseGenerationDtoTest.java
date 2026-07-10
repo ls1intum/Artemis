@@ -14,10 +14,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
- * Unit test for the three exercise-generation wire DTOs. It pins the behaviour the client and the reconnect/replay path depend on: the file-snapshot factory's repository
- * classification, whole-content hashing, and byte-boundary truncation; the event factories' terminal shape; and the {@code @JsonInclude} contract on each DTO (the event/verdict
- * DTOs use {@code NON_EMPTY} to keep empty optional fields off the wire; the file snapshot uses {@code NON_NULL} so an empty file still serialises {@code content:""}). The wire
- * shape is asserted by serialising with a real Jackson mapper (matching production), not by reading getters.
+ * Wire-format tests for exercise-generation DTOs.
  */
 class ExerciseGenerationDtoTest {
 
@@ -124,31 +121,16 @@ class ExerciseGenerationDtoTest {
         assertThat(json.get("action").asText()).isEqualTo("create");
     }
 
+    @Test
+    void fileSnapshot_serialisesEmptyContentRequiredByTheWireContract() throws Exception {
+        JsonNode json = mapper
+                .readTree(mapper.writeValueAsString(ExerciseGenerationFileSnapshotDTO.of("solution/Empty.java", ExerciseGenerationFileSnapshotDTO.ACTION_CREATE, "", 1)));
+
+        assertThat(json.has("content")).isTrue();
+        assertThat(json.get("content").asText()).isEmpty();
+    }
+
     // ---- ExerciseGenerationEventDTO --------------------------------------------------------------------------------------------------------------------------------------------
-
-    @Test
-    void event_ofFactory_leavesTerminalOnlyFieldsUnset() {
-        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "working");
-
-        assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
-        assertThat(event.message()).isEqualTo("working");
-        assertThat(event.completionStatus()).isNull();
-        assertThat(event.verdict()).isNull();
-        assertThat(event.liveExerciseChanged()).isNull();
-        assertThat(event.timestamp()).isNotNull();
-    }
-
-    @Test
-    void event_doneFactory_carriesCompletionStatusAndVerdict() {
-        ExerciseGenerationVerdictDTO verdict = new ExerciseGenerationVerdictDTO(true, true, true, 3, List.of());
-
-        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict, true);
-
-        assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
-        assertThat(event.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
-        assertThat(event.verdict()).isEqualTo(verdict);
-        assertThat(event.liveExerciseChanged()).isTrue();
-    }
 
     @Test
     void event_progressEvent_omitsNullTerminalFieldsAndSerialisesEnumAsName() throws Exception {
@@ -174,5 +156,15 @@ class ExerciseGenerationDtoTest {
         JsonNode rejected = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationVerdictDTO(false, false, true, 2, List.of("solution failed"))));
         assertThat(rejected.get("reasons")).hasSize(1);
         assertThat(rejected.get("reasons").get(0).asText()).isEqualTo("solution failed");
+    }
+
+    @Test
+    void status_serializesEmptyCollectionsRequiredByTheWireContract() throws Exception {
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true)));
+
+        assertThat(json.get("events")).isEmpty();
+        assertThat(json.get("fileSnapshots")).isEmpty();
+        assertThat(json.get("revertAvailable").asBoolean()).isTrue();
+        assertThat(json.has("mode")).isFalse();
     }
 }

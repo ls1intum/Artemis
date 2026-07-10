@@ -244,6 +244,29 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
     });
 
+    it('treats the first user edit after accepting a server baseline as unsaved', () => {
+        const hasUnsavedSpy = vi.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        comp.acceptServerBaseline({ ...exercise, problemStatement: 'generated' });
+        comp.updateProblemStatement('first user edit');
+
+        expect(comp.unsavedChangesValue()).toBe(true);
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('reloads test cases from the server when accepting a baseline for the same exercise', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const refreshTestCasesSpy = vi.spyOn(gradingService, 'refreshTestCases');
+
+        comp.acceptServerBaseline({ ...exercise, problemStatement: 'generated' });
+
+        expect(refreshTestCasesSpy).toHaveBeenCalledExactlyOnceWith(exercise.id);
+    });
+
     it('does not emit unsaved flag during initial sync bootstrap', () => {
         const hasUnsavedSpy = vi.fn();
         const instructionChangeSpy = vi.fn();

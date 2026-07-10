@@ -9,7 +9,6 @@
  */
 
 
-export interface ExerciseGenerationJobStart { 
+export interface ExerciseGenerationJobStart {
     jobId: string;
 }
-

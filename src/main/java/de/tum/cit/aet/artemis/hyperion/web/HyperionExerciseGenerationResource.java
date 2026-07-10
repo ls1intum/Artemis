@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -158,7 +160,17 @@ public class HyperionExerciseGenerationResource {
         log.debug("REST request to get the agentic exercise generation status for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        return jobService.getStatus(user, exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        Optional<String> revertibleJobId = adaptationRevertService.findRevertibleJobId(exerciseId).filter(jobId -> canOfferRevert(exercise));
+        Optional<ExerciseGenerationStatusDTO> retainedStatus = jobService.getStatus(user, exercise);
+        if (retainedStatus.isPresent()) {
+            ExerciseGenerationStatusDTO status = retainedStatus.get();
+            return ResponseEntity
+                    .ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(), revertibleJobId.isPresent()));
+        }
+        return revertibleJobId
+                .<ResponseEntity<ExerciseGenerationStatusDTO>>map(
+                        jobId -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(jobId, false, GenerationMode.ADAPT, List.of(), List.of(), true)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**
@@ -193,11 +205,15 @@ public class HyperionExerciseGenerationResource {
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        Optional<String> revertibleJobId = adaptationRevertService.findRevertibleJobId(exerciseId);
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         try {
             return adaptationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
+                if (result.fullyReverted() || !result.revertedRepositories().isEmpty()) {
+                    revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
+                }
                 ExerciseAdaptationRevertResultDTO body = new ExerciseAdaptationRevertResultDTO(result.fullyReverted(),
-                        result.revertedRepositories().stream().map(RepositoryType::getName).toList());
+                        result.revertedRepositories().stream().map(RepositoryType::getName).toList(), Instant.now());
                 return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
             }).orElseGet(() -> ResponseEntity.notFound().build());
         }
@@ -251,6 +267,11 @@ public class HyperionExerciseGenerationResource {
         if (exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty()) {
             throw new BadRequestAlertException("Hyperion generation can only modify exercises without student participations.", ENTITY_NAME, "exerciseHasParticipations");
         }
+    }
+
+    private boolean canOfferRevert(ProgrammingExercise exercise) {
+        boolean hasParticipations = exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty();
+        return !exercise.isReleased() && !hasParticipations && !jobService.hasActiveJob(exercise.getId());
     }
 
     /**

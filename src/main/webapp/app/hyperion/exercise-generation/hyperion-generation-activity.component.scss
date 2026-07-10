@@ -1,20 +1,46 @@
 .hyperion-activity {
     display: flex;
+    min-width: 0;
+    height: 100%;
     flex-direction: column;
-    border: 1px solid var(--p-content-border-color);
-    border-radius: 0.5rem;
-    overflow: hidden;
-    margin-bottom: 0.75rem;
+    overflow: auto;
     background: var(--p-content-background);
 }
 
-.hyperion-activity-header {
+.hyperion-activity-header,
+.hyperion-activity-heading,
+.hyperion-activity-actions,
+.hyperion-activity-running-status,
+.hyperion-activity-verification,
+.hyperion-activity-message-content {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+}
+
+.hyperion-activity-empty {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
     gap: 0.5rem;
+    padding: 1rem;
+    color: var(--p-text-muted-color);
+    text-align: center;
+}
+
+.hyperion-activity-header {
+    justify-content: space-between;
+    gap: 0.75rem;
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--p-content-border-color);
+    flex-wrap: wrap;
+}
+
+.hyperion-activity-heading,
+.hyperion-activity-actions {
+    gap: 0.5rem;
     flex-wrap: wrap;
 }
 
@@ -22,148 +48,132 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    margin: 0;
+    font-size: 1rem;
     font-weight: 600;
 }
 
-.hyperion-activity-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-wrap: wrap;
+.hyperion-activity-running-status {
+    gap: 0.35rem;
+    color: var(--p-text-muted-color);
+    font-size: 0.85rem;
 }
 
-.hyperion-activity-verdict-reasons {
-    flex-basis: 100%;
-    list-style: disc;
-    margin: 0.2rem 0 0;
-    padding-left: 1.1rem;
-    font-size: 0.78rem;
+.hyperion-activity-verification {
+    gap: 0.75rem 1rem;
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--p-content-border-color);
+    background: var(--p-content-hover-background);
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+
+    > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+}
+
+.hyperion-verification-success {
+    color: var(--color-state-success);
+}
+
+.hyperion-verification-danger {
     color: var(--color-state-danger);
 }
 
+.hyperion-verification-count,
+.hyperion-activity-repo-label {
+    color: var(--p-text-muted-color);
+}
+
+.hyperion-activity-message {
+    width: auto;
+    margin: 0.5rem 0.75rem;
+}
+
+.hyperion-activity-message-content {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.hyperion-activity-verdict-reasons {
+    margin: 0;
+    padding-left: 1.1rem;
+    overflow-wrap: anywhere;
+}
+
 .hyperion-activity-body {
-    display: flex;
-    min-height: 18rem;
-    max-height: 28rem;
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(14rem, 1fr) minmax(14rem, 1fr);
+    border-top: 1px solid var(--p-content-border-color);
 }
 
-.hyperion-activity-sidebar {
-    display: flex;
-    flex-direction: column;
-    width: 16rem;
-    border-right: 1px solid var(--p-content-border-color);
-    overflow-y: auto;
+.hyperion-activity-files,
+.hyperion-activity-progress {
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+
+    h4 {
+        margin: 0 0 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
 }
 
-.hyperion-activity-files {
-    padding: 0.4rem;
+.hyperion-activity-progress {
+    border-left: 1px solid var(--p-content-border-color);
 }
 
 .hyperion-activity-repo-label {
-    text-transform: uppercase;
-    font-size: 0.7rem;
+    margin: 0.45rem 0 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
     letter-spacing: 0.03em;
-    opacity: 0.7;
-    margin: 0.4rem 0 0.2rem;
+    text-transform: uppercase;
 }
 
 .hyperion-activity-file {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
+    display: block;
     width: 100%;
-    text-align: left;
-    border: none;
-    background: transparent;
-    padding: 0.2rem 0.35rem;
-    border-radius: 0.35rem;
-    font-size: 0.8rem;
-    cursor: pointer;
+}
 
-    &:hover {
-        background: var(--p-content-hover-background);
-    }
-
-    &.active {
-        background: var(--p-highlight-background);
-    }
+.hyperion-activity-file-static {
+    padding: 0.35rem 0.75rem;
+    color: var(--p-text-muted-color);
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
 }
 
 .hyperion-activity-file-path {
+    display: block;
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.hyperion-activity-file-action {
-    opacity: 0.6;
-    font-size: 0.7rem;
-    flex-shrink: 0;
+    text-align: left;
 }
 
 .hyperion-activity-timeline {
-    list-style: none;
     margin: 0;
-    padding: 0.4rem 0.6rem;
-    border-top: 1px solid var(--p-content-border-color);
-    font-size: 0.78rem;
+    padding-left: 1.25rem;
+    font-size: 0.8rem;
 
     li {
-        padding: 0.1rem 0;
-        opacity: 0.85;
+        padding: 0.12rem 0;
+        overflow-wrap: anywhere;
     }
 }
 
-.hyperion-activity-empty {
-    padding: 0.6rem;
-    font-size: 0.8rem;
-    opacity: 0.7;
-}
+@media (max-width: 40rem) {
+    .hyperion-activity-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
-.hyperion-activity-preview {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.hyperion-activity-preview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.35rem 0.6rem;
-    border-bottom: 1px solid var(--p-content-border-color);
-    font-size: 0.8rem;
-}
-
-.hyperion-activity-preview-path {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--artemis-font-family-monospace, monospace);
-}
-
-.hyperion-activity-preview-controls {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-shrink: 0;
-}
-
-.hyperion-activity-monaco {
-    flex: 1 1 auto;
-    min-height: 0;
-}
-
-::ng-deep .hyperion-snapshot-changed-line {
-    background: color-mix(in srgb, var(--color-state-success) 14%, transparent);
-}
-
-::ng-deep .hyperion-snapshot-changed-gutter {
-    background: color-mix(in srgb, var(--color-state-success) 60%, transparent);
-    // Monaco inline-styles the gutter decoration width, so !important is required to override it.
-    width: 3px !important;
-    margin-left: 3px;
+    .hyperion-activity-progress {
+        border-top: 1px solid var(--p-content-border-color);
+        border-left: 0;
+    }
 }

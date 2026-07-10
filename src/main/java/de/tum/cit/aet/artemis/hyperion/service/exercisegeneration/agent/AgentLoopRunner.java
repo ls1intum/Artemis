@@ -53,6 +53,10 @@ public class AgentLoopRunner {
     /** The tool the agent calls to declare the exercise complete; calling it ends the loop and hands off to the out-of-band verifier. */
     private static final String SUBMIT_TOOL_NAME = "submit";
 
+    private static final int MAX_PROGRESS_PATH_CHARS = 160;
+
+    private static final Pattern UNSAFE_PROGRESS_CHARACTERS = Pattern.compile("[\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]");
+
     // --- Context-window management ---
 
     /** Headroom reserved below the context window for the model's response plus estimation slack; compaction triggers once the estimated prompt would exceed it. */
@@ -77,9 +81,6 @@ public class AgentLoopRunner {
 
     /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
     private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
-
-    /** Max chars of a tool call's raw arguments rendered into a transcript progress line before eliding, so a large body stays out of the progress view. */
-    private static final int TRANSCRIPT_ARG_MAX_CHARS = 160;
 
     /** Output cap for the summary, so the summary itself never becomes a context problem on the next turn. */
     private static final int SUMMARY_MAX_OUTPUT_TOKENS = 2_000;
@@ -143,16 +144,16 @@ public class AgentLoopRunner {
      * @param chatModels          all available chat models (may be empty if no AI provider is configured)
      * @param contextWindowTokens the model's usable context window in tokens (override per deployment)
      */
-    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens) {
+    AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens) {
         this(chatModels, contextWindowTokens, Duration.ofMinutes(5));
     }
 
-    public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown) {
+    AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown) {
         this(chatModels, contextWindowTokens, providerHardFailureCooldown, new InMemoryProviderFailureCooldown());
     }
 
     public AgentLoopRunner(Collection<ChatModel> chatModels, int contextWindowTokens, Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown) {
-        this.chatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
+        this.chatModel = chatModels.isEmpty() ? null : new HarmonyScrubbingChatModel(chatModels.iterator().next());
         this.toolCallingManager = ToolCallingManager.builder().build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
@@ -229,7 +230,7 @@ public class AgentLoopRunner {
 
         for (int turn = 1; turn <= maxTurns; turn++) {
             if (cancelled.getAsBoolean()) {
-                emit(stepListener, "Cancelled before turn " + turn);
+                emit(stepListener, "Cancelling generation…");
                 return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText);
             }
             // Tag any out-of-band events the tools emit this turn (e.g. streamed file snapshots) with the current turn number.
@@ -250,7 +251,7 @@ public class AgentLoopRunner {
             emitUsage(usageSink, response);
             lastPromptTokens = promptTokensOf(response);
             if (cancelled.getAsBoolean()) {
-                emit(stepListener, "Cancelled after model call on turn " + turn);
+                emit(stepListener, "Cancelling generation…");
                 return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText);
             }
 
@@ -261,15 +262,16 @@ public class AgentLoopRunner {
 
             if (!response.hasToolCalls()) {
                 // No more tool calls: the model considers the task complete; the verifier decides whether it actually is.
-                emit(stepListener, "Agent finished after " + turn + " turn(s)");
+                emit(stepListener, "Preparing the exercise for verification.");
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }
 
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
-            // Transcript: one line per tool call (parsed by the client, see describeToolCall).
             for (AssistantMessage.ToolCall toolCall : toolCalls) {
-                emit(stepListener, "Turn " + turn + ": " + describeToolCall(toolCall));
+                if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
+                    emit(stepListener, describeToolProgress(toolCall));
+                }
             }
             boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
 
@@ -281,8 +283,8 @@ public class AgentLoopRunner {
             catch (RuntimeException e) {
                 // Unknown tool / malformed arguments surface here: feed the error back so the model can self-correct, only giving up after MAX_CONSECUTIVE_TOOL_FAILURES.
                 consecutiveToolFailures++;
-                log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}): {}", turn, consecutiveToolFailures, e.getMessage());
-                emit(stepListener, "Tool call could not be executed (" + e.getMessage() + "); asking the agent to correct it.");
+                log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {})", turn, consecutiveToolFailures, e);
+                emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return new AgentLoopResult(AgentLoopResult.Status.ERROR, turn, lastAssistantText);
                 }
@@ -303,7 +305,7 @@ public class AgentLoopRunner {
 
             if (submitRequested) {
                 // End the loop so the out-of-band verifier (which does not trust the agent) decides acceptance.
-                emit(stepListener, "Agent submitted after " + turn + " turn(s)");
+                emit(stepListener, "Submitting the exercise for verification.");
                 return new AgentLoopResult(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText);
             }
 
@@ -319,7 +321,7 @@ public class AgentLoopRunner {
             prompt = new Prompt(conversation, options);
         }
 
-        emit(stepListener, "Reached the step budget of " + maxTurns + " turns");
+        emit(stepListener, "The generation step limit was reached.");
         return new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText);
     }
 
@@ -345,7 +347,7 @@ public class AgentLoopRunner {
             String sanitized = sanitizeToolName(toolCall.name());
             if (!sanitized.equals(toolCall.name())) {
                 changed = true;
-                log.warn("Normalized leaked tool name '{}' to '{}'", toolCall.name(), sanitized);
+                log.warn("Normalized a leaked model tool name to '{}'", sanitized);
                 normalized.add(new AssistantMessage.ToolCall(toolCall.id(), toolCall.type(), sanitized, toolCall.arguments()));
             }
             else {
@@ -378,22 +380,32 @@ public class AgentLoopRunner {
         return name.substring(0, name.indexOf("<|")).strip();
     }
 
-    /**
-     * Renders a tool call as a single transcript line: tool name plus its most informative argument (path for file tools, command for bash), truncated to keep large bodies out.
-     * <p>
-     * Cross-cutting contract: the client generation stream parser uses this line for the "files changed" view, so tool names must stay stable and for file tools
-     * the {@code path} must be rendered first and in full — otherwise a large {@code content} argument would push it past the truncation point and the UI would miss the file.
-     */
-    private static String describeToolCall(AssistantMessage.ToolCall toolCall) {
-        String arguments = toolCall.arguments() == null ? "" : toolCall.arguments().replaceAll("\\s+", " ").trim();
-        String path = extractJsonStringValue(arguments, "path");
-        if (path != null) {
-            return toolCall.name() + " " + path;
+    /** Builds instructor-facing progress without exposing raw commands or model-generated arguments. */
+    private static String describeToolProgress(AssistantMessage.ToolCall toolCall) {
+        String path = sanitizeProgressPath(extractJsonStringValue(toolCall.arguments() == null ? "" : toolCall.arguments(), "path"));
+        return switch (toolCall.name()) {
+            case "read_file" -> path == null ? "Reviewing an exercise file." : "Reviewing " + path + ".";
+            case "write_file", "edit_file" -> path == null ? "Working on an exercise file." : "Working on " + path + ".";
+            case "bash" -> "Running a workspace command.";
+            case "verify" -> "Checking the exercise.";
+            default -> "Continuing the exercise update.";
+        };
+    }
+
+    @Nullable
+    private static String sanitizeProgressPath(@Nullable String path) {
+        if (path == null) {
+            return null;
         }
-        if (arguments.length() > TRANSCRIPT_ARG_MAX_CHARS) {
-            arguments = arguments.substring(0, TRANSCRIPT_ARG_MAX_CHARS) + "…";
+        String sanitized = UNSAFE_PROGRESS_CHARACTERS.matcher(path).replaceAll(" ").replaceAll("\\s+", " ").strip();
+        if (sanitized.isEmpty()) {
+            return null;
         }
-        return toolCall.name() + " " + arguments;
+        if (sanitized.codePointCount(0, sanitized.length()) <= MAX_PROGRESS_PATH_CHARS) {
+            return sanitized;
+        }
+        int end = sanitized.offsetByCodePoints(0, MAX_PROGRESS_PATH_CHARS - 1);
+        return sanitized.substring(0, end) + "…";
     }
 
     /**
@@ -434,7 +446,7 @@ public class AgentLoopRunner {
         String providerFailureKey = configuredModel() != null ? configuredModel() : "default";
         Instant cooldownUntil = providerFailureCooldown.cooldownUntil(providerFailureKey);
         if (cooldownUntil != null) {
-            emit(stepListener, "Model provider hard-failure cooldown is active for " + providerFailureKey + "; failing fast until " + cooldownUntil + ".");
+            emit(stepListener, "The AI service is temporarily unavailable. Please try again later.");
             return null;
         }
         for (int attempt = 1; attempt <= MODEL_CALL_ATTEMPTS; attempt++) {
@@ -463,15 +475,15 @@ public class AgentLoopRunner {
                 if (!isRetryable(e)) {
                     // Deterministic failure (e.g. 400/401/403/422): re-sending the identical request cannot help, so fail fast with a clear message instead of burning the ladder.
                     log.error("Agent loop model call failed on turn {} with a non-retryable error; not retrying", turn, e);
-                    emit(stepListener, "Model call failed and will not be retried (" + e.getMessage() + ").");
+                    emit(stepListener, "The AI service could not complete the request.");
                     openProviderFailureCooldownIfNeeded(providerFailureKey, e);
                     return null;
                 }
                 lastError = e;
                 lastEmptyResponse = null;
-                log.warn("Agent loop model call failed on turn {} (attempt {}/{}): {}", turn, attempt, MODEL_CALL_ATTEMPTS, e.getMessage());
+                log.warn("Agent loop model call failed on turn {} (attempt {}/{})", turn, attempt, MODEL_CALL_ATTEMPTS, e);
                 if (attempt < MODEL_CALL_ATTEMPTS) {
-                    emit(stepListener, "Model call failed (" + e.getMessage() + "); retrying.");
+                    emit(stepListener, "The AI service is temporarily unavailable. Retrying.");
                     if (!backOffBeforeRetry(attempt, turn, cancelled)) {
                         return null;
                     }
@@ -487,7 +499,7 @@ public class AgentLoopRunner {
         if (lastError != null) {
             openProviderFailureCooldownIfNeeded(providerFailureKey, lastError);
         }
-        emit(stepListener, "Model call failed after " + MODEL_CALL_ATTEMPTS + " attempts: " + (lastError == null ? "unknown error" : lastError.getMessage()));
+        emit(stepListener, "The AI service could not complete the request.");
         return null;
     }
 
@@ -632,7 +644,7 @@ public class AgentLoopRunner {
         if (contextTokens <= (long) contextWindowTokens - RESERVE_TOKENS) {
             return conversation;
         }
-        emit(stepListener, "Context window under pressure (~" + contextTokens + " tokens); compacting earlier steps.");
+        emit(stepListener, "Preparing the next generation step.");
         return compact(conversation, usageSink);
     }
 

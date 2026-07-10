@@ -3,42 +3,64 @@
         "hyperion": {
             "generationActivity": {
                 "title": "Generation activity",
+                "adaptationTitle": "Adaptation activity",
                 "running": "Generating…",
                 "adapting": "Adapting…",
                 "adaptStartFailed": "Could not start the adaptation.",
+                "checkingStatus": "Checking generation status…",
+                "statusUnavailable": "The generation status could not be verified. Editing remains locked to prevent conflicting changes.",
+                "retryStatus": "Retry status check",
                 "cancel": "Cancel",
-                "revert": "Revert",
-                "revertTooltip": "Reset the exercise repositories to the state captured before this adaptation.",
-                "reverted": "Reverted",
-                "revertSuccess": "The adaptation was reverted.",
-                "revertFailed": "Could not revert the adaptation.",
-                "followAgent": "Follow agent",
-                "noFiles": "No files written yet.",
-                "noPreview": "No file selected",
-                "truncated": "This file was truncated for the live preview.",
+                "cancelling": "Cancelling…",
+                "revert": "Undo adaptation",
+                "reverting": "Undoing…",
+                "revertTooltip": "Restore the exercise to the state before the most recent successful adaptation.",
+                "revertConfirmHeader": "Undo the most recent successful adaptation?",
+                "revertConfirmMessage": "This restores the problem statement and repositories to their state before the most recent successful adaptation. You cannot restore the adapted version afterward.",
+                "reverted": "Adaptation undone",
+                "revertSuccess": "The adaptation was undone.",
+                "revertFailed": "Could not undo the adaptation.",
+                "hideDetails": "Hide details",
+                "showDetails": "Show details",
+                "hideChangedFiles": "Hide changed files",
+                "showChangedFiles": "Show changed files",
+                "changedFiles": "Files touched by the agent",
+                "recentActivity": "Recent activity",
+                "emptyTitle": "No generation activity yet",
+                "emptyHint": "Start generation here or from the Artemis Intelligence menu.",
                 "repo": {
                     "solution": "Solution",
                     "template": "Template",
                     "tests": "Tests",
                     "other": "Other"
                 },
-                "action": {
-                    "create": "created",
-                    "edit": "edited"
+                "persistence": {
+                    "workingCopy": "Agent working copy — not saved",
+                    "saved": "Saved to exercise",
+                    "draft": "Draft saved — live exercise unchanged",
+                    "notSaved": "Not saved",
+                    "cancelled": "Not saved — cancelled",
+                    "failed": "Not saved — failed"
                 },
                 "verdict": {
-                    "accepted": "Accepted",
-                    "rejected": "Rejected",
-                    "solutionPassed": "Solution passes",
-                    "solutionFailed": "Solution fails",
-                    "templateFailed": "Template fails",
-                    "templatePasses": "Template passes",
+                    "checksPassed": "Checks passed",
+                    "checksFailed": "Checks failed",
+                    "solutionPassedExpected": "Reference solution passes",
+                    "solutionFailed": "Reference solution fails",
+                    "templateFailedExpected": "Template fails tests as expected",
+                    "templatePassedUnexpected": "Template unexpectedly passes tests",
+                    "oneTest": "test",
                     "tests": "tests"
                 },
                 "completionStatus": {
                     "SUCCESS": "Saved",
                     "NEEDS_REVIEW": "Needs review",
-                    "PARTIAL": "Partial"
+                    "PARTIAL": "Not saved"
+                },
+                "terminalStatus": {
+                    "DONE": "Generation finished",
+                    "CANCELLED": "Cancelled",
+                    "ERROR": "Failed"
                 },
                 "revertPartialFailed": "The adaptation could not be fully reverted. Reverted repositories: {{repositories}}. Please review the remaining repositories manually."
             }

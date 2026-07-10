@@ -18,8 +18,7 @@ import reactor.core.publisher.Flux;
  * assistant {@code content}. If such a token were replayed verbatim in the next request, the server's harmony chat template would re-parse it as structure — most visibly an
  * {@code "Unknown role: assistant<|channel|>commentary"} HTTP 400 that aborts a long, otherwise-healthy run. Removing the tokens keeps the conversation replayable.
  * <p>
- * It delegates {@link #getDefaultOptions()} so the loop can still read the configured model id, and scrubs {@link #stream(Prompt)} chunk-by-chunk too (the agent loop never
- * streams, but the decorator wraps the global bean, so any other {@code ChatClient} streaming consumer stays protected).
+ * It delegates {@link #getDefaultOptions()} so the loop can still read the configured model id.
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 
@@ -39,8 +38,6 @@ public class HarmonyScrubbingChatModel implements ChatModel {
 
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
-        // The agent loop is non-streaming, but this decorator wraps the global ChatModel bean, so any ChatClient `.stream()` consumer must also see harmony tokens stripped.
-        // Scrub each emitted chunk with the same routine as call(); the per-chunk scrub is a no-op unless a chunk's assistant content actually carries a `<|...|>` token.
         return delegate.stream(prompt).map(HarmonyScrubbingChatModel::scrub);
     }
 

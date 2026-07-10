@@ -205,6 +205,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(adaptationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(true, List.of(RepositoryType.SOLUTION))));
 
@@ -214,6 +215,8 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isTrue();
         assertThat(response.getBody().revertedRepositories()).containsExactly("solution");
+        assertThat(response.getBody().completedAt()).isNotNull();
+        verify(jobService).discardRetainedRun(1L, "adapt-job");
         verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
@@ -222,14 +225,16 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(adaptationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
-                .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(false, List.of())));
+                .thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION))));
 
         ResponseEntity<ExerciseAdaptationRevertResultDTO> response = resource.revertAdaptation(1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isFalse();
+        verify(jobService).discardRetainedRun(1L, "adapt-job");
         verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
@@ -367,12 +372,14 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void getExerciseGenerationStatus_whenRunRetained_returns200WithTranscript() {
+    void getExerciseGenerationStatus_whenRunIsActive_hidesRevertCapability() {
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", true, GenerationMode.ADAPT,
-                List.of(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")), List.of());
+                List.of(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")), List.of(), false);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("job-42"));
+        when(jobService.hasActiveJob(1L)).thenReturn(true);
 
         ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
 
@@ -381,6 +388,70 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody().jobId()).isEqualTo("job-42");
         assertThat(response.getBody().running()).isTrue();
         assertThat(response.getBody().mode()).isEqualTo(GenerationMode.ADAPT);
+        assertThat(response.getBody().revertAvailable()).isFalse();
+    }
+
+    @Test
+    void getExerciseGenerationStatus_whenOnlyRevertBaselineRemains_returnsRevertCapability() {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.empty());
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().jobId()).isEqualTo("adapt-job");
+        assertThat(response.getBody().mode()).isEqualTo(GenerationMode.ADAPT);
+        assertThat(response.getBody().revertAvailable()).isTrue();
+        assertThat(response.getBody().events()).isEmpty();
+        assertThat(response.getBody().fileSnapshots()).isEmpty();
+    }
+
+    @Test
+    void getExerciseGenerationStatus_whenAnotherMutationIsActive_hidesRevertCapability() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("new-job", true, GenerationMode.GENERATE, List.of(), List.of(), false);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("old-adaptation"));
+        when(jobService.hasActiveJob(1L)).thenReturn(true);
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().revertAvailable()).isFalse();
+    }
+
+    @Test
+    void getExerciseGenerationStatus_whenExerciseHasParticipations_hidesRevertCapability() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.ADAPT, List.of(), List.of(), false);
+        testExercise.setStudentParticipations(Set.of(mock(StudentParticipation.class)));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("job-42"));
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().revertAvailable()).isFalse();
+    }
+
+    @Test
+    void getExerciseGenerationStatus_whenExerciseIsReleased_hidesRevertCapability() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.ADAPT, List.of(), List.of(), false);
+        testExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("job-42"));
+
+        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().revertAvailable()).isFalse();
     }
 
     @Test
@@ -388,6 +459,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.empty());
+        when(adaptationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.empty());
 
         ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
 

@@ -84,7 +84,7 @@
         display: flex;
         flex-flow: column nowrap;
         height: 200px;
-        overflow: auto;
+        overflow: hidden;
 
         /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
@@ -292,6 +292,10 @@
 
 /* Build output */
 .editor-bottom.collapsed--vertical .card-body {
+    display: none;
+}
+
+.editor-bottom.collapsed--vertical p-tabpanels {
     display: none;
 }
 

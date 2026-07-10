@@ -9,8 +9,8 @@
  */
 
 
-export interface ExerciseGenerationFileSnapshot { 
-    type: string;
+export interface ExerciseGenerationFileSnapshot {
+    type: ExerciseGenerationFileSnapshot.TypeEnum;
     path: string;
     repo: ExerciseGenerationFileSnapshot.RepoEnum;
     action: ExerciseGenerationFileSnapshot.ActionEnum;
@@ -22,6 +22,10 @@ export interface ExerciseGenerationFileSnapshot {
     timestamp: string;
 }
 export namespace ExerciseGenerationFileSnapshot {
+    export const TypeEnum = {
+        FileSnapshot: 'FILE_SNAPSHOT'
+    } as const;
+    export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
     export const RepoEnum = {
         Solution: 'solution',
         Template: 'template',
@@ -35,5 +39,3 @@ export namespace ExerciseGenerationFileSnapshot {
     } as const;
     export type ActionEnum = typeof ActionEnum[keyof typeof ActionEnum];
 }
-
-

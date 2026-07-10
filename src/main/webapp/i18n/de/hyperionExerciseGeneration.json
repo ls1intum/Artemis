@@ -3,42 +3,64 @@
         "hyperion": {
             "generationActivity": {
                 "title": "Generierungsaktivität",
+                "adaptationTitle": "Anpassungsaktivität",
                 "running": "Generierung läuft…",
                 "adapting": "Anpassung läuft…",
                 "adaptStartFailed": "Die Anpassung konnte nicht gestartet werden.",
+                "checkingStatus": "Generierungsstatus wird geprüft…",
+                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. Die Bearbeitung bleibt gesperrt, um Konflikte zu vermeiden.",
+                "retryStatus": "Statusprüfung wiederholen",
                 "cancel": "Abbrechen",
-                "revert": "Zurücksetzen",
-                "revertTooltip": "Setzt die Aufgaben-Repositories auf den vor dieser Anpassung erfassten Stand zurück.",
-                "reverted": "Zurückgesetzt",
-                "revertSuccess": "Die Anpassung wurde zurückgesetzt.",
-                "revertFailed": "Die Anpassung konnte nicht zurückgesetzt werden.",
-                "followAgent": "Agent folgen",
-                "noFiles": "Noch keine Dateien geschrieben.",
-                "noPreview": "Keine Datei ausgewählt",
-                "truncated": "Diese Datei wurde für die Live-Vorschau gekürzt.",
+                "cancelling": "Wird abgebrochen…",
+                "revert": "Anpassung rückgängig machen",
+                "reverting": "Wird rückgängig gemacht…",
+                "revertTooltip": "Stellt den Stand der Aufgabe vor der letzten erfolgreichen Anpassung wieder her.",
+                "revertConfirmHeader": "Letzte erfolgreiche Anpassung rückgängig machen?",
+                "revertConfirmMessage": "Dadurch werden Aufgabenstellung und Repositories auf den Stand vor der letzten erfolgreichen Anpassung zurückgesetzt. Die angepasste Version kann anschließend nicht wiederhergestellt werden.",
+                "reverted": "Anpassung rückgängig gemacht",
+                "revertSuccess": "Die Anpassung wurde rückgängig gemacht.",
+                "revertFailed": "Die Anpassung konnte nicht rückgängig gemacht werden.",
+                "hideDetails": "Details ausblenden",
+                "showDetails": "Details anzeigen",
+                "hideChangedFiles": "Geänderte Dateien ausblenden",
+                "showChangedFiles": "Geänderte Dateien anzeigen",
+                "changedFiles": "Vom Agenten bearbeitete Dateien",
+                "recentActivity": "Letzte Aktivitäten",
+                "emptyTitle": "Noch keine Generierungsaktivität",
+                "emptyHint": "Starte die Generierung hier oder über das Artemis-Intelligence-Menü.",
                 "repo": {
                     "solution": "Musterlösung",
                     "template": "Vorlage",
                     "tests": "Tests",
                     "other": "Sonstige"
                 },
-                "action": {
-                    "create": "erstellt",
-                    "edit": "bearbeitet"
+                "persistence": {
+                    "workingCopy": "Arbeitskopie des Agenten — nicht gespeichert",
+                    "saved": "In der Aufgabe gespeichert",
+                    "draft": "Entwurf gespeichert — Live-Aufgabe unverändert",
+                    "notSaved": "Nicht gespeichert",
+                    "cancelled": "Nicht gespeichert — abgebrochen",
+                    "failed": "Nicht gespeichert — fehlgeschlagen"
                 },
                 "verdict": {
-                    "accepted": "Akzeptiert",
-                    "rejected": "Abgelehnt",
-                    "solutionPassed": "Musterlösung besteht",
+                    "checksPassed": "Prüfungen bestanden",
+                    "checksFailed": "Prüfungen fehlgeschlagen",
+                    "solutionPassedExpected": "Musterlösung besteht",
                     "solutionFailed": "Musterlösung schlägt fehl",
-                    "templateFailed": "Vorlage schlägt fehl",
-                    "templatePasses": "Vorlage besteht",
+                    "templateFailedExpected": "Vorlage schlägt wie vorgesehen fehl",
+                    "templatePassedUnexpected": "Vorlage besteht unerwartet",
+                    "oneTest": "Test",
                     "tests": "Tests"
                 },
                 "completionStatus": {
                     "SUCCESS": "Gespeichert",
                     "NEEDS_REVIEW": "Prüfung nötig",
-                    "PARTIAL": "Teilweise"
+                    "PARTIAL": "Nicht gespeichert"
+                },
+                "terminalStatus": {
+                    "DONE": "Generierung abgeschlossen",
+                    "CANCELLED": "Abgebrochen",
+                    "ERROR": "Fehlgeschlagen"
                 },
                 "revertPartialFailed": "Die Anpassung konnte nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Bitte prüfen Sie die übrigen Repositories manuell."
             }

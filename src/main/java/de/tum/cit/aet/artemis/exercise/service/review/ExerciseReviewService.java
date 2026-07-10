@@ -145,6 +145,18 @@ public class ExerciseReviewService {
      * @return the persisted consistency-check threads created from the given issues
      */
     public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
+        return createConsistencyCheckThreads(exerciseId, issues, userRepository.getUser());
+    }
+
+    /**
+     * Persists consistency-check issues with an explicit author for callers that run outside a request security context.
+     *
+     * @param exerciseId the programming exercise id
+     * @param issues     the consistency issues to persist
+     * @param author     the review-comment author
+     * @return the persisted consistency-check threads
+     */
+    public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues, User author) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming");
@@ -180,7 +192,7 @@ public class ExerciseReviewService {
                 for (ConsistencyThreadLocation location : locations) {
                     CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
                     thread.setGroup(group);
-                    Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
+                    Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId, author);
                     thread.getComments().add(comment);
                     groupedThreads.add(thread);
                 }
@@ -192,7 +204,7 @@ public class ExerciseReviewService {
 
             for (ConsistencyThreadLocation location : locations) {
                 CommentThread thread = buildConsistencyCheckThread(exercise, location, initialCommitShasByTarget, latestProblemStatementVersion);
-                Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId);
+                Comment comment = buildConsistencyCheckComment(thread, issue, location, exercise, repositoryUrisByTarget, exerciseId, author);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
                 createdThreads.add(thread);
@@ -545,12 +557,11 @@ public class ExerciseReviewService {
      * @param exercise               the owning exercise
      * @param repositoryUrisByTarget pre-resolved repository URIs by target
      * @param exerciseId             exercise id used for logging context
+     * @param author                 the comment author
      * @return the initialized consistency-check comment
      */
     private Comment buildConsistencyCheckComment(CommentThread thread, ConsistencyIssueDTO issue, ConsistencyThreadLocation location, Exercise exercise,
-            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId) {
-        User author = userRepository.getUser();
-
+            ConsistencyTargetRepositoryUris repositoryUrisByTarget, long exerciseId, User author) {
         Comment comment = new Comment();
         comment.setType(CommentType.CONSISTENCY_CHECK);
         comment.setContent(new ConsistencyIssueCommentContentDTO(issue.severity(), issue.category(), buildConsistencyIssueText(issue),

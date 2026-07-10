@@ -52,7 +52,11 @@
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.generationSandboxSlots"></span>
                     <span class="font-bold">:</span>
-                    <span>{{ agent.reservedGenerationSandboxSlots ?? 0 }} / {{ agent.maxGenerationSandboxSlots ?? 0 }}</span>
+                    @if (agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined) {
+                        <span>{{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}</span>
+                    } @else {
+                        <span>—</span>
+                    }
                 </div>
                 <div>
                     <span class="font-bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>

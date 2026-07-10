@@ -35,11 +35,21 @@ import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/sh
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { TabsModule } from 'primeng/tabs';
+import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
     BuildOutput,
     Instructions,
+}
+
+export enum CodeEditorBottomPanel {
+    BUILD_OUTPUT = 'build-output',
+    ADDITIONAL = 'additional',
 }
 
 @Component({
@@ -55,6 +65,10 @@ export enum CollapsableCodeEditorElement {
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         KeysPipe,
+        TabsModule,
+        ButtonModule,
+        FaIconComponent,
+        TranslateDirective,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -102,6 +116,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     /** Forwarded to the editor: whether the per-thread "Adapt with feedback" action may be offered (agentic adaptation is supported: Hyperion enabled AND the LocalCI backend). */
     adaptReviewCommentThreadEnabled = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
+    /** Translation key for an optional host-provided panel in the shared resizable bottom area. */
+    editorBottomPanelTitle = input<string | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -115,11 +131,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onAdaptReviewCommentThread = output<number>();
     onCommit = output<void>();
 
-    /** Work in Progress: temporary properties needed to get first prototype working */
-
     participation = input.required<Participation>();
-
-    /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     private readonly selectedFileValue = signal<string | undefined>(undefined);
@@ -147,10 +159,21 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
+    readonly activeBottomPanel = signal<CodeEditorBottomPanel>(CodeEditorBottomPanel.BUILD_OUTPUT);
+    readonly bottomPanelCollapsed = signal(false);
+    readonly CodeEditorBottomPanel = CodeEditorBottomPanel;
+    readonly faChevronDown = faChevronDown;
+    readonly faChevronUp = faChevronUp;
+    readonly faTerminal = faTerminal;
 
     private fileTreeChangeSubscription?: Subscription;
 
     constructor() {
+        effect(() => {
+            if (!this.buildable()) {
+                this.activeBottomPanel.set(CodeEditorBottomPanel.ADDITIONAL);
+            }
+        });
         this.initializeProperties();
 
         effect(() => {
@@ -164,6 +187,18 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
                 this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
             }
         });
+    }
+
+    openEditorBottomPanel(): void {
+        this.activeBottomPanel.set(CodeEditorBottomPanel.ADDITIONAL);
+        this.grid().expandBottomPanel();
+        this.bottomPanelCollapsed.set(false);
+    }
+
+    selectBottomPanel(value: string | number | undefined): void {
+        if (value === CodeEditorBottomPanel.BUILD_OUTPUT || value === CodeEditorBottomPanel.ADDITIONAL) {
+            this.activeBottomPanel.set(value);
+        }
     }
 
     ngOnDestroy(): void {
@@ -441,6 +476,9 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         this.grid().toggleCollapse(event, collapsableElement);
+        if (collapsableElement === CollapsableCodeEditorElement.BuildOutput) {
+            this.bottomPanelCollapsed.set(this.grid().buildOutputIsCollapsed());
+        }
     }
 
     /**

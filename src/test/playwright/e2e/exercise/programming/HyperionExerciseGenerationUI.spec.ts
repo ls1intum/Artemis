@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Browser, expect, Page, Request } from '@playwright/test';
+import { Browser, expect, Locator, Page, Request } from '@playwright/test';
 
 import { test } from '../../../support/fixtures';
 import { Commands } from '../../../support/commands';
@@ -21,6 +21,7 @@ type GenerationRequest = {
 type GenerationStatus = {
     jobId: string;
     running: boolean;
+    revertAvailable: boolean;
     mode?: 'GENERATE' | 'ADAPT';
     events: {
         type: 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
@@ -109,8 +110,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         expect(request).toEqual({ mode: 'GENERATE' });
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toBeVisible();
-        await expect(activity).toContainText('Generating');
-        await expect(page.getByTestId('hyperion-ai-menu')).toBeDisabled();
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
+        await expectNativeEditorIntegration(page);
+        await expectHyperionTabSelected(page);
+        await exerciseBottomPanelTabsWithKeyboard(page);
+        await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectEditorActionsLockedDuringGeneration(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'GENERATE');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
@@ -140,21 +144,24 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toBeVisible();
         await expect(activity).toContainText('HyperionPreview.java', { timeout: 60_000 });
-        await expect(activity).toContainText('retained-preview');
+        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         await expectFileSnapshotStatus(page, exercise!.id!, jobId);
         await expectRehydratedActivityOnFreshPage(browser, exercise!);
 
         await page.reload();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
+        await openHyperionTabWithKeyboard(page);
+        await expectHyperionTabSelected(page);
         const rehydratedActivity = page.getByTestId('hyperion-generation-activity');
         await expect(rehydratedActivity).toBeVisible();
         await expect(rehydratedActivity).toContainText('Starting exercise generation');
         await expect(rehydratedActivity).toContainText('HyperionPreview.java');
-        await expect(rehydratedActivity).toContainText('retained-preview');
+        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
         await expectFileSnapshotStatus(page, exercise!.id!, jobId);
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+        await expectSnapshotNavigationDisabled(page, 'HyperionPreview.java');
         runningJobId = undefined;
     });
 
@@ -176,7 +183,8 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
             mode: 'ADAPT',
             prompt: 'Make the edge-case requirements explicit and keep the tests deterministic.',
         });
-        await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Adapting');
+        await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Adaptation activity');
+        await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         await expectLlmMockSawPrompt(page, 'Make the edge-case requirements explicit and keep the tests deterministic.');
@@ -205,16 +213,24 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         });
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toContainText('Checking the exercise builds and grades', { timeout: 180_000 });
-        await expect(activity).toContainText('The exercise was generated and saved', { timeout: 240_000 });
+        const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
+        await selectTabWithKeyboard(page.getByRole('tab', { name: 'Generation activity' }), buildOutputTab, 'ArrowLeft');
+        await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
+        await expect(buildOutputTab).toHaveAttribute('aria-selected', 'true');
+        await expect(buildOutputTab).toBeFocused();
+
+        const hyperionTab = page.getByRole('tab', { name: 'Generation activity' });
+        await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
+        await expect(activity).toContainText('The exercise was adapted and saved', { timeout: 60_000 });
         await expect(page.getByTestId('hyperion-generation-verdict')).toBeVisible();
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
-        await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
         await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
         await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE');
         await expectAdminGenerationSandboxSlots(browser, '0 / 2');
+        await openPersistedChangedFileInNativeEditor(page, solutionMarkerPath);
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
         await expectExerciseProblemStatement(page, exercise!.id!, 'testUseMergeSortForBigList');
@@ -272,8 +288,9 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         });
 
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity).toContainText('Model call failed and will not be retried', { timeout: 180_000 });
-        await expect(activity).toContainText('The agent loop ended with an error.');
+        await expect(activity).toContainText('The agent loop ended with an error.', { timeout: 180_000 });
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed');
+        await expect(activity.getByTestId('hyperion-generation-file').getByRole('button')).toHaveCount(0);
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
@@ -297,6 +314,73 @@ async function openEditor(page: Page, login: (credentials: UserCredentials, url?
     expect(repositoryId).toBeDefined();
     await login(instructor, `/course-management/${course.id}/programming-exercises/${exerciseId}/code-editor/TEMPLATE/${repositoryId}`);
     await expect(page.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.editor-wrapper')).toBeVisible();
+}
+
+async function expectNativeEditorIntegration(page: Page) {
+    const workspace = page.locator('.editor-wrapper');
+    const center = workspace.locator('.editor-center');
+    const bottom = workspace.locator('.editor-bottom');
+    await expect(center).toBeVisible();
+    await expect(bottom).toBeVisible();
+    await expect(workspace.locator('jhi-code-editor-monaco:visible')).toHaveCount(1);
+    await expect(page.getByTestId('hyperion-generation-activity').locator('jhi-monaco-editor')).toHaveCount(0);
+
+    const centerBox = await center.boundingBox();
+    const bottomBox = await bottom.boundingBox();
+    expect(centerBox).not.toBeNull();
+    expect(bottomBox).not.toBeNull();
+    expect(centerBox!.y + centerBox!.height).toBeLessThanOrEqual(bottomBox!.y + 1);
+}
+
+async function expectHyperionTabSelected(page: Page) {
+    await expect(page.getByTestId('editor-bottom-panel-tab')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('editor-bottom-panel')).toBeVisible();
+}
+
+async function exerciseBottomPanelTabsWithKeyboard(page: Page) {
+    const hyperionTab = page.getByRole('tab', { name: 'Generation activity' });
+    const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
+    await selectTabWithKeyboard(hyperionTab, buildOutputTab, 'ArrowLeft');
+    await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
+}
+
+async function openHyperionTabWithKeyboard(page: Page) {
+    await selectTabWithKeyboard(page.getByRole('tab', { name: 'Build Output' }), page.getByRole('tab', { name: 'Generation activity' }), 'ArrowRight');
+}
+
+async function selectTabWithKeyboard(currentTab: Locator, targetTab: Locator, arrow: 'ArrowLeft' | 'ArrowRight') {
+    await currentTab.focus();
+    await currentTab.press(arrow);
+    await expect(targetTab).toBeFocused();
+    await targetTab.press('Enter');
+    await expect(targetTab).toHaveAttribute('aria-selected', 'true');
+}
+
+async function expectSnapshotNavigationDisabled(page: Page, fileName: string) {
+    const activity = page.getByTestId('hyperion-generation-activity');
+    const fileRow = activity.getByTestId('hyperion-generation-file-static').filter({ hasText: fileName });
+    if (!(await fileRow.isVisible())) {
+        const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
+        if (await detailsToggle.isVisible()) {
+            await detailsToggle.click();
+        }
+    }
+    await expect(fileRow).toBeVisible();
+    await expect(activity.getByRole('button', { name: fileName })).toHaveCount(0);
+}
+
+async function openPersistedChangedFileInNativeEditor(page: Page, fileName: string) {
+    const activity = page.getByTestId('hyperion-generation-activity');
+    const fileButton = activity.getByRole('button', { name: fileName });
+    if (!(await fileButton.isVisible())) {
+        await activity.getByTestId('hyperion-generation-details-toggle').click();
+    }
+    await expect(fileButton).toBeEnabled();
+    await fileButton.click();
+    await expect(page).toHaveURL(/\/code-editor\/SOLUTION\//);
+    await expect(page.locator('jhi-code-editor-monaco jhi-code-editor-header')).toContainText(fileName);
+    await expect(page.locator('jhi-code-editor-monaco:visible')).toHaveCount(1);
 }
 
 async function startGenerationFromMenu(page: Page, exerciseId: number) {
@@ -395,6 +479,7 @@ async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, 
                     solutionPassed: terminal?.verdict?.solutionPassed,
                     templateFailed: terminal?.verdict?.templateFailed,
                     testCount: terminal?.verdict?.testCount,
+                    revertAvailable: status.revertAvailable,
                 };
             },
             { timeout: 60_000 },
@@ -408,6 +493,7 @@ async function expectSuccessfulGenerationStatus(page: Page, exerciseId: number, 
             solutionPassed: true,
             templateFailed: true,
             testCount: 13,
+            revertAvailable: mode === 'ADAPT',
         });
 }
 
@@ -529,15 +615,35 @@ async function testRepositoryFileContains(page: Page, exerciseId: number, path: 
 
 async function revertAcceptedAdaptationFromUi(page: Page, exerciseId: number) {
     await expect(page.getByTestId('hyperion-generation-revert')).toBeVisible({ timeout: 60_000 });
+    let revertRequests = 0;
+    const countRevertRequest = (request: Request) => {
+        if (request.method() === 'POST' && request.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert-adaptation`)) {
+            revertRequests++;
+        }
+    };
+    page.on('request', countRevertRequest);
+    await page.getByTestId('hyperion-generation-revert').click();
+    const initialDialog = page.getByRole('alertdialog', { name: 'Undo the most recent successful adaptation?' });
+    const cancel = initialDialog.getByRole('button', { name: 'Cancel', exact: true });
+    await expect(cancel).toBeFocused();
+    await cancel.click();
+    await expect(initialDialog).toBeHidden();
+    expect(revertRequests).toBe(0);
+    page.off('request', countRevertRequest);
+
     const revertResponsePromise = page.waitForResponse(
         (response) => response.request().method() === 'POST' && response.url().includes(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert-adaptation`),
         { timeout: 120_000 },
     );
     await page.getByTestId('hyperion-generation-revert').click();
+    await page.getByRole('alertdialog', { name: 'Undo the most recent successful adaptation?' }).getByRole('button', { name: 'Undo adaptation', exact: true }).click();
     const revertResponse = await revertResponsePromise;
     expect(revertResponse.ok()).toBeTruthy();
     await expect(page.getByTestId('hyperion-generation-reverted')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('hyperion-generation-revert')).toBeHidden();
+    await expectNoRetainedGenerationStatus(page, exerciseId);
+    await page.reload();
+    await expect(page.getByTestId('hyperion-generation-activity')).toBeHidden();
 }
 
 async function cancelRunningJobFromUi(page: Page, exerciseId: number, jobId: string) {
@@ -601,11 +707,15 @@ async function expectRehydratedActivityOnFreshPage(browser: Browser, programming
     const freshPage = await browser.newPage();
     try {
         await Commands.login(freshPage, instructor, `/course-management/${course.id}/programming-exercises/${exerciseId}/code-editor/TEMPLATE/${repositoryId}`);
+        await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
+        await openHyperionTabWithKeyboard(freshPage);
+        await expectHyperionTabSelected(freshPage);
         const activity = freshPage.getByTestId('hyperion-generation-activity');
         await expect(activity).toBeVisible({ timeout: 60_000 });
         await expect(activity).toContainText('HyperionPreview.java');
-        await expect(activity).toContainText('retained-preview');
-        await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeDisabled();
+        await expectNativeEditorIntegration(freshPage);
+        await expectSnapshotNavigationDisabled(freshPage, 'HyperionPreview.java');
+        await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expect(freshPage.getByTestId('hyperion-generation-cancel')).toBeVisible();
     } finally {
         await freshPage.close();

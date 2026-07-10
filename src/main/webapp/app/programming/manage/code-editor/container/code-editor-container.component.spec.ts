@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorBottomPanel, CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
     CommitState,
     CreateFileChange,
@@ -84,7 +84,7 @@ describe('CodeEditorContainerComponent', () => {
             highlightLines: vi.fn(),
             editor: vi.fn().mockReturnValue({ revealLine: vi.fn() }),
         };
-        gridStub = { toggleCollapse: vi.fn() };
+        gridStub = { toggleCollapse: vi.fn(), expandBottomPanel: vi.fn(), buildOutputIsCollapsed: vi.fn().mockReturnValue(false) };
         (component as any).monacoEditor = () => monacoEditorStub;
         (component as any).grid = () => gridStub;
     });
@@ -447,6 +447,13 @@ describe('CodeEditorContainerComponent', () => {
         component.onToggleCollapse(event, CollapsableCodeEditorElement.BuildOutput);
 
         expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
+    });
+
+    it('should select and expand the projected bottom panel', () => {
+        component.openEditorBottomPanel();
+
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
     });
 
     it('should expose feedbacks for submission when inline feedback is enabled', () => {

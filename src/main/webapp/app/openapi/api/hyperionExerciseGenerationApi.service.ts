@@ -11,7 +11,7 @@
 
 import { Inject, Injectable, Optional }                      from '@angular/core';
 import { HttpClient,
-         HttpResponse, HttpEvent, HttpContext 
+         HttpResponse, HttpEvent, HttpContext
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 // @ts-ignore
@@ -41,8 +41,8 @@ export class HyperionExerciseGenerationApiService extends BaseService {
 
     /**
      * @endpoint delete /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}
-     * @param exerciseId 
-     * @param jobId 
+     * @param exerciseId
+     * @param jobId
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -99,8 +99,8 @@ export class HyperionExerciseGenerationApiService extends BaseService {
 
     /**
      * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-exercise
-     * @param exerciseId 
-     * @param exerciseGenerationRequest 
+     * @param exerciseId
+     * @param exerciseGenerationRequest
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -168,7 +168,7 @@ export class HyperionExerciseGenerationApiService extends BaseService {
 
     /**
      * @endpoint get /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status
-     * @param exerciseId 
+     * @param exerciseId
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
@@ -274,7 +274,7 @@ export class HyperionExerciseGenerationApiService extends BaseService {
 
     /**
      * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert-adaptation
-     * @param exerciseId 
+     * @param exerciseId
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options

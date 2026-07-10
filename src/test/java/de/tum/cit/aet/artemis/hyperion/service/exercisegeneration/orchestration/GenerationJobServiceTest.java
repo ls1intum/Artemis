@@ -19,9 +19,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,32 +48,33 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Unit test for {@link GenerationJobService}'s single-flight, transcript-cap, privacy-ownership and cancel-hook invariants against a real isolated embedded Hazelcast
  * instance, so it also exercises the same {@code Serializable} default serialization the distributed map uses in production.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GenerationJobServiceTest {
 
     private HazelcastInstance hazelcastInstance;
 
     private GenerationJobService jobService;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    void startHazelcast() {
         Config config = new Config();
         config.setClusterName("hyperion-job-service-test-" + System.nanoTime());
-        // Fully isolate: nothing shall ever join this instance.
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+    }
 
-        // No-op publisher: the test needs only the slot/transcript side effects, not the run. Token usage is exercised elsewhere, so a mock sink source suffices here.
+    @BeforeEach
+    void setUp() {
+        hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
         jobService = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class));
         jobService.init();
     }
 
-    @AfterEach
-    void tearDown() {
-        if (hazelcastInstance != null) {
-            hazelcastInstance.shutdown();
-        }
+    @AfterAll
+    void stopHazelcast() {
+        hazelcastInstance.shutdown();
     }
 
     private static User user(String login) {
@@ -119,6 +122,25 @@ class GenerationJobServiceTest {
         jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimRevertSlot(owner, exercise.getId()));
+    }
+
+    @Test
+    void discardRetainedRun_removesOnlyTheMatchingTranscriptAndSnapshots() {
+        long exerciseId = 45L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "adapt", GenerationMode.ADAPT);
+        jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/A.java", "adapted"));
+        jobService.clearJob(exerciseId, jobId);
+
+        jobService.discardRetainedRun(exerciseId, "different-job");
+        assertThat(jobService.getStatus(owner, exercise)).isPresent();
+
+        jobService.discardRetainedRun(exerciseId, jobId);
+
+        assertThat(jobService.getStatus(owner, exercise)).isEmpty();
+        assertThat(perFileEntries()).isEmpty();
+        assertThat(snapshotIndexMap().isEmpty()).isTrue();
     }
 
     @Test
@@ -184,6 +206,18 @@ class GenerationJobServiceTest {
 
         await().pollDelay(Duration.ofMillis(1300)).atMost(Duration.ofSeconds(2))
                 .untilAsserted(() -> assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE)));
+    }
+
+    @Test
+    void recordSnapshot_assignsCrashSafeTtlToSnapshotAndIndexWrites() {
+        long exerciseId = 35L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
+        String snapshotKey = GenerationJobService.fileKey(exerciseId, jobId, "solution/Heartbeat.java");
+
+        jobService.recordSnapshot(exerciseId, jobId, snapshot("solution/Heartbeat.java", "changed"));
+
+        assertThat(perFileSnapshotMap().getEntryView(snapshotKey).getExpirationTime()).isPositive();
+        assertThat(snapshotIndexMap().getEntryView(String.valueOf(exerciseId)).getExpirationTime()).isPositive();
     }
 
     @Test

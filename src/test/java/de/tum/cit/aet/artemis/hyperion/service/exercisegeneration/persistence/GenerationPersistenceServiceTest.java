@@ -17,11 +17,13 @@ import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ import org.mockito.Mockito;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -45,18 +48,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
-/**
- * Tests the persistence orchestration: the canonical tests build is triggered with the tests commit only after the solution was committed (so the build sees the final solution),
- * the problem statement is rewritten only when the agent actually changed it, and a mid-sequence commit failure is surfaced (not swallowed into a false success) and compensated
- * (the already-committed repositories are reverted) so the exercise is never left half-written on the live default branch.
- */
 class GenerationPersistenceServiceTest {
 
     private GitService gitService;
@@ -75,15 +72,19 @@ class GenerationPersistenceServiceTest {
 
     private ResultTestRepository resultRepository;
 
-    private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
-
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private TempFileUtilService tempFileUtilService;
+
     private GenerationPersistenceService service;
 
     private ProgrammingExercise exercise;
+
+    private AtomicReference<String> exerciseProblemStatement;
+
+    private AtomicReference<String> exerciseTitle;
 
     private LocalVCRepositoryUri templateUri;
 
@@ -103,12 +104,9 @@ class GenerationPersistenceServiceTest {
         exerciseVersionService = mock(ExerciseVersionService.class);
         testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         resultRepository = mock(ResultTestRepository.class);
-        programmingExerciseRepositoryService = mock(ProgrammingExerciseRepositoryService.class);
         programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         programmingExerciseTaskService = mock(ProgrammingExerciseTaskService.class);
-        // The build-gate adjustment waits for the freshly triggered tests-build to be PROCESSED, keyed on a solution result newer than the pre-trigger baseline (the grading
-        // pipeline saves the synced test cases strictly before it saves that result). Baseline empty, then a newer result on the first poll, so the wait flips immediately and the
-        // test-case set is read once. The read returns a single non-build-gate case, so the generic tests zero-weight nothing.
+        tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-persistence-test"));
         ProgrammingExerciseTestCase behaviourCase = mock(ProgrammingExerciseTestCase.class);
         when(behaviourCase.getTestName()).thenReturn("behaviourTest");
         when(testCaseRepository.findByExerciseId(anyLong())).thenReturn(Set.of(behaviourCase));
@@ -118,15 +116,25 @@ class GenerationPersistenceServiceTest {
         when(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(anyLong(), anyString())).thenReturn(testSubmission);
         when(resultRepository.existsNewerTestResultForParticipationAndCommitHash(anyLong(), anyString(), any())).thenReturn(true);
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any())).thenReturn(1);
-        // Inject a shrunken test-case-sync wait so the build-result poll runs without sleeping for seconds.
         service = new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepositoryService, programmingExerciseRepository, programmingExerciseTaskService,
+                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, tempFileUtilService,
                 Duration.ofSeconds(2), Duration.ofMillis(5));
 
         exercise = mock(ProgrammingExercise.class);
+        exerciseProblemStatement = new AtomicReference<>();
+        exerciseTitle = new AtomicReference<>();
         when(exercise.getId()).thenReturn(1L);
+        when(exercise.getProblemStatement()).thenAnswer(invocation -> exerciseProblemStatement.get());
+        when(exercise.getTitle()).thenAnswer(invocation -> exerciseTitle.get());
+        doAnswer(invocation -> {
+            exerciseProblemStatement.set(invocation.getArgument(0));
+            return null;
+        }).when(exercise).setProblemStatement(any());
+        doAnswer(invocation -> {
+            exerciseTitle.set(invocation.getArgument(0));
+            return null;
+        }).when(exercise).setTitle(any());
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(exercise));
-        // Distinct URIs per repository so the tests-build trigger can be asserted to fire with the tests commit hash specifically.
         templateUri = mock(LocalVCRepositoryUri.class);
         solutionUri = mock(LocalVCRepositoryUri.class);
         testsUri = mock(LocalVCRepositoryUri.class);
@@ -135,7 +143,6 @@ class GenerationPersistenceServiceTest {
         when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
     }
 
-    /** A real (non-mock) Result with only its id set — enough for the build-completion signal (the wait compares latest-result ids). */
     private static Result resultWithId(long id) {
         Result result = new Result();
         result.setId(id);
@@ -156,14 +163,15 @@ class GenerationPersistenceServiceTest {
 
     private void stubSuccessfulCheckoutAndCommits() throws Exception {
         repository = mock(Repository.class);
-        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
+                .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
-        // By default the scaffolded tree holds only the files the agent produces (no orphans), so the orphan sweep is a no-op unless a test stubs extra tracked files.
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
-        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "hash-template", "pre-solution", "hash-solution", "pre-tests", "hash-tests");
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-template", "pre-solution", "pre-tests");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", "hash-tests");
         when(gitService.getLastCommitHash(templateUri)).thenReturn("hash-template");
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-solution");
-        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests", "pre-tests");
+        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests");
     }
 
     @Test
@@ -173,38 +181,50 @@ class GenerationPersistenceServiceTest {
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        exerciseProblemStatement.set("old statement");
 
-        GenerationPersistenceService.PersistResult persistResult = service.persist(exercise, user, outcome);
+        GenerationPersistenceService.PersistResult persistResult = service.persist(exercise, user, outcome, "old statement", null, "job-1", () -> true);
 
-        // The observable ordering contract: the tests build is triggered with the TESTS commit only AFTER the solution repository was committed, so the build sees the final
-        // solution.
-        // We assert it via the local commit effect rather than the raw file-write order, which is an implementation detail.
-        InOrder order = Mockito.inOrder(gitService, programmingSubmissionService, continuousIntegrationTriggerService);
-        order.verify(gitService, times(6)).getLocalHeadHash(repository);
+        InOrder order = Mockito.inOrder(gitService, programmingSubmissionService, continuousIntegrationTriggerService, exerciseVersionService);
+        order.verify(gitService).getLocalHeadHash(repository);
+        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        order.verify(gitService).getLocalHeadHash(repository);
+        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(repository, "hash-solution", "main", "pre-solution");
+        order.verify(gitService).getLocalHeadHash(repository);
+        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(repository, "hash-tests", "main", "pre-tests");
         order.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
         order.verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
+        order.verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user);
 
-        // The problem statement changed, so it is rewritten with a DB-level compare-and-set guard.
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "old statement", null);
 
-        // A successful persist records a new exercise version.
-        verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user);
         assertThat(persistResult.prePersistHeads()).containsEntry(RepositoryType.TEMPLATE, "pre-template").containsEntry(RepositoryType.SOLUTION, "pre-solution")
                 .containsEntry(RepositoryType.TESTS, "pre-tests");
         assertThat(persistResult.postPersistHeads()).containsEntry(RepositoryType.TEMPLATE, "hash-template").containsEntry(RepositoryType.SOLUTION, "hash-solution")
                 .containsEntry(RepositoryType.TESTS, "hash-tests");
+        assertThat(persistResult.persistedProblemStatement()).isEqualTo("new statement");
+        assertThat(persistResult.persistedTitle()).isNull();
     }
 
     @Test
-    void persist_omitsNullPrePersistHeadsFromReturnedRevertBaseline() throws Exception {
+    void persist_omitsUnchangedRepositoriesFromTheRevertHeads() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(gitService.getLocalHeadHash(repository)).thenReturn(null, "hash-template");
+        when(gitService.isWorkingCopyClean(repository)).thenReturn(true, false, false);
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("pre-template");
+        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-solution");
+        ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        GenerationPersistenceService.PersistResult persistResult = service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), ""));
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user, outcome);
 
-        assertThat(persistResult.prePersistHeads()).doesNotContainKey(RepositoryType.TEMPLATE);
-        assertThat(persistResult.postPersistHeads()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+        assertThat(result.prePersistHeads()).doesNotContainKey(RepositoryType.TEMPLATE).containsEntry(RepositoryType.SOLUTION, "pre-solution").containsEntry(RepositoryType.TESTS,
+                "pre-tests");
+        assertThat(result.postPersistHeads()).doesNotContainKey(RepositoryType.TEMPLATE);
     }
 
     @Test
@@ -221,6 +241,40 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_detectsRepositoryDivergenceBeforeMetadataFinalizationWithoutOverwritingIt() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("concurrent-instructor-head");
+        when(gitService.getLastCommitHash(solutionUri)).thenReturn("hash-solution");
+        when(gitService.getLastCommitHash(testsUri)).thenReturn("hash-tests");
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("stale repository set")
+                .hasMessageContaining("manual review");
+
+        verify(gitService).resetToCommitAndForcePush(repository, "pre-tests", "hash-tests", "main");
+        verify(gitService).resetToCommitAndForcePush(repository, "pre-solution", "hash-solution", "main");
+        verify(gitService, never()).resetToCommitAndForcePush(any(), eq("pre-template"), any(), any());
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+    }
+
+    @Test
+    void persist_rechecksRepositoryHeadsAfterTestCaseSyncBeforeCreatingVersion() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("hash-template", "hash-template", "concurrent-instructor-head");
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("stale repository set")
+                .hasMessageContaining("manual review");
+
+        verify(continuousIntegrationTriggerService).triggerBuild(any(), eq("hash-tests"), eq(RepositoryType.TESTS));
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(exercise, user);
+        verify(gitService, never()).resetToCommitAndForcePush(any(), eq("pre-template"), any(), any());
+    }
+
+    @Test
     void persist_whenExerciseVersionCreationFails_compensatesAndThrowsIncomplete() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
@@ -232,18 +286,18 @@ class GenerationPersistenceServiceTest {
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("exercise version")
                 .hasMessageContaining("INCOMPLETE");
 
-        InOrder order = Mockito.inOrder(gitService);
-        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-tests", "hash-tests", "main");
-        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-solution", "hash-solution", "main");
-        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
         verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
         verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "pre-tests");
         verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "hash-tests", RepositoryType.TESTS);
         verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "pre-tests", RepositoryType.TESTS);
+        InOrder order = Mockito.inOrder(gitService);
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-tests", "hash-tests", "main");
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-solution", "hash-solution", "main");
+        order.verify(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
     }
 
     @Test
-    void persist_whenTestsBuildCannotBeTriggered_compensatesAndDoesNotCreateVersion() throws Exception {
+    void persist_whenTestsBuildCannotBeTriggered_compensatesAndDoesNotCreateGeneratedVersion() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
@@ -265,7 +319,7 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_compensatesRepositories_whenProblemStatementUpdateFails() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        exerciseProblemStatement.set("old statement");
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "old statement", null)).thenReturn(0);
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
@@ -284,7 +338,7 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_usesJobStartMetadataAsProblemStatementGuard() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("manual edit while generation was running");
+        exerciseProblemStatement.set("manual edit while generation was running");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
@@ -301,7 +355,7 @@ class GenerationPersistenceServiceTest {
     void persist_refusesMetadataUpdateBeforeRepositoryCommits_whenExerciseRowIsMissing() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.empty());
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        exerciseProblemStatement.set("old statement");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
@@ -319,8 +373,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
-        when(exercise.getProblemStatement()).thenReturn(" old\r\nstatement\n");
-        when(exercise.getTitle()).thenReturn("Original title");
+        exerciseProblemStatement.set(" old\r\nstatement\n");
+        exerciseTitle.set("Original title");
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(1L, "new statement", "Original title", " old\r\nstatement\n", "Original title")).thenReturn(1);
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
@@ -335,8 +389,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
-        when(exercise.getProblemStatement()).thenReturn("[task][Sort](<testid>7</testid>)");
-        when(exercise.getTitle()).thenReturn("Original title");
+        exerciseProblemStatement.set("[task][Sort](<testid>7</testid>)");
+        exerciseTitle.set("Original title");
         doAnswer(invocation -> {
             ProgrammingExercise candidate = invocation.getArgument(0);
             candidate.setProblemStatement(candidate.getProblemStatement().replace("<testid>7</testid>", "testBubbleSort"));
@@ -356,8 +410,8 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_refusesMeaningfulMarkdownWhitespaceMetadataEditBeforeRepositoryCommits() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("old    statement");
-        when(exercise.getTitle()).thenReturn("Original title");
+        exerciseProblemStatement.set("old    statement");
+        exerciseTitle.set("Original title");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
 
@@ -370,8 +424,8 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_refusesTitleEditEvenWhenProblemStatementOutputIsUnchangedBeforeRepositoryCommits() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("old statement");
-        when(exercise.getTitle()).thenReturn("Edited title");
+        exerciseProblemStatement.set("old statement");
+        exerciseTitle.set("Edited title");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "old statement");
 
@@ -384,8 +438,8 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_refusesMixedExpectedAndTargetMetadataDuringProblemStatementSave() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("");
-        when(exercise.getTitle()).thenReturn("Brief title");
+        exerciseProblemStatement.set("");
+        exerciseTitle.set("Brief title");
 
         ProgrammingExercise currentAtStart = new ProgrammingExercise();
         currentAtStart.setProblemStatement("");
@@ -409,8 +463,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
-        when(exercise.getProblemStatement()).thenReturn("old statement");
-        when(exercise.getTitle()).thenReturn("Old title");
+        exerciseProblemStatement.set("old statement");
+        exerciseTitle.set("Old title");
 
         ProgrammingExercise currentAtStart = new ProgrammingExercise();
         currentAtStart.setProblemStatement("old statement");
@@ -434,7 +488,7 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_restoresProblemStatement_whenTaskExtractionFailsAfterMetadataWasSaved() throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        exerciseProblemStatement.set("old statement");
         ProgrammingExercise currentBeforeSave = new ProgrammingExercise();
         currentBeforeSave.setProblemStatement("old statement");
         ProgrammingExercise currentAfterSave = new ProgrammingExercise();
@@ -458,41 +512,19 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_normalizesCheckoutPlaceholders_inEveryCommittedRepository_soNoHarnessShipsRawPlaceholders() throws Exception {
-        // The agent's sandbox harness can carry (or re-introduce) raw ${...} checkout placeholders — most visibly the Haskell run.sh, whose
-        // ${studentParentWorkingDirectoryName}/
-        // ${solutionWorkingDirectory} expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the build so no test case syncs. The persist must re-run the same
-        // production placeholder substitution exercise creation applies, on EACH committed repository's working copy, so the committed harness is byte-identical to an
-        // instructor-created one. We assert the normalization happens for all three repositories (template, solution, tests).
-        stubSuccessfulCheckoutAndCommits();
-        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
-
-        service.persist(exercise, user, outcome);
-
-        verify(programmingExerciseRepositoryService, times(3)).replacePlaceholders(exercise, repository);
-    }
-
-    @Test
     @SuppressWarnings("unchecked")
     void persist_zeroWeightsBuildGateTestCases_setsTheRealWeightToZeroAndPersistsOnlyThoseCases() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // REAL entities (not mocks) so the assertion proves the persisted WEIGHT actually became 0 — not merely that setWeight was invoked. The tests-build synced a C/C++
-        // FACT
-        // report: a build gate that passes on the compiling template (CompileSort) plus a real behaviour test, both at the default weight 1.0.
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
-        // The build result lands (the setUp default flips a newer solution result on the first poll); the complete synced set is then read once and zero-weighted.
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        // The build gate now grades for zero points (so the untouched compiling template scores 0%); the behaviour test is left graded.
         assertThat(buildGate.getWeight()).as("build gate zero-weighted").isEqualTo(0.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
-        // Exactly the build gate is written back — the unchanged behaviour case is not needlessly re-saved.
         ArgumentCaptor<Iterable<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.forClass(Iterable.class);
         verify(testCaseRepository).saveAll(saved.capture());
         assertThat(saved.getValue()).containsExactly(buildGate);
@@ -513,8 +545,6 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        // BOTH gates from the COMPLETE set are zero-weighted — not just the one visible in the partial sync. A regression to "read the set before the newer result lands" leaves
-        // compileSort at 1.0.
         assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
         assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
@@ -551,18 +581,13 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // A LARGE sync timeout with a tiny poll: the earlier count-keyed waits could never terminate early when the re-synced count equalled the pre-build count — the common
-        // adapt/revert case that keeps the same number of tests — so they spun the whole timeout on the persist thread while the user saw "saving". The build-completion signal is
-        // independent of the count: a build always produces a NEWER solution result, so the wait returns as soon as that result lands regardless of whether the count moved.
         GenerationPersistenceService promptService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
-                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository,
-                programmingExerciseRepositoryService, programmingExerciseRepository, programmingExerciseTaskService, Duration.ofSeconds(10), Duration.ofMillis(5));
+                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
+                programmingExerciseTaskService, tempFileUtilService, Duration.ofSeconds(10), Duration.ofMillis(5));
 
         ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
-        // The count is stable throughout: the re-sync produced the same number of cases the pre-build set had.
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
-        // The pre-trigger baseline capture + the first poll see result id 5; the freshly triggered build's result (id 6) lands on the second poll.
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(resultRepository.existsNewerTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any()))
                 .thenAnswer(invocation -> matchingResultPolls.incrementAndGet() >= 2);
@@ -571,23 +596,20 @@ class GenerationPersistenceServiceTest {
         promptService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
         Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
-        // It still zero-weighted the gate on the same-count set (parity with the oracle is preserved)...
         assertThat(buildGate.getWeight()).as("build gate zero-weighted even though the count never moved off the pre-build value").isEqualTo(0.0);
-        // ...and returned within a couple of polls of the result landing rather than spinning the full 10s timeout (a stalling count-keyed wait would poll ~2000 times / take
-        // ~10s).
         assertThat(elapsed).as("did not spin the full sync timeout on a same-count re-sync").isLessThan(Duration.ofSeconds(2));
         verify(resultRepository, atMost(4)).existsNewerTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
     }
 
     @Test
-    void persist_buildResultNeverLands_respectsTheDeadline_ratherThanHangingOrExitingEarly() throws Exception {
+    void persist_buildResultNeverLands_failsAtTheDeadlineInsteadOfAcceptingPotentiallyWrongGrading() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
         Duration timeout = Duration.ofMillis(80);
         GenerationPersistenceService boundedService = new GenerationPersistenceService("main", gitService, repositoryService, participationService,
-                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository,
-                programmingExerciseRepositoryService, programmingExerciseRepository, programmingExerciseTaskService, timeout, Duration.ofMillis(5));
+                continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository,
+                programmingExerciseTaskService, tempFileUtilService, timeout, Duration.ofMillis(5));
 
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(resultRepository.existsNewerTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any())).thenAnswer(invocation -> {
@@ -597,10 +619,10 @@ class GenerationPersistenceServiceTest {
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of());
 
         long startNanos = System.nanoTime();
-        boundedService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
+        assertThatThrownBy(() -> boundedService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "")))
+                .isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Timed out waiting for the tests-build result");
         Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
-        // It terminated (never hangs) and only after honouring the deadline — it kept polling for the exact triggered submission result rather than exiting early.
         assertThat(elapsed).as("terminated at the bounded deadline, did not hang").isLessThan(Duration.ofSeconds(5));
         assertThat(matchingResultPolls.get()).as("kept polling for the matching TEST build result until the deadline").isGreaterThan(1);
     }
@@ -610,26 +632,18 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // The scaffolded TESTS repo still holds the canonical sample's orphaned test sources (a behaviour test for a DIFFERENT exercise and the previous structure oracle) PLUS the
-        // build harness. The agent produced its own test, the regenerated oracle, and the harness. The persist must delete every orphaned text file so real grading sees the same
-        // tree the verifier accepted.
         Map<String, FileType> trackedTestFiles = Map.of("test/de/test/StringsTest.java", FileType.FILE, "test/de/test/SortingExampleBehaviorTest.java", FileType.FILE,
                 "test/de/test/test.json", FileType.FILE, "test/de/test/OldClassTest.java", FileType.FILE, "pom.xml", FileType.FILE, "test", FileType.FOLDER);
-        // The tests repo is the last committed; return the orphan-bearing tracked set only for it (template/solution have no orphans here).
         when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
 
-        // The sandbox-final tests tree the oracle validated: the agent's test plus the regenerated oracle (test.json kept, same path) — and the harness pom.xml.
         Map<String, String> producedTests = Map.of("test/de/test/StringsTest.java", "...", "test/de/test/test.json", "[]", "pom.xml", "<project/>");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), producedTests, "");
 
         service.persist(exercise, user, outcome);
 
-        // The orphaned canonical sources (a different exercise's behaviour test and a stale structural test class) are deleted so they cannot run in real grading.
         verify(repositoryService).deleteFile(repository, "test/de/test/SortingExampleBehaviorTest.java");
         verify(repositoryService).deleteFile(repository, "test/de/test/OldClassTest.java");
-        // The harness is not deleted here because it is part of the produced tree the verifier accepted.
         verify(repositoryService, never()).deleteFile(repository, "pom.xml");
-        // A file the agent DID produce at the same path (test.json regenerated) is overwritten by the write path, not removed by the orphan sweep.
         verify(repositoryService, never()).deleteFile(repository, "test/de/test/test.json");
     }
 
@@ -651,36 +665,46 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void persist_preservesScaffoldedBinary_neverDeletedAsOrphanNorRewritten(@org.junit.jupiter.api.io.TempDir java.nio.file.Path workingTree) throws Exception {
-        // Gap 2: a Java PLAIN_GRADLE template/solution ships a binary gradle/wrapper/gradle-wrapper.jar the agent never edits. It cannot survive the UTF-8 String round-trip, so
-        // the
-        // read-back EXCLUDES it from producedFiles — which makes it look like an orphan to the sweep. The persist must (a) NOT delete it (it is the byte-exact scaffolded
-        // original
-        // already in the working tree) and (b) NOT rewrite it (it is absent from producedFiles), so it commits intact. A text source the agent produced is still written normally.
         java.nio.file.Path wrapperDir = workingTree.resolve("gradle/wrapper");
         byte[] wrapperBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };
         org.apache.commons.io.FileUtils.writeByteArrayToFile(wrapperDir.resolve("gradle-wrapper.jar").toFile(), wrapperBytes);
+        Path runScript = workingTree.resolve("run.sh");
+        java.nio.file.Files.writeString(runScript, "#!/bin/sh\necho old\n");
+        assertThat(runScript.toFile().setExecutable(true, false)).isTrue();
 
         stubSuccessfulCheckoutAndCommits();
         when(repository.getLocalPath()).thenReturn(workingTree);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // The scaffolded TEMPLATE tree tracks the agent's source PLUS the binary wrapper jar (the latter excluded from producedFiles by the binary-safe read-back). Only the
-        // TEMPLATE
-        // sweep sees these tracked files; solution/tests have none here.
-        Map<String, FileType> trackedTemplateFiles = Map.of("src/de/test/BankAccount.java", FileType.FILE, "gradle/wrapper/gradle-wrapper.jar", FileType.FILE);
+        Map<String, FileType> trackedTemplateFiles = Map.of("src/de/test/BankAccount.java", FileType.FILE, "gradle/wrapper/gradle-wrapper.jar", FileType.FILE, "run.sh",
+                FileType.FILE);
         when(repositoryService.getFiles(any())).thenReturn(trackedTemplateFiles, Map.of(), Map.of());
+        when(gitService.getFileByName(eq(repository), anyString()))
+                .thenAnswer(invocation -> java.nio.file.Files.exists(workingTree.resolve(invocation.getArgument(1, String.class)))
+                        ? Optional.of(mock(de.tum.cit.aet.artemis.programming.domain.File.class))
+                        : Optional.empty());
+        doAnswer(invocation -> {
+            java.nio.file.Files.deleteIfExists(workingTree.resolve(invocation.getArgument(1, String.class)));
+            return null;
+        }).when(repositoryService).deleteFile(eq(repository), anyString());
+        doAnswer(invocation -> {
+            Path target = workingTree.resolve(invocation.getArgument(1, String.class));
+            java.nio.file.Files.createDirectories(target.getParent());
+            try (InputStream content = invocation.getArgument(2)) {
+                java.nio.file.Files.copy(content, target);
+            }
+            return null;
+        }).when(repositoryService).createFile(eq(repository), anyString(), any());
 
-        Map<String, String> producedTemplate = Map.of("src/de/test/BankAccount.java", "class BankAccount {}");
+        Map<String, String> producedTemplate = Map.of("src/de/test/BankAccount.java", "class BankAccount {}", "run.sh", "#!/bin/sh\necho generated\n");
         GenerationOutcome outcome = outcomeWith(producedTemplate, Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
         service.persist(exercise, user, outcome);
 
-        // The binary wrapper jar is NEVER deleted as an orphan (it is preserved byte-exact from the scaffold) and NEVER rewritten (it is not in producedFiles, so no createFile for
-        // it). The on-disk file remains the exact scaffolded bytes.
         verify(repositoryService, never()).deleteFile(repository, "gradle/wrapper/gradle-wrapper.jar");
         verify(repositoryService, never()).createFile(eq(repository), eq("gradle/wrapper/gradle-wrapper.jar"), any());
         assertThat(java.nio.file.Files.readAllBytes(wrapperDir.resolve("gradle-wrapper.jar"))).as("scaffolded wrapper jar is byte-identical").containsExactly(wrapperBytes);
-        // The agent's text source is still written.
+        assertThat(java.nio.file.Files.isExecutable(runScript)).isTrue();
         verify(repositoryService).createFile(eq(repository), eq("src/de/test/BankAccount.java"), any());
     }
 
@@ -689,8 +713,6 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // Parity with verification: if the sandbox-final produced tree omitted a text harness file, persistence must not silently keep the stale scaffolded copy. Either the
-        // verifier rejects the missing harness earlier, or the committed tree mirrors what was verified.
         Map<String, FileType> trackedTestFiles = Map.of("test/de/test/StringsTest.java", FileType.FILE, "pom.xml", FileType.FILE);
         when(repositoryService.getFiles(any())).thenReturn(Map.of(), Map.of(), trackedTestFiles);
 
@@ -720,7 +742,9 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
         when(repositoryService.getFiles(repository)).thenReturn(Map.of("problem-statement.md", FileType.FILE));
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-tests");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-tests");
+        exerciseProblemStatement.set("old statement");
 
         service.persist(exercise, user, outcomeWith(Map.of(), Map.of(), Map.of("problem-statement.md", "stale duplicate", "Test.java", "x"), "new statement"));
 
@@ -734,9 +758,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // The agent re-emitted the identical statement: rewriting it would create a spurious version/diff, so it must be skipped.
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "same statement");
-        when(exercise.getProblemStatement()).thenReturn("same statement");
+        exerciseProblemStatement.set("same statement");
 
         service.persist(exercise, user, outcome);
 
@@ -822,114 +845,90 @@ class GenerationPersistenceServiceTest {
     @Test
     void persist_propagatesMidSequenceCommitFailure_andDoesNotCreateVersion() throws Exception {
         Repository repository = mock(Repository.class);
-        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
+                .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
-        // The template commit succeeds, but the solution commit then fails — the exact half-written scenario that must be surfaced rather than reported as success.
-        Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(repositoryService).commitChanges(any(), any());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("template-pre", "solution-pre", "solution-post");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-post", "solution-post");
+        Mockito.doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("boom")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
+        when(gitService.getLastCommitHash(solutionUri)).thenReturn("solution-pre");
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        // A mid-sequence failure is wrapped as GenerationIncompleteException (never a silent success); the underlying "Failed to commit" cause is preserved in the message.
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Failed to commit");
-        // A failed persist must not record a version that would imply the exercise was saved consistently.
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
         verify(gitService).resetToOriginHead(repository);
     }
 
     @Test
-    void persist_compensatesAlreadyCommittedReposInReverseOrder_whenLaterRepositoryFails() throws Exception {
-        // TEMPLATE and SOLUTION commit successfully; the TESTS commit then fails — the multi-repository half-write the compensation exists to undo. Each repository's pre-persist
-        // HEAD is captured before it is written, so compensation can force-reset the already-committed repos back to their previous commit, in REVERSE commit order, and no
-        // publishable half-generated tree survives on the live default branch.
+    void persist_revertsCommitWhenPushSucceededButCommitCallReportedFailure() throws Exception {
         Repository repository = mock(Repository.class);
-        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
+                .thenReturn(repository);
         when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
         when(repositoryService.getFiles(any())).thenReturn(Map.of());
-        // getLocalHeadHash is called twice per committed repo: once to capture the checked-out pre-persist HEAD, once for Hyperion's new local commit hash. TESTS captures its
-        // pre-persist HEAD, then its commit throws before a post-commit hash is read.
-        when(gitService.getLocalHeadHash(repository)).thenReturn("tmpl-pre", "tmpl-post", "sol-pre", "sol-post", "tests-pre");
-        when(gitService.getLastCommitHash(templateUri)).thenReturn("tmpl-post");
-        when(gitService.getLastCommitHash(solutionUri)).thenReturn("sol-post");
-        // Template and solution commit; the third commit (TESTS) blows up.
-        Mockito.doNothing().doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("tests boom")).when(repositoryService).commitChanges(any(), any());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("template-before", "template-after");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-after");
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("template-after");
+        Mockito.doThrow(new org.eclipse.jgit.api.errors.NoHeadException("push result was lost")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
 
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        // The mid-sequence failure surfaces as GenerationIncompleteException so the UI never publishes a half-generated exercise.
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class);
+        verify(gitService).resetToCommitAndForcePush(repository, "template-before", "template-after", "main");
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persist_surfacesManualReviewWhenRemoteAdvancedAfterAmbiguousCommitFailure() throws Exception {
+        Repository repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
+                .thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("template-before", "template-after");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("template-after");
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("manual-after");
+        Mockito.doThrow(new org.eclipse.jgit.api.errors.NoHeadException("push result was lost")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(), anyString());
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("requires manual review");
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persist_compensatesAlreadyCommittedReposInReverseOrder_whenLaterRepositoryFails() throws Exception {
+        Repository repository = mock(Repository.class);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), any(LocalVCRepositoryUri.class), any(Path.class), eq(true), eq("main"), eq(false)))
+                .thenReturn(repository);
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        when(gitService.getLocalHeadHash(repository)).thenReturn("tmpl-pre", "sol-pre", "tests-pre", "tests-post");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("tmpl-post", "sol-post", "tests-post");
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("tmpl-post");
+        when(gitService.getLastCommitHash(solutionUri)).thenReturn("sol-post");
+        when(gitService.getLastCommitHash(testsUri)).thenReturn("tests-pre");
+        Mockito.doNothing().doNothing().doThrow(new org.eclipse.jgit.api.errors.NoHeadException("tests boom")).when(gitService).pushCommitWithLease(any(), anyString(), anyString(),
+                anyString());
+
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("INCOMPLETE");
 
-        // Compensation force-resets the already-committed repositories back to their captured pre-persist commit, in REVERSE commit order: SOLUTION first, then TEMPLATE.
         InOrder order = Mockito.inOrder(gitService);
         order.verify(gitService).resetToCommitAndForcePush(repository, "sol-pre", "sol-post", "main");
         order.verify(gitService).resetToCommitAndForcePush(repository, "tmpl-pre", "tmpl-post", "main");
-        // The TESTS repository never committed (its commit threw), so it is never reverted.
         verify(gitService, never()).resetToCommitAndForcePush(any(), eq("tests-pre"), any(), any());
-        // A failed, compensated persist must never record an exercise version (the publishable snapshot) nor trigger the tests grading build.
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
     }
-
-    // ================================================================================================================================================================
-    // W3 — recovery must never publish rejected output. persistRecoveryDraft always routes non-accepted drafts to an ISOLATED branch, leaving the live default branch
-    // byte-identical and triggering NO grading build/version of the broken draft.
-    // ================================================================================================================================================================
 
     private final String jobId = "job-42";
 
-    /** The given repository type already tracks a real source file — an adapt of an already-working exercise. */
     private void stubAdaptTarget() {
         when(repositoryService.getFiles(any())).thenReturn(Map.of("src/de/test/BankAccount.java", FileType.FILE));
-    }
-
-    @Test
-    void persistRecoveryDraft_fromScratchTarget_divertsToIsolatedBranch_noDefaultCommitNoBuildNoVersion() throws Exception {
-        stubSuccessfulCheckoutAndCommits();
-        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-hash");
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
-
-        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
-
-        assertThat(result.liveExerciseUntouched()).isTrue();
-        assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
-        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
-        verify(repositoryService, never()).commitChanges(any(), any());
-        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
-        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
-    }
-
-    @Test
-    void persistRecoveryDraft_dotfileOnlyScaffoldTarget_stillDivertsToIsolatedBranch() throws Exception {
-        stubSuccessfulCheckoutAndCommits();
-        when(repositoryService.getFiles(any())).thenReturn(Map.of(".gitattributes", FileType.FILE, ".gitignore", FileType.FILE, "src/.gitkeep", FileType.FILE),
-                Map.of(".gitattributes", FileType.FILE, ".gitignore", FileType.FILE, "src/.gitkeep", FileType.FILE),
-                Map.of(".gitignore", FileType.FILE, "test/.gitkeep", FileType.FILE));
-        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-hash");
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
-
-        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
-
-        assertThat(result.liveExerciseUntouched()).isTrue();
-        assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
-        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
-        verify(repositoryService, never()).commitChanges(any(), any());
-    }
-
-    @Test
-    void persistRecoveryDraft_existingPomOrReadme_stillNeverOverwritesLiveBranch() throws Exception {
-        stubSuccessfulCheckoutAndCommits();
-        when(repositoryService.getFiles(any())).thenReturn(Map.of("pom.xml", FileType.FILE, "readme.md", FileType.FILE));
-        when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-hash");
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
-
-        GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
-
-        assertThat(result.liveExerciseUntouched()).isTrue();
-        assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
-        verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
-        verify(repositoryService, never()).commitChanges(any(), any());
-        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
-        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
     }
 
     @Test
@@ -938,41 +937,54 @@ class GenerationPersistenceServiceTest {
         stubAdaptTarget();
         when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-hash");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
-        when(exercise.getProblemStatement()).thenReturn("old statement");
+        exerciseProblemStatement.set("old statement");
 
         GenerationPersistenceService.RecoveryPersistResult result = service.persistRecoveryDraft(exercise, user, outcome, jobId);
 
-        // The live default branch is left byte-identical: the draft is on the isolated branch only.
-        assertThat(result.liveExerciseUntouched()).isTrue();
         assertThat(result.draftBranch()).isEqualTo("hyperion-draft/" + jobId);
-        // Every repository's draft is pushed to the SAME isolated branch; the live default branch is never committed to (no RepositoryService.commitChanges).
+        assertThat(result.savedRepositories()).containsExactlyInAnyOrder(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
         verify(gitService, times(3)).commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user));
         verify(repositoryService, never()).commitChanges(any(), any());
-        // CRITICAL: the broken draft must NOT be graded against the live exercise, and the live exercise must NOT be recorded as a new version (it did not change).
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
-        // The live exercise's problem statement must NOT be overwritten by the broken draft's statement.
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
-        // The working copy is reset back to origin/HEAD so the diverted commit does not linger on the checkout.
-        verify(gitService, times(3)).resetToOriginHead(repository);
     }
 
     @Test
     void persistRecoveryDraft_adaptIsolatedPushFailsMidMultiRepo_propagates_andNeverTouchesDefaultBranch() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         stubAdaptTarget();
-        // Template diverts fine, but the next isolated push (solution) blows up — the multi-repo half-write scenario. Because we never touch the default branch in adapt mode,
-        // this
-        // can only ever half-write the ISOLATED branch (a throwaway draft), never half-regress the live exercise.
         when(gitService.commitToIsolatedBranchAndPush(any(), eq("hyperion-draft/" + jobId), any(), eq(user))).thenReturn("draft-template")
                 .thenThrow(new org.eclipse.jgit.api.errors.NoHeadException("isolated push boom"));
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
         assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class).hasMessageContaining("recovery draft");
-        // The live default branch was NEVER committed to, NEVER graded, NEVER versioned — the working exercise is intact despite the isolated-branch failure.
         verify(repositoryService, never()).commitChanges(any(), any());
         verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_whenProducedTreesMatchLiveRepositories_doesNotClaimDraftBranch() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(any())).thenReturn(true);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No repository draft was saved");
+
+        verify(gitService, never()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
+    }
+
+    @Test
+    void persistRecoveryDraft_whenProducedFilesHaveNoRepository_failsInsteadOfSilentlyDroppingThem() throws Exception {
+        when(exercise.getRepositoryURI(RepositoryType.TEMPLATE)).thenReturn(null);
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), "new statement");
+
+        assertThatThrownBy(() -> service.persistRecoveryDraft(exercise, user, outcome, jobId)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("exercise repository is unavailable");
+
+        verify(gitService, never()).commitToIsolatedBranchAndPush(any(), any(), any(), any());
     }
 
     @Test
@@ -991,16 +1003,11 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
-        // The lean AI create page ships a brief-derived placeholder title; on acceptance the persist reconciles it from the generated statement's first H1.
         assertThat(GenerationPersistenceService.extractTitleFromH1("# Roman Numerals\n\nConvert integers 1..3999.")).isEqualTo("Roman Numerals");
-        // Leading blank lines and trailing heading whitespace are tolerated.
         assertThat(GenerationPersistenceService.extractTitleFromH1("\n\n#   Balanced BST   \n## Tasks")).isEqualTo("Balanced BST");
-        // A level-2 heading is NOT a title; with no H1 the placeholder is kept (null).
         assertThat(GenerationPersistenceService.extractTitleFromH1("## Subsection only\nbody")).isNull();
         assertThat(GenerationPersistenceService.extractTitleFromH1("No heading at all")).isNull();
-        // A hash with no following space (e.g. a tag) is not an ATX heading.
         assertThat(GenerationPersistenceService.extractTitleFromH1("#NotAHeading")).isNull();
-        // An over-long heading is capped so it can never break the title column.
         String longHeading = "# " + "x".repeat(400);
         assertThat(GenerationPersistenceService.extractTitleFromH1(longHeading)).hasSize(255);
     }
@@ -1010,13 +1017,11 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // From-scratch: the statement was blank before this run (the AI page persisted empty repositories), so the placeholder title is replaced by the agent's own H1.
-        when(exercise.getProblemStatement()).thenReturn("");
+        exerciseProblemStatement.set("");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Roman Numerals\n\nConvert 1..3999.");
 
         service.persist(exercise, user, outcome);
 
-        // The generated title persists in the same guarded metadata write and is reflected on the in-memory exercise after the successful compare-and-set.
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "# Roman Numerals\n\nConvert 1..3999.", "Roman Numerals", "", null);
         verify(exercise).setTitle("Roman Numerals");
     }
@@ -1026,8 +1031,7 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        // Adapt: the statement already existed, so the instructor's title is authoritative and must not be overwritten by the (possibly re-titled) generated H1.
-        when(exercise.getProblemStatement()).thenReturn("# Old Title\n\nold body");
+        exerciseProblemStatement.set("# Old Title\n\nold body");
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Brand New Heading\n\nnew body");
 
         service.persist(exercise, user, outcome);

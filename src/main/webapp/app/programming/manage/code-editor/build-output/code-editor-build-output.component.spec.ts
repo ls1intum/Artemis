@@ -110,6 +110,17 @@ describe('CodeEditorBuildOutputComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should omit its header when hosted in a shared bottom-panel header', () => {
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [] } as Participation);
+        fixture.componentRef.setInput('showHeader', false);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
+
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('.card-header, .card-second-header'))).toBeNull();
+        expect(debugElement.query(By.css('#cardBuildOutput'))).not.toBeNull();
+    });
+
     it('should setup result websocket, fetch result details and build logs on participation change', () => {
         const result = { id: 1 };
         const submission = { id: 1, results: [result] };

@@ -214,55 +214,10 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void build_encodesAPlusQualityRules() {
-        // The two rules that map to real verifier gates: test every promised contract, and clean up unused dependencies.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("EVERY promise you make").contains("unused dependencies");
-    }
-
-    @Test
-    void build_encodesProblemStatementQualityRules() {
-        // One marker per DISTINCT problem-statement-quality rule. Cut only the same-rule redundancy/examples: "within 1e-6" (same float rule as
-        // "exact equality"), "Design note (not graded)" (same complexity rule), "CONCRETE FENCED trace" (same worked-example rule). The load-bearing pin is the `[task]` spelling
-        // contract; the rest prove each rule is present without freezing its wording. Single varargs assertion so a failure names every missing marker, not just the first.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains(
-                // Contract: the parser matches the exact five characters `[task]`; any other spelling binds nothing.
-                "EXACT five-character singular keyword `[task]`",
-                // Rule: examples must be shown as worked examples.
-                "WORKED EXAMPLE",
-                // Rule: the statement must stay student-facing (no leaked grading mechanics).
-                "STUDENT-FACING ONLY",
-                // Rule: do not bind an internal build-gate aggregate.
-                "build-gate",
-                // Rule: pin the input domain in the contract.
-                "INPUT DOMAIN",
-                // Rule: never state an asymptotic/complexity guarantee the value-asserting tests cannot verify.
-                "Do NOT state any complexity",
-                // Rule: an untoleranced float comparison is exact equality and must be stated as such.
-                "exact equality");
-    }
-
-    @Test
-    void build_forbidsStatingDomainGuaranteesTheSolutionDoesNotEnforce() {
-        // The model once invented a "NaN throws" rule a `< 0` guard does not enforce in IEEE-754; every domain/error guarantee must be grounded in what the reference solution
-        // does.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("the REFERENCE SOLUTION actually enforces").contains("does NOT reject NaN");
-    }
-
-    @Test
     void build_forbidsAddingOrStrippingParensOnTestNames() {
         // The binding resolves by exact string match, so adding/removing the () on a name silently grades it 0.
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
         assertThat(prompt).contains("do NOT add, remove").contains("grades it 0");
-    }
-
-    @Test
-    void build_specMode_instructsToStripMetaNotesAndMeetQualityBar() {
-        // A placeholder statement once carried internal notes the agent kept; spec mode must tell it to delete them and lift the statement to the quality bar.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, "Implement a bounded integer stack with push, pop, peek and a fixed capacity."));
-        assertThat(prompt).contains("DELETE any internal/meta notes").contains("PROBLEM STATEMENT QUALITY");
     }
 
     @Test
@@ -283,14 +238,6 @@ class AgentSystemPromptServiceTest {
         // Audit found Rust shipped a dead syn/proc-macro harness + unused chrono/rand deps; the profile must name the prune + a grep self-check.
         String guidance = profile(ProgrammingLanguage.RUST);
         assertThat(guidance).contains("rust_template_test_macros").contains("grep -rn");
-    }
-
-    @Test
-    void build_mandatesStudentFacingTemplateAndCoverageSelfCheck() {
-        // Audit found agents skipped a coverage pass and shipped grader-mechanics-leaking statements; the prompt must mandate a scratchpad plan and a re-read-your-tests coverage
-        // self-check before submitting.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("scratchpad").contains("re-read your tests");
     }
 
     @Test

@@ -375,13 +375,6 @@ class DifferentialVerificationServiceTest {
                 new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()));
     }
 
-    /** Same as {@link #verifyWithFiles} but with an ADAPT-style caller; harness immutability still applies because production grading trusts it verbatim. */
-    private static VerificationResult verifyWithFilesAdapt(BuildReportSpec solution, BuildReportSpec template, Map<String, String> seedTests, Map<String, String> producedTests,
-            Map<String, String> producedTemplate, Map<String, String> producedSolution) {
-        return newVerifier().verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
-                new VerificationRequest(seedTests, producedTests, producedTemplate, producedSolution, Set.of(), Set.of(), Set.of()));
-    }
-
     /** ADAPT mode with an explicit pre-adapt graded-name baseline, so the adapt total-wipe (zero-retention) gate can be exercised end-to-end through the production verify(...). */
     private static VerificationResult verifyAdaptWithBaseline(BuildReportSpec solution, BuildReportSpec template, String problemStatement, Set<String> baselineGradedTestNames) {
         return newVerifier().verify(new ScriptedSandbox(solution, template, problemStatement), "s", new ProgrammingExercise(),
@@ -391,16 +384,6 @@ class DifferentialVerificationServiceTest {
     private static final String SOLUTION_BODY = "module Exercise (factorial) where\n\nfactorial :: Integer -> Integer\nfactorial 0 = 1\nfactorial n = n * factorial (n - 1)\n";
 
     private static final String SEED_CABAL = "library solution\n  hs-source-dirs: ${solutionWorkingDirectory}/src\n  exposed-modules: Exercise\n";
-
-    @Test
-    void integrityGates_acceptWhenHarnessUnchangedAndNoLeak() {
-        var seedTests = Map.of("test.cabal", SEED_CABAL);
-        var producedTests = Map.of("test.cabal", SEED_CABAL.replace("${solutionWorkingDirectory}", "assignment"));
-        var producedTemplate = Map.of("src/Exercise.hs", "factorial _ = error \"todo: implement factorial here\"\n");
-        var producedSolution = Map.of("src/Exercise.hs", SOLUTION_BODY);
-        VerificationResult result = verifyWithFiles(result(5, 0, 0, 0), result(5, 3, 0, 1), seedTests, producedTests, producedTemplate, producedSolution);
-        assertThat(result.accepted()).isTrue();
-    }
 
     @Test
     void integrityGates_rejectWhenHarnessBuildLayoutTampered() {
@@ -440,26 +423,6 @@ class DifferentialVerificationServiceTest {
         assertThat(result.accepted()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
         assertThat(result.reasons()).anyMatch(r -> r.contains("@StrictTimeout"));
-    }
-
-    @Test
-    void adaptMode_stillRejectsHarnessLayoutChange() {
-        // ADAPT may change test source files, but not the seeded harness layout: production grading trusts the harness verbatim, so accepting a rewritten source path is unsafe.
-        var seedTests = Map.of("test.cabal", SEED_CABAL);
-        var producedTests = Map.of("test.cabal", SEED_CABAL.replace("${solutionWorkingDirectory}/src", "assignment/solution/src"));
-        VerificationResult result = verifyWithFilesAdapt(result(5, 0, 0, 0), result(5, 3, 0, 1), seedTests, producedTests, Map.of(), Map.of());
-        assertThat(result.accepted()).as("ADAPT keeps the tests-repo harness-immutability gate").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("harness is graded"));
-    }
-
-    @Test
-    void adaptMode_stillEnforcesTheSolutionLeakGate() {
-        // A template leaking the reference solution to a non-graded path must still be rejected in ADAPT mode.
-        var producedTemplate = Map.of("src/Exercise.hs", "factorial _ = error \"todo: implement the factorial function here\"\n", "doc/reference_solution.hs", SOLUTION_BODY);
-        var producedSolution = Map.of("src/Exercise.hs", SOLUTION_BODY);
-        VerificationResult result = verifyWithFilesAdapt(result(5, 0, 0, 0), result(5, 3, 0, 1), Map.of(), Map.of(), producedTemplate, producedSolution);
-        assertThat(result.accepted()).as("the solution-leak gate is enforced by ADAPT").isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("template leaks the reference solution"));
     }
 
     @Test

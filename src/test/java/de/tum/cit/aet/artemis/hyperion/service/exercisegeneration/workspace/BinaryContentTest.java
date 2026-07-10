@@ -40,22 +40,24 @@ class BinaryContentTest {
     }
 
     @Test
-    void classifiesLargeUtf8TextAsText_whenAMultibyteCharStraddlesTheSniffBoundary() {
-        // A >8 KiB UTF-8 text file whose 4-byte emoji straddles the 8192-byte sniff window (bytes 8190-8191 inside as a TRUNCATED F0 9F, the rest outside). A strict decode of the
-        // raw window would REPORT the truncated tail as malformed and the whole text file would be wrongly dropped as binary — a silent source loss. It must classify as text.
+    void classifiesLargeUtf8TextAsText_whenAMultibyteCharCrossesTheFileSniffBoundary(@TempDir Path dir) throws Exception {
         byte[] emoji = "😀".getBytes(StandardCharsets.UTF_8); // F0 9F 98 80
-        assertThat(BinaryContent.isBinary(textWithMultibyteAt(emoji, 8190, 9000))).as("truncated trailing emoji at the sniff boundary is text").isFalse();
+        Path text = dir.resolve("large.txt");
+        FileUtils.writeByteArrayToFile(text.toFile(), textWithMultibyteAt(emoji, 8190, 9000));
+
+        assertThat(BinaryContent.isBinaryFile(text)).isFalse();
     }
 
     @Test
-    void classifiesLargeUtf8TextAsText_forMultibyteCharsAtEitherSideOfTheBoundary() {
-        byte[] emoji = "😀".getBytes(StandardCharsets.UTF_8);
-        // Two-byte 'é' (C3 A9) whose lead byte is the last byte in the window (8191): only the lead survives, a truncated tail that must still read as text.
-        assertThat(BinaryContent.isBinary(textWithMultibyteAt("é".getBytes(StandardCharsets.UTF_8), 8191, 9000))).isFalse();
-        // Emoji with three of four bytes inside the window (lead at 8189).
-        assertThat(BinaryContent.isBinary(textWithMultibyteAt(emoji, 8189, 9000))).isFalse();
-        // Emoji ending exactly at the boundary (fully inside the window): decoded whole, still text.
-        assertThat(BinaryContent.isBinary(textWithMultibyteAt(emoji, 8188, 9000))).isFalse();
+    void detectsBinaryMarkersAfterTheFormerSniffWindow(@TempDir Path dir) throws Exception {
+        byte[] content = new byte[9000];
+        Arrays.fill(content, (byte) 'a');
+        content[8500] = 0;
+        Path file = dir.resolve("late-marker.bin");
+        FileUtils.writeByteArrayToFile(file.toFile(), content);
+
+        assertThat(BinaryContent.isBinary(content)).isTrue();
+        assertThat(BinaryContent.isBinaryFile(file)).isTrue();
     }
 
     @Test

@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationApiService } from 'app/openapi/api/hyperionExerciseGenerationApi.service';
-import { ExerciseGenerationRequest } from 'app/openapi/model/exerciseGenerationRequest';
 import {
     ExerciseAdaptationRevertResult,
     HyperionGenerationJobStart,
@@ -27,8 +26,7 @@ export class HyperionExerciseGenerationService {
      * @param request the explicit mode plus the optional prompt / selected feedback threads
      */
     generate(exerciseId: number, request: HyperionGenerationRequest): Observable<HyperionGenerationJobStart> {
-        const generatedRequest: ExerciseGenerationRequest = request;
-        return this.api.generateExercise(exerciseId, generatedRequest);
+        return this.api.generateExercise(exerciseId, request);
     }
 
     /**
@@ -37,7 +35,7 @@ export class HyperionExerciseGenerationService {
      * @param exerciseId the exercise id
      */
     getStatus(exerciseId: number): Observable<HttpResponse<HyperionGenerationStatus>> {
-        return this.api.getExerciseGenerationStatus(exerciseId, 'response') as Observable<HttpResponse<HyperionGenerationStatus>>;
+        return this.api.getExerciseGenerationStatus(exerciseId, 'response');
     }
 
     /**

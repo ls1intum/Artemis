@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * Tests the recovery path: a near-miss run becomes a persisted draft plus one problem-statement-anchored {@code CONSISTENCY_CHECK} finding per verification reason (and the agent's
@@ -57,7 +60,8 @@ class GenerationRecoveryServiceTest {
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);
-        when(persistenceService.persistRecoveryDraft(any(), any(), any(), any())).thenReturn(new GenerationPersistenceService.RecoveryPersistResult(true, "hyperion-draft/job-1"));
+        when(persistenceService.persistRecoveryDraft(any(), any(), any(), any()))
+                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult("hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE)));
     }
 
     private GenerationOutcome outcome(VerificationResult verification, String agentNote) {
@@ -79,6 +83,7 @@ class GenerationRecoveryServiceTest {
         assertThat(findings).hasSize(3);
         // Every finding anchors to the problem statement (which always exists), so the thread reliably lands in the editor.
         assertThat(findings).allSatisfy(finding -> {
+            assertThat(finding.category()).isEqualTo(ConsistencyIssueCategory.GENERATION_REVIEW_REQUIRED);
             assertThat(finding.relatedLocations()).singleElement().satisfies(location -> assertThat(location.type()).isEqualTo(ArtifactType.PROBLEM_STATEMENT));
             assertThat(finding.description()).isNotBlank();
             assertThat(finding.suggestedFix()).isNotBlank();
@@ -106,7 +111,7 @@ class GenerationRecoveryServiceTest {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one", "gap two"));
         GenerationOutcome outcome = outcome(verification, "");
         // Two persisted threads come back from the review service.
-        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any())).thenReturn(List.of(threadWithComment(), threadWithComment()));
+        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(threadWithComment(), threadWithComment()));
 
         int created = recoveryService.recover(exercise, user, outcome, "job-1").reviewThreadCount();
 
@@ -115,7 +120,7 @@ class GenerationRecoveryServiceTest {
         verify(persistenceService).persistRecoveryDraft(exercise, user, outcome, "job-1");
         // The findings are created through the EXISTING consistency-check thread path (no parallel mechanism).
         ArgumentCaptor<List<ConsistencyIssueDTO>> captor = ArgumentCaptor.forClass(List.class);
-        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), captor.capture());
+        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), captor.capture(), eq(user));
         assertThat(captor.getValue()).hasSize(2);
         // Open editors are notified per created thread so the review panel updates live.
         verify(exerciseEditorSyncService, times(2)).broadcastReviewThreadUpdate(eq(42L), any());
@@ -125,14 +130,14 @@ class GenerationRecoveryServiceTest {
     void recover_persistsBeforeCreatingFindings_soDraftExistsWhenThreadsAnchor() {
         VerificationResult verification = new VerificationResult(false, false, true, 1, List.of("gap"));
         GenerationOutcome outcome = outcome(verification, "");
-        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any())).thenReturn(List.of(threadWithComment()));
+        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any(), any())).thenReturn(List.of(threadWithComment()));
 
         var inOrder = org.mockito.Mockito.inOrder(persistenceService, exerciseReviewService);
         recoveryService.recover(exercise, user, outcome, "job-1");
 
         // Persist must happen before threads are created so the draft (and its repos) exist when the review threads resolve their anchors.
         inOrder.verify(persistenceService).persistRecoveryDraft(exercise, user, outcome, "job-1");
-        inOrder.verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any());
+        inOrder.verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any(), eq(user));
     }
 
     @Test
@@ -145,7 +150,7 @@ class GenerationRecoveryServiceTest {
 
         assertThat(created).isZero();
         verify(persistenceService).persistRecoveryDraft(exercise, user, outcome, "job-1");
-        verify(exerciseReviewService, never()).createConsistencyCheckThreads(anyLong(), any());
+        verify(exerciseReviewService, never()).createConsistencyCheckThreads(anyLong(), any(), any());
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
     }
 
@@ -155,7 +160,7 @@ class GenerationRecoveryServiceTest {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one", "gap two"));
         GenerationOutcome outcome = outcome(verification, "agent note");
         // Persist commits the draft (no throw), then thread creation blows up (e.g. a DB constraint / missing exercise version).
-        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any())).thenThrow(new IllegalStateException("thread persistence failed"));
+        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any(), any())).thenThrow(new IllegalStateException("thread persistence failed"));
 
         // The draft is saved, so recovery returns the degraded sentinel instead of throwing — the caller will emit NEEDS_REVIEW, not PARTIAL.
         int result = recoveryService.recover(exercise, user, outcome, "job-1").reviewThreadCount();
@@ -167,38 +172,36 @@ class GenerationRecoveryServiceTest {
         verify(exerciseEditorSyncService, never()).broadcastReviewThreadUpdate(anyLong(), any());
     }
 
-    /** An isolated draft surfaces {@code liveExerciseUntouched=true} and the draft branch up to the caller. */
     @Test
-    void recover_adaptTargetDivertedToIsolatedBranch_resultCarriesUntouchedFlagAndBranch() {
+    void recover_adaptTargetDivertedToIsolatedBranch_resultCarriesSavedRepositoryAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 2, List.of("gap one"));
         GenerationOutcome outcome = outcome(verification, "");
         // The persistence layer diverted the draft to an isolated branch, leaving the live exercise byte-identical.
         when(persistenceService.persistRecoveryDraft(any(), any(), any(), eq("job-9")))
-                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult(true, "hyperion-draft/job-9"));
-        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any())).thenReturn(List.of(threadWithComment()));
+                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult("hyperion-draft/job-9", Set.of(RepositoryType.TEMPLATE)));
+        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(threadWithComment()));
 
         GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, "job-9");
 
         // The live exercise was NOT overwritten and the caller learns exactly where the draft is.
-        assertThat(result.liveExerciseUntouched()).isTrue();
+        assertThat(result.savedRepositories()).containsExactly(RepositoryType.TEMPLATE);
         assertThat(result.draftBranch()).isEqualTo("hyperion-draft/job-9");
         // Review comments are still created so the gaps are surfaced even though the draft is on an isolated branch.
         assertThat(result.reviewThreadCount()).isEqualTo(1);
     }
 
-    /** The isolated draft result still carries {@code liveExerciseUntouched=true} and the branch even when thread creation fails. */
     @Test
-    void recover_adaptDiverted_thenAnnotationFails_stillReportsUntouchedAndBranch() {
+    void recover_adaptDiverted_thenAnnotationFails_stillReportsSavedRepositoryAndBranch() {
         VerificationResult verification = new VerificationResult(false, false, true, 1, List.of("gap"));
         GenerationOutcome outcome = outcome(verification, "");
         when(persistenceService.persistRecoveryDraft(any(), any(), any(), eq("job-x")))
-                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult(true, "hyperion-draft/job-x"));
-        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any())).thenThrow(new IllegalStateException("thread persistence failed"));
+                .thenReturn(new GenerationPersistenceService.RecoveryPersistResult("hyperion-draft/job-x", Set.of(RepositoryType.TEMPLATE)));
+        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any(), any())).thenThrow(new IllegalStateException("thread persistence failed"));
 
         GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, "job-x");
 
         assertThat(result.reviewThreadCount()).isEqualTo(GenerationRecoveryService.REVIEW_COMMENTS_FAILED);
-        assertThat(result.liveExerciseUntouched()).isTrue();
+        assertThat(result.savedRepositories()).containsExactly(RepositoryType.TEMPLATE);
         assertThat(result.draftBranch()).isEqualTo("hyperion-draft/job-x");
     }
 
@@ -259,31 +262,31 @@ class GenerationRecoveryServiceTest {
     @Test
     void surfaceAdvisoryFindings_attachesThreadsWithoutAffectingAcceptance() {
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji", "no emoji test")));
-        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any())).thenReturn(List.of(threadWithComment()));
+        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(threadWithComment()));
 
-        int created = recoveryService.surfaceAdvisoryFindings(exercise, report);
+        int created = recoveryService.surfaceAdvisoryFindings(exercise, user, report);
 
         assertThat(created).isEqualTo(1);
-        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any());
+        verify(exerciseReviewService).createConsistencyCheckThreads(eq(42L), any(), eq(user));
         verify(exerciseEditorSyncService, times(1)).broadcastReviewThreadUpdate(eq(42L), any());
     }
 
     /** An empty advisory report on the accepted path creates no threads and never calls the review service — a clean exercise gets zero advisory noise. */
     @Test
     void surfaceAdvisoryFindings_emptyReport_createsNothing() {
-        int created = recoveryService.surfaceAdvisoryFindings(exercise, SpecFidelityReport.empty());
+        int created = recoveryService.surfaceAdvisoryFindings(exercise, user, SpecFidelityReport.empty());
 
         assertThat(created).isZero();
-        verify(exerciseReviewService, never()).createConsistencyCheckThreads(anyLong(), any());
+        verify(exerciseReviewService, never()).createConsistencyCheckThreads(anyLong(), any(), any());
     }
 
     /** A thread-creation failure on the accepted path is swallowed (advisory only): it returns 0 and never throws, so it can never downgrade a SUCCESS. */
     @Test
     void surfaceAdvisoryFindings_attachFailure_isSwallowed() {
         SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji", "no emoji test")));
-        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any())).thenThrow(new IllegalStateException("db down"));
+        when(exerciseReviewService.createConsistencyCheckThreads(anyLong(), any(), any())).thenThrow(new IllegalStateException("db down"));
 
-        int created = recoveryService.surfaceAdvisoryFindings(exercise, report);
+        int created = recoveryService.surfaceAdvisoryFindings(exercise, user, report);
 
         assertThat(created).isZero();
     }

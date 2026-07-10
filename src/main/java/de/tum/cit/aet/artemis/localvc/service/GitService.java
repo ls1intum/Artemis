@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CloneCommand;
@@ -102,7 +104,17 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    @Value("${artemis.version-control.git-operation-timeout-seconds:120}")
+    private int gitOperationTimeoutSeconds = 120;
+
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    private void validateGitOperationTimeout() {
+        if (gitOperationTimeoutSeconds <= 0) {
+            throw new IllegalArgumentException("artemis.version-control.git-operation-timeout-seconds must be positive");
+        }
+    }
 
     /**
      * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
@@ -463,6 +475,46 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Creates a commit from the staged changes without pushing it.
+     *
+     * @param repo    the repository containing the staged changes
+     * @param message the commit message
+     * @param user    the commit author, or {@code null} for the Artemis service user
+     * @return the created commit hash
+     * @throws GitAPIException if the commit fails
+     */
+    public String commitStagedChanges(Repository repo, String message, @Nullable User user) throws GitAPIException {
+        String name = user != null ? user.getName() : artemisGitName;
+        String email = user != null ? user.getEmail() : artemisGitEmail;
+        try (Git git = new Git(repo)) {
+            RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
+            return commit.getName();
+        }
+    }
+
+    /**
+     * Pushes {@code commitHash} only if {@code branch} still points at {@code expectedRemoteHead}.
+     *
+     * @param repo               the repository containing the commit
+     * @param commitHash         the commit to push
+     * @param branch             the target branch
+     * @param expectedRemoteHead the required current remote head
+     * @throws GitAPIException if the push fails or the lease is rejected
+     */
+    public void pushCommitWithLease(Repository repo, String commitHash, String branch, String expectedRemoteHead) throws GitAPIException {
+        if (StringUtils.isBlank(expectedRemoteHead)) {
+            throw new TransportException("Refusing to push " + branch + " without an expected remote HEAD lease");
+        }
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            String remoteRef = "refs/heads/" + branch;
+            Iterable<PushResult> pushResults = pushCommand(git).setRefSpecs(new RefSpec(commitHash + ":" + remoteRef))
+                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedRemoteHead)).call();
+            assertPushAccepted(pushResults, remoteRef);
+        }
+    }
+
+    /**
      * Commits the staged changes of the currently checked-out working tree onto an <em>isolated</em> branch and pushes ONLY that branch to the remote, leaving the branch the
      * working copy was checked out on (and therefore the default branch on the remote) completely untouched.
      * <p>
@@ -493,7 +545,9 @@ public class GitService extends AbstractGitService {
             log.debug("commitToIsolatedBranchAndPush -> Push {} to {}", repo.getLocalPath(), isolatedBranch);
             setRemoteUrl(repo);
             // Push only the new commit to refs/heads/<isolatedBranch> (see method contract): the remote default branch is never advanced.
-            pushCommand(git).setRefSpecs(new RefSpec(commit.getName() + ":refs/heads/" + isolatedBranch)).call();
+            String remoteRef = "refs/heads/" + isolatedBranch;
+            Iterable<PushResult> pushResults = pushCommand(git).setRefSpecs(new RefSpec(commit.getName() + ":" + remoteRef)).call();
+            assertPushAccepted(pushResults, remoteRef);
             return commit.getName();
         }
     }
@@ -534,12 +588,20 @@ public class GitService extends AbstractGitService {
     }
 
     private static void assertPushAccepted(Iterable<PushResult> pushResults, String remoteRef) throws TransportException {
+        boolean foundTargetRef = false;
         for (PushResult pushResult : pushResults) {
             for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-                if (remoteRef.equals(update.getRemoteName()) && update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
-                    throw new TransportException("Force-with-lease push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
+                if (!remoteRef.equals(update.getRemoteName())) {
+                    continue;
+                }
+                foundTargetRef = true;
+                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new TransportException("Leased push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
                 }
             }
+        }
+        if (!foundTargetRef) {
+            throw new TransportException("Push result did not contain an update for " + remoteRef);
         }
     }
 
@@ -1263,27 +1325,27 @@ public class GitService extends AbstractGitService {
     }
 
     private PullCommand pullCommand(Git git) {
-        return git.pull();
+        return git.pull().setTimeout(gitOperationTimeoutSeconds);
     }
 
     private PushCommand pushCommand(Git git) {
-        return git.push();
+        return git.push().setTimeout(gitOperationTimeoutSeconds);
     }
 
     private FetchCommand fetchCommand(Git git) {
-        return git.fetch();
+        return git.fetch().setTimeout(gitOperationTimeoutSeconds);
     }
 
     protected LsRemoteCommand lsRemoteCommand(Git git) {
-        return git.lsRemote();
+        return git.lsRemote().setTimeout(gitOperationTimeoutSeconds);
     }
 
     @Override
     protected LsRemoteCommand lsRemoteCommand() {
-        return Git.lsRemoteRepository();
+        return Git.lsRemoteRepository().setTimeout(gitOperationTimeoutSeconds);
     }
 
     protected CloneCommand cloneCommand() {
-        return Git.cloneRepository();
+        return Git.cloneRepository().setTimeout(gitOperationTimeoutSeconds);
     }
 }

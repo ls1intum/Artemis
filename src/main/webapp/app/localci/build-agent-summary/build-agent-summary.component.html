@@ -72,7 +72,13 @@
                         </td>
                         <td class="build-agents-column">{{ agent.maxNumberOfConcurrentBuildJobs }}</td>
                         <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
-                        <td class="build-agents-column">{{ agent.reservedGenerationSandboxSlots ?? 0 }} / {{ agent.maxGenerationSandboxSlots ?? 0 }}</td>
+                        <td class="build-agents-column">
+                            @if (agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined) {
+                                {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                            } @else {
+                                —
+                            }
+                        </td>
                         <td class="build-agents-column-jobs" (click)="$event.stopPropagation()">
                             @for (job of agent.runningBuildJobs ?? []; track job.id ?? $index) {
                                 <div class="running-job-item">

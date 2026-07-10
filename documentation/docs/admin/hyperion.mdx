@@ -227,27 +227,21 @@ Additional controls:
 
 Agentic generation can run for several minutes and consume many model tokens. Configure these server-side limits before enabling it for production courses:
 
-| Property | Default | Purpose |
-| --- | --- | --- |
-| `artemis.hyperion.agent.max-job-duration` | `PT30M` | Admission-to-cancellation deadline. Cancellation is cooperative: provider, sandbox, verification, and repository operations must also have bounded timeouts. |
-| `artemis.hyperion.agent.max-turns` | `40` | Per-attempt model-turn cap. The orchestrator can still retry verification-guided near misses (currently up to three attempts per job), but one runaway attempt is bounded. |
-| `artemis.hyperion.agent.max-tokens-per-job` | `1500000` | Per-job post-response token guard; the job is cancelled before the next agent turn once reached. Sized from live GPU browser E2E to leave headroom above successful Java generate/adapt runs while keeping a hard runaway cap. |
-| `artemis.hyperion.agent.token-budget-window` | `PT24H` | Rolling window for admission budgets. |
-| `artemis.hyperion.agent.in-flight-token-reservation-per-job` | `1500000` | Worst-case reservation counted against enabled rolling budgets while a job is running. Keep this aligned with `max-tokens-per-job` unless your deployment intentionally uses stricter admission reservations. |
-| `artemis.hyperion.agent.admission-max-tokens-per-user` | `0` | Rolling per-user admission limit. `0` disables the limit. |
-| `artemis.hyperion.agent.admission-max-tokens-per-course` | `0` | Rolling per-course admission limit. `0` disables the limit. |
-| `artemis.hyperion.agent.admission-max-tokens-global` | `0` | Rolling global admission limit. `0` disables the limit. |
-| `artemis.hyperion.agent.owner-heartbeat-interval` | `PT15S` | How often the worker node refreshes its ownership heartbeat. |
-| `artemis.hyperion.agent.stale-job-timeout` | `PT35M` | How long another node waits before stopping an abandoned cancellable job slot. Keep this above `max-job-duration`. |
-| `artemis.hyperion.agent.stale-job-scan-ms` | `60000` | Scan interval for cooperative deadline/stale-slot cleanup. |
-| `artemis.hyperion.agent.provider-hard-failure-cooldown` | `PT5M` | Shared cooldown for provider quota/auth/configuration failures; transient rate limits still use per-call backoff. The former `provider-circuit-breaker-cooldown` name is accepted as a compatibility alias. |
-
-Remaining production-hardening follow-ups before treating Hyperion as a fully fenced cost-critical production worker:
-
-- **Hard wall-clock job deadlines:** propagate an absolute deadline through provider calls, retry sleeps, sandbox execution, verification, repository writes, and CI follow-up instead of relying only on cooperative cancellation.
-- **Stronger token budgets:** add hard pre-call/request caps and enforce per-user, per-course, and global budgets according to the institution's policy before enabling unrestricted production use.
-- **Provider quota/circuit-breaker classification:** distinguish quota/auth/configuration outages, transient rate limits, and transport failures; honour provider retry hints and consider a circuit breaker for repeated provider failures.
-- **Stronger multi-node fencing:** evaluate CP/DB-backed ownership or another stronger heartbeat fence for node death and split-brain; the current Hazelcast slot is cooperative and intentionally does not auto-reclaim non-cancellable durable writes.
+| Property                                                     | Default   | Purpose                                                                                                                                                                                                                        |
+| ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `artemis.hyperion.agent.max-job-duration`                    | `PT30M`   | Admission-to-cancellation deadline. Cancellation is cooperative: provider, sandbox, verification, and repository operations must also have bounded timeouts.                                                                   |
+| `artemis.hyperion.agent.max-turns`                           | `40`      | Per-attempt model-turn cap. The orchestrator can still retry verification-guided near misses (currently up to three attempts per job), but one runaway attempt is bounded.                                                     |
+| `artemis.hyperion.agent.max-tokens-per-job`                  | `1500000` | Per-job post-response token guard; the job is cancelled before the next agent turn once reached. Sized from live GPU browser E2E to leave headroom above successful Java generate/adapt runs while keeping a hard runaway cap. |
+| `artemis.hyperion.agent.token-budget-window`                 | `PT24H`   | Rolling window for admission budgets.                                                                                                                                                                                          |
+| `artemis.hyperion.agent.in-flight-token-reservation-per-job` | `1500000` | Worst-case reservation counted against enabled rolling budgets while a job is running. Keep this aligned with `max-tokens-per-job` unless your deployment intentionally uses stricter admission reservations.                  |
+| `artemis.hyperion.agent.admission-max-tokens-per-user`       | `0`       | Rolling per-user admission limit. `0` disables the limit.                                                                                                                                                                      |
+| `artemis.hyperion.agent.admission-max-tokens-per-course`     | `0`       | Rolling per-course admission limit. `0` disables the limit.                                                                                                                                                                    |
+| `artemis.hyperion.agent.admission-max-tokens-global`         | `0`       | Rolling global admission limit. `0` disables the limit.                                                                                                                                                                        |
+| `artemis.hyperion.agent.owner-heartbeat-interval`            | `PT15S`   | How often the worker node refreshes its ownership heartbeat.                                                                                                                                                                   |
+| `artemis.hyperion.agent.stale-job-timeout`                   | `PT35M`   | How long another node waits before stopping an abandoned cancellable job slot. Keep this above `max-job-duration`.                                                                                                             |
+| `artemis.hyperion.agent.stale-job-scan-ms`                   | `60000`   | Scan interval for cooperative deadline/stale-slot cleanup.                                                                                                                                                                     |
+| `artemis.hyperion.agent.provider-hard-failure-cooldown`      | `PT5M`    | Shared cooldown for provider quota/auth/configuration failures; transient rate limits still use per-call backoff.                                                                                                              |
+| `artemis.version-control.git-operation-timeout-seconds`      | `120`     | Inactivity timeout applied to clone, fetch, pull, push, and remote-list operations.                                                                                                                                            |
 
 ## Operational considerations
 

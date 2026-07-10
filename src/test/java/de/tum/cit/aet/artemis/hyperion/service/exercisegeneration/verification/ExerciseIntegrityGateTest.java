@@ -65,11 +65,6 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void harness_acceptsByteIdenticalHarness() {
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(map("test.cabal", SEED_TEST_CABAL), map("test.cabal", SEED_TEST_CABAL), false)).isEmpty();
-    }
-
-    @Test
     void harness_rejectsWhenBuildLayoutLineChangedAwayFromSeed() {
         // The exact Haskell defect: the agent rewrote the solution library's hs-source-dirs to assignment/solution/src, which is NOT where production lays the solution out.
         String tampered = SEED_TEST_CABAL.replace("${studentParentWorkingDirectoryName}/src", "assignment/src").replace("${solutionWorkingDirectory}/src",

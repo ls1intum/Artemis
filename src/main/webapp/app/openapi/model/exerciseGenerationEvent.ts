@@ -10,7 +10,7 @@
 import { ExerciseGenerationVerdict } from './exerciseGenerationVerdict';
 
 
-export interface ExerciseGenerationEvent { 
+export interface ExerciseGenerationEvent {
     type: ExerciseGenerationEvent.TypeEnum;
     message?: string;
     completionStatus?: ExerciseGenerationEvent.CompletionStatusEnum;
@@ -34,5 +34,3 @@ export namespace ExerciseGenerationEvent {
     } as const;
     export type CompletionStatusEnum = typeof CompletionStatusEnum[keyof typeof CompletionStatusEnum];
 }
-
-

@@ -80,6 +80,7 @@ interface CodeEditorContainerStub {
     jumpToLine?: ReturnType<typeof vi.fn>;
     initializeProperties?: ReturnType<typeof vi.fn>;
     monacoEditor?: () => any;
+    openEditorBottomPanel?: ReturnType<typeof vi.fn>;
 }
 
 function setCodeEditorContainer(comp: CodeEditorInstructorAndEditorContainerComponent, stub: CodeEditorContainerStub | undefined): void {
@@ -106,6 +107,7 @@ function createDefaultContainerStub(): CodeEditorContainerStub {
         jumpToLine: vi.fn(),
         initializeProperties: vi.fn(),
         monacoEditor: () => monacoEditor,
+        openEditorBottomPanel: vi.fn(),
     };
 }
 
@@ -1180,6 +1182,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     let generationService: { generate: ReturnType<typeof vi.fn> };
     let dialogOpen: ReturnType<typeof vi.fn>;
     let attachToJob: ReturnType<typeof vi.fn>;
+    let openEditorBottomPanel: ReturnType<typeof vi.fn>;
     let selectedIds: WritableSignal<number[]>;
     let reviewCommentService: {
         setExercise: ReturnType<typeof vi.fn>;
@@ -1260,7 +1263,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().add(1, 'day') });
 
         attachToJob = vi.fn();
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => false });
+        openEditorBottomPanel = vi.fn();
+        setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false });
     });
 
     afterEach(() => {
@@ -1283,6 +1288,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(reviewCommentService.clearSelectedFeedback).toHaveBeenCalledOnce();
         expect(selectedIds()).toEqual([]);
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
     });
 
     it('startGeneration dispatches a GENERATE run and attaches the job', () => {
@@ -1290,6 +1296,55 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE' });
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'GENERATE');
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it.each([
+        ['solution', 'solution/src/main/Solution.java', CommentThreadLocationType.SOLUTION_REPO, 'src/main/Solution.java'],
+        ['template', 'template/src/main/Template.java', CommentThreadLocationType.TEMPLATE_REPO, 'src/main/Template.java'],
+        ['tests', 'tests/src/test/ExerciseTest.java', CommentThreadLocationType.TEST_REPO, 'src/test/ExerciseTest.java'],
+    ] as const)('navigates a persisted %s snapshot through the authoritative editor', (repo, path, targetType, filePath) => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+
+        (comp as any).onHyperionSnapshotSelected({ repo, path });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType, filePath });
+    });
+
+    it('does not fake navigation for an unknown other snapshot', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+
+        (comp as any).onHyperionSnapshotSelected({ repo: 'other', path: 'notes.txt' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('opens a persisted problem statement snapshot in the authoritative problem editor', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => true });
+
+        (comp as any).onHyperionSnapshotSelected({ repo: 'other', path: 'problem-statement.md' });
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith({ targetType: CommentThreadLocationType.PROBLEM_STATEMENT, filePath: 'problem-statement.md' });
+    });
+
+    it('does not navigate a snapshot before the activity is terminal', () => {
+        const navigateSpy = vi.spyOn(internals(comp) as any, 'navigateToLocation');
+        (comp as any).generationActivity = () => ({ canNavigateSnapshots: () => false });
+
+        (comp as any).onHyperionSnapshotSelected({ repo: 'solution', path: 'solution/src/Main.java' });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('reopens Hyperion from the AI toolbar while status is unavailable', () => {
+        (comp as any).generationActivity = () => ({ running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+
+        (comp as any).onAiToolbarClick({} as Event, { toggle: vi.fn() });
+
+        expect(openEditorBottomPanel).toHaveBeenCalledOnce();
     });
 
     it('startGeneration is blocked while another run is active or start request is pending', () => {
@@ -1306,11 +1361,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         pending.complete();
         expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-generate-1', 'GENERATE');
 
-        (comp as any).generationActivity = () => ({ attachToJob, running: () => true });
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => true, statusLoading: () => false, statusLoadFailed: () => false });
 
         (comp as any).startGeneration();
 
         expect(generationService.generate).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the editor locked while generation status is hydrating', () => {
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false });
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
+    });
+
+    it('keeps the editor locked when generation status could not be verified', () => {
+        (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
     });
 
     it('startGeneration is blocked when local repository changes are unsaved', () => {
@@ -1341,15 +1408,41 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     it('refreshes editor content after an accepted generation completes', () => {
         const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
         setCodeEditorContainer(comp, { actions: () => actions });
+        const fileSyncService = (comp as any).fileSyncService;
+        const beginExpectedUpdateSpy = vi.spyOn(fileSyncService, 'beginExpectedRepositoryUpdate');
+        const endExpectedUpdateSpy = vi.spyOn(fileSyncService, 'endExpectedRepositoryUpdate');
+        const acceptServerBaseline = vi.fn();
+        const unsavedChangesValue = vi.fn().mockReturnValue(false);
+        setEditableInstructions(comp, { acceptServerBaseline, unsavedChangesValue });
         const loadSpy = vi
             .spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults')
             .mockReturnValue(of({ body: createMockExercise({ problemStatement: 'Updated problem statement' }) } as any));
 
-        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+            completedAt: '2026-07-10T20:00:00Z',
+        });
 
-        expect(actions.executeRefresh).toHaveBeenCalledOnce();
+        expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
+        expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:00:00Z'));
+        actions.executeRefresh.mock.calls[0][0]();
+        expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
         expect(loadSpy).toHaveBeenCalledWith(42);
+        expect(acceptServerBaseline).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated problem statement' }));
         expect(comp.exercise.problemStatement).toBe('Updated problem statement');
+    });
+
+    it('uses the server revert timestamp as the commit-alert suppression boundary', () => {
+        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const beginExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'beginExpectedRepositoryUpdate');
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(of({ body: createMockExercise() } as any));
+
+        (comp as any).onHyperionAdaptationReverted('2026-07-10T20:01:00Z');
+
+        expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:01:00Z'));
+        expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
     });
 
     it('does not auto-refresh after Hyperion when the editor has unsaved local changes', () => {

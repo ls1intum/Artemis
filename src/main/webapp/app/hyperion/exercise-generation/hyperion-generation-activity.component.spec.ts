@@ -1,4 +1,3 @@
-import { Component, forwardRef, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -6,8 +5,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { ConfirmationService } from 'primeng/api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
 import {
@@ -16,23 +15,6 @@ import {
     HyperionGenerationMessage,
     HyperionGenerationStatus,
 } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-
-// A lightweight fake so the read-only preview does not instantiate the real Monaco editor in jsdom. It provides the MonacoEditorComponent DI token so the component's
-// viewChild(MonacoEditorComponent) RESOLVES to it, exercising the security-critical render effect: we can then assert that snapshot content routes to the text-only
-// changeModel() sink (never innerHTML), and that changed lines create a decorations collection.
-@Component({
-    selector: 'jhi-monaco-editor',
-    template: '',
-    providers: [{ provide: MonacoEditorComponent, useExisting: forwardRef(() => FakeMonacoEditorComponent) }],
-})
-class FakeMonacoEditorComponent {
-    readOnly = input(false);
-    shrinkToFit = input(true);
-    changeModel = vi.fn();
-    decorationsCollection = { clear: vi.fn() };
-    createDecorationsCollection = vi.fn(() => this.decorationsCollection);
-    getEditor = vi.fn(() => ({ createDecorationsCollection: this.createDecorationsCollection }));
-}
 
 class MockService {
     status: HyperionGenerationStatus | null = null;
@@ -52,7 +34,7 @@ class MockService {
 
     revertAdaptation(exerciseId: number): Observable<ExerciseAdaptationRevertResult> {
         this.revertCalls.push(exerciseId);
-        return of({ fullyReverted: true, revertedRepositories: ['TEMPLATE', 'SOLUTION', 'TESTS'] });
+        return of({ fullyReverted: true, revertedRepositories: ['exercise', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     }
 
     subscribeToStream(): Observable<HyperionGenerationMessage> {
@@ -62,7 +44,7 @@ class MockService {
 
 function snapshot(path: string, action: 'create' | 'edit', content: string, overrides: Partial<ExerciseGenerationFileSnapshot> = {}): ExerciseGenerationFileSnapshot {
     const repo = path.startsWith('solution/') ? 'solution' : path.startsWith('template/') ? 'template' : path.startsWith('tests/') ? 'tests' : 'other';
-    return { type: 'FILE_SNAPSHOT', path, repo, action, content, sha256: 'x', bytes: content.length, truncated: false, turn: 1, ...overrides };
+    return { type: 'FILE_SNAPSHOT', path, repo, action, content, sha256: 'x', bytes: content.length, truncated: false, turn: 1, timestamp: '', ...overrides };
 }
 
 describe('HyperionGenerationActivityComponent', () => {
@@ -80,10 +62,6 @@ describe('HyperionGenerationActivityComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        TestBed.overrideComponent(HyperionGenerationActivityComponent, {
-            remove: { imports: [MonacoEditorComponent] },
-            add: { imports: [FakeMonacoEditorComponent] },
-        });
     });
 
     afterEach(() => {
@@ -98,13 +76,91 @@ describe('HyperionGenerationActivityComponent', () => {
         return fixture;
     }
 
-    it('self-hides when there is no retained run', () => {
+    it('shows an intentional idle state that can request generation', () => {
         const fixture = createWith(null);
-        expect(fixture.componentInstance.visible()).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-activity"]')).toBeNull();
+        const startRequested = vi.fn();
+        fixture.componentInstance.startRequested.subscribe(startRequested);
+
+        expect(fixture.componentInstance.visible()).toBe(true);
+        expect(fixture.componentInstance.statusLoading()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-empty"]')).not.toBeNull();
+
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-start"]')).triggerEventHandler('onClick');
+        expect(startRequested).toHaveBeenCalledOnce();
     });
 
-    it('rehydrates the preview from the status and follows the latest file', () => {
+    it('shows why editing is locked while status is loading', () => {
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn(() => pendingStatus);
+
+        const fixture = createWith(null);
+
+        expect(fixture.componentInstance.visible()).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('generationActivity.checkingStatus');
+        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
+    });
+
+    it('bounds automatic status retries and exposes a manual retry', () => {
+        vi.useFakeTimers();
+        service.getStatus = vi.fn(() => throwError(() => new Error('temporary failure')));
+        const fixture = createWith(null);
+
+        expect(fixture.componentInstance.statusLoading()).toBe(true);
+        expect(service.getStatus).toHaveBeenCalledOnce();
+
+        vi.advanceTimersByTime(1_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(2);
+        vi.advanceTimersByTime(2_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+        expect(fixture.componentInstance.statusLoading()).toBe(false);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
+        expect(fixture.componentInstance.visible()).toBe(true);
+        vi.advanceTimersByTime(60_000);
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+
+        fixture.debugElement.query(By.css('p-button')).triggerEventHandler('onClick');
+        expect(service.getStatus).toHaveBeenCalledTimes(4);
+        expect(fixture.componentInstance.statusLoading()).toBe(true);
+    });
+
+    it('clears a status-load failure when the live stream succeeds', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        service.getStatus = vi.fn(() => throwError(() => new Error('temporary failure')));
+        fixture.componentInstance.attachToJob('j1', 'ADAPT');
+        vi.advanceTimersByTime(3_000);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
+
+        service.stream$.next({
+            type: 'DONE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 1, reasons: [] },
+            liveExerciseChanged: true,
+        });
+
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+        expect(fixture.componentInstance.statusLoading()).toBe(false);
+    });
+
+    it('ignores a late status error after a terminal live event', () => {
+        const fixture = createWith(null);
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn(() => pendingStatus);
+        fixture.componentInstance.attachToJob('j1', 'ADAPT');
+
+        service.stream$.next({
+            type: 'DONE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 1, reasons: [] },
+            liveExerciseChanged: true,
+        });
+        pendingStatus.error(new Error('late failure'));
+
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
+        expect(fixture.componentInstance.running()).toBe(false);
+    });
+
+    it('rehydrates the changed-file inventory from retained status', () => {
         const fixture = createWith({
             jobId: 'j1',
             running: true,
@@ -116,32 +172,113 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.jobId()).toBe('j1');
         expect(component.snapshots()).toHaveLength(2);
         expect(component.filesByRepo().map((group) => group.repo)).toEqual(['solution', 'tests']);
-        expect(component.activeSnapshot()?.path).toBe('tests/T.java');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
     });
 
-    it('folds a live snapshot, coalescing by path, and pins on selection', () => {
+    it('lets the instructor collapse and restore retained details', () => {
+        const fixture = createWith({ jobId: 'j1', running: false, events: [], fileSnapshots: [snapshot('solution/A.java', 'create', 'a')] });
+        const toggle = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
+
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.textContent).toContain('generationActivity.hideChangedFiles');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
+
+        toggle.click();
+        fixture.detectChanges();
+
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(toggle.textContent).toContain('generationActivity.showChangedFiles');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).toBeNull();
+    });
+
+    it('keeps open details mounted when a live run completes', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [snapshot('solution/A.java', 'create', 'a')] });
+        const disclosure = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
+        disclosure.focus();
+
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'SUCCESS',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2, reasons: [] },
+            liveExerciseChanged: true,
+        });
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.detailsExpanded()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-details-toggle"]')).toHaveLength(1);
+        expect(document.activeElement).toBe(disclosure);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).toBeNull();
+    });
+
+    it('surfaces the newest human progress without replaying legacy tool telemetry as a live log', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: true,
+            events: [
+                { type: 'PROGRESS', message: 'Turn 1: bash {"command":"cat secret"}' },
+                ...Array.from({ length: 10 }, (_, index) => ({ type: 'PROGRESS' as const, message: `event ${index}` })),
+            ],
+            fileSnapshots: [],
+        });
+        const current = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"]');
+
+        expect(current.textContent).toContain('event 9');
+        expect(fixture.nativeElement.textContent).toContain('event 8');
+        expect(fixture.nativeElement.textContent).not.toContain('cat secret');
+        expect(fixture.nativeElement.querySelector('[role="log"]')).toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('[role="status"]')).toHaveLength(1);
+    });
+
+    it('announces a terminal outcome instead of stale progress in one atomic status region', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [{ type: 'PROGRESS', message: 'Still editing' }], fileSnapshots: [] });
+
+        service.stream$.next({ type: 'ERROR', message: 'Generation failed' });
+        fixture.detectChanges();
+
+        const statuses = fixture.nativeElement.querySelectorAll('[role="status"]');
+        expect(statuses).toHaveLength(1);
+        expect(statuses[0].getAttribute('aria-atomic')).toBe('true');
+        expect(statuses[0].textContent).toContain('Generation failed');
+        expect(statuses[0].textContent).not.toContain('Still editing');
+    });
+
+    it('does not show a disclosure when there is no hidden content', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [{ type: 'PROGRESS', message: 'Only current state' }], fileSnapshots: [] });
+
+        expect(fixture.componentInstance.hasDetails()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]')).toBeNull();
+    });
+
+    it('does not manufacture a file preview before the first file arrives', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+
+        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
+    });
+
+    it('coalesces live snapshots by repository and path', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [snapshot('solution/A.java', 'create', 'a')] });
         const component = fixture.componentInstance;
 
         service.stream$.next(snapshot('solution/A.java', 'edit', 'a2'));
         expect(component.snapshots()).toHaveLength(1);
-        expect(component.activeSnapshot()?.content).toBe('a2');
+        expect(component.snapshots()[0].content).toBe('a2');
 
         service.stream$.next(snapshot('template/B.java', 'create', 'b'));
         expect(component.snapshots()).toHaveLength(2);
-        expect(component.activeSnapshot()?.path).toBe('template/B.java');
-
-        component.selectFile('solution/A.java');
-        expect(component.follow()).toBe(false);
-        expect(component.activePath()).toBe('solution/A.java');
     });
 
-    it('keeps same-path snapshots separate across repositories', () => {
+    it('keeps live changed-file controls non-actionable until the run is terminal', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
         const component = fixture.componentInstance;
+        const selected = vi.fn();
+        component.snapshotSelected.subscribe(selected);
 
         service.stream$.next(snapshot('src/Main.java', 'create', 'template', { repo: 'template' }));
         service.stream$.next(snapshot('src/Main.java', 'create', 'solution', { repo: 'solution' }));
+        fixture.detectChanges();
 
         expect(component.snapshots()).toHaveLength(2);
         expect(component.filesByRepo().map((group) => [group.repo, group.files.map((file) => file.content)])).toEqual([
@@ -149,9 +286,56 @@ describe('HyperionGenerationActivityComponent', () => {
             ['template', ['template']],
         ]);
 
-        component.selectFile('src/Main.java', 'template');
-        expect(component.activeSnapshot()?.repo).toBe('template');
-        expect(component.activeSnapshot()?.content).toBe('template');
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file"]')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
+        expect(selected).not.toHaveBeenCalled();
+    });
+
+    it('emits a selected snapshot after the run reaches a persisted terminal state', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: false,
+            events: [{ type: 'DONE', message: 'Saved', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [snapshot('solution/src/Main.java', 'edit', 'solution')],
+        });
+        const selected = vi.fn();
+        fixture.componentInstance.snapshotSelected.subscribe(selected);
+
+        fixture.detectChanges();
+        fixture.componentInstance.detailsExpanded.set(true);
+        fixture.detectChanges();
+        const changedFile = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"] button') as HTMLButtonElement;
+        changedFile.click();
+
+        expect(changedFile.disabled).toBe(false);
+        expect(selected).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ repo: 'solution', path: 'solution/src/Main.java' }));
+    });
+
+    it('keeps snapshots non-actionable when a terminal run did not change the live exercise', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: false,
+            events: [{ type: 'DONE', message: 'Draft only', completionStatus: 'PARTIAL', liveExerciseChanged: false }],
+            fileSnapshots: [snapshot('solution/src/Main.java', 'edit', 'draft')],
+        });
+        fixture.componentInstance.detailsExpanded.set(true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file-static"]')).not.toBeNull();
+    });
+
+    it.each([
+        [{ running: true, events: [] }, 'persistence.workingCopy'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }] }, 'persistence.saved'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'PARTIAL', liveExerciseChanged: false }] }, 'persistence.notSaved'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false }] }, 'persistence.draft'],
+        [{ running: false, events: [{ type: 'CANCELLED' }] }, 'persistence.cancelled'],
+        [{ running: false, events: [{ type: 'ERROR' }] }, 'persistence.failed'],
+    ])('shows a truthful persistence state for %o', (state, labelKey) => {
+        const fixture = createWith({ jobId: 'j1', fileSnapshots: [], ...state } as HyperionGenerationStatus);
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-persistence-state"]').textContent).toContain(labelKey);
     });
 
     it('caps retained progress events to the latest entries', () => {
@@ -203,7 +387,21 @@ describe('HyperionGenerationActivityComponent', () => {
             completionStatus: 'NEEDS_REVIEW',
             liveExerciseChanged: undefined,
         });
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-completion-status"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-completion-status"]')).toBeNull();
+    });
+
+    it('describes the inverted template check as an expected pass condition', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'SUCCESS',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 1, reasons: [] },
+        });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('verdict.templateFailedExpected');
+        expect(fixture.nativeElement.textContent).toContain('verdict.oneTest');
     });
 
     it('surfaces the failed-gate reasons of a rejected verdict', () => {
@@ -280,56 +478,94 @@ describe('HyperionGenerationActivityComponent', () => {
 
         expect(component.events()).toEqual([{ type: 'PROGRESS', message: 'already produced files' }]);
         expect(component.snapshots()).toHaveLength(1);
-        expect(component.activeSnapshot()?.path).toBe('solution/A.java');
+        expect(component.snapshots()[0].path).toBe('solution/A.java');
     });
 
-    it('offers revert only for an accepted adapt run, clears stale preview, and emits refresh hook', () => {
+    it('confirms undo for an accepted adaptation and leaves one truthful terminal state', () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
         const reverted = vi.fn();
         component.adaptationReverted.subscribe(reverted);
 
         component.attachToJob('j9', 'ADAPT');
+        service.status = {
+            jobId: 'j9',
+            running: false,
+            mode: 'ADAPT',
+            events: [],
+            fileSnapshots: [],
+            revertAvailable: true,
+        };
         service.stream$.next(snapshot('solution/A.java', 'create', 'adapted'));
-        fixture.detectChanges();
-        const editor = fixture.debugElement.query(By.directive(FakeMonacoEditorComponent)).componentInstance as FakeMonacoEditorComponent;
-        expect(component.activeSnapshot()?.content).toBe('adapted');
-        // An adapt run offers revert only once it has completed with an accepted verdict; before the DONE event there is nothing to revert to.
+        expect(component.snapshots()[0].content).toBe('adapted');
         expect(component.canRevert()).toBe(false);
 
-        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'SUCCESS',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+            liveExerciseChanged: true,
+        });
         expect(component.running()).toBe(false);
         expect(component.canRevert()).toBe(true);
 
-        component.revert();
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
+        fixture.detectChanges();
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-revert"]')).triggerEventHandler('onClick');
+        expect(service.revertCalls).toEqual([]);
+        const confirmation = confirm.mock.calls[0][0];
+        expect(confirmation.defaultFocus).toBe('reject');
+        confirmation.accept?.();
+
         expect(service.revertCalls).toEqual([42]);
         expect(component.reverted()).toBe(true);
+        expect(component.jobId()).toBeUndefined();
+        expect(component.mode()).toBe('ADAPT');
+        expect(component.verdict()).toBeUndefined();
         expect(component.snapshots()).toEqual([]);
-        expect(component.activeSnapshot()).toBeUndefined();
-        expect(editor.changeModel).toHaveBeenLastCalledWith('', '');
-        expect(reverted).toHaveBeenCalledOnce();
+        expect(reverted).toHaveBeenCalledExactlyOnceWith('2026-07-10T20:00:00Z');
         expect(component.canRevert()).toBe(false);
     });
 
-    it('keeps the preview and revert affordance when the server reports a partial revert', () => {
+    it('replaces stale success details with a persistent warning when undo is partial', () => {
         const fixture = createWith(null);
         const component = fixture.componentInstance;
         const reverted = vi.fn();
         component.adaptationReverted.subscribe(reverted);
         service.revertAdaptation = (exerciseId: number) => {
             service.revertCalls.push(exerciseId);
-            return throwError(() => new HttpErrorResponse({ status: 409, error: { fullyReverted: false, revertedRepositories: ['TEMPLATE'] } }));
+            return throwError(
+                () => new HttpErrorResponse({ status: 409, error: { fullyReverted: false, revertedRepositories: ['TEMPLATE'], completedAt: '2026-07-10T20:00:00Z' } }),
+            );
         };
 
         component.attachToJob('j9', 'ADAPT');
+        service.status = {
+            jobId: 'j9',
+            running: false,
+            mode: 'ADAPT',
+            events: [],
+            fileSnapshots: [],
+            revertAvailable: true,
+        };
         service.stream$.next(snapshot('solution/A.java', 'create', 'adapted'));
-        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'SUCCESS',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+            liveExerciseChanged: true,
+        });
 
-        component.revert();
+        const confirm = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
+        component.confirmRevert();
+        confirm.mock.calls[0][0].accept?.();
 
         expect(service.revertCalls).toEqual([42]);
         expect(component.reverted()).toBe(false);
-        expect(component.snapshots()).toHaveLength(1);
+        expect(component.snapshots()).toHaveLength(0);
+        expect(component.verdict()).toBeUndefined();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert-partial"]')).not.toBeNull();
         expect(reverted).not.toHaveBeenCalled();
         expect(component.canRevert()).toBe(true);
     });
@@ -340,8 +576,16 @@ describe('HyperionGenerationActivityComponent', () => {
             jobId: 'j5',
             running: false,
             mode: 'ADAPT',
-            events: [{ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 4, reasons: [] } }],
+            events: [
+                {
+                    type: 'DONE',
+                    completionStatus: 'SUCCESS',
+                    verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 4, reasons: [] },
+                    liveExerciseChanged: true,
+                },
+            ],
             fileSnapshots: [],
+            revertAvailable: true,
         });
         const component = fixture.componentInstance;
 
@@ -359,37 +603,69 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.canRevert()).toBe(false);
     });
 
-    it('follows a re-edit of an earlier file, not merely the last-created file', () => {
-        // Regression: following must track the last-written path, not array order. upsertSnapshot replaces edited files in place,
-        // so a re-edit of an earlier file would otherwise never surface (the last array slot is a different, later-created file).
-        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+    it('does not offer revert when an accepted adaptation was only partially saved', () => {
+        const fixture = createWith(null);
         const component = fixture.componentInstance;
 
-        service.stream$.next(snapshot('solution/A.java', 'create', 'a'));
-        service.stream$.next(snapshot('solution/B.java', 'create', 'b'));
-        expect(component.activeSnapshot()?.path).toBe('solution/B.java');
+        component.attachToJob('j9', 'ADAPT');
+        service.stream$.next({
+            type: 'DONE',
+            completionStatus: 'PARTIAL',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+            liveExerciseChanged: false,
+        });
 
-        service.stream$.next(snapshot('solution/A.java', 'edit', 'a2'));
-        expect(component.snapshots()).toHaveLength(2);
-        expect(component.activeSnapshot()?.path).toBe('solution/A.java');
-        expect(component.activeSnapshot()?.content).toBe('a2');
+        expect(component.canRevert()).toBe(false);
     });
 
-    it('routes snapshot content to the text-only changeModel sink and decorates only edits', () => {
-        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
-        const editor = fixture.debugElement.query(By.directive(FakeMonacoEditorComponent)).componentInstance as FakeMonacoEditorComponent;
+    it('does not offer undo when the server no longer retains the adaptation baseline', () => {
+        const fixture = createWith({
+            jobId: 'j9',
+            running: false,
+            mode: 'ADAPT',
+            events: [
+                {
+                    type: 'DONE',
+                    completionStatus: 'SUCCESS',
+                    verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+                    liveExerciseChanged: true,
+                },
+            ],
+            fileSnapshots: [],
+            revertAvailable: false,
+        });
 
-        // A created file: content reaches Monaco via changeModel (never innerHTML), with no diff decorations for a brand-new file.
-        service.stream$.next(snapshot('solution/A.java', 'create', 'line1\nline2'));
-        fixture.detectChanges();
-        expect(editor.changeModel).toHaveBeenCalledWith('solution/A.java', 'line1\nline2');
-        expect(editor.createDecorationsCollection).not.toHaveBeenCalled();
+        expect(fixture.componentInstance.canRevert()).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert"]')).toBeNull();
+    });
 
-        // A re-edit that changes a line: routed through changeModel again, and the changed line is marked via a decorations collection.
-        service.stream$.next(snapshot('solution/A.java', 'edit', 'line1\nCHANGED'));
-        fixture.detectChanges();
-        expect(editor.changeModel).toHaveBeenLastCalledWith('solution/A.java', 'line1\nCHANGED');
-        expect(editor.createDecorationsCollection).toHaveBeenCalledTimes(1);
+    it('keeps an authoritative undo available when a later run owns the retained transcript', () => {
+        const fixture = createWith({
+            jobId: 'later-run',
+            running: false,
+            mode: 'GENERATE',
+            events: [{ type: 'CANCELLED', message: 'Cancelled' }],
+            fileSnapshots: [],
+            revertAvailable: true,
+        });
+
+        expect(fixture.componentInstance.canRevert()).toBe(true);
+    });
+
+    it('shows a retained undo without manufacturing empty activity details', () => {
+        const fixture = createWith({
+            jobId: 'j9',
+            running: false,
+            mode: 'ADAPT',
+            events: [],
+            fileSnapshots: [],
+            revertAvailable: true,
+        });
+
+        expect(fixture.componentInstance.canRevert()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).toBeNull();
     });
 
     it('refreshes authoritative status instead of pretending completion when the live stream errors', () => {
@@ -420,7 +696,7 @@ describe('HyperionGenerationActivityComponent', () => {
         vi.advanceTimersByTime(1_000);
 
         expect(component.snapshots()).toHaveLength(1);
-        expect(component.activeSnapshot()?.content).toBe('new');
+        expect(component.snapshots()[0].content).toBe('new');
     });
 
     it('polls status instead of staying stuck when the stream completes without an event', () => {
@@ -433,7 +709,7 @@ describe('HyperionGenerationActivityComponent', () => {
         service.status = {
             jobId: 'j1',
             running: false,
-            events: [{ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3 }, liveExerciseChanged: true }],
+            events: [{ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] }, liveExerciseChanged: true }],
             fileSnapshots: [],
         };
 
@@ -443,7 +719,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.verdict()?.accepted).toBe(true);
         expect(completed).toHaveBeenCalledExactlyOnceWith({
             mode: undefined,
-            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3 },
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
             completionStatus: undefined,
             liveExerciseChanged: true,
         });
@@ -460,9 +736,61 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.canRevert()).toBe(false);
     });
 
+    it('refreshes a prior adaptation undo after a later generation stops', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+        const runningStatus: HyperionGenerationStatus = {
+            jobId: 'later-run',
+            running: true,
+            mode: 'GENERATE',
+            events: [],
+            fileSnapshots: [],
+            revertAvailable: false,
+        };
+        const stoppedStatus = { ...runningStatus, running: false, events: [{ type: 'CANCELLED' as const, message: 'Cancelled' }] };
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(of(new HttpResponse({ body: runningStatus })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: stoppedStatus })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: { ...stoppedStatus, revertAvailable: true } })));
+        component.attachToJob('later-run', 'GENERATE');
+
+        service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });
+
+        expect(component.canRevert()).toBe(false);
+        vi.advanceTimersByTime(500);
+
+        expect(component.canRevert()).toBe(true);
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+    });
+
     it.each([
-        [{ type: 'DONE' as const, completionStatus: 'SUCCESS' as const, verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3 } }, true],
-        [{ type: 'DONE' as const, completionStatus: 'PARTIAL' as const, verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 3 } }, false],
+        ['CANCELLED' as const, 'terminalStatus.CANCELLED'],
+        ['ERROR' as const, 'terminalStatus.ERROR'],
+    ])('keeps the %s outcome visible when details are collapsed', (type, labelKey) => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileSnapshots: [] });
+        service.stream$.next({ type, message: 'terminal' });
+        fixture.componentInstance.detailsExpanded.set(false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain(labelKey);
+    });
+
+    it.each([
+        [
+            {
+                type: 'DONE' as const,
+                completionStatus: 'SUCCESS' as const,
+                verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] },
+                liveExerciseChanged: true,
+            },
+            true,
+        ],
+        [
+            { type: 'DONE' as const, completionStatus: 'PARTIAL' as const, verdict: { accepted: false, solutionPassed: false, templateFailed: true, testCount: 3, reasons: [] } },
+            false,
+        ],
         [{ type: 'CANCELLED' as const, message: 'Cancelled' }, false],
         [{ type: 'ERROR' as const, message: 'Failed' }, false],
     ])('rehydrates terminal status %s from retained status', (terminalEvent, canRevert) => {
@@ -472,10 +800,12 @@ describe('HyperionGenerationActivityComponent', () => {
             mode: 'ADAPT',
             events: [terminalEvent],
             fileSnapshots: [snapshot('solution/A.java', 'create', 'a')],
+            revertAvailable: canRevert,
         });
         const component = fixture.componentInstance;
 
         expect(component.running()).toBe(false);
+        expect(component.detailsExpanded()).toBe(false);
         expect(component.events().at(-1)).toEqual(terminalEvent);
         expect(component.canRevert()).toBe(canRevert);
         if ('completionStatus' in terminalEvent) {
@@ -508,13 +838,14 @@ describe('HyperionGenerationActivityComponent', () => {
 
         component.attachToJob('live', 'GENERATE');
         service.stream$.next(snapshot('solution/A.java', 'edit', 'newer'));
-        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 1 }, liveExerciseChanged: true });
+        service.stream$.next({ type: 'DONE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 1, reasons: [] }, liveExerciseChanged: true });
+        expect(component.detailsExpanded()).toBe(true);
         pendingStatus.next(
             new HttpResponse<HyperionGenerationStatus>({
                 body: {
                     jobId: 'live',
                     running: true,
-                    events: [{ type: 'PROGRESS', message: 'older status' }],
+                    events: [{ type: 'DONE', message: 'older retained terminal', liveExerciseChanged: true }],
                     fileSnapshots: [snapshot('solution/A.java', 'create', 'older')],
                 },
             }),
@@ -524,6 +855,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.events().map((event) => event.type)).toContain('DONE');
         expect(component.snapshots()).toHaveLength(1);
         expect(component.snapshots()[0].content).toBe('newer');
+        expect(component.detailsExpanded()).toBe(true);
     });
 
     it('resets and self-hides when the exercise is cleared', () => {
@@ -542,5 +874,19 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.jobId()).toBeUndefined();
         expect(component.snapshots()).toHaveLength(0);
         expect(component.verdict()).toBeUndefined();
+    });
+
+    it('ignores a status response that arrives after the exercise is cleared', () => {
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = () => pendingStatus.asObservable();
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('exerciseId', undefined);
+        fixture.detectChanges();
+        pendingStatus.next(new HttpResponse({ body: { jobId: 'stale', running: true, events: [], fileSnapshots: [] } }));
+
+        expect(component.jobId()).toBeUndefined();
+        expect(component.running()).toBe(false);
     });
 });
