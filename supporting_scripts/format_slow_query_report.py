@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+"""
+format_slow_query_report.py
+---------------------------
+Reads the JSON produced by GET /api/core/admin/performance/slow-queries and
+prints a GitHub-flavored Markdown summary suitable for appending to a PR comment.
+
+Usage:
+    python3 format_slow_query_report.py slow-query-report.json
+
+Output is written to stdout; redirect to a .md file from the shell.
+"""
+
+import json
+import sys
+from datetime import timezone, datetime
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def load_report(path: str) -> dict:
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def trunc(text: str, max_len: int = 120) -> str:
+    """Truncate a SQL string for display in a table cell."""
+    if text is None:
+        return ""
+    text = text.replace("|", "\\|").replace("\n", " ")
+    return text[:max_len] + "…" if len(text) > max_len else text
+
+
+def fmt_endpoint(method: str, endpoint: str) -> str:
+    if not method and not endpoint:
+        return "*(background)*"
+    return f"`{method or '?'} {endpoint or '?'}`"
+
+
+def iso_to_human(iso: str) -> str:
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    except Exception:
+        return iso
+
+
+# ---------------------------------------------------------------------------
+# Markdown sections
+# ---------------------------------------------------------------------------
+
+def build_slow_queries_section(slow_queries: list, threshold_ms: int) -> str:
+    if not slow_queries:
+        return f"✅ **No slow queries** detected (threshold: {threshold_ms} ms)\n"
+
+    lines = [
+        f"### 🐢 Slow Queries ({len(slow_queries)} found, threshold: {threshold_ms} ms)\n",
+        "| # | Duration | Endpoint | Test | SQL (truncated) |",
+        "|---|----------|----------|------|-----------------|",
+    ]
+    for i, q in enumerate(slow_queries, start=1):
+        endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"))
+        test = f"`{q['testName']}`" if q.get("testName") else "—"
+        sql = trunc(q.get("sql", ""))
+        lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {endpoint} | {test} | `{sql}` |")
+    return "\n".join(lines) + "\n"
+
+
+def build_n1_section(n1_suspects: list, n1_threshold: int) -> str:
+    if not n1_suspects:
+        return f"✅ **No N+1 patterns** detected (threshold: >{n1_threshold} occurrences per request)\n"
+
+    lines = [
+        f"### 🔁 N+1 Query Suspects ({len(n1_suspects)} found, threshold: >{n1_threshold}×/request)\n",
+        "| # | Occurrences | Endpoint | Test | SQL template (truncated) |",
+        "|---|-------------|----------|------|--------------------------|",
+    ]
+    for i, s in enumerate(n1_suspects, start=1):
+        endpoint = fmt_endpoint(s.get("httpMethod"), s.get("httpEndpoint"))
+        test = f"`{s['testName']}`" if s.get("testName") else "—"
+        sql = trunc(s.get("normalizedSql", ""))
+        lines.append(f"| {i} | **{s['occurrences']}×** | {endpoint} | {test} | `{sql}` |")
+    return "\n".join(lines) + "\n"
+
+
+def build_report(report: dict) -> str:
+    threshold_ms = report.get("thresholdMs", "?")
+    n1_threshold = report.get("n1Threshold", "?")
+    slow_count = report.get("slowQueryCount", 0)
+    n1_count = report.get("n1SuspectCount", 0)
+    generated_at = iso_to_human(report.get("generatedAt", ""))
+
+    slow_queries = report.get("slowQueries", [])
+    n1_suspects = report.get("n1Suspects", [])
+
+    # --- Header ---
+    if slow_count == 0 and n1_count == 0:
+        header_emoji = "✅"
+        header_status = "No performance regressions detected"
+    else:
+        header_emoji = "⚠️"
+        issues = []
+        if slow_count > 0:
+            issues.append(f"{slow_count} slow quer{'y' if slow_count == 1 else 'ies'}")
+        if n1_count > 0:
+            issues.append(f"{n1_count} N+1 suspect{'s' if n1_count != 1 else ''}")
+        header_status = "Performance issues found: " + " · ".join(issues)
+
+    lines = [
+        "",
+        "---",
+        f"## {header_emoji} Slow Query Report",
+        "",
+        f"> Generated at: {generated_at}  ",
+        f"> Slow-query threshold: **{threshold_ms} ms** · N+1 detection: **>{n1_threshold}×/request**",
+        "",
+        build_slow_queries_section(slow_queries, threshold_ms),
+        build_n1_section(n1_suspects, n1_threshold),
+        "",
+        "<details>",
+        "<summary>How to investigate</summary>",
+        "",
+        "**Slow queries** exceed the per-query execution time threshold.",
+        "Common causes: missing index, unbounded result set, complex JOIN.",
+        "",
+        "**N+1 suspects** are queries whose *normalised* SQL template was executed more than",
+        f"{n1_threshold} times within a single HTTP request — a strong indicator that",
+        "related data is being loaded one entity at a time instead of in a single JOIN.",
+        "",
+        "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance)",
+        "for remediation patterns.",
+        "",
+        "</details>",
+        "",
+        "<!-- Slow Query Report -->",
+    ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: format_slow_query_report.py <report.json>", file=sys.stderr)
+        sys.exit(1)
+
+    report_path = sys.argv[1]
+    try:
+        report = load_report(report_path)
+    except (json.JSONDecodeError, FileNotFoundError) as exc:
+        print(f"## ⚠️ Slow Query Report Parse Error\n\n{exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(build_report(report))

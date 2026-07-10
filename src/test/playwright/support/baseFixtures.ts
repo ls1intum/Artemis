@@ -116,10 +116,22 @@ const test = baseTest.extend<
         { scope: 'worker', auto: true },
     ],
     autoTestFixture: [
-        async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
+        async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>, testInfo) => {
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
+
+            // Inject the test name as an HTTP header on every API request so the
+            // server-side slow-query detector can associate captured queries with the
+            // Playwright test that triggered them (thesis objective 4.4).
+            await page.route('**/api/**', async (route) => {
+                await route.continue({
+                    headers: {
+                        ...route.request().headers(),
+                        'X-Playwright-Test-Name': testInfo.title,
+                    },
+                });
+            });
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 

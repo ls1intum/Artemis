@@ -151,6 +151,29 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (Phase 1)
+        id: collect-slow-query-report
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+          {
+            echo 'slow_query_md<<EOF_SLOW_QUERY_MARKER'
+            cat slow-query-summary.md 2>/dev/null || echo ""
+            echo 'EOF_SLOW_QUERY_MARKER'
+          } >> "$GITHUB_OUTPUT"
+        env:
+          ARTEMIS_BASE_URL: http://localhost:8080
+
+      - name: Upload slow-query report artifact (Phase 1)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 1
+          path: slow-query-report.json
+          if-no-files-found: warn
+
       - name: E2E Teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
@@ -220,6 +243,7 @@ jobs:
           INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
           INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
           INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_SLOW_QUERY_MD: ${{ steps.collect-slow-query-report.outputs.slow_query_md }}
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
           INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
           INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
@@ -240,6 +264,7 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            const slowQueryMd = process.env.INPUT_SLOW_QUERY_MD || '';
 
             const failedTests = parseFailedTests('phase1-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -258,6 +283,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Two-phase execution\n`;
             body += `- **Phase 1:** \`${relevantTests}\`\n`;
             body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
@@ -340,6 +366,29 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (Phase 2)
+        id: collect-slow-query-report
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+          {
+            echo 'slow_query_md<<EOF_SLOW_QUERY_MARKER'
+            cat slow-query-summary.md 2>/dev/null || echo ""
+            echo 'EOF_SLOW_QUERY_MARKER'
+          } >> "$GITHUB_OUTPUT"
+        env:
+          ARTEMIS_BASE_URL: http://localhost:8080
+
+      - name: Upload slow-query report artifact (Phase 2)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Phase 2
+          path: slow-query-report.json
+          if-no-files-found: warn
+
       - name: E2E Teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
@@ -407,6 +456,7 @@ jobs:
           INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
           INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
           INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_SLOW_QUERY_MD: ${{ steps.collect-slow-query-report.outputs.slow_query_md }}
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
           INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
           INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
@@ -425,6 +475,7 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            const slowQueryMd = process.env.INPUT_SLOW_QUERY_MD || '';
 
             const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
@@ -432,7 +483,7 @@ jobs:
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
             const flakinessTable = buildFlakinessTable(flakinessResults);
 
-            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable + (slowQueryMd ? '\n' + slowQueryMd : ''));
 
             if (existingCommentId) {
               let body = (await github.rest.issues.getComment({
@@ -530,6 +581,29 @@ jobs:
           START: ${{ steps.test-timer.outputs.start }}
         run: .github/scripts/wall-clock-timer.sh stop "$START"
 
+      - name: Collect slow-query report (All PR)
+        id: collect-slow-query-report
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+          {
+            echo 'slow_query_md<<EOF_SLOW_QUERY_MARKER'
+            cat slow-query-summary.md 2>/dev/null || echo ""
+            echo 'EOF_SLOW_QUERY_MARKER'
+          } >> "$GITHUB_OUTPUT"
+        env:
+          ARTEMIS_BASE_URL: http://localhost:8080
+
+      - name: Upload slow-query report artifact (All PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report All PR
+          path: slow-query-report.json
+          if-no-files-found: warn
+
       - name: E2E Teardown
         if: ${{ !cancelled() }}
         uses: ./.github/actions/e2e-teardown
@@ -605,6 +679,7 @@ jobs:
           INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
           INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
           INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+          INPUT_SLOW_QUERY_MD: ${{ steps.collect-slow-query-report.outputs.slow_query_md }}
           INPUT_PR_NUMBER: ${{ steps.find-e2e-comment.outputs.pr-number }}
           INPUT_COMMENT_ID: ${{ steps.find-e2e-comment.outputs.comment-id }}
           INPUT_STATUS_EMOJI: ${{ steps.format-results.outputs.status-emoji }}
@@ -623,6 +698,7 @@ jobs:
             const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
             const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
             const infraNote = process.env.INPUT_INFRA_NOTE || '';
+            const slowQueryMd = process.env.INPUT_SLOW_QUERY_MD || '';
 
             const failedTests = parseFailedTests('all-test-results/results.xml');
             const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
@@ -636,6 +712,7 @@ jobs:
             body += reporterNote;
             body += infraNote;
             body += flakinessTable;
+            if (slowQueryMd) { body += '\n' + slowQueryMd; }
             body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
             body += `<!-- OVERALL -->\n\n`;
             body += `🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
@@ -689,6 +766,22 @@ jobs:
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: .ci/E2E-tests/execute.sh multi-node playwright
+
+      - name: Collect slow-query report (Non-PR)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
+        env:
+          ARTEMIS_BASE_URL: http://localhost:8080
+
+      - name: Upload slow-query report artifact (Non-PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        continue-on-error: true
+        with:
+          name: Slow Query Report Non-PR
+          path: slow-query-report.json
+          if-no-files-found: warn
 
       - name: E2E Teardown
         if: ${{ !cancelled() }}
