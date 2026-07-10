@@ -62,6 +62,7 @@
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
+@source './app/exercise/exercise-headers/exercise-headers-information/result-history-dropdown/result-history-dropdown.component.html';
 @source './app/exercise/result';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
