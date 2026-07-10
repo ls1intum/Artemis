@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import jakarta.ws.rs.ext.ParamConverter.Lazy;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -11,6 +9,7 @@ import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
 
