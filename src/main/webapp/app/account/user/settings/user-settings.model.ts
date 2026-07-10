@@ -39,4 +39,7 @@ export abstract class Setting {
     descriptionKey?: string;
     settingId!: SettingId;
     changed?: boolean;
+    // The on/off state of the setting (see the class doc: settings hold changeable on/off properties). Kept on the base
+    // so concrete settings components can read it via the inherited signals without re-declaring (shadowing) them.
+    active?: boolean;
 }
