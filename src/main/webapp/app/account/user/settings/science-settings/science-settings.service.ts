@@ -56,10 +56,7 @@ export class ScienceSettingsService {
 
         this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
             next: (res: HttpResponse<Setting[]>) => {
-                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
-                    res.body!,
-                    UserSettingsCategory.SCIENCE_SETTINGS,
-                ) as ScienceSetting[];
+                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(res.body!, UserSettingsCategory.SCIENCE_SETTINGS);
 
                 this.storeScienceSettings(currentScienceSettings);
                 this.currentScienceSettingsSubject.next(currentScienceSettings);
