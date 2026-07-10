@@ -148,8 +148,25 @@ describe('ExerciseHeaderComponent', () => {
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
         });
 
-        it('should hide the feedback button without a submitted submission or result', () => {
+        it('should show a disabled feedback button without a submitted submission or result', () => {
             configureProgrammingExercise(false, false, false);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+        });
+
+        it('should hide the feedback button when the exercise has not been started', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.allowOnlineEditor = false;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.detectChanges();
 
             expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
         });

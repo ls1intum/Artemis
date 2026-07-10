@@ -285,6 +285,19 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(button.nativeElement.disabled).toBe(false);
         });
 
+        it('should disable the programming feedback button if no submission exists', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+            setupComponentInputs(exercise, false, false);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(true);
+        });
+
         it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
@@ -497,6 +510,42 @@ describe('RequestFeedbackButtonComponent', () => {
         (component as any).handleAthenaAssessment(athenaResult);
 
         expect(component.currentFeedbackRequestCount()).toBe(initialCount + 1);
+        expect(component.isFeedbackGenerationInProgress()).toBe(false);
+    });
+
+    it('should keep the button disabled while an Athena assessment is pending', () => {
+        vi.useFakeTimers();
+        const pendingAthenaResult = {
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            completionDate: dayjs().add(5, 'minutes'),
+            successful: undefined,
+        } as Result;
+
+        (component as any).handleAthenaAssessment(pendingAthenaResult);
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
+    });
+
+    it('should restore the pending feedback state from the participation', async () => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        participation.submissions![0].results = [
+            {
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: dayjs().add(5, 'minutes'),
+                successful: undefined,
+            } as Result,
+        ];
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise, true);
+
+        await initAndTick();
+
+        const button = debugElement.query(By.css('button'));
+        expect(button.nativeElement.disabled).toBe(true);
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
     });
 
     it('should not increment feedback count for unsuccessful Athena assessment', async () => {

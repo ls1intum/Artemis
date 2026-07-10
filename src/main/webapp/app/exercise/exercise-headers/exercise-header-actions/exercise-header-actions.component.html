@@ -137,13 +137,14 @@
                     exercise().type === ExerciseType.PROGRAMMING &&
                     !examMode() &&
                     exercise().allowFeedbackRequests &&
-                    hasProgrammingSubmission() &&
+                    activeParticipationForCode() &&
                     programmingExercise()?.allowOnlineEditor === false
                 ) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
                         [smallButtons]="smallButtons()"
                         [isGeneratingFeedback]="isGeneratingFeedback()"
+                        [isSubmitted]="hasProgrammingSubmission()"
                         (generatingFeedback)="generatingFeedback.emit()"
                     />
                 }

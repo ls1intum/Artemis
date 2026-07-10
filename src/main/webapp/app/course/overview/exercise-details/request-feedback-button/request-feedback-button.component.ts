@@ -25,6 +25,8 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
+import dayjs from 'dayjs/esm';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -78,6 +80,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private readonly isFeedbackRequestPending = signal(false);
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
+    private feedbackRequestTimeout?: ReturnType<typeof setTimeout>;
 
     private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
@@ -96,6 +99,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
         this.acceptSubscription?.unsubscribe();
+        clearTimeout(this.feedbackRequestTimeout);
     }
 
     private updateParticipation() {
@@ -109,6 +113,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
                         this.currentFeedbackRequestCount.set(countSuccessfulAthenaFeedbackRequests(this.participation));
+                        const pendingAthenaResult = getAllResultsOfAllSubmissions(this.participation.submissions).find(isAIResultAndIsBeingProcessed);
+                        this.syncFeedbackRequestPendingState(pendingAthenaResult);
                         this.subscribeToResultUpdates();
                     }
                 },
@@ -190,7 +196,17 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (result.completionDate && result.successful) {
             this.currentFeedbackRequestCount.update((count) => count + 1);
         }
-        this.isFeedbackRequestPending.set(false);
+        this.syncFeedbackRequestPendingState(result);
+    }
+
+    private syncFeedbackRequestPendingState(result: Result | undefined): void {
+        clearTimeout(this.feedbackRequestTimeout);
+        const isPending = isAIResultAndIsBeingProcessed(result);
+        this.isFeedbackRequestPending.set(isPending);
+        if (isPending && result?.completionDate) {
+            const timeout = Math.max(0, dayjs(result.completionDate).diff(dayjs(), 'milliseconds'));
+            this.feedbackRequestTimeout = setTimeout(() => this.isFeedbackRequestPending.set(false), timeout);
+        }
     }
 
     requestFeedback() {
