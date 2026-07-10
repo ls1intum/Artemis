@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260706120000-1" author="artemis">
+        <createTable tableName="presentation_assessment">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" primaryKeyName="pk_presentation_assessment" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(1000)"/>
+            <column name="max_points" type="double">
+                <constraints nullable="false"/>
+            </column>
+            <column name="presentation_date" type="timestamp"/>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="course_id"
+                                 baseTableName="presentation_assessment"
+                                 constraintName="fk_presentation_assessment_course_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="course"/>
+
+        <createIndex indexName="idx_presentation_assessment_course_id" tableName="presentation_assessment">
+            <column name="course_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260706120000-2" author="artemis">
+        <addAutoIncrement tableName="presentation_assessment"
+                          columnName="id"
+                          columnDataType="bigint"/>
+    </changeSet>
+</databaseChangeLog>
