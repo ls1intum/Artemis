@@ -25,6 +25,15 @@
         background-color: var(--feedback-code-reference-chrome-bg);
     }
 
+    &__code-reference-line-number {
+        padding: 0.375rem 0.75rem;
+        color: var(--feedback-code-reference-muted-color);
+        text-align: right;
+        user-select: none;
+        border-right: 1px solid var(--feedback-code-reference-border-color);
+        background-color: var(--feedback-code-reference-chrome-bg);
+    }
+
     &__code-reference-line {
         display: grid;
         grid-template-columns: minmax(3rem, max-content) minmax(0, 1fr);
@@ -58,15 +67,6 @@
             color: var(--p-text-color);
             background-color: transparent;
         }
-    }
-
-    &__code-reference-line-number {
-        padding: 0.375rem 0.75rem;
-        color: var(--feedback-code-reference-muted-color);
-        text-align: right;
-        user-select: none;
-        border-right: 1px solid var(--feedback-code-reference-border-color);
-        background-color: var(--feedback-code-reference-chrome-bg);
     }
 }
 
