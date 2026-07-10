@@ -53,13 +53,8 @@ export const appConfig: ApplicationConfig = {
         //  see https://angular.dev/api/router/withComponentInputBinding?tab=usage-notes
         //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
         provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
-        // This enables service worker (PWA).
-        // registerImmediately (rather than the default registerWhenStable:30000): the app polls continuously
-        // (e.g. /api/public/time), so under zoneless Angular it may not reach "stable" for many seconds, during
-        // which the SW is not yet active and every navigation re-fetches JS chunks from the network. That flood
-        // fills Chrome's CDP response-body buffer in E2E and evicts API response bodies. Registering immediately
-        // caches assets from the start. See PR #13189.
-        importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true, registrationStrategy: 'registerImmediately' })),
+        // This enables service worker (PWA)
+        importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
