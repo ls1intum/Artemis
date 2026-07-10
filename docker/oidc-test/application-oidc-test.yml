@@ -26,6 +26,7 @@ spring:
                         authorization-grant-type: "authorization_code"
                 provider:
                     oidc:
+                        issuer-uri: "http://localhost:9080/realms/artemis-oidc"
                         authorization-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/auth"
                         token-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/token"
                         user-info-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/userinfo"

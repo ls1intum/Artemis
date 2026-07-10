@@ -27,6 +27,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
@@ -60,6 +61,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     private OIDCAuthenticationSuccessHandler successHandler;
 
+    private OIDCAuthenticationFailureHandler failureHandler;
+
     @BeforeEach
     void initManualMocks() {
         oidcService = new OIDCService(userTestRepository, userCreationService);
@@ -70,6 +73,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         ReflectionTestUtils.setField(oidcService, "emailClaimKey", "email");
 
         successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository);
+        failureHandler = new OIDCAuthenticationFailureHandler();
         ReflectionTestUtils.setField(successHandler, "usernameClaimKey", "preferred_username");
     }
 
@@ -204,7 +208,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     }
 
     @Test
-    void testOidcLogin_failsForDeactivatedUser() throws Exception {
+    void testOidcLogin_failsForDeactivatedUser() {
         assertStudentNotExists();
         createUser(STUDENT_NAME + "@artemis.local");
 
@@ -213,19 +217,34 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         student.setActivated(false);
         userTestRepository.saveAndFlush(student);
 
+        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
+
+        assertThatExceptionOfType(OAuth2AuthenticationException.class).isThrownBy(() -> oidcService.loadUser(mockUserRequest))
+                .matches(ex -> "user_deactivated".equals(ex.getError().getErrorCode()));
+    }
+
+    @Test
+    void testOidcFailureHandler_withDeactivatedUserException_redirectsToDeactivatedError() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new org.springframework.security.oauth2.core.OAuth2Error("user_deactivated"), "Deactivated");
 
-        // Simulate successful login
-        var mockUserRequest = createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName"));
-        var oidcUser = oidcService.loadUser(mockUserRequest);
-        var auth = new org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
-        successHandler.onAuthenticationSuccess(request, response, auth);
+        failureHandler.onAuthenticationFailure(request, response, exception);
 
-        // Verify that user was redirected to /sign-in page
+        // Verify the correct redirect for deactivated user
         assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=deactivated");
-        // Verify no access token was issued
-        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void testOidcFailureHandler_withGenericException_redirectsToGenericOidcError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new org.springframework.security.oauth2.core.OAuth2Error("invalid_issuer"), "Wrong Issuer");
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        // Verify the default error redirect
+        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?error=oidcFailure");
     }
 
     private OidcUserRequest createMockUserRequest(Map<String, Object> claims) {

@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
@@ -71,14 +72,14 @@ public class OIDCService extends OidcUserService {
 
         // Check if user with given username already exists
         Optional<User> localUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
-
+        User actualUser;
         if (localUser.isEmpty()) {
             // Add new user to database
-            createNewUserFromOidc(username, oidcUser);
+            actualUser = createNewUserFromOidc(username, oidcUser);
         }
         else {
             // Update user information and store changes if necessary
-            User actualUser = localUser.get();
+            actualUser = localUser.get();
             String firstName = oidcUser.getAttribute(firstNameClaimKey);
             String lastName = oidcUser.getAttribute(lastNameClaimKey);
             String email = oidcUser.getAttribute(emailClaimKey);
@@ -92,7 +93,11 @@ public class OIDCService extends OidcUserService {
                 userRepository.save(actualUser);
             }
         }
-
+        // Don't issue JWT cookie for inactive users
+        if (!actualUser.getActivated()) {
+            log.warn("OIDC authentication rejected: User account '{}' is deactivated in Artemis.", username);
+            throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
+        }
         return oidcUser;
     }
 

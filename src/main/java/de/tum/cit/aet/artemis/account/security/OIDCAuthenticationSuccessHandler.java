@@ -62,14 +62,6 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated OIDC user " + username + " could not be found in the database."));
 
-        // Don't issue JWT cookie for inactive users
-        if (!user.getActivated()) {
-            if (session != null) {
-                session.invalidate();
-            }
-            response.sendRedirect("/sign-in?loginError=deactivated");
-            return;
-        }
         // Artemis-side authorization, get roles from database
         var authorities = user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList();
 

@@ -18,6 +18,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
 
@@ -36,6 +37,8 @@ public class OIDCConfiguration {
 
     private final OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler;
 
+    private final OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler;
+
     private final Environment environment;
 
     @Value("${spring.security.oauth2.client.registration.oidc.client-id:mock-id}")
@@ -43,6 +46,9 @@ public class OIDCConfiguration {
 
     @Value("${spring.security.oauth2.client.registration.oidc.client-secret:mock-secret}")
     private String clientSecret;
+
+    @Value("${spring.security.oauth2.client.provider.oidc.issuer-uri:http://mock-issuer}")
+    private String issuerUri;
 
     @Value("${spring.security.oauth2.client.provider.oidc.authorization-uri:http://mock-auth}")
     private String authorizationUri;
@@ -59,9 +65,11 @@ public class OIDCConfiguration {
     @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
 
-    public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler, Environment environment) {
+    public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler,
+            OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, Environment environment) {
         this.oidcService = oidcService;
         this.oidcAuthenticationSuccessHandler = oidcAuthenticationSuccessHandler;
+        this.oidcAuthenticationFailureHandler = oidcAuthenticationFailureHandler;
         this.environment = environment;
     }
 
@@ -80,8 +88,8 @@ public class OIDCConfiguration {
         }
         ClientRegistration oidcRegistration = ClientRegistration.withRegistrationId("oidc").clientId(clientId).clientSecret(clientSecret)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE).redirectUri("{baseUrl}/login/oauth2/code/{registrationId}").scope(configuredScopes)
-                .authorizationUri(authorizationUri).tokenUri(tokenUri).userInfoUri(userInfoUri).jwkSetUri(jwkSetUri).userNameAttributeName(usernameClaimKey).clientName("TUM Login")
-                .build();
+                .issuerUri(issuerUri).authorizationUri(authorizationUri).tokenUri(tokenUri).userInfoUri(userInfoUri).jwkSetUri(jwkSetUri).userNameAttributeName(usernameClaimKey)
+                .clientName("TUM Login").build();
 
         return new InMemoryClientRegistrationRepository(oidcRegistration);
     }
@@ -127,6 +135,7 @@ public class OIDCConfiguration {
                 .authorizationEndpoint(auth -> auth.authorizationRequestResolver(resolver))
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcService))
                 .successHandler(this.oidcAuthenticationSuccessHandler)
+                .failureHandler(this.oidcAuthenticationFailureHandler)
             );
         // @formatter:on
 

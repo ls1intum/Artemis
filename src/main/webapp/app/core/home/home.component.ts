@@ -207,6 +207,9 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
             if (params['loginError'] === 'deactivated') {
                 this.authenticationError.set(true);
                 this.alertService.error('home.errors.loginDeactivated');
+            } else if (params['loginError'] === 'oidcFailure') {
+                this.authenticationError.set(true);
+                this.alertService.error('home.errors.ssoFailure');
             }
         });
     }
