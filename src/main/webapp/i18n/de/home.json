@@ -23,7 +23,7 @@
             "tumWarning": "An der TUM nutze z.B. <b>go42tum</b> oder <b>example@tum.de</b>",
             "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal.",
             "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein, um zur vorherigen Seite zurückzukehren.",
-            "ssoFailure": "Bei der Single-Sign-On-Authentifizierung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+            "ssoFailure": "Bei der Single-Sign-On-Authentifizierung ist ein Fehler aufgetreten. Bitte versuche es erneut."
         }
     }
 }
