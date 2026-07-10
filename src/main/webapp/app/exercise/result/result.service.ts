@@ -36,7 +36,6 @@ export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPe
 
 export interface Badge {
     severity: 'success' | 'info' | 'secondary';
-    class?: string;
     text: string;
     tooltip: string;
 }
@@ -339,9 +338,6 @@ export class ResultService implements IResultService {
     }
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {
-        if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-            return { severity: 'info', class: 'bg-ai', text: 'artemisApp.result.ai', tooltip: 'artemisApp.result.aiTooltip' };
-        }
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             if (isPracticeMode(participation) || isPracticeResult(result)) {
                 return { severity: 'secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
