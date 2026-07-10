@@ -54,9 +54,9 @@ export interface IrisArtifactMessage extends BaseEntity {
  */
 export class IrisCommandMessage implements BaseEntity {
     id?: number;
-    content: IrisMessageContent[];
+    content!: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
-    sender: IrisSender.COMMAND;
+    sender!: IrisSender.COMMAND;
     accessedMemories?: MemirisMemory[];
     createdMemories?: MemirisMemory[];
 }

@@ -4,10 +4,10 @@
  * (currently only a point-out: navigate the combined view if it is still open) and acknowledge the outcome.
  */
 export class IrisCommandRequestDTO {
-    correlationId: string;
+    correlationId!: string;
     /** Command type discriminator (currently only "pointOut"). */
-    type: string;
-    lectureUnitId: number;
+    type!: string;
+    lectureUnitId!: number;
     page?: number;
     timestamp?: number;
 }
