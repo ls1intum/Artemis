@@ -4,8 +4,8 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { of, throwError } from 'rxjs';
+import { catchError, map, switchMap, take, tap } from 'rxjs/operators';
+import { EMPTY, of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
@@ -43,6 +43,8 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
+import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
 // Modal -> Result details view
 @Component({
@@ -68,6 +70,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private injector = inject(Injector);
     readonly dialogRef = inject(DynamicDialogRef, { optional: true });
 
@@ -246,6 +249,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         const exercise = this.resolvedExercise();
                         if (exercise) {
                             this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, exercise));
+                            this.enrichFeedbackItemsWithCodeReferences(feedbackItems);
                         }
                         if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
@@ -285,6 +289,48 @@ export class FeedbackComponent implements OnInit, OnChanges {
             .subscribe(() => {
                 this.isLoading.set(false);
             });
+    }
+
+    private enrichFeedbackItemsWithCodeReferences(feedbackItems: FeedbackItem[]): void {
+        const participation = this.participation();
+        const exerciseId = this.resolvedExercise()?.id;
+        const participationId = participation.id;
+        const commitHash = (this.result().submission as ProgrammingSubmission)?.commitHash;
+        const hasCodeReferences = feedbackItems.some((item) => item.codeReference);
+        if (this.exerciseType() !== ExerciseType.PROGRAMMING || exerciseId === undefined || participationId === undefined || !commitHash || !hasCodeReferences) {
+            return;
+        }
+
+        this.programmingExerciseParticipationService
+            .getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitHash)
+            .pipe(
+                take(1),
+                catchError(() => EMPTY),
+            )
+            .subscribe((fileContentByPath) => {
+                if (!fileContentByPath) {
+                    return;
+                }
+                feedbackItems.forEach((item) => {
+                    const reference = item.codeReference;
+                    const fileContent = reference && fileContentByPath.get(reference.filePath);
+                    if (reference && fileContent) {
+                        reference.lines = this.getReferencedLines(fileContent, reference.line, reference.lineEnd ?? reference.line);
+                    }
+                });
+                this.feedbackItemNodes.update((nodes) => (nodes ? [...nodes] : nodes));
+            });
+    }
+
+    private getReferencedLines(fileContent: string, lineStart: number, lineEnd: number): { line: number; code: string; referenced: boolean }[] {
+        const context = 2;
+        const lines = fileContent.split(/\r?\n/);
+        const firstLine = Math.max(1, lineStart - context);
+        const lastLine = Math.min(lines.length, lineEnd + context);
+        return lines.slice(firstLine - 1, lastLine).map((code, index) => {
+            const line = firstLine + index;
+            return { line, code, referenced: line >= lineStart && line <= lineEnd };
+        });
     }
 
     /**

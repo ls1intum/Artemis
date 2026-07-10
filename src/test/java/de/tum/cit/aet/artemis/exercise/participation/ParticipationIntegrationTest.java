@@ -854,6 +854,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
+        assertThat(invokedResult.getFeedbacks().iterator().next().getReference()).isEqualTo("file:client.cpp_line:3-4");
         assertThat(invokedResult.getScore()).isEqualTo(100.0);
     }
 
