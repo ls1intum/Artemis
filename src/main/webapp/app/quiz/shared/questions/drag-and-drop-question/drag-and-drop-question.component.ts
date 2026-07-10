@@ -53,6 +53,9 @@ export class DragAndDropQuestionComponent {
 
     readonly MappingResult = MappingResult;
 
+    // Pixels scrolled per animation frame while dragging near a container edge (CDK default is 2). Kept low so the auto-scroll stays controllable.
+    protected readonly dragAutoScrollStep = 10;
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
