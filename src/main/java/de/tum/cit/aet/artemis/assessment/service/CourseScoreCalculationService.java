@@ -113,7 +113,7 @@ public class CourseScoreCalculationService {
         double reachableMaxPoints = 0.0;
         double reachablePresentationPoints = 0.0;
 
-        // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+        // Non-variant exercises: summed up individually (unchanged by variant groups).
         for (var exercise : exercises) {
             if (isExerciseVariant(exercise)) {
                 continue;
@@ -146,9 +146,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates the max and reachable max points contributed by the exercise variant groups among the given exercises.
-     * The max points of the variants of a group are summed up and then capped at the group's configured maxPoints, so a
-     * group never contributes more than its cap. Exercises that are not variants are ignored here (they are summed up
-     * separately, exactly as before exercise variants were introduced).
+     * Each group's variant max points are summed and then capped at the group's configured maxPoints. Non-variant
+     * exercises are ignored here (they are summed up separately).
      *
      * @param exercises the exercises which are checked for variant group membership
      * @return the capped max and reachable max points contributed by the variant groups (presentation points are always 0)
@@ -386,7 +385,7 @@ public class CourseScoreCalculationService {
         double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
-        // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+        // Non-variant exercises: summed up individually (unchanged by variant groups).
         for (ExerciseCourseScoreDTO exercise : courseExercises) {
             if (isExerciseVariant(exercise)) {
                 continue;
@@ -424,10 +423,9 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the points a student earns from the exercise variant groups among the given exercises. The points the
-     * student earns across the variants of a group are summed up and then capped at the group's configured maxPoints, so
-     * a group never contributes more than its cap. Exercises that are not variants are ignored here (they are summed up
-     * separately, exactly as before exercise variants were introduced).
+     * Calculates the points a student earns from the exercise variant groups among the given exercises. Each group's
+     * earned variant points are summed and then capped at the group's configured maxPoints. Non-variant exercises are
+     * ignored here (they are summed up separately).
      *
      * @param courseExercises           the exercises which are checked for variant group membership
      * @param gradeScoreDTOMap          the student's achieved scores per exercise id
@@ -509,7 +507,7 @@ public class CourseScoreCalculationService {
                     achievedPointsPerVariantGroup.add(variantGroup.getId(), variantGroup.getMaxPoints(), pointsAchievedFromExercise);
                 }
                 else {
-                    // Non-variant exercises: summed up exactly as before exercise variants were introduced.
+                    // Non-variant exercises: summed up individually (unchanged by variant groups).
                     pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
                 }
             }
@@ -631,8 +629,8 @@ public class CourseScoreCalculationService {
 
     /**
      * Determines whether the given exercise is a variant of an exercise variant group with a configured points cap.
-     * Only such exercises are handled by the separate, capped variant-group computation; all other exercises (including
-     * those whose group has no configured cap) are summed up exactly as before exercise variants were introduced.
+     * Only such exercises go through the separate, capped variant-group computation; all others are summed up
+     * individually.
      *
      * @param exercise the exercise to check
      * @return {@code true} if the exercise belongs to a variant group that has a maxPoints cap

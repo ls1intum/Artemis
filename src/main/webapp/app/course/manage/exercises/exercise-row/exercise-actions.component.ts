@@ -91,10 +91,9 @@ export class ExerciseActionsComponent {
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
     /**
-     * Width (px) the actions column must reserve to keep this row's always-visible quiz lifecycle buttons plus the
-     * ellipsis trigger on screen — i.e. the point at which every collapsible main button has folded into the ellipsis.
-     * 0 for non-quiz rows. The table floors the shared column at the max reported across its rows (see exercise-table),
-     * so the column shrinks (collapsing the main buttons) before the table scrolls, never clipping the quiz buttons.
+     * Width (px) the actions column must reserve to keep this row's always-visible quiz buttons plus the ellipsis
+     * trigger on screen; 0 for non-quiz rows. The table floors the shared column at the max reported across its rows
+     * (see exercise-table), so the column collapses the main buttons before scrolling, never clipping the quiz buttons.
      */
     readonly quizActionsMinWidth = output<number>();
 

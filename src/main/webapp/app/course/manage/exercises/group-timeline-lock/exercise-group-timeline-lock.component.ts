@@ -15,11 +15,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
  * clicking one calls {@link openModal}, which opens the group-edit dialog through PrimeNG's {@link DialogService}.
  * Saving persists the group's timeline via {@link ExerciseVariantGroupService} and re-emits the exercise with the
  * group's (now shared) dates applied so the form reflects them without a reload.
- *
- * The dialog is opened imperatively (rather than via a declarative {@code <p-dialog [visible]>}) because the latter
- * mis-layered its overlay on the first open from inside the large exercise-update form: the backdrop stayed transparent
- * and the locked date-field overlays painted over the dialog. {@code DialogService} appends to the body and manages the
- * overlay z-index through PrimeNG's overlay service, which renders correctly on the first open.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',

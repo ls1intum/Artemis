@@ -100,11 +100,10 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to create ExerciseVariantGroup in course {} : {}", courseId, createDTO);
         ExerciseVariantGroup group = createDTO.toEntity();
         group.validateDates();
-        // The course owns the unidirectional collection (the course_id FK lives on this table but is managed from the
-        // Course side). Persist the group first so it gets an id, then attach it to the course so the FK is written.
-        // The two saves are deliberately not wrapped in a transaction (this codebase avoids service-level
-        // @Transactional): all validation happens before the first save, so the remaining failure window can only
-        // leave behind an empty, course-less group that no course-scoped query ever sees.
+        // The course owns the unidirectional collection: save the group first to get an id, then attach it so the
+        // course_id FK is written. Not wrapped in a transaction (this codebase avoids service-level @Transactional);
+        // validation runs before the first save, so a failure between the two can only leave an orphan, course-less
+        // group that no course-scoped query ever sees.
         group = exerciseVariantGroupRepository.save(group);
         Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
         course.addExerciseVariantGroup(group);
@@ -153,8 +152,8 @@ public class ExerciseVariantGroupResource {
         // Programming timeline changes recompute the build-and-test date and reschedule build/test operations, so they go
         // through the dedicated update flow (which reloads and saves the exercise itself) rather than a plain saveAll.
         programmingExercises.forEach(programmingExercise -> updateProgrammingExerciseTimeline(programmingExercise, group));
-        // Build the response from the loaded entity (its exercises were fetched); the save() return value is a re-merged
-        // instance whose lazy exercises collection cannot initialize once the session is closed (open-in-view is off).
+        // Build the response from the loaded entity (its exercises were fetched); save()'s re-merged return value has a
+        // lazy exercises collection that cannot initialize once the session closes (open-in-view is off).
         return ResponseEntity.ok(new ExerciseVariantGroupDTO(group));
     }
 
@@ -199,9 +198,9 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteExerciseVariantGroup(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to delete ExerciseVariantGroup {} in course {}", groupId, courseId);
-        // Load the group without its member exercises: keeping them out of the persistence context lets the
-        // ON DELETE SET NULL foreign key (see the Liquibase changelog) ungroup them, instead of Hibernate failing the
-        // flush because managed exercises still reference the removed group. The members survive, simply ungrouped.
+        // Load the group without its members so the ON DELETE SET NULL foreign key (see the Liquibase changelog) can
+        // ungroup them; loading them would make Hibernate's flush fail because managed exercises still reference the
+        // removed group. The members survive, simply ungrouped.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
         exerciseVariantGroupRepository.delete(group);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
@@ -227,9 +226,8 @@ public class ExerciseVariantGroupResource {
         log.debug("REST request to assign exercise {} in course {} to variant group {}", exerciseId, courseId, assignmentDTO.groupId());
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
-            // Variant groups are course-owned and carry a course timeline. An exam exercise reports its exam's course via
-            // getCourseViaExerciseGroupOrCourseMember(), so it would otherwise pass the ownership check below and be
-            // assigned to a course group, later breaking group timeline updates. Reject it up front.
+            // An exam exercise reports its exam's course, so it would pass the ownership check below and be assigned to
+            // a course-owned group, later breaking group timeline updates. Reject it up front.
             throw new BadRequestAlertException("Exam exercises cannot be assigned to a variant group", ENTITY_NAME, "examExerciseNotAllowed");
         }
         Course exerciseCourse = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -243,17 +241,15 @@ public class ExerciseVariantGroupResource {
             throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
         }
         if (group != null) {
-            // For a date the group doesn't define yet, and that none of its current members define either, adopt the
-            // joining exercise's value instead of blanking it out. This makes empty (or partially configured) groups
-            // adopt a sensible timeline from the first real exercise added to them, rather than forcing every date to
-            // null until someone edits the group directly.
+            // Let a brand-new, empty group adopt a timeline from its first exercise instead of forcing every
+            // date to null until someone edits the group directly.
             adoptMissingDatesFromExercise(group, exercise);
         }
         exercise.setExerciseVariantGroup(group);
         if (group != null && exercise instanceof ProgrammingExercise programmingExercise) {
-            // Persist the membership change first, then route the timeline through the programming update flow so the
+            // Persist the membership change, then route the timeline through the programming update flow so the
             // build-and-test date is recomputed and the scheduled build/test operations are refreshed (a plain save
-            // would leave the old due-date/build tasks scheduled). This exercise is fully loaded, so saving it is safe.
+            // would leave the old tasks scheduled).
             exerciseRepository.save(programmingExercise);
             updateProgrammingExerciseTimeline(programmingExercise, group);
             return ResponseEntity.ok().build();
@@ -304,8 +300,7 @@ public class ExerciseVariantGroupResource {
         changed |= adoptMissingDate(group, exercise, Exercise::getExampleSolutionPublicationDate, ExerciseVariantGroup::getExampleSolutionPublicationDate,
                 ExerciseVariantGroup::setExampleSolutionPublicationDate);
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // Not a field on the base Exercise, so it needs its own ProgrammingExercise-only getter/setter pair instead
-            // of going through the generic Exercise-typed helper above.
+            // Not a base Exercise field, so it needs the ProgrammingExercise-only getter/setter pair.
             changed |= adoptMissingDate(group, programmingExercise, ProgrammingExercise::getBuildAndTestStudentSubmissionsAfterDueDate,
                     ExerciseVariantGroup::getBuildAndTestStudentSubmissionsAfterDueDate, ExerciseVariantGroup::setBuildAndTestStudentSubmissionsAfterDueDate);
         }
@@ -333,13 +328,10 @@ public class ExerciseVariantGroupResource {
     }
 
     /**
-     * Validates the exercise's date combination via {@link Exercise#validateBaseDates()} rather than the polymorphic
-     * {@link Exercise#validateDates()}, so that for a {@link QuizExercise} this runs only the base
-     * release/start/due/assessmentDue/exampleSolutionPublication check and not {@link QuizExercise}'s additional
-     * {@code quizBatches} loop: {@code quizBatches} is a lazy collection that is not initialized on the exercises loaded
-     * here (no open Hibernate session outside the originating repository call), so iterating it would throw
-     * {@code LazyInitializationException}. Only individual-mode quizzes can be group members (enforced in
-     * {@link #setExerciseVariantGroup}), so the batch-specific check this skips is not relevant for group timelines.
+     * Validates the exercise's dates via {@link Exercise#validateBaseDates()} rather than the polymorphic
+     * {@link Exercise#validateDates()}: for a {@link QuizExercise} the latter also iterates the lazy {@code quizBatches}
+     * collection, which is not initialized here and would throw {@code LazyInitializationException}. Only individual-mode
+     * quizzes can be group members, so the skipped batch check is irrelevant for group timelines.
      *
      * @param exercise the exercise whose (already updated) dates should be validated
      */

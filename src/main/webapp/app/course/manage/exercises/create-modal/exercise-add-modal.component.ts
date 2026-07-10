@@ -94,9 +94,9 @@ export class ExerciseAddModalComponent {
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     /**
-     * The exercise-type cards actually shown, gated the same way as the legacy add popover: text / modeling /
-     * file-upload are hidden when their module feature is inactive, and programming is hidden while its feature toggle
-     * is off. This keeps the modal from routing users into create/import screens for unavailable exercise types.
+     * The exercise-type cards actually shown, gated like the legacy add popover: text / modeling / file-upload are
+     * hidden when their module feature is inactive, and programming while its feature toggle is off. This keeps the
+     * modal from routing users into create/import screens for unavailable exercise types.
      */
     protected readonly exerciseTypeCards = computed<ExerciseTypeCard[]>(() =>
         EXERCISE_TYPE_CARDS.filter((card) => {
@@ -157,10 +157,9 @@ export class ExerciseAddModalComponent {
     }
 
     /**
-     * Opens the regular Artemis exercise import dialog (the one used on develop) for the selected exercise type.
-     * Mirrors {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also
-     * allows importing from a file), all other types use the direct import list. The dialog shows the real
-     * exercises returned by the paging endpoints.
+     * Opens the regular Artemis exercise import dialog for the selected exercise type. Mirrors
+     * {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also allows importing
+     * from a file), all other types use the direct import list.
      */
     startImport(type: ExerciseType): void {
         this.close();

@@ -119,8 +119,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly cards = signal<CourseExerciseCard[]>([]);
     /**
      * Whether the initial exercise load has finished. Gates the "no exercises match" empty state so it is not shown
-     * during the brief window before the exercises arrive on first (direct) access — switching views afterwards keeps
-     * this true, so a genuinely empty result (e.g. a search with no matches) still shows the message.
+     * during the brief window before the exercises first arrive, while still showing it for a genuinely empty result.
      */
     readonly loaded = signal(false);
 
@@ -181,9 +180,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly selectedDeleteError$ = this.selectedDeleteError.asObservable();
 
     constructor() {
-        // Restore the last-selected view so editing an exercise (which navigates away and re-instantiates this
-        // component on return) keeps the chosen view instead of falling back to the 'type' default. The stored value
-        // is validated against the known views so a stale or corrupt entry simply falls back to the default.
+        // Restore the last-selected view so returning from an exercise editor keeps the chosen view instead of the
+        // 'type' default. Validated against the known views so a stale/corrupt entry falls back to the default.
         const storedView = this.localStorageService.retrieve<ExerciseManagementView>(VIEW_STORAGE_KEY);
         if (storedView && this.viewOptions.some((option) => option.value === storedView)) {
             this.view.set(storedView);
@@ -191,9 +189,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // CourseExerciseCard titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
-        // this zoneless app they must be rebuilt when the language changes — otherwise they keep the previous language
-        // until the next user interaction rebuilds the cards.
+        // Card titles are resolved eagerly via TranslateService.instant, so in this zoneless app they must be rebuilt
+        // on language change — otherwise they keep the previous language until the next interaction rebuilds the cards.
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.rebuildCards());
 
         this.route.parent!.data.subscribe(({ course }) => {
@@ -290,11 +287,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     /**
-     * Deletes every selected exercise on the server via its type-specific service. Invoked by the bulk-delete button's
-     * {@code jhiDeleteButton} directive once the user confirms in the shared delete dialog. Once the deletions settle the
-     * exercises are reloaded from the server (rather than pruned locally) so the view reflects the true state even on a
-     * partial failure. Errors are surfaced through {@link selectedDeleteError} so the delete dialog (and the alert
-     * service) can show them.
+     * Deletes every selected exercise via its type-specific service, invoked by the bulk-delete button's
+     * {@code jhiDeleteButton} directive on confirm. Reloads from the server afterwards (rather than pruning locally) so
+     * the view reflects the true state even on a partial failure; errors are surfaced through {@link selectedDeleteError}.
      */
     deleteSelectedExercises(): void {
         const exercisesToDelete = this.selectedExercises();
