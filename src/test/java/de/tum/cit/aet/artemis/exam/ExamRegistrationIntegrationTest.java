@@ -78,11 +78,15 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final int NUMBER_OF_TUTORS = 1;
 
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
+
     private User student1;
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 1, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         // Add a student that is not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
@@ -109,7 +113,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
 
         Set<User> studentsInCourseBefore = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(student), HttpStatus.OK, null);
         Set<User> studentsInCourseAfter = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
@@ -126,7 +131,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
 
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.OK, null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
 
         Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsAfter).hasSize(1);
@@ -135,8 +141,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", null, HttpStatus.BAD_REQUEST,
-                null);
+        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -357,13 +363,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
 
         assertThat(storedExam.getExamUsers()).contains(examUser);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterInstructorToExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "instructor1", null, HttpStatus.FORBIDDEN,
-                null);
     }
 
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam

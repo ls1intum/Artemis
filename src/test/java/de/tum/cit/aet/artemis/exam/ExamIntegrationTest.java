@@ -400,7 +400,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN, Exam.class);
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/reset", HttpStatus.FORBIDDEN);
-        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
         request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students", List.of(new StudentDTO(null, null, null, null, null)), HttpStatus.FORBIDDEN);
         request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
     }
@@ -1228,8 +1227,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.FORBIDDEN);
         // Get exam
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
-        // Add student to exam
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
         // Generate student exams
         request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.FORBIDDEN);

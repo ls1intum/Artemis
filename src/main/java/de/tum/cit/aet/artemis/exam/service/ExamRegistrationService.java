@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -181,7 +184,10 @@ public class ExamRegistrationService {
         if (exam.isStarted()) {
             // Generate student exams for the registered students if the exam has already started and prepare the exercises
             List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
-            studentExamService.startExercisesForStudentExams(newStudentExams);
+            List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
+            long start = System.nanoTime();
+            studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
+                    .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId));
         }
 
         try {
@@ -222,53 +228,6 @@ public class ExamRegistrationService {
      */
     public boolean isUserRegisteredForExam(Long examId, Long userId) {
         return examRepository.isUserRegisteredForExam(examId, userId);
-    }
-
-    /**
-     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has
-     * access to the course of the exam.
-     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
-     * If the exam has already started, a student exam is additionally generated.
-     *
-     * @param course  the course containing the exam
-     * @param exam    the exam for which we want to register a student
-     * @param student the student to be registered to the exam
-     */
-    @Deprecated // use registerStudentsForExam instead
-    public void registerStudentToExam(Course course, Exam exam, User student) {
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration of students is only allowed for real exams");
-        }
-
-        if (!student.getGroups().contains(course.getStudentGroupName())) {
-            userService.addUserToGroup(student, course.getStudentGroupName());
-        }
-
-        Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-
-        if (registeredExamUserOptional.isEmpty() || !exam.getExamUsers().contains(registeredExamUserOptional.get())) {
-            ExamUser registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(student);
-            registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
-            exam.addExamUser(registeredExamUser);
-            examRepository.save(exam);
-            // Generate a student exam for the registered student if the exam has already started
-            if (exam.isStarted()) {
-                Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-                studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
-            }
-            studentExamService.invalidateExerciseStartStatus(exam.getId());
-        }
-        else {
-            log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
-            return;
-        }
-
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**
