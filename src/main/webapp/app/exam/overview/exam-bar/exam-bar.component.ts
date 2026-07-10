@@ -43,7 +43,7 @@ export class ExamBarComponent implements AfterViewInit, OnDestroy {
     readonly examTitle = computed(() => this.exam()?.title ?? '');
     readonly exercises = computed<Exercise[]>(() => this.studentExam()?.exercises ?? []);
 
-    private previousHeight: number;
+    private previousHeight!: number; // set in ngAfterViewInit() before the ResizeObserver callback reads it
     private resizeObserver: ResizeObserver | undefined;
 
     /**

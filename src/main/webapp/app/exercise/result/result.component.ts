@@ -2,7 +2,8 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -46,7 +47,8 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        NgbTooltip,
+        TooltipModule,
+        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -91,7 +93,6 @@ export class ResultComponent {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-
     // True when the passed result is actually displayable as a score (rated, or ungraded allowed, or an Athena AI result).
     private readonly displayableResult = computed(() => {
         const result = this.result();

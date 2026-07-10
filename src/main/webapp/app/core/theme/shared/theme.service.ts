@@ -77,7 +77,7 @@ export class ThemeService {
 
     private localStorageService = inject(LocalStorageService);
 
-    private darkSchemeMediaQuery: MediaQueryList;
+    private darkSchemeMediaQuery!: MediaQueryList; // set in initialize(), called once on application startup before any read
 
     constructor() {
         effect(() => {
