@@ -20,9 +20,9 @@
         font-size: medium;
         text-align: left;
 
-        // The list-group items stack directly on top of each other, so the following item paints over
-        // the bottom of the focused item's focus ring. Raise the focused item above siblings, including
-        // Bootstrap's active list-group item (z-index: 2), so the ring stays visible.
+        /* The list-group items stack directly on top of each other, so the following item paints over
+           the bottom of the focused item's focus ring. Raise the focused item above siblings, including
+           Bootstrap's active list-group item (z-index: 2), so the ring stays visible. */
         &:focus-visible {
             position: relative;
             z-index: 3;
