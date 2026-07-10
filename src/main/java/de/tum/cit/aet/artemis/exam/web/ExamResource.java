@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -320,6 +321,23 @@ public class ExamResource {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
+        // If the schedule (start/end date) changed but the working time did not, the block above did not run, so
+        // conducting students are never told about the new schedule. Push a schedule update carrying the new dates so
+        // their pre-start countdown and start-based content visibility recompute. Only relevant while students may be in
+        // the pre-start conduction window (from the original start minus EXAM_START_WAIT_TIME_MINUTES until the exam
+        // ends); a routine edit of a far-future exam reaches no conducting student and is skipped.
+        else {
+            boolean startDateChanged = comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
+            ZonedDateTime now = now();
+            boolean withinConductionWindow = originalStartDate != null && savedExam.getEndDate() != null
+                    && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
+            // Test exams have no instructor-controlled pre-start countdown and their clients do not subscribe to these
+            // updates, so skip them to avoid persisting unused events.
+            if ((startDateChanged || endDateChanged) && withinConductionWindow && !savedExam.isTestExam()) {
+                Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
+                examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
+            }
+        }
 
         boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
         if (scheduleRelevantExamSettingsChanged) {
@@ -458,6 +476,7 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
+        checkExamTitleLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
@@ -479,6 +498,18 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Checks that the exam title does not exceed the database column limit. The client caps this too, but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTitleLengthElseThrow(Exam exam) {
+        if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
+                    "examTitleTooLong");
         }
     }
 
