@@ -827,6 +827,7 @@ public class StudentExamService {
      *
      * @param examId         exam to which the student exams belong
      * @param studentExamIds the ids of student exams for which to start exercises
+     * @return a future that will yield the number of generated participations
      */
     public CompletableFuture<Integer> startExercisesForStudentExams(Long examId, List<Long> studentExamIds) {
         return this.startExercises(examId, studentExamIds);
