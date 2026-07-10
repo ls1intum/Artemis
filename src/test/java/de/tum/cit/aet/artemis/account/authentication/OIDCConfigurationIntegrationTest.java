@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.FilterChainProxy;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.account.config.OIDCConfiguration;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTe
  * Integration tests ensuring that OIDC Configuration beans and Spring Security
  * filter chain wiring are properly set up when the OIDC feature toggle is enabled.
  */
-@TestPropertySource(properties = { "artemis.user-management.oidc.enabled=true", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_oidc_config_test" })
+@ActiveProfiles(value = "oidc", inheritProfiles = true)
 class OIDCConfigurationIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Autowired(required = false)

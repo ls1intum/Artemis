@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.account.config.OIDCEnabled;
 @Conditional(OIDCEnabled.class)
 public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
-    private final Logger log = LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(OIDCAuthenticationFailureHandler.class);
 
     /**
      * Handles OIDC authentication failures by logging the exception and redirecting the client to the sign-in page.
