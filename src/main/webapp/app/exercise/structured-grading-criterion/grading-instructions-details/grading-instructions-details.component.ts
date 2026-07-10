@@ -33,10 +33,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
     readonly exercise = input.required<Exercise>();
-    private instructions: GradingInstruction[];
+    private instructions: GradingInstruction[] = [];
     private readonly criteria = signal<GradingCriterion[]>(undefined!);
 
-    backupExercise: Exercise;
+    backupExercise!: Exercise; // set in ngOnInit() as a deep clone of the exercise() input before any edit-restore reads it
     readonly markdownEditorText = signal('');
     readonly showEditMode = signal<boolean>(undefined!);
 
@@ -368,13 +368,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = cloneDeep(
-                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions![backupInstructionIndex],
+                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = cloneDeep(
+                    this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex],
                 );
             }
         }
         if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
-            this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = new GradingInstruction();
+            this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = new GradingInstruction();
         }
         this.initializeMarkdown();
     }
@@ -434,9 +434,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    onCriterionTitleChange($event: any, criterion: GradingCriterion) {
+    onCriterionTitleChange($event: Event, criterion: GradingCriterion) {
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
-        this.exercise().gradingCriteria![criterionIndex].title = $event.target.value;
+        this.exercise().gradingCriteria![criterionIndex].title = ($event.target as HTMLInputElement).value;
     }
 
     resetCriterionTitle(criterion: GradingCriterion) {
@@ -480,6 +480,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
-        this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
+        this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = instruction;
     }
 }

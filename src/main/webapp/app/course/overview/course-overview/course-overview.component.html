@@ -32,31 +32,7 @@
             >
                 @if (course()) {
                     @if (showCourseTitleBar()) {
-                        <jhi-course-title-bar
-                            [hasSidebar]="hasSidebar()"
-                            [isSidebarCollapsed]="isSidebarCollapsed()"
-                            [pageTitle]="pageTitle()"
-                            [isExamStarted]="isExamStarted()"
-                            (toggleSidebar)="toggleSidebar()"
-                        >
-                            @if (showRefreshButton()) {
-                                <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
-                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />
-                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                                </button>
-                            }
-                            @if (selectableSettingPresets()) {
-                                <jhi-course-notification-preset-picker
-                                    [availableCourseSettingPresets]="selectableSettingPresets()!"
-                                    [selectedCourseSettingPreset]="selectedSettingPreset()"
-                                    [isSmallButton]="true"
-                                    (onPresetSelected)="presetSelected($event)"
-                                />
-                            }
-                            @if (course()!.id) {
-                                <jhi-course-notification-overview [courseId]="course()!.id!" />
-                            }
-                        </jhi-course-title-bar>
+                        <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()" />
                     }
 
                     <div
@@ -65,6 +41,7 @@
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
                             'mx-2': !isExamStarted(),
                         }"
+                        [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
                     >
                         @if (!hasSidebar()) {
                             <ng-container class="d-flex ms-auto" #controlsViewContainer />

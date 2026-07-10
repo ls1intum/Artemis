@@ -4,23 +4,21 @@
             <span jhiTranslate="artemisApp.systemNotification.systemNotification"></span>
             [{{ notif.id }}]
         </h5>
-        <dl class="row-md jh-entity-details">
-            <dt><span jhiTranslate="global.field.id"></span></dt>
-            <dd>
-                <span>{{ notif.id }}</span>
-            </dd>
-            <dt><span jhiTranslate="artemisApp.systemNotification.title"></span></dt>
-            <dd>{{ notif.title }}</dd>
-            <dt><span jhiTranslate="artemisApp.systemNotification.text"></span></dt>
-            <dd>{{ notif.text }}</dd>
-            <dt><span jhiTranslate="artemisApp.systemNotification.type"></span></dt>
-            <dd>{{ notif.type }}</dd>
-            <dt><span jhiTranslate="artemisApp.systemNotification.expireDate"></span></dt>
-            <dd>{{ notif.expireDate | artemisDate }}</dd>
+        <dl class="grid grid-cols-1 gap-y-2 md:grid-cols-12" data-testid="system-notification-details">
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="global.field.id"></span></dt>
+            <dd class="md:col-span-9">{{ notif.id }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.title"></span></dt>
+            <dd class="md:col-span-9">{{ notif.title }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.text"></span></dt>
+            <dd class="md:col-span-9">{{ notif.text }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.type"></span></dt>
+            <dd class="md:col-span-9">{{ notif.type }}</dd>
+            <dt class="font-semibold md:col-span-3"><span jhiTranslate="artemisApp.systemNotification.expireDate"></span></dt>
+            <dd class="md:col-span-9">{{ notif.expireDate | artemisDate }}</dd>
         </dl>
-        <a id="editButton" [routerLink]="['edit']" class="btn btn-warning">
-            <fa-icon [icon]="faWrench" />
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+        <a id="editButton" [routerLink]="['edit']" pButton size="small" severity="warn">
+            <fa-icon [icon]="faPencil" />
+            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
         </a>
     </div>
 }

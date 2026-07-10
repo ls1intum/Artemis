@@ -137,7 +137,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 this.allowFeedbackRequests.set(false);
             } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
-                this.allowComplaintsForAutomaticAssessments.set(false);
+                // Do NOT reset allowComplaintsForAutomaticAssessments here: AUTOMATIC is the only assessment type
+                // where this setting is meaningful, and this effect also runs on load, so resetting it would wipe
+                // the persisted value every time the exercise editor is opened (issue #13070).
                 this.allowFeedbackRequests.set(false);
                 this.feedbackSuggestionModule.set(undefined);
             }

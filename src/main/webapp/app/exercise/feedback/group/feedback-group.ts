@@ -6,9 +6,9 @@ import { FeedbackColor, FeedbackNode } from 'app/exercise/feedback/node/feedback
  * NOTE: The following definition does not enforce that each group is disjunctive from each other
  */
 export abstract class FeedbackGroup implements FeedbackNode {
-    name: string;
+    name!: string; // set in each concrete subclass constructor (e.g. FeedbackGroupWrong)
     members: FeedbackItem[] = [];
-    credits: number;
+    credits = 0;
     maxCredits?: number;
     color?: FeedbackColor;
     /**

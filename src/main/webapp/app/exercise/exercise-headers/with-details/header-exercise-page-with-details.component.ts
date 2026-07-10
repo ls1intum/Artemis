@@ -63,7 +63,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
     public readonly exerciseCategories = signal<ExerciseCategory[]>(undefined!);
     public readonly dueDate = signal<dayjs.Dayjs | undefined>(undefined);
-    public isBeforeStartDate: boolean;
+    public isBeforeStartDate = false;
     public programmingExercise?: ProgrammingExercise;
     public individualComplaintDueDate?: dayjs.Dayjs;
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
@@ -98,7 +98,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         return undefined;
     });
 
-    icon: IconProp;
+    icon?: IconProp;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -115,7 +115,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             this.icon = getIcon(exercise.type);
         }
 
-        this.programmingExercise = exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
+        this.programmingExercise = exercise.type === ExerciseType.PROGRAMMING ? exercise : undefined;
 
         if (exam) {
             this.determineNextRelevantDateExamMode();
@@ -183,7 +183,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
         for (let i = 0; i < dates.length; i++) {
             if (dates[i] && now.isBefore(dates[i])) {
-                this.nextRelevantDate.set(dates[i]!);
+                this.nextRelevantDate.set(dates[i]);
                 this.nextRelevantDateLabel.set(dateLabels[i]);
                 this.nextRelevantDateStatusBadge.set('bg-success');
                 return;
@@ -199,7 +199,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
                     return;
                 }
 
-                this.nextRelevantDate.set(dates[i]!);
+                this.nextRelevantDate.set(dates[i]);
                 this.nextRelevantDateLabel.set(dateLabels[i]);
                 this.nextRelevantDateStatusBadge.set('bg-danger');
                 return;

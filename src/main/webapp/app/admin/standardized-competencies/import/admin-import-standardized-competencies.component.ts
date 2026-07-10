@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -17,7 +17,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyTaxonomy, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -27,8 +26,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeNode, convertToTreeNodes } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { MessageModule } from 'primeng/message';
+import { ButtonModule } from 'primeng/button';
+import { parseJson } from 'app/foundation/util/json.util';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -42,6 +44,7 @@ interface ImportCount {
 @Component({
     selector: 'jhi-admin-import-standardized-competencies',
     templateUrl: './admin-import-standardized-competencies.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FontAwesomeModule,
         TooltipModule,
@@ -50,8 +53,9 @@ interface ImportCount {
         HtmlForMarkdownPipe,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
-        ButtonComponent,
         AdminTitleBarTitleDirective,
+        MessageModule,
+        ButtonModule,
     ],
 })
 export class AdminImportStandardizedCompetenciesComponent {
@@ -71,8 +75,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly importCount = signal<ImportCount | undefined>(undefined);
     /** Validation errors found in the parsed import data */
     protected readonly validationErrors = signal<string[]>([]);
-    /** The PrimeNG `TreeNode[]` rendered by the knowledge area tree component. */
-    protected readonly treeNodes = signal<KnowledgeAreaTreeNode[]>([]);
+    protected readonly dataSource = signal<KnowledgeAreaTreeDataSource>({ data: [] });
     private fileReader: FileReader = new FileReader();
     private readonly validationTranslationBase = 'artemisApp.standardizedCompetency.manage.import.error.validation';
     private readonly labelsBase = `${this.validationTranslationBase}.labels`;
@@ -84,7 +87,6 @@ export class AdminImportStandardizedCompetenciesComponent {
     protected readonly faChevronRight = faChevronRight;
     //Other constants
     protected readonly getIcon = getIcon;
-    protected readonly ButtonType = ButtonType;
     protected readonly importExample = `\`\`\`json
 {
     "knowledgeAreas": [{
@@ -120,7 +122,7 @@ export class AdminImportStandardizedCompetenciesComponent {
      * @param event the event triggered by changing the file
      */
     onFileChange(event: Event) {
-        this.treeNodes.set([]);
+        this.dataSource.set({ data: [] });
         const input = event.target as HTMLInputElement;
         if (input.files?.length) {
             const fileList: FileList = input.files;
@@ -162,7 +164,7 @@ export class AdminImportStandardizedCompetenciesComponent {
             next: () => {
                 this.isLoading.set(false);
                 this.alertService.success('artemisApp.standardizedCompetency.manage.import.success');
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => {
                 onError(this.alertService, error);
@@ -176,7 +178,7 @@ export class AdminImportStandardizedCompetenciesComponent {
     }
 
     cancel() {
-        this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+        void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
     }
 
     /**
@@ -189,7 +191,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
         let parsedData: KnowledgeAreasForImportDTO | undefined;
         try {
-            parsedData = JSON.parse(this.fileReader.result as string);
+            parsedData = parseJson<KnowledgeAreasForImportDTO>(this.fileReader.result as string);
             this.importData.set(parsedData);
         } catch (e) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');
@@ -199,8 +201,7 @@ export class AdminImportStandardizedCompetenciesComponent {
                 const count = this.countKnowledgeAreasAndCompetencies({ children: parsedData.knowledgeAreas });
                 count.knowledgeAreas -= 1;
                 this.importCount.set(count);
-                const knowledgeAreasForTree = parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
-                this.treeNodes.set(convertToTreeNodes(knowledgeAreasForTree));
+                this.dataSource.set({ data: parsedData.knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea)) });
             }
         } catch (e) {
             parsedData = undefined;
@@ -213,7 +214,7 @@ export class AdminImportStandardizedCompetenciesComponent {
                 this.validationErrors.set(errors);
                 this.importData.set(undefined);
                 this.importCount.set(undefined);
-                this.treeNodes.set([]);
+                this.dataSource.set({ data: [] });
             } else {
                 this.validationErrors.set([]);
             }

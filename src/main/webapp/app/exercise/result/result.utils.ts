@@ -2,7 +2,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -16,7 +15,7 @@ import { Participation, ParticipationType, getLatestSubmission } from 'app/exerc
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -211,7 +210,7 @@ export const evaluateTemplateStatus = (
                 // TODO why is this distinct from the case above? The submission can still be graded and often is.
                 return ResultTemplateStatus.NO_RESULT;
             }
-        } else if (isPracticeMode(participation as StudentParticipation)) {
+        } else if (isPracticeMode(participation)) {
             // Practice mode submissions are not in due time but should show AI feedback statuses, not LATE/LATE_NO_FEEDBACK
             if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
                 return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
@@ -280,7 +279,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, participatio
  */
 export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
     if (!result) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
@@ -288,9 +287,9 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
             return 'text-primary';
         }
         if (isAIResultAndFailed(result)) {
-            return 'text-danger';
+            return 'text-state-danger';
         }
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -298,30 +297,30 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (isBuildFailedAndResultIsAutomatic(result, participation)) {
-        return 'text-danger';
+        return 'text-state-danger';
     }
 
     if (resultIsPreliminary(result, participation)) {
-        return 'text-secondary';
+        return 'text-muted-color';
     }
 
     if (result?.score === undefined) {
-        return result?.successful ? 'text-success' : 'text-danger';
+        return result?.successful ? 'text-state-success' : 'text-state-danger';
     }
 
     if (isOnlyCompilationTested(result, participation, templateStatus)) {
-        return 'text-success';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
-        return 'text-success';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_ORANGE) {
         return 'result-orange';
     }
 
-    return 'text-danger';
+    return 'text-state-danger';
 };
 
 /**
@@ -380,7 +379,7 @@ export const resultIsPreliminary = (result: Result, participation: Participation
     const exerciseType = participation?.exercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise as ProgrammingExercise);
+    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise);
 };
 
 /**
@@ -430,7 +429,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
     const testCasesNames: Set<string> = new Set();
     results.forEach((result) => {
         if (!result.result.feedbacks) {
-            return [];
+            return;
         }
         result.result.feedbacks.forEach((feedback) => {
             if (Feedback.isTestCaseFeedback(feedback)) {
@@ -460,7 +459,7 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
         } else {
             resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
         }
-        testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
+        testCaseResults.push({ testName, testResult: resultText });
     });
     return testCaseResults;
 }

@@ -25,7 +25,7 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
      * @param editor The editor to register the completion provider for.
      * @param translateService The translate service to use for translations.
      */
-    register(editor: TextEditor, translateService: TranslateService): void {
+    override register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
         const exercises = this.metisService.getCourse().exercises ?? [];
         this.setValues(
@@ -61,7 +61,7 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
         editor.focus();
     }
 
-    dispose(): void {
+    override dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
     }

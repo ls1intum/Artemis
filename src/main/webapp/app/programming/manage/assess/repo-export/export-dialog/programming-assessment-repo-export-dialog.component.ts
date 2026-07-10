@@ -44,7 +44,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
     readonly FeatureToggle = FeatureToggle;
-    exportInProgress: boolean;
+    exportInProgress = false;
     // Backed by a signal because the template reads it (e.g. [disabled]) while [(ngModel)] mutates its
     // properties in place. The getter/setter facade keeps reads reactive without breaking two-way binding.
     private readonly _repositoryExportOptions = signal<RepositoryExportOptions>(undefined!);

@@ -91,7 +91,7 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly exam = signal<Exam>(undefined!);
     readonly courseId = signal<number>(undefined!);
     readonly examId = signal<number>(undefined!);
-    exerciseGroupId: number;
+    exerciseGroupId!: number; // set in ngOnInit() from route params in exam mode
     readonly allExercises = signal<Exercise[]>([]);
     readonly currentlyShownExercises = signal<Exercise[]>([]);
     readonly numberOfSubmissions = signal(new DueDateStat());
@@ -144,7 +144,7 @@ export class AssessmentDashboardComponent implements OnInit {
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.loadAll();
-        this.accountService.identity().then((user) => this.tutor.set(user!));
+        void this.accountService.identity().then((user) => this.tutor.set(user!));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
     }
 
@@ -464,6 +464,6 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
-        return exercise as QuizExercise;
+        return exercise;
     }
 }

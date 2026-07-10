@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
+import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -273,24 +273,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Add a student to the registered users for an exam
-     * @param courseId The course id.
-     * @param examId The id of the exam to which to add the student
-     * @param studentLogin Login of the student
-     */
-    addStudentToExam(courseId: number, examId: number, studentLogin: string): Observable<HttpResponse<StudentDTO>> {
-        return this.http.post<StudentDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students/${studentLogin}`, undefined, { observe: 'response' });
-    }
-
-    /**
      * Add students to the registered users for an exam
      * @param courseId The course id.
      * @param examId The id of the exam to which to add the student
      * @param studentDtos Student DTOs of student to add to the exam
      * @return studentDtos of students that were not found in the system
      */
-    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
+    addStudentsToExam(courseId: number, examId: number, studentDtos: ExamUserDTO[]): Observable<HttpResponse<ExamRegistrationResultDTO>> {
+        return this.http.post<ExamRegistrationResultDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/students`, studentDtos, { observe: 'response' });
     }
 
     /**
@@ -310,8 +300,8 @@ export class ExamManagementService {
      * @param formData
      * @return matriculation number of students that were not found in the system
      */
-    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<any[]>> {
-        return this.http.post<any[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
+    saveImages(courseId: number, examId: number, formData: FormData): Observable<HttpResponse<ExamUsersNotFoundDTO>> {
+        return this.http.post<ExamUsersNotFoundDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users-save-images`, formData, { observe: 'response' });
     }
 
     /**
@@ -430,7 +420,7 @@ export class ExamManagementService {
      * @returns The list of generated student exams.
      */
     generateStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
+        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-student-exams`, {}, { observe: 'response' });
     }
 
     /**
@@ -470,7 +460,7 @@ export class ExamManagementService {
      * @returns The list of newly generated student exams.
      */
     generateMissingStudentExams(courseId: number, examId: number): Observable<HttpResponse<StudentExam[]>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
+        return this.http.post<StudentExam[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/generate-missing-student-exams`, {}, { observe: 'response' });
     }
 
     /**
@@ -507,7 +497,7 @@ export class ExamManagementService {
      * @returns number of evaluated exercises
      */
     evaluateQuizExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
+        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/evaluate-quiz-exercises`, {}, { observe: 'response' });
     }
 
     /**
@@ -517,7 +507,7 @@ export class ExamManagementService {
      * @returns number of evaluated participations
      */
     assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
+        return this.http.post<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
     }
 
     /**
@@ -723,4 +713,9 @@ interface ExamImportDTO {
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];
+}
+
+export interface ExamRegistrationResultDTO {
+    notFoundStudents?: ExamUserDTO[];
+    rejectedStaffUsers?: ExamUserDTO[];
 }
