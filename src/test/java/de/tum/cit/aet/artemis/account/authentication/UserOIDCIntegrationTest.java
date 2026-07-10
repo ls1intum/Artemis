@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
+import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
@@ -57,6 +58,9 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
     @Autowired
     private JWTCookieService jwtCookieService;
 
+    @Autowired
+    private ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     private OIDCService oidcService;
 
     private OIDCAuthenticationSuccessHandler successHandler;
@@ -72,7 +76,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         ReflectionTestUtils.setField(oidcService, "lastNameClaimKey", "family_name");
         ReflectionTestUtils.setField(oidcService, "emailClaimKey", "email");
 
-        successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository);
+        successHandler = new OIDCAuthenticationSuccessHandler(jwtCookieService, userTestRepository, artemisSuccessfulLoginService);
         failureHandler = new OIDCAuthenticationFailureHandler();
         ReflectionTestUtils.setField(successHandler, "usernameClaimKey", "preferred_username");
     }
@@ -244,7 +248,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         failureHandler.onAuthenticationFailure(request, response, exception);
 
         // Verify the default error redirect
-        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?error=oidcFailure");
+        assertThat(response.getRedirectedUrl()).isEqualTo("/sign-in?loginError=oidcFailure");
     }
 
     private OidcUserRequest createMockUserRequest(Map<String, Object> claims) {

@@ -23,7 +23,10 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.account.config.OIDCEnabled;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 @Lazy
 @Component
@@ -34,12 +37,15 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
     private final UserRepository userRepository;
 
+    private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
+
     @Value("${artemis.user-management.oidc.mappings.username:preferred_username}")
     private String usernameClaimKey;
 
-    public OIDCAuthenticationSuccessHandler(JWTCookieService jwtCookieService, UserRepository userRepository) {
+    public OIDCAuthenticationSuccessHandler(JWTCookieService jwtCookieService, UserRepository userRepository, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
+        this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
     }
 
     @Override
@@ -73,6 +79,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         ResponseCookie jwtCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        artemisSuccessfulLoginService.sendLoginEmail(user.getLogin(), AuthenticationMethod.OIDC, HttpRequestUtils.getClientEnvironment(request));
         // Remove state from OIDCConfiguration
         if (session != null) {
             session.invalidate();

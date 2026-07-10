@@ -50,7 +50,7 @@ public class OIDCAuthenticationFailureHandler implements AuthenticationFailureHa
             response.sendRedirect("/sign-in?loginError=deactivated");
         }
         else {
-            response.sendRedirect("/sign-in?error=oidcFailure");
+            response.sendRedirect("/sign-in?loginError=oidcFailure");
         }
     }
 }

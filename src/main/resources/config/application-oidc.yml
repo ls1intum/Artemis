@@ -33,7 +33,7 @@ spring:
                 provider:
                     oidc:
                         # The URI of IdP
-                        issuer-uri: "${ARTEMIS_OIDC_ISSUER_URI:https://login.tum.de}"
+                        issuer-uri: "${ARTEMIS_OIDC_ISSUER_URI:https://tumidp.lrz.de/idp/shibboleth}"
                         # The URI where the user's browser is redirected to display the university IdP page
                         authorization-uri: "${ARTEMIS_OIDC_AUTHORIZATION_URI:https://login.tum.de/idp/profile/oidc/authorize}"
                         # The secure back-channel URI where Artemis exchanges the auth code for OIDC tokens
@@ -41,4 +41,4 @@ spring:
                         # The secure back-channel URI where Artemis requests the user JSON payload
                         user-info-uri: "${ARTEMIS_OIDC_USER_INFO_URI:https://login.tum.de/idp/profile/oidc/userinfo}"
                         # The public keys URI used by Artemis to cryptographically verify OIDC token signatures
-                        jwk-set-uri: "${ARTEMIS_OIDC_JWK_SET_URI:https://login.tum.de/idp/profile/oidc/keys}"
+                        jwk-set-uri: "${ARTEMIS_OIDC_JWK_SET_URI:https://login.tum.de/idp/profile/oidc/keyset}"

@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTe
  * Integration tests ensuring that OIDC Configuration beans and Spring Security
  * filter chain wiring are properly set up when the OIDC feature toggle is enabled.
  */
-@TestPropertySource(properties = "artemis.user-management.oidc.enabled=true")
+@TestPropertySource(properties = { "artemis.user-management.oidc.enabled=true", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_oidc_config_test" })
 class OIDCConfigurationIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Autowired(required = false)
