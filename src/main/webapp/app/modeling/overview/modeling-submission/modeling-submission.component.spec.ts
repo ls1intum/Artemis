@@ -481,7 +481,6 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify error was shown
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
-        expect(comp.isGeneratingFeedback()).toBe(false);
     });
 
     it('should handle Athena assessment results separately from manual assessments', async () => {

@@ -121,13 +121,10 @@ describe('RequestFeedbackButtonComponent', () => {
         return participation;
     }
 
-    function setupComponentInputs(exercise: Exercise, isSubmitted?: boolean, isGeneratingFeedback?: boolean) {
+    function setupComponentInputs(exercise: Exercise, isSubmitted?: boolean) {
         fixture.componentRef.setInput('exercise', exercise);
         if (isSubmitted !== undefined) {
             fixture.componentRef.setInput('isSubmitted', isSubmitted);
-        }
-        if (isGeneratingFeedback !== undefined) {
-            fixture.componentRef.setInput('isGeneratingFeedback', isGeneratingFeedback);
         }
         mockExerciseDetails(exercise);
     }
@@ -151,6 +148,7 @@ describe('RequestFeedbackButtonComponent', () => {
         await vi.advanceTimersByTimeAsync(0);
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
+        expect(component.isFeedbackGenerationInProgress()).toBe(false);
     });
 
     describe('when user has accepted LLM usage', () => {
@@ -257,12 +255,12 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(alertService.warning).toHaveBeenCalled();
         });
 
-        it('should disable the button if latest submission is not submitted or feedback is generating', async () => {
+        it('should disable the button if latest submission is not submitted', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-            setupComponentInputs(exercise, false, false);
+            setupComponentInputs(exercise, false);
 
             await initAndTick();
 
@@ -271,12 +269,12 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(button.nativeElement.disabled).toBe(true);
         });
 
-        it('should enable the button if latest submission is submitted and feedback is not generating', async () => {
+        it('should enable the button if latest submission is submitted', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-            setupComponentInputs(exercise, true, false);
+            setupComponentInputs(exercise, true);
 
             await initAndTick();
 
@@ -289,7 +287,7 @@ describe('RequestFeedbackButtonComponent', () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
             const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
-            setupComponentInputs(exercise, false, false);
+            setupComponentInputs(exercise, false);
 
             await initAndTick();
 
@@ -303,7 +301,7 @@ describe('RequestFeedbackButtonComponent', () => {
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-            setupComponentInputs(exercise, true, false);
+            setupComponentInputs(exercise, true);
             component.hasUserAcceptedLLMUsage.set(true);
 
             const modalSpy = vi.spyOn(llmModalService, 'open');
@@ -391,7 +389,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
+        setupComponentInputs(exercise, true);
         component.hasUserAcceptedLLMUsage.set(false);
 
         const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
@@ -513,17 +511,56 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(component.isFeedbackGenerationInProgress()).toBe(false);
     });
 
-    it('should keep the button disabled while an Athena assessment is pending', () => {
+    it('should stay disabled for a pending websocket result until the server timeout', async () => {
         vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise, true);
+        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
+
+        await initAndTick();
+        component.requestAIFeedback();
+        await vi.advanceTimersByTimeAsync(0);
+
         const pendingAthenaResult = {
             assessmentType: AssessmentType.AUTOMATIC_ATHENA,
             completionDate: dayjs().add(5, 'minutes'),
             successful: undefined,
         } as Result;
-
-        (component as any).handleAthenaAssessment(pendingAthenaResult);
+        resultSubject.next(pendingAthenaResult);
+        fixture.detectChanges();
 
         expect(component.isFeedbackGenerationInProgress()).toBe(true);
+        expect(debugElement.query(By.css('button')).nativeElement.disabled).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(5 * 60 * 1000);
+        fixture.detectChanges();
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(false);
+        expect(debugElement.query(By.css('button')).nativeElement.disabled).toBe(false);
+    });
+
+    it.each([true, false])('should re-enable after a terminal websocket result with successful=%s', async (successful) => {
+        vi.useFakeTimers();
+        setAthenaEnabled(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise, true);
+        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
+        vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        await initAndTick();
+        resultSubject.next({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().add(5, 'minutes') } as Result);
+        expect(component.isFeedbackGenerationInProgress()).toBe(true);
+
+        resultSubject.next({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs(), successful } as Result);
+
+        expect(component.isFeedbackGenerationInProgress()).toBe(false);
     });
 
     it('should restore the pending feedback state from the participation', async () => {
@@ -659,27 +696,6 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(exerciseService.getExerciseDetails).not.toHaveBeenCalled();
     });
 
-    it('should emit generatingFeedback event when feedback request succeeds', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
-        component.hasUserAcceptedLLMUsage.set(true);
-
-        const generatingFeedbackSpy = vi.fn();
-        component.generatingFeedback.subscribe(generatingFeedbackSpy);
-
-        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
-        vi.spyOn(alertService, 'success');
-
-        component.requestAIFeedback();
-        await vi.advanceTimersByTimeAsync(0);
-
-        expect(generatingFeedbackSpy).toHaveBeenCalled();
-        expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestSent');
-    });
-
     it('should disable the button after feedback request succeeds while feedback is generating', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
@@ -725,7 +741,7 @@ describe('RequestFeedbackButtonComponent', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.MODELING, false, participation);
-        setupComponentInputs(exercise, true, false);
+        setupComponentInputs(exercise, true);
 
         await initAndTick();
 
@@ -781,7 +797,7 @@ describe('RequestFeedbackButtonComponent', () => {
             setAthenaEnabled(true);
             const participation = createParticipation();
             const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-            setupComponentInputs(exercise, true, false);
+            setupComponentInputs(exercise, true);
             component.hasUserAcceptedLLMUsage.set(false);
             component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
 

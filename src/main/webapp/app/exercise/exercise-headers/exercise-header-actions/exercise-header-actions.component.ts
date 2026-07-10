@@ -116,7 +116,6 @@ export class ExerciseHeaderActionsComponent {
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
     readonly onRestartPractice = input<() => boolean>();
@@ -125,7 +124,6 @@ export class ExerciseHeaderActionsComponent {
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
     readonly participationModeChange = output<ParticipationMode>();
 

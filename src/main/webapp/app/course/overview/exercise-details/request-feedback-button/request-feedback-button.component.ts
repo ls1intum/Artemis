@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -67,17 +67,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     currentFeedbackRequestCount = signal(0);
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
+    private readonly isFeedbackRequestPending = signal(false);
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
     hasAthenaResultForLatestSubmission = input<boolean>(false);
-    isGeneratingFeedback = input<boolean>(false);
-    readonly isFeedbackGenerationInProgress = computed(() => this.isGeneratingFeedback() || this.isFeedbackRequestPending());
+    readonly isFeedbackGenerationInProgress = this.isFeedbackRequestPending.asReadonly();
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
-    generatingFeedback = output<void>();
 
-    private readonly isFeedbackRequestPending = signal(false);
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;
     private feedbackRequestTimeout?: ReturnType<typeof setTimeout>;
@@ -232,7 +230,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.isFeedbackRequestPending.set(true);
-                    this.generatingFeedback.emit();
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },

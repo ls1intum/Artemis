@@ -140,13 +140,7 @@
                     activeParticipationForCode() &&
                     programmingExercise()?.allowOnlineEditor === false
                 ) {
-                    <jhi-request-feedback-button
-                        [exercise]="exercise()"
-                        [smallButtons]="smallButtons()"
-                        [isGeneratingFeedback]="isGeneratingFeedback()"
-                        [isSubmitted]="hasProgrammingSubmission()"
-                        (generatingFeedback)="generatingFeedback.emit()"
-                    />
+                    <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" [isSubmitted]="hasProgrammingSubmission()" />
                 }
                 @if (shouldDisplayIDEButtons()) {
                     @if (programmingExercise()?.allowOfflineIde) {
@@ -272,11 +266,6 @@
         [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
     ></p>
     <span (click)="closeSubmitPopover()">
-        <jhi-request-feedback-button
-            [exercise]="exercise()"
-            [isGeneratingFeedback]="isGeneratingFeedback()"
-            (generatingFeedback)="generatingFeedback.emit()"
-            [isSubmitted]="true"
-        />
+        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" />
     </span>
 </ng-template>

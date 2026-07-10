@@ -61,7 +61,6 @@ class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
     pendingChanges = input<any>();
     hasAthenaResultForLatestSubmission = input<any>();
-    isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
 }
 

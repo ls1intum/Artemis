@@ -389,36 +389,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(codeButton).not.toBeNull();
     });
 
-    it('should pass feedback generation state to the programming feedback button', async () => {
-        const participation = {
-            id: 1,
-            initializationState: InitializationState.INITIALIZED,
-            repositoryUri: 'https://clone-me.git',
-        } as ProgrammingExerciseStudentParticipation;
-        const exerciseData = {
-            id: 3,
-            type: ExerciseType.PROGRAMMING,
-            allowFeedbackRequests: true,
-            studentParticipations: [participation],
-        } as ProgrammingExercise;
-        const generatingFeedbackSpy = vi.fn();
-        comp.generatingFeedback.subscribe(generatingFeedbackSpy);
-
-        fixture.componentRef.setInput('courseId', 1);
-        fixture.componentRef.setInput('exercise', exerciseData);
-        fixture.componentRef.setInput('isGeneratingFeedback', true);
-        TestBed.tick();
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const feedbackButton = debugElement.query(By.directive(RequestFeedbackButtonComponent));
-        expect(feedbackButton.componentInstance.isGeneratingFeedback).toBe(true);
-
-        feedbackButton.componentInstance.generatingFeedback.emit();
-
-        expect(generatingFeedbackSpy).toHaveBeenCalledOnce();
-    });
-
     // Quiz not supported yet
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',

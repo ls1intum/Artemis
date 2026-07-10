@@ -94,9 +94,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
 
     private readonly _uninitializedQuiz = signal(false);
