@@ -7,8 +7,9 @@ TEST_PATHS=("$@")
 FAILED=0
 REPORTER_FAILED=0
 
-# Clean up stale marker from previous runs (self-hosted runners have persistent workspaces)
-rm -f ./test-reports/.reporter-failed
+# Clean up stale markers/logs from previous runs (self-hosted runners have persistent workspaces)
+mkdir -p ./test-reports
+rm -f ./test-reports/.reporter-failed ./test-reports/pw-output-*.log ./test-reports/e2e-counts.env
 
 if [ ${#TEST_PATHS[@]} -eq 0 ] && [ -n "$PLAYWRIGHT_TEST_PATHS" ]; then
     read -r -a TEST_PATHS <<< "$PLAYWRIGHT_TEST_PATHS"
@@ -42,8 +43,18 @@ run_playwright() {
     local test_type="$1"
     shift
 
-    NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@"
-    local exit_code=$?
+    # Raise the runner heap headroom: the single "run all" CI job executes the whole ~316-test suite in
+    # one Playwright process, and its per-run accumulation (results, coverage, attachments) hit the old
+    # 6144 MB cap mid-run and OOM'd a worker ("Reached heap limit — JavaScript heap out of memory"),
+    # which spuriously failed the tests it was running. We APPEND the flag rather than rely on a default:
+    # the root .npmrc sets `node-options=--max-old-space-size=6144`, which pnpm injects into NODE_OPTIONS,
+    # so a `${NODE_OPTIONS:-…}` fallback would never fire. Node applies the LAST --max-old-space-size, so
+    # appending 8192 raises the cap for this invocation only, without touching the global .npmrc value.
+    # Tee the output to a per-type log (in addition to the console) so we can later aggregate
+    # Playwright's own pass/flaky/fail/skip summary — the flaky count is not expressible in JUnit.
+    # PIPESTATUS[0] preserves Playwright's real exit code across the pipe.
+    NODE_OPTIONS="${NODE_OPTIONS:-} --max-old-space-size=8192" PLAYWRIGHT_TEST_TYPE="$test_type" pnpm exec playwright test "$@" 2>&1 | tee "./test-reports/pw-output-${test_type}.log"
+    local exit_code=${PIPESTATUS[0]}
 
     if [ $exit_code -ne 0 ]; then
         local junit_file="./test-reports/results-${test_type}.xml"
@@ -89,6 +100,35 @@ if [ -n "$EXPECTED_CLUSTER_NODE_COUNT" ]; then
         run_playwright multinode e2e --project=multi-node-tests
     fi
 fi
+
+# Aggregate Playwright's own pass/flaky/fail/skip counts across every project invocation above and
+# write them to a small env file the CI workflow folds into the E2E commit-status description
+# ("309 passed, 3 flaky, 0 failed"). Playwright's JUnit report cannot express "flaky" (a retried test
+# that ultimately passes is just a passing <testcase>), so Playwright's own end-of-run summary is the
+# authoritative source. Each summary count line looks like "  309 passed (34.0m)" / "  3 flaky".
+echo "--- Aggregating test counts ---"
+E2E_PASSED=0
+E2E_FLAKY=0
+E2E_FAILED=0
+E2E_SKIPPED=0
+for pw_log in ./test-reports/pw-output-*.log; do
+    [ -f "$pw_log" ] || continue
+    while read -r count kind; do
+        case "$kind" in
+            passed) E2E_PASSED=$((E2E_PASSED + count)) ;;
+            flaky) E2E_FLAKY=$((E2E_FLAKY + count)) ;;
+            failed) E2E_FAILED=$((E2E_FAILED + count)) ;;
+            skipped) E2E_SKIPPED=$((E2E_SKIPPED + count)) ;;
+        esac
+    done < <(sed -E 's/\x1b\[[0-9;]*m//g' "$pw_log" | tr -d '\r' | grep -oE '^[[:space:]]+[0-9]+ (passed|flaky|failed|skipped)' | grep -oE '[0-9]+ (passed|flaky|failed|skipped)')
+done
+{
+    echo "E2E_PASSED=${E2E_PASSED}"
+    echo "E2E_FLAKY=${E2E_FLAKY}"
+    echo "E2E_FAILED=${E2E_FAILED}"
+    echo "E2E_SKIPPED=${E2E_SKIPPED}"
+} > ./test-reports/e2e-counts.env
+echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed, ${E2E_SKIPPED} skipped"
 
 # Remove any stale results.xml (e.g. from playwright:setup init test) before
 # moving the real report into place, so CI never consumes an outdated report.
