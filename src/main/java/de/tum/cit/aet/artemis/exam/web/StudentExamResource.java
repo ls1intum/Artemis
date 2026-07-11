@@ -74,7 +74,6 @@ import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
-import de.tum.cit.aet.artemis.exam.service.StudentExamSubmitMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -125,8 +124,6 @@ public class StudentExamResource {
 
     private final StudentExamLiveEventService studentExamLiveEventService;
 
-    private final StudentExamSubmitMapper studentExamSubmitMapper;
-
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -140,7 +137,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
             WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository,
-            StudentExamLiveEventService studentExamLiveEventService, StudentExamSubmitMapper studentExamSubmitMapper) {
+            StudentExamLiveEventService studentExamLiveEventService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -158,7 +155,6 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventRepository = examLiveEventRepository;
         this.studentExamLiveEventService = studentExamLiveEventService;
-        this.studentExamSubmitMapper = studentExamSubmitMapper;
     }
 
     /**
@@ -290,9 +286,8 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        // Reconstruct the transient graph the (unchanged) submit machinery consumes from the slim DTO.
-        studentExamSubmitMapper.attachSubmissions(existingStudentExam, studentExamFromClient, currentUser);
-        studentExamService.submitStudentExam(existingStudentExam, currentUser);
+        // The service reconstructs the transient graph from the slim DTO and then runs the (unchanged) submit machinery.
+        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
