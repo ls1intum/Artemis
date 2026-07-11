@@ -456,6 +456,25 @@ describe('CodeEditorContainerComponent', () => {
         expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
     });
 
+    it('should expand a collapsed bottom panel when selecting a tab', () => {
+        component.bottomPanelCollapsed.set(true);
+
+        component.selectBottomPanel(CodeEditorBottomPanel.BUILD_OUTPUT);
+
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
+        expect(component.bottomPanelCollapsed()).toBe(false);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
+    });
+
+    it('should expand the bottom panel when activating the already-selected tab', () => {
+        component.bottomPanelCollapsed.set(true);
+
+        component.expandSelectedBottomPanel();
+
+        expect(component.bottomPanelCollapsed()).toBe(false);
+        expect(gridStub.expandBottomPanel).toHaveBeenCalledOnce();
+    });
+
     it('should expose feedbacks for submission when inline feedback is enabled', () => {
         const feedback = { id: 1 } as Feedback;
         fixture.componentRef.setInput('participation', {

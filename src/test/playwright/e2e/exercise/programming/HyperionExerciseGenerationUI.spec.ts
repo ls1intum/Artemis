@@ -101,6 +101,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
 
     test('starts generation through the real Hyperion backend, exposes admin slot usage, and cancels the running job', async ({ browser, page, login }) => {
         test.setTimeout(180_000);
+        await page.setViewportSize({ width: 1024, height: 768 });
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
 
@@ -114,6 +115,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectNativeEditorIntegration(page);
         await expectHyperionTabSelected(page);
         await exerciseBottomPanelTabsWithKeyboard(page);
+        await expectBottomPanelReachableAtNarrowWidth(page);
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectEditorActionsLockedDuringGeneration(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'GENERATE');
@@ -214,12 +216,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         const activity = page.getByTestId('hyperion-generation-activity');
         await expect(activity).toContainText('Checking the exercise builds and grades', { timeout: 180_000 });
         const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
-        await selectTabWithKeyboard(page.getByRole('tab', { name: 'Generation activity' }), buildOutputTab, 'ArrowLeft');
+        await selectTabWithKeyboard(page.getByRole('tab', { name: 'AI activity' }), buildOutputTab, 'ArrowLeft');
         await expectSuccessfulGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expect(buildOutputTab).toHaveAttribute('aria-selected', 'true');
         await expect(buildOutputTab).toBeFocused();
 
-        const hyperionTab = page.getByRole('tab', { name: 'Generation activity' });
+        const hyperionTab = page.getByRole('tab', { name: 'AI activity' });
         await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
         await expect(activity).toContainText('The exercise was adapted and saved', { timeout: 60_000 });
         await expect(page.getByTestId('hyperion-generation-verdict')).toBeVisible();
@@ -331,6 +333,7 @@ async function expectNativeEditorIntegration(page: Page) {
     expect(centerBox).not.toBeNull();
     expect(bottomBox).not.toBeNull();
     expect(centerBox!.y + centerBox!.height).toBeLessThanOrEqual(bottomBox!.y + 1);
+    expect(bottomBox!.y + bottomBox!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
 }
 
 async function expectHyperionTabSelected(page: Page) {
@@ -339,14 +342,51 @@ async function expectHyperionTabSelected(page: Page) {
 }
 
 async function exerciseBottomPanelTabsWithKeyboard(page: Page) {
-    const hyperionTab = page.getByRole('tab', { name: 'Generation activity' });
+    const hyperionTab = page.getByRole('tab', { name: 'AI activity' });
     const buildOutputTab = page.getByRole('tab', { name: 'Build Output' });
     await selectTabWithKeyboard(hyperionTab, buildOutputTab, 'ArrowLeft');
     await selectTabWithKeyboard(buildOutputTab, hyperionTab, 'ArrowRight');
+
+    const collapseButton = page.getByTestId('code-editor-bottom-collapse');
+    await collapseButton.click();
+    await expect(collapseButton).toHaveAttribute('aria-expanded', 'false');
+    await hyperionTab.click();
+    await expect(collapseButton).toHaveAttribute('aria-expanded', 'true');
+
+    const resizeHandle = page.getByRole('slider', { name: 'Resize bottom panel' });
+    await resizeHandle.focus();
+    await expect(resizeHandle).toBeFocused();
+    await resizeHandle.press('Home');
+    const minimumHeight = await resizeHandle.getAttribute('aria-valuemin');
+    const maximumHeight = await resizeHandle.getAttribute('aria-valuemax');
+    expect(minimumHeight).not.toBeNull();
+    expect(maximumHeight).not.toBeNull();
+    expect(Number(maximumHeight)).toBeGreaterThan(Number(minimumHeight));
+    await expect(resizeHandle).toHaveAttribute('aria-valuenow', minimumHeight!);
+
+    const bottomPanel = page.locator('.editor-bottom');
+    const minimumBox = await bottomPanel.boundingBox();
+    await resizeHandle.press('ArrowUp');
+    const enlargedBox = await bottomPanel.boundingBox();
+    expect(enlargedBox!.height).toBeGreaterThan(minimumBox!.height);
+}
+
+async function expectBottomPanelReachableAtNarrowWidth(page: Page) {
+    await page.setViewportSize({ width: 320, height: 768 });
+    const controls = [page.getByRole('tab', { name: 'AI activity' }), page.getByTestId('code-editor-bottom-collapse'), page.getByTestId('hyperion-generation-live-status')];
+    for (const control of controls) {
+        await expect(control).toBeVisible();
+        const box = await control.boundingBox();
+        expect(box!.x).toBeGreaterThanOrEqual(0);
+        expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    }
+    const pageWidths = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+    expect(pageWidths.scroll).toBe(pageWidths.client);
+    await page.setViewportSize({ width: 1024, height: 768 });
 }
 
 async function openHyperionTabWithKeyboard(page: Page) {
-    await selectTabWithKeyboard(page.getByRole('tab', { name: 'Build Output' }), page.getByRole('tab', { name: 'Generation activity' }), 'ArrowRight');
+    await selectTabWithKeyboard(page.getByRole('tab', { name: 'Build Output' }), page.getByRole('tab', { name: 'AI activity' }), 'ArrowRight');
 }
 
 async function selectTabWithKeyboard(currentTab: Locator, targetTab: Locator, arrow: 'ArrowLeft' | 'ArrowRight') {

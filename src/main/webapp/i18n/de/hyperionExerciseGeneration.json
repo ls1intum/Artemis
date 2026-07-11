@@ -2,13 +2,17 @@
     "artemisApp": {
         "hyperion": {
             "generationActivity": {
+                "panelTitle": "KI-Aktivität",
                 "title": "Generierungsaktivität",
                 "adaptationTitle": "Anpassungsaktivität",
                 "running": "Generierung läuft…",
                 "adapting": "Anpassung läuft…",
                 "adaptStartFailed": "Die Anpassung konnte nicht gestartet werden.",
                 "checkingStatus": "Generierungsstatus wird geprüft…",
-                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. Die Bearbeitung bleibt gesperrt, um Konflikte zu vermeiden.",
+                "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
+                "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht aktualisiert werden.",
+                "retryEditorRefresh": "Editor-Aktualisierung wiederholen",
+                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. KI-Aktionen bleiben bis zu einer erfolgreichen Prüfung nicht verfügbar; die manuelle Bearbeitung ist weiterhin möglich.",
                 "retryStatus": "Statusprüfung wiederholen",
                 "cancel": "Abbrechen",
                 "cancelling": "Wird abgebrochen…",

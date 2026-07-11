@@ -444,7 +444,7 @@ describe('CodeEditorActionsComponent', () => {
 
         expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
         expect(comp.editorState()).toEqual(EditorState.CLEAN);
-        expect(onComplete).toHaveBeenCalledOnce();
+        expect(onComplete).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should emit internet-disconnected refresh error on pull failure', () => {
@@ -470,7 +470,7 @@ describe('CodeEditorActionsComponent', () => {
 
         expect(comp.editorState()).toEqual(EditorState.UNSAVED_CHANGES);
         expect(onErrorStub).toHaveBeenCalledWith('refreshFailed');
-        expect(onComplete).toHaveBeenCalledOnce();
+        expect(onComplete).toHaveBeenCalledExactlyOnceWith(false);
     });
 
     it('should reset repository and refresh after modal confirmation', () => {

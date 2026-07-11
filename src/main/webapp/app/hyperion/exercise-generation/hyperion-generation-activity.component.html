@@ -1,94 +1,100 @@
 @if (visible()) {
-    <section class="hyperion-activity" aria-labelledby="hyperion-generation-activity-title" data-testid="hyperion-generation-activity">
+    <section class="hyperion-activity" [attr.aria-label]="titleLabelKey() | artemisTranslate" data-testid="hyperion-generation-activity">
         @if (canRevert()) {
             <p-confirmDialog />
         }
 
-        <header class="hyperion-activity-header">
-            <div class="hyperion-activity-heading">
-                <h3 id="hyperion-generation-activity-title" class="hyperion-activity-title">
-                    <fa-icon [icon]="facArtemisIntelligence" />
-                    <span [jhiTranslate]="titleLabelKey()"></span>
-                </h3>
-                @if (liveStatus(); as status) {
-                    <span class="hyperion-activity-running-status" role="status" aria-atomic="true" data-testid="hyperion-generation-live-status">
-                        @if (status.busy) {
-                            <fa-icon [icon]="faSpinner" animation="spin" />
-                        }
-                        @if (status.message) {
-                            <span>{{ status.message }}</span>
-                        } @else {
-                            <span [jhiTranslate]="status.labelKey"></span>
-                        }
-                    </span>
-                }
-            </div>
+        @if (!idle() && !statusLoadFailed()) {
+            <header class="hyperion-activity-header">
+                <div class="hyperion-activity-heading">
+                    @if (liveStatus(); as status) {
+                        <span class="hyperion-activity-running-status" role="status" aria-atomic="true" data-testid="hyperion-generation-live-status">
+                            @if (status.busy) {
+                                <fa-icon [icon]="faSpinner" animation="spin" />
+                            }
+                            @if (status.message) {
+                                <span>{{ status.message }}</span>
+                            } @else {
+                                <span [jhiTranslate]="status.labelKey"></span>
+                            }
+                            @if (!status.busy && persistenceState(); as persistence) {
+                                <span class="visually-hidden"> — <span [jhiTranslate]="persistence.labelKey"></span></span>
+                            }
+                        </span>
+                    }
+                </div>
 
-            <div class="hyperion-activity-actions">
-                @if (terminalStatus(); as terminal) {
-                    <p-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
-                        <span [jhiTranslate]="terminal.labelKey"></span>
-                    </p-tag>
-                }
-                @if (persistenceState(); as persistence) {
-                    <p-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
-                        <span [jhiTranslate]="persistence.labelKey"></span>
-                    </p-tag>
-                }
-                @if (reverted()) {
-                    <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.reverted"></span>
-                    </p-tag>
-                }
-                @if (jobId() && hasDetails()) {
-                    <button
-                        pButton
-                        type="button"
-                        size="small"
-                        text
-                        severity="secondary"
-                        [attr.aria-expanded]="detailsExpanded()"
-                        aria-controls="hyperion-generation-details"
-                        (click)="toggleDetails()"
-                        data-testid="hyperion-generation-details-toggle"
-                    >
-                        <fa-icon [icon]="detailsExpanded() ? faChevronUp : faChevronDown" />
-                        <span [jhiTranslate]="detailsLabelKey()"></span>
-                    </button>
-                }
-                @if (running()) {
-                    <p-button
-                        size="small"
-                        severity="danger"
-                        [text]="true"
-                        [loading]="cancelRequested()"
-                        [disabled]="cancelRequested()"
-                        (onClick)="cancel()"
-                        [pTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
-                        data-testid="hyperion-generation-cancel"
-                    >
-                        <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
-                    </p-button>
-                }
-                @if (canRevert()) {
-                    <p-button
-                        size="small"
-                        severity="secondary"
-                        [text]="true"
-                        [loading]="reverting()"
-                        [disabled]="reverting()"
-                        (onClick)="confirmRevert()"
-                        [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
-                        data-testid="hyperion-generation-revert"
-                    >
-                        @if (!reverting()) {
-                            <fa-icon [icon]="faRotateLeft" />
-                        }
-                        <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : 'artemisApp.hyperion.generationActivity.revert'"></span>
-                    </p-button>
-                }
-            </div>
-        </header>
+                <div class="hyperion-activity-actions">
+                    @if (editorRefreshFailed()) {
+                        <p-button size="small" severity="secondary" [text]="true" (onClick)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.retryEditorRefresh"></span>
+                        </p-button>
+                    }
+                    @if (terminalStatus(); as terminal) {
+                        <p-tag [severity]="terminal.severity" data-testid="hyperion-generation-terminal-status">
+                            <span [jhiTranslate]="terminal.labelKey"></span>
+                        </p-tag>
+                    }
+                    @if (persistenceState(); as persistence) {
+                        <p-tag [severity]="persistence.severity" data-testid="hyperion-generation-persistence-state">
+                            <span [jhiTranslate]="persistence.labelKey"></span>
+                        </p-tag>
+                    }
+                    @if (reverted()) {
+                        <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.reverted"></span>
+                        </p-tag>
+                    }
+                    @if (jobId() && hasDetails()) {
+                        <button
+                            pButton
+                            type="button"
+                            size="small"
+                            text
+                            severity="secondary"
+                            [attr.aria-expanded]="detailsExpanded()"
+                            aria-controls="hyperion-generation-details"
+                            (click)="toggleDetails()"
+                            data-testid="hyperion-generation-details-toggle"
+                        >
+                            <fa-icon [icon]="detailsExpanded() ? faChevronUp : faChevronDown" />
+                            <span [jhiTranslate]="detailsLabelKey()"></span>
+                        </button>
+                    }
+                    @if (running()) {
+                        <p-button
+                            size="small"
+                            severity="danger"
+                            [text]="true"
+                            [loading]="cancelRequested()"
+                            [disabled]="cancelRequested()"
+                            (onClick)="cancel()"
+                            [pTooltip]="'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate"
+                            data-testid="hyperion-generation-cancel"
+                        >
+                            <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
+                        </p-button>
+                    }
+                    @if (canRevert()) {
+                        <p-button
+                            size="small"
+                            severity="secondary"
+                            [text]="true"
+                            [loading]="reverting()"
+                            [disabled]="reverting()"
+                            (onClick)="confirmRevert()"
+                            [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
+                            data-testid="hyperion-generation-revert"
+                        >
+                            @if (!reverting()) {
+                                <fa-icon [icon]="faRotateLeft" />
+                            }
+                            <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : 'artemisApp.hyperion.generationActivity.revert'"></span>
+                        </p-button>
+                    }
+                </div>
+            </header>
+        }
 
         @if (idle()) {
             <div class="hyperion-activity-empty" data-testid="hyperion-generation-empty">
@@ -167,8 +173,8 @@
             }
         }
 
-        @if (jobId() && hasDetails() && detailsExpanded()) {
-            <div id="hyperion-generation-details" class="hyperion-activity-body" data-testid="hyperion-generation-details">
+        @if (jobId() && hasDetails()) {
+            <div id="hyperion-generation-details" class="hyperion-activity-body" [hidden]="!detailsExpanded()" data-testid="hyperion-generation-details">
                 @if (snapshots().length) {
                     <section class="hyperion-activity-files" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
                         <h4 id="hyperion-changed-files-title" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
@@ -183,6 +189,7 @@
                                             severity="secondary"
                                             [text]="true"
                                             [fluid]="true"
+                                            [ariaLabel]="snapshotAccessibleLabel(file)"
                                             [pTooltip]="file.path"
                                             tooltipPosition="right"
                                             (onClick)="selectFile(file)"
@@ -191,7 +198,7 @@
                                             <span class="hyperion-activity-file-path">{{ displayPath(file) }}</span>
                                         </p-button>
                                     } @else {
-                                        <div class="hyperion-activity-file-static" data-testid="hyperion-generation-file-static">
+                                        <div class="hyperion-activity-file-static" [attr.aria-label]="snapshotAccessibleLabel(file)" data-testid="hyperion-generation-file-static">
                                             {{ displayPath(file) }}
                                         </div>
                                     }

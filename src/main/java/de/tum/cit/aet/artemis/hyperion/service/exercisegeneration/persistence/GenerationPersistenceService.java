@@ -128,25 +128,16 @@ public class GenerationPersistenceService {
         this.testCaseSyncPoll = testCaseSyncPoll;
     }
 
-    /** The repositories persisted, in the order they are committed. Tests are committed last so the test-triggered build sees the final solution. */
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    /** Prefix of the isolated branch a recovery draft is diverted to; the job id is appended so concurrent/repeated runs never collide on the ref. */
     static final String RECOVERY_DRAFT_BRANCH_PREFIX = "hyperion-draft/";
 
-    /** Exercise title column length; an H1 reconciled from a generated statement is capped to this. */
     private static final int MAX_TITLE_LENGTH = 255;
 
     private static final Duration TEST_CASE_SYNC_TIMEOUT = Duration.ofMinutes(2);
 
     private static final Duration TEST_CASE_SYNC_POLL = Duration.ofSeconds(3);
 
-    /**
-     * The result of persisting a non-accepted recovery draft.
-     *
-     * @param draftBranch       the isolated branch the repository drafts were pushed to
-     * @param savedRepositories the repositories for which a draft commit was pushed
-     */
     public record RecoveryPersistResult(String draftBranch, Set<RepositoryType> savedRepositories) {
 
         public RecoveryPersistResult {
@@ -154,14 +145,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /**
-     * Commit heads captured while persisting an accepted generation.
-     *
-     * @param prePersistHeads           the default-branch heads before Hyperion committed each changed repository
-     * @param postPersistHeads          the heads immediately after Hyperion committed each changed repository
-     * @param persistedProblemStatement the problem statement persisted by this guarded operation
-     * @param persistedTitle            the title persisted by this guarded operation
-     */
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement,
             String persistedTitle) {
     }

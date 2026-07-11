@@ -194,13 +194,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
     }
 
-    executeRefresh(onComplete?: () => void) {
+    executeRefresh(onComplete?: (succeeded: boolean) => void) {
         this.editorState.set(EditorState.REFRESHING);
         this.repositoryService.pull().subscribe({
             next: () => {
                 this.onRefreshFiles.emit();
                 this.editorState.set(EditorState.CLEAN);
-                onComplete?.();
+                onComplete?.(true);
             },
             error: (error: Error) => {
                 this.editorState.set(EditorState.UNSAVED_CHANGES);
@@ -209,7 +209,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 } else {
                     this.onError.emit('refreshFailed');
                 }
-                onComplete?.();
+                onComplete?.(false);
             },
         });
     }

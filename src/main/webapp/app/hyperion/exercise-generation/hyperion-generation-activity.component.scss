@@ -44,15 +44,6 @@
     flex-wrap: wrap;
 }
 
-.hyperion-activity-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
 .hyperion-activity-running-status {
     gap: 0.35rem;
     color: var(--p-text-muted-color);
@@ -109,6 +100,10 @@
     min-height: 0;
     grid-template-columns: minmax(14rem, 1fr) minmax(14rem, 1fr);
     border-top: 1px solid var(--p-content-border-color);
+}
+
+.hyperion-activity-body[hidden] {
+    display: none;
 }
 
 .hyperion-activity-files,

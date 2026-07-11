@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -669,7 +670,7 @@ class GenerationPersistenceServiceTest {
         byte[] wrapperBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };
         org.apache.commons.io.FileUtils.writeByteArrayToFile(wrapperDir.resolve("gradle-wrapper.jar").toFile(), wrapperBytes);
         Path runScript = workingTree.resolve("run.sh");
-        java.nio.file.Files.writeString(runScript, "#!/bin/sh\necho old\n");
+        FileUtils.writeStringToFile(runScript.toFile(), "#!/bin/sh\necho old\n", StandardCharsets.UTF_8);
         assertThat(runScript.toFile().setExecutable(true, false)).isTrue();
 
         stubSuccessfulCheckoutAndCommits();
@@ -691,7 +692,7 @@ class GenerationPersistenceServiceTest {
             Path target = workingTree.resolve(invocation.getArgument(1, String.class));
             java.nio.file.Files.createDirectories(target.getParent());
             try (InputStream content = invocation.getArgument(2)) {
-                java.nio.file.Files.copy(content, target);
+                FileUtils.copyInputStreamToFile(content, target.toFile());
             }
             return null;
         }).when(repositoryService).createFile(eq(repository), anyString(), any());

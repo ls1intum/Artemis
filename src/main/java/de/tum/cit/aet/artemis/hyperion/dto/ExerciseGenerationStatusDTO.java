@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param fileSnapshots   the latest whole-file snapshot per file written so far, in write order, so a reloading client can rehydrate the live editor preview and resume the stream
  * @param revertAvailable whether the server still retains the baseline required to undo the latest adaptation
  */
-public record ExerciseGenerationStatusDTO(String jobId, boolean running, @JsonInclude(JsonInclude.Include.NON_NULL) GenerationMode mode, List<ExerciseGenerationEventDTO> events,
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
         List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable) {
 }

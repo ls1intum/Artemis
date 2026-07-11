@@ -29,7 +29,7 @@
             [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
             [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback()"
-            [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.title' : undefined"
+            [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.panelTitle' : undefined"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
@@ -203,7 +203,7 @@
                                             <button
                                                 class="ai-menu-item flex-grow-1"
                                                 (click)="startGeneration(); aiMenuPopover.hide()"
-                                                [disabled]="isExerciseGenerationRunning()"
+                                                [disabled]="isExerciseGenerationActionBlocked()"
                                                 data-testid="hyperion-generate-exercise"
                                             >
                                                 <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
@@ -215,7 +215,7 @@
                                         <button
                                             class="ai-menu-item"
                                             (click)="openAdaptDialog(); aiMenuPopover.hide()"
-                                            [disabled]="isExerciseGenerationRunning()"
+                                            [disabled]="isExerciseGenerationActionBlocked()"
                                             data-testid="hyperion-adapt-with-feedback"
                                         >
                                             <fa-icon [icon]="facArtemisIntelligence" class="ai-menu-item-inline-icon" />
@@ -478,6 +478,9 @@
                 @if (showGenerationActivity()) {
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
+                        [refreshingEditor]="generationRefreshPending()"
+                        [editorRefreshFailed]="generationRefreshFailed()"
+                        (editorRefreshRequested)="retryHyperionRefresh()"
                         (adaptationReverted)="onHyperionAdaptationReverted($event)"
                         (generationCompleted)="onHyperionGenerationCompleted($event)"
                         (snapshotSelected)="onHyperionSnapshotSelected($event)"

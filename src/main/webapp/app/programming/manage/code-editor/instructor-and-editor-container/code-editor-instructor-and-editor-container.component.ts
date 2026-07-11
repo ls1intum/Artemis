@@ -182,6 +182,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     fileToJumpOn: string | undefined = undefined;
     readonly selectedIssue = signal<ConsistencyIssueNavigationIssue | undefined>(undefined);
     readonly generationStartPending = signal(false);
+    readonly generationRefreshPending = signal(false);
+    readonly generationRefreshFailed = signal(false);
     private shouldAutoStartExerciseGeneration = window.history.state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true;
 
     // Icons
@@ -318,7 +320,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected onAiToolbarClick(event: Event, popover: Popover): void {
-        if (this.isExerciseGenerationRunning()) {
+        if (this.isExerciseGenerationActionBlocked()) {
             this.openHyperionPanel();
             return;
         }
@@ -327,7 +329,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private refreshAfterHyperionRepositoryChange(operationCompletedAt?: number): void {
         const exerciseId = this.exercise?.id;
-        if (exerciseId === undefined) {
+        if (exerciseId === undefined || this.generationRefreshPending()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -335,22 +337,48 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         const actions = this.codeEditorContainer()?.actions();
+        this.generationRefreshFailed.set(false);
+        this.generationRefreshPending.set(true);
         this.fileSyncService.beginExpectedRepositoryUpdate(operationCompletedAt);
+        let repositoryRefreshComplete = actions === undefined;
+        let repositoryRefreshSucceeded = actions === undefined;
+        let exerciseRefreshComplete = false;
+        let refreshedExercise: ProgrammingExercise | undefined;
+        const finishRefresh = () => {
+            if (repositoryRefreshComplete && exerciseRefreshComplete) {
+                if (repositoryRefreshSucceeded && refreshedExercise && this.exercise?.id === exerciseId && this.canRefreshAfterHyperionRepositoryChange()) {
+                    this.editableInstructions()?.acceptServerBaseline(refreshedExercise);
+                    this.exercise = refreshedExercise;
+                    this.onInstructionChanged(refreshedExercise.problemStatement ?? '');
+                }
+                this.generationRefreshFailed.set(!repositoryRefreshSucceeded || refreshedExercise === undefined);
+                this.fileSyncService.endExpectedRepositoryUpdate();
+                this.generationRefreshPending.set(false);
+            }
+        };
         if (actions) {
-            actions.executeRefresh(() => this.fileSyncService.endExpectedRepositoryUpdate());
-        } else {
-            this.fileSyncService.endExpectedRepositoryUpdate();
+            actions.executeRefresh((succeeded) => {
+                repositoryRefreshSucceeded = succeeded;
+                repositoryRefreshComplete = true;
+                finishRefresh();
+            });
         }
         this.reloadExerciseFromServer(exerciseId)
-            .pipe(take(1))
-            .subscribe((exercise) => {
-                if (this.exercise?.id !== exerciseId) {
-                    return;
-                }
-                this.editableInstructions()?.acceptServerBaseline(exercise);
-                this.exercise = exercise;
-                this.onInstructionChanged(exercise.problemStatement ?? '');
+            .pipe(
+                take(1),
+                finalize(() => {
+                    exerciseRefreshComplete = true;
+                    finishRefresh();
+                }),
+            )
+            .subscribe({
+                next: (exercise) => (refreshedExercise = exercise),
+                error: () => this.alertService.error('artemisApp.editor.errors.refreshFailed', { connectionIssue: '' }),
             });
+    }
+
+    protected retryHyperionRefresh(): void {
+        this.refreshAfterHyperionRepositoryChange();
     }
 
     private canRefreshAfterHyperionRepositoryChange(): boolean {
@@ -365,7 +393,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected startGeneration(): void {
         const exerciseId = this.exercise?.id;
-        if (exerciseId === undefined || !this.showGenerationActivity() || this.isExerciseGenerationRunning()) {
+        if (exerciseId === undefined || !this.showGenerationActivity() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -400,10 +428,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected isExerciseGenerationRunning(): boolean {
         const activity = this.generationActivity();
-        return (
-            this.generationStartPending() ||
-            (this.showGenerationActivity() && (activity === undefined || activity.statusLoading() || activity.statusLoadFailed() || activity.running()))
-        );
+        return this.generationStartPending() || this.generationRefreshPending() || (this.showGenerationActivity() && (activity?.statusLoading() || activity?.running() || false));
+    }
+
+    protected isExerciseGenerationActionBlocked(): boolean {
+        const activity = this.generationActivity();
+        return this.isExerciseGenerationRunning() || (this.showGenerationActivity() && (activity === undefined || activity.statusLoadFailed()));
     }
 
     protected showGenerationActivity(): boolean {
@@ -446,7 +476,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private startAdaptation(instructions?: string): void {
         const exerciseId = this.exercise?.id;
-        if (exerciseId === undefined || this.isExerciseGenerationRunning()) {
+        if (exerciseId === undefined || this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -486,7 +516,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private maybeAutoStartExerciseGenerationFromNavigation(): void {
-        if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.showGenerationActivity() || this.isExerciseGenerationRunning()) {
+        if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.showGenerationActivity() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
 

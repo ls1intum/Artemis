@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -159,7 +160,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
         try {
             String preHead = gitService.getLocalHeadHash(checkedOut);
-            Files.writeString(targetPath.resolve("generated.txt"), "generated");
+            FileUtils.writeStringToFile(targetPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
             gitService.stageAllChanges(checkedOut);
 
             String postHead = gitService.commitStagedChanges(checkedOut, "Generated exercise", null);
@@ -188,11 +189,11 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var concurrent = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, concurrentPath, true, true);
         try {
             String remoteHead = gitService.getLastCommitHash(repoUri);
-            Files.writeString(targetPath.resolve("generated.txt"), "generated");
+            FileUtils.writeStringToFile(targetPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
             gitService.stageAllChanges(checkedOut);
             String postHead = gitService.commitStagedChanges(checkedOut, "Generated exercise", null);
 
-            Files.writeString(concurrentPath.resolve("instructor.txt"), "newer instructor edit");
+            FileUtils.writeStringToFile(concurrentPath.resolve("instructor.txt").toFile(), "newer instructor edit", StandardCharsets.UTF_8);
             gitService.stageAllChanges(concurrent);
             String concurrentHead = gitService.commitStagedChanges(concurrent, "Instructor edit", null);
             gitService.pushCommitWithLease(concurrent, concurrentHead, defaultBranch, remoteHead);
@@ -222,13 +223,13 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var concurrent = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, concurrentPath, true, true);
         try {
             String preHead = gitService.getLastCommitHash(repoUri);
-            Files.writeString(recoveryPath.resolve("generated.txt"), "generated");
+            FileUtils.writeStringToFile(recoveryPath.resolve("generated.txt").toFile(), "generated", StandardCharsets.UTF_8);
             gitService.stageAllChanges(recovery);
             String generatedHead = gitService.commitStagedChanges(recovery, "Generated exercise", null);
             gitService.pushCommitWithLease(recovery, generatedHead, defaultBranch, preHead);
 
             gitService.resetToOriginHead(concurrent);
-            Files.writeString(concurrentPath.resolve("instructor.txt"), "newer instructor edit");
+            FileUtils.writeStringToFile(concurrentPath.resolve("instructor.txt").toFile(), "newer instructor edit", StandardCharsets.UTF_8);
             gitService.stageAllChanges(concurrent);
             String concurrentHead = gitService.commitStagedChanges(concurrent, "Instructor edit", null);
             gitService.pushCommitWithLease(concurrent, concurrentHead, defaultBranch, generatedHead);
@@ -258,11 +259,11 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var first = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, firstPath, true, true);
         var competing = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, competingPath, true, true);
         try {
-            Files.writeString(first.getLocalPath().resolve("first.txt"), "first draft");
+            FileUtils.writeStringToFile(first.getLocalPath().resolve("first.txt").toFile(), "first draft", StandardCharsets.UTF_8);
             gitService.stageAllChanges(first);
             String firstDraftHead = gitService.commitToIsolatedBranchAndPush(first, draftBranch, "First draft", null);
 
-            Files.writeString(competing.getLocalPath().resolve("competing.txt"), "competing draft");
+            FileUtils.writeStringToFile(competing.getLocalPath().resolve("competing.txt").toFile(), "competing draft", StandardCharsets.UTF_8);
             gitService.stageAllChanges(competing);
             assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.commitToIsolatedBranchAndPush(competing, draftBranch, "Competing draft", null));
 

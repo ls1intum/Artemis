@@ -207,6 +207,43 @@ describe('CodeEditorFileSyncService', () => {
             incomingMessages$.next({ ...newCommitEvent, timestamp: 101 } as ExerciseEditorSyncEvent);
             expect(addAlertSpy).toHaveBeenCalledOnce();
         });
+
+        it('suppresses one late timestamp-less expected commit without hiding a subsequent unknown commit', () => {
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            service.init(EXERCISE_ID, TARGET);
+            const timestampLessEvent = { ...newCommitEvent, timestamp: undefined } as ExerciseEditorSyncEvent;
+
+            service.beginExpectedRepositoryUpdate(100);
+            service.endExpectedRepositoryUpdate();
+            incomingMessages$.next(timestampLessEvent);
+            expect(addAlertSpy).not.toHaveBeenCalled();
+
+            incomingMessages$.next(timestampLessEvent);
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not suppress an external timestamp-less commit when the expected one arrived during refresh', () => {
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            service.init(EXERCISE_ID, TARGET);
+            const timestampLessEvent = { ...newCommitEvent, timestamp: undefined } as ExerciseEditorSyncEvent;
+
+            service.beginExpectedRepositoryUpdate(100);
+            incomingMessages$.next(timestampLessEvent);
+            service.endExpectedRepositoryUpdate();
+            incomingMessages$.next(timestampLessEvent);
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not suppress a newer external commit while the expected refresh is still active', () => {
+            const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+            service.init(EXERCISE_ID, TARGET);
+
+            service.beginExpectedRepositoryUpdate(100);
+            incomingMessages$.next({ ...newCommitEvent, timestamp: 101 } as ExerciseEditorSyncEvent);
+
+            expect(addAlertSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('openFile and closeFile', () => {

@@ -19,10 +19,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class ProgrammingExerciseFeedbackCreationServiceTest {
 
@@ -88,10 +88,10 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
     }
 
     private static Harness harness(BuildResultNotification buildResult) {
-        ProgrammingExerciseTestCaseRepository testCaseRepository = mock();
+        ProgrammingExerciseTestCaseTestRepository testCaseRepository = mock();
         WebsocketMessagingService websocketMessagingService = mock();
         ProgrammingExerciseTaskService taskService = mock();
-        ProgrammingExerciseRepository exerciseRepository = mock();
+        ProgrammingExerciseTestRepository exerciseRepository = mock();
         GitService gitService = mock();
         ProgrammingExerciseFeedbackCreationService service = spy(new ProgrammingExerciseFeedbackCreationService(testCaseRepository, websocketMessagingService, taskService,
                 exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), gitService));
@@ -104,7 +104,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
     }
 
     private record Harness(ProgrammingExerciseFeedbackCreationService service, BuildResultNotification buildResult, ProgrammingExercise exercise, LocalVCRepositoryUri testsUri,
-            GitService gitService, ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
-            ProgrammingExerciseTaskService taskService, ProgrammingExerciseRepository exerciseRepository) {
+            GitService gitService, ProgrammingExerciseTestCaseTestRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
+            ProgrammingExerciseTaskService taskService, ProgrammingExerciseTestRepository exerciseRepository) {
     }
 }

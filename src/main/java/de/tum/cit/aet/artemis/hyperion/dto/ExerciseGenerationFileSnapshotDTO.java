@@ -8,6 +8,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -28,6 +30,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param timestamp the moment the snapshot was produced
  */
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic", allowableValues = TYPE) String type,
         @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket", allowableValues = {
                 REPOSITORY_SOLUTION, REPOSITORY_TEMPLATE, REPOSITORY_TESTS, REPOSITORY_OTHER }) String repo,

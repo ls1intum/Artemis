@@ -108,14 +108,14 @@
         @if (editorBottomPanelTitle(); as bottomPanelTitle) {
             <p-tabs class="editor-bottom-tabs" [value]="activeBottomPanel()" (valueChange)="selectBottomPanel($event)" data-testid="code-editor-bottom-tabs">
                 <div class="editor-bottom-tabs-header">
-                    <p-tablist>
+                    <p-tablist [pt]="{ tabList: { 'aria-label': 'artemisApp.editor.bottomPanels' | artemisTranslate } }">
                         @if (buildable()) {
-                            <p-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab">
+                            <p-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab" (click)="expandSelectedBottomPanel()">
                                 <fa-icon [icon]="faTerminal" />
                                 <span jhiTranslate="artemisApp.editor.buildOutput"></span>
                             </p-tab>
                         }
-                        <p-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab">
+                        <p-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
                             <span [jhiTranslate]="bottomPanelTitle"></span>
                         </p-tab>
                     </p-tablist>

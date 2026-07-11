@@ -53,6 +53,7 @@ const INITIAL_SYNC_FINALIZE_DELAY_MS = 500;
  * Late-arriving updates on the old path will be forwarded to the new path within this window.
  */
 const RENAME_REDIRECT_TTL_MS = 5000;
+const EXPECTED_COMMIT_GRACE_PERIOD_MS = 2000;
 
 type FileSyncEntry = {
     // Mutable — kept in sync with the fileDocs map key by remapFileKey/remapDirectoryKeys.
@@ -100,6 +101,8 @@ export class CodeEditorFileSyncService {
     private exerciseId?: number;
     private expectedRepositoryUpdate = false;
     private expectedRepositoryUpdateCompletedAt?: number;
+    private suppressNextTimestampLessCommitUntil?: number;
+    private timestampLessExpectedCommitSeen = false;
     private readonly newCommitAlerts = new Set<Alert>();
     private currentTarget?: ExerciseEditorSyncTarget;
     private auxiliaryRepositoryId?: number;
@@ -186,6 +189,8 @@ export class CodeEditorFileSyncService {
         this.auxiliaryRepositoryId = undefined;
         this.expectedRepositoryUpdate = false;
         this.expectedRepositoryUpdateCompletedAt = undefined;
+        this.suppressNextTimestampLessCommitUntil = undefined;
+        this.timestampLessExpectedCommitSeen = false;
         clearRemoteSelectionStyles();
     }
 
@@ -196,11 +201,16 @@ export class CodeEditorFileSyncService {
     beginExpectedRepositoryUpdate(operationCompletedAt?: number): void {
         this.expectedRepositoryUpdate = true;
         this.expectedRepositoryUpdateCompletedAt = operationCompletedAt;
+        this.suppressNextTimestampLessCommitUntil = undefined;
+        this.timestampLessExpectedCommitSeen = false;
         this.dismissNewCommitAlerts();
     }
 
     endExpectedRepositoryUpdate(): void {
         this.expectedRepositoryUpdate = false;
+        if (!this.timestampLessExpectedCommitSeen) {
+            this.suppressNextTimestampLessCommitUntil = Date.now() + EXPECTED_COMMIT_GRACE_PERIOD_MS;
+        }
         this.dismissNewCommitAlerts();
     }
 
@@ -785,10 +795,19 @@ export class CodeEditorFileSyncService {
     // ── Private: Commit alert handler ────────────────────────────────────
 
     private handleNewCommitAlert(message: ExerciseNewCommitAlertEvent): void {
-        if (
-            this.expectedRepositoryUpdate ||
-            (this.expectedRepositoryUpdateCompletedAt !== undefined && message.timestamp !== undefined && message.timestamp <= this.expectedRepositoryUpdateCompletedAt)
-        ) {
+        const isLateTimestampLessExpectedCommit =
+            message.timestamp === undefined && this.suppressNextTimestampLessCommitUntil !== undefined && Date.now() <= this.suppressNextTimestampLessCommitUntil;
+        if (isLateTimestampLessExpectedCommit) {
+            this.suppressNextTimestampLessCommitUntil = undefined;
+            return;
+        }
+        const isExpectedByTimestamp =
+            this.expectedRepositoryUpdateCompletedAt !== undefined && message.timestamp !== undefined && message.timestamp <= this.expectedRepositoryUpdateCompletedAt;
+        const cannotDistinguishDuringRefresh = this.expectedRepositoryUpdate && (this.expectedRepositoryUpdateCompletedAt === undefined || message.timestamp === undefined);
+        if (isExpectedByTimestamp || cannotDistinguishDuringRefresh) {
+            if (this.expectedRepositoryUpdate && message.timestamp === undefined) {
+                this.timestampLessExpectedCommitSeen = true;
+            }
             return;
         }
         const alert = this.alertService.addAlert({

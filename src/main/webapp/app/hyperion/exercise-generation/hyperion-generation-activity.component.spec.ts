@@ -189,7 +189,8 @@ describe('HyperionGenerationActivityComponent', () => {
 
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
         expect(toggle.textContent).toContain('generationActivity.showChangedFiles');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]').hidden).toBe(true);
     });
 
     it('keeps open details mounted when a live run completes', () => {
@@ -241,7 +242,68 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(statuses).toHaveLength(1);
         expect(statuses[0].getAttribute('aria-atomic')).toBe('true');
         expect(statuses[0].textContent).toContain('Generation failed');
+        expect(statuses[0].textContent).toContain('generationActivity.persistence.failed');
         expect(statuses[0].textContent).not.toContain('Still editing');
+    });
+
+    it('announces the editor refresh before reporting the terminal result as ready', () => {
+        const fixture = createWith({ jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileSnapshots: [] });
+
+        fixture.componentRef.setInput('refreshingEditor', true);
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[role="status"]');
+        expect(status.textContent).toContain('generationActivity.refreshingEditor');
+        expect(status.textContent).not.toContain('generationActivity.persistence.saved');
+
+        fixture.componentRef.setInput('refreshingEditor', false);
+        fixture.detectChanges();
+        expect(status.textContent).toContain('generationActivity.persistence.saved');
+    });
+
+    it('announces when the saved exercise could not be loaded into the editor', () => {
+        const fixture = createWith({ jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileSnapshots: [] });
+        const refreshRequested = vi.fn();
+        fixture.componentInstance.editorRefreshRequested.subscribe(refreshRequested);
+
+        fixture.componentRef.setInput('editorRefreshFailed', true);
+        fixture.detectChanges();
+
+        const status = fixture.nativeElement.querySelector('[role="status"]');
+        expect(status.textContent).toContain('generationActivity.editorRefreshFailed');
+        expect(status.textContent).toContain('generationActivity.persistence.saved');
+
+        fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"] button').click();
+        expect(refreshRequested).toHaveBeenCalledOnce();
+    });
+
+    it('gives same-path files unique repository-qualified accessible names', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true }],
+            fileSnapshots: [snapshot('src/Main.java', 'edit', 'solution', { repo: 'solution' }), snapshot('src/Main.java', 'edit', 'template', { repo: 'template' })],
+        });
+        fixture.componentInstance.detailsExpanded.set(true);
+        fixture.detectChanges();
+
+        const buttons = [...fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file"] button')] as HTMLButtonElement[];
+        expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual([
+            'artemisApp.hyperion.generationActivity.repo.solution: src/Main.java',
+            'artemisApp.hyperion.generationActivity.repo.template: src/Main.java',
+        ]);
+    });
+
+    it('does not report retained terminal history as a newly completed generation', () => {
+        service.status = { jobId: 'j1', running: false, events: [{ type: 'DONE', liveExerciseChanged: true }], fileSnapshots: [] };
+        const fixture = TestBed.createComponent(HyperionGenerationActivityComponent);
+        const completed = vi.fn();
+        fixture.componentInstance.generationCompleted.subscribe(completed);
+
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.detectChanges();
+
+        expect(completed).not.toHaveBeenCalled();
     });
 
     it('does not show a disclosure when there is no hidden content', () => {
@@ -268,6 +330,17 @@ describe('HyperionGenerationActivityComponent', () => {
 
         service.stream$.next(snapshot('template/B.java', 'create', 'b'));
         expect(component.snapshots()).toHaveLength(2);
+    });
+
+    it('sorts files by display path within each repository', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: true,
+            events: [],
+            fileSnapshots: [snapshot('solution/Z.java', 'create', 'z'), snapshot('solution/A.java', 'create', 'a')],
+        });
+
+        expect(fixture.componentInstance.filesByRepo()[0].files.map((file) => file.path)).toEqual(['solution/A.java', 'solution/Z.java']);
     });
 
     it('keeps live changed-file controls non-actionable until the run is terminal', () => {
@@ -416,8 +489,6 @@ describe('HyperionGenerationActivityComponent', () => {
         const reasons = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-verdict-reasons"]');
         expect(reasons?.textContent).toContain('solution failed 1 test');
         expect(reasons?.textContent).toContain('no gradable test');
-        // The chips must state the actual outcome, not a fixed "Solution passes": a failed solution reads "solution failed" (not the accepted-state label), so colour is not the
-        // only signal (a11y). MockTranslateService renders the key, so assert the failed-state key is used and the passed-state key is not.
         const text = fixture.nativeElement.textContent;
         expect(text).toContain('verdict.solutionFailed');
         expect(text).not.toContain('verdict.solutionPassed');
@@ -571,7 +642,6 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('restores the adapt mode on reconnect so the revert affordance survives a reload', () => {
-        // A completed, accepted in-place adaptation rehydrated from the status endpoint (not a live attach): mode must come from the status, or the header label and revert are lost.
         const fixture = createWith({
             jobId: 'j5',
             running: false,
@@ -726,7 +796,6 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('stops running on a CANCELLED terminal event from the stream', () => {
-        // CANCELLED is a terminal stream event (distinct from the cancel button just requesting it): it stops the run and offers no revert.
         const fixture = createWith({ jobId: 'j1', running: true, mode: 'ADAPT', events: [], fileSnapshots: [] });
         const component = fixture.componentInstance;
 
@@ -814,8 +883,6 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('does not let a late status response clobber a freshly attached live run', () => {
-        // Reconnect race: a status fetch is in flight when the user starts a new run on the same surface. attachToJob bumps the load token, so the
-        // late status of the previous (stale) job must be ignored rather than overwrite the live run the user just started.
         const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
         service.getStatus = () => pendingStatus.asObservable();
         const fixture = createWith(null);

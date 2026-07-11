@@ -12,7 +12,6 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
@@ -67,6 +66,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     private readonly translateService = inject(TranslateService);
 
     readonly exerciseId = input<number | undefined>();
+    readonly refreshingEditor = input(false);
+    readonly editorRefreshFailed = input(false);
+    readonly editorRefreshRequested = output<void>();
     readonly adaptationReverted = output<string>();
     readonly generationCompleted = output<HyperionGenerationCompletedEvent>();
     readonly snapshotSelected = output<ExerciseGenerationFileSnapshot>();
@@ -108,7 +110,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
         const files = this.snapshots();
-        return REPO_ORDER.map((repo) => ({ repo, files: files.filter((file) => file.repo === repo) })).filter((group) => group.files.length > 0);
+        return REPO_ORDER.map((repo) => ({
+            repo,
+            files: files.filter((file) => file.repo === repo).sort((first, second) => this.displayPath(first).localeCompare(this.displayPath(second))),
+        })).filter((group) => group.files.length > 0);
     });
 
     readonly recentEvents = computed(() =>
@@ -120,6 +125,12 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly currentProgress = computed(() => this.recentEvents()[0]);
     readonly previousProgress = computed(() => this.recentEvents().slice(1));
     readonly liveStatus = computed<ActivityLiveStatus | undefined>(() => {
+        if (this.refreshingEditor()) {
+            return { labelKey: 'artemisApp.hyperion.generationActivity.refreshingEditor', busy: true };
+        }
+        if (this.editorRefreshFailed()) {
+            return { labelKey: 'artemisApp.hyperion.generationActivity.editorRefreshFailed', busy: false };
+        }
         const terminal = this.latestTerminalEvent(this.events());
         if (terminal) {
             return { message: terminal.message, labelKey: `artemisApp.hyperion.generationActivity.terminalStatus.${terminal.type}`, busy: false };
@@ -178,15 +189,12 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faRotateLeft = faRotateLeft;
-    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     private streamSubscription?: Subscription;
     private streamLossRefreshTimeout?: ReturnType<typeof setTimeout>;
     private revertAvailabilityRefreshTimeout?: ReturnType<typeof setTimeout>;
     private statusLoadAttempts = 0;
     private loadedExerciseId?: number;
-    // Monotonic token guarding the async status fetch: a newer load or a freshly attached live run (attachToJob) bumps it so a
-    // late getStatus response cannot clobber the current run.
     private loadToken = 0;
     private liveMessageVersion = 0;
     private readonly emittedTerminalJobs = new Set<string>();
@@ -251,6 +259,11 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     protected displayPath(snapshot: ExerciseGenerationFileSnapshot): string {
         const prefix = `${snapshot.repo}/`;
         return snapshot.path.startsWith(prefix) ? snapshot.path.slice(prefix.length) : snapshot.path;
+    }
+
+    protected snapshotAccessibleLabel(snapshot: ExerciseGenerationFileSnapshot): string {
+        const repository = this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${snapshot.repo}`);
+        return `${repository}: ${this.displayPath(snapshot)}`;
     }
 
     private revert(): void {
@@ -318,7 +331,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.service.getStatus(exerciseId).subscribe({
             next: (response) => {
                 if (token !== this.loadToken) {
-                    return; // A newer load or a freshly attached live run superseded this status fetch.
+                    return;
                 }
                 this.statusLoading.set(false);
                 this.statusLoadFailed.set(false);
@@ -334,6 +347,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     return;
                 }
                 const sameJob = this.jobId() === status.jobId;
+                const wasActivelyObserved = sameJob && this.running();
                 this.jobId.set(status.jobId);
                 this.mode.set(status.mode ?? this.mode());
                 this.revertAvailable.set(status.revertAvailable ?? false);
@@ -349,7 +363,9 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     if (!sameJob) {
                         this.detailsExpanded.set(false);
                     }
-                    this.emitGenerationCompleted(status.jobId, terminalEvent);
+                    if (wasActivelyObserved) {
+                        this.emitGenerationCompleted(status.jobId, terminalEvent);
+                    }
                     return;
                 }
                 this.running.set(status.running);

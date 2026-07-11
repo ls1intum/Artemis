@@ -1374,10 +1374,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
     });
 
-    it('keeps the editor locked when generation status could not be verified', () => {
+    it('keeps AI actions blocked without locking manual editing when generation status could not be verified', () => {
         (comp as any).generationActivity = () => ({ attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true });
 
-        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
+        expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+
+        (comp as any).startGeneration();
+
+        expect(generationService.generate).not.toHaveBeenCalled();
     });
 
     it('startGeneration is blocked when local repository changes are unsaved', () => {
@@ -1426,11 +1430,103 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(actions.executeRefresh).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
         expect(beginExpectedUpdateSpy).toHaveBeenCalledExactlyOnceWith(Date.parse('2026-07-10T20:00:00Z'));
-        actions.executeRefresh.mock.calls[0][0]();
+        actions.executeRefresh.mock.calls[0][0](true);
         expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
         expect(loadSpy).toHaveBeenCalledWith(42);
         expect(acceptServerBaseline).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated problem statement' }));
         expect(comp.exercise.problemStatement).toBe('Updated problem statement');
+    });
+
+    it('keeps editing locked and commit alerts suppressed until both Hyperion refreshes complete', () => {
+        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const reload = new Subject<{ body: ProgrammingExercise }>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
+        const fileSyncService = (comp as any).fileSyncService;
+        const endExpectedUpdateSpy = vi.spyOn(fileSyncService, 'endExpectedRepositoryUpdate');
+
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+        });
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
+        actions.executeRefresh.mock.calls[0][0](true);
+        expect((comp as any).isExerciseGenerationRunning()).toBe(true);
+        expect(endExpectedUpdateSpy).not.toHaveBeenCalled();
+
+        reload.next({ body: createMockExercise({ problemStatement: 'Updated problem statement' }) });
+        reload.complete();
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+        expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('does not apply the exercise reload when the repository refresh fails', () => {
+        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const acceptServerBaseline = vi.fn();
+        setEditableInstructions(comp, { acceptServerBaseline, unsavedChangesValue: () => false });
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(
+            of({ body: createMockExercise({ problemStatement: 'Mixed server state' }) } as any),
+        );
+        const endExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'endExpectedRepositoryUpdate');
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+        actions.executeRefresh.mock.calls[0][0](false);
+
+        expect(acceptServerBaseline).not.toHaveBeenCalled();
+        expect(comp.exercise.problemStatement).toBe('Test problem statement');
+        expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('clears the refresh lock and commit suppression when the exercise reload fails', () => {
+        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        setCodeEditorContainer(comp, { actions: () => actions });
+        const reload = new Subject<{ body: ProgrammingExercise }>();
+        const loadSpy = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
+        const endExpectedUpdateSpy = vi.spyOn((comp as any).fileSyncService, 'endExpectedRepositoryUpdate');
+
+        (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', liveExerciseChanged: true });
+        actions.executeRefresh.mock.calls[0][0](true);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        reload.error(new Error('reload failed'));
+
+        expect((comp as any).isExerciseGenerationRunning()).toBe(false);
+        expect((comp as any).generationRefreshFailed()).toBe(true);
+        expect(endExpectedUpdateSpy).toHaveBeenCalledOnce();
+        expect(comp.exercise.problemStatement).toBe('Test problem statement');
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.editor.errors.refreshFailed', { connectionIssue: '' });
+
+        loadSpy.mockReturnValue(of({ body: createMockExercise({ problemStatement: 'Updated after retry' }) } as any));
+        (comp as any).retryHyperionRefresh();
+        actions.executeRefresh.mock.calls[1][0](true);
+
+        expect(comp.exercise.problemStatement).toBe('Updated after retry');
+        expect((comp as any).generationRefreshFailed()).toBe(false);
+    });
+
+    it('does not overwrite problem statement edits made while the Hyperion refresh was in flight', () => {
+        const actions = { executeRefresh: vi.fn(), onSave: vi.fn() };
+        setCodeEditorContainer(comp, { actions: () => actions, canDeactivate: () => true });
+        const reload = new Subject<{ body: ProgrammingExercise }>();
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'findWithTemplateAndSolutionParticipationAndResults').mockReturnValue(reload as any);
+        const acceptServerBaseline = vi.fn();
+        const unsavedChangesValue = vi.fn().mockReturnValueOnce(false).mockReturnValue(true);
+        setEditableInstructions(comp, { acceptServerBaseline, unsavedChangesValue });
+
+        (comp as any).onHyperionGenerationCompleted({
+            mode: 'GENERATE',
+            verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 },
+        });
+        reload.next({ body: createMockExercise({ problemStatement: 'Server problem statement' }) });
+        reload.complete();
+        actions.executeRefresh.mock.calls[0][0](true);
+
+        expect(acceptServerBaseline).not.toHaveBeenCalled();
+        expect(comp.exercise.problemStatement).toBe('Test problem statement');
     });
 
     it('uses the server revert timestamp as the commit-alert suppression boundary', () => {
@@ -1480,6 +1576,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).onHyperionGenerationCompleted({ mode: 'GENERATE', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 2 } });
         comp.exercise = createMockExercise({ id: 99, problemStatement: 'Current exercise', programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
         reload.next({ body: createMockExercise({ id: 42, problemStatement: 'Stale problem statement' }) });
+        actions.executeRefresh.mock.calls[0][0](true);
 
         expect(comp.exercise.problemStatement).toBe('Current exercise');
     });
@@ -1511,6 +1608,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(actions.executeRefresh).toHaveBeenCalledOnce();
         expect(loadSpy).toHaveBeenCalledWith(42);
+        actions.executeRefresh.mock.calls[0][0](true);
         expect(comp.exercise.problemStatement).toBe('Draft problem statement');
     });
 

@@ -40,6 +40,7 @@ import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -69,6 +70,7 @@ export enum CodeEditorBottomPanel {
         ButtonModule,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -198,7 +200,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     selectBottomPanel(value: string | number | undefined): void {
         if (value === CodeEditorBottomPanel.BUILD_OUTPUT || value === CodeEditorBottomPanel.ADDITIONAL) {
             this.activeBottomPanel.set(value);
+            this.expandSelectedBottomPanel();
         }
+    }
+
+    expandSelectedBottomPanel(): void {
+        this.grid().expandBottomPanel();
+        this.bottomPanelCollapsed.set(false);
     }
 
     ngOnDestroy(): void {

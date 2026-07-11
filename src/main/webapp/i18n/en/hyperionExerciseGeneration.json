@@ -2,13 +2,17 @@
     "artemisApp": {
         "hyperion": {
             "generationActivity": {
+                "panelTitle": "AI activity",
                 "title": "Generation activity",
                 "adaptationTitle": "Adaptation activity",
                 "running": "Generating…",
                 "adapting": "Adapting…",
                 "adaptStartFailed": "Could not start the adaptation.",
                 "checkingStatus": "Checking generation status…",
-                "statusUnavailable": "The generation status could not be verified. Editing remains locked to prevent conflicting changes.",
+                "refreshingEditor": "Updating the editor with the saved exercise…",
+                "editorRefreshFailed": "The exercise was saved, but the editor could not be updated.",
+                "retryEditorRefresh": "Retry editor update",
+                "statusUnavailable": "The generation status could not be verified. AI actions remain unavailable until the status check succeeds; manual editing is still available.",
                 "retryStatus": "Retry status check",
                 "cancel": "Cancel",
                 "cancelling": "Cancelling…",
