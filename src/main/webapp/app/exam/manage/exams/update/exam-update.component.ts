@@ -427,6 +427,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     /**
      * Returns true when all exam start / end / confirmation texts are within the allowed length.
      */
+    // Getter (not a computed) on purpose: the texts are mutated in place via [(ngModel)] without changing the exam signal reference, so a computed would go stale.
     get areExamTextsValid(): boolean {
         return ![this.exam.startText, this.exam.endText, this.exam.confirmationStartText, this.exam.confirmationEndText].some((text) => this.isExamTextTooLong(text));
     }
