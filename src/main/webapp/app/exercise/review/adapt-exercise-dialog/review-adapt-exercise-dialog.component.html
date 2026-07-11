@@ -8,11 +8,20 @@
         }
     </p>
 
+    <p-message severity="warn" [closable]="false">
+        <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
+    </p-message>
+
     @if (!isFreeMode) {
-        <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel" [translateValues]="{ count: findings.length }"></label>
-        <div class="review-adapt-exercise-dialog__findings-list">
+        <h3
+            id="adaptExerciseFindingsHeading"
+            class="review-adapt-exercise-dialog__label"
+            jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"
+            [translateValues]="{ count: findings.length }"
+        ></h3>
+        <ul class="review-adapt-exercise-dialog__findings-list" aria-labelledby="adaptExerciseFindingsHeading">
             @for (finding of findings; track finding) {
-                <div class="review-adapt-exercise-dialog__finding-card">
+                <li class="review-adapt-exercise-dialog__finding-card">
                     <div class="review-adapt-exercise-dialog__finding-header">
                         <p-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
                         <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
@@ -37,9 +46,9 @@
                             </div>
                         }
                     }
-                </div>
+                </li>
             }
-        </div>
+        </ul>
     } @else {
         <small class="review-adapt-exercise-dialog__free-help text-muted-color" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
     }
@@ -51,10 +60,14 @@
         class="review-adapt-exercise-dialog__instructions"
         rows="3"
         [attr.maxlength]="maxInstructionsLength"
+        [attr.aria-describedby]="isFreeMode ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
         [placeholder]="(isFreeMode ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate"
         [ngModel]="instructions()"
         (ngModelChange)="instructions.set($event)"
     ></textarea>
+    <small id="adaptExerciseCharacterCount" class="review-adapt-exercise-dialog__character-count text-muted-color">
+        <span jhiTranslate="artemisApp.review.adaptExercise.charactersRemaining" [translateValues]="{ count: remainingCharacters() }"></span>
+    </small>
 
     <div class="review-adapt-exercise-dialog__actions">
         <button pButton type="button" severity="secondary" (click)="cancel()">

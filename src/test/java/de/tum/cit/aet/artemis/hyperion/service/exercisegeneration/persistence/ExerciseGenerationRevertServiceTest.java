@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,6 +29,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -35,11 +37,11 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Unit test for {@link ExerciseAdaptationRevertService}'s capture-and-revert invariants against a real isolated embedded Hazelcast instance, with the git and persistence
+ * Unit test for {@link ExerciseGenerationRevertService}'s capture-and-revert invariants against a real isolated embedded Hazelcast instance, with the git and persistence
  * collaborators mocked so the reset-to-captured-SHA behaviour is exercised deterministically without a real repository.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ExerciseAdaptationRevertServiceTest {
+class ExerciseGenerationRevertServiceTest {
 
     private static final String DEFAULT_BRANCH = "main";
 
@@ -51,7 +53,7 @@ class ExerciseAdaptationRevertServiceTest {
 
     private TempFileUtilService tempFileUtilService;
 
-    private ExerciseAdaptationRevertService revertService;
+    private ExerciseGenerationRevertService revertService;
 
     private ProgrammingExercise exercise;
 
@@ -86,7 +88,7 @@ class ExerciseAdaptationRevertServiceTest {
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevert(any(), any(), any(), any(), any(), any(), any())).thenReturn(true);
-        revertService = new ExerciseAdaptationRevertService(hazelcastInstance, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
+        revertService = new ExerciseGenerationRevertService(hazelcastInstance, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
         revertService.init();
 
         templateUri = mock(LocalVCRepositoryUri.class);
@@ -119,25 +121,37 @@ class ExerciseAdaptationRevertServiceTest {
 
     @Test
     void recordBaseline_omitsRepositoriesWithoutACapturedHead() throws Exception {
-        // A persist that only committed solution + tests hands back only those pre-persist heads; the untouched template is not part of the revertible baseline, so a later revert
-        // resets only solution + tests and never touches the template.
         Map<RepositoryType, String> onlySolutionAndTests = new EnumMap<>(RepositoryType.class);
         onlySolutionAndTests.put(RepositoryType.SOLUTION, "sha-solution");
         onlySolutionAndTests.put(RepositoryType.TESTS, "sha-tests");
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests");
 
-        revertService.recordBaseline(exercise, "job-1", onlySolutionAndTests,
-                postAdaptationHeads(RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests"), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, onlySolutionAndTests,
+                postRunHeads(RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests"), "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.SOLUTION, RepositoryType.TESTS);
         verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", "adapted-solution", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
-        // The template had no captured head, so it is never force-reset.
         verify(gitService, never()).resetToCommitAndForcePush(eq(templateRepo), any(), any(), any());
+    }
+
+    @Test
+    void recordBaseline_retainsTheRunModeForStatusRecovery() {
+        revertService.recordBaseline(exercise, "job-generate", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+
+        assertThat(revertService.findRevertibleRun(77L)).contains(new ExerciseGenerationRevertService.RevertibleRun("job-generate", GenerationMode.GENERATE));
+    }
+
+    @Test
+    void findRevertibleRun_acceptsLegacyBaselineWithoutMode() {
+        AdaptationBaseline legacy = new AdaptationBaseline("legacy-job", null, Map.of(), Map.of(), "old statement", "Old Title", "adapted statement", "Adapted Title");
+        hazelcastInstance.<Long, AdaptationBaseline>getMap("hyperion-exercise-adaptation-baselines").set(77L, legacy);
+
+        assertThat(revertService.findRevertibleRun(77L)).contains(new ExerciseGenerationRevertService.RevertibleRun("legacy-job", null));
     }
 
     @Test
@@ -145,7 +159,8 @@ class ExerciseAdaptationRevertServiceTest {
         Map<RepositoryType, String> templateAndSolution = new EnumMap<>(RepositoryType.class);
         templateAndSolution.put(RepositoryType.TEMPLATE, "sha-template");
         templateAndSolution.put(RepositoryType.SOLUTION, "sha-solution");
-        revertService.recordBaseline(exercise, "job-1", templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, templateAndSolution, Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
+                "Old Title");
 
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user)).isEmpty();
@@ -155,9 +170,9 @@ class ExerciseAdaptationRevertServiceTest {
 
     @Test
     void recordBaseline_whenNewBaselineCannotBeRecorded_removesOlderBaseline() {
-        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
 
-        revertService.recordBaseline(exercise, "job-2", preAdaptationHeads(), Map.of(), "adapted statement", "Adapted Title");
+        revertService.recordBaseline(exercise, "job-2", GenerationMode.ADAPT, preRunHeads(), Map.of(), "adapted statement", "Adapted Title");
 
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
     }
@@ -167,21 +182,18 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests");
-        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isTrue();
         assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
-        // Each repository was force-reset to the EXACT commit captured at job start, on the default branch.
         verify(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", "adapted-solution", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
-        // Grading is re-synced against the reverted tests commit.
         verify(persistenceService).resyncAfterRevert(eq(exercise), eq(user), eq("sha-tests"), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"));
-        // The baseline is consumed so the same adaptation cannot be reverted twice.
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
         assertThat(revertService.revert(exercise, user)).isEmpty();
     }
@@ -191,8 +203,8 @@ class ExerciseAdaptationRevertServiceTest {
         Repository cachedTemplateRepo = mock(Repository.class);
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
         when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
         revertService.revert(exercise, user);
 
@@ -212,10 +224,10 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getOrCheckoutRepository(templateUri, false, DEFAULT_BRANCH, false)).thenReturn(cachedTemplateRepo);
         org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.GitAPIException("fetch failed") {
         }).when(gitService).fetchAll(cachedTemplateRepo);
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).hasValueSatisfying(revertResult -> assertThat(revertResult.fullyReverted()).isTrue());
         verify(gitService).deleteLocalRepository(templateUri);
@@ -226,11 +238,11 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template", "sha-template");
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution", "sha-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests", "sha-tests");
-        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(persistenceService.resyncAfterRevert(any(), any(), any(), any(), any(), any(), any())).thenReturn(false, true);
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> partial = revertService.revert(exercise, user);
-        Optional<ExerciseAdaptationRevertService.RevertResult> retry = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user);
 
         assertThat(partial).isPresent();
         assertThat(partial.get().fullyReverted()).isFalse();
@@ -244,12 +256,12 @@ class ExerciseAdaptationRevertServiceTest {
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template", "sha-template");
         when(gitService.getLastCommitHash(solutionUri)).thenReturn("adapted-solution");
         when(gitService.getLastCommitHash(testsUri)).thenReturn("adapted-tests", "sha-tests");
-        revertService.recordBaseline(exercise, "job-1", preAdaptationHeads(), postAdaptationHeads(), "old statement", "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(gitService.getOrCheckoutRepository(eq(solutionUri), eq(solutionUri), any(Path.class), eq(true), eq(DEFAULT_BRANCH), eq(false)))
                 .thenThrow(new IllegalStateException("checkout failed")).thenReturn(solutionRepo);
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> partial = revertService.revert(exercise, user);
-        Optional<ExerciseAdaptationRevertService.RevertResult> retry = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user);
 
         assertThat(partial).isPresent();
         assertThat(partial.get().fullyReverted()).isFalse();
@@ -265,10 +277,10 @@ class ExerciseAdaptationRevertServiceTest {
         when(exercise.getProblemStatement()).thenReturn("adapted statement\r\n");
         when(exercise.getTitle()).thenReturn(" Adapted Title ");
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isTrue();
@@ -279,10 +291,10 @@ class ExerciseAdaptationRevertServiceTest {
     @Test
     void revert_refusesToClobberManualCommitsAfterTheAdaptation() throws Exception {
         when(gitService.getLastCommitHash(templateUri)).thenReturn("manual-template");
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
@@ -300,10 +312,10 @@ class ExerciseAdaptationRevertServiceTest {
         when(exercise.getProblemStatement()).thenReturn("adapted statement", "manual statement");
         when(exercise.getTitle()).thenReturn("Adapted Title", "Adapted Title");
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
@@ -316,10 +328,10 @@ class ExerciseAdaptationRevertServiceTest {
     void revert_refusesBeforeRepositoryResetWhenPersistedMetadataChanged() throws Exception {
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(false);
         when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
-        revertService.recordBaseline(exercise, "job-1", Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
-                "Old Title");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"),
+                "old statement", "Old Title");
 
-        Optional<ExerciseAdaptationRevertService.RevertResult> result = revertService.revert(exercise, user);
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
@@ -330,30 +342,65 @@ class ExerciseAdaptationRevertServiceTest {
     }
 
     @Test
+    void revert_whenOwnershipIsLostBeforeFirstReset_doesNotMutateAndKeepsBaseline() throws Exception {
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> false);
+
+        assertThat(result).hasValueSatisfying(value -> {
+            assertThat(value.fullyReverted()).isFalse();
+            assertThat(value.revertedRepositories()).isEmpty();
+        });
+        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
+        verify(gitService, never()).getOrCheckoutRepository(any(), any(), any(Path.class), anyBoolean(), any(), anyBoolean());
+        verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
+        verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void revert_whenOwnershipIsLostAfterOneReset_returnsPartialAndKeepsBaseline() throws Exception {
+        when(gitService.getLastCommitHash(templateUri)).thenReturn("adapted-template");
+        revertService.recordBaseline(exercise, "job-1", GenerationMode.GENERATE, Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "sha-solution"),
+                Map.of(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution"), "old statement", "Old Title");
+        AtomicInteger ownershipChecks = new AtomicInteger();
+
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> ownershipChecks.getAndIncrement() == 0);
+
+        assertThat(result).hasValueSatisfying(value -> {
+            assertThat(value.fullyReverted()).isFalse();
+            assertThat(value.revertedRepositories()).containsExactly(RepositoryType.TEMPLATE);
+        });
+        assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
+        verify(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
+        verify(gitService, never()).resetToCommitAndForcePush(eq(solutionRepo), any(), any(), any());
+        verify(persistenceService, never()).resyncAfterRevert(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     void revert_whenNoBaselineRetained_returnsEmpty() {
         assertThat(revertService.revert(exercise, user)).isEmpty();
     }
 
-    private static Map<RepositoryType, String> postAdaptationHeads() {
-        return postAdaptationHeads(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests");
+    private static Map<RepositoryType, String> postRunHeads() {
+        return postRunHeads(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests");
     }
 
-    private static Map<RepositoryType, String> postAdaptationHeads(RepositoryType firstType, String firstHead, RepositoryType secondType, String secondHead) {
+    private static Map<RepositoryType, String> postRunHeads(RepositoryType firstType, String firstHead, RepositoryType secondType, String secondHead) {
         Map<RepositoryType, String> heads = new EnumMap<>(RepositoryType.class);
         heads.put(firstType, firstHead);
         heads.put(secondType, secondHead);
         return heads;
     }
 
-    private static Map<RepositoryType, String> postAdaptationHeads(RepositoryType firstType, String firstHead, RepositoryType secondType, String secondHead,
-            RepositoryType thirdType, String thirdHead) {
-        Map<RepositoryType, String> heads = postAdaptationHeads(firstType, firstHead, secondType, secondHead);
+    private static Map<RepositoryType, String> postRunHeads(RepositoryType firstType, String firstHead, RepositoryType secondType, String secondHead, RepositoryType thirdType,
+            String thirdHead) {
+        Map<RepositoryType, String> heads = postRunHeads(firstType, firstHead, secondType, secondHead);
         heads.put(thirdType, thirdHead);
         return heads;
     }
 
     /** The pre-persist commit heads a full accepted adaptation of all three repositories hands back to {@code recordBaseline}. */
-    private static Map<RepositoryType, String> preAdaptationHeads() {
+    private static Map<RepositoryType, String> preRunHeads() {
         Map<RepositoryType, String> heads = new EnumMap<>(RepositoryType.class);
         heads.put(RepositoryType.TEMPLATE, "sha-template");
         heads.put(RepositoryType.SOLUTION, "sha-solution");

@@ -18,6 +18,8 @@ export interface ExerciseGenerationStatus {
     events: Array<ExerciseGenerationEvent>;
     fileSnapshots: Array<ExerciseGenerationFileSnapshot>;
     revertAvailable: boolean;
+    revertJobId?: string;
+    revertMode?: ExerciseGenerationStatus.RevertModeEnum;
 }
 export namespace ExerciseGenerationStatus {
     export const ModeEnum = {
@@ -25,4 +27,9 @@ export namespace ExerciseGenerationStatus {
         Adapt: 'ADAPT'
     } as const;
     export type ModeEnum = typeof ModeEnum[keyof typeof ModeEnum];
+    export const RevertModeEnum = {
+        Generate: 'GENERATE',
+        Adapt: 'ADAPT'
+    } as const;
+    export type RevertModeEnum = typeof RevertModeEnum[keyof typeof RevertModeEnum];
 }

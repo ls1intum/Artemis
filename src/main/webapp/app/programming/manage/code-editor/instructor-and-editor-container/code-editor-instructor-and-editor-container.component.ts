@@ -36,11 +36,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Observable, finalize, map, take, tap } from 'rxjs';
+import { Observable, finalize, from, map, take, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
@@ -69,8 +72,15 @@ import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
-import { HyperionGenerationActivityComponent, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
-import { ExerciseGenerationFileSnapshot } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import {
+    HyperionGenerationActivityComponent,
+    HyperionGenerationCompletedEvent,
+    HyperionReviewRequestedEvent,
+} from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
+import { ExerciseGenerationFileSnapshot, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { Router } from '@angular/router';
+import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -79,6 +89,7 @@ const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
 };
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const MIN_MEANINGFUL_SPEC_LENGTH = 40;
 interface ConsistencyIssueNavigationIssue {
     threadId: number;
     targetType: CommentThreadLocationType;
@@ -94,7 +105,7 @@ interface ConsistencyIssueNavigationIssue {
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
     // Keep review comment state scoped to each editor container instance.
-    providers: [ExerciseReviewCommentService],
+    providers: [ExerciseReviewCommentService, ConfirmationService],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -121,6 +132,7 @@ interface ConsistencyIssueNavigationIssue {
         MessageModule,
         PopoverModule,
         HyperionGenerationActivityComponent,
+        ConfirmDialogModule,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -207,8 +219,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
     private dialogService = inject(DialogService);
+    private confirmationService = inject(ConfirmationService);
     private generationService = inject(HyperionExerciseGenerationService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private reviewRouter = inject(Router);
+    private readonly editorDestroyRef = inject(DestroyRef);
+    private readonly reviewRequestsInFlight = new Set<string>();
     private readonly selectedAdaptFeedbackThreads = computed(() =>
         this.exerciseReviewCommentService.selectedFeedbackThreads().filter((thread) => !thread.resolved && !thread.outdated && firstConsistencyIssueContent(thread)),
     );
@@ -316,6 +333,84 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.navigateToLocation({ targetType, filePath });
     }
 
+    protected onHyperionReviewRequested(request: HyperionReviewRequestedEvent): void {
+        const exerciseId = this.exercise?.id;
+        const courseId = this.exercise?.course?.id;
+        if (exerciseId === undefined || courseId === undefined) {
+            this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable');
+            return;
+        }
+        if (request.target === 'problem-statement') {
+            const requestKey = `${request.jobId}:problem-statement`;
+            if (this.reviewRequestsInFlight.has(requestKey)) {
+                return;
+            }
+            this.reviewRequestsInFlight.add(requestKey);
+            this.navigateToHyperionReview(['/course-management', courseId, 'programming-exercises', exerciseId, 'version-history'], requestKey);
+            return;
+        }
+
+        const repositoryType = {
+            solution: RepositoryType.SOLUTION,
+            template: RepositoryType.TEMPLATE,
+            tests: RepositoryType.TESTS,
+        }[request.target];
+        const requestKey = `${request.jobId}:${repositoryType}`;
+        if (this.reviewRequestsInFlight.has(requestKey)) {
+            return;
+        }
+        this.reviewRequestsInFlight.add(requestKey);
+        let navigationStarted = false;
+        this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId, repositoryType)
+            .pipe(
+                take(1),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => {
+                    if (!navigationStarted) {
+                        this.reviewRequestsInFlight.delete(requestKey);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (commits) => {
+                    const expectedMessage = `Generate exercise with Hyperion (${request.jobId})`;
+                    const matchingCommits = commits.filter((candidate) => candidate.hash && candidate.message === expectedMessage);
+                    if (matchingCommits.length !== 1) {
+                        this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable');
+                        return;
+                    }
+                    navigationStarted = true;
+                    this.navigateToHyperionReview(
+                        ['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', repositoryType, 'commit-history', matchingCommits[0].hash!],
+                        requestKey,
+                    );
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable'),
+            });
+    }
+
+    private navigateToHyperionReview(commands: unknown[], requestKey?: string): void {
+        from(this.reviewRouter.navigate(commands))
+            .pipe(
+                take(1),
+                takeUntilDestroyed(this.editorDestroyRef),
+                finalize(() => {
+                    if (requestKey) {
+                        this.reviewRequestsInFlight.delete(requestKey);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (navigated) => {
+                    if (!navigated) {
+                        this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable');
+                    }
+                },
+                error: () => this.alertService.error('artemisApp.hyperion.generationActivity.reviewUnavailable'),
+            });
+    }
+
     protected openHyperionPanel(): void {
         this.codeEditorContainer()?.openEditorBottomPanel();
     }
@@ -392,9 +487,41 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
     }
 
-    protected startGeneration(): void {
+    protected startGeneration(skipConfirmation = false): void {
         const exerciseId = this.exercise?.id;
-        if (exerciseId === undefined || !this.showGenerationActivity() || this.isExerciseGenerationActionBlocked()) {
+        if (exerciseId === undefined || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
+            return;
+        }
+        if ((this.exercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+            return;
+        }
+        if (!this.canRefreshAfterHyperionRepositoryChange()) {
+            this.alertService.warning('pendingChanges');
+            return;
+        }
+        if (!skipConfirmation) {
+            this.confirmationService.confirm({
+                key: 'hyperionGenerateConfirmation',
+                header: this.translateService.instant('artemisApp.hyperion.generationActivity.generateConfirmHeader'),
+                message: this.translateService.instant('artemisApp.hyperion.generationActivity.generateConfirmMessage'),
+                rejectButtonProps: {
+                    label: this.translateService.instant('entity.action.cancel'),
+                    severity: 'secondary',
+                },
+                acceptButtonProps: {
+                    label: this.translateService.instant('artemisApp.programmingExercise.codeGeneration.generateCode'),
+                },
+                defaultFocus: 'reject',
+                accept: () => this.dispatchGeneration(exerciseId),
+            });
+            return;
+        }
+        this.dispatchGeneration(exerciseId);
+    }
+
+    private dispatchGeneration(exerciseId: number): void {
+        if (this.isExerciseGenerationActionBlocked()) {
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
@@ -419,7 +546,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected canGenerateExercise(): boolean {
         const exercise = this.exercise;
-        if (exercise?.programmingLanguage !== ProgrammingLanguage.JAVA) {
+        if (!supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType)) {
             return false;
         }
         const isReleased = exercise.releaseDate === undefined || !dayjs(exercise.releaseDate).isAfter(dayjs());
@@ -438,11 +565,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     protected showGenerationActivity(): boolean {
-        return this.hyperionGenerationSupported && !!this.exercise?.id && (this.exercise?.isAtLeastEditor ?? false) && this.canGenerateExercise();
+        return (
+            this.hyperionGenerationSupported &&
+            !!this.exercise?.id &&
+            (this.exercise?.isAtLeastEditor ?? false) &&
+            supportsHyperionExerciseGeneration(this.exercise?.programmingLanguage, this.exercise?.projectType)
+        );
     }
 
     protected canAdaptWithFeedback(): boolean {
-        return this.showGenerationActivity();
+        return this.showGenerationActivity() && this.canGenerateExercise();
     }
 
     protected adaptFromThread(threadId: number): void {
@@ -458,12 +590,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.canAdaptWithFeedback()) {
             return;
         }
+        if (!this.canRefreshAfterHyperionRepositoryChange()) {
+            onCancel?.();
+            this.alertService.warning('pendingChanges');
+            return;
+        }
         const findings = selectedThreadsFindings(this.selectedAdaptFeedbackThreads(), this.translateService);
         const dialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
             header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
             modal: true,
             dismissableMask: true,
             width: '40rem',
+            breakpoints: { '640px': 'calc(100vw - 2rem)' },
             data: { findings } satisfies ReviewAdaptExerciseDialogData,
         });
         dialogRef?.onClose.pipe(take(1)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
@@ -517,7 +655,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private maybeAutoStartExerciseGenerationFromNavigation(): void {
-        if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.showGenerationActivity() || this.isExerciseGenerationActionBlocked()) {
+        if (!this.shouldAutoStartExerciseGeneration || !this.exercise?.id || !this.canGenerateExercise() || this.isExerciseGenerationActionBlocked()) {
             return;
         }
 
@@ -525,7 +663,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         const updatedState = typeof window.history.state === 'object' && window.history.state !== null ? window.history.state : {};
         updatedState[AUTO_START_EXERCISE_GENERATION_STATE] = false;
         window.history.replaceState(updatedState, '');
-        this.startGeneration();
+        this.startGeneration(true);
+    }
+
+    protected onHyperionStartRequested(mode?: HyperionGenerationMode): void {
+        if (mode === 'ADAPT') {
+            this.openAdaptDialog();
+        } else {
+            this.startGeneration();
+        }
     }
 
     override ngOnDestroy() {

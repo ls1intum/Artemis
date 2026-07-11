@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,25 +12,20 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
-/** Data passed into the adapt-exercise dialog. */
 export interface ReviewAdaptExerciseDialogData {
-    /** The structured review-comment findings to address, shown read-only as cards. Absent/empty in the finding-free "free adapt" mode. */
     findings?: AdaptFinding[];
 }
 
-/** The result the dialog hands back when the instructor confirms, or {@code undefined} when cancelled. */
 export interface ReviewAdaptExerciseDialogResult {
-    /** Free-text instructions the instructor added. Optional in review-thread mode, required (non-empty) in free mode. */
     instructions?: string;
 }
 
-/** Artemis Intelligence dialog that collects optional/required instructions and closes with the result; the host assembles and starts the run. */
 @Component({
     selector: 'jhi-review-adapt-exercise-dialog',
     templateUrl: './review-adapt-exercise-dialog.component.html',
     styleUrl: './review-adapt-exercise-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ButtonModule, TagModule, TextareaModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [FormsModule, ButtonModule, TagModule, TextareaModule, MessageModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ReviewAdaptExerciseDialogComponent {
     private readonly dialogRef = inject(DynamicDialogRef);
@@ -45,18 +41,15 @@ export class ReviewAdaptExerciseDialogComponent {
         [ConsistencyIssue.SeverityEnum.Low]: 2,
     };
 
-    /** The structured review-comment findings to address (rendered read-only as cards, highest severity first); empty in the finding-free "free adapt" mode (no open review comments). */
     readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData | undefined)?.findings ?? [])].sort(
         (a, b) => ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[a.severity] - ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[b.severity],
     );
-    /** Whether this is the finding-free "free adapt" mode (no review comments, instructions required). */
     readonly isFreeMode = this.findings.length === 0;
     readonly instructions = signal('');
+    readonly remainingCharacters = computed(() => this.maxInstructionsLength - this.instructions().length);
 
-    /** In free mode the confirm action is blocked until the instructor has typed instructions; with review comments to address the comments alone suffice. */
     readonly confirmDisabled = computed(() => this.isFreeMode && this.instructions().trim().length === 0);
 
-    /** Closes the dialog with the instructions so the host can start the adaptation run for the selected feedback threads (plus these optional instructions). */
     confirm(): void {
         if (this.confirmDisabled()) {
             return;
@@ -65,7 +58,6 @@ export class ReviewAdaptExerciseDialogComponent {
         this.dialogRef.close({ instructions: trimmed || undefined } satisfies ReviewAdaptExerciseDialogResult);
     }
 
-    /** Closes the dialog without adapting. */
     cancel(): void {
         this.dialogRef.close(undefined);
     }

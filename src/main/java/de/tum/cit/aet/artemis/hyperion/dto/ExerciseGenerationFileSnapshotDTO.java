@@ -35,8 +35,9 @@ public record ExerciseGenerationFileSnapshotDTO(@Schema(description = "Constant 
         @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket", allowableValues = {
                 REPOSITORY_SOLUTION, REPOSITORY_TEMPLATE, REPOSITORY_TESTS, REPOSITORY_OTHER }) String repo,
         @Schema(description = "Whether the file was created or edited", allowableValues = { ACTION_CREATE, ACTION_EDIT }) String action,
-        @Schema(description = "The whole current file content (capped)") String content, @Schema(description = "SHA-256 hex digest of the full content") String sha256,
-        @Schema(description = "Full content size in bytes") long bytes, @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
+        @Schema(description = "The whole current file content (capped)") @JsonInclude(JsonInclude.Include.ALWAYS) String content,
+        @Schema(description = "SHA-256 hex digest of the full content") String sha256, @Schema(description = "Full content size in bytes") long bytes,
+        @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
         @Schema(description = "The agent turn the write happened on") int turn, @Schema(description = "The moment the snapshot was produced") Instant timestamp)
         implements Serializable{
 

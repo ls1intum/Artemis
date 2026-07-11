@@ -54,8 +54,7 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String capturedProblemStatement;
 
     /**
-     * Advisory spec-fidelity / coverage findings (the brief-coverage axis the differential oracle is blind to). Purely advisory: never consulted by {@link #isAccepted()}. Empty
-     * when the critic found nothing or was skipped.
+     * Spec-fidelity findings. Coverage findings are advisory; a high-confidence unrequested adaptation change prevents direct persistence to the live exercise.
      */
     private final SpecFidelityReport specFidelityReport;
 
@@ -108,7 +107,7 @@ public final class GenerationOutcome implements AutoCloseable {
      * @return {@code true} only when verification accepted the exercise
      */
     public boolean isAccepted() {
-        return verification != null && verification.accepted();
+        return verification != null && verification.accepted() && !specFidelityReport.hasBlockingFindings();
     }
 
     public AgentLoopResult loopResult() {

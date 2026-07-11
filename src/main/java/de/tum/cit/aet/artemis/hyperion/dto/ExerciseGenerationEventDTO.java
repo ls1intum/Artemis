@@ -56,7 +56,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
         SUCCESS,
         /** Not fully converged but a usable best-effort draft was saved with verification findings attached as review comments to resolve. */
         NEEDS_REVIEW,
-        /** The run finished without saving (e.g. nothing usable was produced, or recovery itself failed); the exercise was left untouched. */
+        /** Saving did not complete; partial draft branches or live changes may exist and require manual review. */
         PARTIAL
     }
 

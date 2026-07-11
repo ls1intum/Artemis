@@ -63,9 +63,11 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+const MIN_MEANINGFUL_SPEC_LENGTH = 40;
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -209,6 +211,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseIdForAi = signal<number | undefined>(undefined);
     programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
+    programmingExerciseProjectTypeForAi = signal<ProjectType | null | undefined>(undefined);
 
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
@@ -219,6 +222,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this._programmingExercise.set(value);
         this.programmingExerciseIdForAi.set(value.id);
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
+        this.programmingExerciseProjectTypeForAi.set(value.projectType);
     }
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
@@ -317,7 +321,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
             !this.isImportFromSharingForAi() &&
-            this.programmingExerciseLanguageForAi() === ProgrammingLanguage.JAVA
+            supportsHyperionExerciseGeneration(this.programmingExerciseLanguageForAi(), this.programmingExerciseProjectTypeForAi())
         );
     });
 
@@ -410,6 +414,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
+            this.programmingExerciseProjectTypeForAi.set(this.programmingExercise.projectType);
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
@@ -459,6 +464,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set selectedProjectType(type: ProjectType) {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
+        this.programmingExerciseProjectTypeForAi.set(this.programmingExercise.projectType);
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
@@ -838,6 +844,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with AI preparation.
      */
     saveWithAi() {
+        if ((this.programmingExercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+            return;
+        }
         this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 

@@ -30,7 +30,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRecoveryService;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * <p>
  * Every terminal state emits a clear, distinct event: {@code SUCCESS} (verified and saved), {@code NEEDS_REVIEW} (repository draft saved with review comments to resolve),
  * {@code PARTIAL}
- * (nothing usable was produced, or recovery itself failed — the exercise is left untouched and the run can be retried), plus cancellation and error. A recovered draft is never
+ * (saving did not complete and any partial repository state needs manual review), plus cancellation and error. A recovered draft is never
  * presented as a verified exercise: only the {@code SUCCESS} path is clean; {@code NEEDS_REVIEW} always carries the gaps the instructor must fix. The {@link GenerationOutcome} is
  * always closed here so the sandbox container is destroyed on every path.
  */
@@ -77,7 +78,7 @@ public class GenerationTaskService {
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
-    private final ExerciseAdaptationRevertService adaptationRevertService;
+    private final ExerciseGenerationRevertService generationRevertService;
 
     private final TaskScheduler taskScheduler;
 
@@ -89,7 +90,7 @@ public class GenerationTaskService {
 
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationRecoveryService recoveryService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionGenerationBudgetService generationBudgetService, ExerciseAdaptationRevertService adaptationRevertService,
+            HyperionGenerationBudgetService generationBudgetService, ExerciseGenerationRevertService generationRevertService,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration,
             @Value("${artemis.hyperion.agent.max-tokens-per-job:1500000}") long maxTokensPerJob,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
@@ -100,7 +101,7 @@ public class GenerationTaskService {
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.generationBudgetService = generationBudgetService;
-        this.adaptationRevertService = adaptationRevertService;
+        this.generationRevertService = generationRevertService;
         this.taskScheduler = taskScheduler;
         this.maxJobDuration = maxJobDuration;
         this.maxTokensPerJob = maxTokensPerJob;
@@ -189,13 +190,8 @@ public class GenerationTaskService {
                                 String originalTitle = event.expectedTitle();
                                 GenerationPersistenceService.PersistResult persistResult = persistenceService.persist(exerciseToPersist, user, outcome, originalProblemStatement,
                                         originalTitle, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
-                                if (event.mode() == GenerationMode.ADAPT) {
-                                    adaptationRevertService.recordBaseline(exerciseToPersist, jobId, persistResult.prePersistHeads(), persistResult.postPersistHeads(),
-                                            originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle());
-                                }
-                                else {
-                                    discardOlderBaselineAfterPersist(exerciseId);
-                                }
+                                generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(), persistResult.postPersistHeads(),
+                                        originalProblemStatement, originalTitle, persistResult.persistedProblemStatement(), persistResult.persistedTitle());
                                 int advisoryCount = recoveryService.surfaceAdvisoryFindings(exerciseToPersist, user, outcome.specFidelityReport());
                                 String advisory = advisoryCount == 1 ? " 1 review note was added for your attention."
                                         : advisoryCount > 1 ? " " + advisoryCount + " review notes were added for your attention." : "";
@@ -205,9 +201,9 @@ public class GenerationTaskService {
                             }
                             catch (GenerationIncompleteException e) {
                                 log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
-                                emitter.milestone(
-                                        ExerciseGenerationEventDTO.done("Verification passed, but saving the exercise did not complete safely. Please review the exercise.",
-                                                ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
+                                emitter.milestone(ExerciseGenerationEventDTO.done(
+                                        "Verification passed, but saving did not complete. Some generated changes may already have been saved; manual review is required.",
+                                        ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
                             }
                             catch (RuntimeException e) {
                                 log.error("Failed to persist generated exercise {}", exerciseId, e);
@@ -241,15 +237,6 @@ public class GenerationTaskService {
         }
     }
 
-    private void discardOlderBaselineAfterPersist(long exerciseId) {
-        try {
-            adaptationRevertService.discardBaseline(exerciseId);
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not discard an older adaptation baseline after persisting exercise {}", exerciseId, e);
-        }
-    }
-
     private void releaseBudgetReservation(GenerationStartedEvent event) {
         generationBudgetService.releaseReservation(event.budgetReservationId());
     }
@@ -268,9 +255,14 @@ public class GenerationTaskService {
      */
     private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
             GenerationProgressEmitter emitter) {
-        String reason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
+        boolean scopeBlocked = outcome.specFidelityReport().hasBlockingFindings();
+        String scopeReason = outcome.specFidelityReport().findings().stream().filter(
+                finding -> finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE)
+                .map(SpecFidelityReport.Finding::detail).collect(Collectors.joining(" "));
+        String reason = scopeBlocked ? scopeReason : outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
         try {
-            emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
+            emitter.progress(scopeBlocked ? "Build and grading checks passed, but the adaptation-scope review requires manual review. Saving an isolated draft."
+                    : "Verification did not pass. Saving the best-effort draft and recording what to review.");
             GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
@@ -281,11 +273,12 @@ public class GenerationTaskService {
             // recover only throws when persist itself failed, so reaching here means the repository draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save
             // (review comments
             // could not be attached), which the message states explicitly.
+            String outcomeSummary = scopeBlocked
+                    ? "Build and grading checks passed, but the adaptation changed content outside the requested scope or its scope could not be verified."
+                    : "The generated draft did not pass verification.";
             String message = issueCount < 0
-                    ? "A draft exercise was generated but did not pass verification, so it needs your review before use. The review notes could not be attached automatically — "
-                            + "open the exercise and review it manually before grading." + placement + " " + reason
-                    : "A draft exercise was generated but did not pass verification, so it needs your review before use. " + issueCount + " issue(s) to review were added to the "
-                            + "exercise." + placement + " " + reason;
+                    ? outcomeSummary + " The review notes could not be attached automatically — open the exercise and review it manually before grading." + placement + " " + reason
+                    : outcomeSummary + " " + issueCount + " issue(s) to review were added to the exercise." + placement + " " + reason;
             emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict, false));
         }
         catch (RuntimeException e) {

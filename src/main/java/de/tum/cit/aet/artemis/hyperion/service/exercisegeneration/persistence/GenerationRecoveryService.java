@@ -150,17 +150,15 @@ public class GenerationRecoveryService {
             findings.add(finding(Severity.MEDIUM, "Note from the generation agent: " + agentNote.trim(),
                     "Use the agent's note for context on what was attempted and what remains to be done."));
         }
-        // Advisory spec-fidelity / coverage gaps (the brief-coverage axis the oracle is blind to): non-blocking context only, never part of the accept/reject verdict.
         findings.addAll(specFidelityFindings(outcome.specFidelityReport()));
         return findings;
     }
 
     /**
-     * Translates the advisory spec-fidelity report into review findings. Shared by the recovery path (non-accepted draft) and the accepted path, so the same brief-coverage gaps
-     * surface to the instructor whether or not the differential oracle accepted the exercise.
+     * Translates spec-fidelity and adaptation-scope findings for instructor review.
      *
-     * @param report the advisory spec-fidelity report
-     * @return one MEDIUM consistency issue per finding (possibly empty)
+     * @param report the spec-fidelity report
+     * @return one consistency issue per finding (possibly empty)
      */
     static List<ConsistencyIssueDTO> specFidelityFindings(SpecFidelityReport report) {
         List<ConsistencyIssueDTO> findings = new ArrayList<>();
@@ -169,10 +167,14 @@ public class GenerationRecoveryService {
                 case MECHANICS_LEAK -> "Grader-mechanics phrasing in the student-facing problem statement: \"" + finding.requirement() + "\"";
                 case MISSING_WORKED_EXAMPLE -> "Error/edge behaviour without a concrete worked example: \"" + finding.requirement() + "\"";
                 case INVENTED_REQUIREMENT -> "Requirement not asked for by the brief (confirm or remove): \"" + finding.requirement() + "\"";
+                case UNREQUESTED_ADAPTATION_CHANGE -> "Adaptation changed content outside the requested scope: \"" + finding.requirement() + "\"";
+                case ADAPTATION_SCOPE_REVIEW_UNAVAILABLE -> "Adaptation scope could not be verified automatically";
                 case UNCOVERED_REQUIREMENT -> "Possible coverage gap against the brief: \"" + finding.requirement() + "\"";
                 case MISSING_FAILURE_MESSAGE -> "Graded tests give no failure message, so a failing student sees only \"expected X but was Y\": " + finding.requirement();
             };
-            findings.add(finding(Severity.MEDIUM, title, finding.detail()));
+            Severity severity = finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE
+                    || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE ? Severity.HIGH : Severity.MEDIUM;
+            findings.add(finding(severity, title, finding.detail()));
         }
         return findings;
     }

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,9 +14,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param mode            the explicit run intent (generate vs. adapt), so a reconnecting client can restore the correct header label and the revert affordance without inferring it
  * @param events          the events produced so far, oldest first, to replay into the transcript
  * @param fileSnapshots   the latest whole-file snapshot per file written so far, in write order, so a reloading client can rehydrate the live editor preview and resume the stream
- * @param revertAvailable whether the server still retains the baseline required to undo the latest adaptation
+ * @param revertAvailable whether the server still retains the baseline required to undo the latest successful generation or adaptation
+ * @param revertJobId     the successful run whose baseline can be reverted; may differ from {@code jobId} when a later run failed or was cancelled
+ * @param revertMode      the mode of {@code revertJobId}, used for truthful undo copy
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
-        List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable) {
+public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, @JsonInclude(JsonInclude.Include.ALWAYS) List<ExerciseGenerationEventDTO> events,
+        @JsonInclude(JsonInclude.Include.ALWAYS) List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable, @Nullable String revertJobId,
+        @Nullable GenerationMode revertMode) {
+
+    public ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
+            List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable) {
+        this(jobId, running, mode, events, fileSnapshots, revertAvailable, null, null);
+    }
 }

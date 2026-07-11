@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -30,6 +32,65 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class GenerationWorkspaceServiceTest {
+
+    @Test
+    void prepareRepositoryForGeneration_removesExerciseArtifactsButKeepsBuildConfiguration() throws Exception {
+        Path root = Files.createTempDirectory("hyperion-generation-seed");
+        try {
+            Files.createDirectories(root.resolve("src/de/test"));
+            Files.writeString(root.resolve("src/de/test/BubbleSort.java"), "class BubbleSort {}");
+            Files.writeString(root.resolve("pom.xml"), "<project />");
+
+            GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.SOLUTION, GenerationMode.GENERATE);
+
+            assertThat(root.resolve("src")).doesNotExist();
+            assertThat(root.resolve("pom.xml")).hasContent("<project />");
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+        }
+    }
+
+    @Test
+    void prepareTestRepositoryForGeneration_removesConventionalAndCategorizedTests() throws Exception {
+        Path root = Files.createTempDirectory("hyperion-generation-tests-seed");
+        try {
+            for (String testRoot : Set.of("test", "behavior/test", "structural/test")) {
+                Path test = root.resolve(testRoot).resolve("de/test/BubbleSortTest.java");
+                Files.createDirectories(test.getParent());
+                Files.writeString(test, "class BubbleSortTest {}");
+            }
+            Files.createDirectories(root.resolve("behavior"));
+            Files.writeString(root.resolve("behavior/build.gradle"), "plugins {}");
+
+            GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.TESTS, GenerationMode.GENERATE);
+
+            assertThat(root.resolve("test")).doesNotExist();
+            assertThat(root.resolve("behavior/test")).doesNotExist();
+            assertThat(root.resolve("structural/test")).doesNotExist();
+            assertThat(root.resolve("behavior/build.gradle")).hasContent("plugins {}");
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+        }
+    }
+
+    @Test
+    void prepareRepositoryForAdaptation_preservesExistingArtifacts() throws Exception {
+        Path root = Files.createTempDirectory("hyperion-adaptation-seed");
+        try {
+            Path source = root.resolve("src/de/test/Inventory.java");
+            Files.createDirectories(source.getParent());
+            Files.writeString(source, "class Inventory {}");
+
+            GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.SOLUTION, GenerationMode.ADAPT);
+
+            assertThat(source).hasContent("class Inventory {}");
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+        }
+    }
 
     @Test
     void sessionSpec_disablesNetworkEgressByDefault() {
@@ -53,7 +114,7 @@ class GenerationWorkspaceServiceTest {
         when(exercise.getRepositoryURI(any(RepositoryType.class))).thenReturn(mock(LocalVCRepositoryUri.class));
         GenerationWorkspaceService service = new GenerationWorkspaceService(gitService, mock(), mock(), mock(), tempFileUtilService());
 
-        assertThatThrownBy(() -> service.seedWorkspace(mock(InteractiveSandbox.class), "session", exercise)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> service.seedWorkspace(mock(InteractiveSandbox.class), "session", exercise, GenerationMode.GENERATE)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("TEMPLATE repository");
     }
 

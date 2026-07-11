@@ -74,7 +74,9 @@
                 "suggestedFixLabel": "Lösungsvorschlag",
                 "suggestedFixRemoveLabel": "Entfernen",
                 "cancel": "Abbrechen",
-                "confirm": "Aufgabe anpassen"
+                "confirm": "Aufgabe anpassen",
+                "persistenceNotice": "Akzeptierte Ergebnisse werden automatisch in Aufgabenstellung, Template, Musterlösung und Tests gespeichert. Prüfe alle Bestandteile vor der Freigabe. Rückgängig ist nur möglich, solange der temporäre In-Memory-Ausgangsstand verfügbar ist und keine späteren Repository-Änderungen im Konflikt stehen.",
+                "charactersRemaining": "Noch {{ count }} Zeichen"
             }
         }
     }

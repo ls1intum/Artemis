@@ -638,7 +638,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 </Callout>
 
-Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. The AI assists the process while the instructor retains full control — every AI-generated modification must be reviewed and accepted through a diff view before it is applied.
+Artemis integrates AI-assisted authoring capabilities into the programming exercise editor through the Hyperion module. These features help instructors generate, refine, and analyze problem statements without leaving the editor. Problem-statement-only generation and refinement are review-first: proposed changes appear in a diff before you apply them. Whole-exercise generation and adaptation use the automatic persistence workflow described below.
 
 The AI-assisted authoring features are organized into two areas:
 
@@ -687,7 +687,7 @@ To modify a specific portion of the problem statement, select a text region in t
 
 #### Diff View
 
-All AI-generated modifications — from generation, refinement, quality fixes, and difficulty adaptation — are presented in a diff view before application. The left column shows the current problem statement with deletions highlighted in red, while the right column shows the proposed revision with additions highlighted in green. A summary bar reports the net change statistics. You can accept, discard, or toggle between split and inline views.
+AI-assisted problem-statement refinements, quality fixes, and difficulty adaptations are presented in a diff view before application. Whole-exercise generation uses a separate informed confirmation, saves only after automated build and grading checks, and then offers exact saved-change review and undo actions in the editor. In the problem-statement diff, the left column shows deletions in red and the right column shows additions in green. You can accept, discard, or toggle between split and inline views.
 
 <Image
     src={hyperionDiffView}
@@ -748,12 +748,12 @@ Click **Analyze Problem Statement** in the checklist panel to run all three anal
 
 </Callout>
 
-Hyperion can generate or adapt a complete Java programming exercise: problem statement, template, solution, and tests. The action is limited to unreleased draft exercises without student participations. Treat every result as a draft and review it before release.
+Hyperion can generate or adapt a complete Java Maven or Gradle programming exercise: problem statement, template, solution, and tests. The action is limited to supported unreleased draft exercises without student participations. Accepted output is saved automatically after mechanical verification. Treat every result as a draft and review every artifact before release.
 
 There are two entry points:
 
 - **During exercise creation:** For a new Java programming exercise, choose **Generate with AI**. Artemis creates the exercise and repositories, opens the online editor, and starts generation.
-- **From the online editor:** Use **Artemis Intelligence** → **Generate exercise**. For an existing exercise, **Adapt exercise** can apply selected consistency-review feedback plus optional instructions.
+- **From the online editor:** Describe the exercise requirements in the problem statement, then use **Artemis Intelligence** → **Generate exercise**. For an existing exercise, **Adapt exercise** can apply selected consistency-review feedback plus optional instructions.
 
 <Image
     src={hyperionGenerateWithAi}
@@ -772,11 +772,11 @@ Use **Apply with AI** on active consistency-review threads to include them in th
 
 <Image src={hyperionRemoveSelection} alt="Remove Selection button in a selected review thread" size={ImageSize.large} caption="Remove Selection action for selected feedback" />
 
-The activity panel streams progress and changed-file previews. A reload reconnects to the retained job state. You can cancel a running job; cancellation is cooperative and can take effect after the current model or build operation returns.
+Before a manually started generation or adaptation, Artemis explains that accepted output is saved automatically. The activity panel streams progress and changed-file previews. After persistence, **Review saved changes** opens the problem-statement version history or the exact Hyperion commit diff for each touched repository. A reload reconnects to the retained job state. You can cancel a running job; cancellation is cooperative and can take effect after the current model or build operation returns.
 
-Hyperion accepts generated content only after an isolated verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. Only accepted output can update the live exercise. A rejected but recoverable draft can instead be saved to isolated review branches; review and merge all three repositories with an external Git client because Artemis does not expose custom branches. A partial live update is reported as requiring manual review and cannot be reverted automatically.
+Hyperion accepts generated content only after an isolated mechanical verification run confirms that the solution passes, the template fails the required tests, task bindings resolve, and protected test infrastructure remains unchanged. These checks do not establish pedagogical quality or semantic completeness; instructor review remains required. Only accepted output can update the live exercise. A rejected but recoverable draft can instead be saved to isolated review branches; review and merge all three repositories with an external Git client because Artemis does not expose custom branches. A `PARTIAL` result means that live persistence was incomplete or that recoverable output exists only on isolated recovery branches. It is not fully saved, requires manual review, and cannot be reverted automatically.
 
-A successfully persisted adaptation offers **Undo adaptation** for up to seven days while the in-memory baseline remains available, provided the repositories have not changed again. Undo restores the captured pre-adaptation commits and problem statement; a full cluster restart can make the action unavailable earlier.
+A successfully persisted generation or adaptation offers **Undo generation** or **Undo adaptation** while its in-memory baseline remains available, provided the repositories have not changed again. Undo restores the captured pre-run commits and problem statement. The action is not crash-durable: a server restart or conflicting repository change can make it unavailable. Review and undo promptly when needed.
 
 <Callout variant={CalloutVariant.warning}>
 

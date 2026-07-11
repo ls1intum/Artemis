@@ -8,6 +8,7 @@
                 "running": "Generating…",
                 "adapting": "Adapting…",
                 "adaptStartFailed": "Could not start the adaptation.",
+                "meaningfulSpecRequired": "Describe the exercise requirements in at least 40 characters before generating it.",
                 "checkingStatus": "Checking generation status…",
                 "refreshingEditor": "Updating the editor with the saved exercise…",
                 "editorRefreshFailed": "The exercise was saved, but the editor could not be updated.",
@@ -16,22 +17,25 @@
                 "retryStatus": "Retry status check",
                 "cancel": "Cancel",
                 "cancelling": "Cancelling…",
-                "revert": "Undo adaptation",
                 "reverting": "Undoing…",
-                "revertTooltip": "Restore the exercise to the state before the most recent successful adaptation.",
-                "revertConfirmHeader": "Undo the most recent successful adaptation?",
-                "revertConfirmMessage": "This restores the problem statement and repositories to their state before the most recent successful adaptation. You cannot restore the adapted version afterward.",
-                "reverted": "Adaptation undone",
-                "revertSuccess": "The adaptation was undone.",
-                "revertFailed": "Could not undo the adaptation.",
                 "hideDetails": "Hide details",
                 "showDetails": "Show details",
                 "hideChangedFiles": "Hide changed files",
                 "showChangedFiles": "Show changed files",
                 "changedFiles": "Files touched by the agent",
+                "reviewSavedChanges": "Review saved changes",
+                "reviewSavedChangesHint": "Open the exercise version history or the exact saved repository commit.",
+                "reviewUnavailable": "The saved Hyperion commit could not be found. Open the repository history and review the changes manually.",
+                "reviewTarget": {
+                    "problem-statement": "Problem statement history",
+                    "solution": "Solution diff",
+                    "template": "Template diff",
+                    "tests": "Tests diff"
+                },
                 "recentActivity": "Recent activity",
                 "emptyTitle": "No generation activity yet",
                 "emptyHint": "Start generation here or from the Artemis Intelligence menu.",
+                "unavailableHint": "Generation is unavailable after release or student participation.",
                 "repo": {
                     "solution": "Solution",
                     "template": "Template",
@@ -44,29 +48,48 @@
                     "draft": "Draft saved — live exercise unchanged",
                     "notSaved": "Not saved",
                     "cancelled": "Not saved — cancelled",
-                    "failed": "Not saved — failed"
+                    "failed": "Not saved — failed",
+                    "partial": "Not fully saved — manual review required"
                 },
                 "verdict": {
-                    "checksPassed": "Checks passed",
-                    "checksFailed": "Checks failed",
                     "solutionPassedExpected": "Reference solution passes",
                     "solutionFailed": "Reference solution fails",
                     "templateFailedExpected": "Template fails tests as expected",
                     "templatePassedUnexpected": "Template unexpectedly passes tests",
                     "oneTest": "test",
-                    "tests": "tests"
+                    "tests": "tests",
+                    "consistencyChecksPassed": "Build and grading consistency checks passed",
+                    "consistencyChecksFailed": "Build or grading consistency checks failed",
+                    "instructorReviewRequired": "Instructor review required"
                 },
                 "completionStatus": {
                     "SUCCESS": "Saved",
                     "NEEDS_REVIEW": "Needs review",
-                    "PARTIAL": "Not saved"
+                    "PARTIAL": "Not fully saved — manual review required"
                 },
                 "terminalStatus": {
                     "DONE": "Generation finished",
                     "CANCELLED": "Cancelled",
                     "ERROR": "Failed"
                 },
-                "revertPartialFailed": "The adaptation could not be fully reverted. Reverted repositories: {{repositories}}. Please review the remaining repositories manually."
+                "revertPartialFailed": "The AI changes could not be fully undone. Reverted repositories: {{repositories}}. Review the remaining repositories manually.",
+                "runAgain": "Run again",
+                "undoGeneration": "Undo generation",
+                "undoAdaptation": "Undo adaptation",
+                "undoGenerationTooltip": "Restore the exercise to the state before the most recent successful generation.",
+                "undoAdaptationTooltip": "Restore the exercise to the state before the most recent successful adaptation.",
+                "undoGenerationConfirmHeader": "Undo the most recent successful generation?",
+                "undoGenerationConfirmMessage": "This restores the problem statement and repositories to their state before generation. You cannot restore the generated version afterward.",
+                "undoAdaptationConfirmHeader": "Undo the most recent successful adaptation?",
+                "undoAdaptationConfirmMessage": "This restores the problem statement and repositories to their state before adaptation. You cannot restore the adapted version afterward.",
+                "generateConfirmHeader": "Generate and automatically save this exercise?",
+                "generateConfirmMessage": "Hyperion will replace the problem statement, template, solution, and tests after mechanical verification, then save the accepted output automatically. Review every artifact before release. Undo is temporary, stored only in memory, and becomes unavailable after conflicting repository changes or a server restart.",
+                "generationUndone": "Generation undone",
+                "adaptationUndone": "Adaptation undone",
+                "undoGenerationSuccess": "The generation was undone.",
+                "undoAdaptationSuccess": "The adaptation was undone.",
+                "undoGenerationFailed": "Could not undo the generation.",
+                "undoAdaptationFailed": "Could not undo the adaptation."
             }
         }
     }

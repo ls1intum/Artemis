@@ -114,9 +114,10 @@ class GenerationOrchestrationServiceTest {
         // Default to a successful, empty extraction (the verifier is mocked, so files are not inspected here).
         when(workspace.extractRepository(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
-        when(workspace.seedWorkspace(any(), anyString(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
+        when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
         // Default the advisory critic to no findings; specific tests override it.
         when(specFidelityCritic.critique(any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         // renderForRetryPrompt is a pure renderer; delegate to the real impl so the retry prompt is folded exactly as in production.
         SpecFidelityCriticService renderingDelegate = new SpecFidelityCriticService(null, new ObjectMapper());
         when(specFidelityCritic.renderForRetryPrompt(any())).thenAnswer(invocation -> renderingDelegate.renderForRetryPrompt(invocation.getArgument(0)));
@@ -202,6 +203,7 @@ class GenerationOrchestrationServiceTest {
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
         verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture());
+        verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.ADAPT);
         assertThat(requestCaptor.getValue().baselineGradedTestNames()).as("ADAPT hands the persisted graded test names to the total-wipe gate")
                 .containsExactlyInAnyOrder("evictsLeastRecentlyUsed", "capacityIsRespected");
     }
@@ -215,6 +217,8 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isAccepted()).isTrue();
         }
+
+        verify(workspace).seedWorkspace(sandbox, SESSION_ID, exercise, GenerationMode.GENERATE);
 
         ArgumentCaptor<VerificationRequest> requestCaptor = ArgumentCaptor.forClass(VerificationRequest.class);
         verify(verifier).verify(any(), anyString(), any(), requestCaptor.capture());
@@ -314,6 +318,69 @@ class GenerationOrchestrationServiceTest {
         assertThat(promptCaptor.getAllValues().get(1)).contains("passed differential verification").contains("quality gaps").contains("CJK characters");
     }
 
+    @Test
+    void acceptedAdaptationWithOnlyAdvisoryFindings_stopsInsteadOfRiskingUnrequestedPolish() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(reportWith("add assertion messages"));
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Change remove only and preserve everything else", "job", GenerationMode.ADAPT, () -> false, null, null,
+                response -> {
+                })) {
+            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
+        }
+        verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void acceptedAdaptationWithPersistentScopeDrift_isNotAcceptedForLivePersistence() {
+        SpecFidelityReport scopeDrift = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE,
+                "solution/src/Inventory.java removed displayName(String)", "The feedback explicitly required preserving it.")));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(scopeDrift);
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Change only remove; preserve displayName", "job", GenerationMode.ADAPT, () -> false, null, null,
+                response -> {
+                })) {
+            assertThat(outcome.isAccepted()).as("unresolved adaptation scope drift must go to the isolated review draft, never live persistence").isFalse();
+            assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
+        }
+    }
+
+    @Test
+    void unchangedAdaptationStillRequiresTheFailClosedScopeReview() {
+        when(exercise.getProblemStatement()).thenReturn("PROBLEM STATEMENT");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any()))
+                .thenReturn(SpecFidelityReport.adaptationScopeUnavailable("The adaptation scope reviewer is unavailable."));
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", JOB_ID, GenerationMode.ADAPT, () -> false, null, null, null)) {
+            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
+        }
+
+        verify(specFidelityCritic, atLeastOnce()).critiqueAdaptation(eq("Change one method only"), eq("PROBLEM STATEMENT"), any(), eq(""), any());
+        verify(specFidelityCritic, never()).critique(any(), any(), any(), any());
+    }
+
+    @Test
+    void adaptationCriticExceptionOrTruncatedEvidence_neverAllowsLivePersistence() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
+        when(workspace.seedWorkspace(any(), anyString(), any(), any())).thenReturn(
+                new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of(RepositoryType.SOLUTION, Map.of("src/Huge.java", "x".repeat(30_000)))));
+        when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenThrow(new RuntimeException("critic plumbing failed"));
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Change one method only", "job", GenerationMode.ADAPT, () -> false, null, null, response -> {
+        })) {
+            assertThat(outcome.isAccepted()).isFalse();
+            assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
+        }
+    }
+
     /** On rejection with attempts remaining, the critic's findings are folded into the retry prompt alongside the authoritative rejection reason. */
     @Test
     void rejectedWithCriticFindings_foldsAdvisoryGapsIntoRetryPrompt() {
@@ -368,6 +435,18 @@ class GenerationOrchestrationServiceTest {
     void extractTaskBoundTestNames_dedupesAndTrims() {
         assertThat(GenerationOrchestrationService.extractTaskBoundTestNames("")).isEmpty();
         assertThat(GenerationOrchestrationService.extractTaskBoundTestNames("[task][A]( t1 , t2 )\n[task][B](t2,t3)")).containsExactly("t1", "t2", "t3");
+    }
+
+    @Test
+    void adaptationChangeSummary_preservesOrderingEvidenceAndReportsTruncation() {
+        String reordered = GenerationOrchestrationService.renderAdaptationChanges("same", "same",
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Example.java", "first\nsecond\nthird\n")),
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Example.java", "second\nfirst\nthird\n")));
+
+        assertThat(reordered).contains("--- solution/src/Example.java").contains("- second").contains("+ second");
+
+        String truncated = GenerationOrchestrationService.renderAdaptationChanges("", "x".repeat(30_000), Map.of(), Map.of());
+        assertThat(truncated).contains("change summary truncated").hasSizeLessThanOrEqualTo(24_000);
     }
 
     // --- Turn-0 workspace layout seeding (Fix #2) ----------------------------------------------------------------------------------------------------------------------------

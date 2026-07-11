@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -20,6 +21,10 @@ import java.util.regex.Pattern;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.Edit;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +78,10 @@ public class GenerationOrchestrationService {
 
     private static final int VERIFY_WORKSPACE_MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
 
+    private static final int MAX_ADAPTATION_CHANGE_CHARS = 24_000;
+
+    private static final String CHANGE_SUMMARY_TRUNCATED = "\n... [change summary truncated]\n";
+
     private static final int VERIFY_WORKSPACE_MAX_ENTRIES = 10_000;
 
     /**
@@ -96,8 +105,7 @@ public class GenerationOrchestrationService {
 
     private final StructuralOracleSeedingService structuralOracleSeeder;
 
-    // Advisory critic for the brief-coverage axis the differential verifier is blind to. Non-blocking: never affects the final verdict; while attempts remain it can still trigger
-    // a polish retry for an otherwise accepted exercise, and any remaining findings surface as advisory review comments.
+    // Reviews brief coverage and, for adaptations, blocks acceptance when unrelated changes cannot be ruled out.
     private final SpecFidelityCriticService specFidelityCritic;
 
     // Used to register a node-local cancel hook that destroys the sandbox session, so a cancellation during a long build interrupts promptly rather than at the next between-turn
@@ -151,6 +159,7 @@ public class GenerationOrchestrationService {
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
+        String baselineProblemStatement = exercise.getProblemStatement();
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
@@ -162,11 +171,12 @@ public class GenerationOrchestrationService {
             String activeSessionId = sessionId;
             jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
 
-            emit(progress, "Loading the example exercise");
+            emit(progress, mode == GenerationMode.GENERATE ? "Preparing a clean exercise workspace" : "Loading the existing exercise");
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
-            GenerationWorkspaceService.WorkspaceSeed workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise);
+            GenerationWorkspaceService.WorkspaceSeed workspaceSeed = workspace.seedWorkspace(sandbox, sessionId, exercise, mode);
             Map<String, String> placeholderReplacements = ciPlaceholderReplacements(exercise);
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
+            Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
 
             String systemPrompt = systemPromptService.build(exercise, mode);
             // The agent's `verify` tool runs the same differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); the post-loop
@@ -257,19 +267,28 @@ public class GenerationOrchestrationService {
                 }
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`. Shares the run's usage sink so the critic's LLM call is counted, not dropped.
-                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), effectiveUsageSink,
-                        progress);
+                @Nullable
+                String adaptationChanges = mode == GenerationMode.ADAPT
+                        ? renderAdaptationChanges(baselineProblemStatement, producedProblemStatement, baselineRepositoryFiles, producedFilesByType)
+                        : null;
+                specFidelityReport = runSpecFidelityCritic(userPrompt, producedProblemStatement, exercise.getProgrammingLanguage(), producedTests.files(), adaptationChanges,
+                        effectiveUsageSink, progress);
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
                     return GenerationOutcome.cancelled(cancelledResult(loopResult));
                 }
 
-                if (verification.accepted() && !specFidelityReport.hasFindings() || attempt == MAX_GENERATION_ATTEMPTS) {
+                boolean acceptedWithoutRequiredRetry = verification.accepted()
+                        && (!specFidelityReport.hasFindings() || mode == GenerationMode.ADAPT && !specFidelityReport.hasBlockingFindings());
+                if (acceptedWithoutRequiredRetry || attempt == MAX_GENERATION_ATTEMPTS) {
                     break;
                 }
                 if (verification.accepted()) {
-                    emit(progress, "Verification accepted the exercise, but the spec-fidelity review found quality gaps; asking the agent to polish the exercise.");
-                    currentPrompt = "Your previous attempt passed differential verification, but the spec-fidelity review found quality gaps. Keep the accepted behaviour intact, "
+                    emit(progress,
+                            mode == GenerationMode.ADAPT
+                                    ? "Verification accepted the exercise, but the adaptation-scope review found unrequested changes; asking the agent to restore them."
+                                    : "Verification accepted the exercise, but the spec-fidelity review found quality gaps; asking the agent to polish the exercise.");
+                    currentPrompt = "Your previous attempt passed differential verification, but the review found changes that must be corrected. Keep the accepted behaviour intact, "
                             + "fix only these quality gaps, re-run `sh verify.sh solution` and `sh verify.sh template`, then call submit again."
                             + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
                     continue;
@@ -310,21 +329,27 @@ public class GenerationOrchestrationService {
     private static final Pattern TASK_BINDING = Pattern.compile("\\[task]\\[[^]]*]\\(([^)]*)\\)");
 
     /**
-     * Runs the advisory spec-fidelity critic against one attempt's produced artifacts, never throwing, so the critic can never perturb the run.
+     * Reviews spec fidelity and adaptation scope without allowing reviewer failures to escape the orchestration boundary.
      *
      * @param brief            the instructor brief for this run
      * @param problemStatement the produced student-facing problem statement
      * @param language         the exercise language (may be {@code null})
      * @param producedTests    the produced tests-repo files (path to content), used to derive the test identifiers
      * @param progress         the progress sink for a short transcript line
-     * @return the advisory report (possibly empty); never {@code null}
+     * @return the report (possibly empty); never {@code null}
      */
     private SpecFidelityReport runSpecFidelityCritic(String brief, String problemStatement, @Nullable ProgrammingLanguage language, Map<String, String> producedTests,
-            Consumer<ChatResponse> usageSink, Consumer<String> progress) {
+            @Nullable String adaptationChanges, Consumer<ChatResponse> usageSink, Consumer<String> progress) {
         try {
             List<String> testNames = extractTaskBoundTestNames(problemStatement);
-            SpecFidelityReport report = specFidelityCritic.critique(brief, problemStatement, testNames, usageSink);
-            // Merge the model-free messageless-assertion check into the same advisory report (folds into the retry prompt / review comments, never affects acceptance).
+            SpecFidelityReport report = adaptationChanges == null ? specFidelityCritic.critique(brief, problemStatement, testNames, usageSink)
+                    : specFidelityCritic.critiqueAdaptation(brief, problemStatement, testNames, adaptationChanges, usageSink);
+            if (adaptationChanges != null && adaptationChanges.contains(CHANGE_SUMMARY_TRUNCATED)) {
+                List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
+                combined.addAll(SpecFidelityReport.adaptationScopeUnavailable("The bounded change summary was truncated, so not every changed line could be reviewed.").findings());
+                report = new SpecFidelityReport(List.copyOf(combined));
+            }
+            // Messageless assertions remain advisory and share the same retry/review channel.
             List<SpecFidelityReport.Finding> messageless = specFidelityCritic.detectMessagelessAssertions(language, producedTests);
             if (!messageless.isEmpty()) {
                 List<SpecFidelityReport.Finding> combined = new ArrayList<>(report.findings());
@@ -332,14 +357,65 @@ public class GenerationOrchestrationService {
                 report = new SpecFidelityReport(combined);
             }
             if (report.hasFindings()) {
-                emit(progress, "Spec-fidelity review found " + report.findings().size()
-                        + " advisory gap(s) against the brief (these do not affect acceptance; they are surfaced for review).");
+                emit(progress, "Spec-fidelity review found " + report.findings().size() + " gap(s) against the brief; unresolved adaptation scope changes require manual review.");
             }
             return report;
         }
         catch (RuntimeException e) {
-            log.warn("Spec-fidelity critic could not run for exercise; continuing without advisory findings: {}", e.getMessage());
-            return SpecFidelityReport.empty();
+            log.warn("Spec-fidelity critic could not run for exercise: {}", e.getMessage());
+            return adaptationChanges == null ? SpecFidelityReport.empty()
+                    : SpecFidelityReport.adaptationScopeUnavailable("The adaptation-scope reviewer failed before it could assess every changed line.");
+        }
+    }
+
+    static String renderAdaptationChanges(@Nullable String baselineProblemStatement, String producedProblemStatement, Map<RepositoryType, Map<String, String>> baselineFiles,
+            Map<RepositoryType, Map<String, String>> producedFiles) {
+        StringBuilder changes = new StringBuilder();
+        appendChangedFile(changes, "problem-statement.md", baselineProblemStatement, producedProblemStatement);
+        for (RepositoryType type : List.of(RepositoryType.SOLUTION, RepositoryType.TEMPLATE, RepositoryType.TESTS)) {
+            Map<String, String> before = baselineFiles.getOrDefault(type, Map.of());
+            Map<String, String> after = producedFiles.getOrDefault(type, Map.of());
+            Set<String> paths = new TreeSet<>(before.keySet());
+            paths.addAll(after.keySet());
+            for (String path : paths) {
+                appendChangedFile(changes, type.getName() + "/" + path, before.get(path), after.get(path));
+            }
+        }
+        return changes.toString();
+    }
+
+    private static void appendChangedFile(StringBuilder changes, String path, @Nullable String before, @Nullable String after) {
+        if (changes.length() >= MAX_ADAPTATION_CHANGE_CHARS || java.util.Objects.equals(before, after)) {
+            return;
+        }
+        appendCapped(changes, "\n--- " + path + "\n");
+        RawText oldText = new RawText((before == null ? "" : before).getBytes(StandardCharsets.UTF_8));
+        RawText newText = new RawText((after == null ? "" : after).getBytes(StandardCharsets.UTF_8));
+        for (Edit edit : DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.MYERS).diff(RawTextComparator.DEFAULT, oldText, newText)) {
+            appendCapped(changes, "@@ -" + (edit.getBeginA() + 1) + " +" + (edit.getBeginB() + 1) + " @@\n");
+            for (int line = edit.getBeginA(); line < edit.getEndA(); line++) {
+                appendCapped(changes, "- " + oldText.getString(line) + "\n");
+            }
+            for (int line = edit.getBeginB(); line < edit.getEndB(); line++) {
+                appendCapped(changes, "+ " + newText.getString(line) + "\n");
+            }
+        }
+    }
+
+    private static void appendCapped(StringBuilder target, String value) {
+        if (target.indexOf(CHANGE_SUMMARY_TRUNCATED) >= 0) {
+            return;
+        }
+        int contentLimit = MAX_ADAPTATION_CHANGE_CHARS - CHANGE_SUMMARY_TRUNCATED.length();
+        int remaining = contentLimit - target.length();
+        if (value.length() <= remaining) {
+            target.append(value);
+        }
+        else {
+            if (remaining > 0) {
+                target.append(value, 0, remaining);
+            }
+            target.append(CHANGE_SUMMARY_TRUNCATED);
         }
     }
 
@@ -546,6 +622,13 @@ public class GenerationOrchestrationService {
             normalized.put(file.getKey(), content);
         }
         return normalized;
+    }
+
+    private static Map<RepositoryType, Map<String, String>> replacePlaceholdersByRepository(Map<RepositoryType, Map<String, String>> filesByRepository,
+            Map<String, String> replacements) {
+        Map<RepositoryType, Map<String, String>> normalized = new EnumMap<>(RepositoryType.class);
+        filesByRepository.forEach((type, files) -> normalized.put(type, replacePlaceholders(files, replacements)));
+        return Map.copyOf(normalized);
     }
 
     private static String replacePlaceholders(String content, Map<String, String> replacements) {

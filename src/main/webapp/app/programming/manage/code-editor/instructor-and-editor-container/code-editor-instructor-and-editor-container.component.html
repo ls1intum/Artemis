@@ -199,15 +199,15 @@
                             <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
                                 <div class="ai-menu-items">
                                     <!-- AI Generation Actions -->
-                                    @if (showGenerationActivity()) {
+                                    @if (canGenerateExercise()) {
                                         <div class="ai-menu-item-group">
                                             <button
-                                                class="ai-menu-item flex-grow-1"
+                                                class="ai-menu-item grow"
                                                 (click)="startGeneration(); aiMenuPopover.hide()"
                                                 [disabled]="isExerciseGenerationActionBlocked()"
                                                 data-testid="hyperion-generate-exercise"
                                             >
-                                                <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                                <fa-icon [icon]="facArtemisIntelligence" class="mr-2" />
                                                 <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode">Generate exercise</span>
                                             </button>
                                         </div>
@@ -477,15 +477,18 @@
             </div>
             <ng-container editorBottomPanel>
                 @if (showGenerationActivity()) {
+                    <p-confirmDialog key="hyperionGenerateConfirmation" />
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
+                        [startAllowed]="canGenerateExercise()"
                         [refreshingEditor]="generationRefreshPending()"
                         [editorRefreshFailed]="generationRefreshFailed()"
                         (editorRefreshRequested)="retryHyperionRefresh()"
                         (adaptationReverted)="onHyperionAdaptationReverted($event)"
                         (generationCompleted)="onHyperionGenerationCompleted($event)"
+                        (reviewRequested)="onHyperionReviewRequested($event)"
                         (snapshotSelected)="onHyperionSnapshotSelected($event)"
-                        (startRequested)="startGeneration()"
+                        (startRequested)="onHyperionStartRequested($event)"
                     />
                 }
             </ng-container>

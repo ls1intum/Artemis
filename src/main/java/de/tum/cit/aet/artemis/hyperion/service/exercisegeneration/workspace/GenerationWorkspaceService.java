@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -110,9 +111,10 @@ public class GenerationWorkspaceService {
      * @param sandbox   the sandbox session
      * @param sessionId the session handle
      * @param exercise  the exercise whose components are seeded
+     * @param mode      whether to start from clean exercise artifacts or preserve the existing tree
      * @return the seeded repository heads plus TESTS-repo text files used later by the immutability and stale-head gates
      */
-    public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
+    public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, GenerationMode mode) {
         String defaultBranch = exercise.getBuildConfig() != null ? exercise.getBuildConfig().getBranch() : null;
         Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(PROBLEM_STATEMENT_FILE, exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement());
@@ -120,35 +122,58 @@ public class GenerationWorkspaceService {
         Map<String, Path> repositoryTrees = new LinkedHashMap<>();
         Map<RepositoryType, String> repositoryHeads = new LinkedHashMap<>();
         Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata = new LinkedHashMap<>();
+        Map<RepositoryType, Map<String, String>> repositoryTextFiles = new LinkedHashMap<>();
         Map<String, String> testsSeedSnapshot = Map.of();
         List<SeededRepository> temporaryCheckouts = new ArrayList<>();
         try {
             for (RepositoryType repositoryType : SEEDED_REPOSITORIES) {
                 SeededRepository seededRepository = checkoutWorkingTree(exercise, repositoryType, defaultBranch);
                 temporaryCheckouts.add(seededRepository);
+                prepareRepositoryForMode(seededRepository.workingTree(), repositoryType, mode);
                 repositoryTrees.put(directoryFor(repositoryType), seededRepository.workingTree());
                 repositoryHeads.put(repositoryType, seededRepository.headHash());
                 repositoryMetadata.put(repositoryType, readWorkingTreeMetadata(seededRepository.workingTree()));
+                Map<String, String> textSnapshot = Map.copyOf(readWorkingTreeTextFiles(seededRepository.workingTree()));
+                repositoryTextFiles.put(repositoryType, textSnapshot);
                 if (repositoryType == RepositoryType.TESTS) {
-                    testsSeedSnapshot = readWorkingTreeTextFiles(seededRepository.workingTree());
+                    testsSeedSnapshot = textSnapshot;
                 }
             }
             Map<String, String> referenceSample = readReferenceSample(exercise);
             textFiles.putAll(referenceSample);
             sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(textFiles, repositoryTrees));
             log.info("Seeded generation workspace for exercise {} ({} repositories, {} reference files)", exercise.getId(), repositoryTrees.size(), referenceSample.size());
-            return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata));
+            return new WorkspaceSeed(testsSeedSnapshot, Map.copyOf(repositoryHeads), Map.copyOf(repositoryMetadata), Map.copyOf(repositoryTextFiles));
         }
         finally {
             temporaryCheckouts.forEach(GenerationWorkspaceService::closeAndDeleteTemporaryCheckout);
         }
     }
 
-    public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads,
-            Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
+    static void prepareRepositoryForMode(Path repositoryRoot, RepositoryType repositoryType, GenerationMode mode) {
+        if (mode != GenerationMode.GENERATE) {
+            return;
+        }
+        List<String> artifactRoots = repositoryType == RepositoryType.TESTS ? List.of("test", "behavior/test", "structural/test") : List.of("src");
+        try {
+            for (String artifactRoot : artifactRoots) {
+                FileUtils.deleteDirectory(repositoryRoot.resolve(artifactRoot).toFile());
+            }
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not prepare a clean " + repositoryType + " repository for generation", e);
+        }
+    }
+
+    public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata,
+            Map<RepositoryType, Map<String, String>> repositoryTextFiles) {
 
         public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads) {
-            this(testsSeedSnapshot, repositoryHeads, Map.of());
+            this(testsSeedSnapshot, repositoryHeads, Map.of(), Map.of());
+        }
+
+        public WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryType, String> repositoryHeads, Map<RepositoryType, RepositorySeedMetadata> repositoryMetadata) {
+            this(testsSeedSnapshot, repositoryHeads, repositoryMetadata, Map.of());
         }
     }
 

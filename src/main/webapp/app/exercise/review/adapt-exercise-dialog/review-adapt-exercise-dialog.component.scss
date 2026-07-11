@@ -1,5 +1,6 @@
 .review-adapt-exercise-dialog {
     display: flex;
+    min-width: 0;
     flex-direction: column;
     gap: 0.75rem;
 
@@ -17,6 +18,7 @@
     &__label {
         font-weight: 600;
         margin-bottom: -0.25rem;
+        font-size: 1rem;
     }
 
     &__findings-list {
@@ -26,9 +28,13 @@
         max-height: min(45vh, 26rem);
         overflow-y: auto;
         padding-right: 0.25rem;
+        padding-left: 0;
+        margin: 0;
+        list-style: none;
     }
 
     &__finding-card {
+        min-width: 0;
         padding: 0.5rem 0.75rem;
         border: 1px solid var(--p-content-border-color);
         border-radius: var(--p-form-field-border-radius);
@@ -48,8 +54,10 @@
     }
 
     &__finding-location {
+        min-width: 0;
         font-size: 0.8rem;
         color: var(--p-text-muted-color);
+        overflow-wrap: anywhere;
     }
 
     &__finding-description {
@@ -91,6 +99,11 @@
         resize: vertical;
     }
 
+    &__character-count {
+        align-self: flex-end;
+        margin-top: -0.5rem;
+    }
+
     &__actions {
         display: flex;
         justify-content: flex-end;
@@ -100,5 +113,21 @@
 
     &__action-icon {
         margin-right: 0.25rem;
+    }
+}
+
+@media (max-width: 40rem) {
+    .review-adapt-exercise-dialog {
+        &__findings-list {
+            max-height: 35vh;
+        }
+
+        &__actions {
+            flex-direction: column-reverse;
+
+            button {
+                width: 100%;
+            }
+        }
     }
 }

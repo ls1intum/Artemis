@@ -5,16 +5,16 @@ import java.util.List;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 
 /**
- * Advisory result of the spec-fidelity / coverage critic — the one quality axis the differential oracle is structurally blind to.
+ * Result of the spec-fidelity and adaptation-scope review — quality axes the differential oracle is structurally blind to.
  * <p>
  * The differential oracle ({@link DifferentialVerificationService}) proves an exercise is internally consistent (the solution passes its own tests, the template fails them, the
  * bindings resolve) but never whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
  * categories).
  * <p>
- * It is advisory: never consulted by the acceptance decision, so an exercise the oracle accepts stays accepted regardless of what the critic finds. Its findings are used in two
- * non-blocking ways — folded into the verifier-feedback retry prompt while attempts remain, and surfaced as advisory review comments on the final exercise otherwise.
+ * Coverage findings remain advisory. Unrequested adaptation changes and unavailable adaptation-scope verdicts block direct live persistence and are saved for manual review
+ * instead.
  *
- * @param findings the spec-fidelity gaps found (empty when the critic found nothing, the brief was trivial, or the critic itself failed and was skipped)
+ * @param findings the spec-fidelity or adaptation-scope findings
  */
 public record SpecFidelityReport(List<Finding> findings) {
 
@@ -30,6 +30,10 @@ public record SpecFidelityReport(List<Finding> findings) {
         MISSING_WORKED_EXAMPLE,
         /** A requirement/constraint the produced problem statement imposes that the instructor's brief never asked for (scope drift the instructor should confirm). */
         INVENTED_REQUIREMENT,
+        /** An adaptation changed or removed existing content that its feedback did not request changing. */
+        UNREQUESTED_ADAPTATION_CHANGE,
+        /** The adaptation-scope review could not produce a trustworthy verdict. */
+        ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
         /**
          * A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y" with no hint at which behaviour broke
          * (the gold-standard Artemis test pairs every check with a descriptive message). Deterministic, advisory.
@@ -52,7 +56,16 @@ public record SpecFidelityReport(List<Finding> findings) {
         return new SpecFidelityReport(List.of());
     }
 
+    public static SpecFidelityReport adaptationScopeUnavailable(String detail) {
+        return new SpecFidelityReport(List.of(new Finding(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, "Adaptation scope could not be verified",
+                detail + " The generated files were kept in an isolated review draft instead of changing the live exercise.")));
+    }
+
     public boolean hasFindings() {
         return !findings.isEmpty();
+    }
+
+    public boolean hasBlockingFindings() {
+        return findings.stream().anyMatch(finding -> finding.kind() == Kind.UNREQUESTED_ADAPTATION_CHANGE || finding.kind() == Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE);
     }
 }

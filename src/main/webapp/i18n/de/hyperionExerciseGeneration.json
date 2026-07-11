@@ -8,6 +8,7 @@
                 "running": "Generierung läuft…",
                 "adapting": "Anpassung läuft…",
                 "adaptStartFailed": "Die Anpassung konnte nicht gestartet werden.",
+                "meaningfulSpecRequired": "Beschreibe die Anforderungen der Aufgabe vor der Generierung mit mindestens 40 Zeichen.",
                 "checkingStatus": "Generierungsstatus wird geprüft…",
                 "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
                 "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht aktualisiert werden.",
@@ -16,22 +17,25 @@
                 "retryStatus": "Statusprüfung wiederholen",
                 "cancel": "Abbrechen",
                 "cancelling": "Wird abgebrochen…",
-                "revert": "Anpassung rückgängig machen",
                 "reverting": "Wird rückgängig gemacht…",
-                "revertTooltip": "Stellt den Stand der Aufgabe vor der letzten erfolgreichen Anpassung wieder her.",
-                "revertConfirmHeader": "Letzte erfolgreiche Anpassung rückgängig machen?",
-                "revertConfirmMessage": "Dadurch werden Aufgabenstellung und Repositories auf den Stand vor der letzten erfolgreichen Anpassung zurückgesetzt. Die angepasste Version kann anschließend nicht wiederhergestellt werden.",
-                "reverted": "Anpassung rückgängig gemacht",
-                "revertSuccess": "Die Anpassung wurde rückgängig gemacht.",
-                "revertFailed": "Die Anpassung konnte nicht rückgängig gemacht werden.",
                 "hideDetails": "Details ausblenden",
                 "showDetails": "Details anzeigen",
                 "hideChangedFiles": "Geänderte Dateien ausblenden",
                 "showChangedFiles": "Geänderte Dateien anzeigen",
                 "changedFiles": "Vom Agenten bearbeitete Dateien",
+                "reviewSavedChanges": "Gespeicherte Änderungen prüfen",
+                "reviewSavedChangesHint": "Öffnet den Versionsverlauf der Aufgabe oder genau den gespeicherten Repository-Commit.",
+                "reviewUnavailable": "Der gespeicherte Hyperion-Commit wurde nicht gefunden. Öffne den Repository-Verlauf und prüfe die Änderungen manuell.",
+                "reviewTarget": {
+                    "problem-statement": "Aufgabenstellungsverlauf",
+                    "solution": "Lösungs-Diff",
+                    "template": "Vorlagen-Diff",
+                    "tests": "Test-Diff"
+                },
                 "recentActivity": "Letzte Aktivitäten",
                 "emptyTitle": "Noch keine Generierungsaktivität",
                 "emptyHint": "Starte die Generierung hier oder über das Artemis-Intelligence-Menü.",
+                "unavailableHint": "Die Generierung ist nach der Freigabe oder Teilnahme von Studierenden nicht mehr verfügbar.",
                 "repo": {
                     "solution": "Musterlösung",
                     "template": "Vorlage",
@@ -44,29 +48,48 @@
                     "draft": "Entwurf gespeichert — Live-Aufgabe unverändert",
                     "notSaved": "Nicht gespeichert",
                     "cancelled": "Nicht gespeichert — abgebrochen",
-                    "failed": "Nicht gespeichert — fehlgeschlagen"
+                    "failed": "Nicht gespeichert — fehlgeschlagen",
+                    "partial": "Nicht vollständig gespeichert — manuelle Prüfung erforderlich"
                 },
                 "verdict": {
-                    "checksPassed": "Prüfungen bestanden",
-                    "checksFailed": "Prüfungen fehlgeschlagen",
                     "solutionPassedExpected": "Musterlösung besteht",
                     "solutionFailed": "Musterlösung schlägt fehl",
                     "templateFailedExpected": "Vorlage schlägt wie vorgesehen fehl",
                     "templatePassedUnexpected": "Vorlage besteht unerwartet",
                     "oneTest": "Test",
-                    "tests": "Tests"
+                    "tests": "Tests",
+                    "consistencyChecksPassed": "Build- und Bewertungskonsistenz geprüft",
+                    "consistencyChecksFailed": "Build- oder Bewertungskonsistenz fehlgeschlagen",
+                    "instructorReviewRequired": "Prüfung durch Lehrende erforderlich"
                 },
                 "completionStatus": {
                     "SUCCESS": "Gespeichert",
                     "NEEDS_REVIEW": "Prüfung nötig",
-                    "PARTIAL": "Nicht gespeichert"
+                    "PARTIAL": "Nicht vollständig gespeichert — manuelle Prüfung erforderlich"
                 },
                 "terminalStatus": {
                     "DONE": "Generierung abgeschlossen",
                     "CANCELLED": "Abgebrochen",
                     "ERROR": "Fehlgeschlagen"
                 },
-                "revertPartialFailed": "Die Anpassung konnte nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Bitte prüfen Sie die übrigen Repositories manuell."
+                "revertPartialFailed": "Die KI-Änderungen konnten nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Bitte prüfen Sie die übrigen Repositories manuell.",
+                "runAgain": "Erneut ausführen",
+                "undoGeneration": "Generierung rückgängig machen",
+                "undoAdaptation": "Anpassung rückgängig machen",
+                "undoGenerationTooltip": "Stellt den Zustand vor der letzten erfolgreichen Generierung wieder her.",
+                "undoAdaptationTooltip": "Stellt den Zustand vor der letzten erfolgreichen Anpassung wieder her.",
+                "undoGenerationConfirmHeader": "Letzte erfolgreiche Generierung rückgängig machen?",
+                "undoGenerationConfirmMessage": "Dadurch werden Aufgabenstellung und Repositories auf den Zustand vor der Generierung zurückgesetzt. Die generierte Version kann danach nicht wiederhergestellt werden.",
+                "undoAdaptationConfirmHeader": "Letzte erfolgreiche Anpassung rückgängig machen?",
+                "undoAdaptationConfirmMessage": "Dadurch werden Aufgabenstellung und Repositories auf den Zustand vor der Anpassung zurückgesetzt. Die angepasste Version kann danach nicht wiederhergestellt werden.",
+                "generateConfirmHeader": "Aufgabe generieren und automatisch speichern?",
+                "generateConfirmMessage": "Hyperion ersetzt nach mechanischer Verifikation Aufgabenstellung, Template, Musterlösung und Tests und speichert das akzeptierte Ergebnis automatisch. Prüfe alle Bestandteile vor der Freigabe. Rückgängig ist temporär, nur im Arbeitsspeicher verfügbar und entfällt nach widersprechenden Repository-Änderungen oder einem Serverneustart.",
+                "generationUndone": "Generierung rückgängig gemacht",
+                "adaptationUndone": "Anpassung rückgängig gemacht",
+                "undoGenerationSuccess": "Die Generierung wurde rückgängig gemacht.",
+                "undoAdaptationSuccess": "Die Anpassung wurde rückgängig gemacht.",
+                "undoGenerationFailed": "Die Generierung konnte nicht rückgängig gemacht werden.",
+                "undoAdaptationFailed": "Die Anpassung konnte nicht rückgängig gemacht werden."
             }
         }
     }

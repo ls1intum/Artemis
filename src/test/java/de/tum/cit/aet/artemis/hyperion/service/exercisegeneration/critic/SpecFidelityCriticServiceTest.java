@@ -128,6 +128,27 @@ class SpecFidelityCriticServiceTest {
         assertThat(report.findings()).extracting(SpecFidelityReport.Finding::requirement).containsExactly("O(1) extra space");
     }
 
+    @Test
+    void adaptationDiff_exposesUnrequestedDeletionAsBlockingFinding() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse(
+                "{\"uncovered\":[],\"missingExamples\":[],\"invented\":[],\"unrequestedChanges\":[{\"change\":\"solution/src/Inventory.java removed displayName(String)\",\"reason\":\"the feedback explicitly preserves it\"}]}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change only remove(); preserve displayName(String).", "# Inventory", List.of("removeRejectsZero"),
+                "--- solution/src/Inventory.java\n- String displayName(String itemId)\n", null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE);
+            assertThat(finding.requirement()).contains("displayName");
+        });
+        assertThat(report.hasBlockingFindings()).isTrue();
+        ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompt.capture());
+        assertThat(prompt.getValue().getContents()).contains("ADAPTATION CHANGES").contains("- String displayName(String itemId)");
+    }
+
     /**
      * The mechanics-leak pass needs NO model at all: even with no ChatClient configured (null), the deterministic leak check still fires while the coverage pass is silently
      * skipped. Proves the model-free check is independent of the LLM pass.
@@ -199,6 +220,47 @@ class SpecFidelityCriticServiceTest {
         verify(chatModel, never()).call(any(Prompt.class));
     }
 
+    @Test
+    void shortAdaptationFeedback_stillRunsScopeReview() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"unrequestedChanges\":[]}"));
+        when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper);
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+
+        assertThat(report.hasBlockingFindings()).isFalse();
+        verify(chatModel).call(any(Prompt.class));
+    }
+
+    @Test
+    void unavailableAdaptationScopeReview_blocksLivePersistence() {
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(null, objectMapper);
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+
+        assertThat(report.findings()).singleElement().satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void malformedAdaptationScopeResponse_blocksLivePersistence() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse("not json"));
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
+    @Test
+    void adaptationResponseMissingScopeVerdict_blocksLivePersistence() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"uncovered\":[]}"));
+
+        SpecFidelityReport report = critic.critiqueAdaptation("Change remove(0).", "# Inventory", List.of("test_x"), "- old\n+ new", null);
+
+        assertThat(report.hasBlockingFindings()).isTrue();
+    }
+
     /** A degenerate response with far too many entries is capped, so a critic finding list can never flood the retry prompt or review panel. */
     @Test
     void floodOfFindings_isCapped() {
@@ -213,6 +275,21 @@ class SpecFidelityCriticServiceTest {
 
         // Capped well below 100 so a degenerate model response cannot explode downstream.
         assertThat(report.findings().size()).isLessThanOrEqualTo(12);
+    }
+
+    @Test
+    void advisoryFindingFlood_cannotDisplaceBlockingAdaptationScopeDrift() {
+        StringBuilder body = new StringBuilder("{\"uncovered\":[");
+        for (int i = 0; i < 20; i++) {
+            body.append(i == 0 ? "" : ",").append("{\"requirement\":\"req").append(i).append("\",\"reason\":\"r\"}");
+        }
+        body.append("],\"unrequestedChanges\":[{\"change\":\"solution removed displayName\",\"reason\":\"explicitly preserved\"}]}");
+        SpecFidelityCriticService critic = criticReturning(jsonResponse(body.toString()));
+
+        SpecFidelityReport report = critic.critiqueAdaptation(UNICODE_BRIEF, "Clean statement.", List.of("test_x"), "- displayName", null);
+
+        assertThat(report.hasBlockingFindings()).isTrue();
+        assertThat(report.findings()).hasSizeLessThanOrEqualTo(12);
     }
 
     /** Entries missing a requirement string are skipped rather than producing blank findings. */

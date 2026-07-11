@@ -13,6 +13,7 @@ import java.util.function.BooleanSupplier;
 import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,33 +28,25 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
-/**
- * Provides the safety net for {@code ADAPT} runs: retain each changed repository's pre-adaptation commit while the accepted result is persisted, and later reset the
- * template/solution/tests repositories back to that captured state. This is the deliberately simple alternative to a staging/approval state machine — an accepted adaptation is
- * applied to the live
- * exercise immediately (like a manual instructor edit), and this service lets the instructor undo it in one click.
- * <p>
- * The captured baselines live in a TTL-bounded Hazelcast map keyed by exercise id (the most recent adaptation wins), so a revert works from any node and after the generation job's
- * slot is gone.
- */
+/** Retains the pre-run state of the latest accepted generation or adaptation so an instructor can safely undo it. */
 @Lazy
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
-public class ExerciseAdaptationRevertService {
+public class ExerciseGenerationRevertService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseAdaptationRevertService.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseGenerationRevertService.class);
 
+    // Keep the established map name so rolling deployments retain existing adaptation baselines.
     private static final String BASELINE_MAP_NAME = "hyperion-exercise-adaptation-baselines";
 
-    /**
-     * How long a captured baseline stays revertible; generous so an instructor can undo an adaptation well after the run finished, but bounded so the map never grows unbounded.
-     */
+    /** Latest-only, bounded recovery window; this intentionally is not a durable history. */
     private static final int BASELINE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
     /** The repositories reset by a revert, in the same order the persist commits them (tests last so the re-sync build sees the reverted solution). */
@@ -71,7 +64,7 @@ public class ExerciseAdaptationRevertService {
 
     private IMap<Long, AdaptationBaseline> baselineMap;
 
-    public ExerciseAdaptationRevertService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, GitService gitService,
+    public ExerciseGenerationRevertService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, GitService gitService,
             GenerationPersistenceService persistenceService, TempFileUtilService tempFileUtilService,
             @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.hazelcastInstance = hazelcastInstance;
@@ -87,56 +80,53 @@ public class ExerciseAdaptationRevertService {
     }
 
     /**
-     * Records a revertible baseline for an adaptation that was accepted and applied to the live repositories in place, from the pre-persist commit HEADs the persist captured just
-     * before it overwrote each repository. It is written only on that accepted-and-applied path (never at job start), so a cancelled, rejected, or errored run — which leaves the
-     * live repositories unchanged — can never overwrite a prior accepted adaptation's baseline with the current (post-adaptation) HEAD and make that earlier change non-revertible.
-     * A repository with no captured pre-persist HEAD (nothing was committed to it, or it had no prior commit) is omitted and not reverted. Best-effort: a failure only means the
-     * run
-     * cannot be reverted, never that the persisted adaptation is unsound — so it never throws.
+     * Records a baseline using the exercise's current metadata as the post-run guard.
      *
-     * @param exercise            the exercise that was adapted
-     * @param jobId               the adaptation job id
-     * @param preAdaptationHeads  the per-repository commit HEAD captured immediately before the accepted adaptation was committed in place
-     * @param postAdaptationHeads the per-repository commit HEAD captured immediately after Hyperion committed the accepted adaptation
-     * @param problemStatement    the problem statement before the adaptation
-     * @param title               the title before the adaptation
+     * @param exercise         the persisted exercise
+     * @param jobId            the completed job
+     * @param mode             whether the run generated or adapted the exercise
+     * @param preRunHeads      repository heads before persistence
+     * @param postRunHeads     repository heads after persistence
+     * @param problemStatement problem statement before persistence
+     * @param title            title before persistence
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads, Map<RepositoryType, String> postAdaptationHeads,
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatement, String title) {
-        recordBaseline(exercise, jobId, preAdaptationHeads, postAdaptationHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
+        recordBaseline(exercise, jobId, mode, preRunHeads, postRunHeads, problemStatement, title, exercise.getProblemStatement(), exercise.getTitle());
     }
 
     /**
-     * Records a baseline using the metadata captured inside the guarded persistence operation, avoiding a post-persist reload race with manual edits.
+     * Records a baseline only after a guarded persist has completed successfully. Failures leave the run saved but not undoable.
      *
-     * @param exercise                        the exercise that was adapted
-     * @param jobId                           the adaptation job id
-     * @param preAdaptationHeads              repository heads before the adaptation
-     * @param postAdaptationHeads             repository heads after the adaptation
-     * @param problemStatement                the problem statement before the adaptation
-     * @param title                           the title before the adaptation
-     * @param expectedCurrentProblemStatement the exact problem statement persisted by the adaptation
-     * @param expectedCurrentTitle            the exact title persisted by the adaptation
+     * @param exercise                        the persisted exercise
+     * @param jobId                           the completed job
+     * @param mode                            whether the run generated or adapted the exercise
+     * @param preRunHeads                     repository heads before persistence
+     * @param postRunHeads                    repository heads after persistence
+     * @param problemStatement                problem statement before persistence
+     * @param title                           title before persistence
+     * @param expectedCurrentProblemStatement problem statement written by the run
+     * @param expectedCurrentTitle            title written by the run
      */
-    public void recordBaseline(ProgrammingExercise exercise, String jobId, Map<RepositoryType, String> preAdaptationHeads, Map<RepositoryType, String> postAdaptationHeads,
+    public void recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle) {
         try {
             baselineMap.delete(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
             Map<RepositoryType, String> expectedCurrentHeads = new LinkedHashMap<>();
             for (RepositoryType repositoryType : REVERT_ORDER) {
-                String head = preAdaptationHeads.get(repositoryType);
+                String head = preRunHeads.get(repositoryType);
                 if (head != null) {
                     LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
                     if (uri == null) {
                         log.warn(
-                                "Could not record the adaptation baseline for the {} repository of exercise {} because the repository URI is missing; this run will not be revertible",
+                                "Could not record the generation baseline for the {} repository of exercise {} because the repository URI is missing; this run will not be revertible",
                                 repositoryType, exercise.getId());
                         return;
                     }
-                    String expectedCurrentHead = postAdaptationHeads.get(repositoryType);
+                    String expectedCurrentHead = postRunHeads.get(repositoryType);
                     if (expectedCurrentHead == null) {
-                        log.warn("Could not record the adaptation baseline for the {} repository of exercise {} because Hyperion's post-adaptation HEAD is missing", repositoryType,
+                        log.warn("Could not record the generation baseline for the {} repository of exercise {} because Hyperion's post-run HEAD is missing", repositoryType,
                                 exercise.getId());
                         return;
                     }
@@ -145,12 +135,12 @@ public class ExerciseAdaptationRevertService {
                 }
             }
             baselineMap.set(exercise.getId(),
-                    new AdaptationBaseline(jobId, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle),
+                    new AdaptationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement, expectedCurrentTitle),
                     BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
-            log.info("Recorded revertible adaptation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
+            log.info("Recorded revertible generation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
         }
         catch (RuntimeException e) {
-            log.warn("Could not record the adaptation baseline for exercise {} (job {}); this run will not be revertible: {}", exercise.getId(), jobId, e.getMessage());
+            log.warn("Could not record the generation baseline for exercise {} (job {}); this run will not be revertible: {}", exercise.getId(), jobId, e.getMessage());
         }
     }
 
@@ -158,23 +148,24 @@ public class ExerciseAdaptationRevertService {
      * Returns the job whose retained baseline can currently be undone.
      *
      * @param exerciseId the exercise whose baseline should be inspected
-     * @return the revertible adaptation job id, or empty when no baseline remains
+     * @return the revertible job id, or empty when no baseline remains
      */
     public Optional<String> findRevertibleJobId(long exerciseId) {
         return Optional.ofNullable(baselineMap.get(exerciseId)).map(AdaptationBaseline::jobId);
     }
 
     /**
-     * Removes a baseline that predates a newly persisted live-exercise mutation.
+     * Returns the retained run metadata from one baseline-map read.
      *
-     * @param exerciseId the exercise whose older baseline should be removed
+     * @param exerciseId the exercise whose baseline should be inspected
+     * @return the retained job and mode, or empty when no baseline remains
      */
-    public void discardBaseline(long exerciseId) {
-        baselineMap.delete(exerciseId);
+    public Optional<RevertibleRun> findRevertibleRun(long exerciseId) {
+        return Optional.ofNullable(baselineMap.get(exerciseId)).map(baseline -> new RevertibleRun(baseline.jobId(), baseline.mode()));
     }
 
     /**
-     * Reverts the most recent adaptation of the exercise: resets template/solution/tests back to the commits captured at that run's start, then re-synchronises grading. Idempotent
+     * Reverts the most recent accepted run: resets template/solution/tests back to the commits captured before persistence, then re-synchronises grading. Idempotent
      * against a missing baseline (returns {@code false}); the baseline is consumed on a successful revert so it is not offered twice.
      *
      * @param exercise the exercise to revert
@@ -186,7 +177,7 @@ public class ExerciseAdaptationRevertService {
     }
 
     /**
-     * Reverts the most recent adaptation while aborting before durable mutations if this node no longer owns the job.
+     * Reverts the most recent accepted run while aborting before durable mutations if this node no longer owns the job.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
@@ -224,7 +215,7 @@ public class ExerciseAdaptationRevertService {
         if (!metadataCanBeReverted(exercise.getProblemStatement(), baseline.expectedProblemStatement(), baseline.problemStatement())
                 || !metadataCanBeReverted(exercise.getTitle(), baseline.expectedTitle(), baseline.title()) || !persistenceService.canRestoreProblemStatementAndTitle(exercise,
                         baseline.problemStatement(), baseline.title(), baseline.expectedProblemStatement(), baseline.expectedTitle())) {
-            log.error("Refusing to revert adaptation metadata for exercise {} because the current problem statement/title no longer matches the captured adaptation state",
+            log.error("Refusing to revert generation metadata for exercise {} because the current problem statement/title no longer matches the captured generated state",
                     exercise.getId());
             return new RevertResult(false, List.of());
         }
@@ -238,7 +229,8 @@ public class ExerciseAdaptationRevertService {
                 continue;
             }
             if (!stillOwnsMutationSlot.getAsBoolean()) {
-                log.error("Stopped reverting adaptation for exercise {} because this node lost the exercise mutation slot before resetting {}", exercise.getId(), repositoryType);
+                log.error("Stopped reverting generated changes for exercise {} because this node lost the exercise mutation slot before resetting {}", exercise.getId(),
+                        repositoryType);
                 fullyReverted = false;
                 break;
             }
@@ -258,15 +250,15 @@ public class ExerciseAdaptationRevertService {
                 }
                 String expectedCurrentHead = baseline.expectedCurrentHeadFor(repositoryType);
                 if (expectedCurrentHead == null) {
-                    throw new IllegalStateException("No post-adaptation HEAD was captured for this repository; refusing to force-push without clobber protection");
+                    throw new IllegalStateException("No post-run HEAD was captured for this repository; refusing to force-push without clobber protection");
                 }
                 if (!expectedCurrentHead.equals(currentHead)) {
-                    throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the adaptation commit " + expectedCurrentHead);
+                    throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
                 }
                 gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, defaultBranch);
                 refreshCachedCheckout(uri);
                 reverted.add(repositoryType);
-                log.info("Reverted the {} repository of exercise {} back to its pre-adaptation commit {}", repositoryType, exercise.getId(), head);
+                log.info("Reverted the {} repository of exercise {} back to its pre-generated commit {}", repositoryType, exercise.getId(), head);
             }
             catch (Exception e) {
                 fullyReverted = false;
@@ -277,13 +269,14 @@ public class ExerciseAdaptationRevertService {
                     repository.closeBeforeDelete();
                 }
                 if (temporaryCheckout != null && !FileUtils.deleteQuietly(temporaryCheckout.toFile())) {
-                    log.warn("Could not delete temporary Hyperion adaptation-revert checkout {}", temporaryCheckout);
+                    log.warn("Could not delete temporary Hyperion generation-revert checkout {}", temporaryCheckout);
                 }
             }
         }
         if (fullyReverted) {
             if (!stillOwnsMutationSlot.getAsBoolean()) {
-                log.error("Stopped reverting adaptation for exercise {} because this node lost the exercise mutation slot before metadata/test-case resync", exercise.getId());
+                log.error("Stopped reverting generated changes for exercise {} because this node lost the exercise mutation slot before metadata/test-case resync",
+                        exercise.getId());
                 return new RevertResult(false, List.copyOf(reverted));
             }
             // Re-sync grading to the reverted tests (best-effort); the tests HEAD is the captured baseline commit we just reset to. A partial revert deliberately skips this so
@@ -318,11 +311,18 @@ public class ExerciseAdaptationRevertService {
     }
 
     /**
-     * The outcome of reverting an adaptation.
+     * The outcome of reverting generated changes.
      *
      * @param fullyReverted        {@code true} if every captured repository was reset successfully; {@code false} if any could not be (needs manual review)
      * @param revertedRepositories the repositories that were reset back to their baseline commit
      */
     public record RevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
+    }
+
+    /**
+     * @param jobId the retained job
+     * @param mode  its mode, or {@code null} for a baseline serialized by an older node
+     */
+    public record RevertibleRun(String jobId, @Nullable GenerationMode mode) {
     }
 }

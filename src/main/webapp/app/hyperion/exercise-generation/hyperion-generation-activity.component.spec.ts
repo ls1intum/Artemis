@@ -9,6 +9,7 @@ import { ConfirmationService } from 'primeng/api';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
+import { AlertService } from 'app/foundation/service/alert.service';
 import {
     ExerciseAdaptationRevertResult,
     ExerciseGenerationFileSnapshot,
@@ -89,6 +90,19 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(startRequested).toHaveBeenCalledOnce();
     });
 
+    it('does not offer generation when the exercise is no longer eligible', () => {
+        const fixture = createWith(null);
+        const startRequested = vi.fn();
+        fixture.componentInstance.startRequested.subscribe(startRequested);
+        fixture.componentRef.setInput('startAllowed', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-start"]')).toBeNull();
+
+        fixture.componentInstance.requestStart();
+        expect(startRequested).not.toHaveBeenCalled();
+    });
+
     it('shows why editing is locked while status is loading', () => {
         const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
         service.getStatus = vi.fn(() => pendingStatus);
@@ -125,6 +139,18 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.statusLoading()).toBe(true);
     });
 
+    it('releases the manual editor lock when retained-status requests never respond', () => {
+        vi.useFakeTimers();
+        service.getStatus = vi.fn(() => new Subject<HttpResponse<HyperionGenerationStatus>>());
+        const fixture = createWith(null);
+
+        vi.advanceTimersByTime(18_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+        expect(fixture.componentInstance.statusLoading()).toBe(false);
+        expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
+    });
+
     it('clears a status-load failure when the live stream succeeds', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
@@ -158,6 +184,21 @@ describe('HyperionGenerationActivityComponent', () => {
 
         expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
         expect(fixture.componentInstance.running()).toBe(false);
+    });
+
+    it('does not update status after the component is destroyed', () => {
+        vi.useFakeTimers();
+        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn(() => pendingStatus);
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        fixture.destroy();
+        pendingStatus.error(new Error('late status failure'));
+        vi.advanceTimersByTime(60_000);
+
+        expect(service.getStatus).toHaveBeenCalledOnce();
+        expect(component.statusLoadFailed()).toBe(false);
     });
 
     it('rehydrates the changed-file inventory from retained status', () => {
@@ -210,10 +251,10 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-details-toggle"]')).toHaveLength(1);
         expect(document.activeElement).toBe(disclosure);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).not.toBeNull();
     });
 
-    it('surfaces the newest human progress without replaying legacy tool telemetry as a live log', () => {
+    it('shows recent progress visually while announcing only the coarse running state', () => {
         const fixture = createWith({
             jobId: 'j1',
             running: true,
@@ -225,7 +266,12 @@ describe('HyperionGenerationActivityComponent', () => {
         });
         const current = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"]');
 
-        expect(current.textContent).toContain('event 9');
+        expect(current.textContent).toContain('generationActivity.running');
+        expect(current.textContent).not.toContain('event 9');
+        const visibleProgress = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-current-progress"]');
+        expect(visibleProgress.textContent).toContain('event 9');
+        expect(visibleProgress.getAttribute('role')).toBeNull();
+        expect(visibleProgress.getAttribute('aria-live')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('event 8');
         expect(fixture.nativeElement.textContent).not.toContain('cat secret');
         expect(fixture.nativeElement.querySelector('[role="log"]')).toBeNull();
@@ -241,9 +287,15 @@ describe('HyperionGenerationActivityComponent', () => {
         const statuses = fixture.nativeElement.querySelectorAll('[role="status"]');
         expect(statuses).toHaveLength(1);
         expect(statuses[0].getAttribute('aria-atomic')).toBe('true');
-        expect(statuses[0].textContent).toContain('Generation failed');
+        expect(statuses[0].textContent).toContain('generationActivity.terminalStatus.ERROR');
         expect(statuses[0].textContent).toContain('generationActivity.persistence.failed');
         expect(statuses[0].textContent).not.toContain('Still editing');
+        const terminalMessage = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]');
+        expect(terminalMessage.textContent).toContain('Generation failed');
+        expect(terminalMessage.tagName).toBe('DIV');
+        expect(terminalMessage.getAttribute('role')).toBeNull();
+        expect(terminalMessage.getAttribute('aria-live')).toBeNull();
+        expect(terminalMessage.closest('p-message')).toBeNull();
     });
 
     it('announces the editor refresh before reporting the terminal result as ready', () => {
@@ -384,6 +436,72 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(selected).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ repo: 'solution', path: 'solution/src/Main.java' }));
     });
 
+    it('offers one history review action for each saved artifact type', () => {
+        const fixture = createWith({
+            jobId: 'job-42',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true }],
+            fileSnapshots: [
+                snapshot('problem-statement.md', 'edit', 'problem'),
+                snapshot('solution/src/Main.java', 'edit', 'solution'),
+                snapshot('solution/src/Helper.java', 'edit', 'helper'),
+                snapshot('tests/src/MainTest.java', 'edit', 'tests'),
+            ],
+        });
+
+        const actions = fixture.debugElement.queryAll(By.css('[data-testid="hyperion-generation-review-action"]'));
+        expect(actions.map((action) => action.attributes['data-review-target'])).toEqual(['problem-statement', 'solution', 'tests']);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).not.toBeNull();
+    });
+
+    it('emits the saved artifact and exact job when review is requested', () => {
+        const fixture = createWith({
+            jobId: 'job-42',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true }],
+            fileSnapshots: [snapshot('template/src/Main.java', 'edit', 'template')],
+        });
+        const requested = vi.fn();
+        fixture.componentInstance.reviewRequested.subscribe(requested);
+
+        fixture.debugElement.query(By.css('[data-review-target="template"]')).triggerEventHandler('onClick');
+
+        expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'template', jobId: 'job-42' });
+    });
+
+    it('restores all review actions from a baseline-only retained status', () => {
+        const fixture = createWith({
+            jobId: 'job-42',
+            mode: 'GENERATE',
+            running: false,
+            revertAvailable: true,
+            revertJobId: 'job-42',
+            revertMode: 'GENERATE',
+            events: [],
+            fileSnapshots: [],
+        });
+        const requested = vi.fn();
+        fixture.componentInstance.reviewRequested.subscribe(requested);
+        fixture.detectChanges();
+
+        const actions = fixture.debugElement.queryAll(By.css('[data-testid="hyperion-generation-review-action"]'));
+        expect(actions.map((action) => action.attributes['data-review-target'])).toEqual(['problem-statement', 'solution', 'template', 'tests']);
+
+        fixture.debugElement.query(By.css('[data-review-target="solution"]')).triggerEventHandler('onClick');
+        expect(requested).toHaveBeenCalledExactlyOnceWith({ target: 'solution', jobId: 'job-42' });
+    });
+
+    it('does not offer saved-change review before persistence succeeds', () => {
+        const fixture = createWith({
+            jobId: 'job-42',
+            running: false,
+            events: [{ type: 'DONE', completionStatus: 'PARTIAL', liveExerciseChanged: false }],
+            fileSnapshots: [snapshot('solution/src/Main.java', 'edit', 'draft')],
+        });
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-review"]')).toBeNull();
+    });
+
     it('keeps snapshots non-actionable when a terminal run did not change the live exercise', () => {
         const fixture = createWith({
             jobId: 'j1',
@@ -401,14 +519,107 @@ describe('HyperionGenerationActivityComponent', () => {
     it.each([
         [{ running: true, events: [] }, 'persistence.workingCopy'],
         [{ running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }] }, 'persistence.saved'],
-        [{ running: false, events: [{ type: 'DONE', completionStatus: 'PARTIAL', liveExerciseChanged: false }] }, 'persistence.notSaved'],
+        [{ running: false, events: [{ type: 'DONE', completionStatus: 'PARTIAL', liveExerciseChanged: false }] }, 'persistence.partial'],
         [{ running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', liveExerciseChanged: false }] }, 'persistence.draft'],
         [{ running: false, events: [{ type: 'CANCELLED' }] }, 'persistence.cancelled'],
         [{ running: false, events: [{ type: 'ERROR' }] }, 'persistence.failed'],
-    ])('shows a truthful persistence state for %o', (state, labelKey) => {
+    ])('shows the persistence state for %o', (state, labelKey) => {
         const fixture = createWith({ jobId: 'j1', fileSnapshots: [], ...state } as HyperionGenerationStatus);
 
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-persistence-state"]').textContent).toContain(labelKey);
+    });
+
+    it.each([
+        [{ type: 'ERROR' as const }, 'GENERATE' as const],
+        [{ type: 'CANCELLED' as const }, 'ADAPT' as const],
+        [{ type: 'DONE' as const, completionStatus: 'PARTIAL' as const }, 'GENERATE' as const],
+    ])('offers a safe retry after %o', (event, mode) => {
+        const fixture = createWith({ jobId: 'j1', mode, running: false, events: [event], fileSnapshots: [] });
+        const requested = vi.fn();
+        fixture.componentInstance.startRequested.subscribe(requested);
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('[data-testid="hyperion-generation-run-again"]')).triggerEventHandler('onClick');
+        expect(requested).toHaveBeenCalledExactlyOnceWith(mode);
+    });
+
+    it('does not offer a retry when the exercise is no longer eligible', () => {
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: false, events: [{ type: 'ERROR' }], fileSnapshots: [] });
+        fixture.componentRef.setInput('startAllowed', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-run-again"]')).toBeNull();
+        expect(fixture.componentInstance.canRunAgain()).toBe(false);
+    });
+
+    it('keeps partial-recovery instructions visible when Run again is offered', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: false,
+            events: [{ type: 'DONE', completionStatus: 'PARTIAL', message: 'Review branch hyperion/recovery-123 manually.' }],
+            fileSnapshots: [],
+        });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]').textContent).toContain('hyperion/recovery-123');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-run-again"]')).not.toBeNull();
+    });
+
+    it('reconciles cancellation status a bounded number of times when the terminal stream event stalls', () => {
+        vi.useFakeTimers();
+        service.status = { jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] };
+        const fixture = createWith(service.status);
+        const statusSpy = vi.spyOn(service, 'getStatus');
+
+        fixture.componentInstance.cancel();
+        vi.advanceTimersByTime(10_000);
+
+        expect(statusSpy).toHaveBeenCalledTimes(3);
+        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+    });
+
+    it('clears stale running state when cancellation status has no retained job', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] });
+        service.status = null;
+
+        fixture.componentInstance.cancel();
+        vi.advanceTimersByTime(1_000);
+
+        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+        expect(fixture.componentInstance.running()).toBe(false);
+        expect(fixture.componentInstance.jobId()).toBeUndefined();
+    });
+
+    it('adopts a newer job when cancellation reconciliation returns a different job', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileSnapshots: [] });
+        service.status = { jobId: 'j2', mode: 'ADAPT', running: true, events: [], fileSnapshots: [] };
+
+        fixture.componentInstance.cancel();
+        vi.advanceTimersByTime(1_000);
+
+        expect(fixture.componentInstance.cancelRequested()).toBe(false);
+        expect(fixture.componentInstance.jobId()).toBe('j2');
+        expect(fixture.componentInstance.mode()).toBe('ADAPT');
+        expect(fixture.componentInstance.running()).toBe(true);
+    });
+
+    it('uses generation-specific undo copy for a generated exercise', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            mode: 'GENERATE',
+            running: false,
+            revertAvailable: true,
+            revertJobId: 'j1',
+            revertMode: 'GENERATE',
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [],
+        });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-revert"]').textContent).toContain('generationActivity.undoGeneration');
     });
 
     it('caps retained progress events to the latest entries', () => {
@@ -499,6 +710,62 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.cancel();
         expect(service.cancelCalls).toEqual([[42, 'j1']]);
         expect(fixture.componentInstance.cancelRequested()).toBe(true);
+    });
+
+    it('ignores late cancel and undo emissions after destruction', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({
+            jobId: 'j1',
+            mode: 'ADAPT',
+            running: false,
+            revertAvailable: true,
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+            fileSnapshots: [],
+        });
+        const component = fixture.componentInstance;
+        const statusSpy = vi.spyOn(service, 'getStatus');
+        const cancel$ = new Subject<void>();
+        const revert$ = new Subject<ExerciseAdaptationRevertResult>();
+        service.cancel = vi.fn(() => cancel$);
+        service.revertAdaptation = vi.fn(() => revert$);
+        const reverted = vi.fn();
+        component.adaptationReverted.subscribe(reverted);
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+        const successSpy = vi.spyOn(alertService, 'success');
+
+        (component as any).revert();
+        component.running.set(true);
+        component.cancel();
+        const stateBeforeDestroy = { reverting: component.reverting(), cancelRequested: component.cancelRequested() };
+        fixture.destroy();
+        const timersAfterDestroy = vi.getTimerCount();
+
+        cancel$.next();
+        revert$.next({ fullyReverted: true, revertedRepositories: ['solution'], completedAt: '2026-07-11T12:00:00Z' });
+        expect(vi.getTimerCount()).toBe(timersAfterDestroy);
+        vi.advanceTimersByTime(60_000);
+
+        expect({ reverting: component.reverting(), cancelRequested: component.cancelRequested() }).toEqual(stateBeforeDestroy);
+        expect(statusSpy).not.toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(reverted).not.toHaveBeenCalled();
+    });
+
+    it('does not retry a late revert-availability failure after destruction', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'j1', mode: 'ADAPT', running: false, events: [], fileSnapshots: [] });
+        const availability$ = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        service.getStatus = vi.fn(() => availability$);
+
+        (fixture.componentInstance as any).refreshRevertAvailability(42, 'j1');
+        fixture.destroy();
+        availability$.error(new Error('late failure'));
+        expect(vi.getTimerCount()).toBe(0);
+        vi.advanceTimersByTime(60_000);
+
+        expect(service.getStatus).toHaveBeenCalledOnce();
     });
 
     it('refreshes retained status when cancellation is rejected or already terminal', () => {
@@ -717,9 +984,33 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [{ type: 'CANCELLED', message: 'Cancelled' }],
             fileSnapshots: [],
             revertAvailable: true,
+            revertJobId: 'successful-adaptation',
+            revertMode: 'ADAPT',
         });
 
         expect(fixture.componentInstance.canRevert()).toBe(true);
+        expect(fixture.componentInstance.undoLabelKey()).toBe('artemisApp.hyperion.generationActivity.undoAdaptation');
+        const review = vi.fn();
+        fixture.componentInstance.reviewRequested.subscribe(review);
+        fixture.componentInstance.requestReview('solution');
+        expect(review).toHaveBeenCalledWith({ target: 'solution', jobId: 'successful-adaptation' });
+
+        const confirmation = vi.spyOn(fixture.debugElement.injector.get(ConfirmationService), 'confirm');
+        const success = vi.spyOn(TestBed.inject(AlertService), 'success');
+        fixture.componentInstance.confirmRevert();
+        expect(confirmation.mock.calls[0][0].header).toContain('undoAdaptationConfirmHeader');
+        expect(confirmation.mock.calls[0][0].message).toContain('undoAdaptationConfirmMessage');
+        confirmation.mock.calls[0][0].accept?.();
+        expect(success).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.undoAdaptationSuccess');
+        expect(fixture.componentInstance.undoneLabelKey()).toBe('artemisApp.hyperion.generationActivity.adaptationUndone');
+    });
+
+    it('never fabricates exact review provenance for a legacy retained undo', () => {
+        const fixture = createWith({ jobId: 'later-run', mode: 'GENERATE', running: false, events: [{ type: 'CANCELLED' }], fileSnapshots: [], revertAvailable: true });
+
+        expect(fixture.componentInstance.canRevert()).toBe(true);
+        expect(fixture.componentInstance.undoLabelKey()).toBe('artemisApp.hyperion.generationActivity.undoAdaptation');
+        expect(fixture.componentInstance.reviewTargets()).toEqual([]);
     });
 
     it('shows a retained undo without manufacturing empty activity details', () => {

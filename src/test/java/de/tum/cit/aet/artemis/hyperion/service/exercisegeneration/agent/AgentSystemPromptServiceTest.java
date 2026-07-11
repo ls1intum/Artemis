@@ -2,13 +2,10 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.EnumSet;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -18,12 +15,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
-/**
- * Unit test for the agent system prompt's spec-mode branching and the per-language generation profiles, especially the [task]-binding identifier each profile must encode (it
- * differs
- * sharply per test framework).
- */
+/** Unit tests for generation prompting and the production Java capability contract. */
 class AgentSystemPromptServiceTest {
+
+    /** Leaves about 28% headroom over the largest representative Java prompt while preventing another unbounded failure-diary prompt. */
+    private static final int MAX_SYSTEM_PROMPT_CHARS = 10_000;
 
     // No LocalCI services -> the generic build fallback, enough to assert the build-context section renders.
     private final AgentSystemPromptService systemPromptService = new AgentSystemPromptService(new SandboxBuildCommandService(Optional.empty(), Optional.empty()));
@@ -43,10 +39,6 @@ class AgentSystemPromptServiceTest {
         exercise.setProgrammingLanguage(language);
         exercise.setProblemStatement(problemStatement);
         return exercise;
-    }
-
-    private static String profile(ProgrammingLanguage language) {
-        return LanguageGenerationProfile.guidanceFor(exerciseWith(language, ""));
     }
 
     @Test
@@ -79,6 +71,37 @@ class AgentSystemPromptServiceTest {
         // The shared correctness contract is present in BOTH modes.
         assertThat(adaptPrompt).contains("THE CONTRACT");
         assertThat(generatePrompt).contains("THE CONTRACT");
+    }
+
+    @Test
+    void build_adaptMode_doesNotAuthorizeFromScratchCleanupOrReplacement() {
+        ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
+
+        String adaptPrompt = systemPromptService.build(exercise, GenerationMode.ADAPT);
+        String generatePrompt = systemPromptService.build(exercise, GenerationMode.GENERATE);
+
+        assertThat(adaptPrompt).contains("Inspect the existing statement, solution, template, tests, and task bindings before editing")
+                .contains("Do not delete or rename existing source files, public APIs, tests, task bindings, or instructor prose").contains("unless the")
+                .contains("feedback requires it").doesNotContain("remove leftover exercise-specific Java sources").doesNotContain("may refine or replace it");
+        assertThat(generatePrompt).contains("exercise source and test roots are clean").contains("may refine or replace it")
+                .doesNotContain("remove leftover exercise-specific Java sources");
+    }
+
+    @Test
+    void build_keepsRepresentativeSupportedConfigurationsFocused() {
+        ProgrammingExercise maven = exerciseWith(ProgrammingLanguage.JAVA, "");
+        maven.setProjectType(ProjectType.MAVEN_MAVEN);
+        maven.setPackageName("de.example.maven");
+        ProgrammingExercise gradleWithSca = exerciseWith(ProgrammingLanguage.JAVA, "");
+        gradleWithSca.setProjectType(ProjectType.PLAIN_GRADLE);
+        gradleWithSca.setPackageName("de.example.gradle");
+        gradleWithSca.setStaticCodeAnalysisEnabled(true);
+
+        Map<String, String> prompts = Map.of("Maven", systemPromptService.build(maven), "Gradle with SCA", systemPromptService.build(gradleWithSca));
+        assertThat(prompts).allSatisfy((configuration, prompt) -> {
+            assertThat(prompt.length()).as("%s system prompt length", configuration).isLessThanOrEqualTo(MAX_SYSTEM_PROMPT_CHARS);
+            assertThat(prompt).doesNotContain("Python", "Rust", "Go exercise", "CMake", "cabal", "package.json");
+        });
     }
 
     @Test
@@ -118,6 +141,17 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
+    void resolvePrompt_adaptationIsTargetedAndDoesNotAuthorizeTaskReplacement() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "Add tests for zero and negative amounts.", null);
+        ProgrammingExercise exercise = exerciseWithStatement("Maintain stock quantities for independently named inventory items.");
+
+        String prompt = systemPromptService.resolvePrompt(request, exercise);
+
+        assertThat(prompt).contains("targeted revision").containsIgnoringCase("preserve every statement requirement and artifact where the feedback is silent")
+                .contains("Add tests for zero and negative amounts.").doesNotContain("change the task").doesNotContain("replace");
+    }
+
+    @Test
     void resolvePrompt_blankPrompt_fallsBackToModeAwareDefault() {
         // A whitespace-only prompt is treated as "no prompt".
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(null, "   \n  ", null);
@@ -148,7 +182,7 @@ class AgentSystemPromptServiceTest {
         // lock.
         String prompt = systemPromptService.build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
         // Contract: spec-mode framing selected (statement is the starting point), not the from-scratch "you write it" framing. Refine wording is not pinned.
-        assertThat(prompt).contains("CURRENT problem statement and the starting point").doesNotContain("you write it");
+        assertThat(prompt).contains("CURRENT statement and starting point").doesNotContain("you write it");
     }
 
     @Test
@@ -181,137 +215,48 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void build_requiresStudentFacingTestFeedbackAndNonDegenerateWitnessTests() {
+    void build_preservesTheGroundedExerciseQualityContract() {
         String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        // One marker per rule: student-facing failure messages, and a non-degenerate witness for universally-quantified promises.
-        assertThat(prompt).contains("failure message").contains("NON-DEGENERATE");
-        // Contract: a @DisplayName would break the [task]<->method-name binding, so the prompt must forbid a display title, not require one.
-        assertThat(prompt).contains("do NOT rename the test or add a display title").doesNotContain("Give each JVM test a @DisplayName");
+
+        assertThat(prompt).contains("THE CONTRACT", "ARTEMIS TASK BINDINGS", "GROUNDED WORKFLOW", "SAFE TOOL USE")
+                .contains("[task][Short human title](exactTestNameA,exactTestNameB)", "throw new UnsupportedOperationException", "tests/pom.xml", "Call `verify` early")
+                .contains("raw build and debugging commands").doesNotContain("Use bash only for inspection and safe file removal");
     }
 
     @Test
-    void build_forbidsTypographyInSourceCodeAndExampleReproductionOfGradedInputs() {
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        // One marker per rule: ASCII-only in authored source, and never reuse a graded test's exact input as a worked example.
-        assertThat(prompt).contains("all authored SOURCE CODE").contains("NEVER reproduce a graded test's exact composite input");
-    }
-
-    @Test
-    void build_enumeratesTheRealToolSurfaceAndForbidsApplyPatch() {
-        // The agent hallucinated an apply_patch tool (and a silent bash apply_patch no-op corrupted its file-state model); the prompt must name the exact tool set and rule out
-        // apply_patch in both tool-call and bash forms.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        // Contract: the exact tool set is enumerated, apply_patch is ruled out, and re-reading unchanged files is forbidden. One apply_patch marker.
-        assertThat(prompt).contains("Your ONLY tools are bash, read_file, write_file, edit_file, verify, and submit").contains("Never call apply_patch")
-                .contains("do NOT re-read a file whose contents you have already seen");
-    }
-
-    @Test
-    void build_makesVerifyThePrimarySelfCheckAndTheAuthoritativeSourceOfTestNames() {
-        // The `verify` tool, not the per-language naming rules, is the authoritative source of the exact parser-form names the agent must copy verbatim.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.DART, ""));
-        assertThat(prompt).contains("PRIMARY self-check").contains("VERBATIM");
-    }
-
-    @Test
-    void build_forbidsAddingOrStrippingParensOnTestNames() {
-        // The binding resolves by exact string match, so adding/removing the () on a name silently grades it 0.
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.JAVA, ""));
-        assertThat(prompt).contains("do NOT add, remove").contains("grades it 0");
-    }
-
-    @Test
-    void cppProfile_enforcesByteIdenticalHeadersViaDiff() {
-        // The shared header is the contract; the C++ profile must make the agent prove identity (diff prints nothing) rather than merely intend it.
-        assertThat(profile(ProgrammingLanguage.C_PLUS_PLUS)).contains("diff -r solution/include template/include").contains("byte-identical");
-    }
-
-    @Test
-    void cSharpProfile_pinsNet8AndUsesThrowingStub() {
-        // Audit found the agent downgraded the solution to net6 (sandbox-invisible prod break) and the profile's "empty stub" was uncompilable (CS0161).
-        String guidance = profile(ProgrammingLanguage.C_SHARP);
-        assertThat(guidance).contains("net8.0").contains("throw new NotImplementedException();").contains("CS0161");
-    }
-
-    @Test
-    void rustProfile_prunesTheDeadStructuralHarnessAndUnusedDeps() {
-        // Audit found Rust shipped a dead syn/proc-macro harness + unused chrono/rand deps; the profile must name the prune + a grep self-check.
-        String guidance = profile(ProgrammingLanguage.RUST);
-        assertThat(guidance).contains("rust_template_test_macros").contains("grep -rn");
-    }
-
-    @Test
-    void build_kotlin_instructsToWriteEverythingInKotlin() {
-        String prompt = systemPromptService.build(exerciseWith(ProgrammingLanguage.KOTLIN, ""));
-        assertThat(prompt).contains("KOTLIN exercise").contains(".kt").contains("do NOT write any .java");
-    }
-
-    /** Languages present in the enum but with no Artemis exercise templates / not creatable in this deployment — they correctly get no generation profile. */
-    private static final Set<ProgrammingLanguage> LANGUAGES_WITHOUT_TEMPLATES = EnumSet.of(ProgrammingLanguage.EMPTY, ProgrammingLanguage.SQL, ProgrammingLanguage.POWERSHELL,
-            ProgrammingLanguage.ADA, ProgrammingLanguage.PHP);
-
-    @ParameterizedTest
-    @EnumSource(ProgrammingLanguage.class)
-    void everySupportedLanguageHasGenerationGuidanceThatExplainsTaskBindings(ProgrammingLanguage language) {
-        String guidance = profile(language);
-        if (LANGUAGES_WITHOUT_TEMPLATES.contains(language)) {
-            assertThat(guidance).as("no profile for the untemplated language %s", language).isEmpty();
-            return;
-        }
-        assertThat(guidance).as("guidance for %s", language).isNotBlank();
-        assertThat(guidance).as("%s profile explains [task] bindings", language).contains("[task]");
-    }
-
-    @Test
-    void profiles_encodeEachFrameworksDivergentTaskNamingRule() {
-        // The per-framework naming rules the agent most often gets wrong.
-        assertThat(profile(ProgrammingLanguage.PYTHON)).contains("test METHOD name");
-        assertThat(profile(ProgrammingLanguage.JAVASCRIPT)).contains("underscore");
-        assertThat(profile(ProgrammingLanguage.TYPESCRIPT)).contains("underscore");
-        assertThat(profile(ProgrammingLanguage.RUBY)).contains("test METHOD name");
-        assertThat(profile(ProgrammingLanguage.R)).contains("DESCRIPTION STRING");
-        // Dart: the package:test name is the space-joined group+test; production prepends the dot test-FILE suite prefix only with >=2 files, dropping it for a single file (the
-        // common case). Two contract markers: the space-join rule and the singular-suite exception (drop the prefix); the worked example is not pinned.
-        assertThat(profile(ProgrammingLanguage.DART)).contains("joined by SINGLE SPACES").contains("DROPPED");
-        assertThat(profile(ProgrammingLanguage.GO)).contains("TestXxx");
-        assertThat(profile(ProgrammingLanguage.RUST)).contains("#[test] fn");
-        // Catch2 reports a nested SECTION as the slash-joined TEST_CASE/SECTION path.
-        assertThat(profile(ProgrammingLanguage.C_PLUS_PLUS)).contains("TEST_CASE").contains("SLASH-joined");
-        assertThat(profile(ProgrammingLanguage.C_SHARP)).contains("[Test]");
-        assertThat(profile(ProgrammingLanguage.SWIFT)).contains("allTests");
-        assertThat(profile(ProgrammingLanguage.HASKELL)).contains("DOT-JOINED");
-        assertThat(profile(ProgrammingLanguage.BASH)).contains("@test");
-    }
-
-    @Test
-    void cProfile_dependsOnProjectType() {
-        ProgrammingExercise gcc = exerciseWith(ProgrammingLanguage.C, "");
-        gcc.setProjectType(ProjectType.GCC);
-        assertThat(LanguageGenerationProfile.guidanceFor(gcc)).contains("gcc project type");
-
-        ProgrammingExercise fact = exerciseWith(ProgrammingLanguage.C, "");
-        fact.setProjectType(ProjectType.FACT);
-        assertThat(LanguageGenerationProfile.guidanceFor(fact)).contains("fact project type");
-    }
-
-    @Test
-    void javaProfile_dependsOnProjectType_blackboxUsesDejagnuNotAres() {
-        // MAVEN_BLACKBOX is a DejaGnu (stdin/stdout) harness with no JUnit tests, so its guidance teaches the black-box specifics and the dejagnu[<step>] binding, not Ares/JUnit.
+    void javaBlackboxIsUnsupportedBecauseTheVerifierDoesNotRunDejagnu() {
         ProgrammingExercise blackbox = exerciseWith(ProgrammingLanguage.JAVA, "");
         blackbox.setProjectType(ProjectType.MAVEN_BLACKBOX);
-        String blackboxGuidance = LanguageGenerationProfile.guidanceFor(blackbox);
-        // Contract: black-box teaches the DejaGnu dejagnu[<step>] binding (one exemplar step is enough to pin the syntax), not JUnit. Individual step names / STDIN prose not
-        // frozen.
-        assertThat(blackboxGuidance).contains("MAVEN_BLACKBOX").contains("DejaGnu").contains("dejagnu[public]").contains("[task]");
-        // Contract: the black-box profile must NOT carry the JUnit/Ares profile. Two representative markers (assert on instructional phrases, not bare @Public/@StrictTimeout the
-        // black-box text may name only to forbid).
-        assertThat(blackboxGuidance).doesNotContain("@WhitelistPath(\"target\")").doesNotContain("The [task] binding uses the test METHOD name");
 
-        // A normal Java project type and the null default both keep the JUnit/Ares jvm() profile.
-        ProgrammingExercise plainMaven = exerciseWith(ProgrammingLanguage.JAVA, "");
-        plainMaven.setProjectType(ProjectType.PLAIN_MAVEN);
-        assertThat(LanguageGenerationProfile.guidanceFor(plainMaven)).contains("@Public").contains("@StrictTimeout");
-        assertThat(profile(ProgrammingLanguage.JAVA)).contains("@Public").contains("@StrictTimeout");
+        assertThat(LanguageGenerationProfile.isSupported(blackbox)).isFalse();
+        assertThat(systemPromptService.isGenerationSupported(blackbox)).isFalse();
+        assertThat(LanguageGenerationProfile.guidanceFor(blackbox)).isEmpty();
+    }
+
+    @Test
+    void legacyJavaMavenWithoutProjectTypeRemainsSupported() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+
+        assertThat(exercise.getProjectType()).isNull();
+        assertThat(LanguageGenerationProfile.isSupported(exercise)).isTrue();
+    }
+
+    @Test
+    void javaProjectTypeWithoutVerifiedMavenOrGradleRunnerIsUnsupported() {
+        ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+        exercise.setProjectType(ProjectType.PLAIN);
+
+        assertThat(LanguageGenerationProfile.isSupported(exercise)).isFalse();
+    }
+
+    @Test
+    void javaMavenAndGradleProjectTypesRemainSupported() {
+        for (ProjectType projectType : new ProjectType[] { ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE }) {
+            ProgrammingExercise exercise = exerciseWith(ProgrammingLanguage.JAVA, "");
+            exercise.setProjectType(projectType);
+            assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s", projectType).isTrue();
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("@Public").contains("@StrictTimeout");
+        }
     }
 
     // The single server source of truth for the one-click whole-exercise generation offer.
@@ -324,15 +269,12 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void isGenerationSupported_acceptsOfferSet_rejectsBestEffortAndUntemplated() {
-        // 3 representative arms; the exact offer set is already pinned above.
-        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).as("offered").isTrue();
-        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.OCAML)).as("best-effort excluded").isFalse();
-        assertThat(systemPromptService.isGenerationSupported(ProgrammingLanguage.SQL)).as("untemplated excluded").isFalse();
+    void isGenerationSupported_rejectsMissingExercise() {
+        assertThat(LanguageGenerationProfile.isSupported(null)).isFalse();
     }
 
     @Test
-    void isGenerationSupported_rejectsNullLanguage() {
-        assertThat(systemPromptService.isGenerationSupported(null)).isFalse();
+    void isGenerationSupported_rejectsUnsupportedLanguage() {
+        assertThat(systemPromptService.isGenerationSupported(exerciseWith(ProgrammingLanguage.PYTHON, ""))).isFalse();
     }
 }

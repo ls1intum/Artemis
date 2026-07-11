@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -39,7 +40,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRende
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -72,7 +73,7 @@ public class HyperionExerciseGenerationResource {
 
     private final HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
 
-    private final ExerciseAdaptationRevertService adaptationRevertService;
+    private final ExerciseGenerationRevertService generationRevertService;
 
     private final RemoteInteractiveSandboxClient sandboxClient;
 
@@ -80,13 +81,13 @@ public class HyperionExerciseGenerationResource {
 
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationJobService jobService,
             AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ExerciseAdaptationRevertService adaptationRevertService, RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
+            ExerciseGenerationRevertService generationRevertService, RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jobService = jobService;
         this.agentSystemPromptService = agentSystemPromptService;
         this.reviewCommentContextRenderer = reviewCommentContextRenderer;
-        this.adaptationRevertService = adaptationRevertService;
+        this.generationRevertService = generationRevertService;
         this.sandboxClient = sandboxClient;
         this.generationBudgetService = generationBudgetService;
     }
@@ -106,10 +107,9 @@ public class HyperionExerciseGenerationResource {
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
-        if (!agentSystemPromptService.isGenerationSupported(language)) {
-            // Fail clearly instead of running and producing a result the differential oracle cannot verify (best-effort/no-profile languages).
-            throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language
-                    + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        if (!agentSystemPromptService.isGenerationSupported(exercise)) {
+            throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language + "' and project type '"
+                    + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
         if (!sandboxClient.hasAvailableGenerationSandboxSlots(2)) {
@@ -160,16 +160,17 @@ public class HyperionExerciseGenerationResource {
         log.debug("REST request to get the agentic exercise generation status for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<String> revertibleJobId = adaptationRevertService.findRevertibleJobId(exerciseId).filter(jobId -> canOfferRevert(exercise));
+        Optional<ExerciseGenerationRevertService.RevertibleRun> revertibleRun = generationRevertService.findRevertibleRun(exerciseId).filter(run -> canOfferRevert(exercise));
         Optional<ExerciseGenerationStatusDTO> retainedStatus = jobService.getStatus(user, exercise);
         if (retainedStatus.isPresent()) {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
-            return ResponseEntity
-                    .ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(), revertibleJobId.isPresent()));
+            return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileSnapshots(),
+                    revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
+                    revertibleRun.map(run -> Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT)).orElse(null)));
         }
-        return revertibleJobId
-                .<ResponseEntity<ExerciseGenerationStatusDTO>>map(
-                        jobId -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(jobId, false, GenerationMode.ADAPT, List.of(), List.of(), true)))
+        return revertibleRun.<ResponseEntity<ExerciseGenerationStatusDTO>>map(
+                run -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(run.jobId(), false, Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT), List.of(), List.of(),
+                        true, run.jobId(), Objects.requireNonNullElse(run.mode(), GenerationMode.ADAPT))))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
@@ -191,24 +192,24 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent in-place adaptation of the exercise, resetting its
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent accepted generation or adaptation, resetting its
      * template/solution/tests
-     * repositories back to the commit state captured at the start of that adaptation run. The deliberately simple alternative to a staging workflow.
+     * repositories back to the state captured before persistence. The legacy route name is retained for client compatibility.
      *
      * @param exerciseId the programming exercise id
-     * @return 200 if an adaptation baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
+     * @return 200 if a baseline was found and fully reverted; 409 if at least one repository failed to revert; 404 if there is nothing to revert
      */
     @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert-adaptation")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseAdaptationRevertResultDTO> revertAdaptation(@PathVariable long exerciseId) {
-        log.debug("REST request to revert the last agentic adaptation of exercise [{}]", exerciseId);
+        log.debug("REST request to revert the last accepted agentic generation run of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<String> revertibleJobId = adaptationRevertService.findRevertibleJobId(exerciseId);
+        Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         try {
-            return adaptationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
+            return generationRevertService.revert(exercise, user, () -> jobService.isOwnedActiveJob(exerciseId, revertSlot)).map(result -> {
                 if (result.fullyReverted() || !result.revertedRepositories().isEmpty()) {
                     revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
                 }

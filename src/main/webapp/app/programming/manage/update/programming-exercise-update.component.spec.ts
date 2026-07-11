@@ -386,6 +386,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
+        it('requires meaningful requirements before creating repositories', () => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.programmingExercise.problemStatement = 'too short';
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+
+            comp.saveWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
+        });
+
         it('should call automatic setup with empty repositories and navigate to template editor', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
@@ -537,6 +549,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should show for a supported Java Maven project', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.localCiEnabledForAi.set(true);
+
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should hide for unsupported Java black-box projects', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.MAVEN_BLACKBOX;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.localCiEnabledForAi.set(true);
+
+            expect(comp.showGenerateWithAi()).toBe(false);
         });
 
         it('should NOT show under Jenkins (localci inactive), even with hyperion enabled and java', () => {

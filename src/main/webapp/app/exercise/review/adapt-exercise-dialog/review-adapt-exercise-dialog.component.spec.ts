@@ -77,4 +77,26 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         component.cancel();
         expect(close).toHaveBeenCalledWith(undefined);
     });
+
+    it('exposes the remaining instruction capacity and associates it with the textarea', async () => {
+        const { component, fixture } = await setup({});
+        component.instructions.set('abc');
+        fixture.detectChanges();
+
+        expect(component.remainingCharacters()).toBe(7997);
+        const textarea = fixture.nativeElement.querySelector('#adaptExerciseInstructions');
+        expect(textarea.getAttribute('aria-describedby')).toContain('adaptExerciseCharacterCount');
+        expect(fixture.nativeElement.querySelector('#adaptExerciseCharacterCount').textContent).toContain('adaptExercise.charactersRemaining');
+    });
+
+    it('renders selected findings as a labelled list and discloses automatic persistence', async () => {
+        const { fixture } = await setup({ findings: [finding(ConsistencyIssue.SeverityEnum.High, 'fix it')] });
+        fixture.detectChanges();
+
+        const heading = fixture.nativeElement.querySelector('#adaptExerciseFindingsHeading');
+        const list = fixture.nativeElement.querySelector('ul[aria-labelledby="adaptExerciseFindingsHeading"]');
+        expect(heading).not.toBeNull();
+        expect(list.querySelectorAll('li')).toHaveLength(1);
+        expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
+    });
 });

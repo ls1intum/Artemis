@@ -74,7 +74,9 @@
                 "suggestedFixLabel": "Suggested fix",
                 "suggestedFixRemoveLabel": "Remove",
                 "cancel": "Cancel",
-                "confirm": "Adapt exercise"
+                "confirm": "Adapt exercise",
+                "persistenceNotice": "Accepted output is saved automatically to the problem statement, template, solution, and tests. Review every artifact before release. Undo is available only while the temporary in-memory baseline remains available and no later repository changes conflict.",
+                "charactersRemaining": "{{ count }} characters remaining"
             }
         }
     }

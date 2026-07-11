@@ -40,9 +40,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * It combines deterministic passes (a regex scan of the problem statement for grader-mechanics leaks and a scan of the produced tests for message-less assertions, both model-free)
  * with a single bounded LLM pass (uncovered requirements, missing worked examples, and invented requirements). See {@link SpecFidelityReport.Kind} for the full set of findings.
  * <p>
- * Non-blocking: this critic never participates in the accept/reject decision, so a false positive (its real risk) can only add an advisory note. Its findings are folded into the
- * verifier-feedback retry prompt while attempts remain and surfaced as advisory review comments otherwise. Any failure of the model pass (timeout, error, empty or garbage output)
- * is swallowed and yields no findings, so a critic failure never perturbs the run.
+ * Coverage findings are advisory. For adaptations, the same bounded pass also receives a compact baseline-to-candidate diff; a high-confidence unrequested change or an unavailable
+ * scope verdict prevents direct live persistence and routes the candidate to the isolated review-draft path.
  */
 @Lazy
 @Service
@@ -68,7 +67,7 @@ public class SpecFidelityCriticService {
 
     private static final String CRITIC_SYSTEM_PROMPT = """
             You are a meticulous QA reviewer for programming-exercise test suites. You are given an instructor's BRIEF (what the exercise must require), the produced PROBLEM \
-            STATEMENT, and the exact list of TEST NAMES that were written. You produce THREE kinds of finding.
+            STATEMENT, and the exact list of TEST NAMES that were written. You produce four kinds of finding.
 
             (1) UNCOVERED requirements: the concrete, checkable requirements and edge cases that the brief (or problem statement) explicitly names but that NO test appears to cover. \
             Count as a requirement only something concrete and assertable that the brief actually states, e.g.: a named input class to handle ("CJK characters", "emoji", \
@@ -89,22 +88,30 @@ public class SpecFidelityCriticService {
             the brief and that a student would be graded on; do NOT list reasonable elaborations, naming, or the happy path. These are flagged for the instructor to confirm, not \
             errors.
 
+            (4) UNREQUESTED adaptation changes: when an ADAPTATION CHANGES section is present, list only high-confidence deletions or rewrites that the BRIEF does not request, \
+            especially content it explicitly says to preserve. Do not flag a change required by the brief. Name the repository path and removed or altered symbol/content.
+
             Respond with ONLY a JSON object, no prose, of the exact form:
             {"uncovered": [{"requirement": "<the requirement in the brief's own terms>", "reason": "<why no test covers it>"}], \
             "missingExamples": [{"behaviour": "<the error/edge behaviour>", "reason": "<which concrete fenced example is missing>"}], \
-            "invented": [{"requirement": "<the requirement the statement adds>", "reason": "<why it is not in the brief>"}]}
+            "invented": [{"requirement": "<the requirement the statement adds>", "reason": "<why it is not in the brief>"}], \
+            "unrequestedChanges": [{"change": "<path and unrequested change>", "reason": "<why the brief does not require it>"}]}
             Keep each requirement, behaviour, and reason concise (one short sentence, no markdown) so the JSON is never truncated. \
             If everything is covered, every error/edge behaviour has a concrete fenced example, and the statement adds nothing beyond the brief, respond with \
-            {"uncovered": [], "missingExamples": [], "invented": []}.""";
+            {"uncovered": [], "missingExamples": [], "invented": [], "unrequestedChanges": []}.""";
 
     /** The structured shape the coverage pass parses the model JSON into. */
-    private record CriticResponse(@Nullable List<UncoveredItem> uncovered, @Nullable List<ExampleGapItem> missingExamples, @Nullable List<UncoveredItem> invented) {
+    private record CriticResponse(@Nullable List<UncoveredItem> uncovered, @Nullable List<ExampleGapItem> missingExamples, @Nullable List<UncoveredItem> invented,
+            @Nullable List<AdaptationChangeItem> unrequestedChanges) {
     }
 
     private record UncoveredItem(@Nullable String requirement, @Nullable String reason) {
     }
 
     private record ExampleGapItem(@Nullable String behaviour, @Nullable String reason) {
+    }
+
+    private record AdaptationChangeItem(@Nullable String change, @Nullable String reason) {
     }
 
     /**
@@ -156,7 +163,14 @@ public class SpecFidelityCriticService {
      */
     public SpecFidelityReport critique(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, @Nullable Consumer<ChatResponse> usageSink) {
         List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
-        findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames, usageSink));
+        findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames, null, usageSink));
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
+    public SpecFidelityReport critiqueAdaptation(@Nullable String brief, @Nullable String problemStatement, List<String> testNames, String adaptationChanges,
+            @Nullable Consumer<ChatResponse> usageSink) {
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(detectMechanicsLeaks(problemStatement));
+        findings.addAll(detectUncoveredRequirements(brief, problemStatement, testNames, adaptationChanges, usageSink));
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -177,24 +191,20 @@ public class SpecFidelityCriticService {
         return leaks;
     }
 
-    /**
-     * Runs the single LLM coverage pass via the shared ChatClient and parses its findings defensively. Returns no findings — never throws — when there is no model, the brief is
-     * too
-     * short to be a real spec, or the call/parse fails for any reason (timeout, error, empty or garbage output), so a critic failure can never perturb the run.
-     */
+    /** Runs one bounded review pass; adaptation-scope review fails closed when the model or response is unavailable. */
     private List<SpecFidelityReport.Finding> detectUncoveredRequirements(@Nullable String brief, @Nullable String problemStatement, List<String> testNames,
-            @Nullable Consumer<ChatResponse> usageSink) {
+            @Nullable String adaptationChanges, @Nullable Consumer<ChatResponse> usageSink) {
         if (chatClient == null) {
-            return List.of();
+            return adaptationChanges == null ? List.of() : scopeReviewUnavailable("No AI reviewer is configured.");
         }
         String effectiveBrief = brief == null ? "" : brief.strip();
-        if (effectiveBrief.length() < MIN_BRIEF_CHARS) {
+        if (adaptationChanges == null && effectiveBrief.length() < MIN_BRIEF_CHARS) {
             // No real instructor spec to critique (empty/placeholder brief): skip rather than hallucinate requirements out of nothing.
             return List.of();
         }
         try {
             // Output-capped, tool-free, single call (no retry): a bounded constant cost that cannot loop.
-            ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames))
+            ChatResponse response = chatClient.prompt().system(CRITIC_SYSTEM_PROMPT).user(renderUserPrompt(effectiveBrief, problemStatement, testNames, adaptationChanges))
                     .options(OpenAiChatOptions.builder().maxTokens(CRITIC_MAX_OUTPUT_TOKENS)).call().chatResponse();
             if (usageSink != null) {
                 // Count the critic's own token usage against the generation run; without this its spend goes entirely unrecorded.
@@ -202,42 +212,62 @@ public class SpecFidelityCriticService {
             }
             String text = LLMTokenUsageService.extractResponseText(response);
             if (text == null || text.isBlank()) {
-                return List.of();
+                return adaptationChanges == null ? List.of() : scopeReviewUnavailable("The AI reviewer returned no verdict.");
             }
-            return parseCritique(text);
+            List<SpecFidelityReport.Finding> parsed = parseCritique(text, adaptationChanges != null);
+            return parsed != null ? parsed : adaptationChanges == null ? List.of() : scopeReviewUnavailable("The AI review verdict could not be parsed.");
         }
         catch (RuntimeException e) {
             // Graceful skip: a critic failure must never fail the run. The differential oracle's verdict is unaffected.
             log.warn("Spec-fidelity critic LLM pass failed; skipping coverage findings for this attempt: {}", e.getMessage());
-            return List.of();
+            return adaptationChanges == null ? List.of() : scopeReviewUnavailable("The AI reviewer failed before it could assess the change scope.");
         }
     }
 
-    private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames) {
+    private static List<SpecFidelityReport.Finding> scopeReviewUnavailable(String detail) {
+        return SpecFidelityReport.adaptationScopeUnavailable(detail).findings();
+    }
+
+    private static String renderUserPrompt(String brief, @Nullable String problemStatement, List<String> testNames, @Nullable String adaptationChanges) {
         String tests = testNames.isEmpty() ? "(no tests were produced)" : String.join("\n", testNames);
+        String changes = adaptationChanges == null || adaptationChanges.isBlank() ? "" : "\n\nADAPTATION CHANGES (baseline to candidate):\n" + adaptationChanges;
         return "INSTRUCTOR BRIEF:\n" + brief + "\n\nPRODUCED PROBLEM STATEMENT:\n" + (problemStatement == null || problemStatement.isBlank() ? "(empty)" : problemStatement.strip())
-                + "\n\nTEST NAMES (" + testNames.size() + "):\n" + tests
+                + "\n\nTEST NAMES (" + testNames.size() + "):\n" + tests + changes
                 + "\n\nList (1) the brief's concrete requirements/edge-cases that no test covers, (2) the error/edge behaviours that have no concrete fenced example, and (3) the "
-                + "graded requirements the problem statement invents beyond the brief (scope drift), as the specified JSON.";
+                + "graded requirements the problem statement invents beyond the brief. When adaptation changes are present, also list (4) high-confidence unrequested changes, as the specified JSON.";
     }
 
     /**
      * Parses the model's JSON critic response defensively. Tolerates surrounding prose / code fences, ignores entries missing their text, truncates over-long text, and caps the
      * total count across all finding kinds. Any structural surprise yields no findings rather than an exception.
      */
-    private List<SpecFidelityReport.Finding> parseCritique(String text) {
+    private @Nullable List<SpecFidelityReport.Finding> parseCritique(String text, boolean requireScopeVerdict) {
         CriticResponse parsed;
         try {
             parsed = objectMapper.readValue(extractJsonPayload(text), CriticResponse.class);
         }
         catch (Exception e) {
             log.debug("Spec-fidelity critic JSON did not parse ({}); treating as no findings.", e.getMessage());
-            return List.of();
+            return null;
         }
-        if (parsed == null) {
-            return List.of();
+        if (parsed == null || requireScopeVerdict && parsed.unrequestedChanges() == null) {
+            return null;
         }
         List<SpecFidelityReport.Finding> findings = new ArrayList<>();
+        // Scope violations can prevent live persistence, so retain them before advisory findings consume the shared defensive cap.
+        if (parsed.unrequestedChanges() != null) {
+            for (AdaptationChangeItem item : parsed.unrequestedChanges()) {
+                if (findings.size() >= MAX_COVERAGE_FINDINGS) {
+                    break;
+                }
+                if (item == null || item.change() == null || item.change().isBlank()) {
+                    continue;
+                }
+                String reason = item.reason() != null && !item.reason().isBlank() ? item.reason().strip() : "the feedback does not require this change.";
+                findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE, truncate(item.change().strip()),
+                        "This adaptation changed existing content outside the requested scope: " + reason + " Restore it or make the feedback explicitly require the change."));
+            }
+        }
         if (parsed.uncovered() != null) {
             for (UncoveredItem item : parsed.uncovered()) {
                 if (findings.size() >= MAX_COVERAGE_FINDINGS) {
@@ -381,8 +411,9 @@ public class SpecFidelityCriticService {
         if (!report.hasFindings()) {
             return "";
         }
-        StringBuilder builder = new StringBuilder(
-                "\n\nAdditionally, a spec-fidelity review of your exercise found these gaps against the instructor's brief (these did NOT cause rejection, but fixing them makes the "
+        StringBuilder builder = new StringBuilder(report.hasBlockingFindings()
+                ? "\n\nAn adaptation-scope review found changes that prevent direct saving until they are restored or required by the feedback:"
+                : "\n\nAdditionally, a spec-fidelity review of your exercise found these gaps against the instructor's brief (these did NOT cause rejection, but fixing them makes the "
                         + "exercise match the brief):");
         for (SpecFidelityReport.Finding finding : report.findings()) {
             switch (finding.kind()) {
@@ -397,6 +428,9 @@ public class SpecFidelityCriticService {
                                 + "naming the behaviour that broke, e.g. assertEquals(expected, actual, \"calculateSize must sum every file regardless of nesting depth\").");
                 case UNCOVERED_REQUIREMENT ->
                     builder.append("\n- No test covers this requirement from the brief: \"").append(finding.requirement()).append("\". Add a test that asserts it.");
+                case UNREQUESTED_ADAPTATION_CHANGE -> builder.append("\n- Unrequested adaptation change: \"").append(finding.requirement()).append("\". ").append(finding.detail());
+                case ADAPTATION_SCOPE_REVIEW_UNAVAILABLE -> builder.append("\n- The adaptation-scope review was unavailable. Re-check every changed file against the feedback "
+                        + "and preserve all unrelated content before submitting again.");
             }
         }
         return builder.toString();

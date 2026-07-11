@@ -42,7 +42,7 @@
                     }
                     @if (reverted()) {
                         <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
-                            <span jhiTranslate="artemisApp.hyperion.generationActivity.reverted"></span>
+                            <span [jhiTranslate]="undoneLabelKey()"></span>
                         </p-tag>
                     }
                     @if (jobId() && hasDetails()) {
@@ -75,6 +75,11 @@
                             <span [jhiTranslate]="cancelRequested() ? 'artemisApp.hyperion.generationActivity.cancelling' : 'artemisApp.hyperion.generationActivity.cancel'"></span>
                         </p-button>
                     }
+                    @if (canRunAgain()) {
+                        <p-button size="small" severity="secondary" [text]="true" (onClick)="runAgain()" data-testid="hyperion-generation-run-again">
+                            <span jhiTranslate="artemisApp.hyperion.generationActivity.runAgain"></span>
+                        </p-button>
+                    }
                     @if (canRevert()) {
                         <p-button
                             size="small"
@@ -83,26 +88,38 @@
                             [loading]="reverting()"
                             [disabled]="reverting()"
                             (onClick)="confirmRevert()"
-                            [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
+                            [pTooltip]="undoTooltipKey() | artemisTranslate"
                             data-testid="hyperion-generation-revert"
                         >
                             @if (!reverting()) {
                                 <fa-icon [icon]="faRotateLeft" />
                             }
-                            <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : 'artemisApp.hyperion.generationActivity.revert'"></span>
+                            <span [jhiTranslate]="reverting() ? 'artemisApp.hyperion.generationActivity.reverting' : undoLabelKey()"></span>
                         </p-button>
                     }
                 </div>
             </header>
         }
 
+        @if (running() && currentProgress()?.message; as message) {
+            <div class="hyperion-activity-current-progress" data-testid="hyperion-generation-current-progress">{{ message }}</div>
+        }
+
+        @if (terminalMessage(); as message) {
+            <div class="hyperion-activity-terminal-message" data-testid="hyperion-generation-terminal-message">{{ message }}</div>
+        }
+
         @if (idle()) {
             <div class="hyperion-activity-empty" data-testid="hyperion-generation-empty">
                 <strong jhiTranslate="artemisApp.hyperion.generationActivity.emptyTitle"></strong>
-                <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
-                <p-button size="small" (onClick)="requestStart()" data-testid="hyperion-generation-start">
-                    <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
-                </p-button>
+                @if (startAllowed()) {
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
+                    <p-button size="small" (onClick)="requestStart()" data-testid="hyperion-generation-start">
+                        <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
+                    </p-button>
+                } @else {
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.unavailableHint"></span>
+                }
             </div>
         }
 
@@ -129,10 +146,13 @@
                     <fa-icon [icon]="currentVerdict.accepted ? faCircleCheck : faCircleXmark" />
                     <strong
                         [jhiTranslate]="
-                            currentVerdict.accepted ? 'artemisApp.hyperion.generationActivity.verdict.checksPassed' : 'artemisApp.hyperion.generationActivity.verdict.checksFailed'
+                            currentVerdict.accepted
+                                ? 'artemisApp.hyperion.generationActivity.verdict.consistencyChecksPassed'
+                                : 'artemisApp.hyperion.generationActivity.verdict.consistencyChecksFailed'
                         "
                     ></strong>
                 </span>
+                <span class="hyperion-verification-review" jhiTranslate="artemisApp.hyperion.generationActivity.verdict.instructorReviewRequired"></span>
                 <span [class]="currentVerdict.solutionPassed ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
                     <fa-icon [icon]="currentVerdict.solutionPassed ? faCircleCheck : faCircleXmark" />
                     <span
@@ -171,6 +191,29 @@
                     </ul>
                 </p-message>
             }
+        }
+
+        @if (reviewTargets().length) {
+            <section class="hyperion-activity-review" aria-labelledby="hyperion-review-saved-title" data-testid="hyperion-generation-review">
+                <div class="hyperion-activity-review-copy">
+                    <h4 id="hyperion-review-saved-title" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
+                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
+                </div>
+                <div class="hyperion-activity-review-actions">
+                    @for (target of reviewTargets(); track target) {
+                        <p-button
+                            size="small"
+                            severity="secondary"
+                            [outlined]="true"
+                            (onClick)="requestReview(target)"
+                            data-testid="hyperion-generation-review-action"
+                            [attr.data-review-target]="target"
+                        >
+                            <span [jhiTranslate]="'artemisApp.hyperion.generationActivity.reviewTarget.' + target"></span>
+                        </p-button>
+                    }
+                </div>
+            </section>
         }
 
         @if (jobId() && hasDetails()) {
