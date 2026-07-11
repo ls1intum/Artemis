@@ -865,21 +865,12 @@ pre {
     border-radius: 1rem;
     background-color: var(--bs-tertiary-bg);
     color: var(--bs-body-color);
-    font-size: 0.85rem;
+    font-size: var(--bs-body-font-size);
     cursor: pointer;
     text-align: left;
-    transition:
-        background-color 0.15s ease,
-        border-color 0.15s ease;
-
-    &:hover,
-    &:focus-visible {
-        border-color: var(--info);
-        color: var(--info);
-    }
 
     fa-icon {
-        color: var(--info);
+        color: var(--primary);
     }
 }
 
