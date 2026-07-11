@@ -716,13 +716,13 @@ public class ExamResource {
      */
     @GetMapping("exams/{examId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
+    public ResponseEntity<ExamWithExerciseGroupsDTO> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
 
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamWithExerciseGroupsDTO.ofImport(exam));
     }
 
     /**

@@ -137,6 +137,33 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
         return of(exam, false);
     }
 
+    /**
+     * Builds the response for the exam-import fetch ({@code GET exams/{examId}},
+     * {@link de.tum.cit.aet.artemis.exam.web.ExamResource#getExamForImportWithExercises}). That fetch hydrates the same
+     * fully detailed graph as the detailed {@code GET} ({@code findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true)}),
+     * so it uses the {@code withDetails=true} shape.
+     * <p>
+     * Two client consumers read this response and echo it back onto write paths, and this shape serves both:
+     * <ul>
+     * <li>the exercise-group import modal ({@code exam-exercise-import.component}) renders per exercise {@code id}, {@code type},
+     * {@code title}, {@code shortName}, {@code difficulty} and per group {@code id}, {@code title}, {@code isMandatory}, then
+     * re-posts the selected groups to {@code import-exercise-group} — where the exercises deserialize back into the polymorphic
+     * {@code Exercise} hierarchy (and their quiz-question / programming-participation stubs), so the {@code type} discriminators
+     * this shape carries are load-bearing for that echo;</li>
+     * <li>the create-exam-from-import editor resolves this response ({@code ExamResolve} with {@code forImport}) into
+     * {@code exam-update.component} — the same component and therefore the same field set as the normal edit route, which already
+     * consumes this DTO — and its body-builder ({@code convertExamToImportDTO} / {@code convertExerciseGroupsToImportDTO}) reads
+     * the scalar exam core plus, per exercise, {@code id}, {@code type}, {@code title}, {@code shortName}, {@code maxPoints},
+     * {@code bonusPoints} and, per group, {@code title}, {@code isMandatory} — all a subset of this shape.</li>
+     * </ul>
+     *
+     * @param exam the fully hydrated exam (groups + exercises with quiz-question / programming details)
+     * @return the exam-import DTO
+     */
+    public static ExamWithExerciseGroupsDTO ofImport(Exam exam) {
+        return of(exam, true);
+    }
+
     private static ExamWithExerciseGroupsDTO of(Exam exam, boolean withDetails) {
         // Single source for the shared scalar core: build the plain ExamDTO once and copy its accessors, so only ExamDTO.of
         // reads the scalar entity getters. channelName (ExamDTO-only) is dropped; started and numberOfExamUsers are added.

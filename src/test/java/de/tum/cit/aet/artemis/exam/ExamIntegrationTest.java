@@ -2211,14 +2211,31 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         QuizExerciseFactory.addAllQuestionTypesToQuizExercise(quiz);
         exerciseRepository.save(quiz);
 
-        Exam received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
-        assertThat(received).isEqualTo(exam2);
-        assertThat(received.getExerciseGroups()).hasSize(1);
-        var group = received.getExerciseGroups().getFirst();
-        assertThat(group.getExercises()).hasSize(1);
-        QuizExercise receivedExercise = (QuizExercise) group.getExercises().iterator().next();
-        // Details like the quiz questions are needed for importing and should be included
-        assertThat(receivedExercise.getQuizQuestions()).hasSize(4);
+        ExamWithExerciseGroupsDTO received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class);
+        assertThat(received.id()).isEqualTo(exam2.getId());
+        assertThat(received.title()).isEqualTo(exam2.getTitle());
+        assertThat(received.testExam()).isEqualTo(exam2.isTestExam());
+        // exam-import.component reads exam.course to decide isImportInSameCourse
+        assertThat(received.course()).isNotNull();
+        assertThat(received.course().id()).isEqualTo(course1.getId());
+        assertThat(received.exerciseGroups()).hasSize(1);
+        var group = received.exerciseGroups().getFirst();
+        // the import modal renders and the body-builder re-posts group id/title/isMandatory
+        assertThat(group.id()).isEqualTo(quizGroup.getId());
+        assertThat(group.title()).isEqualTo(quizGroup.getTitle());
+        assertThat(group.isMandatory()).isEqualTo(quizGroup.getIsMandatory());
+        assertThat(group.exercises()).hasSize(1);
+        var receivedExercise = group.exercises().getFirst();
+        // convertExerciseGroupsToImportDTO re-posts exactly these fields; the polymorphic type discriminator is
+        // load-bearing for the import-exercise-group echo (the exercise deserializes back into the Exercise hierarchy)
+        assertThat(receivedExercise.id()).isEqualTo(quiz.getId());
+        assertThat(receivedExercise.type()).isEqualTo(ExerciseType.QUIZ);
+        assertThat(receivedExercise.title()).isEqualTo(quiz.getTitle());
+        assertThat(receivedExercise.maxPoints()).isEqualTo(quiz.getMaxPoints());
+        assertThat(receivedExercise.bonusPoints()).isEqualTo(quiz.getBonusPoints());
+        // Quiz-question stubs keep length + polymorphic type so the echo round-trips (details are reloaded from source on import)
+        assertThat(receivedExercise.quizQuestions()).hasSize(4);
+        assertThat(receivedExercise.quizQuestions()).allSatisfy(question -> assertThat(question.type()).isNotBlank());
     }
 
     @Test
