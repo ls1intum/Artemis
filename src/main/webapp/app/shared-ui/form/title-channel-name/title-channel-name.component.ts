@@ -26,6 +26,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     channelNameHelpIconText = input<string>('artemisApp.programmingExercise.channelNameTooltip');
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
+    maxTitleLength = input<number>();
     initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();

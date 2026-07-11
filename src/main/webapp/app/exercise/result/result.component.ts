@@ -275,6 +275,9 @@ export class ResultComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
+            // Don't auto-focus the first focusable element on show: in a long feedback list it is often
+            // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
+            focusOnShow: false,
             inputValues: {
                 exercise,
                 result,
