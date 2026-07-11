@@ -95,6 +95,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -821,7 +822,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
     @EnforceAtLeastTutor
-    public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
+    public ResponseEntity<ExamForAssessmentDashboardDTO> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
@@ -846,7 +847,7 @@ public class ExamResource {
 
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(exercises, tutorParticipations, true);
 
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamForAssessmentDashboardDTO.of(exam));
     }
 
     /**
@@ -858,7 +859,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
+    public ResponseEntity<ExamForAssessmentDashboardDTO> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
@@ -871,7 +872,7 @@ public class ExamResource {
             exerciseGroup.setExercises(courseRepository.filterInterestingExercisesForAssessmentDashboards(exerciseGroup.getExercises()));
         }
 
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamForAssessmentDashboardDTO.of(exam));
     }
 
     /**

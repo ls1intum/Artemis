@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -1431,8 +1432,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        exam = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.OK, Exam.class);
-        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).toList()).isNotEmpty();
+        ExamForAssessmentDashboardDTO dashboard = request.get(
+                "/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.OK,
+                ExamForAssessmentDashboardDTO.class);
+        var exercises = dashboard.exerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.exercises().stream()).toList();
+        assertThat(exercises).isNotEmpty();
+        // the test-run dashboard does not compute the per-exercise assessment statistics (its client screen hides them),
+        // so the transient stats stay absent on the wire
+        assertThat(exercises).allSatisfy(exercise -> {
+            assertThat(exercise.numberOfSubmissions()).isNull();
+            assertThat(exercise.tutorParticipations()).isNull();
+        });
     }
 
     @Test
@@ -1497,12 +1507,23 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
         examRepository.save(exam);
 
-        Exam receivedExam = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK, Exam.class);
+        ExamForAssessmentDashboardDTO receivedExam = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK,
+                ExamForAssessmentDashboardDTO.class);
 
         // Test that the received exam has two text exercises
-        assertThat(receivedExam.getExerciseGroups().getFirst().getExercises()).as("Two exercises are returned").hasSize(2);
+        assertThat(receivedExam.exerciseGroups().getFirst().exercises()).as("Two exercises are returned").hasSize(2);
         // Test that the received exam has zero quiz exercises, because quiz exercises do not need to be corrected manually
-        assertThat(receivedExam.getExerciseGroups().get(1).getExercises()).as("Zero exercises are returned").isEmpty();
+        // (an empty exercise list is dropped by NON_EMPTY and arrives as null, which the client guards with *ngIf)
+        assertThat(receivedExam.exerciseGroups().get(1).exercises()).as("Zero exercises are returned").isNullOrEmpty();
+
+        // Pin the assessment-statistics contract the tutor dashboard reads: each interesting exercise carries the
+        // submission stat and the current tutor's participation (with a status) attached by the dashboard service.
+        var firstExercise = receivedExam.exerciseGroups().getFirst().exercises().getFirst();
+        assertThat(firstExercise.numberOfSubmissions()).as("submission stat is attached").isNotNull();
+        assertThat(firstExercise.tutorParticipations()).as("tutor participation is attached").isNotNull().first().satisfies(tp -> assertThat(tp.status()).isNotNull());
+        // Pin the course projection the client turns into access rights + complaint/feedback flags
+        assertThat(receivedExam.course()).isNotNull();
+        assertThat(receivedExam.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
     }
 
     @Test
