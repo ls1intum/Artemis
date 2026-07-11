@@ -8,6 +8,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -193,10 +194,9 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<void> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
-        const studentExamCopy = cloneDeep(studentExam);
-        ExamParticipationService.breakCircularDependency(studentExamCopy);
+        const submitStudentExamDTO = toSubmitStudentExamDTO(studentExam);
 
-        return this.httpClient.post<void>(url, studentExamCopy).pipe(
+        return this.httpClient.post<void>(url, submitStudentExamDTO).pipe(
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));

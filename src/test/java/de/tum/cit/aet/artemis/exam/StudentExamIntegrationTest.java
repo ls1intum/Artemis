@@ -55,6 +55,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -1004,24 +1006,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         submission.setText("Test2");
         submission.setSubmitted(false);
 
-        // if the submitted exam has the submitted flag set to true, the request should be ignored, but still return OK
+        // The client-supplied submitted flag is no longer read (it is dropped from the DTO): the submitted state is
+        // derived from the database. A client that claims submitted=true while its DB copy is not yet submitted therefore
+        // does NOT short-circuit — the exam is legitimately submitted and the change is saved.
         studentExam1.setSubmitted(true);
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-
-        // Check that submission change is not saved
-        assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test1", null);
-
-        // if the submitted exam has the submitted flag set to false, and the studentExam is not yet submitted, the request should be accepted ...
-        studentExam1.setSubmitted(false);
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
-        // ... and the exam actually be submitted and the change be saved
         assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
 
         // Change submission again
         submission.setText("Test3");
         submission.setSubmitted(false);
 
-        // Subsequent calls should still return OK, but not persist my new submission change
+        // Subsequent calls are ignored because the DATABASE now marks the exam as submitted (the idempotent double-submit
+        // guard), regardless of the client-supplied flag, and still return OK without persisting the new change.
+        studentExam1.setSubmitted(false);
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
         assertStudentExam1HasSingleTextSubmissionWithTextAndIsSubmitted("Test2", true);
     }
@@ -1052,16 +1050,20 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitStudentExam_differentUser() throws Exception {
+    void testSubmitStudentExam_manipulatedUserInBodyIsIgnored() throws Exception {
         studentExam1.setSubmitted(false);
         studentExamRepository.save(studentExam1);
-        // Forbidden because user object is wrong
+        // The submit body no longer carries a user field: ownership is derived from the persisted student exam (owned by
+        // student1, the authenticated user), not from a client claim. A body that still claims a different user (a stale
+        // full-entity body from before the DTO rollout) is deserialized ignoring that field, so the request succeeds and
+        // the DB ownership stays student1. Cross-user submission is rejected by DB truth in testSubmitExamOtherUser_forbidden.
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         studentExam1.setUser(student2);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExam1, HttpStatus.OK, null);
 
         studentExam1 = studentExamRepository.findByIdElseThrow(studentExam1.getId());
         assertThat(studentExam1.getUser()).isEqualTo(student1);
+        assertThat(studentExam1.isSubmitted()).isTrue();
     }
 
     @Test
@@ -3019,6 +3021,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // TODO: Hibernate 7 increased base query count from 5 to 6 — investigate remaining extra query in a follow-up
         private final int BASE_QUERY_COUNT = 6;
 
+        // The submit path now rebuilds the quiz submission from the slim SubmitStudentExamDTO via
+        // QuizSubmissionService.buildSubmissionFromLiveClientDTO (reusing the #12832 quiz live-save mapper). That mapper
+        // re-resolves the client-supplied answer ids against the quiz exercise, so the submit reconstruction loads the
+        // quiz exercise WITH its questions (and their eager nested options/items/spots) — a fixed cost incurred whenever
+        // the hand-in contains a quiz exercise, independent of whether the quiz answer actually changed.
+        private final int QUIZ_RECONSTRUCTION_QUERY_COUNT = 9;
+
         private TextExercise textExercise;
 
         private ModelingExercise modeExercise;
@@ -3090,8 +3099,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
+            // Even when nothing changed, the DTO reconstruction still loads the quiz exercise with questions to rebuild
+            // the (unchanged) quiz submission before the content-equality check decides not to persist it.
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
-                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + QUIZ_RECONSTRUCTION_QUERY_COUNT);
         }
 
         @Test
@@ -3118,16 +3129,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
-            // load Quiz Submissions Submitted Answers (for comparison)
-            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
-            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more — Hibernate now issues per-child-collection
-            // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
-            // Tracked in #12808 to evaluate switching those collections to FetchType.LAZY and reclaiming the +2.
-            final int quizQueryCount = 10;
+            // Additional cost of actually persisting the changed quiz submission (loadQuizSubmissionsSubmittedAnswers +
+            // save), on top of the DTO reconstruction load (QUIZ_RECONSTRUCTION_QUERY_COUNT). The reconstruction load
+            // warms the quiz questions into the session, so this incremental save cost is 8 (previously 10 when the
+            // client posted the fully-hydrated answers and no reconstruction load happened).
+            final int quizSaveQueryCount = 8;
 
             // When
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
-                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + quizQueryCount);
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + QUIZ_RECONSTRUCTION_QUERY_COUNT + quizSaveQueryCount);
             StudentExam submittedExam = request.get(
                     "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
                     StudentExam.class);
@@ -3356,6 +3366,185 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     .getSubmittedAnswerForQuestion(multipleChoiceQuestion);
 
             assertThat(answerAfterSubmission.toSelectedIds()).containsAll(changedAnswerOption.stream().map(AnswerOption::getId).collect(Collectors.toSet()));
+        }
+
+        private long participationId(Exercise exercise) {
+            return exercise.getStudentParticipations().iterator().next().getId();
+        }
+
+        private ObjectNode idRef(long id) {
+            return objectMapper.createObjectNode().put("id", id);
+        }
+
+        private ObjectNode participationNode(long participationId, ArrayNode submissions) {
+            ObjectNode participation = objectMapper.createObjectNode();
+            participation.put("id", participationId);
+            participation.set("submissions", submissions);
+            return participation;
+        }
+
+        private ObjectNode exerciseNode(long exerciseId, ArrayNode participations) {
+            ObjectNode exercise = objectMapper.createObjectNode();
+            exercise.put("id", exerciseId);
+            exercise.set("studentParticipations", participations);
+            return exercise;
+        }
+
+        private ArrayNode arrayOf(ObjectNode... nodes) {
+            ArrayNode array = objectMapper.createArrayNode();
+            for (ObjectNode node : nodes) {
+                array.add(node);
+            }
+            return array;
+        }
+
+        /**
+         * Trap #4 + slim-path proof: post the actual slim {@code SubmitStudentExamDTO} wire shape (NOT a full entity),
+         * then reload from fresh queries and assert every answer type persisted exactly. A silently-dropped field would
+         * leave the persisted content unchanged and this test would fail.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoPersistsEveryAnswerTypeFromFreshQueries() throws Exception {
+            long selectedOptionId = multipleChoiceQuestion.getAnswerOptions().get(1).getId();
+            long dragItemId = dragAndDropQuestion.getDragItems().get(0).getId();
+            long dropLocationId = dragAndDropQuestion.getDropLocations().get(1).getId();
+            long spotId = shortAnswerQuestion.getSpots().get(0).getId();
+
+            ObjectNode mcAnswer = objectMapper.createObjectNode();
+            mcAnswer.put("type", "multiple-choice");
+            mcAnswer.set("quizQuestion", idRef(multipleChoiceQuestion.getId()));
+            mcAnswer.set("selectedOptions", arrayOf(idRef(selectedOptionId)));
+
+            ObjectNode dndMapping = objectMapper.createObjectNode();
+            dndMapping.set("dragItem", idRef(dragItemId));
+            dndMapping.set("dropLocation", idRef(dropLocationId));
+            ObjectNode dndAnswer = objectMapper.createObjectNode();
+            dndAnswer.put("type", "drag-and-drop");
+            dndAnswer.set("quizQuestion", idRef(dragAndDropQuestion.getId()));
+            dndAnswer.set("mappings", arrayOf(dndMapping));
+
+            ObjectNode saText = objectMapper.createObjectNode();
+            saText.put("text", "slim short answer");
+            saText.set("spot", idRef(spotId));
+            ObjectNode saAnswer = objectMapper.createObjectNode();
+            saAnswer.put("type", "short-answer");
+            saAnswer.set("quizQuestion", idRef(shortAnswerQuestion.getId()));
+            saAnswer.set("submittedTexts", arrayOf(saText));
+
+            ObjectNode textSubmissionNode = objectMapper.createObjectNode();
+            textSubmissionNode.put("submissionExerciseType", "text");
+            textSubmissionNode.put("id", textSubmission.getId());
+            textSubmissionNode.put("text", "slim text answer");
+
+            ObjectNode modelingSubmissionNode = objectMapper.createObjectNode();
+            modelingSubmissionNode.put("submissionExerciseType", "modeling");
+            modelingSubmissionNode.put("id", modeSubmission.getId());
+            modelingSubmissionNode.put("model", "slim model");
+            modelingSubmissionNode.put("explanationText", "slim explanation");
+
+            ObjectNode quizSubmissionNode = objectMapper.createObjectNode();
+            quizSubmissionNode.put("submissionExerciseType", "quiz");
+            quizSubmissionNode.put("id", quizSubmission.getId());
+            quizSubmissionNode.set("submittedAnswers", arrayOf(mcAnswer, dndAnswer, saAnswer));
+
+            ArrayNode exercises = arrayOf(exerciseNode(textExercise.getId(), arrayOf(participationNode(participationId(textExercise), arrayOf(textSubmissionNode)))),
+                    exerciseNode(modeExercise.getId(), arrayOf(participationNode(participationId(modeExercise), arrayOf(modelingSubmissionNode)))),
+                    exerciseNode(quizExercise.getId(), arrayOf(participationNode(participationId(quizExercise), arrayOf(quizSubmissionNode)))));
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", exercises);
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            // reload text + modeling from fresh repository queries
+            TextSubmission reloadedText = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+            assertThat(reloadedText.getText()).isEqualTo("slim text answer");
+            ModelingSubmission reloadedModeling = (ModelingSubmission) submissionRepository.findById(modeSubmission.getId()).orElseThrow();
+            assertThat(reloadedModeling.getModel()).isEqualTo("slim model");
+            assertThat(reloadedModeling.getExplanationText()).isEqualTo("slim explanation");
+
+            // reload quiz answers via a fresh summary request and assert each answer type persisted
+            StudentExam submittedExam = request.get(
+                    "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            QuizSubmission reloadedQuiz = (QuizSubmission) ExerciseUtilService.getFirstExerciseWithType(submittedExam, QuizExercise.class).getStudentParticipations().iterator()
+                    .next().findLatestSubmission().orElseThrow();
+            MultipleChoiceSubmittedAnswer mc = (MultipleChoiceSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(multipleChoiceQuestion);
+            assertThat(mc.toSelectedIds()).containsExactly(selectedOptionId);
+            DragAndDropSubmittedAnswer dnd = (DragAndDropSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(dragAndDropQuestion);
+            assertThat(dnd.getMappings()).hasSize(1);
+            assertThat(dnd.getMappings().iterator().next().getDragItem().getId()).isEqualTo(dragItemId);
+            assertThat(dnd.getMappings().iterator().next().getDropLocation().getId()).isEqualTo(dropLocationId);
+            ShortAnswerSubmittedAnswer sa = (ShortAnswerSubmittedAnswer) reloadedQuiz.getSubmittedAnswerForQuestion(shortAnswerQuestion);
+            assertThat(sa.getSubmittedTexts()).hasSize(1);
+            assertThat(sa.getSubmittedTexts().iterator().next().getText()).isEqualTo("slim short answer");
+            assertThat(sa.getSubmittedTexts().iterator().next().getSpot().getId()).isEqualTo(spotId);
+        }
+
+        /**
+         * Trap #3: a raw body with explicit empty arrays (the shape a real client emits, which a DTO-serialized test
+         * body would silently omit via {@code @JsonInclude(NON_EMPTY)}). The submit must return 200, mark the exam
+         * submitted, and persist nothing — matching the early-return / skip semantics.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoWithExplicitEmptyExercisesArrayMarksSubmittedWithoutSaving() throws Exception {
+            String originalText = ((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText();
+
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", objectMapper.createArrayNode());
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            assertThat(studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow().isSubmitted()).isTrue();
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo(originalText);
+        }
+
+        /**
+         * Trap #3, nested variant: an exercise whose participation carries an explicit empty submissions array, and a
+         * quiz submission with an explicit empty submittedAnswers array. Both must be handled without error (skip / empty
+         * rebuild), the exam still marked submitted, and the untouched text submission preserved.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitViaSlimDtoWithExplicitEmptyNestedArraysIsSafe() throws Exception {
+            String originalText = ((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText();
+
+            // text exercise participation with an explicit empty submissions array -> size != 1 -> skipped
+            ObjectNode textParticipation = participationNode(participationId(textExercise), objectMapper.createArrayNode());
+            // quiz submission with an explicit empty submittedAnswers array -> rebuilt as an empty answer set
+            ObjectNode quizSubmissionNode = objectMapper.createObjectNode();
+            quizSubmissionNode.put("submissionExerciseType", "quiz");
+            quizSubmissionNode.put("id", quizSubmission.getId());
+            quizSubmissionNode.set("submittedAnswers", objectMapper.createArrayNode());
+
+            ArrayNode exercises = arrayOf(exerciseNode(textExercise.getId(), arrayOf(textParticipation)),
+                    exerciseNode(quizExercise.getId(), arrayOf(participationNode(participationId(quizExercise), arrayOf(quizSubmissionNode)))));
+            ObjectNode body = objectMapper.createObjectNode();
+            body.put("id", studentExamForConduction.getId());
+            body.set("exercises", exercises);
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", body, HttpStatus.OK);
+
+            assertThat(studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow().isSubmitted()).isTrue();
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo(originalText);
+        }
+
+        /**
+         * Trap #2: a stale client tab opened before the DTO rollout still posts the full-entity {@code StudentExam}
+         * body. It must deserialize losslessly into the DTO (matching discriminators + ignore-unknown) and persist the
+         * changed answer exactly as the slim body would.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSubmitLegacyFullEntityBodyStillPersistsChangedText() throws Exception {
+            textSubmission.setText("legacy full entity text");
+
+            request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, HttpStatus.OK);
+
+            assertThat(((TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow()).getText()).isEqualTo("legacy full entity text");
         }
     }
 }

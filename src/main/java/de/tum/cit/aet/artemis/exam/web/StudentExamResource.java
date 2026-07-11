@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -73,6 +74,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamLiveEventService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamSubmitMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -123,6 +125,8 @@ public class StudentExamResource {
 
     private final StudentExamLiveEventService studentExamLiveEventService;
 
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
+
     @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -136,7 +140,7 @@ public class StudentExamResource {
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
             WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventRepository examLiveEventRepository,
-            StudentExamLiveEventService studentExamLiveEventService) {
+            StudentExamLiveEventService studentExamLiveEventService, StudentExamSubmitMapper studentExamSubmitMapper) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -154,6 +158,7 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventRepository = examLiveEventRepository;
         this.studentExamLiveEventService = studentExamLiveEventService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
     }
 
     /**
@@ -237,35 +242,39 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/submit : Submits the student exam
-     * Updates all submissions and marks student exam as submitted according to given student exam
-     * NOTE: the studentExam has to be sent with all exercises, participations and submissions
+     * Updates all submissions and marks student exam as submitted. Only the student exam id and the last-second
+     * submission changes are read from the body; ownership, exam/course validation and the test-run/test-exam gating
+     * are derived from the authoritative student exam loaded from the database.
      *
      * @param courseId              the course to which the student exams belong to
      * @param examId                the exam to which the student exams belong to
-     * @param studentExamFromClient the student exam with exercises, participations and submissions
+     * @param studentExamFromClient the student exam id with the exercises, participations and submissions carrying the last-second changes
      * @return empty response with status code:
      *         200 if successful
      *         400 if student exam was in an illegal state
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExamFromClient) {
+    public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody SubmitStudentExamDTO studentExamFromClient) {
         long start = System.nanoTime();
-        log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.getId());
+        log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.id());
 
         // 1. DB Call: read
         User currentUser = userRepository.getUser();
-        // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
-        if (!Objects.equals(studentExamFromClient.getUser().getId(), currentUser.getId())) {
+
+        // 2. DB Call: read the authoritative student exam; all downstream truth (ownership, exam/course, submitted
+        // flag, test-run/test-exam gating) comes from this DB entity, not from the client body.
+        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.id());
+        // Ownership is now checked against the persisted owner instead of a client-supplied user field. This is the
+        // behavior-equivalent replacement for the previous anti-manipulation gate and closes the latent hole where the
+        // client-claimed user was the only ownership check.
+        if (!Objects.equals(existingStudentExam.getUser().getId(), currentUser.getId())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
+        validateExamRequestParametersElseThrow(existingStudentExam, examId, courseId);
 
-        // 2. DB Call: read
-        StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamFromClient.getId());
-        validateExamRequestParametersElseThrow(studentExamFromClient, examId, courseId);
-
-        if (Boolean.TRUE.equals(studentExamFromClient.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
-            log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.getId(), currentUser.getLogin());
+        if (Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
+            log.error("Student exam with id {} for user {} is already submitted.", studentExamFromClient.id(), currentUser.getLogin());
             // NOTE: we should not send an error message to the user here, due to overload it could happen that the call is sent multiple times
             return ResponseEntity.ok().build();
         }
@@ -278,7 +287,9 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        studentExamService.submitStudentExam(studentExamFromClient, currentUser);
+        // Reconstruct the transient graph the (unchanged) submit machinery consumes from the slim DTO.
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, studentExamFromClient, currentUser);
+        studentExamService.submitStudentExam(existingStudentExam, currentUser);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
