@@ -16,9 +16,10 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     }
 
     // TODO: Reduce this to 0 by returning DTOs instead of entities
+    // Reduced from 24 to 22: getStudentExamForConduction + getTestRunForConduction now return StudentExamForConductionDTO.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 10;
+        return 8;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart

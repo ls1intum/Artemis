@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.conduction.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
@@ -354,7 +355,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<StudentExamForConductionDTO> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -396,7 +397,7 @@ public class StudentExamResource {
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 currentUser.getLogin());
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(StudentExamForConductionDTO.of(studentExam));
     }
 
     private void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
@@ -425,7 +426,8 @@ public class StudentExamResource {
     // TODO: use the same REST call as for real exams and test exams
     @GetMapping({ "courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction", "courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
+    public ResponseEntity<StudentExamForConductionDTO> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId,
+            HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -442,7 +444,7 @@ public class StudentExamResource {
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
-        return ResponseEntity.ok(testRun);
+        return ResponseEntity.ok(StudentExamForConductionDTO.of(testRun));
     }
 
     @NonNull
