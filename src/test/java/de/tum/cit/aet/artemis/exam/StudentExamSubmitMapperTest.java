@@ -194,4 +194,117 @@ class StudentExamSubmitMapperTest {
         // no exercise here is a quiz, so the quiz collaborators must never be touched
         verifyNoInteractions(quizExerciseRepository, quizSubmissionService);
     }
+
+    @Test
+    void shouldDropTextSubmissionSentForANonTextExercise() {
+        // FIX 2: the text branch must validate the exercise type like the quiz branch, matching the legacy
+        // ClassCastException-swallow. A text submission bound to a quiz exercise is dropped, not cast-and-crashed.
+        QuizExercise exercise = new QuizExercise();
+        exercise.setId(30L);
+        StudentExam studentExam = studentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(30L, List.of(new SubmitExamParticipationDTO(3000L, List.of(new TextExamSubmissionDTO(300L, "mismatched")))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        // the participation is still initialized, but the type-mismatched submission is dropped
+        assertThat(onlyParticipation(exercise).getSubmissions()).isEmpty();
+        // a text submission never touches the quiz collaborators
+        verifyNoInteractions(quizExerciseRepository, quizSubmissionService);
+    }
+
+    @Test
+    void shouldDropModelingSubmissionSentForANonModelingExercise() {
+        // FIX 2: same for the modeling branch.
+        TextExercise exercise = new TextExercise();
+        exercise.setId(31L);
+        StudentExam studentExam = studentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(31L, List.of(new SubmitExamParticipationDTO(3100L, List.of(new ModelingExamSubmissionDTO(310L, "{model}", "explanation")))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        assertThat(onlyParticipation(exercise).getSubmissions()).isEmpty();
+    }
+
+    @Test
+    void shouldSkipExerciseWhenMoreThanOneParticipationIsPresent() {
+        // FIX 3: the ambiguity check must run on the wire List BEFORE folding into a Set. Two same-id participations
+        // would collapse to one in a HashSet and wrongly proceed; on the List they are size 2 -> attach nothing.
+        TextExercise exercise = new TextExercise();
+        exercise.setId(40L);
+        StudentExam studentExam = studentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L, List.of(new SubmitExamExerciseDTO(40L, List.of(new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(400L, "a"))),
+                new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(401L, "b")))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        assertThat(exercise.getStudentParticipations()).isNotNull().isEmpty();
+    }
+
+    @Test
+    void shouldSkipExerciseWhenTheParticipationCarriesMoreThanOneSubmission() {
+        // FIX 3: same ambiguity rule for submissions.
+        TextExercise exercise = new TextExercise();
+        exercise.setId(41L);
+        StudentExam studentExam = studentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L, List.of(new SubmitExamExerciseDTO(41L,
+                List.of(new SubmitExamParticipationDTO(4100L, List.of(new TextExamSubmissionDTO(410L, "a"), new TextExamSubmissionDTO(411L, "b")))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        assertThat(exercise.getStudentParticipations()).isNotNull().isEmpty();
+    }
+
+    @Test
+    void shouldBuildEmptyQuizSubmissionWithoutLoadingQuestionsWhenNoAnswers() {
+        // FIX 5: an empty answer set has nothing to re-resolve, so the expensive question-tree load is skipped and an
+        // empty submission carrying only the id is produced (matching buildSubmissionFromLiveClientDTO for empty input).
+        QuizExercise exercise = new QuizExercise();
+        exercise.setId(60L);
+        StudentExam studentExam = studentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(60L, List.of(new SubmitExamParticipationDTO(6000L, List.of(new QuizExamSubmissionDTO(600L, Set.of())))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        Submission submission = onlySubmission(onlyParticipation(exercise));
+        assertThat(submission).isInstanceOf(QuizSubmission.class);
+        assertThat(submission.getId()).isEqualTo(600L);
+        assertThat(((QuizSubmission) submission).getSubmittedAnswers()).isEmpty();
+        // neither the question-tree load nor the live-client rebuild run for an empty answer set
+        verifyNoInteractions(quizExerciseRepository, quizSubmissionService);
+    }
+
+    @Test
+    void shouldDropPoisonedExerciseButReconstructHealthyOnesInTheSameCall() {
+        // FIX 1: a per-exercise reconstruction failure (here: the quiz question-tree load throws) must never abort the
+        // hand-in nor lose a sibling exercise's answers. The poisoned quiz degrades to empty; the healthy text survives.
+        QuizExercise poisonedQuiz = new QuizExercise();
+        poisonedQuiz.setId(50L);
+        TextExercise healthyText = new TextExercise();
+        healthyText.setId(51L);
+        StudentExam studentExam = studentExamWith(poisonedQuiz, healthyText);
+
+        when(quizExerciseRepository.findByIdWithQuestionsElseThrow(50L)).thenThrow(new RuntimeException("boom"));
+
+        Set<SubmittedAnswerFromLiveClientDTO> answers = Set.of(new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(20L), Set.of(new EntityIdRefDTO(201L))));
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(50L, List.of(new SubmitExamParticipationDTO(5000L, List.of(new QuizExamSubmissionDTO(500L, answers))))),
+                        new SubmitExamExerciseDTO(51L, List.of(new SubmitExamParticipationDTO(5100L, List.of(new TextExamSubmissionDTO(510L, "healthy")))))));
+
+        mapper.attachSubmissions(studentExam, dto, currentUser());
+
+        // poisoned quiz: reconstruction threw -> empty participations (its last-second changes dropped), no crash
+        assertThat(poisonedQuiz.getStudentParticipations()).isNotNull().isEmpty();
+        // healthy text: reconstructed despite the sibling failure
+        Submission submission = onlySubmission(onlyParticipation(healthyText));
+        assertThat(submission).isInstanceOf(TextSubmission.class);
+        assertThat(((TextSubmission) submission).getText()).isEqualTo("healthy");
+    }
 }

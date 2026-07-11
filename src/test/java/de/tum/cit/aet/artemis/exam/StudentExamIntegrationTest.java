@@ -3147,11 +3147,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // TODO: Hibernate 7 increased base query count from 5 to 6 — investigate remaining extra query in a follow-up
         private final int BASE_QUERY_COUNT = 6;
 
-        // The submit path now rebuilds the quiz submission from the slim SubmitStudentExamDTO via
+        // The submit path rebuilds the quiz submission from the slim SubmitStudentExamDTO via
         // QuizSubmissionService.buildSubmissionFromLiveClientDTO (reusing the #12832 quiz live-save mapper). That mapper
         // re-resolves the client-supplied answer ids against the quiz exercise, so the submit reconstruction loads the
-        // quiz exercise WITH its questions (and their eager nested options/items/spots) — a fixed cost incurred whenever
-        // the hand-in contains a quiz exercise, independent of whether the quiz answer actually changed.
+        // quiz exercise WITH its questions (and their eager nested options/items/spots). This cost is incurred ONLY when
+        // the quiz submission actually carries answers: an empty/absent answer set has nothing to re-resolve, so the
+        // reconstruction skips the load entirely and builds an empty submission from the id alone (see
+        // StudentExamSubmitMapper#buildQuizSubmission). Hence it appears in the changed-answers test but not the
+        // unchanged one, whose conduction quiz submission has no answers.
         private final int QUIZ_RECONSTRUCTION_QUERY_COUNT = 9;
 
         private TextExercise textExercise;
@@ -3225,10 +3228,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
-            // Even when nothing changed, the DTO reconstruction still loads the quiz exercise with questions to rebuild
-            // the (unchanged) quiz submission before the content-equality check decides not to persist it.
+            // The conduction quiz submission carries no answers, so the reconstruction skips the quiz question-tree load
+            // (FIX 5) and no content actually changes, so nothing is persisted: the hand-in stays at the bare skeleton
+            // cost. Tightened from BASE + QUIZ_RECONSTRUCTION to just BASE now that the empty-answer reload is elided.
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
-                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + QUIZ_RECONSTRUCTION_QUERY_COUNT);
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT);
         }
 
         @Test
@@ -3296,6 +3300,35 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             verifyDragAndDropSubmission(changedMapping, quizSubmissionAfterExamSubmission);
             verifyShortAnswerSubmission(changedText, quizSubmissionAfterExamSubmission);
             verifyMultipleChoiceSubmission(changedAnswerOptions, quizSubmissionAfterExamSubmission);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPoisonedExerciseIsDroppedWhileHandInSucceedsAndOtherExercisesSave() throws Exception {
+            // Governing principle: the exam is ALWAYS marked submitted, and a broken per-exercise submission degrades to
+            // a logged drop of only that exercise's answers — never a 5xx and never data loss for other exercises. Here
+            // the quiz submission references a non-existent submission id, so the per-exercise save rejects and swallows
+            // it, while the healthy text change is still persisted and the exam is submitted.
+            final String healthyAnswer = "This healthy text answer must survive a poisoned sibling exercise";
+            textSubmission.setText(healthyAnswer);
+            quizSubmission.setId(999_999_999L);
+
+            // must return 200 (not 5xx): the hand-in is never aborted by a broken exercise
+            request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+
+            // the exam is marked submitted despite the poisoned quiz
+            StudentExam submitted = studentExamRepository.findById(studentExamForConduction.getId()).orElseThrow();
+            assertThat(submitted.isSubmitted()).isTrue();
+            assertThat(submitted.getSubmissionDate()).isNotNull();
+
+            // no data loss for the healthy sibling: the changed text answer is persisted
+            StudentExam summary = request.get(
+                    "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
+                    StudentExam.class);
+            TextExercise textExerciseAfter = ExerciseUtilService.getFirstExerciseWithType(summary, TextExercise.class);
+            TextSubmission textSubmissionAfter = (TextSubmission) textExerciseAfter.getStudentParticipations().iterator().next().findLatestSubmission().orElseThrow();
+            assertThat(textSubmissionAfter.getText()).isEqualTo(healthyAnswer);
         }
 
         @Test
