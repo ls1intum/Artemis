@@ -922,10 +922,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetExamWithExerciseGroups_returnsDetailsAndTransients() throws Exception {
         // Full exam with all exercise types; the programming exercise carries template + solution participations (with
         // build-plan ids), the quiz gets questions so the count is non-trivial.
-        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
+        Exam exam = examWithAllExerciseTypesAndQuizQuestions();
         QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
-        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
-        quizExerciseRepository.save(quizExercise);
         int expectedQuestionCount = quizExercise.getQuizQuestions().size();
 
         ExamWithExerciseGroupsDTO returnedExam = assertThatDb(
@@ -993,10 +991,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testResetExam_returnsGroupsWithParticipationCountsButNoExerciseDetails() throws Exception {
         // reset is served with withDetails=false: groups + transients are populated, but quiz questions and programming
         // participations are NOT hydrated. The ofReset factory must therefore omit them without touching the lazy fields.
-        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
-        QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
-        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
-        quizExerciseRepository.save(quizExercise);
+        Exam exam = examWithAllExerciseTypesAndQuizQuestions();
 
         ExamWithExerciseGroupsDTO returnedExam = request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/reset", new LinkedMultiValueMap<>(), null,
                 ExamWithExerciseGroupsDTO.class, HttpStatus.OK);
@@ -1008,6 +1003,36 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The reset shape carries neither quiz-question stubs nor programming build-plan participations.
         assertThat(exercises).allMatch(exercise -> exercise.quizQuestions() == null);
         assertThat(exercises).allMatch(exercise -> exercise.templateParticipation() == null && exercise.solutionParticipation() == null);
+    }
+
+    /**
+     * Shared fixture for the detailed-get and reset tests: a full exam with all exercise types whose quiz exercise
+     * (exercise group index 3) carries persisted questions.
+     *
+     * @return the persisted exam
+     */
+    private Exam examWithAllExerciseTypesAndQuizQuestions() {
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
+        QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+        return exam;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamWithExerciseGroups_nullStartDate_doesNotThrow() throws Exception {
+        // isStarted() dereferences startDate; a not-yet-scheduled exam (null startDate) must map without NPE, and the
+        // computed started flag reads false (matching what the client renders for an absent flag).
+        Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
+        exam.setStartDate(null);
+        examRepository.save(exam);
+
+        ExamWithExerciseGroupsDTO returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK,
+                ExamWithExerciseGroupsDTO.class);
+
+        assertThat(returnedExam.startDate()).isNull();
+        assertThat(returnedExam.started()).isFalse();
     }
 
     @Test
@@ -1157,6 +1182,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         params.add("withExerciseGroups", "true");
         var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class, params);
         assertThat(exam2.exerciseGroups()).hasSize(exam.getExerciseGroups().size());
+
+        // Per-group exercise membership: each group must carry exactly its source exercises (by id) with matching types,
+        // not merely the right count.
+        for (int i = 0; i < exam.getExerciseGroups().size(); i++) {
+            var expectedGroup = exam.getExerciseGroups().get(i);
+            var actualGroup = exam2.exerciseGroups().get(i);
+            assertThat(actualGroup.id()).isEqualTo(expectedGroup.getId());
+            var expectedExercises = expectedGroup.getExercises();
+            if (expectedExercises.isEmpty()) {
+                assertThat(actualGroup.exercises()).isNullOrEmpty();
+            }
+            else {
+                assertThat(actualGroup.exercises()).extracting(actualExercise -> actualExercise.id())
+                        .containsExactlyInAnyOrderElementsOf(expectedExercises.stream().map(Exercise::getId).toList());
+                assertThat(actualGroup.exercises()).allSatisfy(actualExercise -> {
+                    Exercise expectedExercise = expectedExercises.stream().filter(candidate -> candidate.getId().equals(actualExercise.id())).findFirst().orElseThrow();
+                    assertThat(actualExercise.type()).isEqualTo(expectedExercise.getExerciseType());
+                });
+            }
+        }
 
         var quizExercises = exam2.exerciseGroups().get(1).exercises();
         assertThat(quizExercises).isNotEmpty()

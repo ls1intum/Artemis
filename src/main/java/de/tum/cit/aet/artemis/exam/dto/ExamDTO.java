@@ -59,7 +59,8 @@ public record ExamDTO(long id, @Nullable String title, boolean testExam, boolean
         @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
         @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam,
         @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber, @Nullable String courseName,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExamDTO course, @Nullable String channelName, @Nullable String examArchivePath) {
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable CourseForExamDTO course, @Nullable String channelName, @Nullable String examArchivePath)
+        implements ExamResponseDTO {
 
     /**
      * Builds the scalar-core response DTO from an exam. Reads only stored scalar columns, the eager course, and the
