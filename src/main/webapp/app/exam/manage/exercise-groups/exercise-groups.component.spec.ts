@@ -9,7 +9,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseGroup, ExerciseGroupOrderDTO } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -276,6 +276,52 @@ describe('Exercise Groups Component', () => {
 
         expect(comp.exerciseGroups()![to].id).toBe(fromId);
         expect(comp.exerciseGroups()![from].id).toBe(toId);
+    });
+
+    it('serializes reorder saves: ignores a reorder click while a save is in flight and re-applies the confirmed order once it resolves', async () => {
+        comp.exerciseGroups.set(groups);
+
+        // Two independent PUTs, each controlled manually so the test can decide when (and in what order) they resolve.
+        const firstSave = new Subject<HttpResponse<ExerciseGroupOrderDTO[]>>();
+        const secondSave = new Subject<HttpResponse<ExerciseGroupOrderDTO[]>>();
+        const updateOrderSpy = vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(firstSave.asObservable()).mockReturnValueOnce(secondSave.asObservable());
+
+        // User action 1: move group at index 0 ("id 0") down. Optimistic local order becomes [1, 0, 2] and a save starts.
+        comp.moveDown(0);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+        expect(comp.orderSavePending()).toBe(true);
+        expect(updateOrderSpy).toHaveBeenCalledOnce();
+
+        // User action 2 (stale race attempt): while the first save is still in flight, further reorder actions must be
+        // ignored so a second, independent PUT can never be fired (which would otherwise let a late-arriving response
+        // re-apply an older order over a newer one).
+        comp.moveDown(1);
+        expect(updateOrderSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+
+        // The first (and only) in-flight save now resolves with the server-confirmed order.
+        firstSave.next(new HttpResponse<ExerciseGroupOrderDTO[]>({ body: [{ id: 1 }, { id: 0 }, { id: 2 }] }));
+        firstSave.complete();
+        await Promise.resolve();
+
+        expect(comp.orderSavePending()).toBe(false);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+
+        // Now that the first save has resolved, a new reorder action is allowed and fires its own PUT.
+        comp.moveUp(2);
+        expect(updateOrderSpy).toHaveBeenCalledTimes(2);
+        expect(comp.orderSavePending()).toBe(true);
+
+        // Resolve the two saves in reversed order relative to when they were sent (the first-sent response arrives
+        // last): this only reaches the component's second, currently-pending subscription, since the first save was
+        // already completed and its subscription is gone. The final rendered order must match the last user action.
+        secondSave.next(new HttpResponse<ExerciseGroupOrderDTO[]>({ body: [{ id: 1 }, { id: 2 }, { id: 0 }] }));
+        secondSave.complete();
+        firstSave.next(new HttpResponse<ExerciseGroupOrderDTO[]>({ body: [{ id: 1 }, { id: 0 }, { id: 2 }] }));
+        await Promise.resolve();
+
+        expect(comp.orderSavePending()).toBe(false);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
     });
 
     it('maps exercise types to exercise groups', () => {

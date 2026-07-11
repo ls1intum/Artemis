@@ -91,6 +91,11 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
     exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
 
+    // Guards against reorder-response races: every arrow click fires an independent PUT, and a stale response
+    // arriving after a newer one would re-apply an older order. While a save is in flight, further reorder actions
+    // are ignored (no queueing) so responses can never interleave.
+    orderSavePending = signal(false);
+
     localCIEnabled = signal(true);
     textExerciseEnabled = signal(false);
     modelingExerciseEnabled = signal(false);
@@ -275,6 +280,11 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveUp(index: number): void {
+        // Ignore further reorder actions while a save is in flight: two independent PUTs could otherwise complete
+        // out of order and a stale response would re-apply an older order over a newer one.
+        if (this.orderSavePending()) {
+            return;
+        }
         const exerciseGroups = this.exerciseGroups();
         if (exerciseGroups) {
             [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
@@ -289,6 +299,11 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveDown(index: number): void {
+        // Ignore further reorder actions while a save is in flight: two independent PUTs could otherwise complete
+        // out of order and a stale response would re-apply an older order over a newer one.
+        if (this.orderSavePending()) {
+            return;
+        }
         const exerciseGroups = this.exerciseGroups();
         if (exerciseGroups) {
             [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
@@ -299,6 +314,7 @@ export class ExerciseGroupsComponent implements OnInit {
     }
 
     private saveOrder(): void {
+        this.orderSavePending.set(true);
         this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
             next: (res) => {
                 // The server confirms the persisted order as a list of group ids. Re-apply that order to the already-loaded,
@@ -309,8 +325,12 @@ export class ExerciseGroupsComponent implements OnInit {
                 const groupsById = new Map(currentGroups.map((group) => [group.id, group]));
                 const reorderedGroups = orderedGroupIds.map((orderEntry) => groupsById.get(orderEntry.id)).filter((group): group is ExerciseGroup => group !== undefined);
                 this.exerciseGroups.set(reorderedGroups);
+                this.orderSavePending.set(false);
             },
-            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+            error: () => {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+                this.orderSavePending.set(false);
+            },
         });
     }
 
