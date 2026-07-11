@@ -28,11 +28,10 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs.
-    // The exam-import endpoints return ExamImportResultDTO/ExerciseGroupImportResultDTO, which wrap the imported
-    // Exam/ExerciseGroup entity alongside the skipped/incomplete exercise titles. This trades two raw-entity returns
-    // (the more severe anti-pattern) for two DTO-wrapped-entity fields; both should be reduced to 0 eventually.
+    // ExerciseGroupImportResultDTO still wraps the imported ExerciseGroup entity alongside the skipped/incomplete
+    // exercise titles; the remaining DTO-wrapped-entity fields should be reduced to 0 eventually.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 2;
     }
 }
