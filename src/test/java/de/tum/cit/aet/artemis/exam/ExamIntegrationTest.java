@@ -83,6 +83,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -317,17 +318,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     private void generateStudentExams(Exam exam) throws Exception {
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
         for (var studentExam : studentExams) {
-            assertThat(studentExam.getExam()).isEqualTo(exam);
+            assertThat(studentExam.workingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
         }
-        verifyStudentExams(studentExams, exam.getExamUsers().size());
+        // the response masks the nested exam, so verify membership via the persisted student exams
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(exam.getExamUsers().size());
     }
 
     private void generateMissingStudentExams(Exam exam, int expectedMissingStudent) throws Exception {
-        List<StudentExam> missingStudentExams = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> missingStudentExams = request.postListWithResponseBody(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
         assertThat(missingStudentExams).hasSize(expectedMissingStudent);
     }
 

@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -1010,7 +1011,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
@@ -1019,10 +1020,10 @@ public class ExamResource {
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
         List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
-        // we need to break a cycle for the serialization
-        breakCyclesForSerialization(studentExams);
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
-        return ResponseEntity.ok().body(studentExams);
+        // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
+        // which is why the previous breakCyclesForSerialization is no longer needed).
+        return ResponseEntity.ok().body(studentExams.stream().map(StudentExamDTO::of).toList());
     }
 
     @NonNull
@@ -1055,26 +1056,16 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/generate-missing-student-exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<StudentExamDTO>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         log.info("REST request to generate missing student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
         List<StudentExam> studentExams = studentExamService.generateMissingStudentExams(exam);
 
-        // we need to break a cycle for the serialization
-        breakCyclesForSerialization(studentExams);
-
         log.info("Generated {} missing student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
-        return ResponseEntity.ok().body(studentExams);
-    }
-
-    private static void breakCyclesForSerialization(List<StudentExam> studentExams) {
-        for (StudentExam studentExam : studentExams) {
-            studentExam.getExam().setExamUsers(null);
-            studentExam.getExam().setExerciseGroups(null);
-            studentExam.getExam().setStudentExams(null);
-        }
+        // The client only counts the generated student exams; return the slim, exam-masked projection.
+        return ResponseEntity.ok().body(studentExams.stream().map(StudentExamDTO::of).toList());
     }
 
     /**
