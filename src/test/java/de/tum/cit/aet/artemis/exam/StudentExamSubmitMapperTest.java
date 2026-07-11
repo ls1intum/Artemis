@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.submit.ModelingExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.QuizExamSubmissionDTO;
@@ -44,9 +45,12 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Unit tests for {@link StudentExamSubmitMapper}, the boundary that turns the slim submit DTO into the transient graph
- * the (unchanged) submit machinery consumes. These deterministically pin the two silent-answer-loss traps that live in
- * the reconstruction: the participant must be re-derived so the swallowed {@code isOwnedBy} check passes (for individual
- * AND team exercises), and every submission's client id must survive so the swallowed DB id-match resolves it.
+ * the (unchanged) submit machinery consumes. These deterministically pin the silent-answer-loss traps that live in the
+ * reconstruction: the participant must be re-derived so the swallowed {@code isOwnedBy} check passes, and every
+ * submission's client id must survive so the swallowed DB id-match resolves it. They do <i>not</i> assert that exam team
+ * mode works end-to-end — it is unsupported downstream (see the mapper's class javadoc and
+ * {@code StudentParticipationRepository}); they only assert that the reconstruction sets the participant such that
+ * {@code isOwnedBy} passes regardless of exercise mode.
  */
 @ExtendWith(MockitoExtension.class)
 class StudentExamSubmitMapperTest {
@@ -102,7 +106,7 @@ class StudentExamSubmitMapperTest {
         StudentExam studentExam = studentExamWith(exercise);
 
         var dto = new SubmitStudentExamDTO(1L,
-                List.of(new SubmitExamExerciseDTO(10L, List.of(new SubmitExamParticipationDTO(1000L, List.of(new TextExamSubmissionDTO(100L, "answer")))))));
+                List.of(new SubmitExamExerciseDTO(10L, List.of(new SubmitExamParticipationDTO(1000L, List.of(new TextExamSubmissionDTO(100L, "answer", Language.GERMAN)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -122,6 +126,9 @@ class StudentExamSubmitMapperTest {
         // the client id must survive so existingParticipationInDatabase.getSubmissions().contains(...) id-matches
         assertThat(submission.getId()).isEqualTo(100L);
         assertThat(((TextSubmission) submission).getText()).isEqualTo("answer");
+        // the client-detected language must survive: the downstream merge overwrites the column, so a dropped language
+        // would be persisted as null (regression). See TextExamSubmissionDTO.
+        assertThat(((TextSubmission) submission).getLanguage()).isEqualTo(Language.GERMAN);
         assertThat(submission.getLatestResult()).as("no result injected -> passes the result-injection guard").isNull();
     }
 
@@ -135,7 +142,7 @@ class StudentExamSubmitMapperTest {
         StudentExam testRunStudentExam = testRunStudentExamWith(exercise);
 
         var dto = new SubmitStudentExamDTO(1L,
-                List.of(new SubmitExamExerciseDTO(12L, List.of(new SubmitExamParticipationDTO(1002L, List.of(new TextExamSubmissionDTO(102L, "answer")))))));
+                List.of(new SubmitExamExerciseDTO(12L, List.of(new SubmitExamParticipationDTO(1002L, List.of(new TextExamSubmissionDTO(102L, "answer", null)))))));
 
         mapper.attachSubmissions(testRunStudentExam, dto, currentUser());
 
@@ -145,16 +152,20 @@ class StudentExamSubmitMapperTest {
     }
 
     @Test
-    void shouldReconstructTeamExerciseParticipationOwnedByCurrentUser() {
-        // Team mode is the trap: the client participation carries no team, yet isOwnedBy(currentUser) must still pass.
-        // Setting the participant to the authenticated user makes getStudent().login match, independent of exercise mode.
+    void shouldSetParticipantSoIsOwnedByPassesRegardlessOfExerciseMode() {
+        // NOT a claim that team exams submit end-to-end (they are unsupported downstream — the exam submit/summary
+        // queries filter p.student.id and StudentParticipationRepository documents there is no exam team support). This
+        // only pins the reconstruction contract: re-deriving the participant from the authenticated user makes the
+        // swallowed isOwnedBy(currentUser) check in saveSubmission pass independent of exercise mode, so the answer is
+        // not silently dropped there. A TEAM-mode exercise is used purely to show the re-derivation does not depend on
+        // the mode.
         TextExercise exercise = new TextExercise();
         exercise.setId(11L);
         exercise.setMode(ExerciseMode.TEAM);
         StudentExam studentExam = studentExamWith(exercise);
 
         var dto = new SubmitStudentExamDTO(1L,
-                List.of(new SubmitExamExerciseDTO(11L, List.of(new SubmitExamParticipationDTO(1001L, List.of(new TextExamSubmissionDTO(101L, "team answer")))))));
+                List.of(new SubmitExamExerciseDTO(11L, List.of(new SubmitExamParticipationDTO(1001L, List.of(new TextExamSubmissionDTO(101L, "answer", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -218,7 +229,7 @@ class StudentExamSubmitMapperTest {
         StudentExam studentExam = studentExamWith(submittedExercise, untouchedExercise);
 
         var dto = new SubmitStudentExamDTO(1L,
-                List.of(new SubmitExamExerciseDTO(10L, List.of(new SubmitExamParticipationDTO(1000L, List.of(new TextExamSubmissionDTO(100L, "answer")))))));
+                List.of(new SubmitExamExerciseDTO(10L, List.of(new SubmitExamParticipationDTO(1000L, List.of(new TextExamSubmissionDTO(100L, "answer", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -237,7 +248,7 @@ class StudentExamSubmitMapperTest {
         StudentExam studentExam = studentExamWith(exercise);
 
         var dto = new SubmitStudentExamDTO(1L,
-                List.of(new SubmitExamExerciseDTO(30L, List.of(new SubmitExamParticipationDTO(3000L, List.of(new TextExamSubmissionDTO(300L, "mismatched")))))));
+                List.of(new SubmitExamExerciseDTO(30L, List.of(new SubmitExamParticipationDTO(3000L, List.of(new TextExamSubmissionDTO(300L, "mismatched", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -270,8 +281,9 @@ class StudentExamSubmitMapperTest {
         exercise.setId(40L);
         StudentExam studentExam = studentExamWith(exercise);
 
-        var dto = new SubmitStudentExamDTO(1L, List.of(new SubmitExamExerciseDTO(40L, List.of(new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(400L, "a"))),
-                new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(401L, "b")))))));
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(40L, List.of(new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(400L, "a", null))),
+                        new SubmitExamParticipationDTO(4000L, List.of(new TextExamSubmissionDTO(401L, "b", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -286,7 +298,7 @@ class StudentExamSubmitMapperTest {
         StudentExam studentExam = studentExamWith(exercise);
 
         var dto = new SubmitStudentExamDTO(1L, List.of(new SubmitExamExerciseDTO(41L,
-                List.of(new SubmitExamParticipationDTO(4100L, List.of(new TextExamSubmissionDTO(410L, "a"), new TextExamSubmissionDTO(411L, "b")))))));
+                List.of(new SubmitExamParticipationDTO(4100L, List.of(new TextExamSubmissionDTO(410L, "a", null), new TextExamSubmissionDTO(411L, "b", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 
@@ -329,7 +341,7 @@ class StudentExamSubmitMapperTest {
         Set<SubmittedAnswerFromLiveClientDTO> answers = Set.of(new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(20L), Set.of(new EntityIdRefDTO(201L))));
         var dto = new SubmitStudentExamDTO(1L,
                 List.of(new SubmitExamExerciseDTO(50L, List.of(new SubmitExamParticipationDTO(5000L, List.of(new QuizExamSubmissionDTO(500L, answers))))),
-                        new SubmitExamExerciseDTO(51L, List.of(new SubmitExamParticipationDTO(5100L, List.of(new TextExamSubmissionDTO(510L, "healthy")))))));
+                        new SubmitExamExerciseDTO(51L, List.of(new SubmitExamParticipationDTO(5100L, List.of(new TextExamSubmissionDTO(510L, "healthy", null)))))));
 
         mapper.attachSubmissions(studentExam, dto, currentUser());
 

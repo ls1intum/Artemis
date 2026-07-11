@@ -3357,6 +3357,29 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testHandInPersistsTextSubmissionLanguageFromSlimDto() throws Exception {
+            // Wire-parity regression guard: the slim submit DTO must carry the client-detected language. The downstream
+            // save (saveSubmissionTextExercise) persists the reconstructed submission via a JPA merge that overwrites
+            // every mapped column, so a language dropped from the DTO would be nulled out on this hand-in. The conduction
+            // submission starts with a null language; here we set it the way the client does (predictLanguage) and change
+            // the text so the content-equality short-circuit does not skip the save, hand in, then re-read the row.
+            assertThat(textSubmission.getLanguage()).as("the conduction submission starts without a language").isNull();
+            final String changedAnswer = "Dies ist eine geänderte Antwort auf Deutsch";
+            textSubmission.setText(changedAnswer);
+            textSubmission.setLanguage(Language.GERMAN);
+
+            request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+
+            // fresh query straight from the repository (not the summary DTO): both the text AND the language must have
+            // been persisted, proving the language survived the slim-DTO round-trip and the overwriting merge.
+            TextSubmission persisted = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+            assertThat(persisted.getText()).isEqualTo(changedAnswer);
+            assertThat(persisted.getLanguage()).isEqualTo(Language.GERMAN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testChangedAndNotSubmittedModelingSubmission() throws Exception {
             // Given
             final String changedModel = "This is a changed model";

@@ -23,6 +23,7 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { Language } from 'app/course/shared/entities/course.model';
 
 function withId<T extends { id?: number }>(entity: T, id: number): T {
     entity.id = id;
@@ -66,9 +67,12 @@ describe('toSubmitStudentExamDTO', () => {
         expect(dto).toEqual({ id: 9, exercises: [] });
     });
 
-    it('maps a text submission to the slim text variant preserving the submission id', () => {
+    it('maps a text submission to the slim text variant preserving the submission id and language', () => {
         const submission = withId(new TextSubmission(), 100);
         submission.text = 'my answer';
+        // the client-detected language must ride along: the server persists via a merge that overwrites the column, so a
+        // dropped language would be nulled out on every hand-in text edit. See the mapper's TextSubmissionDTO.
+        submission.language = Language.GERMAN;
 
         const studentExam = new StudentExam();
         studentExam.id = 1;
@@ -78,7 +82,7 @@ describe('toSubmitStudentExamDTO', () => {
 
         expect(dto.exercises[0]).toEqual({
             id: 10,
-            studentParticipations: [{ id: 1000, submissions: [{ submissionExerciseType: 'text', id: 100, text: 'my answer' }] }],
+            studentParticipations: [{ id: 1000, submissions: [{ submissionExerciseType: 'text', id: 100, text: 'my answer', language: Language.GERMAN }] }],
         });
     });
 
