@@ -618,6 +618,77 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(optionalExamSession.get().getIpAddressAsIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
     }
 
+    /**
+     * Wire-contract guard for the student-facing data minimisation the conduction endpoint performs on the raw JSON.
+     * <p>
+     * During conduction (results not published, not a test run) the server strips every solution signal a student must
+     * not see while keeping exactly the ids the exam-taking client needs to render the question and build an answer.
+     * This pins that masking at the wire, at the exact locations the client reads: quiz answer options must carry an
+     * {@code id} but neither {@code isCorrect} nor {@code explanation}; drag-and-drop / short-answer questions must
+     * carry their answerable {@code dragItems}/{@code dropLocations}/{@code spots} (with ids) but no
+     * {@code correctMappings}; short-answer questions must not leak {@code solutions}; and the text exercise must not
+     * leak its {@code exampleSolution}. A conduction DTO projection must reproduce this masked shape exactly — never
+     * re-adding the stripped fields — so this guards the migration against silently exposing solutions to students.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireMasksSolutionsButKeepsAnswerableIds() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        userUtilService.changeUser(studentExam.getUser().getLogin());
+
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class, headers);
+
+        boolean sawQuiz = false;
+        boolean sawText = false;
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            if ("text".equals(exercise.path("type").asText())) {
+                sawText = true;
+                assertThat(exercise.has("exampleSolution")).as("text exercise must not leak exampleSolution during conduction").isFalse();
+            }
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            assertThat(questions).hasSize(3);
+            for (JsonNode question : questions) {
+                assertThat(question.hasNonNull("id")).as("quiz question carries an id for the client").isTrue();
+                assertThat(question.hasNonNull("type")).as("quiz question carries its polymorphic type discriminator").isTrue();
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        JsonNode options = question.get("answerOptions");
+                        assertThat(options).as("MC question keeps its answer options for the client").isNotNull();
+                        assertThat(options).hasSize(2);
+                        for (JsonNode option : options) {
+                            assertThat(option.hasNonNull("id")).as("answer option carries an id the client needs to submit a selection").isTrue();
+                            assertThat(option.has("isCorrect")).as("answer option must not leak isCorrect during conduction").isFalse();
+                            assertThat(option.has("explanation")).as("answer option must not leak explanation during conduction").isFalse();
+                        }
+                    }
+                    case "drag-and-drop" -> {
+                        assertThat(question.get("dragItems")).as("DnD question keeps its drag items for the client").isNotNull();
+                        assertThat(question.get("dropLocations")).as("DnD question keeps its drop locations for the client").isNotNull();
+                        assertThat(question.path("correctMappings").isEmpty()).as("DnD question must not leak correctMappings during conduction").isTrue();
+                    }
+                    case "short-answer" -> {
+                        assertThat(question.get("spots")).as("SA question keeps its spots for the client").isNotNull();
+                        assertThat(question.path("correctMappings").isEmpty()).as("SA question must not leak correctMappings during conduction").isTrue();
+                        assertThat(question.path("solutions").isEmpty()).as("SA question must not leak solutions during conduction").isTrue();
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+
+        assertThat(sawQuiz).as("conduction wire exposed a quiz exercise to mask-check").isTrue();
+        assertThat(sawText).as("conduction wire exposed a text exercise to mask-check").isTrue();
+
+        deleteExamWithInstructor(exam1);
+    }
+
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
