@@ -39,6 +39,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -1052,6 +1053,57 @@ describe('AttachmentVideoUnitComponent', () => {
             const provider = component.contextProvider();
 
             expect(provider.hasVideoBeenPlayed!()).toBe(false);
+        });
+    });
+
+    describe('Iris point-out command handling', () => {
+        let chatService: IrisChatService;
+        let ackSpy: ReturnType<typeof vi.spyOn>;
+
+        function pointOutRequest(overrides: Partial<IrisCommandRequestDTO>): IrisCommandRequestDTO {
+            return { correlationId: 'corr', type: 'pointOut', lectureUnitId: 1, ...overrides } as IrisCommandRequestDTO;
+        }
+
+        beforeEach(() => {
+            chatService = TestBed.inject(IrisChatService);
+            ackSpy = vi.spyOn(chatService, 'sendCommandAck').mockImplementation(() => {});
+            fixture.detectChanges();
+        });
+
+        it('acknowledges immediately as not applied when the combined view is closed', () => {
+            component['fullscreenState'].set(false);
+
+            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c1', page: 3 }));
+
+            expect(ackSpy).toHaveBeenCalledWith('c1', false);
+        });
+
+        it('ignores command requests targeting a different lecture unit', () => {
+            component['fullscreenState'].set(true);
+
+            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c2', lectureUnitId: 999, page: 3 }));
+
+            expect(ackSpy).not.toHaveBeenCalled();
+        });
+
+        it('defers the success ack until the point-out navigation has actually been applied', () => {
+            const goToPage = vi.fn();
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue({ goToPage }),
+                writable: true,
+                configurable: true,
+            });
+            component['fullscreenState'].set(true);
+
+            component['handleCommandRequest'](pointOutRequest({ correlationId: 'c3', page: 3 }));
+
+            // The ack must not be sent synchronously — it waits for the navigation effect to run.
+            expect(ackSpy).not.toHaveBeenCalled();
+
+            fixture.detectChanges(); // flush the pendingPointOut effect
+
+            expect(goToPage).toHaveBeenCalledWith(3);
+            expect(ackSpy).toHaveBeenCalledWith('c3', true);
         });
     });
 });

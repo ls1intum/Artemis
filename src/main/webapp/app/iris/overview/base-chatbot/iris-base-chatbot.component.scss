@@ -874,12 +874,12 @@ pre {
 
     &:hover,
     &:focus-visible {
-        border-color: var(--primary);
-        color: var(--primary);
+        border-color: var(--info);
+        color: var(--info);
     }
 
     fa-icon {
-        color: var(--primary);
+        color: var(--info);
     }
 }
 

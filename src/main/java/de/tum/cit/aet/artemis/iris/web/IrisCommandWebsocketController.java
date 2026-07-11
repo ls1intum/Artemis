@@ -38,7 +38,12 @@ public class IrisCommandWebsocketController {
      */
     @MessageMapping("topic/iris/command-ack")
     public void acknowledgeCommand(@Payload IrisCommandAckDTO ack, Principal principal) {
-        log.debug("Received client command ack {} from user {} (applied={})", ack.correlationId(), principal != null ? principal.getName() : null, ack.applied());
+        if (principal == null) {
+            // Without an authenticated principal the ack cannot be attributed to the user awaiting it; drop it.
+            log.warn("Ignoring Iris command ack {} without an authenticated principal", ack.correlationId());
+            return;
+        }
+        log.debug("Received client command ack {} from user {} (applied={})", ack.correlationId(), principal.getName(), ack.applied());
         coordinationService.handleAck(ack, principal.getName());
     }
 }

@@ -23,9 +23,9 @@ public record PyrisMessageDTO(@Nullable Long id, Instant sentAt, IrisMessageSend
     /**
      * Convert an IrisMessage to a PyrisMessageDTO.
      * <p>
-     * Iris only ever consumes plain text, so no JSON content is forwarded to Pyris. COMMAND markers (e.g. past point-outs) are the only JSON content the agent needs to be aware
-     * of; they are rendered here into a human-readable system note. All other JSON content (e.g. MCQ artifacts produced by the LLM) is not part of the agent's prompt and is
-     * dropped. This keeps the wire format text-only and avoids the fragile JSON-string round-trip that Pyris' {@code Json[Any]} parsing previously required.
+     * Text content is forwarded as text and other JSON content (e.g. MCQ artifacts produced by the LLM) is forwarded unchanged as JSON, exactly as before. The only special case is
+     * a COMMAND marker (e.g. a past point-out): since Iris consumes it as a plain-text system note, it is rendered here into a human-readable sentence instead of being sent as raw
+     * JSON.
      *
      * @param message The message to convert.
      * @return The converted message.
@@ -35,8 +35,12 @@ public record PyrisMessageDTO(@Nullable Long id, Instant sentAt, IrisMessageSend
             if (messageContent instanceof IrisTextMessageContent) {
                 return (PyrisMessageContentBaseDTO) new PyrisTextMessageContentDTO(messageContent.getContentAsString());
             }
-            if (messageContent instanceof IrisJsonMessageContent json && message.getSender() == IrisMessageSender.COMMAND) {
-                return (PyrisMessageContentBaseDTO) new PyrisTextMessageContentDTO(renderCommandMarker(json.getJsonNode()));
+            if (messageContent instanceof IrisJsonMessageContent json) {
+                // COMMAND markers are rendered into a plain-text system note; every other JSON payload is forwarded as-is.
+                if (message.getSender() == IrisMessageSender.COMMAND) {
+                    return (PyrisMessageContentBaseDTO) new PyrisTextMessageContentDTO(renderCommandMarker(json.getJsonNode()));
+                }
+                return (PyrisMessageContentBaseDTO) new PyrisJsonMessageContentDTO(messageContent.getContentAsString());
             }
             return null;
         }).filter(Objects::nonNull).toList();

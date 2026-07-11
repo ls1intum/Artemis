@@ -68,6 +68,12 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
 
+/**
+ * A queued point-out target. When it originates from a server command (rather than a marker click),
+ * {@link correlationId} carries the ack to send back once the navigation has actually been applied.
+ */
+type PendingPointOut = IrisPointOutNavigation & { correlationId?: string };
+
 /** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
 const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
 
@@ -165,7 +171,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     // A point-out navigation target waiting to be applied once the combined view is open and the
     // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
-    private readonly pendingPointOut = signal<IrisPointOutNavigation | undefined>(undefined);
+    private readonly pendingPointOut = signal<PendingPointOut | undefined>(undefined);
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -330,6 +336,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
             untracked(() => {
                 this.navigateWithinCombinedView(navigation);
+                // Acknowledge a server command only now — once the view has really moved — so Iris learns
+                // "applied" for the actual navigation, not merely because the combined view was open.
+                if (navigation.correlationId) {
+                    this.chatService.sendCommandAck(navigation.correlationId, true);
+                }
                 this.pendingPointOut.set(undefined);
             });
         });
@@ -356,9 +367,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
-     * Handles a server command request for this unit. For a point-out: if this unit's combined view is open, defer the
-     * navigation (via {@link pendingPointOut}) and acknowledge success; if it is closed, acknowledge that nothing was
-     * shown. Requests for other units are ignored — the matching unit (or the server-side timeout) handles them.
+     * Handles a server command request for this unit. For a point-out: if this unit's combined view is open, queue the
+     * navigation (via {@link pendingPointOut}); the success ack is sent from the pendingPointOut effect once the view has
+     * actually moved, so Iris is only told "applied" when the student really saw the jump. If the view is closed,
+     * acknowledge immediately that nothing was shown. Requests for other units are ignored — the matching unit (or the
+     * server-side timeout) handles them.
      * @param request the command request to carry out
      */
     private handleCommandRequest(request: IrisCommandRequestDTO): void {
@@ -369,8 +382,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.chatService.sendCommandAck(request.correlationId, false);
             return;
         }
-        this.pendingPointOut.set({ lectureUnitId: request.lectureUnitId, page: request.page, timestamp: request.timestamp, forceOpen: false });
-        this.chatService.sendCommandAck(request.correlationId, true);
+        this.pendingPointOut.set({
+            lectureUnitId: request.lectureUnitId,
+            page: request.page,
+            timestamp: request.timestamp,
+            forceOpen: false,
+            correlationId: request.correlationId,
+        });
     }
 
     /** Jumps the slides to the requested page and/or seeks the video to the requested timestamp. */

@@ -10,6 +10,9 @@ type SubscribedChannel<T> = { wsSubscription: Subscription; subject: Subject<T> 
 /** STOMP destination the client publishes command acknowledgements to (handled server-side by IrisCommandWebsocketController). */
 const COMMAND_ACK_DESTINATION = '/topic/iris/command-ack';
 
+/** Suffix appended to the per-session Iris topic for command requests. Mirrors the server's IrisCommandService.COMMAND_TOPIC_SUFFIX. */
+const COMMAND_TOPIC_SUFFIX = '/commands';
+
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
  */
@@ -65,7 +68,7 @@ export class IrisWebsocketService implements OnDestroy {
         }
 
         const subscribedChannel = this.commandChannels.computeIfAbsent(sessionId, () => {
-            const channel = this.getChannelFromSessionId(sessionId) + '/commands';
+            const channel = this.getChannelFromSessionId(sessionId) + COMMAND_TOPIC_SUFFIX;
             const subject = new Subject<IrisCommandRequestDTO>();
             const wsSubscription = this.websocketService.subscribe<IrisCommandRequestDTO>(channel).subscribe((response: IrisCommandRequestDTO) => {
                 subject.next(response);
