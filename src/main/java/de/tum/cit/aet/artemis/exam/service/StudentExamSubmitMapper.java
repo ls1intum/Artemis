@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.dto.submit.SubmitExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.TextExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -100,13 +101,14 @@ public class StudentExamSubmitMapper {
         // One question-loaded quiz exercise per distinct quiz id per request; the exact-one participation/submission
         // rules already bound this to a single load per quiz, but memoizing keeps that guarantee explicit and cheap.
         Map<Long, QuizExercise> quizExerciseCache = new HashMap<>();
+        boolean testRun = existingStudentExam.isTestRun();
         for (Exercise exercise : existingStudentExam.getExercises()) {
             if (exercise == null) {
                 continue;
             }
             try {
                 SubmitExamExerciseDTO exerciseDTO = exerciseDtosById.get(exercise.getId());
-                exercise.setStudentParticipations(buildParticipations(exercise, exerciseDTO, currentUser, quizExerciseCache));
+                exercise.setStudentParticipations(buildParticipations(exercise, exerciseDTO, currentUser, quizExerciseCache, testRun));
             }
             catch (Exception e) {
                 // Mirror the legacy per-exercise swallow: never let one broken exercise abort the hand-in or lose
@@ -119,7 +121,7 @@ public class StudentExamSubmitMapper {
     }
 
     private Set<StudentParticipation> buildParticipations(Exercise exercise, @Nullable SubmitExamExerciseDTO exerciseDTO, User currentUser,
-            Map<Long, QuizExercise> quizExerciseCache) {
+            Map<Long, QuizExercise> quizExerciseCache, boolean testRun) {
         Set<StudentParticipation> participations = new HashSet<>();
         // Enforce the exact-one-participation semantics on the wire List (see class javadoc): anything other than a
         // single participation attaches nothing, matching the server's studentParticipations.size() != 1 -> skip.
@@ -137,6 +139,18 @@ public class StudentExamSubmitMapper {
         // isOwnedBy(currentUser) for individual exercises directly and for team exercises the DB participation
         // still carries the real team, which is what the second (DB-side) ownership check validates.
         participation.setParticipant(currentUser);
+        // Re-attach the exercise back-reference the legacy full-entity graph always carried. Without it the test-run /
+        // test-exam quiz evaluation (ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam) filters this
+        // participation out via `participation.getExercise() instanceof QuizExercise` and never persists the quiz
+        // participation/result.
+        participation.setExercise(exercise);
+        // Preserve the two participation metadata fields the legacy conduction-loaded graph round-tripped and that the
+        // downstream save must not clobber: the test-run flag (ExamQuizService persists this reconstructed participation,
+        // and the summary's test-run query filters on `p.testRun = TRUE`, so a lost flag hides the quiz participation) and
+        // the initialization state (a null would break consumers that read getInitializationState() and the participation
+        // is INITIALIZED while it is being worked on).
+        participation.setTestRun(testRun);
+        participation.setInitializationState(InitializationState.INITIALIZED);
         participation.setSubmissions(buildSubmissions(exercise, participationDTO.submissions().getFirst(), quizExerciseCache));
         participations.add(participation);
         return participations;

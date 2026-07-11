@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.dto.submit.TextExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.service.StudentExamSubmitMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -77,6 +78,12 @@ class StudentExamSubmitMapperTest {
         return studentExam;
     }
 
+    private StudentExam testRunStudentExamWith(Exercise... exercises) {
+        StudentExam studentExam = studentExamWith(exercises);
+        studentExam.setTestRun(true);
+        return studentExam;
+    }
+
     private static StudentParticipation onlyParticipation(Exercise exercise) {
         assertThat(exercise.getStudentParticipations()).hasSize(1);
         return exercise.getStudentParticipations().iterator().next();
@@ -101,6 +108,13 @@ class StudentExamSubmitMapperTest {
 
         StudentParticipation participation = onlyParticipation(exercise);
         assertThat(participation.getId()).isEqualTo(1000L);
+        // the exercise back-reference must be re-attached: the test-run/test-exam quiz evaluation filters participations
+        // by `participation.getExercise() instanceof QuizExercise`, so a null exercise would silently drop the evaluation
+        assertThat(participation.getExercise()).isSameAs(exercise);
+        // the initialization state must be re-attached so the persisted participation is not clobbered to null
+        assertThat(participation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        // a non-test-run student exam yields non-test-run participations
+        assertThat(participation.isTestRun()).isFalse();
         // the swallowed isOwnedBy(currentUser) in saveSubmission must pass, otherwise the answer is silently dropped
         assertThat(participation.isOwnedBy(currentUser())).isTrue();
         Submission submission = onlySubmission(participation);
@@ -109,6 +123,25 @@ class StudentExamSubmitMapperTest {
         assertThat(submission.getId()).isEqualTo(100L);
         assertThat(((TextSubmission) submission).getText()).isEqualTo("answer");
         assertThat(submission.getLatestResult()).as("no result injected -> passes the result-injection guard").isNull();
+    }
+
+    @Test
+    void shouldFlagReconstructedParticipationsOfATestRunAsTestRun() {
+        // Regression guard: a test-run participation must be reconstructed with testRun=true, otherwise the evaluate step
+        // persists it as a non-test-run participation and the summary's `WHERE p.testRun = TRUE` query hides the quiz.
+        TextExercise exercise = new TextExercise();
+        exercise.setId(12L);
+        exercise.setMode(ExerciseMode.INDIVIDUAL);
+        StudentExam testRunStudentExam = testRunStudentExamWith(exercise);
+
+        var dto = new SubmitStudentExamDTO(1L,
+                List.of(new SubmitExamExerciseDTO(12L, List.of(new SubmitExamParticipationDTO(1002L, List.of(new TextExamSubmissionDTO(102L, "answer")))))));
+
+        mapper.attachSubmissions(testRunStudentExam, dto, currentUser());
+
+        StudentParticipation participation = onlyParticipation(exercise);
+        assertThat(participation.isTestRun()).isTrue();
+        assertThat(participation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     @Test
