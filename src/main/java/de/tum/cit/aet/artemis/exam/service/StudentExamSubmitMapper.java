@@ -46,9 +46,17 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * The reconstruction intentionally keeps the exam-conduction save machinery
  * ({@code StudentExamService.saveSubmissions}/{@code saveSubmission}) byte-for-byte unchanged: it only changes how the
  * graph is built at the controller boundary. The DB-loaded exercise instances are reused (so the {@code instanceof}
- * type switch keeps working), and onto each we hang transient participations (id + participant = current user, so
- * {@code isOwnedBy(currentUser)} passes for both individual and team exercises) carrying transient submissions rebuilt
+ * type switch keeps working), and onto each we hang transient participations (id + participant = current user, so the
+ * swallowed {@code isOwnedBy(currentUser)} check in {@code saveSubmission} passes) carrying transient submissions rebuilt
  * per type with their client ids preserved (so the DB id-match in {@code saveSubmission} still resolves them).
+ * <p>
+ * <b>Exam team mode is unsupported downstream.</b> Re-deriving the participant from the authenticated user makes
+ * {@code isOwnedBy(currentUser)} pass regardless of exercise mode, but this is <i>not</i> a claim that team exams submit
+ * end-to-end: the exam submit/summary queries filter on {@code p.student.id} and {@code StudentParticipationRepository}
+ * documents that "in an exam there is only one submission for file upload, text, modeling and quiz and there is no team
+ * support" (see {@code findGradesByExamIdAndStudentId}). This mapper deliberately adds no team-rejection logic (that
+ * would be a behavior change); it merely reconstructs whatever the client posts, and exam team participations remain as
+ * unsupported here as they are everywhere else in the exam flow.
  * <p>
  * <b>Failure containment.</b> The reconstruction runs at the controller boundary <i>before</i>
  * {@code submitStudentExam} marks the exam submitted, so any exception it throws would abort the whole hand-in with a
@@ -135,9 +143,10 @@ public class StudentExamSubmitMapper {
         }
         StudentParticipation participation = new StudentParticipation();
         participation.setId(participationDTO.id());
-        // the participant is re-derived from the authenticated user (the client no longer sends it); this passes
-        // isOwnedBy(currentUser) for individual exercises directly and for team exercises the DB participation
-        // still carries the real team, which is what the second (DB-side) ownership check validates.
+        // the participant is re-derived from the authenticated user (the client no longer sends it); this passes the
+        // swallowed isOwnedBy(currentUser) check for individual exercises, and the second (DB-side) ownership check
+        // validates the persisted participation independently. Exam team mode is unsupported downstream regardless (see
+        // the class javadoc and StudentParticipationRepository); this mapper adds no team-specific handling either way.
         participation.setParticipant(currentUser);
         // Re-attach the exercise back-reference the legacy full-entity graph always carried. Without it the test-run /
         // test-exam quiz evaluation (ExamQuizService.evaluateQuizParticipationsForTestRunAndTestExam) filters this
@@ -181,6 +190,10 @@ public class StudentExamSubmitMapper {
                 TextSubmission textSubmission = new TextSubmission();
                 textSubmission.setId(textDTO.id());
                 textSubmission.setText(textDTO.text());
+                // Preserve the client-detected language: saveSubmissionTextExercise persists this submission via a JPA
+                // merge that overwrites every mapped column from the entity, so a dropped language would be written as
+                // null on every hand-in text edit (regression vs the legacy full-entity body). See TextExamSubmissionDTO.
+                textSubmission.setLanguage(textDTO.language());
                 yield textSubmission;
             }
             case ModelingExamSubmissionDTO modelingDTO -> {

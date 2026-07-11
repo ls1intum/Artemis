@@ -8,6 +8,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { Language } from 'app/course/shared/entities/course.model';
 
 /**
  * Wire shape of the exam hand-in request body ({@code POST .../student-exams/submit}).
@@ -50,6 +51,10 @@ interface BaseSubmissionDTO {
 export interface TextSubmissionDTO extends BaseSubmissionDTO {
     submissionExerciseType: SubmissionExerciseType.TEXT;
     text?: string;
+    // The client-detected language must ride along: the server persists the reconstructed submission via a JPA merge that
+    // overwrites every column, so a dropped language would be nulled out on every hand-in text edit. Mirrors the server
+    // TextExamSubmissionDTO. The language is detected in text-exam-submission.component.ts.
+    language?: Language;
 }
 
 export interface ModelingSubmissionDTO extends BaseSubmissionDTO {
@@ -125,7 +130,12 @@ export function toSubmitStudentExamDTO(studentExam: StudentExam): SubmitStudentE
 function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO | undefined {
     switch (submission.submissionExerciseType) {
         case SubmissionExerciseType.TEXT:
-            return { submissionExerciseType: SubmissionExerciseType.TEXT, id: submission.id, text: (submission as TextSubmission).text };
+            return {
+                submissionExerciseType: SubmissionExerciseType.TEXT,
+                id: submission.id,
+                text: (submission as TextSubmission).text,
+                language: (submission as TextSubmission).language,
+            };
         case SubmissionExerciseType.MODELING: {
             const modelingSubmission = submission as ModelingSubmission;
             return {
