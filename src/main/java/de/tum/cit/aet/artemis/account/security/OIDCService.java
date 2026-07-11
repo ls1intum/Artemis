@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.security;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -74,8 +76,16 @@ public class OIDCService extends OidcUserService {
         Optional<User> localUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
         User actualUser;
         if (localUser.isEmpty()) {
-            // Add new user to database
-            actualUser = createNewUserFromOidc(username, oidcUser);
+            try {
+                // Add new user to database
+                actualUser = createNewUserFromOidc(username, oidcUser);
+            }
+            catch (DataIntegrityViolationException e) {
+                // Race condition which occurs when two users try to create same account
+                // In such case the account is already created so this value will be assigned
+                actualUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
+                        .orElseThrow(() -> new OAuth2AuthenticationException("Failed to resolve concurrent OIDC user provisioning"));
+            }
         }
         else {
             // Update user information and store changes if necessary
@@ -83,13 +93,21 @@ public class OIDCService extends OidcUserService {
             String firstName = oidcUser.getAttribute(firstNameClaimKey);
             String lastName = oidcUser.getAttribute(lastNameClaimKey);
             String email = oidcUser.getAttribute(emailClaimKey);
+            boolean isUpdated = false;
 
-            if (!java.util.Objects.equals(actualUser.getFirstName(), firstName) || !java.util.Objects.equals(actualUser.getLastName(), lastName)
-                    || !java.util.Objects.equals(actualUser.getEmail(), email)) {
-
+            if (firstName != null && !firstName.isBlank() && !Objects.equals(actualUser.getFirstName(), firstName)) {
                 actualUser.setFirstName(firstName);
+                isUpdated = true;
+            }
+            if (lastName != null && !lastName.isBlank() && !Objects.equals(actualUser.getLastName(), lastName)) {
                 actualUser.setLastName(lastName);
+                isUpdated = true;
+            }
+            if (email != null && !email.isBlank() && !Objects.equals(actualUser.getEmail(), email)) {
                 actualUser.setEmail(email);
+                isUpdated = true;
+            }
+            if (isUpdated) {
                 userRepository.save(actualUser);
             }
         }
