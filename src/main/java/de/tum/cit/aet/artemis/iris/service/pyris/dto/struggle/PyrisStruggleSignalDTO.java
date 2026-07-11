@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * pipeline. camelCase to match the cross-repo wire contract (Plan 1 {@code StruggleSignal}).
  * <p>
  * Boundary and path values are forwarded opaquely (plain strings, no enum): the edit path sends
- * {@code primaryBoundary} in {FM, FM_PLUS, E4, N1, STATE} with {@code path} in {armed, e6}; the discrete
+ * {@code primaryBoundary} in {FM, E4, N1, STATE} with {@code path} in {armed, e6}; the discrete
  * test-stagnation path sends {@code primaryBoundary="TPS"} with {@code path="discrete"}. Pyris owns the
  * value validation, so new client-side values must be introduced Pyris-first.
  * <p>
