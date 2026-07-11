@@ -121,6 +121,20 @@ const test = baseTest.extend<
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
 
+            // Eagerly buffer API response bodies as they arrive. Playwright caches a response body the
+            // first time it is read, so a later `response.json()` in a test returns that cached copy instead
+            // of issuing a fresh CDP `Network.getResponseBody` call. Under the Angular 22 runtime + parallel
+            // load, that late CDP read intermittently returns "No data found for resource with given
+            // identifier" because the browser has already evicted the body from its per-page network buffer
+            // by the time the test reads it (the request itself succeeded server-side). Reading the body the
+            // moment the response event fires — while it is still buffered — makes those reads deterministic.
+            // Best-effort (`.catch`) and scoped to `/api/` responses to avoid buffering large static assets.
+            page.on('response', (response) => {
+                if (response.url().includes('/api/')) {
+                    void response.body().catch(() => {});
+                }
+            });
+
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
             if (coverageEnabled) {
