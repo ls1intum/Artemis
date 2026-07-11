@@ -10,6 +10,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
@@ -53,6 +54,16 @@ describe('toSubmitStudentExamDTO', () => {
         expect(dto).not.toHaveProperty('user');
         expect(dto).not.toHaveProperty('exam');
         expect(dto).not.toHaveProperty('workingTime');
+    });
+
+    it('tolerates a student exam without an exercises array', () => {
+        const studentExam = new StudentExam();
+        studentExam.id = 9;
+        studentExam.exercises = undefined;
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+
+        expect(dto).toEqual({ id: 9, exercises: [] });
     });
 
     it('maps a text submission to the slim text variant preserving the submission id', () => {
@@ -137,6 +148,109 @@ describe('toSubmitStudentExamDTO', () => {
         const dto = toSubmitStudentExamDTO(studentExam);
 
         expect(dto.exercises[0].studentParticipations[0].submissions[0]).toEqual({ submissionExerciseType: 'programming', id: 103 });
+    });
+
+    it('maps a file-upload submission to the inert id-only variant', () => {
+        const submission = withId(new FileUploadSubmission(), 105);
+
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exerciseWith(14, 1004, [submission])];
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+
+        expect(dto.exercises[0].studentParticipations[0].submissions[0]).toEqual({ submissionExerciseType: 'file-upload', id: 105 });
+    });
+
+    it('skips a submission with an unknown submissionExerciseType, keeping the valid ones', () => {
+        const malformed = withId(new TextSubmission(), 106);
+        // force the malformed state the narrow union cannot represent: an undefined discriminator
+        (malformed as any).submissionExerciseType = undefined;
+        const valid = withId(new TextSubmission(), 107);
+        valid.text = 'kept';
+
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exerciseWith(15, 1005, [malformed, valid])];
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+
+        // the malformed submission is dropped, the valid one survives
+        expect(dto.exercises[0].studentParticipations[0].submissions).toEqual([{ submissionExerciseType: 'text', id: 107, text: 'kept' }]);
+    });
+
+    it('maps a quiz submission without submitted answers to an empty answer array', () => {
+        const submission = withId(new QuizSubmission(), 108);
+        submission.submittedAnswers = undefined;
+
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exerciseWith(16, 1006, [submission])];
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+        const mappedSubmission = dto.exercises[0].studentParticipations[0].submissions[0];
+
+        expect(mappedSubmission.submissionExerciseType).toBe(SubmissionExerciseType.QUIZ);
+        if (mappedSubmission.submissionExerciseType !== SubmissionExerciseType.QUIZ) {
+            throw new Error('expected a quiz submission');
+        }
+        expect(mappedSubmission.submittedAnswers).toEqual([]);
+    });
+
+    it('skips a submitted answer with an unknown type and tolerates undefined nested collections', () => {
+        // an answer whose discriminator is undefined must be dropped
+        const malformedAnswer = new MultipleChoiceSubmittedAnswer();
+        (malformedAnswer as any).type = undefined;
+
+        // valid answers with undefined nested collections / question exercise the `?? []` and `?.id` fallbacks
+        const mcAnswer = new MultipleChoiceSubmittedAnswer();
+        mcAnswer.quizQuestion = undefined;
+        mcAnswer.selectedOptions = undefined;
+
+        const dndAnswer = new DragAndDropSubmittedAnswer();
+        dndAnswer.quizQuestion = withId(new DragAndDropQuestion(), 30);
+        dndAnswer.mappings = undefined;
+
+        const saAnswer = new ShortAnswerSubmittedAnswer();
+        saAnswer.quizQuestion = withId(new ShortAnswerQuestion(), 31);
+        saAnswer.submittedTexts = undefined;
+
+        const submission = withId(new QuizSubmission(), 109);
+        submission.submittedAnswers = [malformedAnswer, mcAnswer, dndAnswer, saAnswer];
+
+        const studentExam = new StudentExam();
+        studentExam.exercises = [exerciseWith(17, 1007, [submission])];
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+        const mappedSubmission = dto.exercises[0].studentParticipations[0].submissions[0];
+
+        expect(mappedSubmission.submissionExerciseType).toBe(SubmissionExerciseType.QUIZ);
+        if (mappedSubmission.submissionExerciseType !== SubmissionExerciseType.QUIZ) {
+            throw new Error('expected a quiz submission');
+        }
+        // the malformed answer is dropped; the three valid ones keep their type with empty nested collections
+        expect(mappedSubmission.submittedAnswers).toEqual([
+            { type: 'multiple-choice', quizQuestion: { id: undefined }, selectedOptions: [] },
+            { type: 'drag-and-drop', quizQuestion: { id: 30 }, mappings: [] },
+            { type: 'short-answer', quizQuestion: { id: 31 }, submittedTexts: [] },
+        ]);
+    });
+
+    it('tolerates a participation with undefined submissions and an exercise with undefined participations', () => {
+        const exerciseWithoutParticipations = withId(new TextExercise(undefined, undefined), 18);
+        exerciseWithoutParticipations.studentParticipations = undefined;
+
+        const exerciseWithNullSubmissions = withId(new TextExercise(undefined, undefined), 19);
+        const participation = new StudentParticipation();
+        participation.id = 1008;
+        participation.submissions = undefined;
+        exerciseWithNullSubmissions.studentParticipations = [participation];
+
+        const studentExam = new StudentExam();
+        studentExam.id = 6;
+        studentExam.exercises = [exerciseWithoutParticipations, exerciseWithNullSubmissions];
+
+        const dto = toSubmitStudentExamDTO(studentExam);
+
+        expect(dto.exercises[0]).toEqual({ id: 18, studentParticipations: [] });
+        expect(dto.exercises[1]).toEqual({ id: 19, studentParticipations: [{ id: 1008, submissions: [] }] });
     });
 
     it('emits explicit empty arrays (never omitted) so the server does not read null', () => {
