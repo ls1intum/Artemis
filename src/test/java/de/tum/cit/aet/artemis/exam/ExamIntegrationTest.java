@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
@@ -84,6 +85,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -1441,6 +1443,45 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService).getOrCreateStudentExamElseThrow(course1.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOwnStudentExam_returnsConductionDTOWithCoverFields() throws Exception {
+        // Pins the own-student-exam wire contract the exam-conduction cover reads: the rich exam projection (markdown
+        // cover texts, dates, working time, course id) plus the student's name, and that the exercise graph is NOT leaked.
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
+        exam.setStartText("please-start-carefully");
+        exam.setEndText("please-review-before-submitting");
+        exam.setConfirmationStartText("I-confirm-start");
+        exam.setConfirmationEndText("I-confirm-submit");
+        exam.setExamMaxPoints(42);
+        examRepository.save(exam);
+
+        StudentExamForConductionDTO response = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExamForConductionDTO.class);
+
+        // the student-exam scalars the conduction UI reads
+        assertThat(response.testRun()).isFalse();
+        assertThat(response.workingTime()).isEqualTo(exam.getDuration());
+        // the examined-student box reads user.name
+        assertThat(response.user()).isNotNull();
+        assertThat(response.user().name()).isEqualTo(student1.getName());
+        // the rich exam projection the cover renders
+        ExamForConductionDTO examDTO = response.exam();
+        assertThat(examDTO).isNotNull();
+        assertThat(examDTO.id()).isEqualTo(exam.getId());
+        assertThat(examDTO.testExam()).isFalse();
+        assertThat(examDTO.startDate()).isNotNull();
+        assertThat(examDTO.startText()).isEqualTo("please-start-carefully");
+        assertThat(examDTO.endText()).isEqualTo("please-review-before-submitting");
+        assertThat(examDTO.confirmationStartText()).isEqualTo("I-confirm-start");
+        assertThat(examDTO.confirmationEndText()).isEqualTo("I-confirm-submit");
+        assertThat(examDTO.examMaxPoints()).isEqualTo(42);
+        // exam-cover reads exam.course.id for the attendance-check / conduction links
+        assertThat(examDTO.course()).isNotNull();
+        assertThat(examDTO.course().id()).isEqualTo(course1.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
