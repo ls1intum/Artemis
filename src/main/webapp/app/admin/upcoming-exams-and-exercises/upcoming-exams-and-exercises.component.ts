@@ -12,7 +12,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableModule } from 'primeng/table';
-import { Tag } from 'primeng/tag';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 /**
@@ -31,7 +30,6 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         TableModule,
-        Tag,
         ExamModeBadgeComponent,
     ],
 })
