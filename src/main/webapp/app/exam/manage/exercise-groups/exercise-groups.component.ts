@@ -300,7 +300,16 @@ export class ExerciseGroupsComponent implements OnInit {
 
     private saveOrder(): void {
         this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
-            next: (res) => this.exerciseGroups.set(res.body!),
+            next: (res) => {
+                // The server confirms the persisted order as a list of group ids. Re-apply that order to the already-loaded,
+                // fully-detailed groups (quiz questions, participations, ...) instead of overwriting them with a slimmer
+                // reloaded shape, so the re-rendered table keeps all exercise detail.
+                const orderedGroupIds = res.body ?? [];
+                const currentGroups = this.exerciseGroups() ?? [];
+                const groupsById = new Map(currentGroups.map((group) => [group.id, group]));
+                const reorderedGroups = orderedGroupIds.map((orderEntry) => groupsById.get(orderEntry.id)).filter((group): group is ExerciseGroup => group !== undefined);
+                this.exerciseGroups.set(reorderedGroups);
+            },
             error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
         });
     }
