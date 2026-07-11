@@ -120,6 +120,23 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
         return of(exam, false);
     }
 
+    /**
+     * Builds a row for the exam-management list ({@code GET courses/{courseId}/exams},
+     * {@link de.tum.cit.aet.artemis.exam.web.ExamResource#getExamsForCourse}). That screen renders each exam's status
+     * via the {@code exam-status} component + {@code ExamChecklistService}, which read the scalar core plus, off the
+     * exercise groups, only {@code exerciseGroup.isMandatory} and {@code exerciseGroup.exercises[*].maxPoints}, together
+     * with {@code numberOfExamUsers} (set by {@code setNumberOfExamUsersForExams}) and {@code numberOfExercisesInExam}.
+     * The fetch behind this endpoint hydrates neither quiz questions nor programming participations, so — exactly like
+     * {@link #ofReset(Exam)} — the {@code withDetails=false} shape applies (those per-exercise projections stay null and
+     * no lazy load is forced). All the fields those readers touch are a subset of what this shape already carries.
+     *
+     * @param exam an exam of the course (groups + exercises + {@code numberOfExamUsers}, no exercise details)
+     * @return the exam-management list row
+     */
+    public static ExamWithExerciseGroupsDTO ofExamManagementList(Exam exam) {
+        return of(exam, false);
+    }
+
     private static ExamWithExerciseGroupsDTO of(Exam exam, boolean withDetails) {
         // Single source for the shared scalar core: build the plain ExamDTO once and copy its accessors, so only ExamDTO.of
         // reads the scalar entity getters. channelName (ExamDTO-only) is dropped; started and numberOfExamUsers are added.

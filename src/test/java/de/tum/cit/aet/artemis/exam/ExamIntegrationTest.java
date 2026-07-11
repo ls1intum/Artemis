@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -1186,13 +1187,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
-        var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
         assertThat(course1.getInstructorGroupName()).isIn(instructor.getGroups());
+        // Seed an exam with a quiz exercise in a course the instructor manages: the endpoint filters to exams that
+        // contain a quiz exercise and for which the caller has instructor access.
+        Exam quizExam = examUtilService.addExamWithExerciseGroup(course1, true);
+        ExerciseGroup exerciseGroup = quizExam.getExerciseGroups().getFirst();
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+        exerciseRepository.save(quizExercise);
 
-        for (int i = 0; i < exams.size(); i++) {
-            Exam exam = exams.get(i);
-            assertThat(exam.getCourse().getInstructorGroupName()).as("should be instructor for exam with index %d and id %d", i, exam.getId()).isIn(instructor.getGroups());
-        }
+        // The only consumer of this endpoint is the "add existing questions from an exam" quiz picker, which reads
+        // exactly id + title off each returned exam (option value + label) and nothing else — pin that wire contract.
+        var exams = request.getList("/api/exam/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, ExamForQuestionPoolDTO.class);
+        assertThat(exams).isNotEmpty();
+        assertThat(exams).allSatisfy(exam -> {
+            assertThat(exam.id()).isPositive();
+            assertThat(exam.title()).isNotBlank();
+        });
+        assertThat(exams).anySatisfy(exam -> {
+            assertThat(exam.id()).isEqualTo(quizExam.getId());
+            assertThat(exam.title()).isEqualTo(quizExam.getTitle());
+        });
     }
 
     @Test
@@ -2236,6 +2250,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         final SearchTermPageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exam/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).containsExactly(exam);
+        // Pin the exact fields the exam-import table renders off each paged row: id, title, course.title and testExam.
+        Exam foundExam = result.getResultsOnPage().getFirst();
+        assertThat(foundExam.getTitle()).isEqualTo(title);
+        assertThat(foundExam.isTestExam()).isEqualTo(exam.isTestExam());
+        assertThat(foundExam.getCourse()).isNotNull();
+        assertThat(foundExam.getCourse().getTitle()).isEqualTo(course1.getTitle());
     }
 
     @Test

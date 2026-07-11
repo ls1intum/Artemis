@@ -95,6 +95,8 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -698,9 +700,12 @@ public class ExamResource {
      */
     @GetMapping("exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<ExamForImportListDTO>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises,
+            SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
+        SearchResultPageDTO<Exam> page = examService.getAllOnPageWithSize(search, user, withExercises);
+        List<ExamForImportListDTO> rows = page.getResultsOnPage().stream().map(ExamForImportListDTO::of).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(rows, page.getNumberOfPages()));
     }
 
     /**
@@ -894,14 +899,14 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ExamWithExerciseGroupsDTO>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
 
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
         // We need the exercise groups and exercises for the exam status now
         List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
         examRepository.setNumberOfExamUsersForExams(exams);
-        return ResponseEntity.ok(exams);
+        return ResponseEntity.ok(exams.stream().map(ExamWithExerciseGroupsDTO::ofExamManagementList).toList());
     }
 
     /**
@@ -912,17 +917,19 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams-for-user")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
+    public ResponseEntity<List<ExamForQuestionPoolDTO>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        final List<Exam> exams;
         if (authCheckService.isAdmin(user)) {
-            return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
+            exams = examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             var userGroups = new ArrayList<>(user.getGroups());
-            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
+            exams = examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
         }
+        return ResponseEntity.ok(exams.stream().map(ExamForQuestionPoolDTO::of).toList());
     }
 
     /**
