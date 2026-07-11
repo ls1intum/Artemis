@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -74,6 +75,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -876,7 +878,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         assertThat(examRepository.findAllExercisesWithDetailsByExamId(Long.MAX_VALUE)).isEmpty();
 
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
+        // The plain (withExerciseGroups=false) response is served as ExamDTO and must not trigger an eager fan-out.
+        ExamDTO returnedExam = assertThatDb(() -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, ExamDTO.class))
+                .hasBeenCalledAtMostTimes(10);
+        assertThat(returnedExam.id()).isEqualTo(exam1.getId());
+        assertThat(returnedExam.course()).isNotNull();
+        assertThat(returnedExam.course().id()).isEqualTo(course1.getId());
+        // The embedded course must carry the group names the client needs to compute access rights.
+        assertThat(returnedExam.course().instructorGroupName()).isEqualTo(course1.getInstructorGroupName());
+        assertThat(returnedExam.course().editorGroupName()).isEqualTo(course1.getEditorGroupName());
+        assertThat(returnedExam.course().teachingAssistantGroupName()).isEqualTo(course1.getTeachingAssistantGroupName());
 
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
     }
@@ -897,10 +908,106 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exerciseRepository.save(quizExercise);
         studentParticipationRepository.save(studentParticipation);
 
-        Exam returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        ExamWithExerciseGroupsDTO returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK,
+                ExamWithExerciseGroupsDTO.class);
 
-        assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
+        assertThat(returnedExam.exerciseGroups()).isNotNull();
+        assertThat(returnedExam.exerciseGroups())
+                .anyMatch(group -> group.exercises() != null && group.exercises().stream().anyMatch(exercise -> Boolean.TRUE.equals(exercise.testRunParticipationsExist())));
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExamWithExerciseGroups_returnsDetailsAndTransients() throws Exception {
+        // Full exam with all exercise types; the programming exercise carries template + solution participations (with
+        // build-plan ids), the quiz gets questions so the count is non-trivial.
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
+        QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+        int expectedQuestionCount = quizExercise.getQuizQuestions().size();
+
+        ExamWithExerciseGroupsDTO returnedExam = assertThatDb(
+                () -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, ExamWithExerciseGroupsDTO.class))
+                .hasBeenCalledAtMostTimes(40);
+
+        // Transient set by setExamProperties on the detailed path.
+        assertThat(returnedExam.numberOfExamUsers()).isNotNull();
+        assertThat(returnedExam.exerciseGroups()).isNotNull();
+        var exercises = returnedExam.exerciseGroups().stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream()).toList();
+        // numberOfParticipations (transient) must be present on every exercise for the deletion summary.
+        assertThat(exercises).isNotEmpty().allMatch(exercise -> exercise.numberOfParticipations() != null);
+
+        // Quiz: the count-only projection carries exactly the persisted number of questions (read as .length client-side).
+        var quizDto = exercises.stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
+        assertThat(quizDto.quizQuestions()).hasSize(expectedQuestionCount);
+
+        // Programming: template and solution build-plan ids are carried for the exercise-group programming cell.
+        var programmingDto = exercises.stream().filter(exercise -> exercise.type() == ExerciseType.PROGRAMMING).findFirst().orElseThrow();
+        assertThat(programmingDto.templateParticipation()).isNotNull();
+        assertThat(programmingDto.templateParticipation().buildPlanId()).isNotBlank();
+        assertThat(programmingDto.solutionParticipation()).isNotNull();
+        assertThat(programmingDto.solutionParticipation().buildPlanId()).isNotBlank();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExam_editRoundTrip_preservesChannelNameAndAllClientFields() throws Exception {
+        // The plain GET is the edit round-trip source: the client loads it, reads only the ExamDTO fields, rebuilds the
+        // request via toExamUpdateDTO and PUTs it back. This test drives exactly that path and asserts nothing is lost.
+        Exam exam = validExamWithCustomFieldValues();
+        URI createdExamUri = request.post("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.CREATED);
+
+        ExamDTO loaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
+        assertThat(loaded.channelName()).isEqualTo("scientific-channel-name");
+
+        // Build the request the way the client's toExamUpdateDTO does: from the loaded response fields only.
+        ExamUpdateDTO clientRequest = new ExamUpdateDTO(loaded.id(), loaded.title(), loaded.testExam(), loaded.examWithAttendanceCheck(), loaded.visibleDate(), loaded.startDate(),
+                loaded.endDate(), loaded.publishResultsDate(), loaded.examStudentReviewStart(), loaded.examStudentReviewEnd(), loaded.gracePeriod(), loaded.workingTime(),
+                loaded.startText(), loaded.endText(), loaded.confirmationStartText(), loaded.confirmationEndText(), loaded.examMaxPoints(), loaded.randomizeExerciseOrder(),
+                loaded.numberOfExercisesInExam(), loaded.numberOfCorrectionRoundsInExam(), loaded.examiner(), loaded.moduleNumber(), loaded.courseName(),
+                loaded.exampleSolutionPublicationDate(), loaded.channelName());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", clientRequest, HttpStatus.OK);
+
+        // Re-load through the plain path and assert the round-tripped fields survived, channel name in particular.
+        ExamDTO reloaded = request.get(String.valueOf(createdExamUri), HttpStatus.OK, ExamDTO.class);
+        assertThat(reloaded.channelName()).isEqualTo("scientific-channel-name");
+        assertThat(reloaded.testExam()).isFalse();
+        assertThat(reloaded.title()).isEqualTo(loaded.title());
+        assertThat(reloaded.examiner()).isEqualTo(loaded.examiner());
+        assertThat(reloaded.courseName()).isEqualTo(loaded.courseName());
+        assertThat(reloaded.examMaxPoints()).isEqualTo(loaded.examMaxPoints());
+        assertThat(reloaded.workingTime()).isEqualTo(loaded.workingTime());
+        assertThat(reloaded.numberOfExercisesInExam()).isEqualTo(loaded.numberOfExercisesInExam());
+        assertThat(reloaded.numberOfCorrectionRoundsInExam()).isEqualTo(loaded.numberOfCorrectionRoundsInExam());
+        assertThat(reloaded.randomizeExerciseOrder()).isEqualTo(loaded.randomizeExerciseOrder());
+        assertThat(reloaded.startText()).isEqualTo(loaded.startText());
+        assertThat(reloaded.confirmationEndText()).isEqualTo(loaded.confirmationEndText());
+        assertThat(reloaded.startDate()).isEqualTo(loaded.startDate());
+        assertThat(reloaded.endDate()).isEqualTo(loaded.endDate());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExam_returnsGroupsWithParticipationCountsButNoExerciseDetails() throws Exception {
+        // reset is served with withDetails=false: groups + transients are populated, but quiz questions and programming
+        // participations are NOT hydrated. The ofReset factory must therefore omit them without touching the lazy fields.
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
+        QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
+        QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+
+        ExamWithExerciseGroupsDTO returnedExam = request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/reset", new LinkedMultiValueMap<>(), null,
+                ExamWithExerciseGroupsDTO.class, HttpStatus.OK);
+
+        assertThat(returnedExam.numberOfExamUsers()).isNotNull();
+        assertThat(returnedExam.exerciseGroups()).isNotNull();
+        var exercises = returnedExam.exerciseGroups().stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream()).toList();
+        assertThat(exercises).isNotEmpty().allMatch(exercise -> exercise.numberOfParticipations() != null);
+        // The reset shape carries neither quiz-question stubs nor programming build-plan participations.
+        assertThat(exercises).allMatch(exercise -> exercise.quizQuestions() == null);
+        assertThat(exercises).allMatch(exercise -> exercise.templateParticipation() == null && exercise.solutionParticipation() == null);
     }
 
     @Test
@@ -1041,27 +1148,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true, true);
 
-        // 1. without options
-        var exam1 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
-        assertThat(exam1.getExamUsers()).isEmpty();
-        assertThat(exam1.getExerciseGroups()).isEmpty();
+        // 1. without options -> scalar-core ExamDTO, no exercise groups on the wire
+        var exam1 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, ExamDTO.class);
+        assertThat(exam1.id()).isEqualTo(exam.getId());
 
-        // 2. with exercise groups
+        // 2. with exercise groups -> ExamWithExerciseGroupsDTO
         var params = new LinkedMultiValueMap<String, String>();
         params.add("withExerciseGroups", "true");
-        var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam2.getExamUsers()).isEmpty();
-        assertThat(exam2.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-        for (int i = 0; i < exam2.getExerciseGroups().size(); i++) {
-            assertThat(exam2.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
-        }
+        var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class, params);
+        assertThat(exam2.exerciseGroups()).hasSize(exam.getExerciseGroups().size());
 
-        var quiz = exam2.getExerciseGroups().get(1).getExercises();
-        assertThat(quiz).isNotEmpty().allMatch(exercise -> exercise instanceof QuizExercise quizExercise && !quizExercise.getQuizQuestions().isEmpty());
+        var quizExercises = exam2.exerciseGroups().get(1).exercises();
+        assertThat(quizExercises).isNotEmpty()
+                .allMatch(exercise -> exercise.type() == ExerciseType.QUIZ && exercise.quizQuestions() != null && !exercise.quizQuestions().isEmpty());
 
-        ProgrammingExercise programming = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
-        assertThat(programming.getTemplateParticipation()).isNotNull();
-        assertThat(programming.getSolutionParticipation()).isNotNull();
+        var programming = exam2.exerciseGroups().get(6).exercises().iterator().next();
+        assertThat(programming.type()).isEqualTo(ExerciseType.PROGRAMMING);
+        assertThat(programming.templateParticipation()).isNotNull();
+        assertThat(programming.templateParticipation().buildPlanId()).isNotBlank();
+        assertThat(programming.solutionParticipation()).isNotNull();
+        assertThat(programming.solutionParticipation().buildPlanId()).isNotBlank();
     }
 
     @Test
@@ -1856,9 +1962,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         examRepository.save(exam);
 
-        final Exam receivedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), expectedStatus, Exam.class);
+        final ExamDTO receivedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), expectedStatus, ExamDTO.class);
         if (expectedStatus == HttpStatus.OK) {
-            assertThat(receivedExam.hasExamArchive()).isEqualTo(expectExamArchivePath);
+            // The archive button (also on the plain-get re-fetch path) reads examArchivePath to compute hasArchive.
+            boolean hasArchive = receivedExam.examArchivePath() != null && !receivedExam.examArchivePath().isEmpty();
+            assertThat(hasArchive).isEqualTo(expectExamArchivePath);
         }
     }
 

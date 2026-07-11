@@ -93,6 +93,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
@@ -102,6 +103,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
@@ -238,7 +240,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
+    public ResponseEntity<ExamDTO> createExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examDTO) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", examDTO);
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
@@ -257,7 +259,7 @@ public class ExamResource {
         Exam savedExam = examRepository.save(exam);
         channelService.createExamChannel(savedExam, Optional.ofNullable(examDTO.channelName()));
         searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam)));
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(savedExam);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + savedExam.getId())).body(ExamDTO.of(savedExam));
     }
 
     /**
@@ -270,7 +272,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
+    public ResponseEntity<ExamDTO> updateExam(@PathVariable Long courseId, @RequestBody ExamUpdateDTO examUpdateDTO) {
         log.debug("REST request to update an exam : {}", examUpdateDTO);
 
         if (examUpdateDTO.id() == null) {
@@ -359,7 +361,7 @@ public class ExamResource {
 
         searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(savedExam)));
 
-        return ResponseEntity.ok(savedExam);
+        return ResponseEntity.ok(ExamDTO.of(savedExam));
     }
 
     /**
@@ -372,7 +374,7 @@ public class ExamResource {
      */
     @PatchMapping("courses/{courseId}/exams/{examId}/working-time")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody int workingTimeChange) {
+    public ResponseEntity<ExamDTO> updateExamWorkingTime(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody int workingTimeChange) {
         log.debug("REST request to update the working time of exam with id {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -404,7 +406,7 @@ public class ExamResource {
 
         searchableEntityWeaviateService.ifPresent(service -> service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(exam)));
 
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamDTO.of(exam));
     }
 
     /**
@@ -724,7 +726,7 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
+    public ResponseEntity<?> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
@@ -735,12 +737,12 @@ public class ExamResource {
             if (channel != null) {
                 exam.setChannelName(channel.getName());
             }
-            return ResponseEntity.ok(exam);
+            return ResponseEntity.ok(ExamDTO.of(exam));
         }
 
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
         examService.setExamProperties(exam);
-        return ResponseEntity.ok(exam);
+        return ResponseEntity.ok(ExamWithExerciseGroupsDTO.ofDetailed(exam));
     }
 
     /**
@@ -973,7 +975,7 @@ public class ExamResource {
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/reset")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<ExamWithExerciseGroupsDTO> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to reset exam : {}", examId);
 
         var exam = examRepository.findByIdElseThrow(examId);
@@ -983,7 +985,7 @@ public class ExamResource {
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
         examService.setExamProperties(returnExam);
 
-        return ResponseEntity.ok(returnExam);
+        return ResponseEntity.ok(ExamWithExerciseGroupsDTO.ofReset(returnExam));
     }
 
     /**
