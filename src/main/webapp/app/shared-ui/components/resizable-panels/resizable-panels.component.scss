@@ -11,8 +11,9 @@
     border: 0;
     background: transparent;
 
-    // PrimeNG 22 renamed the panel class from `p-splitterpanel` to `p-splitter-panel`.
-    .p-splitter-panel {
+    // PrimeNG 21.1.9 (pinned by this PR) renders `p-splitterpanel`; PrimeNG 22 renames it to `p-splitter-panel`
+    // (update these selectors when upgrading).
+    .p-splitterpanel {
         display: flex;
         min-width: 0;
         min-height: 0;
@@ -55,11 +56,11 @@
     // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
     // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
     &.right-collapsed {
-        > .p-splitter-panel:first-child {
+        > .p-splitterpanel:first-child {
             flex: 1 1 auto !important;
         }
 
-        > .p-splitter-panel:last-child {
+        > .p-splitterpanel:last-child {
             flex: 0 0 auto !important;
         }
 
