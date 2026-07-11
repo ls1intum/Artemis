@@ -8,7 +8,7 @@ export interface Contexts {
 
 export interface Context {
     beans: Beans;
-    parentId?: any;
+    parentId?: string;
 }
 
 export interface Beans {
@@ -17,7 +17,7 @@ export interface Beans {
 
 export interface Bean {
     prefix: string;
-    properties: any;
+    properties: Record<string, unknown>;
 }
 
 export interface Env {

@@ -28,7 +28,7 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
     }
 
-    private diff: IterableDiffer<TutorialGroupFreePeriod>;
+    private diff!: IterableDiffer<TutorialGroupFreePeriod>; // created in ngOnInit before ngDoCheck reads it
 
     public getCurrentDate(): dayjs.Dayjs {
         return dayjs();

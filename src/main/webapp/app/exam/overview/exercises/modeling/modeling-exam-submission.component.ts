@@ -11,6 +11,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
@@ -93,12 +94,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     updateViewFromSubmission(): void {
         if (this.studentSubmission()) {
-            if (this.studentSubmission()!.model) {
+            if (this.studentSubmission().model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel.set(importDiagram(JSON.parse(this.studentSubmission()!.model!)));
+                this.umlModel.set(importDiagram(parseJson(this.studentSubmission().model!)));
             }
             // Updates explanation text with the latest submission
-            this.explanationText.set(this.studentSubmission()!.explanationText ?? '');
+            this.explanationText.set(this.studentSubmission().explanationText ?? '');
         }
     }
 
@@ -115,9 +116,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
         if (this.studentSubmission()) {
             if (diagramJson) {
-                this.studentSubmission()!.model = diagramJson;
+                this.studentSubmission().model = diagramJson;
             }
-            this.studentSubmission()!.explanationText = this.explanationText();
+            this.studentSubmission().explanationText = this.explanationText();
         }
     }
 
@@ -125,7 +126,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the submission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
-        return !this.studentSubmission()!.isSynced!;
+        return !this.studentSubmission().isSynced!;
     }
 
     /**
@@ -136,12 +137,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     modelChanged(_model: UMLModel) {
-        this.studentSubmission()!.isSynced = false;
+        this.studentSubmission().isSynced = false;
     }
 
     // Changes isSynced to false and updates explanation text
     explanationChanged(explanation: string) {
-        this.studentSubmission()!.isSynced = false;
+        this.studentSubmission().isSynced = false;
         this.explanationText.set(explanation);
     }
 
@@ -162,7 +163,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // if we do not wait here for apollon, the redux store might be undefined
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel.set(importDiagram(JSON.parse(model)));
+            this.umlModel.set(importDiagram(parseJson(model)));
             // same as above regarding the string operations
             const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
             this.explanationText.set(this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '');

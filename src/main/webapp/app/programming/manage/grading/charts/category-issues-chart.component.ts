@@ -3,7 +3,7 @@ import { IssuesMap } from 'app/programming/shared/entities/programming-exercise-
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
-export class IssueColumn {
+export interface IssueColumn {
     w: string;
     h: string;
     color: string;

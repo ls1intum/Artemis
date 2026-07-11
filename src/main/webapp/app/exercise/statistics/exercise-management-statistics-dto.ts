@@ -1,4 +1,4 @@
-export class ExerciseManagementStatisticsDto {
+export interface ExerciseManagementStatisticsDto {
     // average score
     averageScoreOfExercise: number;
     maxPointsOfExercise: number;

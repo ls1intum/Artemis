@@ -809,8 +809,13 @@ public class ProgrammingExerciseGradingService {
 
         points = Math.max(0, points);
 
+        double maxPoints = scoreCalculationData.exercise().getMaxPoints();
+        if (maxPoints <= 0.0) {
+            return 0.0;
+        }
+
         // The score is calculated as a percentage of the maximum points
-        return points / scoreCalculationData.exercise().getMaxPoints() * 100.0;
+        return points / maxPoints * 100.0;
     }
 
     /**

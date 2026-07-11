@@ -99,9 +99,12 @@ public class PlagiarismResult extends AbstractAuditingEntity {
     }
 
     /**
-     * @return an unmodifiable list of the similar distribution
+     * @return an unmodifiable list of the similar distribution, or null if no distribution has been initialized yet
      */
     public List<Integer> getSimilarityDistribution() {
+        if (this.similarityDistribution == null) {
+            return null;
+        }
         return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).toList();
     }
 

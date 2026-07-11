@@ -17,8 +17,10 @@ export class LoadImageService {
     loadImageFile(file: File, cropperSettings: CropperSettings): Promise<LoadedImage> {
         return new Promise((resolve, reject) => {
             const fileReader = new FileReader();
-            fileReader.onload = (event: any) => {
-                this.loadImage(event.target.result, file.type, cropperSettings).then(resolve).catch(reject);
+            fileReader.onload = (event: ProgressEvent<FileReader>) => {
+                this.loadImage(event.target?.result as string, file.type, cropperSettings)
+                    .then(resolve)
+                    .catch(reject);
             };
             fileReader.readAsDataURL(file);
         });
@@ -45,7 +47,7 @@ export class LoadImageService {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 context.drawImage(img, 0, 0);
-                this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
+                void this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
             };
             img.crossOrigin = 'anonymous';
             img.src = url;

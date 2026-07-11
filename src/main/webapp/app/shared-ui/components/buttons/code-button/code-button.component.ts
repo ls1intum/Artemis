@@ -98,11 +98,11 @@ export class CodeButtonComponent implements OnInit {
     // Fields (immutable after construction)
     sshEnabled = false;
     sshTemplateUrl?: string;
-    versionControlUrl: string;
+    versionControlUrl!: string; // set in ngOnInit() from profile info
     readonly isInCourseManagement = signal<boolean>(undefined!);
-    sshSettingsUrl: string;
-    vcsTokenSettingsUrl: string;
-    user: User;
+    sshSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
+    vcsTokenSettingsUrl!: string; // set in configureTooltips() from ngOnInit()
+    user!: User; // set in ngOnInit() from accountService.identity()
     sshKeys?: UserSshPublicKey[];
 
     // Signals (we ideally declare everything related to change detection/UI to signals and leave component fields
@@ -168,7 +168,7 @@ export class CodeButtonComponent implements OnInit {
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
-    theiaPortalURL: string;
+    theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Icons
     readonly faCode = faCode;
@@ -192,6 +192,13 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async ngOnInit() {
+        // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
+        // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
+        // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings
+        // are still empty, the alert element has no text. Setting them up front guarantees the alert always
+        // renders its message as soon as it becomes visible.
+        this.configureTooltips();
+
         const user = await this.accountService.identity();
         if (!user) {
             return;
@@ -216,10 +223,9 @@ export class CodeButtonComponent implements OnInit {
             this.versionControlUrl = profileInfo.versionControlUrl;
         }
 
-        this.configureTooltips();
         this.initTheia(profileInfo);
 
-        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
+        void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
@@ -331,7 +337,7 @@ export class CodeButtonComponent implements OnInit {
      * (Usually the token exists, as it is created when the server creates the participation)
      */
     loadParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.getVcsAccessToken(participation!.id!).subscribe({
+        this.accountService.getVcsAccessToken(participation.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
@@ -357,7 +363,7 @@ export class CodeButtonComponent implements OnInit {
      * Sends the request to create a new participation VCS access token
      */
     createNewParticipationVcsAccessToken(participation: ProgrammingExerciseStudentParticipation) {
-        this.accountService.createVcsAccessToken(participation!.id!).subscribe({
+        this.accountService.createVcsAccessToken(participation.id!).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;

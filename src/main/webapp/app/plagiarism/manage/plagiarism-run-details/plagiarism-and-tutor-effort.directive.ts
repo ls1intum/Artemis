@@ -4,7 +4,7 @@ import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 
 @Directive()
 export abstract class PlagiarismAndTutorEffortDirective {
-    chartLabels: string[];
+    chartLabels!: string[]; // set by each concrete subclass (in its constructor or ngOnInit) before the chart is rendered
     /**
      * The similarity/effort distribution that is visualized in a bar chart; one entry per bar.
      */

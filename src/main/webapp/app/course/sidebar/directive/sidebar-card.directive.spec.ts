@@ -23,7 +23,7 @@ function getCreatedComponentName(spy: ReturnType<typeof vi.spyOn>): string {
 })
 class TestHostComponent {
     directive = viewChild.required(SidebarCardDirective);
-    size: string;
+    size!: string;
     sidebarItem?: SidebarCardElement;
     groupKey?: string;
 }

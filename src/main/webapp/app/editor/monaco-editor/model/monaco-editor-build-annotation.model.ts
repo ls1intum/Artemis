@@ -13,6 +13,8 @@ export enum MonacoEditorBuildAnnotationType {
  * They remain fixed to their line even when the user makes edits.
  * Annotations consist of a {@link MonacoEditorGlyphMarginWidget} to render an icon in the glyph margin and a separate
  * decoration (managed by the {@link decorationsCollection}) to handle highlighting and the hover message.
+ *
+ * Instantiated and populated after construction; the definite-assignment (!) field is set via setupListeners() during construction.
  */
 export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private glyphMarginWidget: MonacoEditorGlyphMarginWidget;
@@ -20,7 +22,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private outdated: boolean;
     private hoverMessage: string;
     private type: MonacoEditorBuildAnnotationType;
-    private updateListener: Disposable;
+    private updateListener!: Disposable; // assigned in setupListeners(), invoked from the constructor
 
     /**
      * @param editor The editor to render this annotation in.
@@ -91,7 +93,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         return this.glyphMarginWidget.getDomNode();
     }
 
-    protected setupListeners() {
+    protected override setupListeners() {
         this.updateListener = this.editor.onDidChangeModelContent(() => {
             // The displayed annotations may not apply anymore if the files have changed. For convenience, we still display them for the user's reference.
             this.setOutdatedAndUpdate(true);
@@ -113,7 +115,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         this.decorationsCollection.clear();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.glyphMarginWidget.dispose();
         this.updateListener.dispose();

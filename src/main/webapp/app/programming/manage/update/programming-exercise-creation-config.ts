@@ -7,8 +7,8 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 export type ProgrammingExerciseCreationConfig = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: string) => string | undefined;
+    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: string) => string | undefined;
     refreshAuxiliaryRepositoryChecks: () => void;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];

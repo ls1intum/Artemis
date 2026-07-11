@@ -44,6 +44,8 @@
                 "actions": "Aktionen",
                 "testCourse": "Testkurs",
                 "previousInstructor": "Bisheriger Kursleiter",
+                "instructorCourseCountNo": "Nein",
+                "instructorCourseCountYes": "Ja ({{ count }})",
                 "accept": "Akzeptieren",
                 "reject": "Ablehnen",
                 "rejectReasonLabel": "Ablehnungsgrund",

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Component({
@@ -7,10 +7,10 @@ import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-compete
     standalone: true,
 })
 export class StandardizedCompetencyFilterStubComponent {
-    @Input() competencyTitleFilter: string;
-    @Input() knowledgeAreaFilter?: KnowledgeAreaDTO;
-    @Input() knowledgeAreasForSelect: KnowledgeAreaDTO[] = [];
+    competencyTitleFilter = input<string>();
+    knowledgeAreaFilter = input<KnowledgeAreaDTO>();
+    knowledgeAreasForSelect = input<KnowledgeAreaDTO[]>([]);
 
-    @Output() competencyTitleFilterChange = new EventEmitter<string>();
-    @Output() knowledgeAreaFilterChange = new EventEmitter<KnowledgeAreaDTO>();
+    competencyTitleFilterChange = output<string>();
+    knowledgeAreaFilterChange = output<KnowledgeAreaDTO>();
 }

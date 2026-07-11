@@ -2,7 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -74,12 +74,11 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise: this.exercise(),
                 result: latestResult,
                 participation: this.participation(),
                 feedbackFilter: this.testIds(),
-                exerciseType: ExerciseType.PROGRAMMING,
                 taskName: this.taskName(),
                 numberOfNotExecutedTests: this.notExecutedTests().length,
             },

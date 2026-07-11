@@ -137,11 +137,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     isRefinementFabOpen = signal(false);
     isGlobalRefining = signal(false);
     globalRefinementPrompt = signal('');
+    courseCompetenciesCount = signal(0);
     private globalRefinementSubscription?: Subscription;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
-    courseRepository: CourseManagementService;
+    courseRepository!: CourseManagementService; // aliased to the injected courseService in ngOnInit()
     notificationText?: string;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -150,15 +151,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exams: Exam[] = [];
 
     courses: Course[] = [];
-    quizExercises: QuizExercise[];
-    allExistingQuestions: QuizQuestion[];
-    existingQuestions: QuizQuestion[];
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: QuizQuestion[] = [];
+    existingQuestions: QuizQuestion[] = [];
     importFile?: File;
-    importFileName: string;
-    searchQueryText: string;
-    dndFilterEnabled: boolean;
-    mcqFilterEnabled: boolean;
-    shortAnswerFilterEnabled: boolean;
+    importFileName = '';
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -188,7 +189,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     faFloppyDisk = faFloppyDisk;
     faCircleNotch = faCircleNotch;
 
-    readonly QuizMode = QuizMode;
+    override readonly QuizMode = QuizMode;
     readonly documentationType: DocumentationType = 'Quiz';
 
     readonly quizModeOptions = computed(() => {
@@ -235,8 +236,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         ];
     });
 
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    override readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    override readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     readonly defaultSecondLayerDialogOptions = {
         width: '40rem',
@@ -456,12 +457,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 finalize(() => this.isGlobalRefining.set(false)),
             )
             .subscribe({
-                next: (results) => {
+                next: ({ results, previousSnapshots }) => {
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
                     }
-                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results, previousSnapshots);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },
@@ -500,7 +501,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
     }
 
-    cacheValidation() {
+    override cacheValidation() {
         if (this.quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
             this.quizExercise().dueDate = undefined; // Due date is calculated on server side
             if (this.scheduleQuizStart) {
@@ -676,7 +677,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving.set(true);
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise().id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: { notificationText?: string } = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
@@ -885,7 +886,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    computeInvalidReasons(): ValidationReason[] {
+    override computeInvalidReasons(): ValidationReason[] {
         const invalidReasons = new Array<ValidationReason>();
         if (!this.quizExercise()) {
             return [];

@@ -7,6 +7,9 @@ import { BuildOverviewService } from 'app/localci/build-queue/build-overview.ser
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
@@ -30,7 +33,17 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule, RouterModule, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        FontAwesomeModule,
+        RouterModule,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        ArtemisTranslatePipe,
+        ButtonModule,
+        TableModule,
+        TagModule,
+    ],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -79,7 +92,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     initialLoadSubscription?: Subscription;
 
     /** Current router URL used for navigation */
-    routerLink: string;
+    routerLink!: string; // set in ngOnInit() from router.url
 
     // Font Awesome icons for the UI
     protected readonly faTimes = faTimes;
@@ -132,7 +145,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      */
     navigateToJobDetail(jobId?: string): void {
         if (jobId) {
-            this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
+            void this.router.navigate(['/admin/build-overview', jobId, 'job-details']);
         }
     }
 

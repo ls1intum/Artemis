@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.suggestionsDTO;
@@ -16,6 +15,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -70,7 +71,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -106,6 +107,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private IrisAdminDashboardRepository irisAdminDashboardRepository;
 
     @Autowired
     private IrisSessionService irisSessionService;
@@ -163,7 +167,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         mockChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
             pipelineDone.set(true);
         });
 
@@ -171,8 +175,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(pipelineDone::get);
 
         User user = userTestRepository.findByIdElseThrow(session.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
     @ParameterizedTest
@@ -222,13 +225,19 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void sendTwoMessages_persistsBothUserAndLlmMessages(IrisChatMode mode) throws Exception {
         IrisChatSession session = createSessionForUser(mode, "student1");
 
-        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages(), null, null)));
-        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages(), null, null)));
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", FINISHED, null, null)));
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", FINISHED, null, null)));
 
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
 
-        verify(websocketMessagingService, times(8)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
+        // Under the run-state protocol each chat run produces exactly three websocket sends to the user:
+        // (1) the echoed user message (IrisChatSessionService#sendOverWebsocket),
+        // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
+        // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
+        // The old stage protocol emitted an additional per-run stage update on top of these (four sends per
+        // run, eight for two messages); removing the stage system drops that to three per run (six total).
+        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
     }
 
@@ -305,6 +314,46 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         request.putWithResponseBody(helpfulUrl(session2, message), true, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void rateMessage_returns400WhenMessageIsIntermediate() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage intermediateMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        intermediateMessage.setIntermediate(true);
+        IrisMessage savedMessage = irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(helpfulUrl(session, savedMessage), true, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ratingAggregates_excludeIntermediateLlmMessages() {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        Instant from = Instant.now().minusSeconds(5);
+
+        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
+        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+
+        // A final (non-intermediate) helpful LLM answer must be counted by the rating aggregates.
+        IrisMessage finalMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        finalMessage.setHelpful(true);
+        irisMessageService.saveMessage(finalMessage, session, IrisMessageSender.LLM);
+
+        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
+        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+        assertThat(thumbsUpAfterFinal).isEqualTo(thumbsUpBaseline + 1);
+        assertThat(totalAfterFinal).isEqualTo(totalBaseline + 1);
+
+        // An intermediate helpful LLM message must not inflate the numerator or the denominator.
+        IrisMessage intermediateMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        intermediateMessage.setHelpful(true);
+        intermediateMessage.setIntermediate(true);
+        irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
+
+        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5))).isEqualTo(thumbsUpAfterFinal);
+        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5))).isEqualTo(totalAfterFinal);
+    }
+
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -313,7 +362,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
 
         mockChatResponse(dto -> {
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
             pipelineDone.set(true);
         });
 
@@ -321,8 +370,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 2);
 
         User user = userTestRepository.findByIdElseThrow(session.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS),
-                messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
     @ParameterizedTest
@@ -334,7 +382,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         final String expectedTitle = "New chat";
 
         mockChatResponse(dto -> {
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), expectedTitle, null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, expectedTitle, null));
             pipelineDone.set(true);
         });
 
@@ -367,7 +415,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisMessage second = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
         mockChatResponse(dto -> {
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
             pipelineDone.set(true);
         });
 
@@ -380,8 +428,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             request.postWithoutResponseBody(messagesUrl(session) + "/" + saved.getId() + "/resend", null, HttpStatus.TOO_MANY_REQUESTS);
 
             User user = userTestRepository.findByIdElseThrow(session.getUserId());
-            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(first.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(first.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
         }
         finally {
             configureCourseRateLimit(course, null, null);
@@ -429,7 +476,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
             mockChatResponse(dto -> {
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -487,7 +534,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
             irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(dto -> {
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
                 pipelineDone.set(true);
             }, submissionId);
 
@@ -495,8 +542,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             await().until(pipelineDone::get);
 
             User user = userTestRepository.findByIdElseThrow(session.getUserId());
-            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                    statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING),
+                    messageDTO("Hello World"));
         }
 
         @Test
@@ -703,7 +750,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             mockChatResponse(dto -> {
                 List<String> suggestions = List.of("suggestion1", "suggestion2", "suggestion3");
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, dto.initialStages(), null, suggestions));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, FINISHED, null, suggestions));
                 pipelineDone.set(true);
             });
 
@@ -711,8 +758,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             await().until(pipelineDone::get);
 
             User user = userTestRepository.findByIdElseThrow(session.getUserId());
-            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                    statusDTO(DONE, IN_PROGRESS), suggestionsDTO("suggestion1", "suggestion2", "suggestion3"));
+            verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING),
+                    suggestionsDTO("suggestion1", "suggestion2", "suggestion3"));
         }
     }
 
@@ -976,7 +1023,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
             mockChatResponse(dto -> {
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), pyrisResult, dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), pyrisResult, FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1045,7 +1092,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 var forwardedContext = (IrisVideoContextDTO) dto.context().get(0);
                 assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
                 assertThat(forwardedContext.timestamp()).isEqualTo(45.5);
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1069,7 +1116,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 var forwardedContext = (IrisSlidesContextDTO) dto.context().get(0);
                 assertThat(forwardedContext.lectureUnitId()).isEqualTo(unitId);
                 assertThat(forwardedContext.page()).isEqualTo(7);
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1102,7 +1149,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 // AND lectureUnitId should be derived from the nested context for RAG filtering
                 assertThat(dto.lectureUnitId()).isEqualTo(unitId);
 
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1125,7 +1172,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 assertThat(dto.context()).hasSize(2);
                 assertThat(dto.context()).anyMatch(IrisVideoContextDTO.class::isInstance);
                 assertThat(dto.context()).anyMatch(IrisSlidesContextDTO.class::isInstance);
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1145,7 +1192,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 // Context should be null (not empty list) for backward compatibility
                 assertThat(dto.context()).isNull();
                 assertThat(dto.lectureUnitId()).isNull();
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1171,7 +1218,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         void sendMessageWithPendingContextMissingMode_returns400() throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
-            List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+            List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null))
+                    .toList();
             var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), Map.of(), new IrisPendingContextDTO(null, lecture.getId()), null);
 
             request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
@@ -1191,7 +1239,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             mockChatResponse(dto -> {
                 assertThat(dto.context()).isNull();
                 assertThat(dto.lectureUnitId()).isNull();
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1212,7 +1260,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             mockChatResponse(dto -> {
                 assertThat(dto.context()).isNull();
                 assertThat(dto.lectureUnitId()).isNull();
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1233,7 +1281,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             mockChatResponse(dto -> {
                 assertThat(dto.context()).isNull();
                 assertThat(dto.lectureUnitId()).isNull();
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1268,7 +1316,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                     assertThat(dto.programmingExerciseSubmission().repository()).containsAllEntriesOf(uncommittedFiles);
                 }
 
-                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", dto.initialStages(), null, null));
+                assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Response", FINISHED, null, null));
                 pipelineDone.set(true);
             });
 
@@ -1319,10 +1367,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(consumer);
     }
 
-    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {
+    private void sendStatus(String jobId, String result, PyrisRunState runState, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {

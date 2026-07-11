@@ -265,9 +265,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const instructionSpans = fixture.nativeElement.querySelectorAll('p.text-wrap span[jhiTranslate]');
         expect(instructionSpans.length).toBeGreaterThanOrEqual(3);
 
-        const startSpan = Array.from(instructionSpans).find((span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.start') as
-            | HTMLElement
-            | undefined;
+        const startSpan = Array.from<HTMLElement>(instructionSpans).find(
+            (span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.start',
+        );
         expect(startSpan).toBeTruthy();
 
         const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
@@ -276,9 +276,9 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const linkSpan = link.querySelector('span[jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"]');
         expect(linkSpan).toBeTruthy();
 
-        const endSpan = Array.from(instructionSpans).find((span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.end') as
-            | HTMLElement
-            | undefined;
+        const endSpan = Array.from<HTMLElement>(instructionSpans).find(
+            (span: HTMLElement) => span.getAttribute('jhiTranslate') === 'global.menu.admin.passkeyApprovalInstructions.end',
+        );
         expect(endSpan).toBeTruthy();
     });
 

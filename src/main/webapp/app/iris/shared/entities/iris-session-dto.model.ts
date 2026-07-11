@@ -1,6 +1,6 @@
 import { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 
-export class IrisSessionDTO {
+export interface IrisSessionDTO {
     id: number;
     title?: string;
     creationDate: Date;

@@ -63,6 +63,9 @@ describe('Exercise Scores Component', () => {
         buildPlanId: '1',
         repositoryUri: 'url',
         testRun: false,
+        testCaseCount: 10,
+        passedTestCaseCount: 5,
+        codeIssueCount: 0,
     };
 
     const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
@@ -251,11 +254,14 @@ describe('Exercise Scores Component', () => {
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true }, true, true],
             [FilterProp.LOCKED, { type: ExerciseType.PROGRAMMING, isAtLeastInstructor: false }, false, false],
             [FilterProp.LOCKED, { type: ExerciseType.TEXT }, true, false],
-        ])('should determine if filter is relevant for exercise configuration', (filter: FilterProp, ex: Exercise, newManualResultsAllowed: boolean, expected: boolean) => {
-            component.exercise.set(ex);
-            component.newManualResultAllowed.set(newManualResultsAllowed);
-            expect(component.relevantFilters().includes(filter)).toBe(expected);
-        });
+        ])(
+            'should determine if filter is relevant for exercise configuration',
+            (filter: FilterProp, ex: Partial<Exercise>, newManualResultsAllowed: boolean, expected: boolean) => {
+                component.exercise.set(ex as Exercise);
+                component.newManualResultAllowed.set(newManualResultsAllowed);
+                expect(component.relevantFilters().includes(filter)).toBe(expected);
+            },
+        );
     });
 
     describe('getBuildPlanUrl', () => {
@@ -344,6 +350,23 @@ describe('Exercise Scores Component', () => {
 
             expect(participation.type).toBe(ParticipationType.STUDENT);
             expect(participation.submissions).toHaveLength(0);
+        });
+
+        it('should produce a programming submission with buildFailed: true when dto.buildFailed is true', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
+            const dto: ParticipationScoreDTO = {
+                ...sampleDto,
+                participationId: 10,
+                submissionId: 20,
+                buildFailed: true,
+            };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.submissions).toHaveLength(1);
+            expect((participation.submissions![0] as any).submissionExerciseType).toBe('programming');
+            expect((participation.submissions![0] as any).buildFailed).toBe(true);
         });
     });
 

@@ -32,7 +32,9 @@ export class IrisChatHttpService {
         return this.httpClient.get<IrisMessageResponseDTO[]>(`${this.apiPrefix}/sessions/${sessionId}/messages`, { observe: 'response' }).pipe(
             map((response) => {
                 const dtos = response.body;
-                if (!dtos) return response as unknown as HttpResponse<IrisMessage[]>;
+                // No body to convert: re-type the empty response via clone's generic overload (clone with no
+                // body key copies the existing body verbatim), preserving the real HttpResponse instance.
+                if (!dtos) return response.clone<IrisMessage[]>({});
 
                 const messages: IrisMessage[] = dtos.map((dto) => {
                     return Object.assign({}, dto, {
@@ -48,9 +50,7 @@ export class IrisChatHttpService {
                     return 0;
                 });
 
-                return Object.assign({}, response, {
-                    body: messages,
-                }) as HttpResponse<IrisMessage[]>;
+                return response.clone<IrisMessage[]>({ body: messages });
             }),
         );
     }
