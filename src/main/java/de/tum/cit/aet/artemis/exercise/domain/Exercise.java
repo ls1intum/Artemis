@@ -372,7 +372,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnore
     public Course getCourseViaExerciseGroupOrCourseMember() {
         if (isExamExercise()) {
-            return this.getExerciseGroup().getExam().getCourse();
+            // Student-facing exam payloads mask the exam out (exerciseGroup.setExam(null)) before serialization, so the
+            // exam (and therefore its course) can be null here. Guard against the resulting NullPointerException by
+            // returning null instead of dereferencing a masked graph; callers that derive a course from an exam exercise
+            // on a masked graph must tolerate a null course (they cannot resolve one anyway).
+            var exam = this.getExerciseGroup().getExam();
+            return exam != null ? exam.getCourse() : null;
         }
         else {
             return this.getCourse();
