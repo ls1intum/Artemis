@@ -228,11 +228,11 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
+        await openPersistedChangedFileInNativeEditor(page, solutionMarkerPath, solutionMarkerText);
         await expectExerciseProblemStatement(page, exercise!.id!, correctedSeedStatementMarker);
         await expectAdaptationRepositoryMarkers(page, exercise!.id!, true);
         await expectLlmMockSawPrompt(page, 'HYPERION_E2E_SUBMIT_SEEDED_EXERCISE');
         await expectAdminGenerationSandboxSlots(browser, '0 / 2');
-        await openPersistedChangedFileInNativeEditor(page, solutionMarkerPath);
 
         await revertAcceptedAdaptationFromUi(page, exercise!.id!);
         await expectExerciseProblemStatement(page, exercise!.id!, 'testUseMergeSortForBigList');
@@ -410,7 +410,7 @@ async function expectSnapshotNavigationDisabled(page: Page, fileName: string) {
     await expect(activity.getByRole('button', { name: fileName })).toHaveCount(0);
 }
 
-async function openPersistedChangedFileInNativeEditor(page: Page, fileName: string) {
+async function openPersistedChangedFileInNativeEditor(page: Page, fileName: string, expectedContent: string) {
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileButton = activity.getByRole('button', { name: fileName });
     if (!(await fileButton.isVisible())) {
@@ -421,6 +421,9 @@ async function openPersistedChangedFileInNativeEditor(page: Page, fileName: stri
     await expect(page).toHaveURL(/\/code-editor\/SOLUTION\//);
     await expect(page.locator('jhi-code-editor-monaco jhi-code-editor-header')).toContainText(fileName);
     await expect(page.locator('jhi-code-editor-monaco:visible')).toHaveCount(1);
+    await expect(page.locator('jhi-code-editor-monaco .view-lines')).toContainText(expectedContent);
+    await expect(page.getByText('Loading file failed.')).toHaveCount(0);
+    await expect(page.getByText('The repository status could not be retrieved.')).toHaveCount(0);
 }
 
 async function startGenerationFromMenu(page: Page, exerciseId: number) {

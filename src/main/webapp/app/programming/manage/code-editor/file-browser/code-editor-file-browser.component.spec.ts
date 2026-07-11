@@ -570,6 +570,25 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renderedFiles).toHaveLength(0);
     });
 
+    it('signals repository readiness only after status and file loading complete', () => {
+        const status = new Subject<{ repositoryStatus: string }>();
+        const files = new Subject<{ [fileName: string]: FileType }>();
+        const loaded = vi.fn();
+        getStatusStub.mockReturnValue(status);
+        getRepositoryContentStub.mockReturnValue(files);
+        comp.repositoryFilesLoaded.subscribe(loaded);
+
+        fixture.componentRef.setInput('commitState', CommitState.UNDEFINED);
+        fixture.detectChanges();
+        status.next({ repositoryStatus: CommitState.CLEAN });
+
+        expect(loaded).not.toHaveBeenCalled();
+
+        files.next({ 'src/Solution.java': FileType.FILE });
+
+        expect(loaded).toHaveBeenCalledOnce();
+    });
+
     it('should select the correct file based on the user selection', () => {
         const fileToSelect = 'folder/file1';
         const otherFile = 'folder2/file2';

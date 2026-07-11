@@ -180,6 +180,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
+    private repositorySwitchTarget: { repository: RepositoryType; auxiliaryRepositoryId?: number } | undefined;
     readonly selectedIssue = signal<ConsistencyIssueNavigationIssue | undefined>(undefined);
     readonly generationStartPending = signal(false);
     readonly generationRefreshPending = signal(false);
@@ -817,24 +818,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.lineJumpOnFileLoad = location.lineNumber;
         this.fileToJumpOn = location.filePath;
+        this.repositorySwitchTarget = undefined;
 
         try {
             const codeEditorContainer = this.codeEditorContainer()!;
             switch (location.targetType) {
                 case CommentThreadLocationType.TEMPLATE_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
+                        this.repositorySwitchTarget = { repository: RepositoryType.TEMPLATE };
                         void this.selectTemplateParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.SOLUTION_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
+                        this.repositorySwitchTarget = { repository: RepositoryType.SOLUTION };
                         void this.selectSolutionParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.TEST_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
+                        this.repositorySwitchTarget = { repository: RepositoryType.TESTS };
                         void this.selectTestRepository();
                         return;
                     }
@@ -845,6 +850,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         auxiliaryRepositoryId !== undefined &&
                         (codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
                     ) {
+                        this.repositorySwitchTarget = { repository: RepositoryType.AUXILIARY, auxiliaryRepositoryId };
                         void this.selectAuxiliaryRepository(auxiliaryRepositoryId);
                         return;
                     }
@@ -854,6 +860,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             }
         } catch {
             this.alertService.error('artemisApp.hyperion.consistencyCheck.navigationFailed');
+            this.repositorySwitchTarget = undefined;
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
             return;
@@ -871,7 +878,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * the file triggers the normal load workflow.
      */
     onEditorLoaded() {
-        if (this.fileToJumpOn) {
+        if (this.fileToJumpOn && !this.repositorySwitchTarget) {
             const codeEditorContainer = this.codeEditorContainer()!;
             // File already loaded, no file-load event will fire.
             // Jump directly without re-running file-sync load/rebind.
@@ -883,6 +890,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             // Will load file and signal to fileLoad when finished loading
             codeEditorContainer.selectedFile = this.fileToJumpOn;
         }
+    }
+
+    onRepositoryFilesLoaded(): void {
+        const target = this.repositorySwitchTarget;
+        if (!target) {
+            return;
+        }
+
+        const codeEditorContainer = this.codeEditorContainer()!;
+        if (
+            codeEditorContainer.selectedRepository() !== target.repository ||
+            (target.repository === RepositoryType.AUXILIARY && this.selectedRepositoryId !== target.auxiliaryRepositoryId)
+        ) {
+            return;
+        }
+
+        this.repositorySwitchTarget = undefined;
+        this.onEditorLoaded();
     }
 
     /**

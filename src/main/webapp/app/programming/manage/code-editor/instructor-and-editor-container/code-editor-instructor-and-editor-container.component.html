@@ -31,6 +31,7 @@
             [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback()"
             [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.panelTitle' : undefined"
             (onFileLoad)="onFileLoad($event)"
+            (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"

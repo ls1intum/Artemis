@@ -738,6 +738,25 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
+        it('does not load a deferred file while its target repository is still initializing', () => {
+            const selectedRepository = vi.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            getCodeEditorContainer(comp).selectedRepository = selectedRepository;
+
+            internals(comp).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/solution/B.java' });
+            comp.onEditorLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBeUndefined();
+
+            comp.onRepositoryFilesLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBeUndefined();
+
+            selectedRepository.mockReturnValue(RepositoryType.SOLUTION);
+            comp.onRepositoryFilesLoaded();
+
+            expect(getCodeEditorContainer(comp).selectedFile).toBe('src/solution/B.java');
+        });
+
         it('navigateToLocation selects test repo when target is TEST_REPO and current repo differs', () => {
             getCodeEditorContainer(comp).selectedRepository = vi.fn().mockReturnValue(RepositoryType.SOLUTION);
             const selectTestSpy = vi.spyOn(comp, 'selectTestRepository');
