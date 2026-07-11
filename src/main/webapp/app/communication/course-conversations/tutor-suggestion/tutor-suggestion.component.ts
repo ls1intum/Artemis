@@ -110,10 +110,11 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                     return;
                 }
                 if (course?.id && post?.id) {
+                    const postId = post.id;
                     this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
                         this.irisEnabled.set(!!response?.settings?.enabled);
                         if (this.irisEnabled()) {
-                            this.chatService.openTutorSuggestionChat(post.id!);
+                            this.chatService.openTutorSuggestionChat(postId);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
