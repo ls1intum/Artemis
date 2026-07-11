@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, HostListener, inject, input, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,12 +9,18 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { Subscription, fromEvent } from 'rxjs';
+import { firstValueFrom, from, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 /**
  * Component that displays a comprehensive overview of course notifications.
@@ -22,18 +29,30 @@ import { RouterLink } from '@angular/router';
  */
 @Component({
     selector: 'jhi-course-notification-overview',
-    imports: [FontAwesomeModule, CourseNotificationBubbleComponent, CommonModule, TranslateDirective, CourseNotificationComponent, ArtemisTranslatePipe, NgbTooltip, RouterLink],
+    imports: [
+        FontAwesomeModule,
+        CourseNotificationBubbleComponent,
+        CommonModule,
+        TranslateDirective,
+        CourseNotificationComponent,
+        ArtemisTranslatePipe,
+        RouterLink,
+        ButtonModule,
+        TooltipModule,
+        CourseNotificationPresetPickerComponent,
+    ],
     templateUrl: './course-notification-overview.component.html',
     styleUrls: ['./course-notification-overview.component.scss'],
 })
-export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, AfterViewInit {
+export class CourseNotificationOverviewComponent implements AfterViewInit {
     readonly courseId = input.required<number>();
 
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
+    private courseNotificationSettingService = inject(CourseNotificationSettingService);
+    private destroyRef = inject(DestroyRef);
 
     // Icons
-    protected readonly faTrash = faTrash;
     protected readonly faBell = faBell;
     protected readonly faCog = faCog;
     protected readonly faFilter = faFilter;
@@ -41,6 +60,11 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected readonly faSpinner = faSpinner;
 
     protected readonly courseCategories = signal<string[]>([]);
+
+    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
+    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
+    private info?: CourseNotificationInfo;
+    private settingInfo?: CourseNotificationSettingInfo;
 
     protected readonly isShown = signal(false);
     protected selectedCategory = CourseNotificationCategory.GENERAL;
@@ -52,14 +76,15 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected savedScrollPosition: number = 0;
     protected pagesFinished: boolean = false;
     protected readonly isLoading = signal<boolean>(false);
-    private courseNotificationCountSubscription?: Subscription;
-    private courseNotificationSubscription?: Subscription;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     protected readonly CourseNotificationViewingStatus = CourseNotificationViewingStatus;
 
     constructor() {
         this.courseCategories.set(Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category))));
+
+        this.subscribeToSettingAndInfoChanges();
+        this.subscribeToNotificationChanges();
     }
 
     ngAfterViewInit(): void {
@@ -68,7 +93,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
 
         fromEvent(this.scrollContainer()!.nativeElement, 'scroll')
-            .pipe(debounceTime(200), distinctUntilChanged())
+            .pipe(debounceTime(200), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
             .subscribe(() => {
                 if (this.isScrolledToBottom()) {
                     this.savedScrollPosition = this.scrollContainer()!.nativeElement.scrollTop;
@@ -77,44 +102,122 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
             });
     }
 
-    ngOnInit(): void {
-        this.courseNotificationCountSubscription = this.courseNotificationService.getNotificationCountForCourse$(this.courseId()).subscribe((count: number) => {
-            this.courseNotificationCount.set(count);
-        });
-        this.courseNotificationSubscription = this.courseNotificationService.getNotificationsForCourse$(this.courseId()).subscribe((notifications) => {
-            this.notifications = notifications;
-
-            this.filterNotificationsIntoCurrentCategory();
-
-            // Note: This is a temporary solution until server-side categorization paging is possible
-            if (
-                this.isLoading() &&
-                !this.pagesFinished &&
-                this.queryCount <= 3 &&
-                this.notificationsForSelectedCategory().length < this.queryStartSize + this.courseNotificationService.pageSize
-            ) {
-                this.queryCount++;
-                this.queryCurrentCategory();
-            } else {
-                this.isLoading.set(false);
-                this.queryCount = 1;
-
-                if (this.isShown()) {
-                    setTimeout(() => {
-                        this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
-                    });
-                    this.updateCurrentCategoryNotificationsToSeenOnServer();
+    /**
+     * Reacts to course changes by (re-)fetching the notification info and setting info for the new course.
+     * Uses `switchMap` so an in-flight request for a previous course is cancelled once the course changes,
+     * and `takeUntilDestroyed` so the subscription is cleaned up automatically when the component is destroyed.
+     */
+    private subscribeToSettingAndInfoChanges(): void {
+        toObservable(this.courseId)
+            .pipe(
+                tap(() => {
+                    this.settingInfo = undefined;
+                    this.info = undefined;
+                    this.selectableSettingPresets.set(undefined);
+                    this.selectedSettingPreset.set(undefined);
+                }),
+                switchMap((courseId) =>
+                    from(
+                        Promise.all([
+                            firstValueFrom(this.courseNotificationService.getInfo()),
+                            firstValueFrom(
+                                this.courseNotificationSettingService
+                                    .getSettingInfo(courseId, false)
+                                    .pipe(filter((value): value is CourseNotificationSettingInfo => value !== undefined)),
+                            ),
+                        ]).then(([info, settingInfo]) => ({ info, settingInfo })),
+                    ),
+                ),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(({ info, settingInfo }) => {
+                if (info.body) {
+                    this.info = info.body;
                 }
-            }
-        });
+                this.settingInfo = settingInfo;
+                if (this.info && this.settingInfo) {
+                    this.initializeCourseNotificationValues();
+                }
+            });
     }
 
-    ngOnDestroy(): void {
-        if (this.courseNotificationCountSubscription) {
-            this.courseNotificationCountSubscription.unsubscribe();
+    /**
+     * Reacts to course changes by (re-)fetching the notification count and the notification list for the new
+     * course. Uses `switchMap` so a course change automatically cancels the previous course's subscriptions,
+     * and `takeUntilDestroyed` so the subscription is cleaned up automatically when the component is destroyed.
+     */
+    private subscribeToNotificationChanges(): void {
+        toObservable(this.courseId)
+            .pipe(
+                tap(() => this.resetNotificationQueryState()),
+                switchMap((courseId) => this.courseNotificationService.getNotificationCountForCourse$(courseId)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((count) => this.courseNotificationCount.set(count));
+
+        toObservable(this.courseId)
+            .pipe(
+                switchMap((courseId) => this.courseNotificationService.getNotificationsForCourse$(courseId)),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((notifications) => this.handleNotificationsUpdate(notifications));
+    }
+
+    /**
+     * Resets the local pagination and notification state. Called whenever the course changes so that
+     * stale data from the previous course is not shown while the new course's data is being fetched.
+     */
+    private resetNotificationQueryState(): void {
+        this.notifications = undefined;
+        this.notificationsForSelectedCategory.set([]);
+        this.queryStartSize = 0;
+        this.queryCount = 1;
+        this.pagesFinished = false;
+        this.savedScrollPosition = 0;
+        this.isLoading.set(false);
+        this.courseNotificationCount.set(0);
+    }
+
+    /**
+     * Processes a fresh list of notifications for the current course: filters them into the selected
+     * category and, if server-side categorization paging has not yet delivered enough items, triggers
+     * additional page fetches (temporary solution until server-side categorization paging is possible).
+     *
+     * @param notifications - The up-to-date list of notifications for the current course
+     */
+    private handleNotificationsUpdate(notifications: CourseNotification[]): void {
+        this.notifications = notifications;
+
+        this.filterNotificationsIntoCurrentCategory();
+
+        if (
+            this.isLoading() &&
+            !this.pagesFinished &&
+            this.queryCount <= 3 &&
+            this.notificationsForSelectedCategory().length < this.queryStartSize + this.courseNotificationService.pageSize
+        ) {
+            this.queryCount++;
+            this.queryCurrentCategory();
+        } else {
+            this.isLoading.set(false);
+            this.queryCount = 1;
+
+            if (this.isShown()) {
+                setTimeout(() => {
+                    this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
+                });
+                this.updateCurrentCategoryNotificationsToSeenOnServer();
+            }
         }
-        if (this.courseNotificationSubscription) {
-            this.courseNotificationSubscription.unsubscribe();
+    }
+
+    /**
+     * Closes the notification overlay and marks visible notifications as seen on the client.
+     */
+    protected closeOverlay() {
+        if (this.isShown()) {
+            this.isShown.set(false);
+            this.updateCurrentCategoryNotificationsToSeenOnClient();
         }
     }
 
@@ -196,12 +299,37 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     }
 
     /**
-     * Handles click on the archive button.
-     * Archives all notifications for the course both on server and in local state.
+     * Initializes the notification presets once both settingInfo and info are available.
+     * Sets up the selectable presets and the currently selected preset.
      */
-    protected archiveClicked() {
-        this.courseNotificationService.archiveAll(this.courseId());
-        this.courseNotificationService.archiveAllInMap(this.courseId());
+    private initializeCourseNotificationValues() {
+        this.selectableSettingPresets.set(this.info!.presets);
+
+        this.selectedSettingPreset.set(
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
+        );
+    }
+
+    /**
+     * Handles selection of a notification preset.
+     *
+     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
+     */
+    protected presetSelected(presetTypeId: number) {
+        const newPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId);
+
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, newPreset);
+
+        this.selectedSettingPreset.set(newPreset);
+    }
+
+    /**
+     * Marks all currently shown notifications (the selected category) as read/seen,
+     * both in the local state and on the server.
+     */
+    protected markAllAsReadClicked() {
+        this.updateCurrentCategoryNotificationsToSeenOnServer();
+        this.updateCurrentCategoryNotificationsToSeenOnClient();
     }
 
     /**

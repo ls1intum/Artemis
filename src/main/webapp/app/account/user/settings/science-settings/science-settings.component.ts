@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, WritableSignal, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -9,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { UserSettingsDirective } from 'app/account/user/settings/directive/user-settings.directive';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
-import { UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting } from 'app/account/user/settings/science-settings/science-settings-structure';
 
 @Component({
@@ -34,9 +33,6 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
     private saveSubscription?: Subscription;
     readonly featureToggleActive = signal(false);
     private lastConfirmedValues = new Map<string, boolean>();
-
-    declare userSettings: WritableSignal<UserSettingsStructure<ScienceSetting>>;
-    declare settings: WritableSignal<Array<ScienceSetting>>;
 
     override ngOnInit(): void {
         this.userSettingsCategory = UserSettingsCategory.SCIENCE_SETTINGS;
