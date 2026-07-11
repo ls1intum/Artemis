@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -216,6 +217,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
         assertThat(userTestRepository.findByIdElseThrow(user.getId()).isMemirisEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_forwardsCommandMarkerInChatHistoryToPyris() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        String markerJson = "{\"type\":\"pointOut\",\"lectureUnitId\":42,\"page\":3}";
+        IrisMessage marker = new IrisMessage();
+        IrisJsonMessageContent markerContent = new IrisJsonMessageContent();
+        markerContent.setJsonContent(markerJson);
+        marker.addContent(markerContent);
+        irisMessageService.saveMessage(marker, session, IrisMessageSender.COMMAND);
+
+        mockChatResponse(dto -> {
+            var commandMessage = dto.chatHistory().stream().filter(message -> message.sender() == IrisMessageSender.COMMAND).findFirst().orElseThrow();
+            assertThat(commandMessage.contents()).hasSize(1);
+            // Pyris parses jsonContent with pydantic Json[Any], which only accepts a JSON string on the wire
+            assertThat(((PyrisJsonMessageContentDTO) commandMessage.contents().getFirst()).jsonContent()).isEqualTo(markerJson);
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(pipelineDone::get);
     }
 
     @ParameterizedTest
