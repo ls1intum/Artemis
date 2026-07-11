@@ -255,6 +255,9 @@ public class StudentExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/student-exams/submit")
     @EnforceAtLeastStudent
+    // NOTE: the body is intentionally NOT @Valid — the legacy full-entity endpoint activated no Bean Validation, and the
+    // DTO migration must not add validation the legacy endpoint lacked (a rejected body would break the hand-in instead
+    // of degrading gracefully). Malformed/ambiguous parts are tolerated and dropped during reconstruction.
     public ResponseEntity<Void> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody SubmitStudentExamDTO studentExamFromClient) {
         long start = System.nanoTime();
         log.debug("REST request to mark the studentExam as submitted : {}", studentExamFromClient.id());

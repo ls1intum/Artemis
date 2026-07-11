@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
+import { QuizSubmissionDTO, toSubmitStudentExamDTO } from 'app/exam/overview/services/submit-student-exam-dto.mapper';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -111,9 +112,14 @@ describe('toSubmitStudentExamDTO', () => {
         studentExam.exercises = [exerciseWith(12, 1002, [submission])];
 
         const dto = toSubmitStudentExamDTO(studentExam);
-        const quizDto = dto.exercises[0].studentParticipations[0].submissions[0];
+        const mappedSubmission = dto.exercises[0].studentParticipations[0].submissions[0];
 
-        expect(quizDto.submissionExerciseType).toBe('quiz');
+        // narrow the discriminated union to the quiz variant so submittedAnswers is statically visible
+        expect(mappedSubmission.submissionExerciseType).toBe(SubmissionExerciseType.QUIZ);
+        if (mappedSubmission.submissionExerciseType !== SubmissionExerciseType.QUIZ) {
+            throw new Error('expected a quiz submission');
+        }
+        const quizDto: QuizSubmissionDTO = mappedSubmission;
         expect(quizDto.id).toBe(102);
         expect(quizDto.submittedAnswers).toEqual([
             { type: 'multiple-choice', quizQuestion: { id: 20 }, selectedOptions: [{ id: 201 }, { id: 202 }] },

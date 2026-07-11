@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exam.dto.submit;
 
 import java.util.Set;
 
-import jakarta.validation.Valid;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,5 +23,5 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerFromLiveCl
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record QuizExamSubmissionDTO(Long id, Set<@Valid SubmittedAnswerFromLiveClientDTO> submittedAnswers) implements SubmitExamSubmissionDTO {
+public record QuizExamSubmissionDTO(Long id, Set<SubmittedAnswerFromLiveClientDTO> submittedAnswers) implements SubmitExamSubmissionDTO {
 }

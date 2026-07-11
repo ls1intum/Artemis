@@ -37,28 +37,65 @@ interface EntityIdRef {
     id?: number;
 }
 
-export interface SubmitExamSubmissionDTO {
-    submissionExerciseType: SubmissionExerciseType;
+/**
+ * Discriminated union of the per-type submission variants, keyed by {@code submissionExerciseType} — the same
+ * discriminator the server DTO hierarchy binds on. Modelling each variant separately (instead of one flat interface
+ * with every optional field) makes the impossible states — e.g. a text submission carrying quiz answers —
+ * unrepresentable and lets the compiler narrow field access after a {@code submissionExerciseType} check.
+ */
+interface BaseSubmissionDTO {
     id?: number;
-    // text
+}
+
+export interface TextSubmissionDTO extends BaseSubmissionDTO {
+    submissionExerciseType: SubmissionExerciseType.TEXT;
     text?: string;
-    // modeling
+}
+
+export interface ModelingSubmissionDTO extends BaseSubmissionDTO {
+    submissionExerciseType: SubmissionExerciseType.MODELING;
     model?: string;
     explanationText?: string;
-    // quiz
+}
+
+export interface QuizSubmissionDTO extends BaseSubmissionDTO {
+    submissionExerciseType: SubmissionExerciseType.QUIZ;
     submittedAnswers?: SubmittedAnswerFromLiveClientDTO[];
 }
 
-export interface SubmittedAnswerFromLiveClientDTO {
-    type: QuizQuestionType;
+/**
+ * Programming and file-upload submissions are never persisted through the exam hand-in; they are modelled as an inert
+ * id-only variant so a legacy body still binds, but carry no content.
+ */
+export interface InertSubmissionDTO extends BaseSubmissionDTO {
+    submissionExerciseType: SubmissionExerciseType.PROGRAMMING | SubmissionExerciseType.FILE_UPLOAD;
+}
+
+export type SubmitExamSubmissionDTO = TextSubmissionDTO | ModelingSubmissionDTO | QuizSubmissionDTO | InertSubmissionDTO;
+
+/**
+ * Discriminated union of the quiz submitted-answer variants, keyed by {@code type} (matching the server's
+ * {@code QuizQuestionType} discriminator).
+ */
+export interface MultipleChoiceSubmittedAnswerDTO {
+    type: QuizQuestionType.MULTIPLE_CHOICE;
     quizQuestion?: EntityIdRef;
-    // multiple-choice
     selectedOptions?: EntityIdRef[];
-    // drag-and-drop
+}
+
+export interface DragAndDropSubmittedAnswerDTO {
+    type: QuizQuestionType.DRAG_AND_DROP;
+    quizQuestion?: EntityIdRef;
     mappings?: { dragItem?: EntityIdRef; dropLocation?: EntityIdRef }[];
-    // short-answer
+}
+
+export interface ShortAnswerSubmittedAnswerDTO {
+    type: QuizQuestionType.SHORT_ANSWER;
+    quizQuestion?: EntityIdRef;
     submittedTexts?: { text?: string; spot?: EntityIdRef }[];
 }
+
+export type SubmittedAnswerFromLiveClientDTO = MultipleChoiceSubmittedAnswerDTO | DragAndDropSubmittedAnswerDTO | ShortAnswerSubmittedAnswerDTO;
 
 /**
  * Builds the slim submit request body from the live in-memory {@link StudentExam}.
@@ -103,9 +140,15 @@ function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO {
                 id: submission.id,
                 submittedAnswers: ((submission as QuizSubmission).submittedAnswers ?? []).map(toSubmittedAnswerDTO),
             };
-        default:
+        case SubmissionExerciseType.PROGRAMMING:
+        case SubmissionExerciseType.FILE_UPLOAD:
             // programming / file-upload: never saved via the hand-in, the server accepts and ignores them.
-            return { submissionExerciseType: submission.submissionExerciseType!, id: submission.id };
+            return { submissionExerciseType: submission.submissionExerciseType, id: submission.id };
+        default:
+            // Only reachable if submissionExerciseType is undefined (malformed submission). Preserve the legacy inert
+            // shape verbatim (no runtime change); the narrow union cannot type an undefined discriminator.
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            return { submissionExerciseType: submission.submissionExerciseType, id: submission.id } as InertSubmissionDTO;
     }
 }
 
@@ -136,6 +179,9 @@ function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveC
                 })),
             };
         default:
-            return { type: answer.type!, quizQuestion: { id: answer.quizQuestion?.id } };
+            // Only reachable if type is undefined (all three real quiz question types are handled above). Preserve the
+            // legacy defensive id-only fallback verbatim (no runtime change); the narrow union cannot type undefined.
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            return { type: answer.type, quizQuestion: { id: answer.quizQuestion?.id } } as SubmittedAnswerFromLiveClientDTO;
     }
 }
