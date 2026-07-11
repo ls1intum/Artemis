@@ -54,6 +54,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -1600,6 +1601,157 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(studentExamFinished.getSubmissionDate()).isNotNull();
         }
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
+
+        deleteExamWithInstructor(exam1);
+    }
+
+    /**
+     * Wire-contract guard for the exam conduction -> hand-in round trip.
+     * <p>
+     * The exam-taking client fetches the conduction response, keeps it typed as the full {@code StudentExam} model, and
+     * later builds the hand-in body from it via {@code toSubmitStudentExamDTO}, which reads exactly
+     * {@code exercises[].id}, {@code studentParticipations[].id} and {@code submissions[].{id, submissionExerciseType}}
+     * plus the per-type content (text+language / model+explanationText / submittedAnswers). This test reproduces that
+     * exact walk against the <em>raw JSON</em> the conduction endpoint returns: it asserts every id path the client
+     * mapper depends on is present on the wire, then builds the slim submit body from those wire ids (injecting the
+     * last-second answers a student would enter), posts it, and fresh-queries the database to prove the text, modeling
+     * and quiz content survived the round trip.
+     * <p>
+     * Unlike the other submit tests, this one never echoes the full conduction entity back to the submit endpoint and
+     * never saves through the dedicated per-exercise submission endpoints — the content reaches the server only through
+     * the slim body assembled from the wire. That makes it the regression guard for the conduction-response DTO
+     * migration: if a migrated conduction projection drops any id path the client mapper reads, the slim body can no
+     * longer be assembled (the id assertions fail) or the content no longer round-trips.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testConductionWireToSlimSubmitBodyRoundTripPersistsContent() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false, true, 1).getFirst();
+        User student = studentExam.getUser();
+        userUtilService.changeUser(student.getLogin());
+
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        // 1. Fetch the conduction response as the raw JSON the client receives.
+        JsonNode conductionWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
+                HttpStatus.OK, JsonNode.class, headers);
+        assertThat(conductionWire.hasNonNull("id")).as("conduction wire carries the student exam id").isTrue();
+        assertThat(conductionWire.get("exercises")).as("conduction wire carries exercises").isNotNull();
+
+        final String expectedText = "Round-trip text " + UUID.randomUUID();
+        final String expectedModel = "{\"element\":\"round-trip model\"}";
+        final String expectedExplanation = "Round-trip explanation";
+
+        // 2. Build the slim submit body exactly as the client's toSubmitStudentExamDTO mapper does, reading only the wire
+        // ids the mapper reads and injecting the per-type content a student would have entered.
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode submitBody = mapper.createObjectNode();
+        submitBody.put("id", conductionWire.get("id").asLong());
+        ArrayNode submitExercises = submitBody.putArray("exercises");
+
+        Long textSubmissionId = null;
+        Long modelingSubmissionId = null;
+        Long quizSubmissionId = null;
+        Long mcQuestionId = null;
+        Long mcOptionId = null;
+
+        for (JsonNode exercise : conductionWire.get("exercises")) {
+            assertThat(exercise.hasNonNull("id")).as("conduction wire exercise carries an id").isTrue();
+            ObjectNode slimExercise = submitExercises.addObject();
+            slimExercise.put("id", exercise.get("id").asLong());
+            ArrayNode slimParticipations = slimExercise.putArray("studentParticipations");
+
+            JsonNode wireParticipations = exercise.get("studentParticipations");
+            if (wireParticipations == null) {
+                continue;
+            }
+            for (JsonNode participation : wireParticipations) {
+                assertThat(participation.hasNonNull("id")).as("conduction wire participation carries an id").isTrue();
+                ObjectNode slimParticipation = slimParticipations.addObject();
+                slimParticipation.put("id", participation.get("id").asLong());
+                ArrayNode slimSubmissions = slimParticipation.putArray("submissions");
+
+                JsonNode wireSubmissions = participation.get("submissions");
+                if (wireSubmissions == null) {
+                    continue;
+                }
+                for (JsonNode submission : wireSubmissions) {
+                    String type = submission.path("submissionExerciseType").asText(null);
+                    ObjectNode slimSubmission = slimSubmissions.addObject();
+                    if (submission.hasNonNull("id")) {
+                        slimSubmission.put("id", submission.get("id").asLong());
+                    }
+                    if (type != null) {
+                        slimSubmission.put("submissionExerciseType", type);
+                    }
+                    if (type == null) {
+                        continue;
+                    }
+                    switch (type) {
+                        case "text" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire text submission carries an id").isTrue();
+                            textSubmissionId = submission.get("id").asLong();
+                            slimSubmission.put("text", expectedText);
+                        }
+                        case "modeling" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire modeling submission carries an id").isTrue();
+                            modelingSubmissionId = submission.get("id").asLong();
+                            slimSubmission.put("model", expectedModel);
+                            slimSubmission.put("explanationText", expectedExplanation);
+                        }
+                        case "quiz" -> {
+                            assertThat(submission.hasNonNull("id")).as("conduction wire quiz submission carries an id").isTrue();
+                            quizSubmissionId = submission.get("id").asLong();
+                            JsonNode questions = exercise.get("quizQuestions");
+                            assertThat(questions).as("conduction wire quiz exercise carries quizQuestions").isNotNull();
+                            ArrayNode answers = slimSubmission.putArray("submittedAnswers");
+                            for (JsonNode question : questions) {
+                                if ("multiple-choice".equals(question.path("type").asText()) && mcQuestionId == null) {
+                                    JsonNode options = question.get("answerOptions");
+                                    assertThat(options).as("conduction wire MC question carries answerOptions").isNotNull();
+                                    assertThat(options.isEmpty()).as("conduction wire MC question exposes at least one option").isFalse();
+                                    mcQuestionId = question.get("id").asLong();
+                                    mcOptionId = options.get(0).get("id").asLong();
+                                    ObjectNode answer = answers.addObject();
+                                    answer.put("type", "multiple-choice");
+                                    answer.putObject("quizQuestion").put("id", mcQuestionId);
+                                    answer.putArray("selectedOptions").addObject().put("id", mcOptionId);
+                                }
+                            }
+                        }
+                        default -> {
+                            // programming / file-upload carry no content the hand-in persists
+                        }
+                    }
+                }
+            }
+        }
+
+        assertThat(textSubmissionId).as("conduction wire exposed a text submission").isNotNull();
+        assertThat(quizSubmissionId).as("conduction wire exposed a quiz submission").isNotNull();
+        assertThat(mcOptionId).as("conduction wire exposed an MC question with a selectable option").isNotNull();
+
+        // 3. Post the slim body — the exact shape the client assembles from the conduction wire.
+        request.postWithoutResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", submitBody, HttpStatus.OK);
+
+        // 4. Fresh-query the database and assert the last-second content survived the round trip.
+        StudentExam persisted = studentExamRepository.findById(studentExam.getId()).orElseThrow();
+        assertThat(persisted.isSubmitted()).as("student exam is marked submitted after hand-in").isTrue();
+
+        TextSubmission persistedText = (TextSubmission) submissionRepository.findById(textSubmissionId).orElseThrow();
+        assertThat(persistedText.getText()).as("text hand-in content persisted from the slim body").isEqualTo(expectedText);
+
+        if (modelingSubmissionId != null) {
+            ModelingSubmission persistedModel = (ModelingSubmission) submissionRepository.findById(modelingSubmissionId).orElseThrow();
+            assertThat(persistedModel.getModel()).as("modeling hand-in content persisted from the slim body").isEqualTo(expectedModel);
+            assertThat(persistedModel.getExplanationText()).as("modeling explanation persisted from the slim body").isEqualTo(expectedExplanation);
+        }
+
+        QuizSubmission persistedQuiz = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(quizSubmissionId);
+        assertThat(persistedQuiz.getSubmittedAnswers()).as("quiz hand-in answers persisted from the slim body").isNotEmpty();
+        var mcAnswer = persistedQuiz.getSubmittedAnswers().stream().filter(answer -> answer instanceof MultipleChoiceSubmittedAnswer)
+                .map(answer -> (MultipleChoiceSubmittedAnswer) answer).findFirst().orElseThrow();
+        final Long expectedOptionId = mcOptionId;
+        assertThat(mcAnswer.getSelectedOptions()).as("MC selected option persisted from the slim body").anyMatch(option -> expectedOptionId.equals(option.getId()));
 
         deleteExamWithInstructor(exam1);
     }
