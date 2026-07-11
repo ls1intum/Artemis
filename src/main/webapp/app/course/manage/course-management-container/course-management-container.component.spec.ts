@@ -8,7 +8,6 @@ import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -138,7 +137,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(MatSidenavModule), MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),

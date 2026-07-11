@@ -129,7 +129,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * Format a date object to a string for display
      */
     formatDueDate(date: dayjs.Dayjs): string {
-        return date!.format('MMM D, YYYY - HH:mm');
+        return date.format('MMM D, YYYY - HH:mm');
     }
 
     /**

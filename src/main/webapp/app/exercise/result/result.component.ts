@@ -2,7 +2,8 @@ import { Component, computed, effect, inject, input, signal } from '@angular/cor
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -46,7 +47,8 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        NgbTooltip,
+        TooltipModule,
+        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -91,7 +93,6 @@ export class ResultComponent {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-
     // True when the passed result is actually displayable as a score (rated, or ungraded allowed, or an Athena AI result).
     private readonly displayableResult = computed(() => {
         const result = this.result();
@@ -217,6 +218,7 @@ export class ResultComponent {
             }
             return 'artemisApp.result.preliminaryTooltip';
         }
+        return undefined;
     }
 
     /**
@@ -233,7 +235,7 @@ export class ResultComponent {
 
             const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
-            this.router.navigate([
+            void this.router.navigate([
                 '/courses',
                 courseId,
                 'exercises',
@@ -273,11 +275,13 @@ export class ResultComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            // Don't auto-focus the first focusable element on show: in a long feedback list it is often
+            // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
+            focusOnShow: false,
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackComponentParameters.exerciseType,
                 showScoreChart: feedbackComponentParameters.showScoreChart,
                 messageKey: feedbackComponentParameters.messageKey,
                 latestDueDate: feedbackComponentParameters.latestDueDate,

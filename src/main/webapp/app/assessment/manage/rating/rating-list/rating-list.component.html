@@ -76,15 +76,7 @@
         </table>
         @if (totalElements() > pageSize) {
             <div class="d-flex justify-content-center mt-3">
-                <ngb-pagination
-                    [collectionSize]="totalElements()"
-                    [(page)]="page"
-                    [pageSize]="pageSize"
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [boundaryLinks]="true"
-                    (pageChange)="onPageChange()"
-                />
+                <p-paginator [first]="(page() - 1) * pageSize" [rows]="pageSize" [totalRecords]="totalElements()" (onPageChange)="onPageChange($event)" />
             </div>
         }
     </div>

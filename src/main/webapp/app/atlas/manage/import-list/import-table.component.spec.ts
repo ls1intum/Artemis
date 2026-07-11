@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -11,6 +10,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 import { Column } from 'app/shared-ui/import/import.component';
+import { PaginatorState } from 'primeng/paginator';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportTableComponent', () => {
@@ -154,16 +154,15 @@ describe('ImportTableComponent', () => {
         expect(onRowSelectionSpy).toHaveBeenCalledExactlyOnceWith(objectList[0]);
     });
 
-    it('should set page size', async () => {
+    it('should change page via the paginator', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.page()).toBe(1);
 
-        const pageSizeSelect = fixture.debugElement.nativeElement.querySelectorAll('.page-link')[3];
-
-        pageSizeSelect.click();
+        // PrimeNG paginator emits a 0-indexed page; page 1 (0-indexed) is the component's page 2.
+        component['onPageChange']({ page: 1 } as PaginatorState);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

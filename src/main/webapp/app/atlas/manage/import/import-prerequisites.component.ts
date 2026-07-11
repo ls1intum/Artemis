@@ -17,7 +17,7 @@ import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-se
 })
 export class ImportPrerequisitesComponent extends ImportCourseCompetenciesComponent {
     entityType = CourseCompetencyType.PREREQUISITE;
-    allowRelationImport = false;
+    override allowRelationImport = false;
 
     private readonly prerequisiteService = inject(PrerequisiteService);
 
@@ -26,7 +26,7 @@ export class ImportPrerequisitesComponent extends ImportCourseCompetenciesCompon
             next: (res) => {
                 this.alertService.success('artemisApp.prerequisite.import.success', { numPrerequisites: res.body?.length ?? 0 });
                 this.isSubmitted = true;
-                this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                void this.router.navigate(['../'], { relativeTo: this.activatedRoute });
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

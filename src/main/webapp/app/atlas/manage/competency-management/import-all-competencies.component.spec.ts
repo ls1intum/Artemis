@@ -7,7 +7,6 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/course/shared/entities/course.model';
 
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,6 +15,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { PaginatorState } from 'primeng/paginator';
 
 describe('ImportAllCompetenciesComponent', () => {
     setupTestBed({ zoneless: true });
@@ -32,14 +32,7 @@ describe('ImportAllCompetenciesComponent', () => {
         dialogConfig = { data: {} } as DynamicDialogConfig;
 
         await TestBed.configureTestingModule({
-            imports: [
-                ImportAllCompetenciesComponent,
-                MockComponent(NgbPagination),
-                FontAwesomeTestingModule,
-                MockComponent(ButtonComponent),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-            ],
+            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -90,5 +83,23 @@ describe('ImportAllCompetenciesComponent', () => {
 
         const semesterProperty = component.columns[2];
         expect(semesterProperty.getProperty(course)).toBe(course.semester);
+    });
+
+    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
+
+        component.onPaginatorPageChange({ page: 2 } as PaginatorState);
+
+        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
+        expect(component.state.page).toBe(3);
+    });
+
+    it('onPaginatorPageChange treats an undefined page as the first page (page 1)', () => {
+        const onPageChangeSpy = vi.spyOn(component, 'onPageChange');
+
+        component.onPaginatorPageChange({} as PaginatorState);
+
+        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
+        expect(component.state.page).toBe(1);
     });
 });

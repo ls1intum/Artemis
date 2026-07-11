@@ -60,7 +60,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     readonly icon = signal<IconProp>(faCheck);
 
-    subscriptionToLiveExamExerciseUpdates: Subscription;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
     faBars = faBars;
@@ -251,7 +251,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
-            const programmingExercise = exercise as ProgrammingExercise;
+            const programmingExercise = exercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
         }
         return false;

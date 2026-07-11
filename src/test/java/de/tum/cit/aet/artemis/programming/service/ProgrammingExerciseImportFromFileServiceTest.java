@@ -3,12 +3,11 @@ package de.tum.cit.aet.artemis.programming.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,10 +25,8 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -50,10 +47,10 @@ class ProgrammingExerciseImportFromFileServiceTest {
     private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     @Mock
-    private RepositoryService repositoryService;
+    private ProgrammingExerciseImportRepositoryService programmingExerciseImportRepositoryService;
 
     @Mock
-    private GitService gitService;
+    private LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     @Mock
     private FileService fileService;
@@ -75,14 +72,13 @@ class ProgrammingExerciseImportFromFileServiceTest {
     @BeforeEach
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
-                new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseRepositoryService, repositoryService, gitService, fileService, profileService,
-                buildPlanRepository, tempFileUtilService);
+                new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseRepositoryService, programmingExerciseImportRepositoryService, fileService,
+                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService));
     }
 
     @Test
     void importProgrammingExerciseFromFile_triggersBuildsOnlyAfterImportedRepositoriesWerePushed() throws Exception {
         Path importExerciseDir = tempDir.resolve("imported-exercise-dir");
-        Path repositoryCloneDir = tempDir.resolve("repository-clones");
         Path zipPath = importExerciseDir.resolve("exercise-for-import.zip");
         Files.createDirectories(importExerciseDir);
 
@@ -99,29 +95,15 @@ class ProgrammingExerciseImportFromFileServiceTest {
         when(programmingExerciseCreationUpdateService.createProgrammingExercise(originalExercise, false, true)).thenReturn(importedExercise);
         when(programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(importedExercise)).thenReturn(importedExercise);
 
-        Repository templateRepository = mockRepository(repositoryCloneDir.resolve("exercise-template"));
-        Repository solutionRepository = mockRepository(repositoryCloneDir.resolve("exercise-solution"));
-        Repository testRepository = mockRepository(repositoryCloneDir.resolve("exercise-tests"));
-        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(false), eq(true))).thenReturn(templateRepository, solutionRepository, testRepository);
-
         var importZip = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         MockMultipartFile zipFile = new MockMultipartFile("file", "valid-import.zip", "application/zip", importZip.getInputStream());
         User user = new User();
 
         programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(originalExercise, zipFile, new Course(), user);
 
-        verify(programmingExerciseCreationUpdateService).createProgrammingExercise(originalExercise, false, true);
-        InOrder importOrder = inOrder(gitService, programmingExerciseCreationUpdateService);
-        importOrder.verify(gitService).commitAndPush(templateRepository, "Import template from file", true, user);
-        importOrder.verify(gitService).commitAndPush(solutionRepository, "Import solution from file", true, user);
-        importOrder.verify(gitService).commitAndPush(testRepository, "Import tests from file", true, user);
+        InOrder importOrder = inOrder(programmingExerciseImportRepositoryService, programmingExerciseCreationUpdateService);
+        importOrder.verify(programmingExerciseCreationUpdateService).createProgrammingExercise(originalExercise, false, true);
+        importOrder.verify(programmingExerciseImportRepositoryService).importRepositoriesFromFile(eq(importedExercise), any(Path.class), eq(user));
         importOrder.verify(programmingExerciseCreationUpdateService).setupBuildPlansAndTriggerInitialBuilds(importedExercise);
-    }
-
-    private static Repository mockRepository(Path localPath) throws Exception {
-        Files.createDirectories(localPath);
-        Repository repository = mock(Repository.class);
-        when(repository.getLocalPath()).thenReturn(localPath);
-        return repository;
     }
 }

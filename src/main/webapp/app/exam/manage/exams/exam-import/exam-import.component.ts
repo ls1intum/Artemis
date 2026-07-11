@@ -1,6 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
@@ -34,7 +35,7 @@ export interface ExamImportDialogData {
         FaIconComponent,
         NgbHighlight,
         ButtonComponent,
-        NgbPagination,
+        PaginatorModule,
         ExamExerciseImportComponent,
         ExamImportProgressDialogComponent,
     ],
@@ -116,7 +117,7 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
             // summary of any skipped or incomplete exercises (so the editor cannot overlook them).
             const totalExercises = (exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
             const importId = this.examManagementService.generateImportId();
-            const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups!, importId);
+            const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups, importId);
             this.examImportProgressDialog()
                 .runImport(importId, totalExercises, request$)
                 .then((response: HttpResponse<ExerciseGroupImportResultDTO>) => {

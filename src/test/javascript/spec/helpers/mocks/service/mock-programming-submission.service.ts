@@ -11,9 +11,9 @@ export class MockProgrammingSubmissionService implements IProgrammingSubmissionS
     triggerInstructorBuild = (participationId: number) => of({});
     unsubscribeAllWebsocketTopics = (exercise: Exercise) => of(null);
     unsubscribeForLatestSubmissionOfParticipation = (participationId: number) => of(null);
-    getResultEtaInMs: () => Observable<number>;
-    triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
-    triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
+    getResultEtaInMs!: () => Observable<number>;
+    triggerInstructorBuildForAllParticipationsOfExercise!: (exerciseId: number) => Observable<void>;
+    triggerInstructorBuildForParticipationsOfExercise!: (exerciseId: number, participationIds: number[]) => Observable<void>;
     getIsLocalCIProfile = () => false;
     fetchQueueReleaseDateEstimationByParticipationId: (participationId: number) => Observable<dayjs.Dayjs | undefined> = () => of(undefined);
 }

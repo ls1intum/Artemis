@@ -25,7 +25,7 @@ export class QuizExerciseExportComponent implements OnInit {
     private alertService = inject(AlertService);
 
     readonly questions = signal<QuizQuestion[]>([]);
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from route params
     readonly course = signal<Course | undefined>(undefined);
 
     /**

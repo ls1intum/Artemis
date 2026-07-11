@@ -5,7 +5,11 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
             <div>
-                <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise().includedInOverallScore" [allowNotIncluded]="true" />
+                <jhi-included-in-overall-score-picker
+                    [includedInOverallScore]="programmingExercise().includedInOverallScore"
+                    (includedInOverallScoreChange)="onIncludedInOverallScoreChange($event)"
+                    [allowNotIncluded]="true"
+                />
             </div>
         </div>
     }
@@ -15,10 +19,10 @@
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <input
-                        required
+                        [required]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED"
                         type="number"
                         class="form-control"
-                        min="1"
+                        [min]="programmingExercise().includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED ? 0 : 1"
                         max="9999"
                         name="points"
                         id="field_points"
@@ -99,12 +103,12 @@
                 (submissionPolicyTypeChange)="calculateFormStatus()"
             />
             @if (programmingExerciseCreationConfig().isEdit) {
-                <ngb-alert [dismissible]="false" [type]="'info'">
+                <p-message severity="info">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                     <a [href]="editPolicyUrl()">
                         <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>
                     </a>
-                </ngb-alert>
+                </p-message>
             }
         </div>
     }

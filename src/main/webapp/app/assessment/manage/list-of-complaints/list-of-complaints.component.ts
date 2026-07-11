@@ -47,9 +47,9 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly complaints = signal<Complaint[]>([]);
     readonly complaintType = signal<ComplaintType>(undefined!);
 
-    private courseId: number;
-    private exerciseId: number;
-    private tutorId: number;
+    private courseId!: number; // set in ngOnInit() from route params
+    private exerciseId!: number; // set in ngOnInit() from route params
+    private tutorId!: number; // set in ngOnInit() from route query params
     private examId?: number;
     readonly course = signal<Course>(undefined!);
     correctionRound?: number;
@@ -165,7 +165,7 @@ export class ListOfComplaintsComponent implements OnInit {
             undefined,
             complaint.result.id,
         );
-        this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
+        void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
     sortRows() {

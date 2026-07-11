@@ -27,24 +27,24 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
 
-    question: QuizQuestion;
-    questionStatistic: QuizQuestionStatistic;
+    question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
+    questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
 
-    quizExercise: QuizExercise;
-    questionIdParam: number;
-    sub: Subscription;
+    quizExercise!: QuizExercise; // set in loadQuizCommon() before it is read
+    questionIdParam!: number; // set in ngOnInit() from the route params
+    sub?: Subscription;
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
     // solutionLabels is currently only used for multiple choice questions
     solutionLabels: string[] = [];
 
-    ratedCorrectData: number;
-    unratedCorrectData: number;
+    ratedCorrectData = 0;
+    unratedCorrectData = 0;
 
-    maxScore: number;
+    maxScore = 0;
     showSolution = false;
-    websocketChannelForData: string;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
     private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;
@@ -137,14 +137,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigateByUrl('courses');
+            void this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
         if (!updatedQuestion) {
-            this.router.navigateByUrl('courses');
+            void this.router.navigateByUrl('courses');
             return undefined;
         }
         this.question = updatedQuestion;

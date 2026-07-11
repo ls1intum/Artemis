@@ -31,7 +31,7 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
@@ -56,7 +56,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
@@ -117,7 +117,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     set textExercise(value: TextExercise) {
         this._textExercise.set(value);
     }
-    backupExercise: TextExercise;
+    backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);

@@ -15,6 +15,8 @@ import { User } from 'app/account/user/user.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/foundation/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { DialogService } from 'primeng/dynamicdialog';
+import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 
 describe('PostingContentPartComponent', () => {
     setupTestBed({ zoneless: true });
@@ -24,6 +26,7 @@ describe('PostingContentPartComponent', () => {
     let debugElement: DebugElement;
     let router: Router;
     let fileService: FileService;
+    let dialogService: DialogService;
     let openAttachmentSpy: ReturnType<typeof vi.spyOn>;
     let navigateByUrlSpy: ReturnType<typeof vi.spyOn>;
     let accountService: AccountService;
@@ -36,6 +39,7 @@ describe('PostingContentPartComponent', () => {
     });
 
     beforeEach(async () => {
+        const mockDialogService = { open: vi.fn() } as unknown as DialogService;
         await TestBed.configureTestingModule({
             imports: [
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
@@ -54,13 +58,20 @@ describe('PostingContentPartComponent', () => {
                 },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        });
+        })
+            // DialogService is provided at the component level (providers: [DialogService]), so it must
+            // be overridden on the component, not the module, for the mock to take effect.
+            .overrideComponent(PostingContentPartComponent, {
+                set: { providers: [{ provide: DialogService, useValue: mockDialogService }] },
+            });
         fixture = TestBed.createComponent(PostingContentPartComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         router = TestBed.inject(Router);
         fileService = TestBed.inject(FileService);
         accountService = TestBed.inject(AccountService);
+        // DialogService is provided at the component level, so resolve it from the component's own injector.
+        dialogService = fixture.debugElement.injector.get(DialogService);
         navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = vi.spyOn(fileService, 'downloadFile');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
@@ -217,6 +228,23 @@ describe('PostingContentPartComponent', () => {
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
             expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
+        });
+
+        it('should open the enlarge slide image dialog with the correct config when enlargeImage is called', () => {
+            const slideToReference = '/path/x.png';
+
+            component.enlargeImage(slideToReference);
+
+            expect(dialogService.open).toHaveBeenCalledOnce();
+            expect(dialogService.open).toHaveBeenCalledWith(
+                EnlargeSlideImageComponent,
+                expect.objectContaining({
+                    data: { slideToReference },
+                    modal: true,
+                    dismissableMask: true,
+                    closeOnEscape: true,
+                }),
+            );
         });
 
         it('should trigger userReferenceClicked event for different user logins', () => {

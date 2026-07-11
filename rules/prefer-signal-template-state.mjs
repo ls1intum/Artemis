@@ -61,16 +61,7 @@ const SIGNAL_FACTORY_IDENTIFIERS = new Set(['signal', 'computed', 'input', 'mode
 const INJECT_IDENTIFIER = 'inject';
 // Reactive-forms types: these manage their own change propagation (and a `[formGroup]`/`formControlName`
 // binding cannot be backed by a signal), so reactive-form fields are exempt — they must NOT become signals.
-const REACTIVE_FORM_TYPES = new Set([
-    'FormGroup',
-    'FormControl',
-    'FormArray',
-    'FormRecord',
-    'AbstractControl',
-    'UntypedFormGroup',
-    'UntypedFormControl',
-    'UntypedFormArray',
-]);
+const REACTIVE_FORM_TYPES = new Set(['FormGroup', 'FormControl', 'FormArray', 'FormRecord', 'AbstractControl', 'UntypedFormGroup', 'UntypedFormControl', 'UntypedFormArray']);
 // Builder methods (`fb.group(...)`, `fb.control(...)`, `fb.array(...)`) that produce reactive-form controls.
 const REACTIVE_FORM_BUILDER_METHODS = new Set(['group', 'control', 'array', 'record', 'nonNullable']);
 
@@ -131,7 +122,12 @@ function isReactiveFormValue(node) {
     if (node.type === 'NewExpression' && node.callee.type === 'Identifier' && REACTIVE_FORM_TYPES.has(node.callee.name)) {
         return true;
     }
-    if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && node.callee.property.type === 'Identifier' && REACTIVE_FORM_BUILDER_METHODS.has(node.callee.property.name)) {
+    if (
+        node.type === 'CallExpression' &&
+        node.callee.type === 'MemberExpression' &&
+        node.callee.property.type === 'Identifier' &&
+        REACTIVE_FORM_BUILDER_METHODS.has(node.callee.property.name)
+    ) {
         return true;
     }
     return false;
@@ -272,13 +268,25 @@ export default createRule({
                     if (!node || typeof node.type !== 'string') {
                         return;
                     }
-                    if (node.type === 'AssignmentExpression' && node.left.type === 'MemberExpression' && !node.left.computed && node.left.object.type === 'ThisExpression' && node.left.property.type === 'Identifier') {
+                    if (
+                        node.type === 'AssignmentExpression' &&
+                        node.left.type === 'MemberExpression' &&
+                        !node.left.computed &&
+                        node.left.object.type === 'ThisExpression' &&
+                        node.left.property.type === 'Identifier'
+                    ) {
                         reassigned.add(node.left.property.name);
                         if (isReactiveFormValue(node.right)) {
                             reactiveFormNames.add(node.left.property.name);
                         }
                     }
-                    if (node.type === 'UpdateExpression' && node.argument.type === 'MemberExpression' && !node.argument.computed && node.argument.object.type === 'ThisExpression' && node.argument.property.type === 'Identifier') {
+                    if (
+                        node.type === 'UpdateExpression' &&
+                        node.argument.type === 'MemberExpression' &&
+                        !node.argument.computed &&
+                        node.argument.object.type === 'ThisExpression' &&
+                        node.argument.property.type === 'Identifier'
+                    ) {
                         reassigned.add(node.argument.property.name);
                     }
                     for (const key of Object.keys(node)) {

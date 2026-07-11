@@ -61,15 +61,12 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
 
     private static void verifyPlagiarismResult(PlagiarismResultDTO result) {
         // verify comparisons
-        for (var comparison : result.plagiarismResult().getComparisons()) {
-            var submissionA = comparison.getSubmissionA();
-            var submissionB = comparison.getSubmissionB();
+        for (var comparison : result.plagiarismResult().comparisons()) {
+            var submissionA = comparison.submissionA();
+            var submissionB = comparison.submissionB();
 
             assertThat(submissionA).as("should have a submission A").isNotNull();
             assertThat(submissionB).as("should have a submission B").isNotNull();
-
-            assertThat(submissionA.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
-            assertThat(submissionB.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
         }
 
         // verify plagiarism result stats

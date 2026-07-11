@@ -54,16 +54,17 @@ export enum FeedbackCorrectionErrorType {
 /**
  * Wraps the information returned by the server upon validating tutor feedbacks.
  */
-export class FeedbackCorrectionError {
+export interface FeedbackCorrectionError {
     // Corresponds to `Feedback.reference`. Reference to the assessed element.
-    public reference: string;
+    reference: string;
 
     // The correction type of the corresponding feedback.
-    public type: FeedbackCorrectionErrorType;
+    type: FeedbackCorrectionErrorType;
 }
 
 export type FeedbackCorrectionStatus = FeedbackCorrectionErrorType | 'CORRECT';
 
+/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class Feedback implements BaseEntity {
     public id?: number;
     public gradingInstruction?: GradingInstruction;
@@ -242,7 +243,8 @@ export class Feedback implements BaseEntity {
         that.text = text;
         // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
         // Support both: dropInfo.instruction.id (expected shape) and dropInfo.id (actual Apollon shape)
-        const instruction = dropInfo?.instruction ?? ((dropInfo as any)?.id ? (dropInfo as any) : undefined);
+        const flatDropInfo = dropInfo as (GradingInstruction & { instruction?: GradingInstruction }) | undefined;
+        const instruction = flatDropInfo?.instruction ?? (flatDropInfo?.id ? flatDropInfo : undefined);
         if (instruction?.id) {
             that.gradingInstruction = instruction;
         }
@@ -336,18 +338,18 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
 /**
  * DTO representing feedback returned by the server.
  */
-export class FeedbackDTO {
-    public id?: number;
-    public text?: string;
-    public detailText?: string;
-    public hasLongFeedbackText?: boolean;
-    public reference?: string;
-    public credits?: number;
-    public positive?: boolean;
-    public type?: FeedbackType;
-    public visibility?: Visibility;
-    public testCaseName?: string;
-    public gradingInstruction?: GradingInstructionDTO;
+export interface FeedbackDTO {
+    id?: number;
+    text?: string;
+    detailText?: string;
+    hasLongFeedbackText?: boolean;
+    reference?: string;
+    credits?: number;
+    positive?: boolean;
+    type?: FeedbackType;
+    visibility?: Visibility;
+    testCaseName?: string;
+    gradingInstruction?: GradingInstructionDTO;
 }
 
 export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
@@ -362,10 +364,10 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
     feedback.positive = dto.positive;
     feedback.type = dto.type;
     feedback.testCase = dto.testCaseName
-        ? ({
+        ? {
               testName: dto.testCaseName,
               visibility: dto.visibility,
-          } as ProgrammingExerciseTestCase)
+          }
         : undefined;
     if (dto.reference) {
         const split = dto.reference.split(':');
@@ -375,14 +377,15 @@ export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
         }
     }
     if (dto.gradingInstruction) {
-        feedback.gradingInstruction = {
+        const gradingInstruction: Partial<GradingInstruction> = {
             id: dto.gradingInstruction.id,
             feedback: dto.gradingInstruction.feedback,
             credits: dto.gradingInstruction.credits,
             usageCount: dto.gradingInstruction.usageCount,
             instructionDescription: dto.gradingInstruction.instructionDescription,
             gradingScale: dto.gradingInstruction.gradingScale,
-        } as GradingInstruction;
+        };
+        feedback.gradingInstruction = gradingInstruction as GradingInstruction;
     }
     return feedback;
 }

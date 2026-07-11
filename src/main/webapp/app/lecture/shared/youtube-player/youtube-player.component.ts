@@ -10,6 +10,14 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 const READINESS_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 
+/** Minimal shape of the YouTube player instance we interact with (subset of the YT.Player / Angular wrapper API). */
+type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'>;
+
+/** Minimal shape of the event emitted by the YouTube player's `ready` output. */
+interface YoutubePlayerReadyEvent {
+    target?: YoutubePlayerApi;
+}
+
 // YT.PlayerState values
 const YT_STATE_PLAYING = 1;
 const YT_STATE_PAUSED = 2;
@@ -37,6 +45,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     initialTimestamp = input<number | undefined>(undefined);
 
     playerFailed = output<void>();
+    currentSlideNumberChange = output<number | undefined>();
 
     protected readonly playerVars = { origin: typeof window !== 'undefined' ? window.location.origin : undefined };
     protected readonly startSeconds = computed(() => {
@@ -44,6 +53,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         return timestamp !== undefined && Number.isFinite(timestamp) && timestamp >= 0 ? Math.floor(timestamp) : undefined;
     });
     protected readonly currentSegmentIndex = signal<number>(-1);
+    private readonly currentSlideNumber = signal<number | undefined>(undefined);
 
     playerComponent = viewChild(YouTubePlayer);
 
@@ -55,7 +65,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
-    private youtubePlayer: Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'> | null = null;
+    private youtubePlayer: YoutubePlayerApi | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
@@ -63,6 +73,8 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver: ResizeObserver | undefined;
     private lastInitialTimestamp: number | undefined;
     protected readonly isResizing = signal<boolean>(false);
+    private readonly hasEverPlayed = signal<boolean>(false);
+    private playerState?: number;
 
     /**
      * Width constraints for the resizable video column. The maximum width is derived from the live
@@ -188,7 +200,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
-        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        const transcriptColumnEl = wrapperEl.querySelector<HTMLElement>('.transcript-column');
         if (!transcriptColumnEl) {
             return;
         }
@@ -210,8 +222,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    onPlayerReady(event: any): void {
+    onPlayerReady(event: YoutubePlayerReadyEvent): void {
         this.clearReadiness();
+        this.hasEverPlayed.set(false); // Reset for new video
         // Use the Angular wrapper when available so seek calls can be queued reliably.
         this.youtubePlayer = this.playerComponent() ?? this.youtubePlayer ?? event?.target ?? null;
         const initial = this.startSeconds();
@@ -227,8 +240,10 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     onStateChange(event: { data: number }): void {
+        this.playerState = event.data;
         if (!this.youtubePlayer) return;
         if (event.data === YT_STATE_PLAYING) {
+            this.hasEverPlayed.set(true);
             this.startPolling();
         } else if (event.data === YT_STATE_PAUSED || event.data === YT_STATE_ENDED || event.data === YT_STATE_BUFFERING) {
             this.clearPolling();
@@ -240,10 +255,18 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.playerFailed.emit();
     }
 
-    seekTo(seconds: number): void {
+    seekTo(seconds: number, _resumePlayback = true): void {
         if (!this.youtubePlayer) return;
         this.youtubePlayer.seekTo(seconds, true);
         this.updateCurrentSegment(seconds);
+    }
+
+    getCurrentSlideNumber(): number | undefined {
+        return this.currentSlideNumber();
+    }
+
+    isPlaying(): boolean {
+        return this.playerState === YT_STATE_PLAYING;
     }
 
     private startPolling(): void {
@@ -269,9 +292,33 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Returns the current playback time in seconds, or undefined if player is not ready.
+     */
+    getCurrentTime(): number | undefined {
+        return this.youtubePlayer?.getCurrentTime();
+    }
+
+    /**
+     * Returns whether the video has been played at least once (not just showing thumbnail).
+     */
+    hasBeenPlayed(): boolean {
+        return this.hasEverPlayed();
+    }
+
     private updateCurrentSegment(currentTime: number): void {
         const segments = this.transcriptSegments();
         const idx = segments.findIndex((s) => currentTime >= s.startTime && currentTime < s.endTime);
         this.currentSegmentIndex.set(idx);
+        this.updateActiveSlideNumber(idx >= 0 ? segments[idx].slideNumber : undefined);
+    }
+
+    private updateActiveSlideNumber(slideNumber: number | undefined): void {
+        if (this.currentSlideNumber() === slideNumber) {
+            return;
+        }
+
+        this.currentSlideNumber.set(slideNumber);
+        this.currentSlideNumberChange.emit(slideNumber);
     }
 }

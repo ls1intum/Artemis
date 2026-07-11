@@ -54,11 +54,11 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     private quizExercisePopupService = inject(QuizExercisePopupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
 
-    private subscription: Subscription;
+    private subscription?: Subscription;
 
     readonly reEvaluateDragAndDropQuestionComponents = viewChildren(ReEvaluateDragAndDropQuestionComponent);
 
-    popupService: QuizExercisePopupService;
+    popupService!: QuizExercisePopupService; // assigned from the injected service in ngOnInit()
 
     readonly isSaving = signal<boolean>(false);
     readonly duration = signal<Duration>(new Duration(0, 0));
@@ -119,7 +119,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
                 files.set(filename, value.file);
             });
         }
-        this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise(), files).then((res) => {
+        void this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise(), files).then((res) => {
             res?.onClose.subscribe((confirmed) => {
                 if (confirmed) {
                     this.savedEntity = cloneDeep(this.quizExercise());
