@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -19,7 +20,13 @@ import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
 /**
  * Response DTO for an {@link Exam} together with its exercise groups, returned by the detailed {@code GET} by id
@@ -171,6 +178,7 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
      * @param title                      the exercise title
      * @param maxPoints                  the maximum points achievable
      * @param bonusPoints                the bonus points achievable
+     * @param difficulty                 the difficulty level (the create-test-run modal renders this cell)
      * @param includedInOverallScore     whether the exercise counts towards the overall score
      * @param assessmentType             the assessment mode
      * @param teamMode                   whether the exercise is a team exercise (always individual for exam exercises)
@@ -185,14 +193,15 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
      * @param solutionParticipation      the solution participation build-plan id (programming exercises, detailed only)
      * @param diagramType                the UML diagram type (modeling exercises)
      * @param filePattern                the accepted file pattern (file-upload exercises)
-     * @param quizQuestions              the id-only quiz-question stubs (quiz exercises, detailed only; length is read)
+     * @param quizQuestions              the id+type quiz-question stubs (quiz exercises, detailed only; length is read, type kept so client echoes round-trip)
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExamExerciseDTO(long id, ExerciseType type, @Nullable String title, @Nullable Double maxPoints, @Nullable Double bonusPoints,
-            @Nullable IncludedInOverallScore includedInOverallScore, @Nullable AssessmentType assessmentType, boolean teamMode, @Nullable Boolean testRunParticipationsExist,
-            @Nullable Long numberOfParticipations, @Nullable String shortName, @Nullable String projectKey, @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineEditor,
-            @Nullable Boolean allowOnlineIde, @Nullable ExamProgrammingParticipationDTO templateParticipation, @Nullable ExamProgrammingParticipationDTO solutionParticipation,
-            @Nullable DiagramType diagramType, @Nullable String filePattern, @Nullable List<ExamQuizQuestionDTO> quizQuestions) {
+            @Nullable DifficultyLevel difficulty, @Nullable IncludedInOverallScore includedInOverallScore, @Nullable AssessmentType assessmentType, boolean teamMode,
+            @Nullable Boolean testRunParticipationsExist, @Nullable Long numberOfParticipations, @Nullable String shortName, @Nullable String projectKey,
+            @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOnlineIde,
+            @Nullable ExamProgrammingParticipationDTO templateParticipation, @Nullable ExamProgrammingParticipationDTO solutionParticipation, @Nullable DiagramType diagramType,
+            @Nullable String filePattern, @Nullable List<ExamQuizQuestionDTO> quizQuestions) {
 
         static ExamExerciseDTO of(Exercise exercise, boolean withDetails) {
             String projectKey = null;
@@ -222,7 +231,7 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
                     if (withDetails) {
                         var questions = quizExercise.getQuizQuestions();
                         if (Hibernate.isInitialized(questions) && questions != null) {
-                            quizQuestions = questions.stream().map(question -> new ExamQuizQuestionDTO(question.getId())).toList();
+                            quizQuestions = questions.stream().map(ExamQuizQuestionDTO::of).toList();
                         }
                     }
                 }
@@ -232,40 +241,86 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
             }
 
             return new ExamExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                    exercise.getIncludedInOverallScore(), exercise.getAssessmentType(), exercise.isTeamMode(), exercise.getTestRunParticipationsExist(),
+                    exercise.getDifficulty(), exercise.getIncludedInOverallScore(), exercise.getAssessmentType(), exercise.isTeamMode(), exercise.getTestRunParticipationsExist(),
                     exercise.getNumberOfParticipations(), exercise.getShortName(), projectKey, allowOfflineIde, allowOnlineEditor, allowOnlineIde, templateParticipation,
                     solutionParticipation, diagramType, filePattern, quizQuestions);
         }
     }
 
     /**
-     * Slim programming participation projection carrying only the build-plan id. The exercise-group programming cell
-     * renders {@code buildPlanId} directly (LocalCI) or derives the build-plan URL from it client-side (Jenkins). The
-     * previously serialized latest submission / result graph is omitted: its only client use fed the
-     * {@code numberOfResultsOf{Template,Solution}Participation} signals, which are computed but never rendered on this
-     * screen, so dropping it changes nothing observable.
+     * Slim programming participation projection carrying the build-plan id plus the polymorphic type discriminator. The
+     * exercise-group programming cell renders {@code buildPlanId} directly (LocalCI) or derives the build-plan URL from it
+     * client-side (Jenkins). The previously serialized latest submission / result graph is omitted: its only client use
+     * fed the {@code numberOfResultsOf{Template,Solution}Participation} signals, which are computed but never rendered on
+     * this screen, so dropping it changes nothing observable.
+     * <p>
+     * Like {@link ExamQuizQuestionDTO}, the stub deliberately carries the {@code type} discriminator because the client
+     * echoes this graph back on the write paths (create-test-run POST and exercise-groups-order PUT). On the wire
+     * {@link de.tum.cit.aet.artemis.exercise.domain.participation.Participation} is
+     * {@code @JsonTypeInfo(use = NAME, property = "type")}; the {@code templateParticipation} / {@code solutionParticipation}
+     * fields deserialize into the concrete {@code Template}/{@code Solution} participation types, so a stub without
+     * {@code type} fails polymorphic deserialization with a 400. {@code type} emits exactly the entity's
+     * {@code @JsonSubTypes} names ({@code "template"} / {@code "solution"}) so those echoes round-trip.
      *
+     * @param type        the polymorphic discriminator matching {@code Participation}'s {@code @JsonSubTypes} name
      * @param buildPlanId the CI build-plan id of the participation
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamProgrammingParticipationDTO(@Nullable String buildPlanId) {
+    public record ExamProgrammingParticipationDTO(String type, @Nullable String buildPlanId) {
 
         @Nullable
         static ExamProgrammingParticipationDTO of(@Nullable ProgrammingExerciseParticipation participation) {
             if (Hibernate.isInitialized(participation) && participation != null) {
-                return new ExamProgrammingParticipationDTO(participation.getBuildPlanId());
+                return new ExamProgrammingParticipationDTO(typeOf(participation), participation.getBuildPlanId());
             }
             return null;
+        }
+
+        /**
+         * Maps a concrete programming participation to the wire name declared in {@code Participation}'s
+         * {@code @JsonSubTypes}, so an echoed stub deserializes back into the same subtype.
+         */
+        private static String typeOf(ProgrammingExerciseParticipation participation) {
+            return switch (participation) {
+                case TemplateProgrammingExerciseParticipation ignored -> "template";
+                case SolutionProgrammingExerciseParticipation ignored -> "solution";
+                default -> throw new IllegalArgumentException("Unsupported programming participation type: " + participation.getClass().getName());
+            };
         }
     }
 
     /**
-     * Id-only quiz-question stub. The client reads only {@code quizQuestions.length} off this payload, so no further
-     * question fields are serialized.
+     * Slim quiz-question stub carrying id + polymorphic type discriminator. The exercise-group quiz cell reads only
+     * {@code quizQuestions.length}, so no further question fields are serialized. The stub deliberately carries the
+     * {@code type} discriminator (not just the id) because the client echoes this graph back on write paths — the
+     * create-test-run POST ({@link de.tum.cit.aet.artemis.exam.web.StudentExamResource#createTestRun} takes a
+     * {@code StudentExam} whose exercises are these DTO objects) and the exercise-groups-order PUT
+     * ({@link de.tum.cit.aet.artemis.exam.web.ExamResource#updateOrderOfExerciseGroups} takes the echoed
+     * {@code ExerciseGroup}s). On the wire {@link QuizQuestion} is {@code @JsonTypeInfo(use = NAME, property = "type")};
+     * an id-only stub without {@code type} fails polymorphic deserialization with a 400. {@code type} therefore emits
+     * exactly the entity's {@code @JsonSubTypes} names so those echoes round-trip.
      *
-     * @param id the id of the quiz question
+     * @param id   the id of the quiz question
+     * @param type the polymorphic discriminator matching {@link QuizQuestion}'s {@code @JsonSubTypes} name
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamQuizQuestionDTO(long id) {
+    public record ExamQuizQuestionDTO(long id, String type) {
+
+        static ExamQuizQuestionDTO of(QuizQuestion question) {
+            return new ExamQuizQuestionDTO(question.getId(), typeOf(question));
+        }
+
+        /**
+         * Maps a concrete quiz question to the wire name declared in {@link QuizQuestion}'s {@code @JsonSubTypes}, so an
+         * echoed stub deserializes back into the same subtype.
+         */
+        private static String typeOf(QuizQuestion question) {
+            return switch (question) {
+                case MultipleChoiceQuestion ignored -> "multiple-choice";
+                case DragAndDropQuestion ignored -> "drag-and-drop";
+                case ShortAnswerQuestion ignored -> "short-answer";
+                default -> throw new IllegalArgumentException("Unknown quiz question type: " + question.getClass().getName());
+            };
+        }
     }
 }

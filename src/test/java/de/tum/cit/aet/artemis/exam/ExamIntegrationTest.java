@@ -48,6 +48,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -940,6 +945,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Quiz: the count-only projection carries exactly the persisted number of questions (read as .length client-side).
         var quizDto = exercises.stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
         assertThat(quizDto.quizQuestions()).hasSize(expectedQuestionCount);
+        // difficulty is mapped for the create-test-run modal cell (create-test-run-modal.component.html renders exercise.difficulty).
+        assertThat(quizDto.difficulty()).isEqualTo(DifficultyLevel.HARD);
+        // Each quiz-question stub carries the polymorphic discriminator (QuizQuestion's @JsonSubTypes names) so a client echo of this
+        // graph deserializes back into the concrete subtype instead of throwing a 400 on the write paths (test-run / exercise-groups-order).
+        assertThat(quizDto.quizQuestions()).allSatisfy(question -> assertThat(question.type()).isNotBlank());
+        assertThat(quizDto.quizQuestions()).extracting(ExamWithExerciseGroupsDTO.ExamQuizQuestionDTO::type).containsExactlyInAnyOrder("multiple-choice", "drag-and-drop",
+                "short-answer");
 
         // Programming: template and solution build-plan ids are carried for the exercise-group programming cell.
         var programmingDto = exercises.stream().filter(exercise -> exercise.type() == ExerciseType.PROGRAMMING).findFirst().orElseThrow();
@@ -947,6 +959,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(programmingDto.templateParticipation().buildPlanId()).isNotBlank();
         assertThat(programmingDto.solutionParticipation()).isNotNull();
         assertThat(programmingDto.solutionParticipation().buildPlanId()).isNotBlank();
+        // Each participation stub carries its polymorphic discriminator (Participation's @JsonSubTypes names) so a client echo
+        // of this graph deserializes back into the concrete Template/Solution participation instead of throwing a 400.
+        assertThat(programmingDto.templateParticipation().type()).isEqualTo("template");
+        assertThat(programmingDto.solutionParticipation().type()).isEqualTo("solution");
     }
 
     @Test
@@ -1005,6 +1021,123 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(exercises).allMatch(exercise -> exercise.templateParticipation() == null && exercise.solutionParticipation() == null);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateTestRun_fromDetailedExamDtoEcho_deserializesQuizQuestions() throws Exception {
+        // Reproduces the create-test-run modal (CreateTestRunModalComponent): it builds a StudentExam whose exam and
+        // exercises are the objects it fetched from GET ?withExerciseGroups=true (the detailed ExamWithExerciseGroupsDTO)
+        // and POSTs it to test-runs. The quiz exercise's quizQuestions (and the programming build-plan participations) are
+        // echoed back; each polymorphic stub must carry its "type" discriminator or Spring rejects the whole body with 400
+        // (the CI regression, reproduced by the negative check below). This fixture carries all exercise types including a
+        // programming exercise with populated build-plan participations, so both echo hazards are exercised.
+        Exam exam = examWithAllExerciseTypesAndQuizQuestions();
+        ObjectMapper mapper = request.getObjectMapper();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withExerciseGroups", "true");
+
+        JsonNode examJson = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, JsonNode.class, params);
+        // Sanity: the fetched graph actually carries a typed quiz-question stub (the thing the client echoes).
+        JsonNode fetchedQuizQuestions = findQuizQuestions(examJson.get("exerciseGroups"));
+        assertThat(fetchedQuizQuestions).isNotNull();
+        assertThat(fetchedQuizQuestions.get(0).get("type").asText()).isNotBlank();
+
+        String createTestRunUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs";
+
+        // FIX path: the echoed body (typed quiz-question + participation stubs) deserializes and the test run is created (200).
+        JsonNode createdTestRun = request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(testRunBodyFrom(examJson, mapper)), true, JsonNode.class, HttpStatus.OK,
+                null, null, null);
+        assertThat(createdTestRun).isNotNull();
+        assertThat(createdTestRun.get("id").asLong()).isPositive();
+
+        // Negative check (deterministic regression reproduction): strip the "type" discriminator from every quiz-question
+        // stub and the same body is rejected with 400, proving the discriminator is what makes the echo round-trip.
+        ObjectNode strippedBody = testRunBodyFrom(examJson, mapper);
+        stripQuizQuestionTypes(strippedBody);
+        request.postWithResponseBody(createTestRunUrl, mapper.writeValueAsString(strippedBody), true, JsonNode.class, HttpStatus.BAD_REQUEST, null, null, null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateOrderOfExerciseGroups_echoesDetailedExamDtoGroupsWithQuizQuestions() throws Exception {
+        // Reproduces the exercise-groups page reorder: it PUTs the exercise groups it loaded from the detailed exam DTO
+        // (each group's exercises include the quiz-question stubs) and the endpoint echoes the body back, which the client
+        // re-renders (the quiz cell reads quizQuestions?.length). The request body deserializes only if the stubs carry the
+        // polymorphic type (FIX 1), and the echoed response must still expose the question count.
+        Exam exam = examWithAllExerciseTypesAndQuizQuestions();
+        QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
+        int expectedQuestionCount = quizExercise.getQuizQuestions().size();
+        ObjectMapper mapper = request.getObjectMapper();
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("withExerciseGroups", "true");
+
+        JsonNode examJson = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, JsonNode.class, params);
+        JsonNode exerciseGroups = examJson.get("exerciseGroups");
+
+        JsonNode reordered = request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order",
+                mapper.writeValueAsString(exerciseGroups), JsonNode.class, HttpStatus.OK, true);
+
+        // The echoed response still carries the quiz exercise's questions, so the client renders the same count.
+        JsonNode echoedQuizQuestions = findQuizQuestions(reordered);
+        assertThat(echoedQuizQuestions).isNotNull();
+        assertThat(echoedQuizQuestions.size()).isEqualTo(expectedQuestionCount);
+    }
+
+    /**
+     * Builds the request body the create-test-run modal sends: the whole fetched exam plus one exercise per group.
+     */
+    private static ObjectNode testRunBodyFrom(JsonNode examJson, ObjectMapper mapper) {
+        ObjectNode body = mapper.createObjectNode();
+        body.set("exam", examJson.deepCopy());
+        ArrayNode exercises = mapper.createArrayNode();
+        for (JsonNode group : examJson.get("exerciseGroups")) {
+            JsonNode groupExercises = group.get("exercises");
+            if (groupExercises != null && !groupExercises.isEmpty()) {
+                exercises.add(groupExercises.get(0).deepCopy());
+            }
+        }
+        body.set("exercises", exercises);
+        body.put("workingTime", 6000);
+        return body;
+    }
+
+    /**
+     * Returns the first {@code quizQuestions} array found across the given exercise groups, or {@code null} if none carry one.
+     */
+    private static JsonNode findQuizQuestions(JsonNode exerciseGroups) {
+        for (JsonNode group : exerciseGroups) {
+            JsonNode exercises = group.get("exercises");
+            if (exercises != null) {
+                for (JsonNode exercise : exercises) {
+                    if (exercise.hasNonNull("quizQuestions")) {
+                        return exercise.get("quizQuestions");
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Removes the polymorphic {@code type} discriminator from every {@code quizQuestions} element anywhere in the tree, so
+     * the resulting body reproduces the pre-fix id-only stub that fails polymorphic deserialization.
+     */
+    private static void stripQuizQuestionTypes(JsonNode node) {
+        if (node.isObject()) {
+            JsonNode quizQuestions = node.get("quizQuestions");
+            if (quizQuestions != null && quizQuestions.isArray()) {
+                for (JsonNode question : quizQuestions) {
+                    if (question.isObject()) {
+                        ((ObjectNode) question).remove("type");
+                    }
+                }
+            }
+            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
+        }
+        else if (node.isArray()) {
+            node.forEach(ExamIntegrationTest::stripQuizQuestionTypes);
+        }
+    }
+
     /**
      * Shared fixture for the detailed-get and reset tests: a full exam with all exercise types whose quiz exercise
      * (exercise group index 3) carries persisted questions.
@@ -1014,6 +1147,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private Exam examWithAllExerciseTypesAndQuizQuestions() {
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course1);
         QuizExercise quizExercise = (QuizExercise) exam.getExerciseGroups().get(3).getExercises().iterator().next();
+        // Pin a difficulty so the detailed DTO's difficulty mapping (read by the create-test-run modal) is asserted against a concrete value.
+        quizExercise.setDifficulty(DifficultyLevel.HARD);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);
         quizExerciseRepository.save(quizExercise);
         return exam;
