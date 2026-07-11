@@ -21,6 +21,12 @@ The accompanying test configuration initializes a dedicated `artemis-oidc` realm
 
 ## Step 1: Initialize the Identity Provider Container
 
+<Callout variant={CalloutVariant.warning}>
+    <b>Prerequisite: Operational Core Infrastructure</b><br/>
+    Before setting up the Keycloak environment, ensure that your local Artemis core database infrastructure (e.g., MySQL via <code>docker compose -f docker/artemis-dev-mysql.yml up -d</code>) is active. 
+    Without the underlying database running, Keycloak will authenticate successfully, but the callback pipeline inside Artemis will collapse with a <code>Communications link failure</code> database exception. See the general docker infrastructure setup guide for details.
+</Callout>
+
 Boot the preconfigured Keycloak instance alongside your standard local infrastructure components:
 
 ```bash
@@ -81,6 +87,7 @@ spring:
             authorization-grant-type: "authorization_code"
         provider:
           oidc:
+            issuer-uri: "http://localhost:9080/realms/artemis-oidc"
             authorization-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/auth"
             token-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/token"
             user-info-uri: "http://localhost:9080/realms/artemis-oidc/protocol/openid-connect/userinfo"
