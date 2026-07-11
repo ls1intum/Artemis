@@ -146,9 +146,10 @@ function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO {
             return { submissionExerciseType: submission.submissionExerciseType, id: submission.id };
         default:
             // Only reachable if submissionExerciseType is undefined (malformed submission). Preserve the legacy inert
-            // shape verbatim (no runtime change); the narrow union cannot type an undefined discriminator.
+            // shape verbatim (no runtime change); the narrow union cannot type an undefined discriminator, so the
+            // object must pass through `unknown` (the AOT compiler rejects a direct assertion).
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { submissionExerciseType: submission.submissionExerciseType, id: submission.id } as InertSubmissionDTO;
+            return { submissionExerciseType: submission.submissionExerciseType, id: submission.id } as unknown as InertSubmissionDTO;
     }
 }
 
@@ -180,8 +181,9 @@ function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveC
             };
         default:
             // Only reachable if type is undefined (all three real quiz question types are handled above). Preserve the
-            // legacy defensive id-only fallback verbatim (no runtime change); the narrow union cannot type undefined.
+            // legacy defensive id-only fallback verbatim (no runtime change); the narrow union cannot type undefined,
+            // so the object must pass through `unknown` (the AOT compiler rejects a direct assertion).
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { type: answer.type, quizQuestion: { id: answer.quizQuestion?.id } } as SubmittedAnswerFromLiveClientDTO;
+            return { type: answer.type, quizQuestion: { id: answer.quizQuestion?.id } } as unknown as SubmittedAnswerFromLiveClientDTO;
     }
 }
