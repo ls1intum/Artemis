@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -134,6 +135,8 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
+    private final StudentExamSubmitMapper studentExamSubmitMapper;
+
     /**
      * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
      * attempts for a given exam. Reuses the course-exercise cap so the two stay in sync.
@@ -147,7 +150,7 @@ public class StudentExamService {
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
             ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -168,6 +171,24 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examService = examService;
+        this.studentExamSubmitMapper = studentExamSubmitMapper;
+    }
+
+    /**
+     * Reconstructs the transient submission graph from the slim client DTO onto the authoritative student exam and then
+     * submits it. This is the single service entry point for the hand-in endpoint, so the controller does not need to
+     * depend on the reconstruction mapper directly.
+     * <p>
+     * The per-exercise degrade semantics of the reconstruction are owned by {@link StudentExamSubmitMapper} and left
+     * unchanged: a broken exercise drops only its own last-second changes while the hand-in still succeeds.
+     *
+     * @param existingStudentExam  the student exam loaded from the database (with its exercises)
+     * @param submitStudentExamDTO the slim request body carrying the last-second submission changes
+     * @param currentUser          the current user
+     */
+    public void submitStudentExam(StudentExam existingStudentExam, SubmitStudentExamDTO submitStudentExamDTO, User currentUser) {
+        studentExamSubmitMapper.attachSubmissions(existingStudentExam, submitStudentExamDTO, currentUser);
+        submitStudentExam(existingStudentExam, currentUser);
     }
 
     /**
