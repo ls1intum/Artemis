@@ -115,13 +115,14 @@ export function toSubmitStudentExamDTO(studentExam: StudentExam): SubmitStudentE
             id: exercise.id,
             studentParticipations: (exercise.studentParticipations ?? []).map((participation) => ({
                 id: participation.id,
-                submissions: (participation.submissions ?? []).map(toSubmissionDTO),
+                // flatMap + `?? []` drops any submission the builder cannot type (undefined discriminator); see toSubmissionDTO.
+                submissions: (participation.submissions ?? []).flatMap((submission) => toSubmissionDTO(submission) ?? []),
             })),
         })),
     };
 }
 
-function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO {
+function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO | undefined {
     switch (submission.submissionExerciseType) {
         case SubmissionExerciseType.TEXT:
             return { submissionExerciseType: SubmissionExerciseType.TEXT, id: submission.id, text: (submission as TextSubmission).text };
@@ -138,22 +139,22 @@ function toSubmissionDTO(submission: Submission): SubmitExamSubmissionDTO {
             return {
                 submissionExerciseType: SubmissionExerciseType.QUIZ,
                 id: submission.id,
-                submittedAnswers: ((submission as QuizSubmission).submittedAnswers ?? []).map(toSubmittedAnswerDTO),
+                submittedAnswers: ((submission as QuizSubmission).submittedAnswers ?? []).flatMap((answer) => toSubmittedAnswerDTO(answer) ?? []),
             };
         case SubmissionExerciseType.PROGRAMMING:
         case SubmissionExerciseType.FILE_UPLOAD:
             // programming / file-upload: never saved via the hand-in, the server accepts and ignores them.
             return { submissionExerciseType: submission.submissionExerciseType, id: submission.id };
         default:
-            // Only reachable if submissionExerciseType is undefined (malformed submission). Preserve the legacy inert
-            // shape verbatim (no runtime change); the narrow union cannot type an undefined discriminator, so the
-            // object must pass through `unknown` (the AOT compiler rejects a direct assertion).
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { submissionExerciseType: submission.submissionExerciseType, id: submission.id } as unknown as InertSubmissionDTO;
+            // Only reachable if submissionExerciseType is undefined (malformed submission): the discriminator cannot be
+            // typed, so skip the entry (the caller filters out undefined). This is behavior-equivalent to the legacy
+            // full-entity hand-in, whose server-side reconstruction already drops submissions of unknown/mismatched
+            // type, so emitting nothing client-side is honest rather than shipping an untypeable inert shape.
+            return undefined;
     }
 }
 
-function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveClientDTO {
+function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveClientDTO | undefined {
     switch (answer.type) {
         case QuizQuestionType.MULTIPLE_CHOICE:
             return {
@@ -180,10 +181,9 @@ function toSubmittedAnswerDTO(answer: SubmittedAnswer): SubmittedAnswerFromLiveC
                 })),
             };
         default:
-            // Only reachable if type is undefined (all three real quiz question types are handled above). Preserve the
-            // legacy defensive id-only fallback verbatim (no runtime change); the narrow union cannot type undefined,
-            // so the object must pass through `unknown` (the AOT compiler rejects a direct assertion).
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            return { type: answer.type, quizQuestion: { id: answer.quizQuestion?.id } } as unknown as SubmittedAnswerFromLiveClientDTO;
+            // Only reachable if type is undefined (all three real quiz question types are handled above): the
+            // discriminator cannot be typed, so skip the entry (the caller filters out undefined). The server drops
+            // answers of unknown type during reconstruction, so emitting nothing is behavior-equivalent.
+            return undefined;
     }
 }
