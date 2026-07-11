@@ -3,9 +3,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApi } from 'app/openapi/api/hyperion-quiz-question-generation-api';
-import { QuizQuestionGenerationRequest } from 'app/openapi/models/quiz-question-generation-request';
-import { QuizQuestionBulkRefinementRequest } from 'app/openapi/models/quiz-question-bulk-refinement-request';
-import { QuizQuestionRefinementResponse } from 'app/openapi/models/quiz-question-refinement-response';
+import { QuizQuestionGenerationRequest } from 'app/openapi/model/quiz-question-generation-request';
+import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quiz-question-bulk-refinement-request';
+import { QuizQuestionRefinementResponse } from 'app/openapi/model/quiz-question-refinement-response';
 import {
     GeneratedQuestion,
     GeneratedQuestionType,

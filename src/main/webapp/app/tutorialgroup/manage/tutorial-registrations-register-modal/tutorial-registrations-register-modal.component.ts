@@ -13,7 +13,7 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicato
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',

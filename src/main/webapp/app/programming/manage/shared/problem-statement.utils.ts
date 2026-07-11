@@ -1,9 +1,9 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/models/problem-statement-global-refinement-request';
-import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/models/problem-statement-targeted-refinement-request';
-import { ProblemStatementGenerationRequest } from 'app/openapi/models/problem-statement-generation-request';
-import { ProblemStatementRefinementResponse } from 'app/openapi/models/problem-statement-refinement-response';
-import { ProblemStatementGenerationResponse } from 'app/openapi/models/problem-statement-generation-response';
+import { ProblemStatementGlobalRefinementRequest } from 'app/openapi/model/problem-statement-global-refinement-request';
+import { ProblemStatementTargetedRefinementRequest } from 'app/openapi/model/problem-statement-targeted-refinement-request';
+import { ProblemStatementGenerationRequest } from 'app/openapi/model/problem-statement-generation-request';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problem-statement-refinement-response';
+import { ProblemStatementGenerationResponse } from 'app/openapi/model/problem-statement-generation-response';
 
 /** Maximum allowed length for user prompts. Must match HyperionUtils.MAX_USER_PROMPT_LENGTH on the server. */
 export const MAX_USER_PROMPT_LENGTH = 1000;

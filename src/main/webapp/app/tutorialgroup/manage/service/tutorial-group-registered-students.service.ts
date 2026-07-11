@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Injectable({
     providedIn: 'root',

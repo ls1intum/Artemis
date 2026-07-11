@@ -1,5 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
+import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

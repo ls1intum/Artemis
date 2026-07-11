@@ -35,8 +35,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CodeGenerationJobStartRepositoryTypeEnum } from 'app/openapi/models/code-generation-job-start';
-import { CodeGenerationRequest } from 'app/openapi/models/code-generation-request';
+import { CodeGenerationJobStartRepositoryTypeEnum } from 'app/openapi/model/code-generation-job-start';
+import { CodeGenerationRequest } from 'app/openapi/model/code-generation-request';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -50,7 +50,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/models/consistency-issue';
+import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';

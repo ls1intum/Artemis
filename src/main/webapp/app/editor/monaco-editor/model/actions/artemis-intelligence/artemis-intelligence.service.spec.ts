@@ -9,8 +9,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
-import { ProblemStatementRewriteResponse } from 'app/openapi/models/problem-statement-rewrite-response';
-import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
+import { ProblemStatementRewriteResponse } from 'app/openapi/model/problem-statement-rewrite-response';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
 import {
     InlineConsistencyIssue,
     addCommentBoxes,
@@ -22,9 +22,9 @@ import {
     severityToString,
 } from './consistency-check';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
+import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { RewriteFaqResponse } from 'app/openapi/models/rewrite-faq-response';
+import { RewriteFaqResponse } from 'app/openapi/model/rewrite-faq-response';
 import { HyperionFaqApi } from 'app/openapi/api/hyperion-faq-api';
 
 describe('ArtemisIntelligenceService', () => {

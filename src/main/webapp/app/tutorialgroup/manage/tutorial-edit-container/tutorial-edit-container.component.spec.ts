@@ -16,7 +16,7 @@ import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutoria
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { TutorialGroupSchedule } from 'app/openapi/models/tutorial-group-schedule';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 describe('TutorialEditContainerComponent', () => {
     let fixture: ComponentFixture<TutorialEditContainerComponent>;

@@ -1,5 +1,5 @@
 import { Dayjs } from 'dayjs/esm';
-import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
+import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 export class IdentifiableCalendarEvent {

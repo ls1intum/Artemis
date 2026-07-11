@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { CalendarApi } from 'app/openapi/api/calendar-api';
-import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
+import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CalendarService', () => {

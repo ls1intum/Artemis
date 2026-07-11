@@ -9,8 +9,8 @@ import { Course, CourseInformationSharingConfiguration } from 'app/course/shared
 import { User } from 'app/account/user/user.model';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupSessionApi } from 'app/openapi/api/tutorial-group-session-api';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import {

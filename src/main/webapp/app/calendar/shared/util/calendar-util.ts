@@ -1,6 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
+import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
 
 const eventTypeIconMap: Record<CalendarEventTypeEnum, IconProp> = {
     ['LECTURE']: faChalkboardUser,

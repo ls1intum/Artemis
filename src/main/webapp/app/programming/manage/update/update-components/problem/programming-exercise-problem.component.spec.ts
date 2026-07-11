@@ -29,10 +29,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
-import { ProblemStatementGenerationResponse } from 'app/openapi/models/problem-statement-generation-response';
+import { ProblemStatementGenerationResponse } from 'app/openapi/model/problem-statement-generation-response';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/models/problem-statement-generation-request';
-import { ProblemStatementRefinementResponse } from 'app/openapi/models/problem-statement-refinement-response';
+import { ProblemStatementGenerationRequest } from 'app/openapi/model/problem-statement-generation-request';
+import { ProblemStatementRefinementResponse } from 'app/openapi/model/problem-statement-refinement-response';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 
 /**

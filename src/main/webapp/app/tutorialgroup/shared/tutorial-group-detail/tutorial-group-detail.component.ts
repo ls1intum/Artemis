@@ -48,7 +48,7 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
 
 interface TutorialGroupDetailSession {
     id: number;

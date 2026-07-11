@@ -5,12 +5,12 @@ import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-int
 import { AlertService } from 'app/foundation/service/alert.service';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
-import { ProblemStatementRewriteRequest } from 'app/openapi/models/problem-statement-rewrite-request';
-import { ProblemStatementRewriteResponse } from 'app/openapi/models/problem-statement-rewrite-response';
-import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
+import { ProblemStatementRewriteRequest } from 'app/openapi/model/problem-statement-rewrite-request';
+import { ProblemStatementRewriteResponse } from 'app/openapi/model/problem-statement-rewrite-response';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
 import { HyperionFaqApi } from 'app/openapi/api/hyperion-faq-api';
-import { RewriteFaqRequest } from 'app/openapi/models/rewrite-faq-request';
-import { RewriteFaqResponse } from 'app/openapi/models/rewrite-faq-response';
+import { RewriteFaqRequest } from 'app/openapi/model/rewrite-faq-request';
+import { RewriteFaqResponse } from 'app/openapi/model/rewrite-faq-response';
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
  * This service is intended to be used by the AI actions of the Monaco editors.

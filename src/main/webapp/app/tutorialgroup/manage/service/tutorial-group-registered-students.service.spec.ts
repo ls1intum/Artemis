@@ -4,7 +4,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from './tutorial-group-registered-students.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 interface TutorialGroupApiServiceMock {
     deregisterStudent: ReturnType<typeof vi.fn>;

@@ -1,6 +1,6 @@
-import { ConsistencyIssue, ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/models/consistency-issue';
+import { ConsistencyIssue, ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { ArtifactLocation, ArtifactLocationTypeEnum } from 'app/openapi/models/artifact-location';
+import { ArtifactLocation, ArtifactLocationTypeEnum } from 'app/openapi/model/artifact-location';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';

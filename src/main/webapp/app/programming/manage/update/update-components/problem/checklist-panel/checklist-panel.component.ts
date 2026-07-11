@@ -28,11 +28,11 @@ import {
 import { Panel } from 'primeng/panel';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
-import { ChecklistAnalysisResponse } from 'app/openapi/models/checklist-analysis-response';
-import { ChecklistActionRequest } from 'app/openapi/models/checklist-action-request';
-import { DifficultyAssessmentDeltaEnum, DifficultyAssessmentSuggestedEnum } from 'app/openapi/models/difficulty-assessment';
-import { QualityIssue } from 'app/openapi/models/quality-issue';
-import { InferredCompetency } from 'app/openapi/models/inferred-competency';
+import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';
+import { ChecklistActionRequest } from 'app/openapi/model/checklist-action-request';
+import { DifficultyAssessmentDeltaEnum, DifficultyAssessmentSuggestedEnum } from 'app/openapi/model/difficulty-assessment';
+import { QualityIssue } from 'app/openapi/model/quality-issue';
+import { InferredCompetency } from 'app/openapi/model/inferred-competency';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {

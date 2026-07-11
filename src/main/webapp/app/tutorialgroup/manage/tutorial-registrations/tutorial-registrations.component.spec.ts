@@ -16,7 +16,7 @@ import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/man
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsComponent } from './tutorial-registrations.component';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 interface ConfirmationServiceMock {
     confirm: ReturnType<typeof vi.fn>;

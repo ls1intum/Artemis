@@ -20,9 +20,9 @@ import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/models/tutorial-group-detail-data';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
 import { Confirmation, ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,

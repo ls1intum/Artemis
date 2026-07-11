@@ -20,8 +20,8 @@ import {
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
-import { TutorialGroupSchedule } from 'app/openapi/models/tutorial-group-schedule';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/models/tutorial-group-detail-data';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 
 describe('TutorialCreateOrEditComponent', () => {
     let component: TutorialCreateOrEditComponent;

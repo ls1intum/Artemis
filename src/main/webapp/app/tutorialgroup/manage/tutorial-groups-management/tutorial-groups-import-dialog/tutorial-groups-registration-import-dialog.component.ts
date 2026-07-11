@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { TutorialGroupImportData } from 'app/openapi/models/tutorial-group-import-data';
+import { TutorialGroupImportData } from 'app/openapi/model/tutorial-group-import-data';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 /**

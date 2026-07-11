@@ -4,7 +4,7 @@ import { TutorialRegistrationsStudentsTableComponent } from './tutorial-registra
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from './tutorial-registrations-students-table.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 describe('TutorialRegistrationsStudentsTable', () => {
     let component: TutorialRegistrationsStudentsTableComponent;

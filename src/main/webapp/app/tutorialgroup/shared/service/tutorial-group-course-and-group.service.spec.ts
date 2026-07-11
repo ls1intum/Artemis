@@ -7,8 +7,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupCourseAndGroupService } from './tutorial-group-course-and-group.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/models/tutorial-group-detail-data';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 

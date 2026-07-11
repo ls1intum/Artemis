@@ -7,7 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { CalendarApi } from 'app/openapi/api/calendar-api';
-import { CalendarEvent } from 'app/openapi/models/calendar-event';
+import { CalendarEvent } from 'app/openapi/model/calendar-event';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 
 @Injectable({

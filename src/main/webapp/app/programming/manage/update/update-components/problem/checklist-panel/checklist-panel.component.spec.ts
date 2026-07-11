@@ -10,9 +10,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of, throwError } from 'rxjs';
-import { ChecklistAnalysisResponse } from 'app/openapi/models/checklist-analysis-response';
-import { ChecklistActionResponse } from 'app/openapi/models/checklist-action-response';
-import { QualityIssue } from 'app/openapi/models/quality-issue';
+import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';
+import { ChecklistActionResponse } from 'app/openapi/model/checklist-action-response';
+import { QualityIssue } from 'app/openapi/model/quality-issue';
 import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';

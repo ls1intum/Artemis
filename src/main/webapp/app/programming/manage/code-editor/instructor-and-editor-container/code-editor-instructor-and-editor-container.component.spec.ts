@@ -39,13 +39,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistency-check-response';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
+import { ConsistencyIssue } from 'app/openapi/model/consistency-issue';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';

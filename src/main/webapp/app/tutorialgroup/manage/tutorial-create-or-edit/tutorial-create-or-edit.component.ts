@@ -21,8 +21,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/models/create-or-update-tutorial-group-request';
-import { TutorialGroupSchedule } from 'app/openapi/models/tutorial-group-schedule';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/create-or-update-tutorial-group-request';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
 
 enum Mode {
     ONLINE = 'Online',

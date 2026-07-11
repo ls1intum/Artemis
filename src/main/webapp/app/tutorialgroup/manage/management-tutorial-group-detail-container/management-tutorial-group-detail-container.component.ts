@@ -22,7 +22,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',

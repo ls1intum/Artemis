@@ -9,7 +9,7 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.3"
         }
     }
-    // The custom OpenAPI generator (generatorName "angular21", https://github.com/ls1intum/openapi-generator-angular21)
+    // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
     // is only needed when regenerating the Angular client locally via `./gradlew openApiGenerate`. The
     // generated client is committed, so CI never regenerates it and must not try to resolve this
     // artifact. The generator + Maven Local are therefore added to the buildscript classpath solely for
@@ -29,7 +29,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular21:1.1.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:1.0.0"
         }
     }
     dependencies {

@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
+import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
