@@ -15,6 +15,7 @@ import { ExerciseGroup, ExerciseGroupOrderDTO } from 'app/exam/shared/entities/e
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -624,6 +625,32 @@ describe('Exam Management Service Tests', () => {
         });
         req.flush(mockResponse);
         await Promise.resolve();
+    });
+
+    it('should reconnect the last result of a locked submission as latestResult', async () => {
+        // GIVEN: the server's wire shape for a locked submission carries its result(s) as a plain list (the DTO the
+        // assessment-locks table reads); the client is expected to derive latestResult from it via reconnectSubmissions.
+        const mockExam: Exam = { id: 1 };
+        const lockedResult = { id: 99, score: 42, completionDate: undefined } as Result;
+        const mockResponse = [{ id: 7, submissionExerciseType: 'text', results: [lockedResult] } as TextSubmission];
+
+        // WHEN
+        let received: TextSubmission[] | undefined;
+        service.findAllLockedSubmissionsOfExam(course.id!, mockExam.id!).subscribe((res) => (received = res.body as TextSubmission[]));
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/locked-submissions`,
+        });
+        req.flush(mockResponse);
+        await Promise.resolve();
+
+        // THEN: reconnectSubmissions must have turned the last (and only) result into latestResult, with the
+        // back-reference to its submission restored, exactly as the assessment-locks component relies on.
+        expect(received).toBeDefined();
+        expect(received![0].latestResult?.id).toBe(lockedResult.id);
+        expect(received![0].latestResult?.score).toBe(lockedResult.score);
+        expect(received![0].latestResult?.submission).toBe(received![0]);
     });
 
     it('should download the exam from archive', async () => {
