@@ -330,8 +330,6 @@ describe('ExerciseImportComponent', () => {
 });
 
 describe('ExerciseImportComponent template', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
