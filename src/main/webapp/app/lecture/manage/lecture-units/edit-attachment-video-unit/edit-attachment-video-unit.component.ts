@@ -113,19 +113,20 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             attachmentType: AttachmentType.FILE,
         });
 
+        const hasUpload = !!file && file.size > 0;
         const updatedUnit = Object.assign(new AttachmentVideoUnit(), currentUnit, {
             name,
             description,
             releaseDate,
             competencyLinks,
             videoSource,
-            attachmentUpdateIntent: file ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
+            attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 
         this.isLoading.set(true);
 
         const formData = new FormData();
-        if (file) {
+        if (hasUpload) {
             formData.append('file', file, fileName);
         }
         formData.append('attachment', objectToJsonBlob(updatedAttachment));

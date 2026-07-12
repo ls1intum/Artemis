@@ -102,7 +102,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de';
 
-        fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         baseFormData = new FormData();
         baseFormData.append('file', fakeFile, 'updated file');
@@ -234,5 +234,30 @@ describe('EditAttachmentVideoUnitComponent', () => {
         const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
         expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should treat a zero-byte file as no file change', async () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: 1,
+            },
+            fileProperties: {
+                file: new File([], 'empty.pdf', { type: 'application/pdf' }),
+                fileName: 'empty.pdf',
+            },
+        };
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
+        expect(updateFormData.has('file')).toBe(false);
     });
 });

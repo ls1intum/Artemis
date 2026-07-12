@@ -390,7 +390,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should send POST request upon attachment form submission and update units', async () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
@@ -449,7 +449,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should send POST request upon attachment form submission and update units when editing lecture', async () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
@@ -505,6 +505,20 @@ describe('LectureUpdateUnitsComponent', () => {
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
         expect(updateSpy).toHaveBeenCalledTimes(1);
 
+        createAttachmentVideoUnitStub.mockClear();
+        wizardUnitComponent.isEditingLectureUnit.set(true);
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.set(editingAttachmentVideoUnit);
+        wizardUnitComponent.createEditAttachmentVideoUnit({
+            ...attachmentVideoUnitFormData,
+            formProperties: { ...attachmentVideoUnitFormData.formProperties, videoSource: 'https://video.example/source' },
+            fileProperties: { file: new File([], 'empty.pdf', { type: 'application/pdf' }), fileName: '' },
+        });
+        await wizardUnitComponentFixture.whenStable();
+
+        const zeroByteUpdateFormData = createAttachmentVideoUnitStub.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(zeroByteUpdateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
+        expect(zeroByteUpdateFormData.has('file')).toBe(false);
+
         updateSpy.mockRestore();
     });
 
@@ -512,7 +526,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
@@ -564,7 +578,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {

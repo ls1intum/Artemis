@@ -208,13 +208,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             attachmentVideoUnit.description = description;
         }
         attachmentVideoUnit.competencyLinks = competencyLinks;
+        const hasUpload = !!file && !!fileName && file.size > 0;
         if (this.isEditingLectureUnit()) {
-            attachmentVideoUnit.attachmentUpdateIntent = file ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
+            attachmentVideoUnit.attachmentUpdateIntent = hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
         }
         this.currentlyProcessedAttachmentVideoUnit.set(attachmentVideoUnit);
 
         const formData = new FormData();
-        if (!!file && !!fileName) {
+        if (hasUpload) {
             formData.append('file', file, fileName);
             formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         }
