@@ -41,6 +41,7 @@ describe('BuildAgentDetailsComponent', () => {
     const mockBuildAgentsService = {
         getBuildAgentDetails: vi.fn().mockReturnValue(of([])),
         getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
+        getGenerationSandboxes: vi.fn().mockReturnValue(of([])),
         pauseBuildAgent: vi.fn().mockReturnValue(of({})),
         resumeBuildAgent: vi.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: vi.fn().mockReturnValue(of({})),
@@ -234,6 +235,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(of([]));
         mockWebsocketService.subscribe.mockImplementation((topic: string) => {
             if (topic === '/topic/admin/running-jobs') {
                 return runningJobsSubject.asObservable();
@@ -254,6 +256,59 @@ describe('BuildAgentDetailsComponent', () => {
         expect(component.buildAgent()).toEqual(mockBuildAgent);
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalledWith(mockBuildAgent.buildAgent?.name);
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
+    });
+
+    it('should group active sandbox sessions by generation job', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(
+            of([
+                {
+                    sessionId: 'authoring',
+                    role: 'AUTHORING',
+                    jobId: 'job-1',
+                    exerciseId: 42,
+                    courseId: 7,
+                    userLogin: 'instructor',
+                    mode: 'GENERATE',
+                    startedAt: '2026-07-12T09:00:00Z',
+                    lastActivityAt: '2026-07-12T09:01:00Z',
+                    reservedSlots: 1,
+                },
+                {
+                    sessionId: 'verification',
+                    role: 'VERIFICATION',
+                    jobId: 'job-1',
+                    exerciseId: 42,
+                    courseId: 7,
+                    userLogin: 'instructor',
+                    mode: 'GENERATE',
+                    startedAt: '2026-07-12T09:00:00Z',
+                    lastActivityAt: '2026-07-12T09:02:00Z',
+                    reservedSlots: 1,
+                },
+            ]),
+        );
+
+        component.ngOnInit();
+
+        expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledWith('agent1');
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1', exerciseId: 42, reservedSlots: 2, lastActivityAt: '2026-07-12T09:02:00Z' })]);
+    });
+
+    it('should expose sandbox loading errors without hiding agent details', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes.mockReturnValue(throwError(() => new Error('unavailable')));
+
+        component.ngOnInit();
+
+        expect(component.generationSandboxesLoadFailed()).toBe(true);
+        expect(component.buildAgent()).toEqual(mockBuildAgent);
+    });
+
+    it('should present sandbox activity as active agent status', () => {
+        component.buildAgent.set({ ...mockBuildAgent, status: BuildAgentStatus.IDLE, numberOfCurrentBuildJobs: 0, reservedGenerationSandboxSlots: 2 });
+
+        expect(component.effectiveStatus()).toBe(BuildAgentStatus.ACTIVE);
     });
 
     it('should initialize websocket subscription on initialization', () => {

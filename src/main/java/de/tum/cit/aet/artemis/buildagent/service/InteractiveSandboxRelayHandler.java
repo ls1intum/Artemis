@@ -7,8 +7,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,9 +36,11 @@ import org.springframework.stereotype.Component;
 
 import com.github.dockerjava.api.exception.DockerException;
 
+import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponse;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
@@ -127,6 +131,8 @@ public class InteractiveSandboxRelayHandler {
 
     /** Container ids this agent owns mapped to the number of generation sandbox slots DESTROY must release exactly once. */
     private final Map<String, Integer> ownedSandboxSlotPermits = new ConcurrentHashMap<>();
+
+    private final Map<String, ActiveSession> activeSessions = new ConcurrentHashMap<>();
 
     /** Verification sandbox container ids mapped to the authoring sandbox whose reserved slot they temporarily consume. */
     private final Map<String, String> verificationSandboxOwners = new ConcurrentHashMap<>();
@@ -221,6 +227,7 @@ public class InteractiveSandboxRelayHandler {
                 case EXEC -> handleExec(request);
                 case COPY_IN -> handleCopyIn(request);
                 case COPY_OUT -> handleCopyOut(request);
+                case LIST -> handleList(request);
                 case DESTROY -> handleDestroy(request);
             };
             responsesTopic.publish(response);
@@ -252,6 +259,9 @@ public class InteractiveSandboxRelayHandler {
     }
 
     private SandboxOpResponse handleCreate(SandboxOpRequest request) {
+        if (request.sessionSpec() == null || request.sessionSpec().context() == null) {
+            return SandboxOpResponse.failure(request.correlationId(), "Generation sandbox CREATE requires an observability context.");
+        }
         // Drain guard: a paused agent (manual drain or auto-paused after failures) must not take on a new long-lived session, mirroring how pause stops new CI build jobs.
         // In-flight
         // sessions keep running (EXEC/COPY/DESTROY stay ungated) so an active generation can finish and tear down cleanly.
@@ -280,12 +290,15 @@ public class InteractiveSandboxRelayHandler {
                     ownedSandboxSlotPermits.computeIfPresent(request.sessionId(), (ignored, permits) -> permits - 1);
                     ownedSandboxSlotPermits.put(containerId, 1);
                     verificationSandboxOwners.put(containerId, request.sessionId());
+                    activeSessions.computeIfPresent(request.sessionId(), (ignored, session) -> session.withReservedSlots(1));
+                    registerSession(containerId, request.sessionSpec().context(), GenerationSandboxSessionDTO.Role.VERIFICATION, 1);
                 }
             }
             else {
                 containerId = interactiveSandboxService().createSession(request.sessionSpec());
                 synchronized (ownedSandboxSlotPermits) {
                     ownedSandboxSlotPermits.put(containerId, permitsToAcquire);
+                    registerSession(containerId, request.sessionSpec().context(), GenerationSandboxSessionDTO.Role.AUTHORING, permitsToAcquire);
                 }
             }
             created = true;
@@ -479,6 +492,20 @@ public class InteractiveSandboxRelayHandler {
         return SandboxOpResponse.ok(request.correlationId(), request.sessionId());
     }
 
+    private SandboxOpResponse handleList(SandboxOpRequest request) {
+        List<GenerationSandboxSessionDTO> sessions;
+        synchronized (ownedSandboxSlotPermits) {
+            sessions = activeSessions.entrySet().stream().map(entry -> entry.getValue().toDto(entry.getKey(), interactiveSandboxService().lastActivity(entry.getKey()))).toList();
+        }
+        return SandboxOpResponse.sessions(request.correlationId(), sessions);
+    }
+
+    private void registerSession(String containerId, SandboxSessionContext context, GenerationSandboxSessionDTO.Role role, int reservedSlots) {
+        if (context != null) {
+            activeSessions.put(containerId, new ActiveSession(context, role, Instant.now(), reservedSlots));
+        }
+    }
+
     private void requireOwnedSession(String sessionId) {
         if (!ownsSession(sessionId)) {
             throw new LocalCIException("Interactive sandbox session " + sessionId + " is not owned by this relay");
@@ -511,9 +538,11 @@ public class InteractiveSandboxRelayHandler {
         boolean restoredToAuthoringReservation = false;
         synchronized (ownedSandboxSlotPermits) {
             permits = ownedSandboxSlotPermits.remove(containerId);
+            activeSessions.remove(containerId);
             String authoringSessionId = verificationSandboxOwners.remove(containerId);
             if (permits != null && authoringSessionId != null && ownedSandboxSlotPermits.containsKey(authoringSessionId)) {
                 ownedSandboxSlotPermits.computeIfPresent(authoringSessionId, (ignored, authoringPermits) -> authoringPermits + permits);
+                activeSessions.computeIfPresent(authoringSessionId, (ignored, session) -> session.withReservedSlots(session.reservedSlots() + permits));
                 restoredToAuthoringReservation = true;
             }
         }
@@ -547,5 +576,17 @@ public class InteractiveSandboxRelayHandler {
             thread.setDaemon(true);
             return thread;
         };
+    }
+
+    private record ActiveSession(SandboxSessionContext context, GenerationSandboxSessionDTO.Role role, Instant startedAt, int reservedSlots) {
+
+        ActiveSession withReservedSlots(int newReservedSlots) {
+            return new ActiveSession(context, role, startedAt, newReservedSlots);
+        }
+
+        GenerationSandboxSessionDTO toDto(String containerId, java.util.Optional<Instant> lastActivity) {
+            return new GenerationSandboxSessionDTO(containerId, role, context.jobId(), context.exerciseId(), context.courseId(), context.userLogin(), context.mode(), startedAt,
+                    lastActivity.orElse(startedAt), reservedSlots);
+        }
     }
 }

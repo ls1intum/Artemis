@@ -1,0 +1,125 @@
+<p-confirmDialog />
+
+<h5 *adminTitleBarTitle id="hyperion-generation-detail-heading" class="mb-0" jhiTranslate="artemisApp.buildAgents.generationSandboxes.detailTitle"></h5>
+
+<div *adminTitleBarActions class="flex items-center gap-2">
+    @if (job(); as generation) {
+        <p-button
+            severity="danger"
+            size="small"
+            [loading]="canceling()"
+            (onClick)="confirmCancel()"
+            [ariaLabel]="'artemisApp.buildAgents.generationSandboxes.cancel' | artemisTranslate"
+        >
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancel"></span>
+        </p-button>
+    }
+</div>
+
+@if (loading()) {
+    <div class="my-5 flex items-center justify-center gap-2" role="status">
+        <fa-icon [icon]="faSpinner" animation="spin" />
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></span>
+    </div>
+} @else if (loadFailed()) {
+    <p-message severity="error" class="mb-3 block">
+        <div class="flex items-center gap-2">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
+            <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load()">
+                <fa-icon [icon]="faRotate" />
+                <span jhiTranslate="metrics.refresh.button"></span>
+            </p-button>
+        </div>
+    </p-message>
+} @else if (notFound()) {
+    <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound" />
+} @else if (job(); as generation) {
+    @if (cancelFailed()) {
+        <p-message severity="error" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed" />
+    }
+
+    <div class="mb-3 rounded-lg border p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <h4 class="mb-0">{{ generation.mode }} · {{ generation.exerciseId }}</h4>
+                <p-tag severity="info" [value]="'artemisApp.buildAgents.generationSandboxes.running' | artemisTranslate" />
+            </div>
+            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agentName }" jhiTranslate="artemisApp.buildAgents.generationSandboxes.backToAgent"></a>
+        </div>
+    </div>
+
+    <section class="mb-3 rounded-lg border" aria-labelledby="hyperion-generation-info-heading">
+        <h5 id="hyperion-generation-info-heading" class="border-b px-4 py-2 font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.information"></h5>
+        <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 p-4">
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.jobId"></dt>
+            <dd>
+                <code>{{ generation.jobId }}</code>
+            </dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></dt>
+            <dd>
+                @if (generation.courseId) {
+                    <a [routerLink]="['/course-management', generation.courseId, 'programming-exercises', generation.exerciseId, 'edit']">{{ generation.exerciseId }}</a>
+                } @else {
+                    {{ generation.exerciseId }}
+                }
+            </dd>
+            @if (generation.courseId) {
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.course"></dt>
+                <dd>
+                    <a [routerLink]="['/course-management', generation.courseId]">{{ generation.courseId }}</a>
+                </dd>
+            }
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></dt>
+            <dd>{{ generation.mode }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></dt>
+            <dd>{{ generation.userLogin }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></dt>
+            <dd>{{ generation.startedAt | artemisDate: 'long' : true }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastActivity"></dt>
+            <dd>{{ generation.lastActivityAt | artemisDate: 'long' : true }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></dt>
+            <dd>{{ duration(generation.startedAt) }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></dt>
+            <dd>{{ generation.reservedSlots }}</dd>
+        </dl>
+    </section>
+
+    <section aria-labelledby="hyperion-sandbox-sessions-heading">
+        <h4 id="hyperion-sandbox-sessions-heading" class="flex items-center gap-2">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessions"></span>
+            <p-tag severity="info" [value]="generation.sessions.length.toString()" />
+        </h4>
+        <p-table [value]="generation.sessions" size="small" [stripedRows]="true">
+            <ng-template #header>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.role"></th>
+                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessionId"></th>
+                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
+                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastActivity"></th>
+                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-session>
+                <tr>
+                    <td>
+                        <p-tag
+                            [severity]="session.role === 'VERIFICATION' ? 'success' : 'info'"
+                            [value]="
+                                (session.role === 'VERIFICATION'
+                                    ? 'artemisApp.buildAgents.generationSandboxes.verification'
+                                    : 'artemisApp.buildAgents.generationSandboxes.authoring'
+                                ) | artemisTranslate
+                            "
+                        />
+                    </td>
+                    <td>
+                        <code [title]="session.sessionId">{{ shortSessionId(session.sessionId) }}</code>
+                    </td>
+                    <td>{{ session.startedAt | artemisDate: 'short' : true }}</td>
+                    <td>{{ session.lastActivityAt | artemisDate: 'short' : true }}</td>
+                    <td>{{ session.reservedSlots }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </section>
+}

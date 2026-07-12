@@ -10,9 +10,14 @@ import java.io.Serializable;
  *
  * @param image     the Docker image to start the warm container from
  * @param runConfig optional per-container overrides; only the network mode is consulted for Hyperion sandboxes
+ * @param context   parent generation metadata required for observable relayed sessions
  */
-public record SandboxSessionSpec(String image, DockerRunConfig runConfig) implements Serializable {
+public record SandboxSessionSpec(String image, DockerRunConfig runConfig, SandboxSessionContext context) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    public SandboxSessionSpec(String image, DockerRunConfig runConfig) {
+        this(image, runConfig, null);
+    }
 }

@@ -207,6 +207,23 @@ describe('BuildAgentSummaryComponent', () => {
         expect(component.currentBuilds()).toBe(4);
     });
 
+    it('should aggregate generation sandbox capacity and usage', () => {
+        component.buildAgents.set(mockBuildAgents);
+
+        expect(component.generationSandboxSlots()).toEqual({ reserved: 1, maximum: 3 });
+    });
+
+    it('should present an agent with active sandboxes as active', () => {
+        const sandboxOnlyAgent: BuildAgentInformation = {
+            ...mockBuildAgents[0],
+            status: BuildAgentStatus.IDLE,
+            numberOfCurrentBuildJobs: 0,
+            reservedGenerationSandboxSlots: 2,
+        };
+
+        expect(component.effectiveStatus(sandboxOnlyAgent)).toBe(BuildAgentStatus.ACTIVE);
+    });
+
     it('should calculate the build capacity and current builds when there are no build agents', () => {
         component.ngOnInit();
         websocketSubject.next([]);

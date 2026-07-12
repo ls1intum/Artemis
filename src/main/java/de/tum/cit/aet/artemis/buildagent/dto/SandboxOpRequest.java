@@ -61,4 +61,8 @@ public record SandboxOpRequest(String correlationId, String targetAgentShortName
     public static SandboxOpRequest destroy(String correlationId, String targetAgentShortName, String sessionId) {
         return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0, 0L, null);
     }
+
+    public static SandboxOpRequest list(String correlationId, String targetAgentShortName) {
+        return new SandboxOpRequest(correlationId, targetAgentShortName, SandboxOp.LIST, null, null, null, 0, 0L, null);
+    }
 }

@@ -18,7 +18,9 @@
         <div class="flex justify-between items-center border-b pb-2 mb-3">
             <p class="mb-0">
                 {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
-                <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+                <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span> ·
+                {{ generationSandboxSlots().reserved }} <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ generationSandboxSlots().maximum }}
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxSlotsInUse"></span>
             </p>
         </div>
         <div class="build-agents-section">
@@ -55,7 +57,7 @@
                         </td>
                         <td class="build-agents-column-strings">{{ agent.buildAgent?.memberAddress }}</td>
                         <td class="build-agents-column">
-                            @switch (agent.status) {
+                            @switch (effectiveStatus(agent)) {
                                 @case ('ACTIVE') {
                                     <p-tag severity="success" [value]="'artemisApp.buildAgents.running' | artemisTranslate" />
                                 }
@@ -74,7 +76,13 @@
                         <td class="build-agents-column">{{ agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0 }}</td>
                         <td class="build-agents-column">
                             @if (agent.reservedGenerationSandboxSlots !== undefined && agent.maxGenerationSandboxSlots !== undefined) {
-                                {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                                @if (agent.buildAgent?.name && agent.maxGenerationSandboxSlots > 0) {
+                                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agent.buildAgent.name }" fragment="active-hyperion-generations">
+                                        {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                                    </a>
+                                } @else {
+                                    {{ agent.reservedGenerationSandboxSlots }} / {{ agent.maxGenerationSandboxSlots }}
+                                }
                             } @else {
                                 —
                             }

@@ -6,7 +6,7 @@ import { Commands } from '../../../support/commands';
 import { admin, instructor, UserCredentials } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
 import { ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
-import { generateUUID } from '../../../support/utils';
+import { generateUUID, newBrowserPage } from '../../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import javaProgrammingExerciseTemplate from '../../../fixtures/exercise/programming/java/template.json';
 
@@ -35,6 +35,7 @@ type GenerationStatus = {
 
 type BuildAgentSlots = {
     buildAgent?: {
+        name?: string;
         memberAddress?: string;
     };
     reservedGenerationSandboxSlots?: number;
@@ -124,11 +125,12 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         const requestsAfterFirstStart = await getHyperionLlmMockRequestCount(page);
         await expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page, exercise!.id!, jobId, requestsAfterFirstStart);
-        const generationBuildAgentAddress = await expectAdminGenerationSandboxSlots(browser, '2 / 2');
+        const generationBuildAgent = await expectAdminGenerationSandboxSlots(browser, '2 / 2');
 
-        await cancelRunningJobFromUi(page, exercise!.id!, jobId);
+        await cancelRunningJobFromAdminDetails(browser, generationBuildAgent.name, exercise!.id!, jobId);
+        await expectCancelledGeneration(page, exercise!.id!, jobId);
         await expectCancelRejected(page, exercise!.id!, jobId);
-        await expectAdminGenerationSandboxSlots(browser, '0 / 2', generationBuildAgentAddress);
+        await expectAdminGenerationSandboxSlots(browser, '0 / 2', generationBuildAgent.address);
         runningJobId = undefined;
     });
 
@@ -688,10 +690,39 @@ async function cancelRunningJobFromUi(page: Page, exerciseId: number, jobId: str
     await page.getByTestId('hyperion-generation-cancel').click();
     const cancelResponse = await cancelResponsePromise;
     expect(cancelResponse.ok()).toBeTruthy();
+    await expectCancelledGeneration(page, exerciseId, jobId);
+}
+
+async function expectCancelledGeneration(page: Page, exerciseId: number, jobId: string) {
     await expect(page.getByTestId('hyperion-generation-activity')).toContainText('Generation was cancelled', { timeout: 60_000 });
     await expect(page.getByTestId('hyperion-generation-cancel')).toBeHidden();
     await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
     await expectTerminalGenerationStatus(page, exerciseId, jobId, 'CANCELLED');
+}
+
+async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: string, exerciseId: number, jobId: string) {
+    const adminPage = await newBrowserPage(browser);
+    try {
+        await Commands.login(adminPage, admin, `/admin/build-agents/details?agentName=${encodeURIComponent(agentName)}`);
+        const generationSection = adminPage.locator('#active-hyperion-generations');
+        await expect(generationSection.getByRole('row').filter({ hasText: exerciseId.toString() })).toBeVisible({ timeout: 60_000 });
+        await generationSection.getByRole('link', { name: new RegExp(`generation details.*${exerciseId}`, 'i') }).click();
+        await expect(adminPage.getByTestId('admin-body').getByText(jobId, { exact: true })).toBeVisible({ timeout: 60_000 });
+        await expect(adminPage.getByRole('heading', { name: 'Sandbox sessions' })).toBeVisible();
+        await expect(adminPage.getByText('Authoring', { exact: true })).toBeVisible();
+
+        const cancelResponsePromise = adminPage.waitForResponse(
+            (response) => response.request().method() === 'DELETE' && response.url().includes(`/api/admin/exercises/${exerciseId}/hyperion-generation-jobs/${jobId}/cancel`),
+            { timeout: 60_000 },
+        );
+        await adminPage.getByRole('button', { name: 'Cancel generation', exact: true }).click();
+        const confirmationDialog = adminPage.getByRole('alertdialog', { name: 'Cancel Hyperion generation' });
+        await confirmationDialog.getByRole('button', { name: 'Yes', exact: true }).click();
+        expect((await cancelResponsePromise).ok()).toBeTruthy();
+        await expect(adminPage.getByText('This Hyperion generation is no longer active on the selected build agent.', { exact: true })).toBeVisible({ timeout: 60_000 });
+    } finally {
+        await adminPage.context().close();
+    }
 }
 
 async function expectCancelRejected(page: Page, exerciseId: number, jobId: string) {
@@ -707,9 +738,10 @@ async function expectCancelRejected(page: Page, exerciseId: number, jobId: strin
 }
 
 async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots: string, expectedBuildAgentAddress?: string) {
-    const adminPage = await browser.newPage();
+    const adminPage = await newBrowserPage(browser);
     const [expectedReservedSlots, expectedMaxSlots] = expectedSlots.split(' / ').map(Number);
     let matchingBuildAgentAddress: string | undefined;
+    let matchingBuildAgentName: string | undefined;
     try {
         await Commands.login(adminPage, admin, '/admin/build-agents');
         await expect
@@ -720,26 +752,29 @@ async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots
                         return undefined;
                     }
                     const agents = (await response.json()) as BuildAgentSlots[];
-                    matchingBuildAgentAddress = agents.find(
+                    const matchingAgent = agents.find(
                         (agent) =>
                             (!expectedBuildAgentAddress || agent.buildAgent?.memberAddress === expectedBuildAgentAddress) &&
                             (agent.reservedGenerationSandboxSlots ?? 0) === expectedReservedSlots &&
                             (agent.maxGenerationSandboxSlots ?? 0) === expectedMaxSlots,
-                    )?.buildAgent?.memberAddress;
+                    );
+                    matchingBuildAgentAddress = matchingAgent?.buildAgent?.memberAddress;
+                    matchingBuildAgentName = matchingAgent?.buildAgent?.name;
                     return matchingBuildAgentAddress;
                 },
                 { timeout: 60_000 },
             )
             .toBeDefined();
         expect(matchingBuildAgentAddress).toBeDefined();
+        expect(matchingBuildAgentName).toBeDefined();
         await expect(adminPage.getByRole('columnheader', { name: /Hyperion sandbox slots/i })).toBeVisible({ timeout: 60_000 });
         const matchingBuildAgentRow = adminPage.getByRole('row').filter({
             has: adminPage.getByRole('cell', { name: matchingBuildAgentAddress, exact: true }),
         });
         await expect(matchingBuildAgentRow.getByRole('cell', { name: expectedSlots, exact: true })).toBeVisible({ timeout: 60_000 });
-        return matchingBuildAgentAddress!;
+        return { address: matchingBuildAgentAddress!, name: matchingBuildAgentName! };
     } finally {
-        await adminPage.close();
+        await adminPage.context().close();
     }
 }
 
@@ -748,7 +783,7 @@ async function expectRehydratedActivityOnFreshPage(browser: Browser, programming
     const repositoryId = programmingExercise.templateParticipation?.id;
     expect(exerciseId).toBeDefined();
     expect(repositoryId).toBeDefined();
-    const freshPage = await browser.newPage();
+    const freshPage = await newBrowserPage(browser);
     try {
         await Commands.login(freshPage, instructor, `/course-management/${course.id}/programming-exercises/${exerciseId}/code-editor/TEMPLATE/${repositoryId}`);
         await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
@@ -762,6 +797,6 @@ async function expectRehydratedActivityOnFreshPage(browser: Browser, programming
         await expect(freshPage.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expect(freshPage.getByTestId('hyperion-generation-cancel')).toBeVisible();
     } finally {
-        await freshPage.close();
+        await freshPage.context().close();
     }
 }

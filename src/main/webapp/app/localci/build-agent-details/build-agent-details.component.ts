@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -33,6 +33,9 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
 import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/running-jobs-table/running-jobs-table.component';
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
+import { GenerationSandboxSession, groupGenerationSandboxSessions } from 'app/localci/shared/entities/generation-sandbox-session.model';
+import { TableModule } from 'primeng/table';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -63,6 +66,8 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
+        TableModule,
+        ArtemisTranslatePipe,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -104,6 +109,23 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Subscription for initial running jobs REST API load */
     runningJobsSubscription?: Subscription;
+
+    generationSandboxesSubscription?: Subscription;
+
+    readonly generationSandboxes = signal<GenerationSandboxSession[]>([]);
+    readonly generationSandboxesLoading = signal(false);
+    readonly generationSandboxesLoadFailed = signal(false);
+    readonly generationJobs = computed(() => groupGenerationSandboxSessions(this.generationSandboxes()));
+
+    readonly effectiveStatus = computed(() => {
+        const agent = this.buildAgent();
+        if (!agent || agent.status === BuildAgentStatus.PAUSED || agent.status === BuildAgentStatus.SELF_PAUSED) {
+            return agent?.status;
+        }
+        return (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0 || (agent.reservedGenerationSandboxSlots ?? 0) > 0
+            ? BuildAgentStatus.ACTIVE
+            : BuildAgentStatus.IDLE;
+    });
 
     /** Subscription for initial agent details REST API load */
     agentDetailsSubscription?: Subscription;
@@ -210,6 +232,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
+        this.generationSandboxesSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
         this.routeParamsSubscription?.unsubscribe();
     }
@@ -226,6 +249,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             .subscribe<BuildAgentInformation>(this.agentDetailsWebsocketChannel)
             .subscribe((buildAgent: BuildAgentInformation) => {
                 this.updateBuildAgent(buildAgent);
+                this.loadGenerationSandboxes();
             });
 
         // Subscribe to all running jobs and filter to only show jobs for this agent
@@ -258,6 +282,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         } else {
             this.loadRunningJobs();
             this.loadAgentDetails();
+            this.loadGenerationSandboxes();
         }
     }
 
@@ -299,13 +324,42 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Now load running jobs and agent details with the resolved name
                 this.loadRunningJobs();
                 this.loadAgentDetails();
+                this.loadGenerationSandboxes();
             },
             error: () => {
                 // If we can't get the agent list, just try with the original address
                 this.loadRunningJobs();
                 this.loadAgentDetails();
+                this.loadGenerationSandboxes();
             },
         });
+    }
+
+    private loadGenerationSandboxes() {
+        const agentName = this.agentName();
+        if (!agentName) {
+            return;
+        }
+        this.generationSandboxesSubscription?.unsubscribe();
+        this.generationSandboxesLoading.set(true);
+        this.generationSandboxesLoadFailed.set(false);
+        this.generationSandboxesSubscription = this.buildAgentsService.getGenerationSandboxes(agentName).subscribe({
+            next: (sessions) => {
+                this.generationSandboxes.set(sessions);
+                this.generationSandboxesLoading.set(false);
+            },
+            error: () => {
+                this.generationSandboxes.set([]);
+                this.generationSandboxesLoading.set(false);
+                this.generationSandboxesLoadFailed.set(true);
+            },
+        });
+    }
+
+    generationDuration(startedAt: string): string {
+        const seconds = Math.max(0, dayjs().diff(dayjs(startedAt), 'seconds'));
+        const minutes = Math.floor(seconds / 60);
+        return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
     }
 
     /**

@@ -19,6 +19,9 @@ public enum SandboxOp {
     /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyOut */
     COPY_OUT,
 
+    /** Lists live generation sandbox sessions on the target agent. */
+    LIST,
+
     /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#destroySession */
     DESTROY
 }

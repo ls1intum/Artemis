@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -100,8 +101,12 @@ public class GenerationWorkspaceService {
      * @return the sandbox session spec
      */
     public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise) {
+        return sessionSpec(exercise, null);
+    }
+
+    public SandboxSessionSpec sessionSpec(ProgrammingExercise exercise, @Nullable SandboxSessionContext context) {
         String image = programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()));
-        return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), "none", 0, 0, 0));
+        return new SandboxSessionSpec(image, new DockerRunConfig(List.of(), "none", 0, 0, 0), context);
     }
 
     /**

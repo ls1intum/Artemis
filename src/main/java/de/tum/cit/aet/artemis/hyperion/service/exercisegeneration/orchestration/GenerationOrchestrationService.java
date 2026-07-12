@@ -35,6 +35,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContext;
+import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpec;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -163,10 +165,11 @@ public class GenerationOrchestrationService {
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
+        SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise, new SandboxSessionContext(jobId, exercise.getId(), courseId, user.getLogin(), mode.name()));
         Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         try {
             emit(progress, "Setting up the build environment");
-            sessionId = sandbox.createSession(workspace.sessionSpec(exercise));
+            sessionId = sandbox.createSession(sessionSpec);
             // Node-local interrupt so a cancellation during a long build aborts the in-flight exec; destroySession is idempotent, safe alongside the orchestrator's own teardown.
             String activeSessionId = sessionId;
             jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
@@ -259,7 +262,7 @@ public class GenerationOrchestrationService {
                 // in-session loop can overwrite the pristine verify.sh or forge a report between seed and copyOut. The in-loop self-check (the agent's `verify` tool) stays
                 // in-session
                 // and advisory; only WHERE this authoritative verify runs changed — the differential logic is unchanged.
-                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest, jobId, placeholderReplacements);
+                verification = verifyInFreshSession(exercise, sandbox, sessionId, verificationRequest, jobId, placeholderReplacements, sessionSpec);
                 emit(progress, verification.report());
                 if (cancelled.getAsBoolean()) {
                     destroyQuietly(sandbox, sessionId);
@@ -501,10 +504,10 @@ public class GenerationOrchestrationService {
      * @return the acceptance verdict from the fresh, untamperable session
      */
     private VerificationResult verifyInFreshSession(ProgrammingExercise exercise, InteractiveSandbox sandbox, String loopSessionId, VerificationRequest request, String jobId,
-            Map<String, String> placeholderReplacements) {
+            Map<String, String> placeholderReplacements, SandboxSessionSpec sessionSpec) {
         String verifySessionId = null;
         try {
-            verifySessionId = sandbox.createVerificationSession(workspace.sessionSpec(exercise), loopSessionId);
+            verifySessionId = sandbox.createVerificationSession(sessionSpec, loopSessionId);
             String activeVerifySessionId = verifySessionId;
             jobService.registerCancelHook(jobId, () -> {
                 destroyQuietly(sandbox, loopSessionId);

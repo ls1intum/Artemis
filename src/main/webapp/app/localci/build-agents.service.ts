@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { catchError } from 'rxjs/operators';
+import { GenerationSandboxSession } from 'app/localci/shared/entities/generation-sandbox-session.model';
 
 @Injectable({ providedIn: 'root' })
 export class BuildAgentsService {
@@ -26,6 +27,14 @@ export class BuildAgentsService {
                 return throwError(() => new Error(`Failed to fetch build agent details ${agentName}\n${err.message}`));
             }),
         );
+    }
+
+    getGenerationSandboxes(agentName: string): Observable<GenerationSandboxSession[]> {
+        return this.http.get<GenerationSandboxSession[]>(`${this.adminResourceUrl}/build-agents/${encodeURIComponent(agentName)}/generation-sandboxes`);
+    }
+
+    cancelGeneration(exerciseId: number, jobId: string): Observable<void> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/exercises/${exerciseId}/hyperion-generation-jobs/${encodeURIComponent(jobId)}/cancel`);
     }
 
     /**

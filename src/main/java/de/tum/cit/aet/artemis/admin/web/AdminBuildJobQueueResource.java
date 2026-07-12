@@ -30,11 +30,15 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
@@ -53,13 +57,61 @@ public class AdminBuildJobQueueResource {
 
     private final BuildJobRepository buildJobRepository;
 
+    private final Optional<RemoteInteractiveSandboxClient> sandboxClient;
+
+    private final Optional<GenerationJobService> generationJobService;
+
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
     public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
-            DistributedDataAccessService distributedDataAccessService) {
+            DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient,
+            Optional<GenerationJobService> generationJobService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.sandboxClient = sandboxClient;
+        this.generationJobService = generationJobService;
+    }
+
+    /**
+     * Returns the active Hyperion sandbox sessions hosted by a build agent.
+     *
+     * @param agentName the build agent short name
+     * @return active sessions, or 404 when the agent is unknown
+     */
+    @GetMapping("build-agents/{agentName}/generation-sandboxes")
+    public ResponseEntity<List<GenerationSandboxSessionDTO>> getGenerationSandboxes(@PathVariable String agentName) {
+        Optional<BuildAgentInformation> agent = distributedDataAccessService.getBuildAgentInformation().stream().filter(info -> info.buildAgent().name().equals(agentName))
+                .findFirst();
+        if (agent.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (agent.get().maxGenerationSandboxSlots() == 0) {
+            return ResponseEntity.ok(List.of());
+        }
+        if (sandboxClient.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        try {
+            return ResponseEntity.ok(sandboxClient.get().listSessions(agentName));
+        }
+        catch (LocalCIException e) {
+            log.warn("Could not query Hyperion sandbox sessions from build agent {}: {}", agentName, e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+    }
+
+    /**
+     * Cancels the parent Hyperion generation job without directly killing an individual container.
+     *
+     * @param exerciseId the exercise owning the generation job
+     * @param jobId      the generation job identifier
+     * @return 204 when cancellation was requested, otherwise 404
+     */
+    @DeleteMapping("exercises/{exerciseId}/hyperion-generation-jobs/{jobId}/cancel")
+    public ResponseEntity<Void> cancelGenerationJob(@PathVariable long exerciseId, @PathVariable String jobId) {
+        boolean cancelled = generationJobService.map(service -> service.requestSystemCancellation(exerciseId, jobId)).orElse(false);
+        return cancelled ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     /**

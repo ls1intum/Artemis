@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
+import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResult;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOp;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequest;
@@ -88,6 +89,8 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
      * cannot block a generation thread forever.
      */
     private static final Duration CONTROL_OP_TIMEOUT = Duration.ofMinutes(5);
+
+    private static final Duration OBSERVABILITY_OP_TIMEOUT = Duration.ofSeconds(10);
 
     /**
      * Wait budget for a single control operation (create attempt, copy, destroy). An instance field defaulting to {@link #CONTROL_OP_TIMEOUT} rather than a bare constant so a test
@@ -313,6 +316,21 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         String containerId = containerOf(sessionId);
         SandboxOpRequest request = SandboxOpRequest.destroy(newCorrelationId(), targetAgent, containerId);
         relay(request, controlOpTimeout);
+    }
+
+    /**
+     * Returns a live snapshot of generation sandbox sessions hosted by the given agent.
+     *
+     * @param agentName the build agent short name
+     * @return the active session snapshot
+     */
+    public List<GenerationSandboxSessionDTO> listSessions(String agentName) {
+        SandboxOpRequest request = SandboxOpRequest.list(newCorrelationId(), agentName);
+        List<GenerationSandboxSessionDTO> sessions = relay(request, OBSERVABILITY_OP_TIMEOUT).sessions();
+        if (sessions == null) {
+            return List.of();
+        }
+        return sessions.stream().map(session -> session.withSessionId(agentName + SESSION_HANDLE_SEPARATOR + session.sessionId())).toList();
     }
 
     /**

@@ -76,6 +76,25 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         this.buildAgents().reduce((totalBuilds, agent) => totalBuilds + (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0), 0),
     );
 
+    readonly generationSandboxSlots = computed(() =>
+        this.buildAgents().reduce(
+            (total, agent) => ({
+                reserved: total.reserved + (agent.reservedGenerationSandboxSlots ?? 0),
+                maximum: total.maximum + (agent.maxGenerationSandboxSlots ?? 0),
+            }),
+            { reserved: 0, maximum: 0 },
+        ),
+    );
+
+    effectiveStatus(agent: BuildAgentInformation): BuildAgentStatus | undefined {
+        if (agent.status === BuildAgentStatus.PAUSED || agent.status === BuildAgentStatus.SELF_PAUSED) {
+            return agent.status;
+        }
+        return (agent.runningBuildJobs?.length ?? agent.numberOfCurrentBuildJobs ?? 0) > 0 || (agent.reservedGenerationSandboxSlots ?? 0) > 0
+            ? BuildAgentStatus.ACTIVE
+            : BuildAgentStatus.IDLE;
+    }
+
     /** WebSocket topic for receiving real-time build agent updates */
     readonly buildAgentsWebsocketTopic = '/topic/admin/build-agents';
 

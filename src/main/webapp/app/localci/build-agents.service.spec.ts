@@ -54,6 +54,24 @@ describe('BuildAgentsService', () => {
         req.flush(expectedResponse);
     });
 
+    it('should return active generation sandboxes for an agent', () => {
+        const expectedResponse = [{ sessionId: 'sandbox-1', jobId: 'job-1', exerciseId: 42 }];
+
+        service.getGenerationSandboxes('build agent/1').subscribe((data) => expect(data).toEqual(expectedResponse));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agents/build%20agent%2F1/generation-sandboxes`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should cancel a Hyperion generation as administrator', () => {
+        service.cancelGeneration(42, 'job/1').subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/exercises/42/hyperion-generation-jobs/job%2F1/cancel`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({});
+    });
+
     it('should handle get build agent details error', async () => {
         const errorMessage = 'Failed to fetch build agent details buildAgent1';
 
