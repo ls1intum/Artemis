@@ -21,4 +21,7 @@ export interface ParticipationScoreDTO {
     buildPlanId?: string;
     repositoryUri?: string;
     testRun: boolean;
+    testCaseCount?: number;
+    passedTestCaseCount?: number;
+    codeIssueCount?: number;
 }

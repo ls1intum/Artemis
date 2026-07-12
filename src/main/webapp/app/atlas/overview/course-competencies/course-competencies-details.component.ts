@@ -185,24 +185,39 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture.id!, event.completed).subscribe({
-            next: () => {
-                event.lectureUnit.completed = event.completed;
+        // Route through the shared helper so the completion request and the (zoneless) reactivity handling stay consistent.
+        this.lectureUnitService.completeLectureUnit(event.lectureUnit.lecture, event, () => {
+            // Publish a fresh lecture-unit reference so the unit card's signal input updates.
+            this.publishLectureUnitCompletion(event.lectureUnit.id!, event.completed);
 
-                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
-                    next: (resp) => {
-                        this.competencyProgress.set(resp.body!);
-                        this.competency.update((competency) => {
-                            if (competency) {
-                                competency.userProgress = [resp.body!];
-                            }
-                            return competency;
-                        });
-                        this.showFireworksIfMastered();
-                    },
-                });
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
+                next: (resp) => {
+                    this.competencyProgress.set(resp.body!);
+                    // Publish a new competency reference (a same-reference update would not notify zoneless change detection).
+                    this.competency.update((competency) =>
+                        competency ? Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { userProgress: [resp.body!] }) : competency,
+                    );
+                    this.showFireworksIfMastered();
+                },
+            });
+        });
+    }
+
+    /**
+     * Replaces the matching lecture unit inside the competency with a fresh reference carrying the new completion state,
+     * so the unit card reacts. A plain in-place mutation would keep the same object reference and not notify change detection.
+     */
+    private publishLectureUnitCompletion(lectureUnitId: number, completed: boolean): void {
+        this.competency.update((competency) => {
+            if (!competency?.lectureUnitLinks) {
+                return competency;
+            }
+            const lectureUnitLinks = competency.lectureUnitLinks.map((link) =>
+                link.lectureUnit?.id === lectureUnitId
+                    ? Object.assign(Object.create(Object.getPrototypeOf(link)), link, { lectureUnit: Object.assign({}, link.lectureUnit, { completed }) })
+                    : link,
+            );
+            return Object.assign(Object.create(Object.getPrototypeOf(competency)), competency, { lectureUnitLinks });
         });
     }
 

@@ -307,20 +307,25 @@ describe('CourseLectureDetailsComponent', () => {
         expect(downloadStreamStub).toHaveBeenCalledWith(null, 'application/pdf', 'Test lecture');
     });
 
-    it('should set lecture unit as completed', async () => {
+    it('should set lecture unit as completed and publish a new unit reference so the card reacts', async () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const lectureUnitService = TestBed.inject(LectureUnitService);
-        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit');
+        // Emulate a successful completion request by invoking the success callback synchronously.
+        const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementation((_lecture, _event, onSuccess) => onSuccess?.());
 
+        lectureUnit3.completed = false;
         courseLecturesDetailsComponent.lecture.set(lecture);
-        courseLecturesDetailsComponent.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
+        courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
 
-        expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
-        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true });
+
+        expect(completeSpy).toHaveBeenCalledWith(lecture, { lectureUnit: lectureUnit3, completed: true }, expect.any(Function));
+        const updatedUnit = courseLecturesDetailsComponent.lectureUnits().find((unit) => unit.id === lectureUnit3.id);
+        expect(updatedUnit?.completed).toBe(true);
+        // A fresh object reference (not the original) is what makes the card's signal input update in a zoneless app.
+        expect(updatedUnit).not.toBe(lectureUnit3);
     });
 
     describe('ensureValidDeepLinkTargets', () => {
