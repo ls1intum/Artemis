@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -46,9 +47,16 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  * The two endpoints share one shape and one factory. The test-run endpoint does not attach the statistics (its client
  * screen renders in {@code isTestRun} mode, which hides the tutor-status column, the second-correction toggle and the
  * complaint graph), so those transient getters return {@code null}/absent there and {@code NON_EMPTY} drops them — the
- * same wire the entity produced. The tutorial-training example submissions the graph would otherwise read are omitted:
- * they are a course-tutorial concept, unset for exam exercises, and lazily uninitialised on this fetch (so the entity
- * never serialized them here either).
+ * same wire the entity produced.
+ * <p>
+ * The tutor-participation graph's {@code calculateClasses} also compares each exercise's example submissions against
+ * the current tutor's {@code trainedExampleSubmissions} to decide whether the TRAINED step renders orange (an
+ * unreviewed/unassessed example still pending) or green: it filters both lists by {@code usedForTutorial} and compares
+ * lengths. Both collections are therefore carried as minimal id + {@code usedForTutorial} leaves — {@code exercise}'s
+ * {@code exampleSubmissions} is populated directly (in-memory, not lazy) by
+ * {@code AssessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard}; the tutor participation's
+ * {@code trainedExampleSubmissions} is eagerly fetched by the {@code TutorParticipationRepository} query
+ * ({@code @EntityGraph} on {@code trainedExampleSubmissions}) so it is already initialised here.
  *
  * @param id                             the id of the exam (tutor-leaderboard complaint links read it)
  * @param title                          the exam title
@@ -149,6 +157,7 @@ public record ExamForAssessmentDashboardDTO(long id, @Nullable String title, @Nu
      * @param numberOfMoreFeedbackRequests           the number of more-feedback requests (transient; graph)
      * @param numberOfOpenMoreFeedbackRequests       the number of open more-feedback requests (transient; graph)
      * @param tutorParticipations                    the current tutor's participation (id + status; tutor-status column)
+     * @param exampleSubmissions                     the exercise's example submissions (id + usedForTutorial only; tutor-participation graph TRAINED-step color)
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseForAssessmentDashboardDTO(long id, ExerciseType type, @Nullable String title, @Nullable ZonedDateTime releaseDate,
@@ -156,7 +165,7 @@ public record ExamForAssessmentDashboardDTO(long id, @Nullable String title, @Nu
             @Nullable Double averageRating, @Nullable Long numberOfRatings, @Nullable DueDateStat numberOfSubmissions, @Nullable DueDateStat totalNumberOfAssessments,
             @Nullable List<DueDateStat> numberOfAssessmentsOfCorrectionRounds, @Nullable Long numberOfComplaints, @Nullable Long numberOfOpenComplaints,
             @Nullable Long numberOfMoreFeedbackRequests, @Nullable Long numberOfOpenMoreFeedbackRequests,
-            @Nullable List<TutorParticipationForAssessmentDashboardDTO> tutorParticipations) {
+            @Nullable List<TutorParticipationForAssessmentDashboardDTO> tutorParticipations, @Nullable List<ExampleSubmissionForAssessmentDashboardDTO> exampleSubmissions) {
 
         static ExerciseForAssessmentDashboardDTO of(Exercise exercise) {
             DueDateStat[] correctionRounds = exercise.getNumberOfAssessmentsOfCorrectionRounds();
@@ -164,27 +173,52 @@ public record ExamForAssessmentDashboardDTO(long id, @Nullable String title, @Nu
             var tutorParticipations = exercise.getTutorParticipations();
             List<TutorParticipationForAssessmentDashboardDTO> tutorParticipationDTOs = Hibernate.isInitialized(tutorParticipations) && tutorParticipations != null
                     && !tutorParticipations.isEmpty() ? tutorParticipations.stream().map(TutorParticipationForAssessmentDashboardDTO::of).toList() : null;
+            var exampleSubmissions = exercise.getExampleSubmissions();
+            List<ExampleSubmissionForAssessmentDashboardDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exampleSubmissions) && exampleSubmissions != null
+                    && !exampleSubmissions.isEmpty() ? exampleSubmissions.stream().map(ExampleSubmissionForAssessmentDashboardDTO::of).toList() : null;
             return new ExerciseForAssessmentDashboardDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getReleaseDate(),
                     exercise.getIncludedInOverallScore(), exercise.isTeamMode(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getSecondCorrectionEnabled(),
                     exercise.getAverageRating(), exercise.getNumberOfRatings(), exercise.getNumberOfSubmissions(), exercise.getTotalNumberOfAssessments(), correctionRoundsList,
                     exercise.getNumberOfComplaints(), exercise.getNumberOfOpenComplaints(), exercise.getNumberOfMoreFeedbackRequests(),
-                    exercise.getNumberOfOpenMoreFeedbackRequests(), tutorParticipationDTOs);
+                    exercise.getNumberOfOpenMoreFeedbackRequests(), tutorParticipationDTOs, exampleSubmissionDTOs);
         }
     }
 
     /**
-     * The current tutor's participation for an exercise on the assessment dashboard. The tutor-participation graph reads
-     * only {@code status} (the tutorial-training example submissions the graph would otherwise read are omitted — they
-     * are unset for exam exercises and lazily uninitialised on this fetch).
+     * The current tutor's participation for an exercise on the assessment dashboard.
      *
-     * @param id     the id of the tutor participation ({@code null} for the synthetic not-participated placeholder)
-     * @param status the tutor participation status (defaults to {@code NOT_PARTICIPATED} when the tutor has not started)
+     * @param id                        the id of the tutor participation ({@code null} for the synthetic not-participated placeholder)
+     * @param status                    the tutor participation status (defaults to {@code NOT_PARTICIPATED} when the tutor has not started)
+     * @param trainedExampleSubmissions the example submissions this tutor has trained on (id + usedForTutorial only; tutor-participation
+     *                                      graph TRAINED-step color — a TRAINED tutor with an unreviewed/unassessed example not yet in this
+     *                                      list must still render orange, not green)
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorParticipationForAssessmentDashboardDTO(@Nullable Long id, @Nullable TutorParticipationStatus status) {
+    public record TutorParticipationForAssessmentDashboardDTO(@Nullable Long id, @Nullable TutorParticipationStatus status,
+            @Nullable List<ExampleSubmissionForAssessmentDashboardDTO> trainedExampleSubmissions) {
 
         static TutorParticipationForAssessmentDashboardDTO of(TutorParticipation tutorParticipation) {
-            return new TutorParticipationForAssessmentDashboardDTO(tutorParticipation.getId(), tutorParticipation.getStatus());
+            var trainedExampleSubmissions = tutorParticipation.getTrainedExampleSubmissions();
+            List<ExampleSubmissionForAssessmentDashboardDTO> trainedExampleSubmissionDTOs = Hibernate.isInitialized(trainedExampleSubmissions) && trainedExampleSubmissions != null
+                    && !trainedExampleSubmissions.isEmpty() ? trainedExampleSubmissions.stream().map(ExampleSubmissionForAssessmentDashboardDTO::of).toList() : null;
+            return new TutorParticipationForAssessmentDashboardDTO(tutorParticipation.getId(), tutorParticipation.getStatus(), trainedExampleSubmissionDTOs);
+        }
+    }
+
+    /**
+     * Minimal example-submission leaf shared by {@link ExerciseForAssessmentDashboardDTO#exampleSubmissions} and
+     * {@link TutorParticipationForAssessmentDashboardDTO#trainedExampleSubmissions}. The tutor-participation graph's
+     * {@code calculateClasses} reads only {@code usedForTutorial} (to split "to review" from "to assess") and relies on
+     * {@code id} for equality when matching a trained submission back to its exercise's example submission.
+     *
+     * @param id              the id of the example submission
+     * @param usedForTutorial whether the example submission is used for tutorial (vs. review) purposes
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record ExampleSubmissionForAssessmentDashboardDTO(long id, boolean usedForTutorial) {
+
+        static ExampleSubmissionForAssessmentDashboardDTO of(ExampleSubmission exampleSubmission) {
+            return new ExampleSubmissionForAssessmentDashboardDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial());
         }
     }
 }

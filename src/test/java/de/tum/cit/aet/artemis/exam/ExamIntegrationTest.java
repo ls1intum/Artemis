@@ -56,7 +56,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -106,6 +111,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -130,6 +137,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTest {
@@ -180,6 +188,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ExampleSubmissionService exampleSubmissionService;
+
+    @Autowired
+    private TutorParticipationService tutorParticipationService;
+
+    @Autowired
+    private TutorParticipationTestRepository tutorParticipationRepository;
+
+    @Autowired
+    private SubmissionService submissionService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -1526,6 +1549,58 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Pin the course projection the client turns into access rights + complaint/feedback flags
         assertThat(receivedExam.course()).isNotNull();
         assertThat(receivedExam.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamForExamAssessmentDashboard_trainedTutorWithUnreviewedExample_bothCollectionsOnWire() throws Exception {
+        // Reproduces the tutor-participation-graph's TRAINED-step colour decision (calculateClasses): it compares
+        // exercise.exampleSubmissions against tutorParticipation.trainedExampleSubmissions (both filtered by
+        // usedForTutorial) to tell a fully-trained tutor (lengths match -> green) from one with a newly-added example
+        // still pending (lengths differ -> orange). Both collections must be present on the wire, with the right
+        // ids, for the client to even make that comparison; a TRAINED tutor with an unreviewed newly-added example
+        // must not silently render green.
+        Course course = courseUtilService.createCourse();
+        course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(course, student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
+        Exam exam = course.getExams().iterator().next();
+        Exam examWithExerciseGroups = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(exam.getId(), false);
+        TextExercise textExercise = (TextExercise) examWithExerciseGroups.getExerciseGroups().getFirst().getExercises().iterator().next();
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        // Example #1: the tutor has already trained on (and assessed) this one.
+        ExampleSubmission trainedExample = participationUtilService.generateExampleSubmission("trained example text", textExercise, false, true);
+        trainedExample = exampleSubmissionService.save(trainedExample);
+        var trainedResult = submissionService.saveNewEmptyResult(trainedExample.getSubmission(), textExercise.getId());
+        trainedResult.setExampleResult(true);
+        resultRepository.save(trainedResult);
+
+        // Example #2: a newly-added example the tutor has NOT trained on yet -- the "unreviewed" example from the finding.
+        ExampleSubmission untrainedExample = participationUtilService.generateExampleSubmission("untrained example text", textExercise, false, true);
+        untrainedExample = exampleSubmissionService.save(untrainedExample);
+        var untrainedResult = submissionService.saveNewEmptyResult(untrainedExample.getSubmission(), textExercise.getId());
+        untrainedResult.setExampleResult(true);
+        resultRepository.save(untrainedResult);
+
+        // The tutor's status is TRAINED, but they have only trained on example #1.
+        TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
+        tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+        tutorParticipation.addTrainedExampleSubmissions(trainedExample);
+        tutorParticipationRepository.save(tutorParticipation);
+
+        ExamForAssessmentDashboardDTO receivedExam = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK,
+                ExamForAssessmentDashboardDTO.class);
+
+        var receivedExercise = receivedExam.exerciseGroups().stream().flatMap(group -> group.exercises().stream()).filter(exercise -> exercise.id() == textExercise.getId())
+                .findFirst().orElseThrow();
+        assertThat(receivedExercise.exampleSubmissions()).as("both example submissions are on the wire").isNotNull()
+                .extracting(ExamForAssessmentDashboardDTO.ExampleSubmissionForAssessmentDashboardDTO::id)
+                .containsExactlyInAnyOrder(trainedExample.getId(), untrainedExample.getId());
+
+        assertThat(receivedExercise.tutorParticipations()).isNotNull().hasSize(1);
+        var receivedTutorParticipation = receivedExercise.tutorParticipations().getFirst();
+        assertThat(receivedTutorParticipation.status()).isEqualTo(TutorParticipationStatus.TRAINED);
+        assertThat(receivedTutorParticipation.trainedExampleSubmissions()).as("only the trained example is in the tutor's trained collection -- the untrained one is absent")
+                .isNotNull().extracting(ExamForAssessmentDashboardDTO.ExampleSubmissionForAssessmentDashboardDTO::id).containsExactly(trainedExample.getId());
     }
 
     @Test
