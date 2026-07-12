@@ -15,9 +15,7 @@ describe('SafeHtmlPipe', () => {
 
     // The pipe returns a trusted SafeHtml wrapper; read the underlying string that DOMPurify produced.
     function unwrap(safeHtml: SafeHtml): string {
-        return (safeHtml && typeof safeHtml === 'object' && 'changingThisBreaksApplicationSecurity' in safeHtml
-            ? (safeHtml as { changingThisBreaksApplicationSecurity: string }).changingThisBreaksApplicationSecurity
-            : '') as string;
+        return (safeHtml as { changingThisBreaksApplicationSecurity?: string })?.changingThisBreaksApplicationSecurity ?? '';
     }
 
     it('strips script tags and event-handler attributes (XSS payload)', () => {
