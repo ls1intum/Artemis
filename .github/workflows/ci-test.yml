@@ -65,7 +65,7 @@ jobs:
             ${{ env.java }}
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
       - name: Java Tests (module-affected)
         if: ${{ !inputs.run_all_tests }}
         # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
