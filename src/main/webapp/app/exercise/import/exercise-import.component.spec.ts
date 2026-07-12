@@ -21,6 +21,10 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseImportComponent', () => {
     setupTestBed({ zoneless: true });
@@ -325,5 +329,59 @@ describe('ExerciseImportComponent', () => {
         comp.sortedColumn = 'COURSE_TITLE';
 
         expect(comp.sortedColumn).toBe('EXAM_TITLE');
+    });
+});
+
+describe('ExerciseImportComponent template', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ExerciseImportComponent>;
+    let comp: ExerciseImportComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject<Exercise | undefined>() } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        })
+            // Render the real template but stub the translate directive so no TranslateService is required.
+            .overrideComponent(ExerciseImportComponent, {
+                remove: { imports: [TranslateDirective] },
+                add: { imports: [MockJhiTranslateDirective] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseImportComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        vi.spyOn(TestBed.inject(QuizExercisePagingService), 'search').mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] }));
+    });
+
+    it('should render the results as a normal table with the header aligned above the rows', () => {
+        const exercise = new QuizExercise(undefined, undefined);
+        exercise.id = 1;
+        exercise.title = 'Some exercise';
+
+        // detect changes first so that ngOnInit runs (it resets the content), then populate the table
+        fixture.detectChanges();
+        comp.content.set({ resultsOnPage: [exercise], numberOfPages: 1 });
+        fixture.detectChanges();
+
+        const table: HTMLTableElement = fixture.nativeElement.querySelector('table');
+        // Regression guard: a bare `flex` class turned the table into a flex row, so the browser
+        // laid out <thead> and <tbody> as side-by-side items (header next to the rows) instead of
+        // stacking them. The table (and its rows) must not carry the flex classes.
+        expect(table.classList.contains('flex')).toBe(false);
+        expect(table.querySelector('thead tr')?.classList.contains('flex-row')).toBe(false);
+        expect(table.querySelector('tbody tr')?.classList.contains('flex-row')).toBe(false);
+
+        // In a normal table every row has the same number of columns as the header, so they align.
+        const headerColumns = table.querySelectorAll('thead tr th').length;
+        const firstRowColumns = table.querySelectorAll('tbody tr:first-child td').length;
+        expect(firstRowColumns).toBe(headerColumns);
     });
 });

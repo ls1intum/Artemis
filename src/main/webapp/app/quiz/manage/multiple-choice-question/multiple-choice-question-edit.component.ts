@@ -84,7 +84,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     readonly questionEditorText = signal('');
     readonly isQuestionCollapsed = signal<boolean>(undefined!);
     reEvaluationInProgress = input<boolean>(false);
-    backupQuestion: MultipleChoiceQuestion;
+    backupQuestion!: MultipleChoiceQuestion; // set in the constructor effect() as a deep copy of the question input
 
     readonly showPreview = computed(() => {
         const markdownEditor = this.markdownEditor();

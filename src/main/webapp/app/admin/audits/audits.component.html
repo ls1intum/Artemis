@@ -1,23 +1,43 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
-    <div class="row">
-        <div class="col-md-5">
-            <h4 jhiTranslate="audits.filter.title"></h4>
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" jhiTranslate="audits.filter.from"></span>
-                </div>
-                <input type="date" class="form-control" name="start" [ngModel]="fromDate()" (ngModelChange)="updateFromDate($event); transition()" required />
-                <div class="input-group-append">
-                    <span class="input-group-text" jhiTranslate="audits.filter.to"></span>
-                </div>
-                <input type="date" class="form-control" name="end" [ngModel]="toDate()" (ngModelChange)="updateToDate($event); transition()" required />
-            </div>
+    <div class="mb-4">
+        <h4 jhiTranslate="audits.filter.title"></h4>
+        <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
+            <p-inputgroup class="w-auto">
+                <p-inputgroup-addon jhiTranslate="audits.filter.from" />
+                <jhi-date-time-picker
+                    #fromPicker
+                    name="start"
+                    inputId="audits-from-date"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [pickerType]="DateTimePickerType.CALENDAR"
+                    [value]="fromDateValue()"
+                    (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
+                    data-testid="audits-from-date"
+                />
+            </p-inputgroup>
+            <p-inputgroup class="w-auto">
+                <p-inputgroup-addon jhiTranslate="audits.filter.to" />
+                <jhi-date-time-picker
+                    #toPicker
+                    name="end"
+                    inputId="audits-to-date"
+                    [hideLabelName]="true"
+                    [hideValidationMessage]="true"
+                    [shouldDisplayTimeZoneWarning]="false"
+                    [pickerType]="DateTimePickerType.CALENDAR"
+                    [value]="toDateValue()"
+                    (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
+                    data-testid="audits-to-date"
+                />
+            </p-inputgroup>
         </div>
     </div>
     @if (audits().length) {
-        <div class="table-responsive">
-            <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
+        <div class="overflow-x-auto" data-testid="audits-table-container">
+            <table class="w-full text-sm border-collapse" aria-describedby="audits-page-heading">
                 <thead>
                     @if (canLoad()) {
                         <tr
@@ -28,29 +48,45 @@
                             (ascendingChange)="ascending.set($event)"
                             (sortChange)="transition()"
                         >
-                            <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
+                            <th scope="col" jhiSortBy="auditEventDate" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" />
+                            </th>
+                            <th scope="col" jhiSortBy="principal" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" />
+                            </th>
+                            <th scope="col" jhiSortBy="auditEventType" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" />
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.data"></span>
+                            </th>
                         </tr>
                     } @else {
                         <tr>
-                            <th scope="col"><span jhiTranslate="audits.table.header.date"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.principal"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.status"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.date"></span>
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.principal"></span>
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.status"></span>
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-start font-semibold border-b border-surface-200 dark:border-surface-700">
+                                <span jhiTranslate="audits.table.header.data"></span>
+                            </th>
                         </tr>
                     }
                 </thead>
                 <tbody>
                     @for (audit of audits(); track audit) {
-                        <tr>
-                            <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
-                            <td>
+                        <tr class="odd:bg-surface-50 even:bg-surface-0 dark:odd:bg-surface-800 dark:even:bg-surface-900">
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">{{ audit.timestamp | artemisDate: 'long' : true }}</td>
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">
                                 <small>{{ audit.principal }}</small>
                             </td>
-                            <td>{{ audit.type }}</td>
-                            <td>
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">{{ audit.type }}</td>
+                            <td class="px-3 py-2 border-b border-surface-100 dark:border-surface-700">
                                 @if (audit.data?.message) {
                                     <span>{{ audit.data.message }}</span>
                                 }
@@ -63,17 +99,17 @@
                 </tbody>
             </table>
         </div>
-        <div>
-            <div class="row justify-content-center">
+        <div class="mt-3">
+            <div class="flex justify-center">
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
-            <div class="row justify-content-center">
+            <div class="flex justify-center">
                 <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
             </div>
         </div>
     } @else {
-        <div class="alert alert-warning">
+        <p-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </div>
+        </p-message>
     }
 </div>

@@ -115,16 +115,16 @@ export class ExamScoresComponent implements OnInit {
     // TODO: Cache already calculated filter dependent statistics
     readonly aggregatedExamResults = signal<AggregatedExamResult>(undefined!);
     readonly aggregatedExerciseGroupResults = signal<AggregatedExerciseGroupResult[]>(undefined!);
-    public noOfExamsFiltered: number;
+    public noOfExamsFiltered = 0;
 
     dataLabelFormatting = this.formatDataLabel.bind(this);
     readonly scores = signal<number[]>(undefined!);
     readonly gradesWithBonus = signal<string[]>(undefined!);
-    lastCalculatedMedianType: MedianType;
+    lastCalculatedMedianType?: MedianType;
     readonly highlightedValue = signal<number | undefined>(undefined);
 
     readonly showOverallMedian = signal<boolean>(undefined!); // Indicates whether the median of all exams is currently highlighted
-    overallChartMedian: number; // This value can vary as it depends on if the user only includes submitted exams or not
+    overallChartMedian = 0; // This value can vary as it depends on if the user only includes submitted exams or not
     readonly overallChartMedianType = signal<MedianType>(undefined!); // We need to distinguish the different overall medians for the toggling
     readonly showPassedMedian = signal<boolean>(undefined!); // Same as above for the median of all passed exams
 

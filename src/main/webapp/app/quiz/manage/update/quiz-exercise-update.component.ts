@@ -137,11 +137,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     isRefinementFabOpen = signal(false);
     isGlobalRefining = signal(false);
     globalRefinementPrompt = signal('');
+    courseCompetenciesCount = signal(0);
     private globalRefinementSubscription?: Subscription;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
-    courseRepository: CourseManagementService;
+    courseRepository!: CourseManagementService; // aliased to the injected courseService in ngOnInit()
     notificationText?: string;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -150,15 +151,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exams: Exam[] = [];
 
     courses: Course[] = [];
-    quizExercises: QuizExercise[];
-    allExistingQuestions: QuizQuestion[];
-    existingQuestions: QuizQuestion[];
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: QuizQuestion[] = [];
+    existingQuestions: QuizQuestion[] = [];
     importFile?: File;
-    importFileName: string;
-    searchQueryText: string;
-    dndFilterEnabled: boolean;
-    mcqFilterEnabled: boolean;
-    shortAnswerFilterEnabled: boolean;
+    importFileName = '';
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
+    shortAnswerFilterEnabled = true;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -456,12 +457,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 finalize(() => this.isGlobalRefining.set(false)),
             )
             .subscribe({
-                next: (results) => {
+                next: ({ results, previousSnapshots }) => {
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
                     }
-                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results, previousSnapshots);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },
