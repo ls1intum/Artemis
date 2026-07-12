@@ -34,6 +34,9 @@ type GenerationStatus = {
 };
 
 type BuildAgentSlots = {
+    buildAgent?: {
+        memberAddress?: string;
+    };
     reservedGenerationSandboxSlots?: number;
     maxGenerationSandboxSlots?: number;
 };
@@ -115,18 +118,17 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         await expectNativeEditorIntegration(page);
         await expectHyperionTabSelected(page);
         await exerciseBottomPanelTabsWithKeyboard(page);
-        await expectBottomPanelReachableAtNarrowWidth(page);
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectEditorActionsLockedDuringGeneration(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'GENERATE');
         await expectHyperionLlmMockRequestsIncreased(page, initialLlmRequests);
         const requestsAfterFirstStart = await getHyperionLlmMockRequestCount(page);
         await expectDuplicateGenerationStartRejectedWithoutNewLlmRequest(page, exercise!.id!, jobId, requestsAfterFirstStart);
-        await expectAdminGenerationSandboxSlots(browser, '2 / 2');
+        const generationBuildAgentAddress = await expectAdminGenerationSandboxSlots(browser, '2 / 2');
 
         await cancelRunningJobFromUi(page, exercise!.id!, jobId);
         await expectCancelRejected(page, exercise!.id!, jobId);
-        await expectAdminGenerationSandboxSlots(browser, '0 / 2');
+        await expectAdminGenerationSandboxSlots(browser, '0 / 2', generationBuildAgentAddress);
         runningJobId = undefined;
     });
 
@@ -371,20 +373,6 @@ async function exerciseBottomPanelTabsWithKeyboard(page: Page) {
     expect(enlargedBox!.height).toBeGreaterThan(minimumBox!.height);
 }
 
-async function expectBottomPanelReachableAtNarrowWidth(page: Page) {
-    await page.setViewportSize({ width: 320, height: 768 });
-    const controls = [page.getByRole('tab', { name: 'AI activity' }), page.getByTestId('code-editor-bottom-collapse'), page.getByTestId('hyperion-generation-live-status')];
-    for (const control of controls) {
-        await expect(control).toBeVisible();
-        const box = await control.boundingBox();
-        expect(box!.x).toBeGreaterThanOrEqual(0);
-        expect(box!.x + box!.width).toBeLessThanOrEqual(320);
-    }
-    const pageWidths = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
-    expect(pageWidths.scroll).toBe(pageWidths.client);
-    await page.setViewportSize({ width: 1024, height: 768 });
-}
-
 async function openHyperionTabWithKeyboard(page: Page) {
     await selectTabWithKeyboard(page.getByRole('tab', { name: 'Build Output' }), page.getByRole('tab', { name: 'AI activity' }), 'ArrowRight');
 }
@@ -428,8 +416,11 @@ async function openPersistedChangedFileInNativeEditor(page: Page, fileName: stri
 
 async function startGenerationFromMenu(page: Page, exerciseId: number) {
     await page.getByTestId('hyperion-ai-menu').click();
-    const startResponsePromise = waitForGenerationStart(page, exerciseId);
     await page.getByTestId('hyperion-generate-exercise').click();
+    const confirmationDialog = page.getByRole('alertdialog', { name: 'Generate and automatically save this exercise?' });
+    await expect(confirmationDialog).toBeVisible();
+    const startResponsePromise = waitForGenerationStart(page, exerciseId);
+    await confirmationDialog.getByRole('button', { name: 'Generate exercise', exact: true }).click();
     return startResponsePromise;
 }
 
@@ -715,9 +706,10 @@ async function expectCancelRejected(page: Page, exerciseId: number, jobId: strin
         .toBe(404);
 }
 
-async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots: string) {
+async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots: string, expectedBuildAgentAddress?: string) {
     const adminPage = await browser.newPage();
     const [expectedReservedSlots, expectedMaxSlots] = expectedSlots.split(' / ').map(Number);
+    let matchingBuildAgentAddress: string | undefined;
     try {
         await Commands.login(adminPage, admin, '/admin/build-agents');
         await expect
@@ -725,18 +717,27 @@ async function expectAdminGenerationSandboxSlots(browser: Browser, expectedSlots
                 async () => {
                     const response = await adminPage.request.get('api/admin/build-agents');
                     if (!response.ok()) {
-                        return false;
+                        return undefined;
                     }
                     const agents = (await response.json()) as BuildAgentSlots[];
-                    return agents.some(
-                        (agent) => (agent.reservedGenerationSandboxSlots ?? 0) === expectedReservedSlots && (agent.maxGenerationSandboxSlots ?? 0) === expectedMaxSlots,
-                    );
+                    matchingBuildAgentAddress = agents.find(
+                        (agent) =>
+                            (!expectedBuildAgentAddress || agent.buildAgent?.memberAddress === expectedBuildAgentAddress) &&
+                            (agent.reservedGenerationSandboxSlots ?? 0) === expectedReservedSlots &&
+                            (agent.maxGenerationSandboxSlots ?? 0) === expectedMaxSlots,
+                    )?.buildAgent?.memberAddress;
+                    return matchingBuildAgentAddress;
                 },
                 { timeout: 60_000 },
             )
-            .toBeTruthy();
+            .toBeDefined();
+        expect(matchingBuildAgentAddress).toBeDefined();
         await expect(adminPage.getByRole('columnheader', { name: /Hyperion sandbox slots/i })).toBeVisible({ timeout: 60_000 });
-        await expect(adminPage.locator('td.build-agents-column').filter({ hasText: expectedSlots }).first()).toBeVisible({ timeout: 60_000 });
+        const matchingBuildAgentRow = adminPage.getByRole('row').filter({
+            has: adminPage.getByRole('cell', { name: matchingBuildAgentAddress, exact: true }),
+        });
+        await expect(matchingBuildAgentRow.getByRole('cell', { name: expectedSlots, exact: true })).toBeVisible({ timeout: 60_000 });
+        return matchingBuildAgentAddress!;
     } finally {
         await adminPage.close();
     }

@@ -18,6 +18,7 @@ import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
@@ -35,11 +36,11 @@ class GenerationWorkspaceServiceTest {
 
     @Test
     void prepareRepositoryForGeneration_removesExerciseArtifactsButKeepsBuildConfiguration() throws Exception {
-        Path root = Files.createTempDirectory("hyperion-generation-seed");
+        Path root = tempFileUtilService().createTempDirectory("hyperion-generation-seed");
         try {
             Files.createDirectories(root.resolve("src/de/test"));
-            Files.writeString(root.resolve("src/de/test/BubbleSort.java"), "class BubbleSort {}");
-            Files.writeString(root.resolve("pom.xml"), "<project />");
+            FileUtils.writeStringToFile(root.resolve("src/de/test/BubbleSort.java").toFile(), "class BubbleSort {}", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(root.resolve("pom.xml").toFile(), "<project />", StandardCharsets.UTF_8);
 
             GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.SOLUTION, GenerationMode.GENERATE);
 
@@ -47,21 +48,21 @@ class GenerationWorkspaceServiceTest {
             assertThat(root.resolve("pom.xml")).hasContent("<project />");
         }
         finally {
-            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+            FileUtils.deleteDirectory(root.toFile());
         }
     }
 
     @Test
     void prepareTestRepositoryForGeneration_removesConventionalAndCategorizedTests() throws Exception {
-        Path root = Files.createTempDirectory("hyperion-generation-tests-seed");
+        Path root = tempFileUtilService().createTempDirectory("hyperion-generation-tests-seed");
         try {
             for (String testRoot : Set.of("test", "behavior/test", "structural/test")) {
                 Path test = root.resolve(testRoot).resolve("de/test/BubbleSortTest.java");
                 Files.createDirectories(test.getParent());
-                Files.writeString(test, "class BubbleSortTest {}");
+                FileUtils.writeStringToFile(test.toFile(), "class BubbleSortTest {}", StandardCharsets.UTF_8);
             }
             Files.createDirectories(root.resolve("behavior"));
-            Files.writeString(root.resolve("behavior/build.gradle"), "plugins {}");
+            FileUtils.writeStringToFile(root.resolve("behavior/build.gradle").toFile(), "plugins {}", StandardCharsets.UTF_8);
 
             GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.TESTS, GenerationMode.GENERATE);
 
@@ -71,24 +72,24 @@ class GenerationWorkspaceServiceTest {
             assertThat(root.resolve("behavior/build.gradle")).hasContent("plugins {}");
         }
         finally {
-            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+            FileUtils.deleteDirectory(root.toFile());
         }
     }
 
     @Test
     void prepareRepositoryForAdaptation_preservesExistingArtifacts() throws Exception {
-        Path root = Files.createTempDirectory("hyperion-adaptation-seed");
+        Path root = tempFileUtilService().createTempDirectory("hyperion-adaptation-seed");
         try {
             Path source = root.resolve("src/de/test/Inventory.java");
             Files.createDirectories(source.getParent());
-            Files.writeString(source, "class Inventory {}");
+            FileUtils.writeStringToFile(source.toFile(), "class Inventory {}", StandardCharsets.UTF_8);
 
             GenerationWorkspaceService.prepareRepositoryForMode(root, RepositoryType.SOLUTION, GenerationMode.ADAPT);
 
             assertThat(source).hasContent("class Inventory {}");
         }
         finally {
-            org.apache.commons.io.FileUtils.deleteDirectory(root.toFile());
+            FileUtils.deleteDirectory(root.toFile());
         }
     }
 

@@ -19,9 +19,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param revertMode      the mode of {@code revertJobId}, used for truthful undo copy
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, @JsonInclude(JsonInclude.Include.ALWAYS) List<ExerciseGenerationEventDTO> events,
-        @JsonInclude(JsonInclude.Include.ALWAYS) List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable, @Nullable String revertJobId,
-        @Nullable GenerationMode revertMode) {
+public record ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, @JsonInclude List<ExerciseGenerationEventDTO> events,
+        @JsonInclude List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, GenerationMode mode, List<ExerciseGenerationEventDTO> events,
             List<ExerciseGenerationFileSnapshotDTO> fileSnapshots, boolean revertAvailable) {
