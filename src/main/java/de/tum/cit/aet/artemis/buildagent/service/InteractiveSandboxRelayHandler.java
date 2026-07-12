@@ -585,8 +585,8 @@ public class InteractiveSandboxRelayHandler {
         }
 
         GenerationSandboxSessionDTO toDto(String containerId, java.util.Optional<Instant> lastActivity) {
-            return new GenerationSandboxSessionDTO(containerId, role, context.jobId(), context.exerciseId(), context.courseId(), context.userLogin(), context.mode(), startedAt,
-                    lastActivity.orElse(startedAt), reservedSlots);
+            return new GenerationSandboxSessionDTO(containerId, role, context.jobId(), context.exerciseId(), context.exerciseTitle(), context.courseId(), context.userLogin(),
+                    context.mode(), startedAt, lastActivity.orElse(startedAt), reservedSlots);
         }
     }
 }

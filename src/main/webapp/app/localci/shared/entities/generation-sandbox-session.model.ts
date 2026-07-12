@@ -6,17 +6,21 @@ export interface GenerationSandboxSession {
     role: GenerationSandboxRole;
     jobId: string;
     exerciseId: number;
+    exerciseTitle: string;
     courseId?: number;
     userLogin: string;
     mode: GenerationMode;
     startedAt: string;
     lastActivityAt: string;
     reservedSlots: number;
+    agentName?: string;
+    stale?: boolean;
 }
 
 export interface GenerationSandboxJob {
     jobId: string;
     exerciseId: number;
+    exerciseTitle: string;
     courseId?: number;
     userLogin: string;
     mode: GenerationMode;
@@ -24,6 +28,8 @@ export interface GenerationSandboxJob {
     lastActivityAt: string;
     reservedSlots: number;
     sessions: GenerationSandboxSession[];
+    agentName?: string;
+    stale?: boolean;
 }
 
 export function groupGenerationSandboxSessions(sessions: GenerationSandboxSession[]): GenerationSandboxJob[] {

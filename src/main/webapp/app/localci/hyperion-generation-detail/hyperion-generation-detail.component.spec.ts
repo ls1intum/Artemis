@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -23,6 +23,7 @@ describe('HyperionGenerationDetailComponent', () => {
             role: 'AUTHORING',
             jobId: 'job-1',
             exerciseId: 42,
+            exerciseTitle: 'Concurrency Lab',
             courseId: 7,
             userLogin: 'instructor',
             mode: 'GENERATE',
@@ -80,7 +81,7 @@ describe('HyperionGenerationDetailComponent', () => {
         expect(fixture.componentInstance.notFound()).toBe(false);
     });
 
-    it('refreshes until a completed generation disappears', async () => {
+    it('preserves the last-known job when a generation naturally ends', async () => {
         vi.useFakeTimers();
         service.getGenerationSandboxes.mockReturnValueOnce(of(sessions)).mockReturnValueOnce(of([]));
         fixture.detectChanges();
@@ -89,22 +90,63 @@ describe('HyperionGenerationDetailComponent', () => {
         await vi.advanceTimersByTimeAsync(5000);
 
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
-        expect(fixture.componentInstance.notFound()).toBe(true);
+        expect(fixture.componentInstance.naturallyEnded()).toBe(true);
+        expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
         fixture.componentInstance.ngOnDestroy();
         vi.useRealTimers();
     });
 
-    it('confirms cancellation and refreshes the job', () => {
+    it('announces release only after a requested cancellation disappears', () => {
+        const cancellation = new Subject<void>();
+        service.cancelGeneration.mockReturnValue(cancellation);
         fixture.componentInstance.ngOnInit();
         const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
         const confirm = vi.spyOn(confirmationService, 'confirm');
-        service.getGenerationSandboxes.mockReturnValueOnce(of([]));
 
         fixture.componentInstance.confirmCancel();
         confirm.mock.calls[0][0].accept?.();
 
         expect(service.cancelGeneration).toHaveBeenCalledWith(42, 'job-1');
+        expect(fixture.componentInstance.canceling()).toBe(true);
+
+        service.getGenerationSandboxes.mockReturnValueOnce(of([]));
+        cancellation.next();
+        cancellation.complete();
+
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
-        expect(fixture.componentInstance.notFound()).toBe(true);
+        expect(fixture.componentInstance.released()).toBe(true);
+        expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
+    });
+
+    it('keeps last-known data when a background refresh fails', () => {
+        service.getGenerationSandboxes.mockReturnValueOnce(of(sessions)).mockReturnValueOnce(throwError(() => new Error('offline')));
+        fixture.componentInstance.ngOnInit();
+
+        fixture.componentInstance.load(false);
+
+        expect(fixture.componentInstance.backgroundRefreshFailed()).toBe(true);
+        expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
+    });
+
+    it('renders localized mode, responsive sessions, and a useful container identifier', () => {
+        service.getGenerationSandboxes.mockReturnValue(of([{ ...sessions[0], sessionId: 'agent-1::0123456789abcdef0123456789abcdef' }]));
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.buildAgents.generationSandboxes.generate');
+        expect(fixture.nativeElement.textContent).not.toContain('GENERATE');
+        expect(fixture.nativeElement.textContent).toContain('Concurrency Lab');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-sessions-scroll"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('summary code').textContent).toContain('0123456789ab…');
+        expect(fixture.nativeElement.querySelector('code[aria-label="0123456789abcdef0123456789abcdef"]').textContent).toContain('0123456789abcdef0123456789abcdef');
+    });
+
+    it('moves focus to the stable back link when the job becomes terminal', () => {
+        fixture.detectChanges();
+
+        fixture.componentInstance.released.set(true);
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="back-to-build-agent"]'));
     });
 });

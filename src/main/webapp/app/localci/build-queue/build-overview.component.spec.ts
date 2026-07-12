@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
@@ -64,6 +64,10 @@ describe('BuildQueueComponent', () => {
     };
 
     const accountServiceMock = { identity: vi.fn(), getAuthenticationState: vi.fn() };
+    const buildAgentsServiceMock = {
+        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
+        getGenerationSandboxes: vi.fn().mockReturnValue(of([])),
+    };
 
     const testCourseId = 123;
 
@@ -297,12 +301,7 @@ describe('BuildQueueComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                {
-                    provide: BuildAgentsService,
-                    useValue: {
-                        getBuildAgentSummary: vi.fn().mockReturnValue(of([])),
-                    },
-                },
+                { provide: BuildAgentsService, useValue: buildAgentsServiceMock },
             ],
             schemas: [NO_ERRORS_SCHEMA],
         });
@@ -316,10 +315,75 @@ describe('BuildQueueComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        buildAgentsServiceMock.getBuildAgentSummary.mockReturnValue(of([]));
+        buildAgentsServiceMock.getGenerationSandboxes.mockReturnValue(of([]));
     });
 
     it('should initialize', () => {
         expect(component).toBeDefined();
+    });
+
+    it('preserves the last-known agent snapshot when a fleet refresh is partial', () => {
+        buildAgentsServiceMock.getBuildAgentSummary.mockReturnValue(
+            of([
+                { buildAgent: { name: 'agent-1' }, maxGenerationSandboxSlots: 2 },
+                { buildAgent: { name: 'agent-2' }, maxGenerationSandboxSlots: 2 },
+                { buildAgent: { name: 'disabled' }, maxGenerationSandboxSlots: 0 },
+            ]),
+        );
+        buildAgentsServiceMock.getGenerationSandboxes.mockImplementation((agentName: string) =>
+            of([
+                {
+                    sessionId: `session-${agentName}`,
+                    role: 'AUTHORING',
+                    jobId: `job-${agentName}`,
+                    exerciseId: agentName === 'agent-1' ? 42 : 43,
+                    exerciseTitle: 'Concurrency Lab',
+                    userLogin: 'instructor',
+                    mode: 'GENERATE',
+                    startedAt: '2026-07-12T09:00:00Z',
+                    lastActivityAt: '2026-07-12T09:01:00Z',
+                    reservedSlots: 2,
+                },
+            ]),
+        );
+
+        component.ngOnInit();
+
+        buildAgentsServiceMock.getGenerationSandboxes.mockImplementation((agentName: string) => (agentName === 'agent-2' ? throwError(() => new Error('offline')) : of([])));
+        component.refreshGenerationJobs();
+
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-agent-2', agentName: 'agent-2', stale: true })]);
+        expect(component.unavailableGenerationAgents()).toBe(1);
+    });
+
+    it('recovers fleet discovery from a live build-agent update', () => {
+        buildAgentsServiceMock.getBuildAgentSummary.mockReturnValue(throwError(() => new Error('offline')));
+        buildAgentsServiceMock.getGenerationSandboxes.mockReturnValue(
+            of([
+                {
+                    sessionId: 'session-agent-1',
+                    role: 'AUTHORING',
+                    jobId: 'job-agent-1',
+                    exerciseId: 42,
+                    exerciseTitle: 'Concurrency Lab',
+                    userLogin: 'instructor',
+                    mode: 'GENERATE',
+                    startedAt: '2026-07-12T09:00:00Z',
+                    lastActivityAt: '2026-07-12T09:01:00Z',
+                    reservedSlots: 2,
+                },
+            ]),
+        );
+
+        component.ngOnInit();
+        expect(component.generationAgentDiscoveryFailed()).toBe(true);
+
+        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+        websocketService.emit('/topic/admin/build-agents', [{ buildAgent: { name: 'agent-1' }, maxGenerationSandboxSlots: 2 }]);
+
+        expect(component.generationAgentDiscoveryFailed()).toBe(false);
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-agent-1', agentName: 'agent-1' })]);
     });
 
     it('should create', () => {

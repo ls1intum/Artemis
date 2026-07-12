@@ -1,0 +1,69 @@
+<div
+    class="overflow-x-auto rounded focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+    data-testid="hyperion-generation-jobs-scroll"
+    role="region"
+    tabindex="0"
+    [attr.aria-label]="'artemisApp.buildAgents.activeHyperionGenerations' | artemisTranslate"
+>
+    <p-table [value]="jobs()" size="small" [stripedRows]="true" styleClass="min-w-[64rem]">
+        <ng-template #header>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.status"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></th>
+                @if (showAgent()) {
+                    <th scope="col" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></th>
+                }
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
+                <th scope="col" jhiTranslate="artemisApp.buildQueue.actions"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-job>
+            <tr [attr.data-stale]="job.stale || null">
+                <td>
+                    @if (job.stale) {
+                        <p-tag severity="warn" [value]="'artemisApp.buildAgents.generationSandboxes.snapshotUnavailable' | artemisTranslate" />
+                    } @else {
+                        <p-tag severity="info" [value]="'artemisApp.buildAgents.generationSandboxes.running' | artemisTranslate" />
+                    }
+                </td>
+                <td>
+                    @if (job.courseId) {
+                        <a [routerLink]="['/course-management', job.courseId, 'programming-exercises', job.exerciseId, 'edit']">
+                            {{ job.exerciseTitle }} (#{{ job.exerciseId }})
+                        </a>
+                    } @else {
+                        {{ job.exerciseTitle }} (#{{ job.exerciseId }})
+                    }
+                </td>
+                <td>{{ modeKey(job.mode) | artemisTranslate }}</td>
+                <td>{{ job.userLogin }}</td>
+                @if (showAgent()) {
+                    <td>
+                        <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: job.agentName }">{{ job.agentName }}</a>
+                    </td>
+                }
+                <td>{{ job.startedAt | artemisDate: 'short' : true }}</td>
+                <td>{{ elapsedSeconds(job.startedAt) | artemisDurationFromSeconds }}</td>
+                <td [title]="job.lastActivityAt | artemisDate: 'long' : true">
+                    {{ elapsedSeconds(job.lastActivityAt) | artemisDurationFromSeconds }}
+                    <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
+                </td>
+                <td>{{ job.reservedSlots }}</td>
+                <td>
+                    <a
+                        data-testid="hyperion-generation-details"
+                        [routerLink]="['/admin/hyperion-generations', job.jobId]"
+                        [queryParams]="{ agentName: job.agentName }"
+                        [attr.aria-label]="('artemisApp.buildAgents.generationSandboxes.viewDetails' | artemisTranslate) + ' ' + job.exerciseId"
+                        jhiTranslate="artemisApp.buildAgents.generationSandboxes.details"
+                    ></a>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

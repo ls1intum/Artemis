@@ -292,7 +292,9 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildAgentsService.getGenerationSandboxes).toHaveBeenCalledWith('agent1');
-        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1', exerciseId: 42, reservedSlots: 2, lastActivityAt: '2026-07-12T09:02:00Z' })]);
+        expect(component.generationJobs()).toEqual([
+            expect.objectContaining({ jobId: 'job-1', exerciseId: 42, reservedSlots: 2, lastActivityAt: '2026-07-12T09:02:00Z', agentName: 'agent1' }),
+        ]);
     });
 
     it('should expose sandbox loading errors without hiding agent details', () => {
@@ -303,6 +305,34 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(component.generationSandboxesLoadFailed()).toBe(true);
         expect(component.buildAgent()).toEqual(mockBuildAgent);
+    });
+
+    it('should preserve last-known sandbox data when refresh fails', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildAgentsService.getGenerationSandboxes
+            .mockReturnValueOnce(
+                of([
+                    {
+                        sessionId: 'authoring',
+                        role: 'AUTHORING',
+                        jobId: 'job-1',
+                        exerciseId: 42,
+                        exerciseTitle: 'Concurrency Lab',
+                        userLogin: 'instructor',
+                        mode: 'GENERATE',
+                        startedAt: '2026-07-12T09:00:00Z',
+                        lastActivityAt: '2026-07-12T09:01:00Z',
+                        reservedSlots: 2,
+                    },
+                ]),
+            )
+            .mockReturnValueOnce(throwError(() => new Error('offline')));
+
+        component.ngOnInit();
+        component['loadGenerationSandboxes']();
+
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1' })]);
+        expect(component.generationSandboxesLoadFailed()).toBe(true);
     });
 
     it('should present sandbox activity as active agent status', () => {

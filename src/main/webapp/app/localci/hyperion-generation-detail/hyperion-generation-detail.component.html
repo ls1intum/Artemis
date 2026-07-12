@@ -1,20 +1,27 @@
 <p-confirmDialog />
 
-<h5 *adminTitleBarTitle id="hyperion-generation-detail-heading" class="mb-0" jhiTranslate="artemisApp.buildAgents.generationSandboxes.detailTitle"></h5>
+<h1 *adminTitleBarTitle id="hyperion-generation-detail-heading" class="mb-0 text-xl" jhiTranslate="artemisApp.buildAgents.generationSandboxes.detailTitle"></h1>
 
 <div *adminTitleBarActions class="flex items-center gap-2">
-    @if (job(); as generation) {
-        <p-button
-            severity="danger"
-            size="small"
-            [loading]="canceling()"
-            (onClick)="confirmCancel()"
-            [ariaLabel]="'artemisApp.buildAgents.generationSandboxes.cancel' | artemisTranslate"
-        >
-            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancel"></span>
+    @if (job() && !released() && !naturallyEnded()) {
+        <p-button severity="danger" size="small" [loading]="canceling()" [disabled]="cancellationRequested()" (onClick)="confirmCancel()">
+            <span
+                [jhiTranslate]="cancellationRequested() ? 'artemisApp.buildAgents.generationSandboxes.cancellationRequested' : 'artemisApp.buildAgents.generationSandboxes.cancel'"
+            ></span>
         </p-button>
     }
 </div>
+
+@if (agentName) {
+    <a
+        #backToAgent
+        data-testid="back-to-build-agent"
+        class="mb-3 inline-block"
+        [routerLink]="['/admin/build-agents/details']"
+        [queryParams]="{ agentName }"
+        jhiTranslate="artemisApp.buildAgents.generationSandboxes.backToAgent"
+    ></a>
+}
 
 @if (loading()) {
     <div class="my-5 flex items-center justify-center gap-2" role="status">
@@ -23,103 +30,164 @@
     </div>
 } @else if (loadFailed()) {
     <p-message severity="error" class="mb-3 block">
-        <div class="flex items-center gap-2">
-            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
-            <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load()">
-                <fa-icon [icon]="faRotate" />
-                <span jhiTranslate="metrics.refresh.button"></span>
-            </p-button>
-        </div>
+        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
+        <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load()">
+            <fa-icon [icon]="faRotate" />
+            <span jhiTranslate="metrics.refresh.button"></span>
+        </p-button>
     </p-message>
 } @else if (notFound()) {
     <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound" />
-} @else if (job(); as generation) {
+}
+
+@if (job(); as generation) {
+    @if (backgroundRefreshFailed()) {
+        <p-message severity="warn" class="mb-3 block">
+            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.refreshFailed"></span>
+            <p-button size="small" severity="secondary" [outlined]="true" (onClick)="load(false)" jhiTranslate="metrics.refresh.button" />
+        </p-message>
+    }
     @if (cancelFailed()) {
         <p-message severity="error" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed" />
     }
+    @if (released()) {
+        <p-message severity="success" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.released" />
+    } @else if (naturallyEnded()) {
+        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.completed" />
+    } @else if (cancellationRequested()) {
+        <p-message severity="info" class="mb-3 block" role="status" jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancellationPending" />
+    }
 
     <div class="mb-3 rounded-lg border p-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <h4 class="mb-0">{{ generation.mode }} · {{ generation.exerciseId }}</h4>
-                <p-tag severity="info" [value]="'artemisApp.buildAgents.generationSandboxes.running' | artemisTranslate" />
+        <div class="flex flex-wrap items-center gap-3">
+            <fa-icon [icon]="released() || naturallyEnded() ? faCircleCheck : faSpinner" [animation]="released() || naturallyEnded() ? undefined : 'spin'" size="2x" />
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 class="mb-0 text-xl">{{ modeKey(generation.mode) | artemisTranslate }} · {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})</h2>
+                <p-tag
+                    [severity]="released() || naturallyEnded() ? 'secondary' : 'info'"
+                    [value]="
+                        (released()
+                            ? 'artemisApp.buildAgents.generationSandboxes.cancelled'
+                            : naturallyEnded()
+                              ? 'artemisApp.buildAgents.generationSandboxes.completedStatus'
+                              : cancellationRequested()
+                                ? 'artemisApp.buildAgents.generationSandboxes.cancelling'
+                                : 'artemisApp.buildAgents.generationSandboxes.running'
+                        ) | artemisTranslate
+                    "
+                />
             </div>
-            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: agentName }" jhiTranslate="artemisApp.buildAgents.generationSandboxes.backToAgent"></a>
         </div>
     </div>
 
     <section class="mb-3 rounded-lg border" aria-labelledby="hyperion-generation-info-heading">
-        <h5 id="hyperion-generation-info-heading" class="border-b px-4 py-2 font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.information"></h5>
-        <dl class="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 p-4">
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.jobId"></dt>
-            <dd>
-                <code>{{ generation.jobId }}</code>
-            </dd>
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></dt>
-            <dd>
-                @if (generation.courseId) {
-                    <a [routerLink]="['/course-management', generation.courseId, 'programming-exercises', generation.exerciseId, 'edit']">{{ generation.exerciseId }}</a>
-                } @else {
-                    {{ generation.exerciseId }}
-                }
-            </dd>
-            @if (generation.courseId) {
-                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.course"></dt>
+        <h3 id="hyperion-generation-info-heading" class="border-b px-4 py-2 text-base font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.information"></h3>
+        <div class="grid grid-cols-1 gap-x-8 p-4 md:grid-cols-2">
+            <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.exercise"></dt>
                 <dd>
-                    <a [routerLink]="['/course-management', generation.courseId]">{{ generation.courseId }}</a>
+                    @if (generation.courseId) {
+                        <a [routerLink]="['/course-management', generation.courseId, 'programming-exercises', generation.exerciseId, 'edit']">
+                            {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})
+                        </a>
+                    } @else {
+                        {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})
+                    }
                 </dd>
-            }
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></dt>
-            <dd>{{ generation.mode }}</dd>
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></dt>
-            <dd>{{ generation.userLogin }}</dd>
+                @if (generation.courseId) {
+                    <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.course"></dt>
+                    <dd>
+                        <a [routerLink]="['/course-management', generation.courseId]">{{ generation.courseId }}</a>
+                    </dd>
+                }
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></dt>
+                <dd>{{ modeKey(generation.mode) | artemisTranslate }}</dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></dt>
+                <dd>{{ generation.userLogin }}</dd>
+            </dl>
+            <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
+                <dt jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></dt>
+                <dd>
+                    <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName }">{{ agentName }}</a>
+                </dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></dt>
+                <dd>{{ generation.reservedSlots }}</dd>
+                <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.jobId"></dt>
+                <dd class="min-w-0">
+                    <code class="select-all break-all">{{ generation.jobId }}</code>
+                </dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="mb-3 rounded-lg border" aria-labelledby="hyperion-generation-timing-heading">
+        <h3 id="hyperion-generation-timing-heading" class="border-b px-4 py-2 text-base font-semibold" jhiTranslate="artemisApp.buildAgents.generationSandboxes.timing"></h3>
+        <dl class="mb-0 grid grid-cols-1 gap-x-4 gap-y-1 p-4 sm:grid-cols-[max-content_minmax(0,1fr)]">
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></dt>
             <dd>{{ generation.startedAt | artemisDate: 'long' : true }}</dd>
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastActivity"></dt>
-            <dd>{{ generation.lastActivityAt | artemisDate: 'long' : true }}</dd>
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></dt>
-            <dd>{{ duration(generation.startedAt) }}</dd>
-            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></dt>
-            <dd>{{ generation.reservedSlots }}</dd>
+            <dd>{{ elapsedSeconds(generation.startedAt) | artemisDurationFromSeconds }}</dd>
+            <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></dt>
+            <dd>
+                {{ elapsedSeconds(generation.lastActivityAt) | artemisDurationFromSeconds }}
+                <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
+                <span class="text-muted-color">({{ generation.lastActivityAt | artemisDate: 'long' : true }})</span>
+            </dd>
         </dl>
     </section>
 
     <section aria-labelledby="hyperion-sandbox-sessions-heading">
-        <h4 id="hyperion-sandbox-sessions-heading" class="flex items-center gap-2">
+        <h3 id="hyperion-sandbox-sessions-heading" class="flex items-center gap-2 text-lg">
             <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessions"></span>
             <p-tag severity="info" [value]="generation.sessions.length.toString()" />
-        </h4>
-        <p-table [value]="generation.sessions" size="small" [stripedRows]="true">
-            <ng-template #header>
-                <tr>
-                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.role"></th>
-                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessionId"></th>
-                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
-                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastActivity"></th>
-                    <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-session>
-                <tr>
-                    <td>
-                        <p-tag
-                            [severity]="session.role === 'VERIFICATION' ? 'success' : 'info'"
-                            [value]="
-                                (session.role === 'VERIFICATION'
-                                    ? 'artemisApp.buildAgents.generationSandboxes.verification'
-                                    : 'artemisApp.buildAgents.generationSandboxes.authoring'
-                                ) | artemisTranslate
-                            "
-                        />
-                    </td>
-                    <td>
-                        <code [title]="session.sessionId">{{ shortSessionId(session.sessionId) }}</code>
-                    </td>
-                    <td>{{ session.startedAt | artemisDate: 'short' : true }}</td>
-                    <td>{{ session.lastActivityAt | artemisDate: 'short' : true }}</td>
-                    <td>{{ session.reservedSlots }}</td>
-                </tr>
-            </ng-template>
-        </p-table>
+        </h3>
+        <div
+            class="overflow-x-auto rounded focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+            data-testid="hyperion-sessions-scroll"
+            role="region"
+            tabindex="0"
+            [attr.aria-label]="'artemisApp.buildAgents.generationSandboxes.sessions' | artemisTranslate"
+        >
+            <p-table [value]="generation.sessions" size="small" [stripedRows]="true" styleClass="min-w-[48rem]">
+                <ng-template #header>
+                    <tr>
+                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.role"></th>
+                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.sessionId"></th>
+                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></th>
+                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></th>
+                        <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.slots"></th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-session>
+                    <tr>
+                        <td>
+                            <p-tag
+                                severity="secondary"
+                                [value]="
+                                    (session.role === 'VERIFICATION'
+                                        ? 'artemisApp.buildAgents.generationSandboxes.verification'
+                                        : 'artemisApp.buildAgents.generationSandboxes.authoring'
+                                    ) | artemisTranslate
+                                "
+                            />
+                        </td>
+                        <td>
+                            <details>
+                                <summary class="cursor-pointer" [attr.aria-label]="'artemisApp.buildAgents.generationSandboxes.showFullId' | artemisTranslate">
+                                    <code>{{ shortSessionId(session.sessionId) }}</code>
+                                </summary>
+                                <code class="select-all break-all" [attr.aria-label]="containerId(session.sessionId)">{{ containerId(session.sessionId) }}</code>
+                            </details>
+                        </td>
+                        <td>{{ session.startedAt | artemisDate: 'short' : true }}</td>
+                        <td [title]="session.lastActivityAt | artemisDate: 'long' : true">
+                            {{ elapsedSeconds(session.lastActivityAt) | artemisDurationFromSeconds }}
+                            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.ago"></span>
+                        </td>
+                        <td>{{ session.reservedSlots }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
     </section>
 }

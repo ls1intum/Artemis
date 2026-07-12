@@ -210,7 +210,7 @@ class InteractiveSandboxRelayRoundTripTest {
     @Test
     void listSessions_reportsMetadataAndPermitOwnershipAcrossTheSessionLifecycle() {
         Instant lastActivity = Instant.parse("2026-07-12T10:15:30Z");
-        SandboxSessionContext context = new SandboxSessionContext("job-42", 123L, 7L, "instructor", "GENERATE");
+        SandboxSessionContext context = new SandboxSessionContext("job-42", 123L, "Sorting exercise", 7L, "instructor", "GENERATE");
         SandboxSessionSpec spec = new SandboxSessionSpec("some-image", null, context);
         when(localSandbox.createSession(any())).thenReturn("loop-container", "verify-container");
         when(localSandbox.lastActivity(anyString())).thenReturn(java.util.Optional.of(lastActivity));
@@ -222,6 +222,7 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(session.role()).isEqualTo(GenerationSandboxSessionDTO.Role.AUTHORING);
             assertThat(session.jobId()).isEqualTo("job-42");
             assertThat(session.exerciseId()).isEqualTo(123L);
+            assertThat(session.exerciseTitle()).isEqualTo("Sorting exercise");
             assertThat(session.courseId()).isEqualTo(7L);
             assertThat(session.userLogin()).isEqualTo("instructor");
             assertThat(session.mode()).isEqualTo("GENERATE");
@@ -682,7 +683,7 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     private static SandboxSessionContext sessionContext() {
-        return new SandboxSessionContext("job", 1L, 2L, "instructor", "GENERATE");
+        return new SandboxSessionContext("job", 1L, "Sorting exercise", 2L, "instructor", "GENERATE");
     }
 
     private static String handle() {

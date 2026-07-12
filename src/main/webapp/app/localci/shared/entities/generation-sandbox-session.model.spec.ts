@@ -6,6 +6,7 @@ describe('groupGenerationSandboxSessions', () => {
         const common = {
             jobId: 'job-1',
             exerciseId: 42,
+            exerciseTitle: 'Concurrency Lab',
             userLogin: 'instructor',
             mode: 'GENERATE',
             reservedSlots: 1,

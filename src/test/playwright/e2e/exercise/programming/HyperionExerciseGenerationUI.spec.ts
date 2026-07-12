@@ -703,13 +703,24 @@ async function expectCancelledGeneration(page: Page, exerciseId: number, jobId: 
 async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: string, exerciseId: number, jobId: string) {
     const adminPage = await newBrowserPage(browser);
     try {
-        await Commands.login(adminPage, admin, `/admin/build-agents/details?agentName=${encodeURIComponent(agentName)}`);
+        await Commands.login(adminPage, admin, '/admin/build-overview');
         const generationSection = adminPage.locator('#active-hyperion-generations');
-        await expect(generationSection.getByRole('row').filter({ hasText: exerciseId.toString() })).toBeVisible({ timeout: 60_000 });
-        await generationSection.getByRole('link', { name: new RegExp(`generation details.*${exerciseId}`, 'i') }).click();
+        await adminPage.setViewportSize({ width: 390, height: 844 });
+        const fleetJobsRegion = adminPage.getByTestId('hyperion-generation-jobs-scroll');
+        await fleetJobsRegion.focus();
+        await expect(fleetJobsRegion).toBeFocused();
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        const generationRow = generationSection.getByRole('row').filter({ hasText: exerciseId.toString() });
+        await expect(generationRow).toContainText(agentName, { timeout: 60_000 });
+        await generationRow.getByTestId('hyperion-generation-details').click();
         await expect(adminPage.getByTestId('admin-body').getByText(jobId, { exact: true })).toBeVisible({ timeout: 60_000 });
         await expect(adminPage.getByRole('heading', { name: 'Sandbox sessions' })).toBeVisible();
         await expect(adminPage.getByText('Authoring', { exact: true })).toBeVisible();
+        const sessionsRegion = adminPage.getByTestId('hyperion-sessions-scroll');
+        await sessionsRegion.focus();
+        await expect(sessionsRegion).toBeFocused();
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+        await adminPage.setViewportSize({ width: 1440, height: 1100 });
 
         const cancelResponsePromise = adminPage.waitForResponse(
             (response) => response.request().method() === 'DELETE' && response.url().includes(`/api/admin/exercises/${exerciseId}/hyperion-generation-jobs/${jobId}/cancel`),
@@ -717,9 +728,9 @@ async function cancelRunningJobFromAdminDetails(browser: Browser, agentName: str
         );
         await adminPage.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         const confirmationDialog = adminPage.getByRole('alertdialog', { name: 'Cancel Hyperion generation' });
-        await confirmationDialog.getByRole('button', { name: 'Yes', exact: true }).click();
+        await confirmationDialog.getByRole('button', { name: 'Cancel generation', exact: true }).click();
         expect((await cancelResponsePromise).ok()).toBeTruthy();
-        await expect(adminPage.getByText('This Hyperion generation is no longer active on the selected build agent.', { exact: true })).toBeVisible({ timeout: 60_000 });
+        await expect(adminPage.getByText('Generation cancelled and sandbox capacity released.', { exact: true })).toBeVisible({ timeout: 60_000 });
     } finally {
         await adminPage.context().close();
     }

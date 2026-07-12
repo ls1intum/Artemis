@@ -8,6 +8,10 @@
                     <span jhiTranslate="artemisApp.buildQueue.running"></span>
                     <p-tag severity="info" styleClass="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
                 </p-button>
+                <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('active-hyperion-generations-heading')">
+                    <span jhiTranslate="artemisApp.buildAgents.activeHyperionGenerations"></span>
+                    <p-tag severity="info" styleClass="ms-1" [value]="generationJobs().length.toString()" />
+                </p-button>
                 <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-queued-heading')">
                     <span jhiTranslate="artemisApp.buildQueue.queued"></span>
                     <p-tag severity="info" styleClass="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
@@ -55,6 +59,40 @@
 
     <div class="build-queue-main-content">
         <jhi-build-job-statistics #statisticsComponent />
+
+        @if (isAdministrationView()) {
+            <section id="active-hyperion-generations" class="mb-5" aria-labelledby="active-hyperion-generations-heading">
+                <div class="mb-3 flex flex-wrap items-center gap-2">
+                    <h5 id="active-hyperion-generations-heading" class="mb-0 flex items-center gap-2">
+                        <span jhiTranslate="artemisApp.buildAgents.activeHyperionGenerations"></span>
+                        <p-tag severity="info" [value]="generationJobs().length.toString()" />
+                    </h5>
+                    <p-button size="small" severity="secondary" [outlined]="true" [loading]="generationJobsLoading()" (onClick)="loadBuildAgents()">
+                        <fa-icon [icon]="faSync" />
+                        <span jhiTranslate="metrics.refresh.button"></span>
+                    </p-button>
+                    @if (generationLastRefreshed(); as refreshed) {
+                        <span class="text-muted-color text-sm">
+                            <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastRefreshed"></span>
+                            {{ refreshed | date: 'mediumTime' }}
+                        </span>
+                    }
+                </div>
+                @if (generationAgentDiscoveryFailed()) {
+                    <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.discoveryUnavailable" />
+                }
+                @if (unavailableGenerationAgents()) {
+                    <p-message severity="warn" class="mb-3 block">
+                        <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.partialUnavailable" [translateValues]="{ count: unavailableGenerationAgents() }"></span>
+                    </p-message>
+                }
+                @if (generationJobs().length) {
+                    <jhi-hyperion-generation-jobs-table [jobs]="generationJobs()" [showAgent]="true" />
+                } @else if (!generationJobsLoading() && !generationAgentDiscoveryFailed()) {
+                    <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.fleetEmpty"></p>
+                }
+            </section>
+        }
 
         <div class="mb-5">
             <div class="flex items-center gap-3 mb-3">

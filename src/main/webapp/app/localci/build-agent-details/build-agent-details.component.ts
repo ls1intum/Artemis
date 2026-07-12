@@ -34,8 +34,7 @@ import { RunningJobsTableComponent } from 'app/localci/build-queue/tables/runnin
 import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finished-jobs-table/finished-jobs-table.component';
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
 import { GenerationSandboxSession, groupGenerationSandboxSessions } from 'app/localci/shared/entities/generation-sandbox-session.model';
-import { TableModule } from 'primeng/table';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -66,8 +65,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         AdminTitleBarActionsDirective,
         RunningJobsTableComponent,
         FinishedJobsTableComponent,
-        TableModule,
-        ArtemisTranslatePipe,
+        HyperionGenerationJobsTableComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -345,21 +343,14 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.generationSandboxesLoadFailed.set(false);
         this.generationSandboxesSubscription = this.buildAgentsService.getGenerationSandboxes(agentName).subscribe({
             next: (sessions) => {
-                this.generationSandboxes.set(sessions);
+                this.generationSandboxes.set(sessions.map((session) => ({ ...session, agentName })));
                 this.generationSandboxesLoading.set(false);
             },
             error: () => {
-                this.generationSandboxes.set([]);
                 this.generationSandboxesLoading.set(false);
                 this.generationSandboxesLoadFailed.set(true);
             },
         });
-    }
-
-    generationDuration(startedAt: string): string {
-        const seconds = Math.max(0, dayjs().diff(dayjs(startedAt), 'seconds'));
-        const minutes = Math.floor(seconds / 60);
-        return minutes > 0 ? `${minutes}m ${seconds % 60}s` : `${seconds}s`;
     }
 
     /**

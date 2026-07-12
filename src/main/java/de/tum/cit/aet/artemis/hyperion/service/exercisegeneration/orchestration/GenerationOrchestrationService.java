@@ -165,7 +165,8 @@ public class GenerationOrchestrationService {
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
-        SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise, new SandboxSessionContext(jobId, exercise.getId(), courseId, user.getLogin(), mode.name()));
+        SandboxSessionSpec sessionSpec = workspace.sessionSpec(exercise,
+                new SandboxSessionContext(jobId, exercise.getId(), exercise.getTitle(), courseId, user.getLogin(), mode.name()));
         Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
         try {
             emit(progress, "Setting up the build environment");
