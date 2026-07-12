@@ -10,13 +10,11 @@ import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
-import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 
 @Conditional(LectureEnabled.class)
@@ -41,10 +39,7 @@ public class IrisLectureUnitSyncService {
      * @param snapshot the current lecture unit snapshot
      */
     public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
-        IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
-        state.setMetadataHash(metadataHash(snapshot));
-        markDirty(state);
-        repository.save(state);
+        repository.markDirty(snapshot.lectureUnitId(), metadataHash(snapshot), null, ZonedDateTime.now());
         publishAfterCommit(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
@@ -54,10 +49,7 @@ public class IrisLectureUnitSyncService {
      * @param snapshot the current lecture unit snapshot
      */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
-        IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
-        state.setVisibilityHash(visibilityHash(snapshot));
-        markDirty(state);
-        repository.save(state);
+        repository.markDirty(snapshot.lectureUnitId(), null, visibilityHash(snapshot), ZonedDateTime.now());
         publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId()));
     }
 
@@ -73,28 +65,6 @@ public class IrisLectureUnitSyncService {
                 eventPublisher.publishEvent(event);
             }
         });
-    }
-
-    private IrisLectureUnitSyncState stateFor(Long lectureUnitId) {
-        return repository.findByLectureUnitId(lectureUnitId).orElseGet(() -> createState(lectureUnitId));
-    }
-
-    private IrisLectureUnitSyncState createState(Long lectureUnitId) {
-        IrisLectureUnitSyncState state = new IrisLectureUnitSyncState();
-        state.setLectureUnitId(lectureUnitId);
-        state.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
-
-        try {
-            return repository.saveAndFlush(state);
-        }
-        catch (DataIntegrityViolationException e) {
-            return repository.findByLectureUnitId(lectureUnitId).orElseThrow(() -> e);
-        }
-    }
-
-    private static void markDirty(IrisLectureUnitSyncState state) {
-        state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
-        state.setNextRetryAt(ZonedDateTime.now());
     }
 
     private static String metadataHash(LectureContentUpdateSnapshot snapshot) {

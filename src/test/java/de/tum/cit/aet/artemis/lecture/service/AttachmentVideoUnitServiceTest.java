@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +30,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
@@ -114,6 +119,32 @@ class AttachmentVideoUnitServiceTest {
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitUsesSubmittedHiddenPagesForVisibilityClassification() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var existingSlide = new Slide();
+        existingSlide.setId(21L);
+        existingSlide.setSlideNumber(1);
+        existingSlide.setHidden(null);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(existingSlide));
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = mock(MultipartFile.class);
+        when(uploadedFile.isEmpty()).thenReturn(false);
+        when(uploadedFile.getOriginalFilename()).thenReturn("lecture.pdf");
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        ZonedDateTime hiddenUntil = ZonedDateTime.parse("2026-07-10T12:00:00Z");
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, List.of(new HiddenPageInfoDTO("21", hiddenUntil, null)), List.of(new SlideOrderDTO("21", 1)),
+                Set.of());
+
+        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsOnlyKeys(1);
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(hiddenUntil.toInstant());
     }
 
     @Test

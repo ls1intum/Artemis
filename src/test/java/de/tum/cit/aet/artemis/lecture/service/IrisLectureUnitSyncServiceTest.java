@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -21,9 +24,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 
@@ -47,12 +50,13 @@ class IrisLectureUnitSyncServiceTest {
     @BeforeEach
     void setUp() {
         service = new IrisLectureUnitSyncService(repository, eventPublisher);
+        doCallRealMethod().when(repository).markDirty(anyLong(), nullable(String.class), nullable(String.class), any(ZonedDateTime.class));
+        when(repository.findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID)).thenReturn(Optional.of(new AttachmentVideoUnit()));
     }
 
     @Test
     void markMetadataDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot();
 
@@ -74,7 +78,6 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void markVisibilityDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL, 1, HIDDEN_UNTIL.plusDays(1)));
 
@@ -97,7 +100,6 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void markMetadataDirtyPublishesEventOnlyAfterActiveTransactionCommits() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         TransactionSynchronizationManager.initSynchronization();
         try {
@@ -122,11 +124,6 @@ class IrisLectureUnitSyncServiceTest {
     void markingDirtyAgainReusesExistingState() {
         AtomicReference<IrisLectureUnitSyncState> persistedState = new AtomicReference<>();
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenAnswer(invocation -> Optional.ofNullable(persistedState.get()));
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> {
-            IrisLectureUnitSyncState state = invocation.getArgument(0);
-            persistedState.set(state);
-            return state;
-        });
         when(repository.save(any())).thenAnswer(invocation -> {
             IrisLectureUnitSyncState state = invocation.getArgument(0);
             persistedState.set(state);
@@ -145,7 +142,6 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void metadataHashIsDeterministicForEquivalentInput() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var firstSnapshot = snapshot();
         var secondSnapshot = snapshot();
@@ -161,7 +157,6 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void visibilityHashIsDeterministicForEquivalentInputAndChangesWithHiddenState() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
-        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var firstSnapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL.plusDays(1), 1, HIDDEN_UNTIL));
         var equivalentSnapshotWithDifferentInsertionOrder = snapshot(slideHiddenMap(1, HIDDEN_UNTIL, 2, HIDDEN_UNTIL.plusDays(1)));
@@ -179,20 +174,21 @@ class IrisLectureUnitSyncServiceTest {
     }
 
     @Test
-    void markingDirtyReloadsStateWhenConcurrentCreateAlreadyInsertedRow() {
-        var existingState = new IrisLectureUnitSyncState();
-        existingState.setLectureUnitId(LECTURE_UNIT_ID);
-        existingState.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
-        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty(), Optional.of(existingState));
-        when(repository.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("duplicate lecture unit state"));
-        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    void metadataAndVisibilityDirtyMarksPreserveBothHashesOnInitiallyMissingState() {
+        AtomicReference<IrisLectureUnitSyncState> persistedState = new AtomicReference<>();
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenAnswer(invocation -> Optional.ofNullable(persistedState.get()));
+        when(repository.save(any())).thenAnswer(invocation -> {
+            IrisLectureUnitSyncState state = invocation.getArgument(0);
+            persistedState.set(state);
+            return state;
+        });
 
+        service.markVisibilityDirtyAfterCommit(snapshot());
         service.markMetadataDirtyAfterCommit(snapshot());
 
-        verify(repository).saveAndFlush(any(IrisLectureUnitSyncState.class));
-        verify(repository).save(existingState);
-        assertThat(existingState.getMetadataHash()).hasSize(64);
-        assertThat(existingState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
+        assertThat(persistedState.get().getVisibilityHash()).hasSize(64);
+        assertThat(persistedState.get().getMetadataHash()).hasSize(64);
+        verify(repository, times(2)).findAttachmentVideoUnitForUpdateById(LECTURE_UNIT_ID);
     }
 
     private static LectureContentUpdateSnapshot snapshot() {
