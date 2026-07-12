@@ -65,11 +65,11 @@ class GocastConnectorServiceTest {
     @Test
     void listAdministeredCoursesSendsCorrectUrlAndHeadersAndMapsDtoFields() {
         mockServer.expect(requestTo(BASE_URL + "/integration/users/" + LRZ_ID + "/administered-courses?year=2026&term=W")).andExpect(method(HttpMethod.GET))
-                .andExpect(header(HttpHeaders.AUTHORIZATION, BEARER)).andExpect(header("X-On-Behalf-Of", LRZ_ID)).andRespond(withSuccess("""
-                        [
+                .andExpect(header(HttpHeaders.AUTHORIZATION, BEARER)).andExpect(headerDoesNotExist("X-On-Behalf-Of")).andRespond(withSuccess("""
+                        {"courses":[
                           {"id":42,"name":"Eidi","slug":"eidi","year":2026,"teachingTerm":"W","vodEnabled":true,"visibility":"loggedin"},
                           {"id":99,"name":"TGI","slug":"tgi","year":2026,"teachingTerm":"W","vodEnabled":false,"visibility":"public"}
-                        ]""", MediaType.APPLICATION_JSON));
+                        ]}""", MediaType.APPLICATION_JSON));
 
         List<GocastCourseDTO> result = connector.listAdministeredCourses(LRZ_ID, 2026, "W");
 
@@ -109,9 +109,9 @@ class GocastConnectorServiceTest {
     void listCourseStreamsSendsCorrectUrlAndBearerOnlyNoOboHeader() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(headerDoesNotExist("X-On-Behalf-Of")).andRespond(withSuccess("""
-                        [
+                        {"streams":[
                           {"streamId":1234,"name":"Lecture 1","private":false}
-                        ]""", MediaType.APPLICATION_JSON));
+                        ]}""", MediaType.APPLICATION_JSON));
 
         List<GocastStreamDTO> result = connector.listCourseStreams(42L);
 

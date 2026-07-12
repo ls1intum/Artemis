@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
  * <p>
  * Implements the four integration endpoints required by Phase 1:
  * <ul>
- * <li>EP1 — {@code GET /integration/users/{lrzId}/administered-courses} (with OBO)</li>
+ * <li>EP1 — {@code GET /integration/users/{lrzId}/administered-courses} (bearer only)</li>
  * <li>EP8 — {@code GET /integration/courses/{courseId}/streams} (bearer only)</li>
  * <li>EP2 — {@code POST /integration/courses/{courseId}/streams/{streamId}/playback-token} (with OBO)</li>
  * <li>EP7 — {@code GET /integration/courses/{courseId}/binding-status} (bearer only)</li>
@@ -81,7 +81,8 @@ public class GocastConnectorService {
      * EP1 — Lists the TUM Live courses directly administered by the given user.
      * <p>
      * Sends {@code GET /integration/users/{lrzId}/administered-courses?year=&term=} with
-     * {@code Authorization: Bearer <token>} and {@code X-On-Behalf-Of: <lrzId>}.
+     * {@code Authorization: Bearer <token>}. The path identifies the target user; EP1 does not use
+     * the on-behalf-of header.
      *
      * @param lrzId the TUM LRZ ID of the user whose administered courses are requested
      * @param year  the academic year (e.g. {@code 2026})
@@ -92,10 +93,10 @@ public class GocastConnectorService {
     public List<GocastCourseDTO> listAdministeredCourses(String lrzId, int year, String term) {
         log.debug("EP1 listAdministeredCourses: year={}, term={}", year, term);
         try {
-            GocastCourseDTO[] result = restClient.get()
+            ListAdministeredCoursesResponse response = restClient.get()
                     .uri(b -> b.path("/integration/users/{lrzId}/administered-courses").queryParam("year", year).queryParam("term", term).build(lrzId))
-                    .header(HttpHeaders.AUTHORIZATION, bearerToken).header(HEADER_ON_BEHALF_OF, lrzId).retrieve().body(GocastCourseDTO[].class);
-            return result != null ? List.of(result) : List.of();
+                    .header(HttpHeaders.AUTHORIZATION, bearerToken).retrieve().body(ListAdministeredCoursesResponse.class);
+            return response != null && response.courses() != null ? response.courses() : List.of();
         }
         catch (RestClientException ex) {
             throw translate("EP1 listAdministeredCourses failed", ex);
@@ -115,9 +116,9 @@ public class GocastConnectorService {
     public List<GocastStreamDTO> listCourseStreams(long gocastCourseId) {
         log.debug("EP8 listCourseStreams: courseId={}", gocastCourseId);
         try {
-            GocastStreamDTO[] result = restClient.get().uri("/integration/courses/{courseId}/streams", gocastCourseId).header(HttpHeaders.AUTHORIZATION, bearerToken).retrieve()
-                    .body(GocastStreamDTO[].class);
-            return result != null ? List.of(result) : List.of();
+            ListCourseStreamsResponse response = restClient.get().uri("/integration/courses/{courseId}/streams", gocastCourseId).header(HttpHeaders.AUTHORIZATION, bearerToken)
+                    .retrieve().body(ListCourseStreamsResponse.class);
+            return response != null && response.streams() != null ? response.streams() : List.of();
         }
         catch (RestClientException ex) {
             throw translate("EP8 listCourseStreams failed for courseId=" + gocastCourseId, ex);
@@ -213,5 +214,13 @@ public class GocastConnectorService {
      * the JSON property, so no {@code @JsonProperty} is required.
      */
     private record BindingStatusResponse(boolean bound) {
+    }
+
+    /** Internal projection of the wrapper returned by EP1. */
+    private record ListAdministeredCoursesResponse(List<GocastCourseDTO> courses) {
+    }
+
+    /** Internal projection of the wrapper returned by EP8. */
+    private record ListCourseStreamsResponse(List<GocastStreamDTO> streams) {
     }
 }
