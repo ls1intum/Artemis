@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.conduction.ExamExerciseForConductionDTO;
-import de.tum.cit.aet.artemis.exam.dto.conduction.ExamForConductionDTO;
+import de.tum.cit.aet.artemis.exam.dto.summary.ExamForSummaryDTO;
 
 /**
  * Response projection of a {@link StudentExam} as carried in the {@code studentExam} field of
@@ -24,6 +24,16 @@ import de.tum.cit.aet.artemis.exam.dto.conduction.ExamForConductionDTO;
  * result graph. The grade-summary endpoint populates the same field for a student caller (masked graph), but the
  * client discards it there and reloads the exam via the separate {@code /summary} fetch, so only the id round-trips.
  * <p>
+ * The nested exam is projected to {@link ExamForSummaryDTO} rather than the bare conduction exam: the instructor detail
+ * screen shares the {@code exam-result-summary} component with the student {@code /summary} path, which gates the
+ * results / example-solution / complaint-review UI on {@code exam.publishResultsDate},
+ * {@code exam.exampleSolutionPublicationDate} and {@code exam.examStudentReviewStart/End}. A bare
+ * {@link de.tum.cit.aet.artemis.exam.dto.conduction.ExamForConductionDTO} lacks those four fields, so the detail screen
+ * always fell back to "results not yet published"; {@link ExamForSummaryDTO} wraps that same conduction projection
+ * (unwrapped, so the wire shape is unchanged) and adds exactly those publish-gate fields. The instructor detail screen
+ * reads a superset of what the summary path reads, and its identity / proctoring / exercise leaves hang off this record
+ * (not off the exam leaf), so switching the exam leaf loses nothing.
+ * <p>
  * The exercise / exam graph is byte-compatible with the already-shipped conduction projection (results are
  * assessor-/feedback-stripped by {@code setResultIfNecessary} in both graphs, and the detail client does not read the
  * exercise-group back-reference the conduction leaf drops), so those leaves are reused verbatim. Only the user and
@@ -33,7 +43,7 @@ import de.tum.cit.aet.artemis.exam.dto.conduction.ExamForConductionDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentExamForDetailDTO(long id, Integer workingTime, Boolean started, ZonedDateTime startedDate, Boolean submitted, ZonedDateTime submissionDate, boolean testRun,
-        Boolean ended, boolean finished, Instant createdDate, UserForDetailDTO user, ExamForConductionDTO exam, List<ExamSessionForDetailDTO> examSessions,
+        Boolean ended, boolean finished, Instant createdDate, UserForDetailDTO user, ExamForSummaryDTO exam, List<ExamSessionForDetailDTO> examSessions,
         List<ExamExerciseForConductionDTO> exercises) {
 
     /**
@@ -54,6 +64,6 @@ public record StudentExamForDetailDTO(long id, Integer workingTime, Boolean star
                 : entityExercises.stream().map(ExamExerciseForConductionDTO::of).toList();
         return new StudentExamForDetailDTO(studentExam.getId(), studentExam.getWorkingTime(), studentExam.isStarted(), studentExam.getStartedDate(), studentExam.isSubmitted(),
                 studentExam.getSubmissionDate(), studentExam.isTestRun(), studentExam.isEnded(), studentExam.isFinished(), studentExam.getCreatedDate(),
-                UserForDetailDTO.of(studentExam.getUser()), ExamForConductionDTO.of(studentExam.getExam()), examSessions, exercises);
+                UserForDetailDTO.of(studentExam.getUser()), ExamForSummaryDTO.of(studentExam.getExam()), examSessions, exercises);
     }
 }

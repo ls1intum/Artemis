@@ -173,6 +173,36 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
     }
 
     /**
+     * FINDING 3: the instructor student-exam detail screen ({@code getStudentExam}, grade DTO path) shares the
+     * {@code exam-result-summary} component with the student {@code /summary} path and gates the results / example-solution /
+     * complaint-review UI on {@code exam.publishResultsDate}, {@code exam.exampleSolutionPublicationDate} and
+     * {@code exam.examStudentReviewStart/End}. The nested {@code studentExam.exam} must therefore carry all four (plus the
+     * course's {@code accuracyOfScores}); with a bare conduction exam projection they were absent and the screen always fell
+     * back to "results not yet published". Uses a published exam with non-default values, since a wire dump using an
+     * unpublished fixture (null publishResultsDate) is exactly how this was missed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void instructorGetStudentExamWireCarriesPublishGateFieldsAndAccuracyOfScores() throws Exception {
+        StudentExam studentExam = createSubmittedStudentExamWithResult(false).studentExam();
+
+        JsonNode gradeWire = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId(), HttpStatus.OK, JsonNode.class);
+
+        JsonNode studentExamNode = gradeWire.get("studentExam");
+        assertThat(studentExamNode).as("grade DTO wire must carry the nested student exam").isNotNull();
+        JsonNode examNode = studentExamNode.get("exam");
+        assertThat(examNode).as("instructor detail wire must carry the nested exam").isNotNull();
+        assertThat(examNode.hasNonNull("publishResultsDate")).as("publishResultsDate must be on the instructor detail wire").isTrue();
+        assertThat(examNode.hasNonNull("exampleSolutionPublicationDate")).as("exampleSolutionPublicationDate must be on the instructor detail wire").isTrue();
+        assertThat(examNode.hasNonNull("examStudentReviewStart")).as("examStudentReviewStart must be on the instructor detail wire").isTrue();
+        assertThat(examNode.hasNonNull("examStudentReviewEnd")).as("examStudentReviewEnd must be on the instructor detail wire").isTrue();
+
+        JsonNode courseNode = examNode.get("course");
+        assertThat(courseNode).as("instructor detail wire must carry the nested course").isNotNull();
+        assertThat(courseNode.path("accuracyOfScores").asInt()).isEqualTo(2);
+    }
+
+    /**
      * FINDING 2 (student side): the masked student-facing summary wire must keep carrying {@code hasComplaint} exactly as
      * the pre-DTO entity wire did (never stripped by {@code Result#filterSensitiveInformation}), including the explicit
      * {@code false} case rather than silently omitting the field.
