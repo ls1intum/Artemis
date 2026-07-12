@@ -5,7 +5,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
-import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson, setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -153,7 +153,7 @@ export class CourseMessagesPage {
         );
         await this.page.locator('.p-dialog-content #submitButton').click();
         const response = await responsePromise;
-        const channel: ChannelDTO = await response.json();
+        const channel: ChannelDTO = await readResponseJson(response);
         await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
         expect(channel.isAnnouncementChannel).toBe(isAnnouncementChannel);
         expect(channel.isPublic).toBe(isPublic);
@@ -426,7 +426,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats') && !resp.url().includes('/register') && resp.request().method() === 'POST');
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
-        const groupChat: GroupChat = await response.json();
+        const groupChat: GroupChat = await readResponseJson(response);
         // Wait for Angular to navigate to the new conversation. Under heavy parallel multi-node
         // load the SPA's internal navigation to the new conversation URL occasionally races a
         // late page reload and the query-param update gets dropped — fall back to navigating

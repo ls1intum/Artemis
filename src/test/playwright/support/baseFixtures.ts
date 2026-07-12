@@ -128,9 +128,21 @@ const WARM_ROUTES = [
  * Best-effort throughout. Gated to CI (where the flake manifests at worker scale); disable with
  * PW_WARM_CACHE=off.
  */
+let warmCacheStatusLogged = false;
+
 async function warmChunksInContext(page: Page): Promise<void> {
     const jwt = readAdminJwt();
-    if (!jwt) return;
+    if (!jwt) {
+        if (!warmCacheStatusLogged) {
+            warmCacheStatusLogged = true;
+            console.log('[warm-cache] skipped — admin JWT not available');
+        }
+        return;
+    }
+    if (!warmCacheStatusLogged) {
+        warmCacheStatusLogged = true;
+        console.log(`[warm-cache] in-context chunk warm-up ACTIVE (${WARM_ROUTES.length} routes per test)`);
+    }
 
     const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
     const url = new URL(baseURL);

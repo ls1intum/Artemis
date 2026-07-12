@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
-import { Browser, Locator, Page, expect } from '@playwright/test';
+import { Browser, Locator, Page, Response, expect } from '@playwright/test';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
@@ -30,6 +30,60 @@ dayjs.extend(utc);
 /*
  * This file contains all the global utility functions.
  */
+
+/**
+ * True for the Chrome DevTools Protocol body-eviction error, i.e.
+ * `response.json: Protocol error (Network.getResponseBody): No data found for resource ...`.
+ */
+function isResponseBodyEvicted(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.includes('getResponseBody') || message.includes('No data found for resource');
+}
+
+/**
+ * Read a Playwright {@link Response} body as JSON, resilient to Chrome's CDP
+ * "Network.getResponseBody: No data found for resource" eviction race.
+ *
+ * Under the Angular 22 runtime + parallel E2E load, large chunk/data responses churn Chrome's
+ * per-renderer network buffer fast enough to evict a just-arrived response body before the test
+ * reads it — even though the request itself succeeded server-side. This helper hardens the common
+ * `await response.json()` pattern:
+ *   1. read the body as JSON (fast path);
+ *   2. on an eviction error, re-read the raw body once — catches a transient (non-eviction) CDP hiccup;
+ *   3. for idempotent **GET** requests, replay the request to fetch a fresh body — the only read-side
+ *      recovery from a true eviction (a non-idempotent request must not be replayed: it would repeat
+ *      the side effect, e.g. create a second entity);
+ *   4. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
+ *
+ * Note: a truly evicted **non-GET** body cannot be recovered read-side (step 4). Reducing the eviction
+ * itself is handled elsewhere (enlarged CDP network buffer + per-test chunk warm-up in baseFixtures).
+ */
+export async function readResponseJson<T = any>(response: Response): Promise<T> {
+    try {
+        return (await response.json()) as T;
+    } catch (error) {
+        if (!isResponseBodyEvicted(error)) {
+            throw error;
+        }
+        try {
+            return JSON.parse((await response.body()).toString('utf-8')) as T;
+        } catch (bodyError) {
+            if (!isResponseBodyEvicted(bodyError)) {
+                throw bodyError;
+            }
+        }
+        const request = response.request();
+        if (request.method() === 'GET') {
+            const replay = await response.frame().page().request.fetch(request);
+            return (await replay.json()) as T;
+        }
+        throw new Error(
+            `Response body for ${request.method()} ${request.url()} was evicted from Chrome's network buffer before it could be read ` +
+                `(CDP Network.getResponseBody). A non-idempotent response cannot be recovered read-side; failing so Playwright retries.`,
+            { cause: error },
+        );
+    }
+}
 
 /**
  * Generates a unique identifier.
