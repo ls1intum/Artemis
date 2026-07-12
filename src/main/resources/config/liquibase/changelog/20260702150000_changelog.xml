@@ -11,6 +11,7 @@
     </changeSet>
 
     <changeSet id="20260702150000-2-backfill-schedule-on-working-time-event" author="krusche">
+        <validCheckSum>9:d60f350bbee0b90c7af9430f601e3cac</validCheckSum>
         <!-- Backfill existing working time events (discriminator 'W') of real exams with their exam's current start/end
              date so the client can rely on both fields being present on a replayed WorkingTimeUpdateEvent. Test exams are
              excluded: their exam start/end dates are only the availability window, not a student's conduction window
