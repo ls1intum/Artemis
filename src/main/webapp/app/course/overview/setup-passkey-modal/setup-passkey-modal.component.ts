@@ -26,6 +26,13 @@ export class SetupPasskeyModalComponent implements OnInit {
 
     readonly visible = signal(false);
 
+    /**
+     * Set once the user dismisses the prompt during the current session (e.g. via "Set up later").
+     * The modal is a singleton in the app shell, so this prevents it from reopening when the
+     * authentication state re-emits (e.g. after changing the AI experience). Reset on a full reload.
+     */
+    private dismissedForCurrentSession = false;
+
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
@@ -57,6 +64,10 @@ export class SetupPasskeyModalComponent implements OnInit {
      * </p>
      */
     private openIfNeeded(): void {
+        if (this.dismissedForCurrentSession) {
+            return;
+        }
+
         const earliestReminderDate = this.localStorageService.retrieveDate(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
         const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
         if (userDisabledReminderForCurrentTimeframe) {
@@ -84,6 +95,7 @@ export class SetupPasskeyModalComponent implements OnInit {
     }
 
     closeModal(): void {
+        this.dismissedForCurrentSession = true;
         this.visible.set(false);
     }
 }
