@@ -13,7 +13,7 @@ import Callout from "../../src/components/Callout/Callout";
 
 Artemis ships a cross-entity search feature — lectures, exercises, exams, FAQs, and communication channels — that is gated by the flag `artemis.weaviate.enabled` (default: **off**). Flipping that flag to `true` requires two prerequisites:
 
-1. **A running Weaviate instance** that Artemis can reach on REST port 8001 and gRPC port 50051.
+1. **A running Weaviate instance** that Artemis can reach over both REST and gRPC. The shipped self-managed setup exposes REST on port 8001 and gRPC on port 50051; Weaviate Cloud uses port 443 for both protocols.
 2. **An embedding strategy** — how vectors are produced for semantic matching (or an explicit decision to do keyword-only search with no vectors at all).
 
 Both are independent of Iris/Pyris. You can run global search without EduTelligence, and you can share a single Weaviate instance between Artemis and Pyris by using distinct `collection-prefix` values (the runtime default is empty, so set a non-empty prefix such as `Artemis_` when sharing an instance).
@@ -25,7 +25,7 @@ Pick the scenario that best matches your infrastructure:
 | Situation | Recommended embedder |
 |---|---|
 | On-premises GPU available | Self-hosted Qwen3-Embedding-8B via OpenAI-compatible API (e.g., your on-prem GPU server or a vLLM/Ollama endpoint) |
-| Cloud deployment / external API allowed | OpenAI text-embedding-3 or Azure OpenAI embedding |
+| Cloud deployment / external API allowed | OpenAI text-embedding-3 or another OpenAI-compatible embedding API |
 | Offline / air-gapped / no GPU | `embeddinggemma-300m` CPU sidecar (`weaviate-embeddings.yml`) |
 | Keyword-only search is sufficient | `vectorizer-module: none` — no embedder required |
 
@@ -45,17 +45,28 @@ For full configuration details of each option, see [Choose and connect an embedd
 
 The Artemis repository ships two ready-to-use Compose files under `docker/`. Run all commands from the **repository root**.
 
-**Keyword-only search, or OpenAI-compatible external embedder:**
+**Keyword-only search:**
 
 ```bash
-# From the Artemis repo root — keyword-only or OpenAI-compatible embedder:
+# From the Artemis repo root:
+docker compose -f docker/weaviate.yml up -d
+```
+
+**OpenAI-compatible external embedder:**
+
+Change the `env_file` entry in `docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
+
+```bash
 docker compose -f docker/weaviate.yml up -d
 ```
 
 **Local CPU embeddings (embeddinggemma sidecar):**
 
+Before the first build, accept the [embeddinggemma model license](https://huggingface.co/google/embeddinggemma-300m), create a Hugging Face access token with read access to the gated model, and export it as `HF_TOKEN`. See [Setup with Local Embeddings](../developer/weaviate-setup#setup-with-local-embeddings-recommended-for-global-search) for the complete first-time setup.
+
 ```bash
-# Local CPU embeddings (embeddinggemma sidecar):
+export HF_TOKEN=your_huggingface_token
+docker compose -f docker/weaviate-embeddings.yml build
 docker compose -f docker/weaviate-embeddings.yml up -d
 ```
 
@@ -117,15 +128,15 @@ Artemis supports three embedding strategies and one keyword-only mode. The subse
 
 ### Option 1 — OpenAI-compatible external embedder
 
-Use this when you have access to the OpenAI API, an Azure OpenAI deployment, or any OpenAI-compatible self-hosted endpoint (vLLM, Ollama, etc.).
+Use this when you have access to the OpenAI API or an OpenAI-compatible self-hosted endpoint (vLLM, Ollama, etc.).
 
 ```yaml
 artemis:
   weaviate:
     enabled: true
     http-host: your-weaviate-host
-    http-port: 443
-    grpc-port: 50051
+    http-port: 443                       # Weaviate Cloud / TLS; the shipped self-managed setup uses 8001
+    grpc-port: 443                       # Weaviate Cloud; the shipped self-managed setup uses 50051
     scheme: https
     collection-prefix: Artemis_          # required if sharing with Pyris
     vectorizer-module: text2vec-openai
@@ -141,7 +152,7 @@ artemis:
 
 </Callout>
 
-**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed).
+**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed). Change its `env_file` entry from `./weaviate/default.env` to `./weaviate/openai.env` before starting the service.
 
 **OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
 
@@ -363,7 +374,7 @@ Weaviate follows semantic versioning. The shipped Compose files pin the image to
 
 <Callout variant={CalloutVariant.warning}>
 
-  Weaviate does **not** support downgrading. Take a backup before each minor version upgrade.
+  Downgrade paths and constraints depend on the source and target versions. Consult the [version-specific migration guidance](https://docs.weaviate.io/deploy/migration) before attempting a downgrade, and take a backup before each minor version upgrade.
 
 </Callout>
 
