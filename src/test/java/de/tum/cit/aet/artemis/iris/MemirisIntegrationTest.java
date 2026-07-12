@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
-import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.statusDTO;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,7 +35,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 
@@ -96,9 +94,9 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockCourseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendCourseStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), List.of("Try this"),
-                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", Collections.emptyList(), Collections.emptyList(), false, false)),
-                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", Collections.emptyList(), Collections.emptyList(), false, false))));
+            assertThatNoException().isThrownBy(() -> sendCourseStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, List.of("Try this"),
+                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", List.of(), List.of(), false, false)),
+                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", List.of(), List.of(), false, false))));
 
             pipelineDone.set(true);
         });
@@ -108,8 +106,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         await().until(pipelineDone::get);
 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(IN_PROGRESS, NOT_STARTED),
-                statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING),
+                messageDTO("Hello World"));
 
         var sessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(sessionFromDb.getMessages()).hasSize(2);
@@ -126,37 +124,26 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setMessageDifferentiator(202502);
 
         AtomicReference<String> jobIdRef = new AtomicReference<>();
-        AtomicReference<List<PyrisStageDTO>> stagesRef = new AtomicReference<>();
 
-        irisRequestMockProvider.mockCourseChatResponse(dto -> {
-            jobIdRef.set(dto.settings().authenticationToken());
-            stagesRef.set(dto.initialStages());
-        });
+        irisRequestMockProvider.mockCourseChatResponse(dto -> jobIdRef.set(dto.settings().authenticationToken()));
 
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
 
-        await().until(() -> jobIdRef.get() != null && stagesRef.get() != null);
+        await().until(() -> jobIdRef.get() != null);
 
-        // Build non-terminal and terminal stage lists
-        var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
-        var executingDone = new PyrisStageDTO("Analyzing context", 30, DONE, null, false, null);
+        // Send intermediate status with accessed memories only (no result yet) and non-terminal run state
+        sendCourseStatus(jobIdRef.get(), null, RUNNING, null, List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", List.of(), List.of(), false, false)), null);
 
-        // Send intermediate status with accessed memories only (no result yet) and non-terminal stages
-        sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null,
-                List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", Collections.emptyList(), Collections.emptyList(), false, false)), null);
-
-        // Final status with assistant message and created memories and terminal stages
-        sendCourseStatus(jobIdRef.get(), "Hello Again", List.of(preparingDone, executingDone), null, null,
-                List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+        // Final status with assistant message and created memories and terminal run state
+        sendCourseStatus(jobIdRef.get(), "Hello Again", FINISHED, null, null, List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 
         var user = userTestRepository.findByIdElseThrow(irisSession.getUserId());
-        // Expect 6 websocket messages in total:
-        // 1) user echo, 2) status [IN_PROGRESS, NOT_STARTED], 3) status [DONE, IN_PROGRESS],
-        // 4) user message update (accessed memories), 5) status [DONE, IN_PROGRESS], 6) assistant message
-        verifyNumberOfCallsToWebsocket(user.getLogin(), String.valueOf(irisSession.getId()), 6);
+        // Expect 5 websocket messages in total:
+        // 1) user echo, 2) RUNNING bootstrap status,
+        // 3) user message update (accessed memories), 4) RUNNING status, 5) assistant message
+        verifyNumberOfCallsToWebsocket(user.getLogin(), String.valueOf(irisSession.getId()), 5);
         // Ensure assistant message was sent
         verifyMessageWasSentOverWebsocket(user.getLogin(), String.valueOf(irisSession.getId()), messageDTO("Hello Again"));
 
@@ -173,11 +160,11 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(assistantMessage.getCreatedMemories()).isNotNull().hasSize(1);
     }
 
-    private void sendCourseStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
+    private void sendCourseStatus(String jobId, String result, PyrisRunState runState, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, runState, null, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
     }
 
     @Test
@@ -187,26 +174,18 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         messageToSend.setMessageDifferentiator(202503);
 
         AtomicReference<String> jobIdRef = new AtomicReference<>();
-        AtomicReference<List<PyrisStageDTO>> stagesRef = new AtomicReference<>();
 
-        irisRequestMockProvider.mockCourseChatResponse(dto -> {
-            jobIdRef.set(dto.settings().authenticationToken());
-            stagesRef.set(dto.initialStages());
-        });
+        irisRequestMockProvider.mockCourseChatResponse(dto -> jobIdRef.set(dto.settings().authenticationToken()));
 
         request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
 
-        await().until(() -> jobIdRef.get() != null && stagesRef.get() != null);
+        await().until(() -> jobIdRef.get() != null);
 
-        var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
-
-        // First: send assistant result to create assistant message and set assistantMessageId on the job (keep job running with non-terminal stages)
-        sendCourseStatus(jobIdRef.get(), "Initial Answer", List.of(preparingDone, executingInProgress), null, null, null);
+        // First: send assistant result to create assistant message and set assistantMessageId on the job (keep job running)
+        sendCourseStatus(jobIdRef.get(), "Initial Answer", RUNNING, null, null, null);
 
         // Then: send only created memories (no result), which should update the existing assistant message and resend it via websocket
-        sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null, null,
-                List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+        sendCourseStatus(jobIdRef.get(), null, RUNNING, null, null, List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 

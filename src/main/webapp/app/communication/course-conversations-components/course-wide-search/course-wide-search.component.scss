@@ -2,7 +2,71 @@
 @import '../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 
+// Make the results list (#scrollableDiv) the actual scroll container instead of letting it grow to its
+// content height (which would make an outer ancestor scroll, so the in-house infinite-scroll directive —
+// whose root is #scrollableDiv — and the component's own scroll handling never fire). The chain from the
+// host down to #scrollableDiv is a fixed-height flex column; the header (title/filters) stays at its
+// natural size and #scrollableDiv flex-grows and scrolls its overflow. `min-height: 0` is required so the
+// flex children may shrink below their content height and actually scroll.
+// NOTE: this component uses ViewEncapsulation.None, so the host is styled via its element selector
+// (`:host` would not apply) and the rules below are intentionally scoped under `.coursewide-search`.
+jhi-course-wide-search {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    // Fill the fixed-height scrollable parent (.scrollable-communication-content) so the inner list, not an
+    // ancestor, becomes the scroll container.
+    height: 100%;
+}
+
+.course-wide-search-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.course-wide-search-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
 .coursewide-search {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1 1 auto;
+
+    > .justify-content-center {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        flex: 1 1 auto;
+
+        > .row {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
+            // Reset Bootstrap's negative row gutters so the column-flex content does not overflow horizontally.
+            margin: 0;
+
+            > #scrollableDiv {
+                min-height: 0;
+                flex: 1 1 auto;
+                overflow-y: auto;
+
+                // Hidden (not removed) while a page is loading, so the infinite-scroll directive persists across
+                // fetches; the spinner is shown separately above.
+                &.is-fetching-posts {
+                    display: none;
+                }
+            }
+        }
+    }
+
     .bold-line {
         height: 1px;
         background: var(--metis-light-gray);

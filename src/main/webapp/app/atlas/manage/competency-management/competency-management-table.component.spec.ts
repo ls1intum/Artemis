@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import '@angular/localize/init';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';

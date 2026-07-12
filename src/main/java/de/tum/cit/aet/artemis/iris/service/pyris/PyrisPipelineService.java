@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -42,7 +41,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -75,6 +75,9 @@ public class PyrisPipelineService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
+    @Value("${artemis.iris.response-streaming-enabled:true}")
+    private boolean responseStreamingEnabled;
+
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
@@ -92,48 +95,45 @@ public class PyrisPipelineService {
      * Executes a pipeline on Pyris, identified by the given name and variant.
      * The pipeline execution is tracked by a unique job token, which must be provided by the caller.
      * The caller must additionally provide a mapper function to create the concrete DTO type for this pipeline from the base DTO.
-     * The status of the pipeline execution is updated via a consumer that accepts a list of stages. This method will
-     * call the consumer with the initial stages of the pipeline execution. Later stages will be sent back from Pyris,
+     * The status of the pipeline execution is updated via a consumer that accepts run-state frames. This method will
+     * call the consumer with the initial running frame of the pipeline execution. Later states will be sent back from Pyris,
      * and need to be handled in the endpoint that receives the status updates.
      * <p>
      *
      * @param name          the name of the pipeline to be executed
      * @param aiSelection   the current AI selection of the user
      * @param variant       the variant of the pipeline
+     * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
      * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, Optional<String> event, String jobToken,
-            Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
-        // Define the preparation stages of pipeline execution with their initial states
-        // There will be more stages added in Pyris later
-        var preparing = new PyrisStageDTO("artemisApp.iris.stages.thinking", 10, null, null, false, null);
-        var executing = new PyrisStageDTO("artemisApp.iris.stages.analyzing", 30, null, null, false, null);
-
-        // Send initial status update indicating that the preparation stage is in progress
-        statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
-
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant), List.of(preparing.done()));
-        var pipelineDto = dtoMapper.apply(baseDto);
+    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
+            Function<PyrisPipelineExecutionDTO, Object> dtoMapper, PipelineStatusUpdater statusUpdater) {
+        statusUpdater.accept(jobToken, PyrisRunState.RUNNING, null);
 
         try {
-            // Send a status update that preparation is done and pipeline execution is starting
-            statusUpdater.accept(List.of(preparing.done(), executing.inProgress()));
+            Boolean streamResponse = responseStreamingEnabled && "chat".equals(name) ? Boolean.TRUE : null;
+            var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel, streamResponse));
+            long dtoBuildStart = System.nanoTime();
+            var pipelineDto = dtoMapper.apply(baseDto);
+            log.info("Pyris {} pipeline DTO built in {} ms", name, (System.nanoTime() - dtoBuildStart) / 1_000_000);
 
             try {
                 // Execute the pipeline using the connector service
+                long requestStart = System.nanoTime();
                 pyrisConnectorService.executePipeline(name, pipelineDto, event);
+                log.debug("Pyris {} pipeline run request accepted in {} ms", name, (System.nanoTime() - requestStart) / 1_000_000);
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
-                statusUpdater.accept(List.of(preparing.done(), executing.error("artemisApp.iris.stages.error.internal")));
+                statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
             }
         }
         catch (Exception e) {
             log.error("Failed to prepare {} pipeline execution", name, e);
-            statusUpdater.accept(List.of(preparing.error("artemisApp.iris.stages.error.internal"), executing.notStarted()));
+            statusUpdater.accept(jobToken, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null));
         }
     }
 
@@ -142,19 +142,20 @@ public class PyrisPipelineService {
      * The caller provides a DTO builder lambda that constructs the context-specific {@link PyrisChatPipelineExecutionDTO}.
      *
      * @param variant      the variant of the pipeline
+     * @param supportLevel the instructional support level ("low" / "moderate" / "high")
      * @param session      the chat session
      * @param eventVariant the event variant to trigger, if any
      * @param dtoBuilder   a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
      */
-    public void executeChatPipeline(String variant, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
+    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
-        executePipeline("chat", user.getSelectedLLMUsage(), variant, eventVariant,
+        executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
-            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
         // @formatter:on
     }
 
@@ -172,18 +173,18 @@ public class PyrisPipelineService {
      * - The user that created the session
      *
      * @param variant                the variant of the pipeline
+     * @param supportLevel           the instructional support level ("low" / "moderate" / "high"), sent for consistency with the other pipelines; whether the
+     *                                   tutor-suggestion pipeline acts on it is determined by Pyris
      * @param session                the chat session
      * @param eventVariant           the event variant if this function triggers a pipeline execution due to a specific event
      * @param lectureId              the optional lecture ID if this is due to a specific event
      * @param textExerciseDTO        the optional text exercise DTO if this is due to a specific event
      * @param submissionDTO          the optional submission DTO if this is due to a specific event
      * @param programmingExerciseDTO the optional programming exercise DTO if this is due to a specific event
-     * @param postDTO                the post DTO containing the post
+     * @param post                   the post the session is about
      */
-    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
-            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO,
-            PostDTO postDTO) {
-        var post = postDTO.post();
+    public void executeTutorSuggestionPipeline(String variant, String supportLevel, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
+            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Post post) {
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
             throw new IllegalStateException("Course not found for post " + post.getId());
@@ -194,6 +195,7 @@ public class PyrisPipelineService {
             "tutor-suggestion",
             user.getSelectedLLMUsage(),
             variant,
+            supportLevel,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
@@ -202,13 +204,12 @@ public class PyrisPipelineService {
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
-                executionDto.initialStages(),
                 textExerciseDTO,
                 submissionDTO,
                 programmingExerciseDTO,
                 lectureId
             ),
-            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+            (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error)
         );
         // @formatter:on
     }
@@ -223,6 +224,7 @@ public class PyrisPipelineService {
      * and either posts it directly or discards it based on confidence.
      *
      * @param variant                the variant of the pipeline
+     * @param supportLevel           the instructional support level ("low" / "moderate" / "high")
      * @param aiSelection            the current AI selection of the user
      * @param post                   the student's post to respond to
      * @param course                 the course the post belongs to
@@ -232,14 +234,14 @@ public class PyrisPipelineService {
      * @param lectureDTO             optional lecture if the channel is linked to one
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
-    public void executeAutonomousTutorPipeline(String variant, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
-            PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO,
-            Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
+    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
+            PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, PipelineStatusUpdater statusUpdateConsumer) {
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
             aiSelection,
             variant,
+            supportLevel,
             Optional.empty(),
             pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),
             executionDto -> new PyrisAutonomousTutorPipelineExecutionDTO(
@@ -247,7 +249,6 @@ public class PyrisPipelineService {
                 post,
                 student,
                 executionDto.settings(),
-                executionDto.initialStages(),
                 programmingExerciseDTO,
                 textExerciseDTO,
                 lectureDTO
@@ -255,6 +256,12 @@ public class PyrisPipelineService {
             statusUpdateConsumer
         );
         // @formatter:on
+    }
+
+    @FunctionalInterface
+    public interface PipelineStatusUpdater {
+
+        void accept(String runId, PyrisRunState runState, PyrisStatusErrorDTO error);
     }
 
     /**

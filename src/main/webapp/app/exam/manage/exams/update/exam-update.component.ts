@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
@@ -14,8 +14,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { EXAM_TEXT_MAX_LENGTH, EXAM_TITLE_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
@@ -52,9 +54,10 @@ import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/co
         ButtonComponent,
         ConfirmEntityNameComponent,
         Dialog,
+        ExamImportProgressDialogComponent,
     ],
 })
-export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ExamUpdateComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
@@ -68,6 +71,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly documentationType: DocumentationType = 'Exams';
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly EXAM_TEXT_MAX_LENGTH = EXAM_TEXT_MAX_LENGTH;
+    protected readonly EXAM_TITLE_MAX_LENGTH = EXAM_TITLE_MAX_LENGTH;
 
     // exam is template-bound (directly and through many getters) and populated asynchronously from the route
     // resolver, so it is backed by a signal to schedule change detection. The getter/setter facade keeps the
@@ -79,7 +84,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     set exam(value: Exam) {
         this._exam.set(value);
     }
-    course: Course;
+    course!: Course; // set in ngOnInit() from route data
     readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);
@@ -100,10 +105,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
-
-    readonly datePickers = viewChildren(FormDateTimePickerComponent);
-
-    private viewInitialized = false;
+    examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -141,13 +143,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                     this.exam.startText = this.examDefaultStartText;
                 }
                 this.hideChannelNameInput.set((!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course));
-                this.refreshDatePickerValidation();
             });
-    }
-
-    ngAfterViewInit() {
-        this.viewInitialized = true;
-        this.refreshDatePickerValidation();
     }
 
     ngOnDestroy() {
@@ -183,14 +179,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     get newWorkingTime(): number | undefined {
         return this.exam.workingTime;
-    }
-
-    private refreshDatePickerValidation() {
-        if (!this.viewInitialized) {
-            return;
-        }
-        // Delay until the current change detection cycle completed so the pickers have the latest ngModel values.
-        setTimeout(() => this.datePickers().forEach((picker) => picker.updateSignals()), 0);
     }
 
     /**
@@ -305,10 +293,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * If the save was not successful, an error is shown to the user.
      */
     save() {
+        // Guard against re-entry (e.g. pressing Enter in the form while a save/import is already running): the save button is
+        // disabled while saving, but ngSubmit can still fire. A second import would reset the in-flight progress dialog.
+        if (this.isSaving()) {
+            return;
+        }
         this.isSaving.set(true);
 
-        this.createOrUpdateOrImportExam()
-            ?.pipe(
+        // Importing an exam can fail per exercise and take a while (programming repository copies). It therefore runs behind
+        // a progress dialog that shows live websocket progress and a persistent, must-dismiss summary of skipped/incomplete
+        // exercises, after which we navigate to the imported exam.
+        if (this.isImport() && this.exam?.exerciseGroups) {
+            this.importExam();
+            return;
+        }
+
+        const request$ = this.exam.id ? this.examManagementService.update(this.course.id!, this.exam) : this.examManagementService.create(this.course.id!, this.exam);
+        request$
+            .pipe(
                 map((response: HttpResponse<Exam>) => response.body!),
                 takeWhile(() => this.componentActive),
             )
@@ -319,24 +321,31 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Creates, updates or imports the exam depending on the current state of the component.
+     * Imports the exam behind a progress dialog and navigates to the imported exam once the user dismisses the dialog.
      * @private
      */
-    private createOrUpdateOrImportExam() {
-        if (this.isImport() && this.exam?.exerciseGroups) {
-            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (!this.examExerciseImportComponent().validateUserInput()) {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving.set(false);
-                return;
-            }
-            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
-            return this.examManagementService.import(this.course.id!, this.exam);
-        } else if (this.exam.id) {
-            return this.examManagementService.update(this.course.id!, this.exam);
-        } else {
-            return this.examManagementService.create(this.course.id!, this.exam);
+    private importExam() {
+        // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+        if (!this.examExerciseImportComponent().validateUserInput()) {
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+            this.isSaving.set(false);
+            return;
         }
+        this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
+        const totalExercises = (this.exam.exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
+        const importId = this.examManagementService.generateImportId();
+        const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
+        this.examImportProgressDialog()
+            .runImport(importId, totalExercises, request$)
+            .then((response) => {
+                const importedExam = response.body?.exam;
+                if (importedExam) {
+                    void this.onSaveSuccess(importedExam);
+                } else {
+                    this.isSaving.set(false);
+                }
+            })
+            .catch((httpErrorResponse: HttpErrorResponse) => this.onSaveError(httpErrorResponse));
     }
 
     /**
@@ -365,7 +374,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
-            this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
         } else {
@@ -403,8 +412,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
             examValidNumberOfExercises &&
-            examValidGracePeriod
+            examValidGracePeriod &&
+            this.areExamTextsValid
         );
+    }
+
+    /**
+     * Returns true when a single exam text (start / end / confirmation) is within the allowed length.
+     */
+    isExamTextTooLong(text?: string): boolean {
+        return (text?.length ?? 0) > EXAM_TEXT_MAX_LENGTH;
+    }
+
+    /**
+     * Returns true when all exam start / end / confirmation texts are within the allowed length.
+     */
+    // Getter (not a computed) on purpose: the texts are mutated in place via [(ngModel)] without changing the exam signal reference, so a computed would go stale.
+    get areExamTextsValid(): boolean {
+        return ![this.exam.startText, this.exam.endText, this.exam.confirmationStartText, this.exam.confirmationEndText].some((text) => this.isExamTextTooLong(text));
     }
 
     /**

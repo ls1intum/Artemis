@@ -49,7 +49,7 @@ export class CourseDetailDoughnutChartComponent {
     readonly chartOptions = computed(() =>
         doughnutChartOptions({
             legend: false,
-            tooltip: { label: (item) => `${item.label}: ${this.valueFormatting({ value: item.parsed })}` },
+            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
         }),
     );
 
@@ -137,7 +137,7 @@ export class CourseDetailDoughnutChartComponent {
         const course = this.course();
         const titleLink = this.titleLink();
         if (course.id && titleLink) {
-            this.router.navigate(['/course-management', course.id, titleLink]);
+            void this.router.navigate(['/course-management', course.id, titleLink]);
         }
     }
 
@@ -159,7 +159,7 @@ export class CourseDetailDoughnutChartComponent {
      * @param data the default tooltip content that has to be replaced
      * returns string representing custom tooltip content
      */
-    valueFormatting(data: any): string {
-        return this.currentMax() === 0 ? '0' : data.value;
+    valueFormatting(data: { value: number }): string {
+        return this.currentMax() === 0 ? '0' : `${data.value}`;
     }
 }

@@ -14,9 +14,9 @@
             <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
-    <table class="table table-striped flex">
+    <table class="table table-striped">
         <thead class="thead-dark">
-            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
+            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
                 <th jhiSortBy="ID" class="col-1">
                     <span>#</span>
                     <fa-icon [icon]="faSort" />
@@ -47,7 +47,7 @@
         </thead>
         <tbody>
             @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
-                <tr [class]="'flex-row exercise-' + exercise.id">
+                <tr [class]="'exercise-' + exercise.id">
                     <td class="col-1">
                         <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
                     </td>
@@ -77,15 +77,6 @@
         </tbody>
     </table>
     <div class="d-flex justify-content-between p-2">
-        <ngb-pagination
-            [maxSize]="5"
-            [rotate]="true"
-            [ellipses]="true"
-            [boundaryLinks]="true"
-            [collectionSize]="total()"
-            [(page)]="state.page"
-            [pageSize]="state.pageSize"
-            (pageChange)="onPageChange($event)"
-        />
+        <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
     </div>
 </div>

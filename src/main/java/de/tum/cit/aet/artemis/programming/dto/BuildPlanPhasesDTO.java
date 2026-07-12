@@ -21,29 +21,13 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
      *
      * @param buildPlanConfiguration the JSON String representation
      * @return the new {@link BuildPlanPhasesDTO} object
-     * @throws JsonProcessingException if the JSON is invalid or has unknown keys
+     * @throws JsonProcessingException if the JSON is invalid
      */
     public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+        if (buildPlanConfiguration == null || buildPlanConfiguration.isBlank()) {
+            return new BuildPlanPhasesDTO(null, null);
+        }
         return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
-    }
-
-    /**
-     * Checks whether a JSON string is a {@link BuildPlanPhasesDTO}
-     *
-     * @param buildPlanConfiguration the JSON string to check
-     * @return true if valid else false
-     */
-    public static boolean isInPhasesFormatOrNull(String buildPlanConfiguration) {
-        if (buildPlanConfiguration == null) {
-            return true;
-        }
-        try {
-            fromBuildPlanConfiguration(buildPlanConfiguration);
-        }
-        catch (JsonProcessingException e) {
-            return false;
-        }
-        return true;
     }
 
     /**

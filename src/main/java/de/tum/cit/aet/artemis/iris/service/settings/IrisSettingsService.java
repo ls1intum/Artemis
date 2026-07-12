@@ -209,7 +209,7 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), sanitizedRateLimit);
+        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), payload.supportLevel(), sanitizedRateLimit);
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {

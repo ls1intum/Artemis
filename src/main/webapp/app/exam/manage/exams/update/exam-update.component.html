@@ -21,6 +21,7 @@
                     [(title)]="exam.title"
                     [(channelName)]="exam.channelName"
                     channelNamePrefix="exam-"
+                    [maxTitleLength]="EXAM_TITLE_MAX_LENGTH"
                     [hideChannelName]="hideChannelNameInput()"
                     [initChannelName]="isImport() || exam.id === undefined"
                 />
@@ -234,7 +235,7 @@
                 <div class="mb-3">
                     <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
                     <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
-                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" />
+                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="exam.course?.id" />
                 </div>
             }
             <!-- Section exam assessment and student review
@@ -318,18 +319,30 @@
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText"></label>
                 <jhi-markdown-editor-monaco id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
+                @if (isExamTextTooLong(exam.startText)) {
+                    <div class="text-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
             </div>
             <div class="form-group">
-                <label for="startText" jhiTranslate="artemisApp.examManagement.endText"></label>
+                <label for="endText" jhiTranslate="artemisApp.examManagement.endText"></label>
                 <jhi-markdown-editor-monaco id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
+                @if (isExamTextTooLong(exam.endText)) {
+                    <div class="text-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
             </div>
             <div class="form-group">
-                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
+                <label for="confirmationStartText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
                 <jhi-markdown-editor-monaco id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
+                @if (isExamTextTooLong(exam.confirmationStartText)) {
+                    <div class="text-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
             </div>
             <div class="form-group">
-                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
+                <label for="confirmationEndText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
                 <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
+                @if (isExamTextTooLong(exam.confirmationEndText)) {
+                    <div class="text-danger" jhiTranslate="artemisApp.examManagement.textTooLong" [translateValues]="{ max: EXAM_TEXT_MAX_LENGTH }"></div>
+                }
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">
@@ -357,3 +370,5 @@
         </form>
     </div>
 </div>
+
+<jhi-exam-import-progress-dialog />

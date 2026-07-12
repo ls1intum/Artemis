@@ -322,8 +322,8 @@
 <jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
 <jhi-user-registration-modal
     titleKey="artemisApp.examManagement.examStudents.addDialog.title"
-    [searchFn]="searchUsersForExamFn()"
-    [registerFn]="registerUsersForExamFn()"
+    [searchFn]="searchUsersForExamFn"
+    [registerFn]="registerUsersForExamFn"
     (registered)="reloadStudentsView()"
 />
 <p-confirmDialog [style]="{ width: '50rem' }" [pt]="{ message: { style: { whiteSpace: 'pre-line' } } }" />

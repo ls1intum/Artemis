@@ -834,4 +834,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      */
     @Query("SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO(e.id, e.exerciseGroup.id) FROM Exercise e WHERE e.id IN :ids AND e.exerciseGroup IS NOT NULL")
     List<ExerciseWithExerciseGroupIdDTO> findExerciseAndGroupIdsByExerciseIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Loads the given exercises with the associations needed to build their searchable representation eagerly fetched:
+     * {@code course} for course exercises, and {@code exerciseGroup → exam → course} for exam exercises. This lets the
+     * global search migration map them via {@code ExerciseSearchableEntityDTO.fromExercise} outside a Hibernate session
+     * (open-session-in-view is disabled), without a per-exercise lazy load.
+     *
+     * @param exerciseIds the exercise IDs to load
+     * @return the exercises that exist, with their course and exam eagerly loaded
+     */
+    @Query("""
+            SELECT exercise FROM Exercise exercise
+            LEFT JOIN FETCH exercise.course
+            LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+            LEFT JOIN FETCH exerciseGroup.exam exam
+            LEFT JOIN FETCH exam.course
+            WHERE exercise.id IN :exerciseIds
+            """)
+    List<Exercise> findAllForSearchMigrationWithCourseAndExam(@Param("exerciseIds") Collection<Long> exerciseIds);
 }

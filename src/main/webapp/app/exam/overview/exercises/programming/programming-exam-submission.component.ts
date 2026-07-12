@@ -91,7 +91,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         return this.exercise();
     }
 
-    isSaving: boolean;
+    isSaving = false;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
 
@@ -113,9 +113,12 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
         this.setSubmissionCountAndLockIfNeeded();
     }
 
-    onActivate() {
+    override onActivate() {
         super.onActivate();
-        this.instructions().updateMarkdown();
+        // Force a re-render (not just updateMarkdown, which skips unchanged problem statements): while this exercise was
+        // hidden its change detection was detached, so a render that happened in the meantime may have injected the
+        // PlantUML diagrams into stale DOM. Re-rendering now that the exercise is visible restores them reliably.
+        this.instructions().forceReRenderProblemStatement();
         this.updateDomain();
     }
 
@@ -123,7 +126,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation(), exercise: this.exercise() } as StudentParticipation;
+        const participation = { ...this.studentParticipation(), exercise: this.exercise() } satisfies StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 

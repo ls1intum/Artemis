@@ -26,6 +26,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     channelNameHelpIconText = input<string>('artemisApp.programmingExercise.channelNameTooltip');
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
+    maxTitleLength = input<number>();
     initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
@@ -62,13 +63,12 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
             this.registerChangeListeners();
         });
 
-        effect(
-            function removeInitialTitleInEditFromForbiddenTitles() {
-                if (this.titleOnPageLoad()) {
-                    this.alreadyUsedTitles().delete(this.titleOnPageLoad());
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const titleOnPageLoad = this.titleOnPageLoad();
+            if (titleOnPageLoad) {
+                this.alreadyUsedTitles().delete(titleOnPageLoad);
+            }
+        });
     }
 
     ngAfterViewInit() {

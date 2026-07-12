@@ -15,18 +15,18 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import dayjs from 'dayjs/esm';
-import { firstValueFrom } from 'rxjs';
-import JSZip from 'jszip';
+import { Observable, firstValueFrom } from 'rxjs';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
-// Mock JSZip to prevent unhandled rejection errors during zip creation
-vi.mock('jszip', () => {
-    class MockJSZip {
+// Mock ZipBuilder to prevent real zip creation (and the resulting browser download) during the export tests
+vi.mock('app/foundation/util/zip.util', () => {
+    class MockZipBuilder {
         file = vi.fn();
-        generateAsync = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
+        generateBlob = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
     }
     return {
-        default: MockJSZip,
+        ZipBuilder: MockZipBuilder,
     };
 });
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -112,7 +112,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    const mockJSZip = {} as JSZip;
+    const mockZipBuilder = {} as ZipBuilder;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -264,11 +264,11 @@ describe('QuizExercise Service', () => {
         ['recalculate', [123], quizEx, 'GET', '/recalculate-statistics'],
         ['find', [123], quizEx, 'GET', ''],
     ])('should perform a http request for %p', async (method, args, response, httpMethod, urlSuffix) => {
-        const functionToCall = service[method as keyof QuizExerciseService];
+        const functionToCall = service[method as keyof QuizExerciseService] as (...args: unknown[]) => Observable<HttpResponse<unknown>>;
         if (typeof functionToCall !== 'function') {
             throw new Error(`Method ${method} not found in service`);
         }
-        const result = firstValueFrom(functionToCall.apply(service, args)) as Promise<HttpResponse<unknown>>;
+        const result = firstValueFrom(functionToCall.apply(service, args));
         const req = httpMock.expectOne({ method: httpMethod });
         expect(req.request.url.endsWith(urlSuffix)).toBe(true);
         req.flush(response);
@@ -451,7 +451,7 @@ describe('QuizExercise Service', () => {
         const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
         vi.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
 
-        await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
+        await expect(service.fetchFilePromise(fileName, mockZipBuilder, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });
 
     function validateFormData(req: TestRequest) {

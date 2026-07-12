@@ -76,11 +76,15 @@ function handleMalformedLoginCredential<T>(
  * @returns The processed credential
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
-function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends SerializableRegistrationCredential | SerializableLoginCredential>(
+function getCredentialWithGracefullyHandlingAuthenticatorIssues<
+    T extends SerializableRegistrationCredential | SerializableLoginCredential,
+    B extends MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential,
+    P extends Malformed1Password8RegistrationCredential | Malformed1Password8LoginCredential,
+>(
     credential: Credential | undefined,
     credentialType: 'registration' | 'login',
-    bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | undefined) => T | undefined,
-    onePassword8Converter: (malformed1Password8Credential: Malformed1Password8RegistrationCredential | Malformed1Password8LoginCredential | undefined) => T | undefined,
+    bitwardenConverter: (malformedBitwardenCredential: B | undefined) => T | undefined,
+    onePassword8Converter: (malformed1Password8Credential: P | undefined) => T | undefined,
     malformedHandler: <U>(credential: Credential | undefined, converterFunction: (credential: U | undefined) => T | undefined) => T,
 ): Credential | T {
     try {
@@ -93,19 +97,16 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         }
         return credential;
     } catch (error) {
-        captureException(error);
-        // eslint-disable-next-line no-undef
-        console.warn(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, error);
+        captureException(new Error(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, { cause: error }));
 
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-        let fixedCredential = malformedHandler<MalformedBitwardenRegistrationCredential>(credential, bitwardenConverter);
+        let fixedCredential = malformedHandler<B>(credential, bitwardenConverter);
 
         // 1Password8 returns empty string for authenticatorData when the Bitwarden workaround is applied
         const is1Password8Credential = fixedCredential.response?.authenticatorData === '';
         if (is1Password8Credential) {
-            // eslint-disable-next-line no-undef
-            console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
-            fixedCredential = malformedHandler<Malformed1Password8RegistrationCredential>(credential, onePassword8Converter);
+            captureException(new Error('Bitwarden workaround did not succeed, attempting 1password8 workaround', { cause: error }));
+            fixedCredential = malformedHandler<P>(credential, onePassword8Converter);
         }
 
         return fixedCredential;
@@ -125,7 +126,11 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
 export function getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | undefined): Credential | SerializableRegistrationCredential {
-    return getCredentialWithGracefullyHandlingAuthenticatorIssues<SerializableRegistrationCredential>(
+    return getCredentialWithGracefullyHandlingAuthenticatorIssues<
+        SerializableRegistrationCredential,
+        MalformedBitwardenRegistrationCredential,
+        Malformed1Password8RegistrationCredential
+    >(
         credential,
         'registration',
         getRegistrationCredentialFromMalformedBitwardenObject,
@@ -147,7 +152,7 @@ export function getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssu
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
 export function getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | undefined): Credential | SerializableLoginCredential {
-    return getCredentialWithGracefullyHandlingAuthenticatorIssues<SerializableLoginCredential>(
+    return getCredentialWithGracefullyHandlingAuthenticatorIssues<SerializableLoginCredential, MalformedBitwardenLoginCredential, Malformed1Password8LoginCredential>(
         credential,
         'login',
         getLoginCredentialFromMalformedBitwardenObject,

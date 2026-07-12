@@ -6,32 +6,65 @@
     overflow: hidden;
 }
 
-:host ::ng-deep .gutter.gutter-horizontal {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 8px;
-    cursor: col-resize;
-    background-color: transparent;
+// ::ng-deep is required to style the PrimeNG Splitter internals (no public API for these overrides).
+:host ::ng-deep .resizable-panels-splitter {
+    border: 0;
+    background: transparent;
 
-    &::before {
-        display: none;
+    .p-splitterpanel {
+        display: flex;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
     }
-}
 
-:host ::ng-deep .split-gutter-handle {
-    display: flex;
-    gap: 1px;
-    pointer-events: none;
+    // Thin transparent gutter showing two vertical grip bars, like the previous split.js gutter.
+    .p-splitter-gutter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: col-resize;
+        background: transparent;
+    }
 
-    &::before,
-    &::after {
-        content: '';
-        display: block;
-        width: 2px;
+    .p-splitter-gutter-handle {
+        // Center the two grip bars within the handle. Without explicit centering and sizing, PrimeNG sizes the
+        // handle to fill the gutter and the bars sit at flex-start (visually left of the divider) instead of centered.
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 12px;
         height: 12px;
-        background: var(--bs-body-color);
-        border-radius: 1px;
+        gap: 1px;
+        background: transparent;
+        pointer-events: none;
+
+        &::before,
+        &::after {
+            content: '';
+            display: block;
+            width: 2px;
+            height: 12px;
+            background: var(--bs-body-color);
+            border-radius: 1px;
+        }
+    }
+
+    // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
+    // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
+    &.right-collapsed {
+        > .p-splitterpanel:first-child {
+            flex: 1 1 auto !important;
+        }
+
+        > .p-splitterpanel:last-child {
+            flex: 0 0 auto !important;
+        }
+
+        > .p-splitter-gutter {
+            display: none !important;
+        }
     }
 }
 

@@ -38,11 +38,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     // Consumers should re-announce their full local state in response.
     readonly reconnected = output<void>();
 
-    currentUser: User;
-    websocketTopic: string;
+    currentUser?: User;
+    websocketTopic!: string; // set in ngOnInit() before any read
 
     constructor() {
-        this.accountService.identity().then((user: User) => (this.currentUser = user));
+        void this.accountService.identity().then((user: User | undefined) => (this.currentUser = user));
     }
 
     /**
@@ -115,6 +115,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 next: () => {
                     const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
                     this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialSync);
+
+                    if (this.exerciseType() === ExerciseType.MODELING) {
+                        const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
+                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialAwarenessSync);
+                    }
                     this.reconnected.emit();
                 },
                 error: (error: unknown) => this.onError(error),

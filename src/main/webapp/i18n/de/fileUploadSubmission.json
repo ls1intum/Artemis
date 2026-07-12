@@ -27,7 +27,6 @@
             "submittedFile": "Die Datei {{ filename }} wurde als Lösung für die Übung eingereicht",
             "download": "Datei herunterladen",
             "selectFile": "Bitte wähle zuerst eine Datei aus und sende sie dann ab.",
-            "fileUpload": "Datei hochladen",
             "forExercise": "für Übung"
         }
     }

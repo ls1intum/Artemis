@@ -15,7 +15,7 @@
                     </a>
                 }
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
+                    <a id="import-example-submission" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
                         <fa-icon [icon]="faPlus" />
                         <fa-icon class="d-xl-none" [icon]="faFont" />
                         <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>

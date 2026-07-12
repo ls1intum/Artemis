@@ -747,8 +747,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             String basePath = baseRepoPath.substring(0, baseRepoPath.indexOf("/git/") + 4);
 
             // Format: /path/to/git/PROJECT_KEY/repo_name.git
-            String repoName = valid ? String.format("%s-%s", randomKey, randomName) : randomName;
-            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, repoName);
+            String repoName = valid ? "%s-%s".formatted(randomKey, randomName) : randomName;
+            repoUrl = "%s/%s/%s.git".formatted(basePath, randomKey, repoName);
 
             foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl);
         }

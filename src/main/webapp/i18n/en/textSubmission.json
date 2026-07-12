@@ -15,8 +15,7 @@
                 "title": "Text Submission"
             },
             "text": "Text",
-            "view": "View assessment",
-            "textEditor": "Text Editor"
+            "view": "View assessment"
         }
     }
 }

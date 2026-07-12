@@ -30,6 +30,8 @@
         "ancestorSeparator": "_"
     },
     "overrides": {
+        "@babel/core": "7.29.7",
+        "js-yaml": "4.2.0",
         "uuid": "11.1.1"
     }
 }

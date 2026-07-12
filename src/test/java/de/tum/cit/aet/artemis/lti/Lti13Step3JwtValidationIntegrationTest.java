@@ -124,12 +124,16 @@ class Lti13Step3JwtValidationIntegrationTest extends AbstractLtiIntegrationTest 
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/message_type", "LtiResourceLinkRequest");
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/version", "1.3.0");
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/deployment_id", "deployment-1");
-            claims.claim("https://purl.imsglobal.org/spec/lti/claim/target_link_uri", "http://localhost/courses/1");
+            // Deliberately target a course id that cannot exist (Long.MAX_VALUE). Course ids come from a low,
+            // sequential database sequence, so this id never collides with courses that other tests create in the
+            // shared database. The previous hardcoded id 1 could be satisfied by another test's course, which sent
+            // performLaunch past the course lookup into user resolution and caused an unrelated NPE (isolation flake).
+            claims.claim("https://purl.imsglobal.org/spec/lti/claim/target_link_uri", "http://localhost/courses/" + Long.MAX_VALUE);
             // Include the full claim set so OidcTokenValidator accepts the token and the request proceeds into
-            // lti13Service.performLaunch, where no Course matches /courses/1 and BadRequestAlertException (400) is
-            // thrown. The distinct 400 status (vs. the 500s in the two negative tests below) is what lets this happy
-            // path test prove a specific outcome — JWKS fetch + signature verify + claim validation all succeeded —
-            // instead of collapsing onto the same generic "any 5xx" assertion as the rejection paths.
+            // lti13Service.performLaunch, where no Course matches the target link and a BadRequestAlertException (400)
+            // is thrown. The distinct 400 status (vs. the 500s in the two negative tests below) proves a specific
+            // outcome: JWKS fetch, signature verification, and claim validation all succeeded, instead of collapsing
+            // onto the same generic "any 5xx" assertion as the rejection paths.
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/roles", java.util.List.of("http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"));
         });
 

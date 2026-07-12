@@ -19,6 +19,7 @@ import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -37,7 +38,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     readonly round = round;
 
     readonly quizExercise = signal<QuizExercise>(undefined!);
-    quizPointStatistic: QuizPointStatistic;
+    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess()/loadNewData() before the chart is rendered
 
     labels: string[] = [];
 
@@ -45,8 +46,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     backgroundColor: string[] = [];
 
     readonly maxScore = signal<number>(undefined!);
-    websocketChannelForData: string;
-    quizExerciseChannel: string;
+    websocketChannelForData!: string; // set in ngOnInit() from the route params before use
+    quizExerciseChannel?: string;
     private quizExerciseSubscription?: Subscription;
     private quizDataSubscription?: Subscription;
 
@@ -54,7 +55,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     waitingForQuizStart = false;
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval!: ReturnType<typeof setInterval>; // set in ngOnInit() via setInterval(), cleared in ngOnDestroy()
 
     // Icons
     faSync = faSync;
@@ -130,13 +131,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {
@@ -154,7 +149,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
         this.loadData();
@@ -169,7 +164,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
         if (!this.accountService.isAtLeastTutor()) {
-            this.router.navigate(['courses']);
+            void this.router.navigate(['courses']);
         }
         this.quizExercise.set(quizExercise);
         this.waitingForQuizStart = !this.quizExercise().quizStarted;

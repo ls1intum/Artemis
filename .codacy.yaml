@@ -1,0 +1,18 @@
+---
+# Codacy configuration — read by Codacy Cloud from the default branch (develop).
+# Scopes security scanners to production code: hardcoded test credentials, non-literal
+# fs/regexp in test helpers, and similar security findings in test code are intentional
+# fixtures, not vulnerabilities. Other tools (ESLint, Stylelint, PMD) still analyze tests.
+engines:
+  opengrep: # Semgrep — SAST security scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "**/*.spec.ts"
+  bandit: # Python security scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "**/test_*.py"
+      - "**/*_test.py"
+      - "**/tests/**"

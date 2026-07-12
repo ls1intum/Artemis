@@ -16,7 +16,7 @@ export function decodeBase64url(input: string | BufferSource): ArrayBuffer {
     if (typeof input === 'string') {
         b64url = input;
     } else if (ArrayBuffer.isView(input) || input instanceof ArrayBuffer) {
-        b64url = new TextDecoder().decode(input as ArrayBuffer);
+        b64url = new TextDecoder().decode(input);
     } else {
         throw new TypeError(`Expected string or BufferSource, but got ${typeof input}`);
     }

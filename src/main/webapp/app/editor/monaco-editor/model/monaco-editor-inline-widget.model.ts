@@ -41,7 +41,7 @@ export class MonacoEditorLineWidget extends MonacoCodeEditorElement {
         this.viewZone.removeFromEditor();
     }
 
-    dispose() {
+    override dispose() {
         super.dispose();
         this.overlayWidget.dispose();
         this.viewZone.dispose();

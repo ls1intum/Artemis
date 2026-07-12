@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +21,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -55,6 +59,10 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final String PROMPT_REFINE_QUIZ_QUESTION_USER = "/prompts/hyperion/refine_quiz_question_user.st";
 
+    private static final String GENERATION_PIPELINE_ID = "HYPERION_QUIZ_QUESTION_GENERATION";
+
+    private static final String REFINEMENT_PIPELINE_ID = "HYPERION_QUIZ_QUESTION_REFINEMENT";
+
     private static final int MAX_QUESTION_TEXT_LENGTH = 10_000;
 
     private static final int MAX_QUESTION_TITLE_LENGTH = 500;
@@ -68,11 +76,17 @@ public class HyperionQuizQuestionGenerationService {
 
     private final HyperionCompetencyContextService competencyGraphService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
+    private final UserRepository userRepository;
+
     public HyperionQuizQuestionGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
-            HyperionCompetencyContextService competencyGraphService) {
+            HyperionCompetencyContextService competencyGraphService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.competencyGraphService = competencyGraphService;
+        this.llmTokenUsageService = llmTokenUsageService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -105,12 +119,30 @@ public class HyperionQuizQuestionGenerationService {
             userPrompt = buildFreeTopicPrompt(course, request, optionalPrompt, requestedQuestionTypes, outputConverter);
         }
 
-        GeneratedQuestionsOutput generatedQuestions;
+        ChatResponse chatResponse;
         try {
-            generatedQuestions = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(outputConverter);
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
         }
         catch (Exception e) {
             log.error("Failed to generate quiz questions for course [{}]", course.getId(), e);
+            throw new InternalServerErrorAlertException("Failed to generate quiz questions", "QuizQuestionGeneration", "QuizQuestionGeneration.generationFailed");
+        }
+
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
+
+        String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+        if (responseText == null) {
+            throw new InternalServerErrorAlertException("LLM returned an empty response", "QuizQuestionGeneration", "QuizQuestionGeneration.emptyLLMResponse");
+        }
+
+        GeneratedQuestionsOutput generatedQuestions;
+        try {
+            generatedQuestions = outputConverter.convert(responseText);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse generated quiz questions for course [{}]", course.getId(), e);
             throw new InternalServerErrorAlertException("Failed to generate quiz questions", "QuizQuestionGeneration", "QuizQuestionGeneration.generationFailed");
         }
 
@@ -174,6 +206,36 @@ public class HyperionQuizQuestionGenerationService {
      */
     @Observed(name = "hyperion.quiz.refine", contextualName = "quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
     public QuizQuestionRefinementResponseDTO refineQuizQuestion(Course course, QuizQuestionRefinementRequestDTO request) {
+        return refineQuizQuestion(course, request, HyperionUtils.resolveCurrentUserId(userRepository));
+    }
+
+    /**
+     * Refine all provided quiz questions using a single refinement prompt.
+     * Each question is refined independently; results are returned in the same order as the input.
+     *
+     * @param course  the course context
+     * @param request the questions and refinement instructions
+     * @return one refinement result per input question, in the same order
+     */
+    @Observed(name = "hyperion.quiz.refine-all", contextualName = "bulk quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
+    public QuizQuestionBulkRefinementResponseDTO refineAllQuizQuestions(Course course, QuizQuestionBulkRefinementRequestDTO request) {
+        log.debug("Bulk-refining {} quiz questions for course [{}]", request.questions().size(), course.getId());
+        // Resolve user id on the request thread before entering the parallel stream;
+        // SecurityContextHolder is ThreadLocal and not propagated to ForkJoinPool workers.
+        Long userId = HyperionUtils.resolveCurrentUserId(userRepository);
+        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream().map(question -> {
+            try {
+                return refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()), userId);
+            }
+            catch (Exception e) {
+                log.warn("Failed to refine quiz question for course [{}]: {}", course.getId(), e.getMessage());
+                return new QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO(e.getMessage());
+            }
+        }).toList();
+        return new QuizQuestionBulkRefinementResponseDTO(refinements);
+    }
+
+    private QuizQuestionRefinementResponseDTO refineQuizQuestion(Course course, QuizQuestionRefinementRequestDTO request, @Nullable Long userId) {
         log.debug("Refining quiz question for course [{}]", course.getId());
 
         if (chatClient == null) {
@@ -207,12 +269,29 @@ public class HyperionQuizQuestionGenerationService {
                         sanitizeInput(originalQuestion.questionText()), "questionHintLine", questionHintLine, "questionExplanationLine", questionExplanationLine, "answerOptions",
                         answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
 
-        RefinedQuestionWithExplanationOutput output;
+        ChatResponse chatResponse;
         try {
-            output = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(outputConverter);
+            chatResponse = chatClient.prompt().system(systemPrompt).user(userPrompt).call().chatResponse();
         }
         catch (Exception e) {
             log.error("Failed to refine quiz question for course [{}]", course.getId(), e);
+            throw new InternalServerErrorAlertException("Failed to refine quiz question", "QuizQuestionRefinement", "QuizQuestionRefinement.refinementFailed");
+        }
+
+        llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, REFINEMENT_PIPELINE_ID,
+                builder -> builder.withCourse(course.getId()).withUser(userId));
+
+        String responseText = LLMTokenUsageService.extractResponseText(chatResponse);
+        if (responseText == null) {
+            throw new InternalServerErrorAlertException("LLM returned an empty response", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyLLMResponse");
+        }
+
+        RefinedQuestionWithExplanationOutput output;
+        try {
+            output = outputConverter.convert(responseText);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse refined quiz question for course [{}]", course.getId(), e);
             throw new InternalServerErrorAlertException("Failed to refine quiz question", "QuizQuestionRefinement", "QuizQuestionRefinement.refinementFailed");
         }
 
@@ -223,29 +302,6 @@ public class HyperionQuizQuestionGenerationService {
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
         String reasoning = sanitizeInput(output.reasoning());
         return new QuizQuestionRefinementResponseDTO.QuizQuestionRefinementSuccessDTO(refinedQuestion, reasoning);
-    }
-
-    /**
-     * Refine all provided quiz questions using a single refinement prompt.
-     * Each question is refined independently; results are returned in the same order as the input.
-     *
-     * @param course  the course context
-     * @param request the questions and refinement instructions
-     * @return one refinement result per input question, in the same order
-     */
-    @Observed(name = "hyperion.quiz.refine-all", contextualName = "bulk quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
-    public QuizQuestionBulkRefinementResponseDTO refineAllQuizQuestions(Course course, QuizQuestionBulkRefinementRequestDTO request) {
-        log.debug("Bulk-refining {} quiz questions for course [{}]", request.questions().size(), course.getId());
-        List<QuizQuestionRefinementResponseDTO> refinements = request.questions().parallelStream().map(question -> {
-            try {
-                return refineQuizQuestion(course, new QuizQuestionRefinementRequestDTO(question, request.refinementPrompt()));
-            }
-            catch (Exception e) {
-                log.warn("Failed to refine quiz question for course [{}]: {}", course.getId(), e.getMessage());
-                return new QuizQuestionRefinementResponseDTO.QuizQuestionRefinementFailureDTO(e.getMessage());
-            }
-        }).toList();
-        return new QuizQuestionBulkRefinementResponseDTO(refinements);
     }
 
     private List<GeneratedQuizQuestionDTO> mapAndValidateGeneratedQuestions(@Nullable GeneratedQuestionsOutput generatedQuestions) {

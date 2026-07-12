@@ -40,6 +40,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -170,7 +171,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
-    paramSub: Subscription;
+    paramSub!: Subscription; // set in ngOnInit(), unsubscribed in ngOnDestroy()
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
@@ -346,9 +347,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   '/course-management',
                   course.id!.toString(),
                   'exams',
-                  ex.exerciseGroup!.exam!.id!.toString(),
+                  ex.exerciseGroup.exam!.id!.toString(),
                   'exercise-groups',
-                  ex.exerciseGroup!.id!.toString(),
+                  ex.exerciseGroup.id!.toString(),
                   ex.type + '-exercises',
                   ex.id!.toString(),
                   'participations',
@@ -434,6 +435,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         result.successful = dto.successful;
         result.completionDate = dto.completionDate;
         result.assessmentType = dto.assessmentType;
+        result.testCaseCount = dto.testCaseCount;
+        result.passedTestCaseCount = dto.passedTestCaseCount;
+        result.codeIssueCount = dto.codeIssueCount;
         return result;
     }
 
@@ -460,13 +464,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                                         successful: dto.successful,
                                         completionDate: dto.completionDate,
                                         assessmentType: dto.assessmentType,
+                                        testCaseCount: dto.testCaseCount,
+                                        passedTestCaseCount: dto.passedTestCaseCount,
+                                        codeIssueCount: dto.codeIssueCount,
                                     },
                                 ]
                               : [],
+                          ...(ex?.type === ExerciseType.PROGRAMMING && {
+                              submissionExerciseType: 'programming' as SubmissionExerciseType,
+                              buildFailed: dto.buildFailed,
+                          }),
                       },
                   ]
                 : [],
-        } as Participation;
+        };
     }
 
     /**

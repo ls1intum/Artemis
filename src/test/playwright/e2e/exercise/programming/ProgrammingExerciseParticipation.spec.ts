@@ -39,15 +39,18 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
                 exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
             });
 
-            test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+            test('Makes a submission using code editor', async ({ courseOverview, programmingExerciseOverview, programmingExerciseEditor }) => {
                 // C builds can take longer under CI parallel load
                 test.slow();
+                const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
                 await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(submission.expectedResult);
                     await expect(resultScore).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
+                // After the build completes, the result must also surface in the course-overview sidebar card (the
+                // `isInSidebarCard` placement of jhi-result), which the editor/header placements do not cover.
+                await courseOverview.checkExerciseResultInSidebar(course.id!, exercise.title!, expectedResultPattern);
             });
 
             test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview, waitForParticipationBuildToFinish }) => {
@@ -59,6 +62,125 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             });
         });
     }
+
+    // Verifies that the course-overview sidebar card (the `isInSidebarCard` placement of jhi-result, rendered via
+    // jhi-updating-result) re-renders purely from websocket pushes — no page reload. While the student stays on the
+    // overview, a fresh build is triggered via REST; the card must transition to the building indicator (submission
+    // websocket) and then back to the result (result websocket). This guards the live-update path that the
+    // fresh-navigate assertion above does not cover.
+    test.describe('Updates the course-overview sidebar result live via websocket', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Re-renders the sidebar card (building then result) on a websocket result without reloading', async ({
+            page,
+            courseOverview,
+            programmingExerciseOverview,
+            programmingExerciseEditor,
+        }) => {
+            test.slow();
+            const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(cAllSuccessful.expectedResult);
+            const participationId = await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, cAllSuccessful, async () => {
+                await expect(programmingExerciseEditor.getResultScoreFromExercise(exercise.id!)).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
+            });
+            // Open the course overview and confirm the sidebar already shows the result (fresh-load path).
+            await courseOverview.checkExerciseResultInSidebar(course.id!, exercise.title!, expectedResultPattern);
+            // Trigger a fresh build via REST while staying on the overview. The card must update from websocket pushes
+            // alone: first the building/queued indicator, then the result again — proving the live re-render.
+            const card = courseOverview.getExerciseSidebarCard(exercise.title!);
+            const buildingIndicator = card.locator('#test-building, #test-queued, jhi-result-progress-bar');
+            // The live building/queued indicator is driven by the per-user /user/topic/newSubmissions and
+            // /user/topic/submissionProcessing websocket notifications. In the multi-node cluster these user-destination
+            // messages are delivered cross-node via the broker's user-destination broadcast, which is best-effort under
+            // load: a single notification can be missed when the trigger-build request is processed on a different node
+            // than the student's websocket session. The build (and its eventual result) always run; only the transient
+            // building push may be lost. Re-trigger a fresh build until the card shows the live indicator — mirroring how
+            // other tests here re-issue best-effort async backend actions (e.g. the message-search retry) — so this
+            // assertion reliably observes the websocket-driven re-render instead of depending on a single push.
+            let buildingObserved = false;
+            for (let attempt = 0; attempt < 6 && !buildingObserved; attempt++) {
+                // A transient non-2xx (the build dispatch itself can briefly fail under heavy multi-node load) is just
+                // retried — only the final "never observed" outcome fails the test.
+                const triggerResponse = await page.request
+                    .post(`/api/programming/participations/${participationId}/trigger-build?submissionType=MANUAL`, { data: {} })
+                    .catch(() => undefined);
+                if (!triggerResponse?.ok()) {
+                    continue;
+                }
+                buildingObserved = await buildingIndicator.waitFor({ state: 'visible', timeout: 20000 }).then(
+                    () => true,
+                    () => false,
+                );
+            }
+            expect(buildingObserved, 'the course-overview sidebar card never showed the live building/queued indicator after re-triggering the build').toBe(true);
+            // After the live building indicator, the card must transition back to the result purely from the websocket result push.
+            await expect(card.locator('#result-score')).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
+        });
+    });
+
+    // Reproduces tester feedback (@laadvo): when a student starts an exercise in place on the course overview, the
+    // sidebar card must update live (from "Not yet started" to the started/result state) WITHOUT a page reload — it
+    // previously stayed at "Not yet started" until refreshing. No build is required: the participation creation alone
+    // must flip the sidebar card.
+    test.describe('Updates the course-overview sidebar live when starting an exercise', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Sidebar card leaves "Not yet started" right after starting (no reload)', async ({ page, login, courseOverview }) => {
+            test.slow();
+            await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
+            const card = courseOverview.getExerciseSidebarCard(exercise.title!);
+            await expect(card).toContainText('Not yet started', { timeout: 30000 });
+
+            const startButton = courseOverview.getStartExerciseButton(exercise.id!);
+            await startButton.waitFor({ state: 'visible', timeout: 30000 });
+            const participationResponse = page.waitForResponse(
+                (resp) => resp.url().includes(`/exercises/${exercise.id}/participations`) && resp.request().method() === 'POST' && resp.status() === 201,
+            );
+            await startButton.click();
+            await participationResponse;
+
+            // Without any reload, the sidebar card must no longer show "Not yet started".
+            await expect(card).not.toContainText('Not yet started', { timeout: 15000 });
+        });
+    });
+
+    // Covers the result-only ("Bucket C") placement of jhi-result in the instructor/admin build overview
+    // (finished-jobs-table), where the component receives a [result] without a participation or exercise.
+    // evaluateTemplateStatus short-circuits to HAS_RESULT there, so the score badge must render.
+    test.describe('Shows the build result in the course build overview', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Renders the result-only badge in the finished build jobs table', async ({ login, page, programmingExerciseOverview, programmingExerciseEditor }) => {
+            test.slow();
+            const expectedResult = cAllSuccessful.expectedResult;
+            const expectedResultPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, cAllSuccessful, async () => {
+                await expect(programmingExerciseEditor.getResultScoreFromExercise(exercise.id!)).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
+            });
+            // As an instructor, open the course build overview; the finished-jobs table renders jhi-result with a
+            // result-only input. The build just produced a passing result, so a matching score badge must be visible.
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/build-overview`);
+            await page.waitForLoadState('domcontentloaded');
+            await expect(page.locator('jhi-result #result-score').filter({ hasText: expectedResult }).first()).toBeVisible({ timeout: 30000 });
+        });
+    });
 });
 
 test.describe('Programming exercise advanced participation', { tag: '@slow' }, () => {

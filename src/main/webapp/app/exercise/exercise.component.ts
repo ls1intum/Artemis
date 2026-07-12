@@ -20,12 +20,12 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private route = inject(ActivatedRoute);
 
-    private eventSubscriber: Subscription;
+    private eventSubscriber!: Subscription; // set in ngOnInit() via registerChangeInExercises(), destroyed in ngOnDestroy()
     readonly embedded = input(false);
     readonly course = input<Course | undefined>(undefined);
     readonly exerciseFilter = input<ExerciseFilter | undefined>(undefined);
     readonly courseContext = signal<Course>(undefined!);
-    filter: ExerciseFilter;
+    filter!: ExerciseFilter; // set in ngOnInit() (defaults to a new ExerciseFilter) before applyFilter() runs
     readonly exerciseCount = output<number>();
     readonly filteredExerciseCount = output<number>();
     readonly showHeading = signal(false);

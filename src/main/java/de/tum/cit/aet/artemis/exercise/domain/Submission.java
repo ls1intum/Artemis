@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -131,7 +130,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -150,7 +149,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
                 .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
 
         if (latestResult != null) {

@@ -46,6 +46,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 @Component({
@@ -103,9 +104,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     stepWizard = viewChild<ElementRef>('stepWizard');
     private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
 
-    private routeAndDataSubscription: Subscription;
+    private routeAndDataSubscription?: Subscription;
 
-    runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
+    runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
 
     readonly isSubmitting = signal(false);
     // isSaving = false;
@@ -165,8 +166,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined, { equal: quizLiveHeaderInfoEqual });
     readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
-    quizId: number;
-    courseId: number;
+    quizId!: number; // set in ngOnInit() from route params / inputs
+    courseId!: number; // set in ngOnInit() from route params / inputs
     interval?: number;
     autoSaveInterval?: number;
     autoSaveTimer = 0;
@@ -180,9 +181,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * Websocket channels
      */
-    participationChannel: string;
-    quizExerciseChannel: string;
-    quizBatchChannel: string;
+    participationChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizExerciseChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
+    quizBatchChannel!: string; // lazily assigned in subscribeToWebsocketChannels() before any dependent read
     websocketSubscription?: Subscription;
     private participationSubscription?: Subscription;
     private quizExerciseSubscription?: Subscription;
@@ -213,6 +214,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             if (!root) {
                 return;
             }
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- the observer is disconnected via the effect's onCleanup below, which runs on every effect re-run and on component destroy. The rule only scans ngOnDestroy, so it cannot see this teardown.
             const observer = new ResizeObserver(() => {
                 const rect = root.getBoundingClientRect();
                 root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
@@ -229,9 +231,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.routeAndDataSubscription = combineLatest([
             this.route.data,
             this.route.params,
-            this.route.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.parent?.params ?? of({} as Params),
+            this.route.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.parent?.params ?? of<Params>({}),
         ]).subscribe(([data, params, parentParams, grandParentParams, greatGrandParentParams]) => {
             this.mode.set(this.inputMode() ?? data.mode);
             // exerciseId: own params (old componentless route) or parent params (new component-based route)
@@ -542,13 +544,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     checkForQuizEnd() {
@@ -600,7 +596,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -642,7 +638,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.shortAnswerSubmittedTexts.update((map) => new Map(map).set(question.id!, (submittedAnswer as ShortAnswerSubmittedAnswer)?.submittedTexts || []));
                         break;
                     default:
-                        captureException('Unknown question type: ' + question);
+                        captureException('Unknown question type: ' + question.type);
                         break;
                 }
             }, this);
@@ -860,7 +856,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                         break;
                     default:
-                        captureException(new Error('Unknown question type: ' + clientQuestion));
+                        captureException(new Error('Unknown question type: ' + clientQuestion.type));
                         break;
                 }
             }
@@ -895,7 +891,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.questionScores.set({});
             this.submission().submittedAnswers?.forEach((submittedAnswer) => {
                 // limit decimal places
-                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
+                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, course);
             }, this);
             this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
@@ -1066,8 +1062,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);
         // make sure the additional information (explanations, correct answers) is available
-        const participation = this.submission().participation as StudentParticipation | undefined;
-        const quizExercise = participation?.exercise as QuizExercise | undefined;
+        const participation: StudentParticipation | undefined = this.submission().participation;
+        const quizExercise = participation?.exercise;
         if (quizExercise) {
             this.transferInformationToQuizExercise(quizExercise);
         }
