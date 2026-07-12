@@ -57,8 +57,12 @@ function isTumLiveStreamUrlForId(urlValue: string, streamId: number): boolean {
         if (!isTumLiveUrl(url)) {
             return false;
         }
-        const streamMatch = /^\/w\/[^/]+\/([0-9]+)\/?$/.exec(url.pathname);
-        return streamMatch !== null && Number(streamMatch[1]) === streamId;
+        const pathSegments = url.pathname.split('/');
+        if (pathSegments.length !== 4 || pathSegments[0] !== '' || pathSegments[1] !== 'w' || pathSegments[2] === '' || pathSegments[3] === '') {
+            return false;
+        }
+        const streamIdSegment = pathSegments[3];
+        return [...streamIdSegment].every((character) => character >= '0' && character <= '9') && Number(streamIdSegment) === streamId;
     } catch {
         return false;
     }
