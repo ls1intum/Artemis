@@ -96,6 +96,77 @@ async function prewarmChunks(browser: Browser): Promise<void> {
     }
 }
 
+/**
+ * A trimmed, diverse subset of {@link PREWARM_ROUTES} used by the per-test in-context warm-up
+ * ({@link warmChunksInContext}). Four routes cover the heaviest, most distinct lazy modules the
+ * failing tests hit (course-management shell, atlas competency/learning-path, exam management,
+ * student course view); keeping it small bounds the per-test warm-up cost.
+ */
+const WARM_ROUTES = [
+    `/course-management/${SEED_COURSES.atlas1.id}`,
+    `/course-management/${SEED_COURSES.atlas1.id}/learning-path-management`,
+    `/course-management/${SEED_COURSES.examManagement.id}/exams`,
+    `/courses/${SEED_COURSES.general.id}`,
+];
+
+/**
+ * EXPERIMENT (getResponseBody flake): warm the JS/CSS chunks into the CURRENT test's own browser
+ * context, so the test's real navigations serve them from cache instead of re-downloading. Fewer
+ * large chunk responses churning Chromium's per-renderer network buffer means the small `/api`
+ * response bodies tests read via `waitForResponse().json()` are far less likely to be evicted before
+ * the read ("Network.getResponseBody: No data found for resource").
+ *
+ * Why in-context and not the worker-scoped {@link prewarmChunks}: Playwright gives each test a fresh,
+ * non-persistent (incognito) context whose HTTP cache is per-context and in-memory — it does NOT
+ * share the browser's on-disk cache. So the worker prewarm, which warms a throwaway context that is
+ * then closed, cannot populate the caches the tests actually use. Warming inside the test's own
+ * context is what makes the cache hit land where it matters.
+ *
+ * Isolation-safe: the suite uses no `storageState`, so the context is clean (logged out) when this
+ * runs. We borrow the cached admin JWT only to reach the authenticated lazy routes, then clear all
+ * cookies + origin storage so the test starts from the same clean state it would have otherwise.
+ * Best-effort throughout. Gated to CI (where the flake manifests at worker scale); disable with
+ * PW_WARM_CACHE=off.
+ */
+async function warmChunksInContext(page: Page): Promise<void> {
+    const jwt = readAdminJwt();
+    if (!jwt) return;
+
+    const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
+    const url = new URL(baseURL);
+    const ctx = page.context();
+
+    await ctx.addCookies([
+        {
+            name: 'jwt',
+            value: jwt,
+            domain: url.hostname,
+            path: '/',
+            httpOnly: false,
+            secure: url.protocol === 'https:',
+            sameSite: 'Lax',
+        },
+    ]);
+
+    for (const route of WARM_ROUTES) {
+        await page.goto(baseURL + route, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => {});
+    }
+
+    // Reset to the clean, logged-out state the test expects (it performs its own login/setup).
+    await ctx.clearCookies().catch(() => {});
+    await page
+        .evaluate(() => {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch {
+                /* storage may be inaccessible on some origins — ignore */
+            }
+        })
+        .catch(() => {});
+    await page.goto('about:blank').catch(() => {});
+}
+
 const test = baseTest.extend<
     {
         autoTestFixture: string;
@@ -150,6 +221,14 @@ const test = baseTest.extend<
                     void response.body().catch(() => {});
                 }
             });
+
+            // EXPERIMENT: warm the app's JS/CSS chunks into this test's context before it runs, so the
+            // test's navigations hit the cache and don't churn the network buffer that holds the /api
+            // response bodies. Only in CI (where the getResponseBody flake manifests); PW_WARM_CACHE=off
+            // disables it. Runs before coverage start so its navigations are not counted.
+            if (process.env.CI && process.env.PW_WARM_CACHE !== 'off') {
+                await warmChunksInContext(page).catch(() => {});
+            }
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
