@@ -144,7 +144,7 @@ public class SlowQueryCollector {
         // CopyOnWriteArrayList doesn't support in-place mutation; rebuild the entry
         for (int i = 0; i < n1Suspects.size(); i++) {
             N1Suspect s = n1Suspects.get(i);
-            if (s.normalizedSql().equals(sql) && objectsEqual(s.httpEndpoint(), httpEndpoint) && objectsEqual(s.testName(), testName)) {
+            if (s.normalizedSql().equals(sql) && objectsEqual(s.httpMethod(), httpMethod) && objectsEqual(s.httpEndpoint(), httpEndpoint) && objectsEqual(s.testName(), testName)) {
                 n1Suspects.set(i, new N1Suspect(sql, newCount, httpMethod, httpEndpoint, testName));
                 return;
             }

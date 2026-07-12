@@ -29,7 +29,10 @@ def trunc(text: str, max_len: int = 120) -> str:
     """Truncate a SQL string for display in a table cell."""
     if text is None:
         return ""
-    text = text.replace("|", "\\|").replace("\n", " ")
+    # Backticks can't be backslash-escaped inside a single-backtick code span (Markdown treats
+    # code span content as verbatim), so a literal backtick would prematurely close the span and
+    # corrupt the table. Substitute a visually similar character instead.
+    text = text.replace("|", "\\|").replace("\n", " ").replace("`", "'")
     return text[:max_len] + "…" if len(text) > max_len else text
 
 
@@ -112,6 +115,8 @@ def build_report(report: dict) -> str:
         "",
         "---",
         f"## {header_emoji} Slow Query Report",
+        "",
+        f"**{header_status}**",
         "",
         f"> Generated at: {generated_at}  ",
         f"> Slow-query threshold: **{threshold_ms} ms** · N+1 detection: **>{n1_threshold}×/request**",
