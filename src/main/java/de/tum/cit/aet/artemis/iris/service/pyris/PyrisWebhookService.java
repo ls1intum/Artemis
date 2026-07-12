@@ -152,7 +152,7 @@ public class PyrisWebhookService {
         Course course = attachmentVideoUnit.getLecture().getCourse();
 
         String lectureUnitLink = "";
-        if (attachmentVideoUnit.getAttachment() != null) {
+        if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
             lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
         }
 

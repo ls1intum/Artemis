@@ -84,7 +84,12 @@ public class ProcessingStateRecoveryService {
      * @param state the stuck processing state to reset
      */
     void resetToIdleForRecovery(LectureUnitProcessingState state) {
-        log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", state.getLectureUnit().getId(), state.getPhase());
+        LectureUnit lectureUnit = state.getLectureUnit();
+        if (lectureUnit == null) {
+            log.warn("Skipping recovery for processing state {} because its lecture unit is missing", state.getId());
+            return;
+        }
+        log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
         state.setPhase(ProcessingPhase.IDLE);
         state.setIngestionJobToken(null);
         state.setStartedAt(null);
@@ -92,7 +97,7 @@ public class ProcessingStateRecoveryService {
         state.setLastUpdated(ZonedDateTime.now());
         processingStateRepository.save(state);
 
-        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(state.getLectureUnit().getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
+        TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
         notifyProcessingStateChange(state, txStatus);
     }
 

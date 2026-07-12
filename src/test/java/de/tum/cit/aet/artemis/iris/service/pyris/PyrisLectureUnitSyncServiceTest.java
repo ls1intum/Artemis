@@ -122,9 +122,10 @@ class PyrisLectureUnitSyncServiceTest {
         assertThat(dto.lectureId()).isEqualTo(20L);
         assertThat(dto.courseId()).isEqualTo(10L);
         assertThat(dto.baseUrl()).isEqualTo(ARTEMIS_BASE_URL);
-        assertThat(dto.releaseDate()).isEqualTo(releaseDate);
+        assertThat(dto.releaseDate().toInstant()).isEqualTo(releaseDate.toInstant());
         assertThat(dto.slides()).extracting(PyrisSlideVisibilityDTO::slideNumber).containsExactly(1, 2, 3);
-        assertThat(dto.slides()).extracting(PyrisSlideVisibilityDTO::hiddenUntil).containsExactly(hiddenUntil, null, null);
+        assertThat(dto.slides().stream().map(PyrisSlideVisibilityDTO::hiddenUntil).map(value -> value == null ? null : value.toInstant()).toList())
+                .containsExactly(hiddenUntil.toInstant(), null, null);
     }
 
     @Test

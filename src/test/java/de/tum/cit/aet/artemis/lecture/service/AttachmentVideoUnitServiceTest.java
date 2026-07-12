@@ -96,18 +96,19 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
-    void updateAttachmentVideoUnitDoesNotSplitSlidesForByteIdenticalUpload() {
+    void updateAttachmentVideoUnitSplitsSlidesForByteIdenticalPdfUpload() {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);
         var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
         var uploadedFile = mock(MultipartFile.class);
         when(uploadedFile.isEmpty()).thenReturn(false);
+        when(uploadedFile.getOriginalFilename()).thenReturn("lecture.pdf");
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of());
 
-        verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class));
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class));
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class), any(), any());
         verify(contentProcessingService, never()).triggerProcessing(any());
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());

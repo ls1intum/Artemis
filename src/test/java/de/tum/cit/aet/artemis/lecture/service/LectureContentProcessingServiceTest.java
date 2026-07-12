@@ -995,5 +995,19 @@ class LectureContentProcessingServiceTest {
             verify(processingStateRepository, times(2)).save(any());
             verify(websocketMessagingService, times(2)).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
+
+        @Test
+        void shouldSkipStateWhoseLectureUnitIsMissing() {
+            LectureUnitProcessingState orphanedState = new LectureUnitProcessingState();
+            orphanedState.setId(300L);
+            orphanedState.setPhase(ProcessingPhase.INGESTING);
+
+            recoveryService.resetToIdleForRecovery(orphanedState);
+
+            assertThat(orphanedState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            verify(processingStateRepository, never()).save(any());
+            verify(transcriptionRepository, never()).findByLectureUnit_Id(anyLong());
+            verify(websocketMessagingService, never()).sendMessage(anyString(), any());
+        }
     }
 }

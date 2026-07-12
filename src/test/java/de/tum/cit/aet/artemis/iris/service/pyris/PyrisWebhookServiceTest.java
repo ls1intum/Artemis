@@ -88,6 +88,23 @@ class PyrisWebhookServiceTest {
     }
 
     @Test
+    void updateLectureUnitMetadataInPyrisKeepsLectureUnitLinkEmptyWhenAttachmentLinkIsMissing() {
+        AttachmentVideoUnit unit = attachmentVideoUnit();
+        unit.setVideoSource("https://video.example/source");
+        Attachment attachment = new Attachment();
+        attachment.setAttachmentType(AttachmentType.FILE);
+        unit.setAttachment(attachment);
+        when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
+        when(videoSourceResolver.resolve(unit.getVideoSource())).thenReturn(new ResolvedVideo(unit.getVideoSource(), VideoSourceType.YOUTUBE, null));
+
+        service.updateLectureUnitMetadataInPyris(unit);
+
+        ArgumentCaptor<PyrisLectureUnitMetadataWebhookDTO> dtoCaptor = ArgumentCaptor.forClass(PyrisLectureUnitMetadataWebhookDTO.class);
+        verify(pyrisConnectorService).executeLectureMetadataWebhook(dtoCaptor.capture());
+        assertThat(dtoCaptor.getValue().lectureUnitLink()).isEmpty();
+    }
+
+    @Test
     void updateLectureUnitVisibilityInPyrisFetchesSlidesAndSendsSortedLightweightVisibility() {
         AttachmentVideoUnit unit = attachmentVideoUnit();
         ZonedDateTime releaseDate = ZonedDateTime.parse("2026-07-02T10:15:30+02:00[Europe/Berlin]");
@@ -107,9 +124,10 @@ class PyrisWebhookServiceTest {
         assertThat(dto.lectureId()).isEqualTo(20L);
         assertThat(dto.courseId()).isEqualTo(10L);
         assertThat(dto.baseUrl()).isEqualTo(ARTEMIS_BASE_URL);
-        assertThat(dto.releaseDate()).isEqualTo(releaseDate);
+        assertThat(dto.releaseDate().toInstant()).isEqualTo(releaseDate.toInstant());
         assertThat(dto.slides()).extracting(PyrisSlideVisibilityDTO::slideNumber).containsExactly(1, 2, 3);
-        assertThat(dto.slides()).extracting(PyrisSlideVisibilityDTO::hiddenUntil).containsExactly(hiddenUntil, null, null);
+        assertThat(dto.slides().stream().map(PyrisSlideVisibilityDTO::hiddenUntil).map(value -> value == null ? null : value.toInstant()).toList())
+                .containsExactly(hiddenUntil.toInstant(), null, null);
     }
 
     @Test

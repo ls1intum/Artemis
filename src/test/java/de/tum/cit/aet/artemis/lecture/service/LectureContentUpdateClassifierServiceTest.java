@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +39,17 @@ class LectureContentUpdateClassifierServiceTest {
         var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
 
         assertThat(updateKind).isEqualTo(LectureContentUpdateKind.VISIBILITY);
+    }
+
+    @Test
+    void doesNotClassifyEquivalentVisibilityInstantsInDifferentZonesAsUpdate() {
+        var before = snapshot(Map.of(1, HIDDEN_UNTIL));
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
+                RELEASE_DATE.withZoneSameInstant(ZoneId.of("Europe/Berlin")), Map.of(1, HIDDEN_UNTIL.withZoneSameInstant(ZoneId.of("Europe/Berlin"))));
+
+        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.NONE);
     }
 
     @Test
@@ -159,7 +171,8 @@ class LectureContentUpdateClassifierServiceTest {
         var snapshot = snapshot(source);
         source.put(2, HIDDEN_UNTIL.plusDays(1));
 
-        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsOnly(Map.entry(1, HIDDEN_UNTIL));
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsOnlyKeys(1);
+        assertThat(snapshot.slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(HIDDEN_UNTIL.toInstant());
         assertThatThrownBy(() -> snapshot.slideHiddenUntilBySlideNumber().put(3, HIDDEN_UNTIL.plusDays(2))).isInstanceOf(UnsupportedOperationException.class);
 
         var snapshotWithNullSlides = new LectureContentUpdateSnapshot(42L, "Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf",

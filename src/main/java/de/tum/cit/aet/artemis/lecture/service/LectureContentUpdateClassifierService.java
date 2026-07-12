@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -76,7 +78,16 @@ public class LectureContentUpdateClassifierService {
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
-        return !Objects.equals(before.releaseDate(), after.releaseDate()) || !Objects.equals(before.slideHiddenUntilBySlideNumber(), after.slideHiddenUntilBySlideNumber());
+        return !representSameInstant(before.releaseDate(), after.releaseDate())
+                || !containSameInstants(before.slideHiddenUntilBySlideNumber(), after.slideHiddenUntilBySlideNumber());
+    }
+
+    private static boolean containSameInstants(Map<Integer, ZonedDateTime> before, Map<Integer, ZonedDateTime> after) {
+        return before.keySet().equals(after.keySet()) && before.keySet().stream().allMatch(slideNumber -> representSameInstant(before.get(slideNumber), after.get(slideNumber)));
+    }
+
+    private static boolean representSameInstant(ZonedDateTime before, ZonedDateTime after) {
+        return before == null ? after == null : after != null && before.toInstant().equals(after.toInstant());
     }
 
     private static boolean isMetadataUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {

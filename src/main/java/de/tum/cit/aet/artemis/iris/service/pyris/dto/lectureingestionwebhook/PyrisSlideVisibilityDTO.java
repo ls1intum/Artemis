@@ -5,5 +5,5 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisSlideVisibilityDTO(Integer slideNumber, ZonedDateTime hiddenUntil) {
+public record PyrisSlideVisibilityDTO(int slideNumber, ZonedDateTime hiddenUntil) {
 }
