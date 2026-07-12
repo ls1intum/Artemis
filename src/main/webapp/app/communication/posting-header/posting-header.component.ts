@@ -40,8 +40,8 @@ export class PostingHeaderComponent implements OnInit {
     isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
 
-    isAtLeastInstructorInCourse: boolean;
-    isAtLeastTutorInCourse: boolean;
+    isAtLeastInstructorInCourse = false;
+    isAtLeastTutorInCourse = false;
     readonly isAuthorOfPosting = signal(false);
     readonly postingIsOfToday = signal(false);
     readonly todayFlag = signal<string | undefined>(undefined);

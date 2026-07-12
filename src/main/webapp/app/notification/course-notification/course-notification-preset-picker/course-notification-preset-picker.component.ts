@@ -6,6 +6,7 @@ import { faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Component for selecting notification setting presets.
@@ -13,7 +14,7 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from
  */
 @Component({
     selector: 'jhi-course-notification-preset-picker',
-    imports: [TranslateDirective, FaIconComponent, NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgClass],
+    imports: [TranslateDirective, FaIconComponent, NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgClass, ButtonModule],
     templateUrl: './course-notification-preset-picker.component.html',
     styleUrls: ['./course-notification-preset-picker.component.scss'],
 })
@@ -29,7 +30,7 @@ export class CourseNotificationPresetPickerComponent {
     protected readonly farEyeSlash = faEyeSlash;
     protected readonly faCheck = faCheck;
 
-    private recentlySelectedTimeout: NodeJS.Timeout;
+    private recentlySelectedTimeout?: NodeJS.Timeout;
     // `isRecentlySelected` is flipped back to false inside a setTimeout callback, and the lang key derives
     // from a signal input; both are read in the template, so they must be reactive under zoneless.
     protected readonly isRecentlySelected = signal(false);

@@ -210,7 +210,6 @@
                 "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
             },
             "error": {
-                "cannotRegisterInstructor": "Du kannst keine Personen aus der Lehr- oder Administrationsgruppe zu Klausuren anmelden.",
                 "cannotShowExampleSolution": "Beispiellösung wurde nicht gefunden",
                 "cannotDisplayExerciseDetails": "Aufgabe {{ exerciseGroupTitle }} kann nicht angezeigt werden"
             },
@@ -532,6 +531,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
+            "textTooLong": "Dieser Text ist zu lang. Bitte verwende höchstens {{ max }} Zeichen.",
             "assessmentDashboard": "Bewertung",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
@@ -671,7 +671,9 @@
                     "register": "Anmelden",
                     "close": "Schließen",
                     "errorRegisterStudent": "Fehler beim Anmelden der Person zur Klausur",
-                    "errorSearchStudents": "Fehler bei der Suche nach Studierenden."
+                    "errorSearchStudents": "Fehler bei der Suche nach Studierenden.",
+                    "notFoundStudents": "Die folgenden Personen konnten nicht angemeldet werden, da sie nicht gefunden wurden: {{ logins }}",
+                    "rejectedStaffUsers": "Die folgenden Personen konnten nicht angemeldet werden, da sie dem Kurs-Personal angehören: {{ logins }}"
                 },
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",

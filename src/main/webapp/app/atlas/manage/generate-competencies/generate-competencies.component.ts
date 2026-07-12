@@ -74,7 +74,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
 
     readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
 
-    courseId: number;
+    courseId!: number; // set in ngOnInit() from the route params
     readonly isLoading = signal(false);
     submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });

@@ -1,5 +1,5 @@
 <div
-    [ngClass]="{ 'is-expanded': isExpanded(), 'd-none': notifications().length === 0 }"
+    [ngClass]="{ 'is-expanded': isExpanded(), hidden: notifications().length === 0 }"
     [ngStyle]="{ height: isExpanded() ? 5 + notifications().length * 7 + 'rem' : null }"
     class="course-notification-popup-overlay"
     (click)="overlayClicked()"
@@ -25,11 +25,11 @@
     }
 
     <div class="course-notification-popup-overlay-collapse">
-        <button class="btn btn-outline-primary rounded-circle btn-sm me-2" (click)="collapseOverlayClicked()">
+        <button pButton [outlined]="true" size="small" [rounded]="true" class="me-2" (click)="collapseOverlayClicked()">
             <fa-icon [icon]="faTimes" />
         </button>
 
-        <button class="btn btn-outline-primary rounded-circle btn-sm" (click)="clearAllNotifications()">
+        <button pButton [outlined]="true" size="small" [rounded]="true" (click)="clearAllNotifications()">
             <fa-icon [icon]="faTrash" />
         </button>
     </div>

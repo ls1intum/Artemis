@@ -337,10 +337,11 @@
                 "sunday": "Sunday"
             },
             "overview": {
-                "title": "Notifications",
+                "title": "Course Notifications",
                 "emptyTitle": "All done!",
                 "settingsTooltip": "Go to settings",
                 "archiveAllTooltip": "Clear all notifications",
+                "markAllAsRead": "Mark all as Read",
                 "emptyMessage": "Currently there are no notifications for this category."
             },
             "category": {
@@ -349,7 +350,7 @@
                 "iris_review": "Iris Review"
             },
             "setting": {
-                "headline": "Notifications"
+                "headline": "Course Notifications"
             },
             "channel": {
                 "email": "E-Mail",
@@ -360,18 +361,18 @@
                 "collapseToggle": "Collapse"
             },
             "preset": {
-                "dropdown": "Setting",
+                "dropdown": "Preference",
                 "defaultUserCourseNotificationSettingPreset": {
                     "title": "Default",
-                    "description": "Receive only essential notifications about the course."
+                    "description": "Receive only essential notifications."
                 },
                 "ignoreUserCourseNotificationSettingPreset": {
                     "title": "Ignore all",
-                    "description": "Receive no notifications for the course."
+                    "description": "Receive no notifications."
                 },
                 "allActivityUserCourseNotificationSettingPreset": {
                     "title": "All activity",
-                    "description": "Receive all notifications to stay on track at all times."
+                    "description": "Receive all notifications."
                 },
                 "customUserCourseNotificationSettingPreset": {
                     "title": "Custom",

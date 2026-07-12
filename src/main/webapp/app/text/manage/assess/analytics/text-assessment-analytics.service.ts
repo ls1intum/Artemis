@@ -19,14 +19,14 @@ export class TextAssessmentAnalytics {
     private location = inject(Location);
     private profileService = inject(ProfileService);
 
-    private userId: number;
-    private courseId: number;
-    private textExerciseId: number;
-    private participationId: number;
-    private submissionId: number;
+    private userId = 0;
+    private courseId = 0;
+    private textExerciseId = 0;
+    private participationId = 0;
+    private submissionId = 0;
     private eventToSend: TextAssessmentEvent = new TextAssessmentEvent();
     private INVALID_VALUE = -1;
-    private route: ActivatedRoute;
+    private route!: ActivatedRoute; // set in setComponentRoute() before subscribeToRouteParameters() reads it
     public analyticsEnabled = false;
 
     constructor() {

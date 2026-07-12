@@ -43,7 +43,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
-    submission: Submission;
+    submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
     // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
     readonly complaint = signal<Complaint | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);

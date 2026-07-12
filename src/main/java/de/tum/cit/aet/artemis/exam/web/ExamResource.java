@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -63,9 +65,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -97,6 +97,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
@@ -321,6 +322,23 @@ public class ExamResource {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
+        // If the schedule (start/end date) changed but the working time did not, the block above did not run, so
+        // conducting students are never told about the new schedule. Push a schedule update carrying the new dates so
+        // their pre-start countdown and start-based content visibility recompute. Only relevant while students may be in
+        // the pre-start conduction window (from the original start minus EXAM_START_WAIT_TIME_MINUTES until the exam
+        // ends); a routine edit of a far-future exam reaches no conducting student and is skipped.
+        else {
+            boolean startDateChanged = comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
+            ZonedDateTime now = now();
+            boolean withinConductionWindow = originalStartDate != null && savedExam.getEndDate() != null
+                    && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
+            // Test exams have no instructor-controlled pre-start countdown and their clients do not subscribe to these
+            // updates, so skip them to avoid persisting unused events.
+            if ((startDateChanged || endDateChanged) && withinConductionWindow && !savedExam.isTestExam()) {
+                Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
+                examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
+            }
+        }
 
         boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;
         if (scheduleRelevantExamSettingsChanged) {
@@ -459,12 +477,28 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
+        checkExamTitleLengthElseThrow(exam);
+        checkExamTextLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
 
         checkExamAttendanceCheckSettings(exam);
+    }
+
+    /**
+     * Checks that the exam start/end and confirmation texts do not exceed the allowed length. The client caps these too,
+     * but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTextLengthElseThrow(Exam exam) {
+        boolean anyTextTooLong = Stream.of(exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText())
+                .anyMatch(text -> text != null && text.length() > Constants.EXAM_TEXT_MAX_LENGTH);
+        if (anyTextTooLong) {
+            throw new BadRequestAlertException("An exam text is too long. Maximum allowed is " + Constants.EXAM_TEXT_MAX_LENGTH + " characters.", ENTITY_NAME, "examTextTooLong");
+        }
     }
 
     /**
@@ -480,6 +514,18 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Checks that the exam title does not exceed the database column limit. The client caps this too, but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTitleLengthElseThrow(Exam exam) {
+        if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
+                    "examTitleTooLong");
         }
     }
 
@@ -935,40 +981,6 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the
-     * exam
-     *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentLogin the login of the user who should get student access
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
-     */
-    @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<StudentDTO> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
-        log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
-
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-
-        if (exam.isTestExam()) {
-            throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
-        }
-
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
-                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
-
-        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
-            throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
-        }
-
-        examRegistrationService.registerStudentToExam(course, exam, student);
-        return ResponseEntity.ok().body(new StudentDTO(student));
-    }
-
-    /**
      * POST /courses/:courseId/exams/:examId/generate-student-exams : Generates the student exams randomly based on the exam configuration and the exercise groups
      *
      * @param courseId the id of the course
@@ -1086,12 +1098,12 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<ExamUserDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
+    public ResponseEntity<ExamRegistrationResultDTO> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExamUserDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        List<ExamUserDTO> notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
+        ExamRegistrationResultDTO notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 

@@ -42,9 +42,9 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     }
     feedbacks: Feedback[] = [];
     readonly isSaving = signal(false);
-    userId: number;
-    isAssessor: boolean;
-    complaint: Complaint;
+    userId?: number;
+    isAssessor?: boolean;
+    complaint?: Complaint;
 
     // Icons
     faSave = faSave;

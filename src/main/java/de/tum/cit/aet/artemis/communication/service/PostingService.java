@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -115,7 +114,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
     }
 
     /**
@@ -127,16 +126,15 @@ public abstract class PostingService {
      * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
      * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
      *
-     * @param postDTO    object including the affected post as well as the action
+     * @param post       the affected post
+     * @param action     the action performed on the post
      * @param courseId   the id of the course the posting belongs to
      * @param recipients the recipients for this broadcast, can be null. Note: this set is ignored when the post carries a pending Iris reply
      *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
      *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
     @SuppressWarnings("deprecation")
-    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
-        Post post = postDTO.post();
-
+    public void broadcastForPost(Post post, MetisCrudAction action, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
         // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
         // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
@@ -144,13 +142,13 @@ public abstract class PostingService {
         // When the post carries a pending Iris reply we therefore deliver per-user instead.
         Conversation postConversation = post.getConversation();
         if (postConversation != null && hasPendingIrisReply(post)) {
-            broadcastPostWithPendingIrisReply(post, postDTO.action(), postConversation);
+            broadcastPostWithPendingIrisReply(post, action, postConversation);
             return;
         }
 
         // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
         // walks the entity exactly once.
-        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, postDTO.action());
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, action);
 
         if (postConversation != null) {
             String coursePathSuffix = "courses/" + courseId;
