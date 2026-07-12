@@ -88,11 +88,13 @@
                 <div class="border-b border-surface-200 dark:border-surface-700 pb-2 mb-3"></div>
                 @if (generationSandboxesLoading()) {
                     <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></p>
-                } @else if (generationSandboxesLoadFailed()) {
+                }
+                @if (generationSandboxesLoadFailed()) {
                     <p-message severity="error" class="block" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed" />
-                } @else if (generationJobs().length) {
+                }
+                @if (generationJobs().length) {
                     <jhi-hyperion-generation-jobs-table [jobs]="generationJobs()" />
-                } @else {
+                } @else if (!generationSandboxesLoading() && !generationSandboxesLoadFailed()) {
                     <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.empty"></p>
                 }
             </section>

@@ -149,4 +149,15 @@ describe('HyperionGenerationDetailComponent', () => {
 
         expect(document.activeElement).toBe(fixture.nativeElement.querySelector('[data-testid="back-to-build-agent"]'));
     });
+
+    it('does not steal focus when a background refresh observes natural completion', () => {
+        fixture.detectChanges();
+        const sessionToggle: HTMLElement = fixture.nativeElement.querySelector('summary');
+        sessionToggle.focus();
+
+        fixture.componentInstance.naturallyEnded.set(true);
+        fixture.detectChanges();
+
+        expect(document.activeElement).toBe(sessionToggle);
+    });
 });

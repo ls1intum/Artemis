@@ -328,10 +328,11 @@ describe('BuildAgentDetailsComponent', () => {
             )
             .mockReturnValueOnce(throwError(() => new Error('offline')));
 
-        component.ngOnInit();
+        fixture.detectChanges();
         component['loadGenerationSandboxes']();
+        fixture.detectChanges();
 
-        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1' })]);
+        expect(component.generationJobs()).toEqual([expect.objectContaining({ jobId: 'job-1', stale: true })]);
         expect(component.generationSandboxesLoadFailed()).toBe(true);
     });
 

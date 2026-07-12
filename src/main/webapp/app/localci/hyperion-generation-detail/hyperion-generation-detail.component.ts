@@ -71,7 +71,7 @@ export class HyperionGenerationDetailComponent implements OnInit, OnDestroy {
     private readonly backToAgent = viewChild<ElementRef<HTMLAnchorElement>>('backToAgent');
 
     private readonly focusTerminalState = effect(() => {
-        if (this.released() || this.naturallyEnded()) {
+        if (this.released()) {
             this.backToAgent()?.nativeElement.focus();
         }
     });

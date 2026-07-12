@@ -347,6 +347,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 this.generationSandboxesLoading.set(false);
             },
             error: () => {
+                this.generationSandboxes.update((sessions) => sessions.map((session) => ({ ...session, stale: true })));
                 this.generationSandboxesLoading.set(false);
                 this.generationSandboxesLoadFailed.set(true);
             },
