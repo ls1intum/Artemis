@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.export.CompetencyProgressExportDTO;
@@ -43,6 +44,32 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
+
+    /**
+     * Idempotently re-applies a freshly computed progress/confidence onto an existing competency-progress row.
+     * <p>
+     * Used on the rare concurrency-conflict reconciliation path in
+     * {@link de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService#updateCompetencyProgress}:
+     * a single targeted UPDATE that touches the existing (competency, user) row, or affects zero rows if it was
+     * concurrently deleted. Unlike a merge/save on a detached entity, it can therefore never resurrect a deleted row.
+     *
+     * @param competencyId     the id of the competency
+     * @param userId           the id of the user
+     * @param progress         the recomputed progress value
+     * @param confidence       the recomputed confidence score
+     * @param confidenceReason the recomputed confidence reason
+     * @return the number of rows updated (0 if the row no longer exists)
+     */
+    @Transactional // ok: a single targeted, idempotent UPDATE on the concurrency-conflict reconciliation path
+    @Modifying
+    @Query("""
+            UPDATE CompetencyProgress cp
+            SET cp.progress = :progress, cp.confidence = :confidence, cp.confidenceReason = :confidenceReason
+            WHERE cp.competency.id = :competencyId
+                AND cp.user.id = :userId
+            """)
+    int updateProgressAndConfidence(@Param("competencyId") long competencyId, @Param("userId") long userId, @Param("progress") Double progress,
+            @Param("confidence") Double confidence, @Param("confidenceReason") CompetencyProgressConfidenceReason confidenceReason);
 
     @Query("""
             SELECT cp

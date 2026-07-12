@@ -271,24 +271,20 @@ public class CompetencyProgressService {
             // inserts one, and the second insert violates the competency_user primary key.
             //
             // Previously this exception was swallowed, which silently DROPPED this thread's freshly computed
-            // progress/confidence. Instead, re-fetch the row the winning thread just created and re-apply this
-            // thread's values as an UPDATE. The UPDATE cannot hit the unique constraint, and the entity has no
-            // @Version, so this converges deterministically without a further conflict. (updateCompetencyProgress
-            // is not @Transactional, so the failed insert's transaction is already rolled back and the re-fetch +
-            // update below run in their own clean transactions.) DB-portable: relies only on the unique
-            // constraint + the standard DataIntegrityViolationException, not on a vendor-specific upsert.
-            CompetencyProgress reconciled = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
-            if (reconciled == null) {
+            // progress/confidence. Instead, re-apply this thread's values to the row the winning thread created
+            // via a single targeted, idempotent UPDATE. Unlike a merge/save on a detached entity (which would
+            // re-insert the row if it had been concurrently deleted between a re-fetch and the flush), this
+            // updates the existing row or affects zero rows if it is already gone — so it can never resurrect a
+            // deleted row. DB-portable: relies only on the unique constraint + the standard
+            // DataIntegrityViolationException, not on a vendor-specific upsert.
+            int updatedRows = competencyProgressRepository.updateProgressAndConfidence(competencyId, user.getId(), studentProgress.getProgress(), studentProgress.getConfidence(),
+                    studentProgress.getConfidenceReason());
+            if (updatedRows == 0) {
                 // The concurrently created row was deleted again (competency/user cleanup) before we could
                 // reconcile. Nothing to persist; return the in-memory values without learning-path propagation.
                 log.debug("Competency progress row vanished during concurrent creation, skipping persistence.");
                 return studentProgress;
             }
-            reconciled.setProgress(studentProgress.getProgress());
-            reconciled.setConfidence(studentProgress.getConfidence());
-            reconciled.setConfidenceReason(studentProgress.getConfidenceReason());
-            competencyProgressRepository.save(reconciled);
-            studentProgress = reconciled;
         }
         catch (org.hibernate.ObjectNotFoundException e) {
             // The competency was deleted between the findById above and the flush triggered by save (or
