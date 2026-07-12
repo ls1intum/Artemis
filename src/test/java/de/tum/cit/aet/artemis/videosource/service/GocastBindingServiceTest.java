@@ -171,6 +171,17 @@ class GocastBindingServiceTest {
         verify(bindingRepository, never()).save(any());
     }
 
+    @Test
+    void activeBindingOperationsWithoutConnectorThrowControlledException() {
+        GocastBindingService serviceWithoutConnector = new GocastBindingService(bindingRepository, Optional.empty());
+
+        assertThatThrownBy(() -> serviceWithoutConnector.listCourseStreams(ARTEMIS_COURSE_ID)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("connector is not available");
+        assertThatThrownBy(() -> serviceWithoutConnector.getPlaybackToken(ARTEMIS_COURSE_ID, 1L, INSTRUCTOR_LRZ_ID, 60)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("connector is not available");
+        verifyNoInteractions(bindingRepository);
+    }
+
     // ── createBinding — IDOR guard ─────────────────────────────────────────────
 
     @Test

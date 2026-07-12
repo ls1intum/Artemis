@@ -185,6 +185,9 @@ public class GocastBindingService {
     }
 
     private GocastCourseBinding getActiveBinding(long courseId) {
+        if (connectorService == null) {
+            throw new IllegalStateException("Gocast connector is not available for course " + courseId);
+        }
         GocastCourseBinding binding = getBindingByCourseIdElseThrow(courseId);
         if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
             throw new IllegalStateException("The TUM Live binding for course " + courseId + " is not active");
