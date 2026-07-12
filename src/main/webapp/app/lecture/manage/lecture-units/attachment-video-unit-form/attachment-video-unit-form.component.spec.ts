@@ -554,5 +554,22 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
             expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ formProperties: expect.objectContaining({ gocastStreamId: 42 }) }));
         });
+
+        it('should replace a restored gocast URL when a different stream is selected', () => {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: {
+                    name: 'Lecture 1',
+                    videoSource: 'https://tum.live/w/eidi/42?video_only=1',
+                    gocastStreamId: 42,
+                },
+                fileProperties: {},
+            } satisfies AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 43, streamName: 'Lecture 2', slug: 'eidi' });
+
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/43?video_only=1');
+        });
     });
 });

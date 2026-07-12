@@ -51,6 +51,19 @@ function isVideoOnlyTumUrl(url: URL): boolean {
     return url?.searchParams.get('video_only') === '1';
 }
 
+function isTumLiveStreamUrlForId(urlValue: string, streamId: number): boolean {
+    try {
+        const url = new URL(urlValue);
+        if (!isTumLiveUrl(url)) {
+            return false;
+        }
+        const streamMatch = /^\/w\/[^/]+\/([0-9]+)\/?$/.exec(url.pathname);
+        return streamMatch !== null && Number(streamMatch[1]) === streamId;
+    } catch {
+        return false;
+    }
+}
+
 function videoSourceTransformUrlValidator(control: AbstractControl): ValidationErrors | undefined {
     const urlValue = control.value;
     if (!urlValue) {
@@ -288,7 +301,7 @@ export class AttachmentVideoUnitFormComponent {
             this.selectedGocastStreamId = formData.formProperties.gocastStreamId;
             this.lastAutoFilledGocastUrl = undefined;
             const videoSource = formData.formProperties.videoSource;
-            if (videoSource && this.selectedGocastStreamId !== undefined && new RegExp(`/w/[^/]+/${this.selectedGocastStreamId}(?:[/?#]|$)`).test(videoSource)) {
+            if (videoSource && this.selectedGocastStreamId !== undefined && isTumLiveStreamUrlForId(videoSource, this.selectedGocastStreamId)) {
                 this.lastAutoFilledGocastUrl = videoSource;
             }
         }
