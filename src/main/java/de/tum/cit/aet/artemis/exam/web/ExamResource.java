@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -476,12 +477,28 @@ public class ExamResource {
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
         checkExamCourseIdElseThrow(courseId, exam);
+        checkExamTitleLengthElseThrow(exam);
+        checkExamTextLengthElseThrow(exam);
         checkExamForDatesConflictsElseThrow(exam);
         checkExamNumericFieldLimitsElseThrow(exam);
         checkExamForWorkingTimeConflictsElseThrow(exam);
         checkExamPointsAndCorrectionRoundsElseThrow(exam);
 
         checkExamAttendanceCheckSettings(exam);
+    }
+
+    /**
+     * Checks that the exam start/end and confirmation texts do not exceed the allowed length. The client caps these too,
+     * but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTextLengthElseThrow(Exam exam) {
+        boolean anyTextTooLong = Stream.of(exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText())
+                .anyMatch(text -> text != null && text.length() > Constants.EXAM_TEXT_MAX_LENGTH);
+        if (anyTextTooLong) {
+            throw new BadRequestAlertException("An exam text is too long. Maximum allowed is " + Constants.EXAM_TEXT_MAX_LENGTH + " characters.", ENTITY_NAME, "examTextTooLong");
+        }
     }
 
     /**
@@ -497,6 +514,18 @@ public class ExamResource {
 
         if (!exam.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
+        }
+    }
+
+    /**
+     * Checks that the exam title does not exceed the database column limit. The client caps this too, but crafted requests and import payloads bypass the UI.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamTitleLengthElseThrow(Exam exam) {
+        if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
+            throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
+                    "examTitleTooLong");
         }
     }
 
