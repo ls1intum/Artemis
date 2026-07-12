@@ -85,6 +85,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -122,6 +123,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCBatchTest;
@@ -2301,6 +2303,50 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // Quiz-question stubs keep length + polymorphic type so the echo round-trips (details are reloaded from source on import)
         assertThat(receivedExercise.quizQuestions()).hasSize(4);
         assertThat(receivedExercise.quizQuestions()).allSatisfy(question -> assertThat(question.type()).isNotBlank());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_echoesQuizConfigScalars_survivesImport() throws Exception {
+        // Reproduces the exercise-group import modal end to end: GET the import fetch, echo the raw exercise-group JSON
+        // unchanged to import-exercise-group (exactly what exam-exercise-import.component does), then reload the
+        // persisted quiz and assert its configuration was NOT silently reset. Regression guard for
+        // QuizExerciseImportService#copyQuizExerciseBasis, which reads randomizeQuestionOrder, allowedNumberOfAttempts,
+        // quizMode and duration off the posted skeleton (this echoed body), not off the original source exercise.
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(course1, true);
+        ExerciseGroup quizGroup = sourceExam.getExerciseGroups().getFirst();
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
+        // Deliberately NON-DEFAULT quiz config (factory defaults are randomizeQuestionOrder=true,
+        // allowedNumberOfAttempts=1, duration=10, quizMode=SYNCHRONIZED): NON_EMPTY only hides nulls/empties, but using
+        // values that differ from every default proves the round-trip actually carried the poster's data instead of
+        // coincidentally matching a fallback.
+        quiz.setRandomizeQuestionOrder(false);
+        quiz.setAllowedNumberOfAttempts(5);
+        quiz.setDuration(999);
+        quiz.setQuizMode(QuizMode.BATCHED);
+        quizExerciseRepository.save(quiz);
+
+        Exam targetExam = examUtilService.addExam(course1);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        JsonNode examJson = request.get("/api/exam/exams/" + sourceExam.getId(), HttpStatus.OK, JsonNode.class);
+        JsonNode exerciseGroupsJson = examJson.get("exerciseGroups");
+        JsonNode fetchedQuiz = exerciseGroupsJson.get(0).get("exercises").get(0);
+        // Sanity: the fetched skeleton actually carries the non-default scalars under test (i.e. Finding 1's fix is present).
+        assertThat(fetchedQuiz.get("randomizeQuestionOrder").asBoolean()).isFalse();
+        assertThat(fetchedQuiz.get("allowedNumberOfAttempts").asInt()).isEqualTo(5);
+        assertThat(fetchedQuiz.get("duration").asInt()).isEqualTo(999);
+        assertThat(fetchedQuiz.get("quizMode").asText()).isEqualTo("BATCHED");
+
+        ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);
+
+        QuizExercise importedQuizStub = (QuizExercise) importResult.exerciseGroups().getFirst().getExercises().iterator().next();
+        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizStub.getId());
+        assertThat(importedQuiz.isRandomizeQuestionOrder()).isFalse();
+        assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
+        assertThat(importedQuiz.getDuration()).isEqualTo(999);
+        assertThat(importedQuiz.getQuizMode()).isEqualTo(QuizMode.BATCHED);
     }
 
     @Test

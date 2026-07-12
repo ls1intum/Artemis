@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
@@ -149,7 +150,10 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
      * {@code title}, {@code shortName}, {@code difficulty} and per group {@code id}, {@code title}, {@code isMandatory}, then
      * re-posts the selected groups to {@code import-exercise-group} — where the exercises deserialize back into the polymorphic
      * {@code Exercise} hierarchy (and their quiz-question / programming-participation stubs), so the {@code type} discriminators
-     * this shape carries are load-bearing for that echo;</li>
+     * this shape carries are load-bearing for that echo. For quiz exercises the posted skeleton is also the source
+     * {@code QuizExerciseImportService#copyQuizExerciseBasis} reads {@code randomizeQuestionOrder}, {@code allowedNumberOfAttempts},
+     * {@code quizMode} and {@code duration} from, so {@link ExamExerciseDTO} carries those four scalars purely for this echo — no
+     * screen renders them, but their absence would silently reset a customized quiz's configuration on import;</li>
      * <li>the create-exam-from-import editor resolves this response ({@code ExamResolve} with {@code forImport}) into
      * {@code exam-update.component} — the same component and therefore the same field set as the normal edit route, which already
      * consumes this DTO — and its body-builder ({@code convertExamToImportDTO} / {@code convertExerciseGroupsToImportDTO}) reads
@@ -238,6 +242,11 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
      * @param diagramType                the UML diagram type (modeling exercises)
      * @param filePattern                the accepted file pattern (file-upload exercises)
      * @param quizQuestions              the id+type quiz-question stubs (quiz exercises, detailed only; length is read, type kept so client echoes round-trip)
+     * @param randomizeQuestionOrder     whether the question order is randomized (quiz exercises, detailed only); present purely so the
+     *                                       group-import echo carries it — see "Why the quiz-config scalars are present" below
+     * @param allowedNumberOfAttempts    the number of allowed attempts (quiz exercises, detailed only); import-echo only, see below
+     * @param quizMode                   the quiz participation mode (quiz exercises, detailed only); import-echo only, see below
+     * @param duration                   the quiz duration in seconds (quiz exercises, detailed only); import-echo only, see below
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExamExerciseDTO(long id, ExerciseType type, @Nullable String title, @Nullable Double maxPoints, @Nullable Double bonusPoints,
@@ -245,8 +254,18 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
             @Nullable Boolean testRunParticipationsExist, @Nullable Long numberOfParticipations, @Nullable String shortName, @Nullable String projectKey,
             @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOnlineIde,
             @Nullable ExamProgrammingParticipationDTO templateParticipation, @Nullable ExamProgrammingParticipationDTO solutionParticipation, @Nullable DiagramType diagramType,
-            @Nullable String filePattern, @Nullable List<ExamQuizQuestionDTO> quizQuestions) {
+            @Nullable String filePattern, @Nullable List<ExamQuizQuestionDTO> quizQuestions, @Nullable Boolean randomizeQuestionOrder, @Nullable Integer allowedNumberOfAttempts,
+            @Nullable QuizMode quizMode, @Nullable Integer duration) {
 
+        /*
+         * Why the quiz-config scalars are present: the exercise-group import modal re-posts this exact exercise object to
+         * import-exercise-group, where it deserializes back into a QuizExercise skeleton and is passed as the
+         * `importedExercise` argument of QuizExerciseImportService#importQuizExercise. copyQuizExerciseBasis reads
+         * randomizeQuestionOrder, allowedNumberOfAttempts, quizMode and duration off exactly that skeleton to build the
+         * persisted copy. Without them here, a customized (e.g. batched, multi-attempt) quiz would silently import with
+         * default/null configuration. These four fields are therefore load-bearing for the import echo even though no
+         * screen renders them directly; do not remove them without checking copyQuizExerciseBasis still doesn't need them.
+         */
         static ExamExerciseDTO of(Exercise exercise, boolean withDetails) {
             String projectKey = null;
             Boolean allowOfflineIde = null;
@@ -257,6 +276,10 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
             ExamProgrammingParticipationDTO templateParticipation = null;
             ExamProgrammingParticipationDTO solutionParticipation = null;
             List<ExamQuizQuestionDTO> quizQuestions = null;
+            Boolean randomizeQuestionOrder = null;
+            Integer allowedNumberOfAttempts = null;
+            QuizMode quizMode = null;
+            Integer duration = null;
 
             switch (exercise) {
                 case ProgrammingExercise programmingExercise -> {
@@ -277,6 +300,11 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
                         if (Hibernate.isInitialized(questions) && questions != null) {
                             quizQuestions = questions.stream().map(ExamQuizQuestionDTO::of).toList();
                         }
+                        // Scalars the group-import echo needs (see class-level comment above); every quiz column, no entity graph.
+                        randomizeQuestionOrder = quizExercise.isRandomizeQuestionOrder();
+                        allowedNumberOfAttempts = quizExercise.getAllowedNumberOfAttempts();
+                        quizMode = quizExercise.getQuizMode();
+                        duration = quizExercise.getDuration();
                     }
                 }
                 default -> {
@@ -287,7 +315,7 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, boolean
             return new ExamExerciseDTO(exercise.getId(), exercise.getExerciseType(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                     exercise.getDifficulty(), exercise.getIncludedInOverallScore(), exercise.getAssessmentType(), exercise.isTeamMode(), exercise.getTestRunParticipationsExist(),
                     exercise.getNumberOfParticipations(), exercise.getShortName(), projectKey, allowOfflineIde, allowOnlineEditor, allowOnlineIde, templateParticipation,
-                    solutionParticipation, diagramType, filePattern, quizQuestions);
+                    solutionParticipation, diagramType, filePattern, quizQuestions, randomizeQuestionOrder, allowedNumberOfAttempts, quizMode, duration);
         }
     }
 
