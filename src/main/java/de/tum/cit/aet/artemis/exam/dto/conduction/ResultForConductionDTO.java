@@ -11,13 +11,16 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
  * Slim projection of a {@link Result} as nested inside a submission in the conduction / summary payload.
  * <p>
  * It carries only the score-summary scalars the entity wire exposes there (no {@code feedbacks}, no {@code submission}
- * or {@code participation} back-references). Deliberately not reusing the shared {@code ResultDTO}: that DTO nests a
- * {@code ParticipationDTO} whose {@code of(...)} calls {@code getCourseViaExerciseGroupOrCourseMember()}, which NPEs on
- * the masked exam graph (the exam is nulled for students). Keeping this projection back-reference-free avoids that trap.
+ * or {@code participation} back-references), plus {@code hasComplaint}: the instructor student-exam detail screen
+ * (grade DTO path, unmasked graph) renders the complaint column from it, and this flag is not stripped by
+ * {@code Result#filterSensitiveInformation}, so it round-trips unchanged on the student-facing masked graph too.
+ * Deliberately not reusing the shared {@code ResultDTO}: that DTO nests a {@code ParticipationDTO} whose
+ * {@code of(...)} calls {@code getCourseViaExerciseGroupOrCourseMember()}, which NPEs on the masked exam graph (the
+ * exam is nulled for students). Keeping this projection back-reference-free avoids that trap.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultForConductionDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, boolean rated, Integer testCaseCount, Integer passedTestCaseCount,
-        Integer codeIssueCount, long exerciseId, AssessmentType assessmentType) {
+        Integer codeIssueCount, long exerciseId, AssessmentType assessmentType, Boolean hasComplaint) {
 
     /**
      * Converts a Result into a ResultForConductionDTO.
@@ -30,6 +33,6 @@ public record ResultForConductionDTO(Long id, ZonedDateTime completionDate, Bool
             return null;
         }
         return new ResultForConductionDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), result.getTestCaseCount(),
-                result.getPassedTestCaseCount(), result.getCodeIssueCount(), result.getExerciseId(), result.getAssessmentType());
+                result.getPassedTestCaseCount(), result.getCodeIssueCount(), result.getExerciseId(), result.getAssessmentType(), result.hasComplaint());
     }
 }
