@@ -91,7 +91,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -346,20 +345,40 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     private void generateStudentExams(Exam exam) throws Exception {
-        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getExamUsers().size());
-        for (var studentExam : studentExams) {
-            assertThat(studentExam.workingTime()).as("Working time is set correctly").isEqualTo(120 * 60);
-        }
+        JsonNode studentExamsJson = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
+                JsonNode.class, HttpStatus.OK);
+        assertThat(studentExamsJson).hasSize(exam.getExamUsers().size());
+        assertSlimStudentExamWireContract(studentExamsJson);
         // the response masks the nested exam, so verify membership via the persisted student exams
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(exam.getExamUsers().size());
     }
 
     private void generateMissingStudentExams(Exam exam, int expectedMissingStudent) throws Exception {
-        List<StudentExamDTO> missingStudentExams = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
-        assertThat(missingStudentExams).hasSize(expectedMissingStudent);
+        JsonNode missingStudentExamsJson = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
+                Optional.empty(), JsonNode.class, HttpStatus.OK);
+        assertThat(missingStudentExamsJson).hasSize(expectedMissingStudent);
+        assertSlimStudentExamWireContract(missingStudentExamsJson);
+    }
+
+    /**
+     * Pins the raw wire contract generateStudentExams/generateMissingStudentExams promise: each element carries its
+     * id and the non-default working-time scalar the client renders, but never leaks the full entity graph the
+     * generation service touches (the owning student, the nested exam, or the exercises/sessions/participations
+     * collections) -- a JsonNode-level check because entity-based deserialization silently tolerates extra fields.
+     *
+     * @param studentExamsJson the raw JSON array response from generate-student-exams / generate-missing-student-exams
+     */
+    private void assertSlimStudentExamWireContract(JsonNode studentExamsJson) {
+        assertThat(studentExamsJson.isArray()).as("response is a JSON array").isTrue();
+        for (JsonNode studentExamJson : studentExamsJson) {
+            assertThat(studentExamJson.has("id")).as("id is present").isTrue();
+            assertThat(studentExamJson.path("workingTime").asInt()).as("non-default scalar state (workingTime) is present").isEqualTo(120 * 60);
+            assertThat(studentExamJson.has("user")).as("owning user must not be leaked").isFalse();
+            assertThat(studentExamJson.has("exam")).as("nested exam must not be leaked").isFalse();
+            assertThat(studentExamJson.has("exercises")).as("exercises must not be leaked").isFalse();
+            assertThat(studentExamJson.has("examSessions")).as("exam sessions must not be leaked").isFalse();
+            assertThat(studentExamJson.has("studentParticipations")).as("participations must not be leaked").isFalse();
+        }
     }
 
     private void verifyStudentsExamAndExercises(Exam exam) throws Exception {
