@@ -397,6 +397,48 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void updateSlideMetadataUsesSlideEntityIdsAndKeepsImagePaths() {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
+
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        slideRepository.deleteAll(existingSlides);
+
+        Slide targetSlide = new Slide();
+        targetSlide.setSlideNumber(1);
+        targetSlide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+        targetSlide.setSlideImagePath("target/path.png");
+        targetSlide = slideRepository.save(targetSlide);
+        targetSlide.setSlideNumber(Math.toIntExact(targetSlide.getId() + 1));
+        targetSlide = slideRepository.save(targetSlide);
+
+        Slide decoySlide = new Slide();
+        decoySlide.setSlideNumber(Math.toIntExact(targetSlide.getId()));
+        decoySlide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+        decoySlide.setSlideImagePath("decoy/path.png");
+        decoySlide = slideRepository.save(decoySlide);
+
+        String targetSlideImagePath = targetSlide.getSlideImagePath();
+        String decoySlideImagePath = decoySlide.getSlideImagePath();
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
+
+        slideSplitterService.updateSlideMetadata(testAttachmentVideoUnit, List.of(new HiddenPageInfoDTO(targetSlide.getId().toString(), hiddenDate, testExercise.getId())));
+
+        Slide updatedTargetSlide = slideRepository.findById(targetSlide.getId()).orElseThrow();
+        Slide updatedDecoySlide = slideRepository.findById(decoySlide.getId()).orElseThrow();
+        assertThat(updatedTargetSlide.getHidden()).isNotNull();
+        assertThat(updatedTargetSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedTargetSlide.getExercise()).isNotNull();
+        assertThat(updatedTargetSlide.getExercise().getId()).isEqualTo(testExercise.getId());
+        assertThat(updatedTargetSlide.getSlideImagePath()).isEqualTo(targetSlideImagePath);
+        assertThat(updatedDecoySlide.getHidden()).isNull();
+        assertThat(updatedDecoySlide.getExercise()).isNull();
+        assertThat(updatedDecoySlide.getSlideImagePath()).isEqualTo(decoySlideImagePath);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void updateSlideVisibilityWaitsForConcurrentSlideMutation() throws Exception {
         Slide slide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
         ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
@@ -439,6 +481,35 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void updateSlideMetadataDoesNotClearHiddenStateWhenHiddenPagesIsNull() {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
+
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        slideRepository.deleteAll(existingSlides);
+
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
+        Slide slide = new Slide();
+        slide.setSlideNumber(1);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+        slide.setSlideImagePath("slide/path.png");
+        slide.setHidden(hiddenDate);
+        slide.setExercise(testExercise);
+        slide = slideRepository.save(slide);
+
+        slideSplitterService.updateSlideMetadata(testAttachmentVideoUnit, null);
+
+        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
+        assertThat(updatedSlide.getHidden()).isNotNull();
+        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getExercise()).isNotNull();
+        assertThat(updatedSlide.getExercise().getId()).isEqualTo(testExercise.getId());
+        assertThat(updatedSlide.getSlideImagePath()).isEqualTo("slide/path.png");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void slideSplitRollbackKeepsPreviousImagesAndRemovesReplacementFiles() throws IOException {
         List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide firstSlide = slides.get(0);
@@ -467,6 +538,32 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         try (var files = Files.walk(attachmentDirectory)) {
             assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBeforeFailedSplit);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void updateSlideMetadataClearsHiddenStateWhenHiddenPagesIsEmpty() {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
+
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        slideRepository.deleteAll(existingSlides);
+
+        Slide slide = new Slide();
+        slide.setSlideNumber(1);
+        slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
+        slide.setSlideImagePath("slide/path.png");
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slide.setExercise(testExercise);
+        slide = slideRepository.save(slide);
+
+        slideSplitterService.updateSlideMetadata(testAttachmentVideoUnit, List.of());
+
+        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
+        assertThat(updatedSlide.getHidden()).isNull();
+        assertThat(updatedSlide.getExercise()).isNull();
+        assertThat(updatedSlide.getSlideImagePath()).isEqualTo("slide/path.png");
     }
 
     @Test
