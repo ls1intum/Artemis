@@ -994,8 +994,13 @@ public class ParticipationService {
         boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
         int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
 
+        Integer testCaseCount = latestResult != null ? latestResult.getTestCaseCount() : null;
+        Integer passedTestCaseCount = latestResult != null ? latestResult.getPassedTestCaseCount() : null;
+        Integer codeIssueCount = latestResult != null ? latestResult.getCodeIssueCount() : null;
+
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
-                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun);
+                resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun,
+                testCaseCount, passedTestCaseCount, codeIssueCount);
     }
 
     /**
