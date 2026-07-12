@@ -245,7 +245,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
-        this.lectureUnitService.completeLectureUnit(this.lecture()!, event);
+        this.lectureUnitService.completeLectureUnit(this.lecture()!, event, () => {
+            // Replace the unit with a new reference so the card's signal input reacts and the checkmark updates immediately.
+            this.lectureUnits.update((units) => units.map((unit) => (unit.id === event.lectureUnit.id ? Object.assign({}, unit, { completed: event.completed }) : unit)));
+        });
     }
 
     private ensureValidDeepLinkTargets(): void {
