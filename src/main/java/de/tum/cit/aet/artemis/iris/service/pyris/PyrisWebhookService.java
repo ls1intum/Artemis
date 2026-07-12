@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,23 +29,18 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFa
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
@@ -69,8 +63,6 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
-    private final Optional<SlideApi> slideApi;
-
     private final VideoSourceResolverService videoSourceResolver;
 
     @Value("${server.url}")
@@ -78,14 +70,13 @@ public class PyrisWebhookService {
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<SlideApi> slideApi, VideoSourceResolverService videoSourceResolver) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.slideApi = slideApi;
         this.videoSourceResolver = videoSourceResolver;
     }
 
@@ -147,32 +138,6 @@ public class PyrisWebhookService {
                 lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type());
     }
 
-    private PyrisLectureUnitMetadataWebhookDTO buildMetadataDto(AttachmentVideoUnit attachmentVideoUnit) {
-        Lecture lecture = attachmentVideoUnit.getLecture();
-        Course course = attachmentVideoUnit.getLecture().getCourse();
-
-        String lectureUnitLink = "";
-        if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
-        }
-
-        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
-        String videoUrl = resolved.type() != null ? resolved.url() : null;
-
-        return new PyrisLectureUnitMetadataWebhookDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), lectureUnitLink, lecture.getId(), lecture.getTitle(),
-                course.getId(), course.getTitle(), course.getDescription() == null ? "" : course.getDescription(), videoUrl, artemisBaseUrl);
-    }
-
-    private PyrisLectureUnitVisibilityWebhookDTO buildVisibilityDto(AttachmentVideoUnit attachmentVideoUnit) {
-        Lecture lecture = attachmentVideoUnit.getLecture();
-        Course course = attachmentVideoUnit.getLecture().getCourse();
-        SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
-        List<PyrisSlideVisibilityDTO> slides = api.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
-                .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
-
-        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(), slides);
-    }
-
     /**
      * Resolve a video URL, converting TUM Live watch page URLs to HLS playlist URLs if TumLiveApi is available.
      * Falls back to the original URL if resolution fails or TumLiveApi is not present.
@@ -227,34 +192,6 @@ public class PyrisWebhookService {
             return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
         }
         return null;
-    }
-
-    /**
-     * Updates lightweight lecture unit metadata in Pyris without sending PDF or transcription payloads.
-     *
-     * @param attachmentVideoUnit The attachment video unit whose metadata changed
-     * @return a simple dispatch token if the update was sent, otherwise null
-     */
-    public String updateLectureUnitMetadataInPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return null;
-        }
-        pyrisConnectorService.executeLectureMetadataWebhook(buildMetadataDto(attachmentVideoUnit));
-        return "metadata-" + attachmentVideoUnit.getId();
-    }
-
-    /**
-     * Updates lightweight lecture unit visibility in Pyris without sending PDF or transcription payloads.
-     *
-     * @param attachmentVideoUnit The attachment video unit whose visibility changed
-     * @return a simple dispatch token if the update was sent, otherwise null
-     */
-    public String updateLectureUnitVisibilityInPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return null;
-        }
-        pyrisConnectorService.executeLectureVisibilityWebhook(buildVisibilityDto(attachmentVideoUnit));
-        return "visibility-" + attachmentVideoUnit.getId();
     }
 
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {

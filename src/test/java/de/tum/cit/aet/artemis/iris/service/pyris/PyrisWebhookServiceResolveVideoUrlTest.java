@@ -22,7 +22,7 @@ class PyrisWebhookServiceResolveVideoUrlTest {
     private PyrisWebhookService withTumLive(TumLiveApi tumLiveApi) {
         VideoSourceResolverService resolver = new VideoSourceResolverService(Optional.ofNullable(tumLiveApi), youTubeUrlService);
         return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(IrisSettingsService.class), Optional.empty(), Optional.empty(),
-                Optional.empty(), Optional.empty(), resolver);
+                Optional.empty(), resolver);
     }
 
     @Test

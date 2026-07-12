@@ -10,6 +10,7 @@ public record LectureContentUpdateSnapshot(Long lectureUnitId, String lectureUni
         String attachmentLink, String videoSource, ZonedDateTime releaseDate, Map<Integer, ZonedDateTime> slideHiddenUntilBySlideNumber) {
 
     public LectureContentUpdateSnapshot {
+        Objects.requireNonNull(lectureUnitId, "lectureUnitId");
         if (slideHiddenUntilBySlideNumber == null) {
             slideHiddenUntilBySlideNumber = Map.of();
         }

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -36,10 +35,6 @@ public class SlideApi extends AbstractLectureApi {
 
     public Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber) {
         return slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentVideoUnitId, slideNumber);
-    }
-
-    public List<Slide> findAllByAttachmentVideoUnitId(Long attachmentVideoUnitId) {
-        return slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
     }
 
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
