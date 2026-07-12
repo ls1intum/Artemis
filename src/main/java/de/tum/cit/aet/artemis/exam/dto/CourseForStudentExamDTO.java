@@ -5,13 +5,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
- * Minimal projection of a {@link Course}, nested inside {@link ExamForStudentExamDTO}.
- * Carries exactly the fields the client's {@code accountService.setAccessRightsForCourse} needs to compute
- * the current user's course-level authorization flags (isAtLeastTutor/Editor/Instructor), plus the id needed
- * to link back to the course.
+ * Minimal projection of a {@link Course}, nested inside {@link ExamForStudentExamDTO} and, via {@link
+ * de.tum.cit.aet.artemis.exam.dto.conduction.ExamForConductionDTO}, inside the conduction and summary payloads.
+ * Carries the fields the client's {@code accountService.setAccessRightsForCourse} needs to compute
+ * the current user's course-level authorization flags (isAtLeastTutor/Editor/Instructor), the id needed
+ * to link back to the course, and {@code accuracyOfScores}, which the exam-taking client's score-rounding
+ * utilities ({@code roundScorePercentSpecifiedByCourseSettings} et al.) read from {@code exam.course}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForStudentExamDTO(long id, String instructorGroupName, String editorGroupName, String teachingAssistantGroupName) {
+public record CourseForStudentExamDTO(long id, String instructorGroupName, String editorGroupName, String teachingAssistantGroupName, Integer accuracyOfScores) {
 
     /**
      * Converts a Course into a CourseForStudentExamDTO.
@@ -23,6 +25,7 @@ public record CourseForStudentExamDTO(long id, String instructorGroupName, Strin
         if (course == null) {
             return null;
         }
-        return new CourseForStudentExamDTO(course.getId(), course.getInstructorGroupName(), course.getEditorGroupName(), course.getTeachingAssistantGroupName());
+        return new CourseForStudentExamDTO(course.getId(), course.getInstructorGroupName(), course.getEditorGroupName(), course.getTeachingAssistantGroupName(),
+                course.getAccuracyOfScores());
     }
 }
