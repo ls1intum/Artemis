@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.exam.dto.conduction.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.summary.StudentExamForSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -485,7 +486,7 @@ public class StudentExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamForSummaryDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -519,7 +520,7 @@ public class StudentExamResource {
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
-        return ResponseEntity.ok(studentExam);
+        return ResponseEntity.ok(StudentExamForSummaryDTO.of(studentExam));
     }
 
     /**
