@@ -33,8 +33,9 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // The exam-import endpoints return ExamImportResultDTO/ExerciseGroupImportResultDTO, which wrap the imported
     // Exam/ExerciseGroup entity alongside the skipped/incomplete exercise titles. This trades two raw-entity returns
     // (the more severe anti-pattern) for two DTO-wrapped-entity fields; both should be reduced to 0 eventually.
+    // Reduced from 3 to 2: StudentExamWithGradeDTO.studentExam is now a StudentExamForDetailDTO projection, not the entity.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 3;
+        return 2;
     }
 }

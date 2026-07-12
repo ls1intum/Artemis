@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -585,7 +586,7 @@ public class ExamService {
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
         var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
-        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, StudentExamForDetailDTO.of(studentExam), studentResult, achievedPointsPerExercise);
     }
 
     @Nullable
