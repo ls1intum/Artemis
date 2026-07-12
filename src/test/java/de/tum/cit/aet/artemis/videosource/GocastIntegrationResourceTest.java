@@ -60,39 +60,41 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @AfterEach
     void tearDown() {
-        bindingRepository.deleteAll();
+        if (course != null) {
+            bindingRepository.findByCourseId(course.getId()).ifPresent(bindingRepository::delete);
+        }
     }
 
     // ── Authorization matrix — instructor-only endpoints ─────────────────────
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void listAdministeredCourses_asStudent_returnsForbidden() throws Exception {
+    void listAdministeredCoursesAsStudentReturnsForbidden() throws Exception {
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void listCourseStreams_asStudent_returnsForbidden() throws Exception {
+    void listCourseStreamsAsStudentReturnsForbidden() throws Exception {
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void createBinding_asStudent_returnsForbidden() throws Exception {
+    void createBindingAsStudentReturnsForbidden() throws Exception {
         GocastCreateBindingRequestDTO body = new GocastCreateBindingRequestDTO(42L, "eidi");
         request.post("/api/videosource/courses/" + course.getId() + "/binding", body, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getBinding_asStudent_returnsForbidden() throws Exception {
+    void getBindingAsStudentReturnsForbidden() throws Exception {
         request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteBinding_asStudent_returnsForbidden() throws Exception {
+    void deleteBindingAsStudentReturnsForbidden() throws Exception {
         request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.FORBIDDEN);
     }
 
@@ -100,7 +102,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listAdministeredCourses_asInstructor_returnsOk() throws Exception {
+    void listAdministeredCoursesAsInstructorReturnsOk() throws Exception {
         GocastCourseDTO dto = new GocastCourseDTO(10L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(dto));
 
@@ -113,7 +115,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listAdministeredCourses_withYearAndTerm_passesParameters() throws Exception {
+    void listAdministeredCoursesWithYearAndTermPassesParameters() throws Exception {
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of());
 
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses?year=2026&term=W", HttpStatus.OK, String.class);
@@ -123,7 +125,15 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listAdministeredCourses_gocastError_propagatesStatus() throws Exception {
+    void listAdministeredCoursesWithInvalidTermReturnsBadRequest() throws Exception {
+        request.get("/api/videosource/courses/" + course.getId() + "/tumlive-courses?term=invalid", HttpStatus.BAD_REQUEST, String.class);
+
+        verify(gocastConnectorService, never()).listAdministeredCourses(anyString(), anyInt(), anyString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void listAdministeredCoursesGocastErrorPropagatesStatus() throws Exception {
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("gocast unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
 
@@ -134,13 +144,13 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listCourseStreams_noBinding_returnsNotFound() throws Exception {
+    void listCourseStreamsNoBindingReturnsNotFound() throws Exception {
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listCourseStreams_withBinding_returnsStreams() throws Exception {
+    void listCourseStreamsWithBindingReturnsStreams() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         GocastStreamDTO streamDTO = new GocastStreamDTO(1001L, "Lecture 1", false, null, null);
         when(gocastConnectorService.listCourseStreams(42L)).thenReturn(List.of(streamDTO));
@@ -154,7 +164,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listCourseStreams_pendingBinding_returnsConflict() throws Exception {
+    void listCourseStreamsPendingBindingReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
 
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.CONFLICT, String.class);
@@ -165,7 +175,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listCourseStreams_revokedBinding_returnsConflict() throws Exception {
+    void listCourseStreamsRevokedBindingReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.REVOKED);
 
         request.get("/api/videosource/courses/" + course.getId() + "/tumlive-streams", HttpStatus.CONFLICT, String.class);
@@ -175,7 +185,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void listCourseStreams_gocastReturns403_marksBindingRevokedAndReturnsConflict() throws Exception {
+    void listCourseStreamsGocastReturns403MarksBindingRevokedAndReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         when(gocastConnectorService.listCourseStreams(42L)).thenThrow(new GocastIntegrationException("forbidden", org.springframework.http.HttpStatus.FORBIDDEN));
 
@@ -190,7 +200,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_asInstructor_returnsPendingBindingWithApprovalUrl() throws Exception {
+    void createBindingAsInstructorReturnsPendingBindingWithApprovalUrl() throws Exception {
         // IDOR guard: instructor must administer the gocast course
         GocastCourseDTO administeredCourse = new GocastCourseDTO(42L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse));
@@ -213,7 +223,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_asInstructor_callbackUrlContainsCourseManagementRoute() throws Exception {
+    void createBindingAsInstructorCallbackUrlContainsCourseManagementRoute() throws Exception {
         // IDOR guard: instructor administers the gocast course
         GocastCourseDTO administeredCourse = new GocastCourseDTO(42L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse));
@@ -228,7 +238,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_withGocastCourseNotAdministeredByInstructor_returnsForbidden() throws Exception {
+    void createBindingWithGocastCourseNotAdministeredByInstructorReturnsForbidden() throws Exception {
         // EP1 returns a list that does NOT include gocastCourseId=42
         GocastCourseDTO otherCourse = new GocastCourseDTO(99L, "Other", "other", 2026, "W", false, "PUBLIC");
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(otherCourse));
@@ -242,7 +252,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_withGocastCourseAdministeredByInstructor_returnsPending() throws Exception {
+    void createBindingWithGocastCourseAdministeredByInstructorReturnsPending() throws Exception {
         GocastCourseDTO administeredCourse = new GocastCourseDTO(42L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse));
         when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
@@ -258,7 +268,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_existingRevokedBinding_resetsToPendingAndReturnsCreated() throws Exception {
+    void createBindingExistingRevokedBindingResetsToPendingAndReturnsCreated() throws Exception {
         // Pre-create a REVOKED binding
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.REVOKED);
 
@@ -279,7 +289,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_ep1ThrowsGocastIntegrationException_propagatesUpstreamStatus() throws Exception {
+    void createBindingEp1ThrowsGocastIntegrationExceptionPropagatesUpstreamStatus() throws Exception {
         // Fix 4: EP1 fails with GocastIntegrationException (e.g. 503) during IDOR guard → must return 503, not 500.
         when(gocastConnectorService.listAdministeredCourses(anyString(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("gocast unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
@@ -293,7 +303,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createBinding_existingActiveBinding_returnsConflict() throws Exception {
+    void createBindingExistingActiveBindingReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
 
         GocastCourseDTO administeredCourse = new GocastCourseDTO(42L, "Eidi", "eidi", 2026, "W", false, "PUBLIC");
@@ -307,13 +317,13 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_noBinding_returnsNotFound() throws Exception {
+    void getBindingNoBindingReturnsNotFound() throws Exception {
         request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NOT_FOUND, GocastBindingWithApprovalDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingAndEp7ReturnsTrue_flipsToActive() throws Exception {
+    void getBindingPendingAndEp7ReturnsTrueFlipsToActive() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
         when(gocastConnectorService.getBindingStatus(42L)).thenReturn(true);
 
@@ -329,7 +339,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingAndEp7ReturnsFalse_remainsPending() throws Exception {
+    void getBindingPendingAndEp7ReturnsFalseRemainsPending() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
         when(gocastConnectorService.getBindingStatus(42L)).thenReturn(false);
         when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
@@ -343,7 +353,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingBinding_includesApprovalUrl() throws Exception {
+    void getBindingPendingBindingIncludesApprovalUrl() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
         when(gocastConnectorService.getBindingStatus(42L)).thenReturn(false);
         when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
@@ -356,7 +366,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingAndEp7Returns403_staysPendingWithoutMutation() throws Exception {
+    void getBindingPendingAndEp7Returns403StaysPendingWithoutMutation() throws Exception {
         // A thrown 403 from EP7 during PENDING refresh is NOT a definitive "unbound" signal —
         // it can indicate a service-account auth/config/upstream-authorization failure. The binding
         // must stay PENDING (not REVOKED) so the instructor can retry. Only an explicit false return
@@ -374,7 +384,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_pendingAndEp7Returns503_returnsPendingWithoutMutation() throws Exception {
+    void getBindingPendingAndEp7Returns503ReturnsPendingWithoutMutation() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
         when(gocastConnectorService.getBindingStatus(42L)).thenThrow(new GocastIntegrationException("unavailable", org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE));
         when(gocastApprovalLinkService.buildApprovalLink(anyLong(), anyString())).thenReturn("https://gocast.test/approve");
@@ -389,7 +399,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getBinding_alreadyActive_doesNotCallEp7() throws Exception {
+    void getBindingAlreadyActiveDoesNotCallEp7() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
 
         GocastBindingWithApprovalDTO result = request.get("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.OK, GocastBindingWithApprovalDTO.class);
@@ -404,13 +414,13 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteBinding_noBinding_returnsNotFound() throws Exception {
+    void deleteBindingNoBindingReturnsNotFound() throws Exception {
         request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteBinding_withBinding_returnsNoContent() throws Exception {
+    void deleteBindingWithBindingReturnsNoContent() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
 
         request.delete("/api/videosource/courses/" + course.getId() + "/binding", HttpStatus.NO_CONTENT);
@@ -422,7 +432,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_asStudentWithBinding_returnsSignedUrls() throws Exception {
+    void getPlaybackTokenAsStudentWithBindingReturnsSignedUrls() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         GocastPlaybackTokenDTO tokenDTO = new GocastPlaybackTokenDTO("https://cdn.test/playlist.m3u8", null, null, 7200);
         when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString())).thenReturn(tokenDTO);
@@ -438,7 +448,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = "outsider", roles = "USER")
-    void getPlaybackToken_asNonMember_returnsForbidden() throws Exception {
+    void getPlaybackTokenAsNonMemberReturnsForbidden() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
 
         request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.FORBIDDEN);
@@ -446,13 +456,13 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_noBinding_returnsNotFound() throws Exception {
+    void getPlaybackTokenNoBindingReturnsNotFound() throws Exception {
         request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_gocastReturns403ButEp7StillBound_returns403WithoutRevoking() throws Exception {
+    void getPlaybackTokenGocastReturns403ButEp7StillBoundReturns403WithoutRevoking() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("user not eligible", org.springframework.http.HttpStatus.FORBIDDEN));
@@ -468,7 +478,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_gocastReturns403AndEp7NotBound_marksRevokedAndReturnsConflict() throws Exception {
+    void getPlaybackTokenGocastReturns403AndEp7NotBoundMarksRevokedAndReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
         when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
                 .thenThrow(new GocastIntegrationException("service account unbound", org.springframework.http.HttpStatus.FORBIDDEN));
@@ -484,7 +494,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_gocastReturns403AndEp7Returns403_staysActiveAndReturnsOriginal403() throws Exception {
+    void getPlaybackTokenGocastReturns403AndEp7Returns403StaysActiveAndReturnsOriginal403() throws Exception {
         // EP2 returns 403 and EP7 itself throws a 403.
         // A thrown EP7 exception (including 403) is NOT a definitive "unbound" signal — only an explicit
         // false return value from EP7 revokes the binding. The binding must stay ACTIVE and the original
@@ -505,7 +515,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_gocastReturns403AndEp7Throws503_staysActiveAndReturns403() throws Exception {
+    void getPlaybackTokenGocastReturns403AndEp7Throws503StaysActiveAndReturns403() throws Exception {
         // Fix 1: EP2 returns 403 + EP7 throws a transient 503 → binding must NOT be mutated and the
         // original EP2 403 status is surfaced (a transient EP7 outage must not change the response code,
         // nor revoke the binding).
@@ -526,7 +536,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_pendingBinding_returnsConflict() throws Exception {
+    void getPlaybackTokenPendingBindingReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.PENDING);
 
         request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);
@@ -537,7 +547,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getPlaybackToken_revokedBinding_returnsConflict() throws Exception {
+    void getPlaybackTokenRevokedBindingReturnsConflict() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.REVOKED);
 
         request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.CONFLICT);

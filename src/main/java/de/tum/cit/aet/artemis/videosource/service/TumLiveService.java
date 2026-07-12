@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -109,7 +110,7 @@ public class TumLiveService {
         try {
             URI uri = new URI(videoUrl);
             String host = uri.getHost();
-            if (host == null || !TUM_LIVE_HOSTS.contains(host)) {
+            if (host == null || !TUM_LIVE_HOSTS.contains(host.toLowerCase(Locale.ROOT))) {
                 return Optional.empty();
             }
             String path = uri.getPath();
@@ -130,17 +131,7 @@ public class TumLiveService {
      * Extracts courseSlug and streamId from TUM Live public video URLs.
      */
     private StreamInfo extractCourseSlugAndStreamId(String videoUrl) {
-        try {
-            String path = new URI(videoUrl).getPath();
-            Matcher matcher = TUM_LIVE_PATTERN.matcher(path);
-            if (matcher.find()) {
-                return new StreamInfo(matcher.group(1), matcher.group(2));
-            }
-        }
-        catch (URISyntaxException e) {
-            log.error("Malformed TUM Live URL: {}", videoUrl, e);
-        }
-        return null;
+        return extractStreamRef(videoUrl).map(streamRef -> new StreamInfo(streamRef.slug(), Long.toString(streamRef.streamId()))).orElse(null);
     }
 
     /**

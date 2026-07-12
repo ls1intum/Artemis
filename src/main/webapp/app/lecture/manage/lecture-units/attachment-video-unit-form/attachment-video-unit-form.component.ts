@@ -285,6 +285,12 @@ export class AttachmentVideoUnitFormComponent {
     private setFormValues(formData: AttachmentVideoUnitFormData) {
         if (formData?.formProperties) {
             this.form.patchValue(formData.formProperties);
+            this.selectedGocastStreamId = formData.formProperties.gocastStreamId;
+            this.lastAutoFilledGocastUrl = undefined;
+            const videoSource = formData.formProperties.videoSource;
+            if (videoSource && this.selectedGocastStreamId !== undefined && new RegExp(`/w/[^/]+/${this.selectedGocastStreamId}(?:[/?#]|$)`).test(videoSource)) {
+                this.lastAutoFilledGocastUrl = videoSource;
+            }
         }
         if (formData?.fileProperties?.file) {
             this.file = formData?.fileProperties?.file;

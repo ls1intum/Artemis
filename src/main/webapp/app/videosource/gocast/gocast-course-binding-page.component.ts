@@ -13,15 +13,11 @@ import { GocastCourseBindingComponent } from './gocast-course-binding.component'
 @Component({
     selector: 'jhi-gocast-course-binding-page',
     template: `
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 col-lg-8">
-                    <h2 jhiTranslate="artemisApp.gocast.binding.pageTitle"></h2>
-                    @if (courseId()) {
-                        <jhi-gocast-course-binding [courseId]="courseId()!" />
-                    }
-                </div>
-            </div>
+        <div class="max-w-5xl">
+            <h2 jhiTranslate="artemisApp.gocast.binding.pageTitle"></h2>
+            @if (courseId()) {
+                <jhi-gocast-course-binding [courseId]="courseId()!" />
+            }
         </div>
     `,
     imports: [TranslateDirective, GocastCourseBindingComponent],

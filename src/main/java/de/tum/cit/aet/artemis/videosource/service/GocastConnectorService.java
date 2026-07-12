@@ -90,7 +90,7 @@ public class GocastConnectorService {
      * @throws GocastIntegrationException if gocast returns an error (carries upstream HTTP status)
      */
     public List<GocastCourseDTO> listAdministeredCourses(String lrzId, int year, String term) {
-        log.debug("EP1 listAdministeredCourses: lrzId={}, year={}, term={}", lrzId, year, term);
+        log.debug("EP1 listAdministeredCourses: year={}, term={}", year, term);
         try {
             GocastCourseDTO[] result = restClient.get()
                     .uri(b -> b.path("/integration/users/{lrzId}/administered-courses").queryParam("year", year).queryParam("term", term).build(lrzId))
@@ -98,7 +98,7 @@ public class GocastConnectorService {
             return result != null ? List.of(result) : List.of();
         }
         catch (RestClientException ex) {
-            throw translate("EP1 listAdministeredCourses failed for lrzId=" + lrzId, ex);
+            throw translate("EP1 listAdministeredCourses failed", ex);
         }
     }
 
@@ -142,7 +142,7 @@ public class GocastConnectorService {
      * @throws GocastIntegrationException if gocast returns an error (carries upstream HTTP status)
      */
     public GocastPlaybackTokenDTO getPlaybackToken(long gocastCourseId, long streamId, int ttlSeconds, String oboLrzId) {
-        log.debug("EP2 getPlaybackToken: courseId={}, streamId={}, ttl={}, obo={}", gocastCourseId, streamId, ttlSeconds, oboLrzId);
+        log.debug("EP2 getPlaybackToken: courseId={}, streamId={}, ttl={}", gocastCourseId, streamId, ttlSeconds);
         try {
             GocastPlaybackTokenDTO result = restClient.post().uri("/integration/courses/{courseId}/streams/{streamId}/playback-token", gocastCourseId, streamId)
                     .header(HttpHeaders.AUTHORIZATION, bearerToken).header(HEADER_ON_BEHALF_OF, oboLrzId).body(Map.of("ttlSeconds", ttlSeconds)).retrieve()

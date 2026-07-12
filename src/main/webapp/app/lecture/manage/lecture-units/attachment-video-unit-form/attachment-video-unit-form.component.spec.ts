@@ -536,5 +536,23 @@ describe('AttachmentVideoUnitFormComponent', () => {
             attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
             expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://my.custom/video');
         });
+
+        it('should preserve the gocast stream when an existing unit is resubmitted', () => {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', {
+                formProperties: {
+                    name: 'Lecture 1',
+                    videoSource: 'https://tum.live/w/eidi/42?video_only=1',
+                    gocastStreamId: 42,
+                },
+                fileProperties: {},
+            } satisfies AttachmentVideoUnitFormData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            const emitSpy = vi.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ formProperties: expect.objectContaining({ gocastStreamId: 42 }) }));
+        });
     });
 });

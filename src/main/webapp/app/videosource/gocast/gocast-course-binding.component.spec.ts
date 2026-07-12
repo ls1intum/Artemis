@@ -80,7 +80,7 @@ describe('GocastCourseBindingComponent', () => {
     it('should show the course dropdown when there is no binding', () => {
         createComponent();
         const select = fixture.nativeElement.querySelector('#gocastCourseSelect');
-        expect(select).toBeDefined();
+        expect(select).not.toBeNull();
     });
 
     it('should set selectedGocastCourseId and slug when a course is selected', () => {
@@ -186,6 +186,15 @@ describe('GocastCourseBindingComponent', () => {
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.gocast.binding.error.loadCourses');
         expect(component.tumLiveCourses()).toHaveLength(0);
+    });
+
+    it('should show an error alert when loading an existing binding fails', () => {
+        vi.spyOn(gocastService, 'getBinding').mockReturnValue(throwError(() => ({ status: 503 })));
+        vi.spyOn(alertService, 'error');
+
+        createComponent();
+
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.gocast.binding.error.loadBinding');
     });
 
     it('should load existing ACTIVE binding on init', () => {

@@ -37,7 +37,7 @@ class GocastEnabledTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void gocastEnabled_bothNonBlank_returnsTrue() {
+    void gocastEnabledBothNonBlankReturnsTrue() {
         setupEnvironment("https://tum.live/api/v2", "my-secret-token", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -45,7 +45,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_urlMissing_returnsFalse() {
+    void gocastEnabledUrlMissingReturnsFalse() {
         setupEnvironment(null, "my-secret-token", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -53,7 +53,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_urlBlank_returnsFalse() {
+    void gocastEnabledUrlBlankReturnsFalse() {
         setupEnvironment("", "my-secret-token", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -61,7 +61,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_urlWhitespaceOnly_returnsFalse() {
+    void gocastEnabledUrlWhitespaceOnlyReturnsFalse() {
         setupEnvironment("   ", "my-secret-token", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -69,7 +69,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_tokenMissing_returnsFalse() {
+    void gocastEnabledTokenMissingReturnsFalse() {
         setupEnvironment("https://tum.live/api/v2", null, null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -77,7 +77,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_tokenBlank_returnsFalse() {
+    void gocastEnabledTokenBlankReturnsFalse() {
         setupEnvironment("https://tum.live/api/v2", "", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -85,7 +85,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_tokenWhitespaceOnly_returnsFalse() {
+    void gocastEnabledTokenWhitespaceOnlyReturnsFalse() {
         setupEnvironment("https://tum.live/api/v2", "   ", null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -93,7 +93,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void gocastEnabled_bothMissing_returnsFalse() {
+    void gocastEnabledBothMissingReturnsFalse() {
         setupEnvironment(null, null, null);
 
         GocastEnabled condition = new GocastEnabled();
@@ -105,7 +105,7 @@ class GocastEnabledTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void tumLiveEnabled_urlOnly_returnsTrue_noTokenRequired() {
+    void tumLiveEnabledUrlOnlyReturnsTrueNoTokenRequired() {
         // The public resolver must activate on api-base-url alone.
         // If a service-account-token is NOT set, TumLiveEnabled must still be true.
         setupEnvironment("https://tum.live/api/v2", null, null);
@@ -115,7 +115,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void tumLiveEnabled_urlMissing_returnsFalse() {
+    void tumLiveEnabledUrlMissingReturnsFalse() {
         setupEnvironment(null, null, null);
 
         TumLiveEnabled condition = new TumLiveEnabled();
@@ -123,7 +123,7 @@ class GocastEnabledTest {
     }
 
     @Test
-    void tumLiveEnabled_urlBlank_returnsFalse() {
+    void tumLiveEnabledUrlBlankReturnsFalse() {
         setupEnvironment("", null, null);
 
         TumLiveEnabled condition = new TumLiveEnabled();

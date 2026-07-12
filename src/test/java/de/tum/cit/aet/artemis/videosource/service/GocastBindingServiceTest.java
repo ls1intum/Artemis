@@ -17,6 +17,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -66,8 +67,9 @@ class GocastBindingServiceTest {
     void setUp() {
         connectorService = mock(GocastConnectorService.class);
         bindingRepository = mock(GocastCourseBindingRepository.class);
-        // save() echoes back the entity it was given so the returned status reflects the in-place mutation.
+        // Repository writes echo the entity so returned status reflects in-place mutation.
         when(bindingRepository.save(any(GocastCourseBinding.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(bindingRepository.saveAndFlush(any(GocastCourseBinding.class))).thenAnswer(invocation -> invocation.getArgument(0));
         bindingService = new GocastBindingService(bindingRepository, Optional.of(connectorService));
     }
 
@@ -87,7 +89,7 @@ class GocastBindingServiceTest {
     // ── refreshStatusFromUpstream ─────────────────────────────────────────────
 
     @Test
-    void refreshStatusFromUpstream_pendingAndEp7True_flipsToActiveAndPersists() {
+    void refreshStatusFromUpstreamPendingAndEp7TrueFlipsToActiveAndPersists() {
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
         when(connectorService.getBindingStatus(GOCAST_COURSE_ID)).thenReturn(true);
 
@@ -100,7 +102,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_pendingAndEp7False_staysPendingAndDoesNotPersist() {
+    void refreshStatusFromUpstreamPendingAndEp7FalseStaysPendingAndDoesNotPersist() {
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
         when(connectorService.getBindingStatus(GOCAST_COURSE_ID)).thenReturn(false);
 
@@ -111,7 +113,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_pendingAndEp7Returns403_staysPendingAndDoesNotPersist() {
+    void refreshStatusFromUpstreamPendingAndEp7Returns403StaysPendingAndDoesNotPersist() {
         // A thrown 403 from EP7 during PENDING refresh is NOT a definitive "unbound" signal —
         // it can indicate a service-account auth/config failure. The binding must stay PENDING
         // so the instructor can retry. REVOKED is only reached from ACTIVE bindings.
@@ -125,7 +127,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_pendingAndEp7Returns5xx_staysPendingAndDoesNotPersist() {
+    void refreshStatusFromUpstreamPendingAndEp7Returns5xxStaysPendingAndDoesNotPersist() {
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
         when(connectorService.getBindingStatus(GOCAST_COURSE_ID)).thenThrow(new GocastIntegrationException("unavailable", HttpStatus.SERVICE_UNAVAILABLE));
 
@@ -136,7 +138,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_alreadyActive_doesNotCallEp7OrPersist() {
+    void refreshStatusFromUpstreamAlreadyActiveDoesNotCallEp7OrPersist() {
         GocastCourseBinding active = binding(GocastBindingStatus.ACTIVE);
 
         GocastCourseBinding result = bindingService.refreshStatusFromUpstream(active);
@@ -147,7 +149,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_alreadyRevoked_doesNotCallEp7OrPersist() {
+    void refreshStatusFromUpstreamAlreadyRevokedDoesNotCallEp7OrPersist() {
         GocastCourseBinding revoked = binding(GocastBindingStatus.REVOKED);
 
         GocastCourseBinding result = bindingService.refreshStatusFromUpstream(revoked);
@@ -158,7 +160,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void refreshStatusFromUpstream_connectorAbsent_staysPendingAndDoesNotPersist() {
+    void refreshStatusFromUpstreamConnectorAbsentStaysPendingAndDoesNotPersist() {
         // When the gocast integration is disabled the connector is not injected; the method must be a safe no-op.
         GocastBindingService serviceWithoutConnector = new GocastBindingService(bindingRepository, Optional.empty());
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
@@ -172,7 +174,7 @@ class GocastBindingServiceTest {
     // ── createBinding — IDOR guard ─────────────────────────────────────────────
 
     @Test
-    void createBinding_instructorDoesNotAdministerCourse_throws403() {
+    void createBindingInstructorDoesNotAdministerCourseThrows403() {
         // EP1 returns a list that does NOT include gocastCourseId=42
         GocastCourseDTO otherCourse = new GocastCourseDTO(99L, "Other", "other", 2026, "W", false, "PUBLIC");
         when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(otherCourse));
@@ -185,7 +187,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void createBinding_instructorAdministersCourse_succeeds() {
+    void createBindingInstructorAdministersCourseSucceeds() {
         when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse()));
         when(bindingRepository.findByCourseId(ARTEMIS_COURSE_ID)).thenReturn(Optional.empty());
 
@@ -193,13 +195,13 @@ class GocastBindingServiceTest {
 
         assertThat(result.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
         assertThat(result.getGocastCourseId()).isEqualTo(GOCAST_COURSE_ID);
-        verify(bindingRepository).save(any());
+        verify(bindingRepository).saveAndFlush(any());
     }
 
     // ── createBinding — MEDIUM-2 relink ───────────────────────────────────────
 
     @Test
-    void createBinding_existingRevokedBinding_resetsToPending() {
+    void createBindingExistingRevokedBindingResetsToPending() {
         when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse()));
         GocastCourseBinding revoked = binding(GocastBindingStatus.REVOKED);
         when(bindingRepository.findByCourseId(ARTEMIS_COURSE_ID)).thenReturn(Optional.of(revoked));
@@ -208,12 +210,12 @@ class GocastBindingServiceTest {
 
         assertThat(result.getStatus()).isEqualTo(GocastBindingStatus.PENDING);
         ArgumentCaptor<GocastCourseBinding> saved = ArgumentCaptor.forClass(GocastCourseBinding.class);
-        verify(bindingRepository).save(saved.capture());
+        verify(bindingRepository).saveAndFlush(saved.capture());
         assertThat(saved.getValue().getStatus()).isEqualTo(GocastBindingStatus.PENDING);
     }
 
     @Test
-    void createBinding_existingActiveBinding_throwsConflict() {
+    void createBindingExistingActiveBindingThrowsConflict() {
         when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse()));
         GocastCourseBinding active = binding(GocastBindingStatus.ACTIVE);
         when(bindingRepository.findByCourseId(ARTEMIS_COURSE_ID)).thenReturn(Optional.of(active));
@@ -224,7 +226,7 @@ class GocastBindingServiceTest {
     }
 
     @Test
-    void createBinding_existingPendingBinding_throwsConflict() {
+    void createBindingExistingPendingBindingThrowsConflict() {
         when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse()));
         GocastCourseBinding pending = binding(GocastBindingStatus.PENDING);
         when(bindingRepository.findByCourseId(ARTEMIS_COURSE_ID)).thenReturn(Optional.of(pending));
@@ -232,5 +234,15 @@ class GocastBindingServiceTest {
         assertThatThrownBy(() -> bindingService.createBinding(ARTEMIS_COURSE_ID, GOCAST_COURSE_ID, "eidi", INSTRUCTOR_LRZ_ID)).isInstanceOf(IllegalStateException.class);
 
         verify(bindingRepository, never()).save(any());
+    }
+
+    @Test
+    void createBindingConcurrentInsertThrowsConflict() {
+        when(connectorService.listAdministeredCourses(anyString(), anyInt(), anyString())).thenReturn(List.of(administeredCourse()));
+        when(bindingRepository.findByCourseId(ARTEMIS_COURSE_ID)).thenReturn(Optional.empty());
+        when(bindingRepository.saveAndFlush(any(GocastCourseBinding.class))).thenThrow(new DataIntegrityViolationException("duplicate course_id"));
+
+        assertThatThrownBy(() -> bindingService.createBinding(ARTEMIS_COURSE_ID, GOCAST_COURSE_ID, "eidi", INSTRUCTOR_LRZ_ID)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already exists");
     }
 }

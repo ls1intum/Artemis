@@ -63,7 +63,7 @@ class GocastConnectorServiceTest {
     // ── EP1: listAdministeredCourses ──────────────────────────────────────────
 
     @Test
-    void listAdministeredCourses_sendsCorrectUrlAndHeaders_andMapsDtoFields() {
+    void listAdministeredCoursesSendsCorrectUrlAndHeadersAndMapsDtoFields() {
         mockServer.expect(requestTo(BASE_URL + "/integration/users/" + LRZ_ID + "/administered-courses?year=2026&term=W")).andExpect(method(HttpMethod.GET))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, BEARER)).andExpect(header("X-On-Behalf-Of", LRZ_ID)).andRespond(withSuccess("""
                         [
@@ -86,7 +86,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void listAdministeredCourses_throwsGocastIntegrationException_on404_oboUserNotFound() {
+    void listAdministeredCoursesThrowsGocastIntegrationExceptionOn404OboUserNotFound() {
         mockServer.expect(requestTo(BASE_URL + "/integration/users/" + LRZ_ID + "/administered-courses?year=2026&term=W")).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
@@ -95,7 +95,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void listAdministeredCourses_throwsGocastIntegrationException_on5xx() {
+    void listAdministeredCoursesThrowsGocastIntegrationExceptionOn5xx() {
         mockServer.expect(requestTo(BASE_URL + "/integration/users/" + LRZ_ID + "/administered-courses?year=2026&term=W")).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
@@ -106,7 +106,7 @@ class GocastConnectorServiceTest {
     // ── EP8: listCourseStreams ─────────────────────────────────────────────────
 
     @Test
-    void listCourseStreams_sendsCorrectUrlAndBearerOnly_noOboHeader() {
+    void listCourseStreamsSendsCorrectUrlAndBearerOnlyNoOboHeader() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(headerDoesNotExist("X-On-Behalf-Of")).andRespond(withSuccess("""
                         [
@@ -123,7 +123,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void listCourseStreams_throwsGocastIntegrationException_on403() {
+    void listCourseStreamsThrowsGocastIntegrationExceptionOn403() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams")).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andRespond(withStatus(HttpStatus.FORBIDDEN));
 
@@ -134,7 +134,7 @@ class GocastConnectorServiceTest {
     // ── EP2: getPlaybackToken ─────────────────────────────────────────────────
 
     @Test
-    void getPlaybackToken_postsToCorrectUrlWithBearerAndObo_andMapsDtoFields() {
+    void getPlaybackTokenPostsToCorrectUrlWithBearerAndOboAndMapsDtoFields() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams/1234/playback-token")).andExpect(method(HttpMethod.POST))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, BEARER)).andExpect(header("X-On-Behalf-Of", LRZ_ID)).andRespond(withSuccess("""
                         {
@@ -154,7 +154,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void getPlaybackToken_throwsGocastIntegrationException_on403() {
+    void getPlaybackTokenThrowsGocastIntegrationExceptionOn403() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams/1234/playback-token")).andExpect(method(HttpMethod.POST))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, BEARER)).andRespond(withStatus(HttpStatus.FORBIDDEN));
 
@@ -165,7 +165,7 @@ class GocastConnectorServiceTest {
     // ── EP7: getBindingStatus ─────────────────────────────────────────────────
 
     @Test
-    void getBindingStatus_returnsTrueWhenBound() {
+    void getBindingStatusReturnsTrueWhenBound() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/binding-status")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andExpect(headerDoesNotExist("X-On-Behalf-Of")).andRespond(withSuccess("{\"bound\":true}", MediaType.APPLICATION_JSON));
 
@@ -176,7 +176,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void getBindingStatus_returnsFalseWhenNotBound() {
+    void getBindingStatusReturnsFalseWhenNotBound() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/binding-status")).andExpect(method(HttpMethod.GET)).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andRespond(withSuccess("{\"bound\":false}", MediaType.APPLICATION_JSON));
 
@@ -187,7 +187,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void getBindingStatus_throwsGocastIntegrationException_on401() {
+    void getBindingStatusThrowsGocastIntegrationExceptionOn401() {
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/binding-status")).andExpect(header(HttpHeaders.AUTHORIZATION, BEARER))
                 .andRespond(withStatus(HttpStatus.UNAUTHORIZED));
 
@@ -196,7 +196,7 @@ class GocastConnectorServiceTest {
     }
 
     @Test
-    void getBindingStatus_throwsGocastIntegrationException_onEmptyBody_ratherThanReturnFalse() {
+    void getBindingStatusThrowsGocastIntegrationExceptionOnEmptyBodyRatherThanReturnFalse() {
         // A 2xx with an empty body must NOT coerce to false (which would look like "not bound"
         // and could trigger a false REVOKE). Instead it must throw BAD_GATEWAY so the resource's
         // EP7-error path leaves the binding ACTIVE.
@@ -210,7 +210,7 @@ class GocastConnectorServiceTest {
     // ── Transport / I-O errors (no HTTP response) → synthetic 503 ─────────────
 
     @Test
-    void networkError_isWrappedAsServiceUnavailable() {
+    void networkErrorIsWrappedAsServiceUnavailable() {
         // A transport failure (e.g. connection refused / read timeout) surfaces as a RestClientException
         // WITHOUT a RestClientResponseException, so there is no upstream HTTP status. The connector must
         // still wrap it into a typed GocastIntegrationException with a synthetic 503 rather than let the
@@ -224,7 +224,7 @@ class GocastConnectorServiceTest {
     // ── EP2 empty-body guard → synthetic 502 (never returns null) ────────────
 
     @Test
-    void getPlaybackToken_emptyBody_isWrappedAsBadGateway() {
+    void getPlaybackTokenEmptyBodyIsWrappedAsBadGateway() {
         // A 2xx with no body would deserialize to null; the connector must throw rather than return null
         // for its @NonNull signature.
         mockServer.expect(requestTo(BASE_URL + "/integration/courses/42/streams/1234/playback-token")).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));

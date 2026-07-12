@@ -22,6 +22,7 @@
                 "relinkCourse": "Kurs verknüpfen",
                 "error": {
                     "loadCourses": "TUM Live Kurse konnten nicht geladen werden. Bitte versuche es erneut.",
+                    "loadBinding": "Die TUM Live Kursverknüpfung konnte nicht geladen werden. Bitte versuche es erneut.",
                     "createBinding": "TUM Live Kursverknüpfung konnte nicht erstellt werden. Bitte versuche es erneut.",
                     "checkStatus": "Verknüpfungsstatus konnte nicht überprüft werden. Bitte versuche es erneut.",
                     "revoke": "TUM Live Kursverknüpfung konnte nicht aufgehoben werden. Bitte versuche es erneut."
@@ -38,7 +39,8 @@
                 "private": "(privat)",
                 "noBindingHint": "Dieser Kurs ist noch nicht mit einem TUM Live Kurs verknüpft. Bitte einen Kursverantwortlichen, die Verknüpfung in den Kurseinstellungen einzurichten.",
                 "error": {
-                    "loadStreams": "TUM Live Streams konnten nicht geladen werden. Bitte versuche es erneut."
+                    "loadStreams": "TUM Live Streams konnten nicht geladen werden. Bitte versuche es erneut.",
+                    "loadBinding": "Die TUM Live Kursverknüpfung konnte nicht geladen werden. Bitte versuche es erneut."
                 }
             }
         }

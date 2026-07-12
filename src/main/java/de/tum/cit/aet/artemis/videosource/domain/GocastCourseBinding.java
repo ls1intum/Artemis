@@ -36,7 +36,7 @@ public class GocastCourseBinding extends DomainObject {
      * FK to {@code course(id)} — enforced at DB level; stored as a plain {@code Long} to avoid
      * a cross-module JPA relationship.
      */
-    @Column(name = "course_id", nullable = false, unique = true)
+    @Column(name = "course_id", nullable = false)
     private Long courseId;
 
     /** The numeric course identifier used by gocast (TUM Live). */

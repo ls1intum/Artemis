@@ -1273,7 +1273,7 @@ describe('AttachmentVideoUnitComponent — template wiring: gocastIdentity reach
 
         // The video player fires the EP2 playback-token request on init (because gocastIdentity is set).
         // Flush it here so httpMock.verify() in afterEach does not see an unexpected open request.
-        const tokenReqs = httpMock.match((r) => r.url.includes('playback-tokens'));
-        tokenReqs.forEach((r) => r.flush({ playlistUrl: 'https://tum.live/hls/test.m3u8', expiresIn: 3600 }));
+        const tokenReq = httpMock.expectOne((request) => request.url.includes('playback-tokens'));
+        tokenReq.flush({ playlistUrl: 'https://tum.live/hls/test.m3u8', expiresIn: 3600 });
     });
 });

@@ -27,7 +27,7 @@ class GocastApprovalLinkServiceTest {
     // ── happy-path: simple callback URL ───────────────────────────────────────
 
     @Test
-    void buildApprovalLink_encodesRedirectWithSpecialChars() {
+    void buildApprovalLinkEncodesRedirectWithSpecialChars() {
         // redirect URL contains '?', '&', and a space — must all be percent-encoded inside the query value
         String artemisCallback = "https://artemis.tum.de/cb?courseId=5&x=a b";
 
@@ -54,7 +54,7 @@ class GocastApprovalLinkServiceTest {
     }
 
     @Test
-    void buildApprovalLink_toleratesTrailingSlashOnBaseUrl() {
+    void buildApprovalLinkToleratesTrailingSlashOnBaseUrl() {
         String artemisCallback = "https://artemis.tum.de/callback";
 
         String result = service(WEB_BASE_URL + "/").buildApprovalLink(GOCAST_COURSE_ID, artemisCallback);
@@ -65,7 +65,7 @@ class GocastApprovalLinkServiceTest {
     }
 
     @Test
-    void buildApprovalLink_exactUrlForSimpleCallback() {
+    void buildApprovalLinkExactUrlForSimpleCallback() {
         String artemisCallback = "https://artemis.tum.de/callback";
 
         String result = service(WEB_BASE_URL).buildApprovalLink(GOCAST_COURSE_ID, artemisCallback);
@@ -75,7 +75,7 @@ class GocastApprovalLinkServiceTest {
     }
 
     @Test
-    void buildApprovalLink_throwsOnNullCallbackUrl() {
+    void buildApprovalLinkThrowsOnNullCallbackUrl() {
         assertThatThrownBy(() -> service(WEB_BASE_URL).buildApprovalLink(GOCAST_COURSE_ID, null)).isInstanceOf(NullPointerException.class)
                 .hasMessageContaining("artemisCallbackUrl");
     }
@@ -83,19 +83,19 @@ class GocastApprovalLinkServiceTest {
     // ── fail-fast on missing required configuration ───────────────────────────
 
     @Test
-    void construction_throwsWhenWebBaseUrlBlank() {
+    void constructionThrowsWhenWebBaseUrlBlank() {
         assertThatThrownBy(() -> new GocastApprovalLinkService("", SERVICE_USER_ID)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artemis.tum-live.web-base-url");
     }
 
     @Test
-    void construction_throwsWhenWebBaseUrlWhitespaceOnly() {
+    void constructionThrowsWhenWebBaseUrlWhitespaceOnly() {
         assertThatThrownBy(() -> new GocastApprovalLinkService("   ", SERVICE_USER_ID)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artemis.tum-live.web-base-url");
     }
 
     @Test
-    void construction_throwsWhenServiceUserIdBlank() {
+    void constructionThrowsWhenServiceUserIdBlank() {
         assertThatThrownBy(() -> new GocastApprovalLinkService(WEB_BASE_URL, "")).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("artemis.tum-live.service-account-user-id");
     }

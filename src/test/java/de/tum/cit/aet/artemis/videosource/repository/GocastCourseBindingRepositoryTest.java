@@ -28,7 +28,7 @@ class GocastCourseBindingRepositoryTest extends AbstractSpringIntegrationIndepen
     // ── findByCourseId ────────────────────────────────────────────────────────
 
     @Test
-    void persistAndFindByCourseId_returnsBinding() {
+    void persistAndFindByCourseIdReturnsBinding() {
         Course course = courseUtilService.createCourse();
 
         GocastCourseBinding binding = new GocastCourseBinding();
@@ -48,7 +48,7 @@ class GocastCourseBindingRepositoryTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    void findByCourseId_returnsEmpty_whenNoBindingExists() {
+    void findByCourseIdReturnsEmptyWhenNoBindingExists() {
         var found = bindingRepository.findByCourseId(Long.MAX_VALUE);
         assertThat(found).isEmpty();
     }
@@ -56,7 +56,7 @@ class GocastCourseBindingRepositoryTest extends AbstractSpringIntegrationIndepen
     // ── findByCourseIdElseThrow ───────────────────────────────────────────────
 
     @Test
-    void findByCourseIdElseThrow_returnsBinding_whenExists() {
+    void findByCourseIdElseThrowReturnsBindingWhenExists() {
         Course course = courseUtilService.createCourse();
 
         GocastCourseBinding binding = new GocastCourseBinding();
@@ -73,14 +73,14 @@ class GocastCourseBindingRepositoryTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    void findByCourseIdElseThrow_throws_whenNoBindingExists() {
+    void findByCourseIdElseThrowThrowsWhenNoBindingExists() {
         assertThatThrownBy(() -> bindingRepository.findByCourseIdElseThrow(Long.MAX_VALUE - 1)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.EntityNotFoundException.class);
     }
 
     // ── unique constraint on course_id ────────────────────────────────────────
 
     @Test
-    void uniqueConstraintOnCourseId_preventsSecondBinding() {
+    void uniqueConstraintOnCourseIdPreventsSecondBinding() {
         Course course = courseUtilService.createCourse();
 
         GocastCourseBinding first = new GocastCourseBinding();

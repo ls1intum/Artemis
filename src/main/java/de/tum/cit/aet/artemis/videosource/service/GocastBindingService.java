@@ -9,12 +9,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.videosource.domain.GocastBindingStatus;
 import de.tum.cit.aet.artemis.videosource.domain.GocastCourseBinding;
 import de.tum.cit.aet.artemis.videosource.dto.GocastCourseDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastPlaybackTokenDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastStreamDTO;
 import de.tum.cit.aet.artemis.videosource.repository.GocastCourseBindingRepository;
 
 /**
@@ -96,12 +100,12 @@ public class GocastBindingService {
             administeredCourses = connectorService.listAdministeredCourses(instructorLrzId, 0, "");
         }
         catch (GocastIntegrationException ex) {
-            log.warn("EP1 listAdministeredCourses failed for instructor {}: {}", instructorLrzId, ex.getMessage());
+            log.warn("EP1 listAdministeredCourses failed while verifying course ownership: {}", ex.getMessage());
             throw ex;
         }
         boolean isAdministered = administeredCourses.stream().anyMatch(c -> c.id() == gocastCourseId && gocastCourseSlug.equals(c.slug()));
         if (!isAdministered) {
-            log.warn("Instructor {} attempted to bind gocast course {} but does not administer it", instructorLrzId, gocastCourseId);
+            log.warn("An instructor attempted to bind gocast course {} without administering it", gocastCourseId);
             throw new AccessForbiddenException("Instructor does not administer the requested gocast course");
         }
 
@@ -115,7 +119,7 @@ public class GocastBindingService {
                 existingBinding.setGocastCourseId(gocastCourseId);
                 existingBinding.setGocastCourseSlug(gocastCourseSlug);
                 existingBinding.setStatus(GocastBindingStatus.PENDING);
-                return bindingRepository.save(existingBinding);
+                return saveBindingOrThrowConflict(existingBinding, courseId);
             }
             else {
                 throw new IllegalStateException("A " + existingBinding.getStatus() + " binding already exists for course " + courseId);
@@ -127,7 +131,82 @@ public class GocastBindingService {
         binding.setGocastCourseId(gocastCourseId);
         binding.setGocastCourseSlug(gocastCourseSlug);
         binding.setStatus(GocastBindingStatus.PENDING);
-        return bindingRepository.save(binding);
+        return saveBindingOrThrowConflict(binding, courseId);
+    }
+
+    private GocastCourseBinding saveBindingOrThrowConflict(GocastCourseBinding binding, long courseId) {
+        try {
+            // Flush so a concurrent insert violating the course_id unique constraint is raised here
+            // and translated to the same conflict semantics as the pre-save existence check.
+            return bindingRepository.saveAndFlush(binding);
+        }
+        catch (DataIntegrityViolationException ex) {
+            throw new IllegalStateException("A binding already exists for course " + courseId, ex);
+        }
+    }
+
+    /**
+     * Lists the streams for an active course binding and reconciles a forbidden upstream response
+     * with the authoritative binding status.
+     *
+     * @param courseId the Artemis course id
+     * @return the streams of the bound TUM Live course
+     */
+    public List<GocastStreamDTO> listCourseStreams(long courseId) {
+        GocastCourseBinding binding = getActiveBinding(courseId);
+        try {
+            return connectorService.listCourseStreams(binding.getGocastCourseId());
+        }
+        catch (GocastIntegrationException ex) {
+            handlePossibleRevocation(binding, ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * Obtains a playback token for an active course binding and reconciles a forbidden upstream
+     * response with the authoritative binding status.
+     *
+     * @param courseId   the Artemis course id
+     * @param streamId   the TUM Live stream id
+     * @param userLrzId  the LRZ id used only for the upstream on-behalf-of request
+     * @param ttlSeconds the requested token lifetime
+     * @return the signed playback token
+     */
+    public GocastPlaybackTokenDTO getPlaybackToken(long courseId, long streamId, String userLrzId, int ttlSeconds) {
+        GocastCourseBinding binding = getActiveBinding(courseId);
+        try {
+            return connectorService.getPlaybackToken(binding.getGocastCourseId(), streamId, ttlSeconds, userLrzId);
+        }
+        catch (GocastIntegrationException ex) {
+            handlePossibleRevocation(binding, ex);
+            throw ex;
+        }
+    }
+
+    private GocastCourseBinding getActiveBinding(long courseId) {
+        GocastCourseBinding binding = getBindingByCourseIdElseThrow(courseId);
+        if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
+            throw new IllegalStateException("The TUM Live binding for course " + courseId + " is not active");
+        }
+        return binding;
+    }
+
+    private void handlePossibleRevocation(GocastCourseBinding binding, GocastIntegrationException originalException) {
+        if (!HttpStatus.FORBIDDEN.isSameCodeAs(originalException.getUpstreamStatus())) {
+            return;
+        }
+        try {
+            if (!connectorService.getBindingStatus(binding.getGocastCourseId())) {
+                log.warn("Upstream access was forbidden and TUM Live reports the binding revoked for gocast course {}", binding.getGocastCourseId());
+                updateStatus(binding, GocastBindingStatus.REVOKED);
+                throw new IllegalStateException("The TUM Live binding is revoked");
+            }
+        }
+        catch (GocastIntegrationException verificationException) {
+            log.warn("Could not verify a possibly revoked TUM Live binding for gocast course {} (status={}); leaving it ACTIVE", binding.getGocastCourseId(),
+                    verificationException.getUpstreamStatus());
+        }
     }
 
     /**

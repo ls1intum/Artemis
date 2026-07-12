@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
@@ -98,13 +99,13 @@ export class GocastStreamPickerComponent implements OnInit {
                     this.loadStreams();
                 }
             },
-            error: (err: { status?: number }) => {
+            error: (err: HttpErrorResponse) => {
                 if (err.status === 404) {
                     // 404 → no binding exists; show the "no binding" hint via REVOKED state
                     this.bindingStatus.set('REVOKED');
+                    return;
                 }
-                // 5xx / other transient errors: leave bindingStatus undefined so the component
-                // renders nothing (avoids misleading "no binding" hint for upstream outages)
+                this.alertService.error('artemisApp.gocast.streamPicker.error.loadBinding');
             },
         });
     }

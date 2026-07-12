@@ -22,6 +22,7 @@
                 "relinkCourse": "Link a Course",
                 "error": {
                     "loadCourses": "Failed to load TUM Live courses. Please try again.",
+                    "loadBinding": "Failed to load the TUM Live course link. Please try again.",
                     "createBinding": "Failed to create the TUM Live course link. Please try again.",
                     "checkStatus": "Failed to verify the binding status. Please try again.",
                     "revoke": "Failed to revoke the TUM Live course link. Please try again."
@@ -38,7 +39,8 @@
                 "private": "(private)",
                 "noBindingHint": "This course is not yet linked to a TUM Live course. Ask an instructor to link one in the course settings.",
                 "error": {
-                    "loadStreams": "Failed to load TUM Live streams. Please try again."
+                    "loadStreams": "Failed to load TUM Live streams. Please try again.",
+                    "loadBinding": "Failed to load the TUM Live course link. Please try again."
                 }
             }
         }

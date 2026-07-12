@@ -1,11 +1,11 @@
 <div class="gocast-stream-picker mt-3">
     @if (bindingStatus() === 'ACTIVE') {
         <!-- Active binding: show the stream dropdown -->
-        <div class="form-group">
+        <div>
             <label for="gocastStreamSelect" jhiTranslate="artemisApp.gocast.streamPicker.label"></label>
             <p-select
                 inputId="gocastStreamSelect"
-                styleClass="d-block mt-1"
+                styleClass="block mt-1"
                 [options]="streamOptions()"
                 optionLabel="label"
                 optionValue="value"
@@ -18,17 +18,17 @@
                 <ng-template #item let-option>
                     <span>{{ option.label }}</span>
                     @if (option.private) {
-                        <span class="ms-1" jhiTranslate="artemisApp.gocast.streamPicker.private"></span>
+                        <span class="ml-1" jhiTranslate="artemisApp.gocast.streamPicker.private"></span>
                     }
                 </ng-template>
             </p-select>
             @if (!isLoading() && streamOptions().length === 0) {
-                <small class="form-text text-muted mt-1" jhiTranslate="artemisApp.gocast.streamPicker.noStreams"></small>
+                <small class="mt-1 text-muted-color" jhiTranslate="artemisApp.gocast.streamPicker.noStreams"></small>
             }
         </div>
     } @else if (bindingStatus() !== undefined) {
         <!-- Binding is PENDING or REVOKED/absent: show a hint -->
-        <p-message severity="info" styleClass="d-block mt-2" [closable]="false">
+        <p-message severity="info" styleClass="mt-2 block" [closable]="false">
             <span jhiTranslate="artemisApp.gocast.streamPicker.noBindingHint"></span>
         </p-message>
     }

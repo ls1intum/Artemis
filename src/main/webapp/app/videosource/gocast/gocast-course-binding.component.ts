@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -86,8 +87,10 @@ export class GocastCourseBindingComponent implements OnInit {
                 // the approval page after a reload without recreating the binding.
                 this.approvalUrl.set(response.approvalUrl ?? undefined);
             },
-            error: () => {
-                // 404 = no binding yet, that is fine — leave binding undefined
+            error: (error: HttpErrorResponse) => {
+                if (error.status !== 404) {
+                    this.alertService.error('artemisApp.gocast.binding.error.loadBinding');
+                }
             },
         });
     }

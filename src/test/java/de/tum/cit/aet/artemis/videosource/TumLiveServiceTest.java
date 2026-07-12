@@ -40,7 +40,7 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void getTumLivePlaylistLink_validUrl_returnsPlaylist() {
+    void getTumLivePlaylistLinkValidUrlReturnsPlaylist() {
         var playlist = "https://cdn.tum.live/playlist_12345.m3u8";
         var dto = new TumLivePlaylistDTO(new StreamDTO(playlist));
 
@@ -52,19 +52,19 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void getTumLivePlaylistLink_notTumLiveHost_returnsEmpty() {
+    void getTumLivePlaylistLinkNotTumLiveHostReturnsEmpty() {
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://example.com/some/path");
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_invalidPath_returnsEmpty() {
+    void getTumLivePlaylistLinkInvalidPathReturnsEmpty() {
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/invalid/path");
         assertThat(result).isEmpty();
     }
 
     @Test
-    void getTumLivePlaylistLink_apiReturnsNoPlaylist_returnsEmpty() {
+    void getTumLivePlaylistLinkApiReturnsNoPlaylistReturnsEmpty() {
         var dto = new TumLivePlaylistDTO(null);
         when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("courseXYZ"), eq("999")).retrieve().body(eq(TumLivePlaylistDTO.class))).thenReturn(dto);
 
@@ -73,7 +73,7 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void getTumLivePlaylistLink_apiThrows_returnsEmpty() {
+    void getTumLivePlaylistLinkApiThrowsReturnsEmpty() {
         when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
                 .thenThrow(new RestClientException("boom"));
 
@@ -86,7 +86,7 @@ class TumLiveServiceTest {
     // -----------------------------------------------------------------------
 
     @Test
-    void extractStreamRef_tumLiveHost_returnsRef() {
+    void extractStreamRefTumLiveHostReturnsRef() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/w/eidi/1234");
         assertThat(result).isPresent();
         assertThat(result.get().slug()).isEqualTo("eidi");
@@ -94,7 +94,15 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void extractStreamRef_rbgTumDeHost_returnsRef() {
+    void extractStreamRefUppercaseTumLiveHostReturnsRef() {
+        Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://TUM.LIVE/w/eidi/1234");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().streamId()).isEqualTo(1234L);
+    }
+
+    @Test
+    void extractStreamRefRbgTumDeHostReturnsRef() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://live.rbg.tum.de/w/abc-course/12345");
         assertThat(result).isPresent();
         assertThat(result.get().slug()).isEqualTo("abc-course");
@@ -102,7 +110,7 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void extractStreamRef_withTrailingParams_returnsRef() {
+    void extractStreamRefWithTrailingParamsReturnsRef() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/w/eidi/1234?quality=PRES&speed=1.5");
         assertThat(result).isPresent();
         assertThat(result.get().slug()).isEqualTo("eidi");
@@ -110,19 +118,19 @@ class TumLiveServiceTest {
     }
 
     @Test
-    void extractStreamRef_nonTumLiveHost_returnsEmpty() {
+    void extractStreamRefNonTumLiveHostReturnsEmpty() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://example.com/w/eidi/1234");
         assertThat(result).isEmpty();
     }
 
     @Test
-    void extractStreamRef_invalidPath_returnsEmpty() {
+    void extractStreamRefInvalidPathReturnsEmpty() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("https://tum.live/course/eidi");
         assertThat(result).isEmpty();
     }
 
     @Test
-    void extractStreamRef_malformedUrl_returnsEmpty() {
+    void extractStreamRefMalformedUrlReturnsEmpty() {
         Optional<GocastStreamRef> result = tumLiveService.extractStreamRef("not a url at all");
         assertThat(result).isEmpty();
     }

@@ -77,15 +77,15 @@ public class GocastIntegrationResource {
 
     private final UserRepository userRepository;
 
-    @Value("${server.url}")
-    private String serverUrl;
+    private final String serverUrl;
 
     public GocastIntegrationResource(GocastConnectorService connectorService, GocastBindingService bindingService, GocastApprovalLinkService approvalLinkService,
-            UserRepository userRepository) {
+            UserRepository userRepository, @Value("${server.url}") String serverUrl) {
         this.connectorService = connectorService;
         this.bindingService = bindingService;
         this.approvalLinkService = approvalLinkService;
         this.userRepository = userRepository;
+        this.serverUrl = serverUrl;
     }
 
     /**
@@ -105,6 +105,9 @@ public class GocastIntegrationResource {
     public ResponseEntity<List<GocastCourseDTO>> listAdministeredCourses(@PathVariable long courseId, @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String term) {
         log.debug("REST request to list administered TUM Live courses for Artemis course {}", courseId);
+        if (term != null && !term.isBlank() && !term.equals("W") && !term.equals("S")) {
+            return ResponseEntity.badRequest().build();
+        }
         String lrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
         try {
             List<GocastCourseDTO> courses = connectorService.listAdministeredCourses(lrzId, year != null ? year : 0, term != null ? term : "");
@@ -132,27 +135,15 @@ public class GocastIntegrationResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<GocastStreamDTO>> listCourseStreams(@PathVariable long courseId) {
         log.debug("REST request to list TUM Live streams for Artemis course {}", courseId);
-        GocastCourseBinding binding = bindingService.getBindingByCourseIdElseThrow(courseId);
-        if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
-            // EP8 requires the service account to be a confirmed course admin (ACTIVE binding). Reject early
-            // with a clear 409 instead of forwarding the request and surfacing an opaque upstream 403.
-            log.debug("Stream list requested for non-ACTIVE binding (status={}) on course {}", binding.getStatus(), courseId);
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
         try {
-            List<GocastStreamDTO> streams = connectorService.listCourseStreams(binding.getGocastCourseId());
-            return ResponseEntity.ok(streams);
+            return ResponseEntity.ok(bindingService.listCourseStreams(courseId));
         }
         catch (GocastIntegrationException ex) {
-            if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
-                // EP8 returned 403 — the service account lost admin access. Mark the binding REVOKED
-                // and return 409 CONFLICT so the UI can show the correct state.
-                log.warn("EP8 listCourseStreams returned 403 for gocast course {} — marking binding REVOKED", binding.getGocastCourseId());
-                bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
-                return ResponseEntity.status(HttpStatus.CONFLICT).build();
-            }
-            log.warn("EP8 listCourseStreams failed for gocast course {}: {}", binding.getGocastCourseId(), ex.getMessage());
+            log.warn("EP8 listCourseStreams failed for Artemis course {}: {}", courseId, ex.getMessage());
             return ResponseEntity.status(ex.getUpstreamStatus()).build();
+        }
+        catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
@@ -255,46 +246,16 @@ public class GocastIntegrationResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<GocastPlaybackTokenDTO> getPlaybackToken(@PathVariable long courseId, @PathVariable long streamId) {
         log.debug("REST request to get playback token for Artemis course {}, stream {}", courseId, streamId);
-        GocastCourseBinding binding = bindingService.getBindingByCourseIdElseThrow(courseId);
-        if (binding.getStatus() != GocastBindingStatus.ACTIVE) {
-            // EP2 requires the service account to be a confirmed course admin (ACTIVE binding). Reject early
-            // with a clear 409 instead of forwarding the request and surfacing an opaque upstream error.
-            log.debug("Playback token requested for non-ACTIVE binding (status={}) on course {}", binding.getStatus(), courseId);
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
         String lrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
         try {
-            GocastPlaybackTokenDTO token = connectorService.getPlaybackToken(binding.getGocastCourseId(), streamId, DEFAULT_PLAYBACK_TOKEN_TTL_SECONDS, lrzId);
-            return ResponseEntity.ok(token);
+            return ResponseEntity.ok(bindingService.getPlaybackToken(courseId, streamId, lrzId, DEFAULT_PLAYBACK_TOKEN_TTL_SECONDS));
         }
         catch (GocastIntegrationException ex) {
-            if (HttpStatus.FORBIDDEN.isSameCodeAs(ex.getUpstreamStatus())) {
-                // Disambiguate the 403: it may mean either (a) the service account is no longer bound
-                // (binding should be REVOKED) or (b) the student is not eligible (leave as ACTIVE).
-                // The binding is only ever mutated when EP7 *definitively* reports not-bound. A transient
-                // EP7 outage (503/timeout/5xx/401/etc.) must leave the binding ACTIVE and call no updateStatus.
-                try {
-                    boolean stillBound = connectorService.getBindingStatus(binding.getGocastCourseId());
-                    if (!stillBound) {
-                        // EP7 definitively reports unbound — revoke the binding and return 409 CONFLICT.
-                        log.warn("EP2 returned 403 and EP7 reports unbound — marking binding REVOKED for gocast course {}", binding.getGocastCourseId());
-                        bindingService.updateStatus(binding, GocastBindingStatus.REVOKED);
-                        return ResponseEntity.status(HttpStatus.CONFLICT).build();
-                    }
-                    // EP7 confirms still bound — student is ineligible. Fall through to return the original EP2 403.
-                    log.debug("EP2 returned 403 but EP7 confirms still bound — student {} is ineligible for stream {}", lrzId, streamId);
-                }
-                catch (GocastIntegrationException ep7Ex) {
-                    // EP7 threw for any reason (403, 502, 503, timeout, etc.). A thrown exception never
-                    // constitutes a definitive "unbound" signal — only an explicit false return value does.
-                    // Do NOT mutate the binding; leave it ACTIVE and fall through to surface the original
-                    // EP2 403 to the caller.
-                    log.warn("EP2 returned 403 but EP7 threw (status={}) — leaving binding ACTIVE for gocast course {}: {}", ep7Ex.getUpstreamStatus(), binding.getGocastCourseId(),
-                            ep7Ex.getMessage());
-                }
-            }
             log.warn("EP2 getPlaybackToken failed for course {}, stream {}: status={}", courseId, streamId, ex.getUpstreamStatus());
             return ResponseEntity.status(ex.getUpstreamStatus()).build();
+        }
+        catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 }

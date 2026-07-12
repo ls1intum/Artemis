@@ -109,12 +109,14 @@ describe('GocastStreamPickerComponent', () => {
 
         it('should leave bindingStatus undefined (render nothing) on a 5xx/other transient error', () => {
             vi.spyOn(gocastService, 'getBinding').mockReturnValue(throwError(() => ({ status: 503 })));
+            vi.spyOn(alertService, 'error');
 
             createComponent(10);
 
             // 5xx: do NOT set REVOKED — that would show a misleading "no binding" hint
             expect(component.bindingStatus()).toBeUndefined();
             expect(component.streams()).toHaveLength(0);
+            expect(alertService.error).toHaveBeenCalledWith('artemisApp.gocast.streamPicker.error.loadBinding');
         });
     });
 
@@ -123,7 +125,7 @@ describe('GocastStreamPickerComponent', () => {
         createComponent(10, true);
 
         const dropdown = fixture.nativeElement.querySelector('#gocastStreamSelect');
-        expect(dropdown).toBeDefined();
+        expect(dropdown).not.toBeNull();
     });
 
     it('should emit streamSelected when a stream is chosen', () => {
