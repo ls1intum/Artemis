@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRep
  * - Checkpoint handling (transcription data)
  * - Completion callbacks
  * - Failure and retry logic
+ * - Iris restart recovery
  */
 class LectureContentProcessingServiceTest {
 
@@ -57,6 +58,8 @@ class LectureContentProcessingServiceTest {
     private LectureContentProcessingService service;
 
     private ProcessingStateCallbackService callbackService;
+
+    private ProcessingStateRecoveryService recoveryService;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -90,6 +93,7 @@ class LectureContentProcessingServiceTest {
         websocketMessagingService = mock(WebsocketMessagingService.class);
         callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
                 websocketMessagingService);
+        recoveryService = new ProcessingStateRecoveryService(processingStateRepository, transcriptionRepository, websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService, attachmentRepository);
 
@@ -973,7 +977,7 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(anyLong())).thenReturn(Optional.empty());
 
             // When
-            int resetCount = callbackService.handleIrisReset();
+            int resetCount = recoveryService.handleIrisReset();
 
             // Then: Both reset to IDLE, retry budget preserved, tokens cleared
             assertThat(resetCount).isEqualTo(2);

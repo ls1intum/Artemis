@@ -35,6 +35,32 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
+     * Updates the lightweight metadata for the provided attachment video unit in Pyris.
+     * <p>
+     * This method calls {@link PyrisWebhookService#updateLectureUnitMetadataInPyris(AttachmentVideoUnit)}.
+     * The lecture ingestion must be enabled for the course.
+     *
+     * @param attachmentVideoUnit the attachment video unit whose metadata should be updated
+     * @return a dispatch token if the update is triggered successfully, otherwise null
+     */
+    public String updateLectureUnitMetadataInPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        return pyrisWebhookService.updateLectureUnitMetadataInPyris(attachmentVideoUnit);
+    }
+
+    /**
+     * Updates the lightweight visibility data for the provided attachment video unit in Pyris.
+     * <p>
+     * This method calls {@link PyrisWebhookService#updateLectureUnitVisibilityInPyris(AttachmentVideoUnit)}.
+     * The lecture ingestion must be enabled for the course.
+     *
+     * @param attachmentVideoUnit the attachment video unit whose visibility should be updated
+     * @return a dispatch token if the update is triggered successfully, otherwise null
+     */
+    public String updateLectureUnitVisibilityInPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        return pyrisWebhookService.updateLectureUnitVisibilityInPyris(attachmentVideoUnit);
+    }
+
+    /**
      * Deletes the given lecture's attachments from the vector database in Pyris.
      * <p>
      * This method calls {@link PyrisWebhookService#deleteLectureFromPyrisDB(List)}.
