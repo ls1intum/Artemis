@@ -1,14 +1,20 @@
 ---
 # Codacy configuration — read by Codacy Cloud from the default branch (develop).
-# Scopes security scanners to production code: hardcoded test credentials, non-literal
-# fs/regexp in test helpers, and similar security findings in test code are intentional
-# fixtures, not vulnerabilities. Other tools (ESLint, Stylelint, PMD) still analyze tests.
+# Scopes security scanners to production code. Excluded from the SAST/security scanners:
+#   - test code (src/test/**, *.spec.ts): hardcoded test credentials, non-literal fs/regexp in
+#     test helpers, etc. are intentional fixtures, not vulnerabilities;
+#   - programming-exercise templates (src/main/resources/templates/**) and test resources
+#     (src/test/resources/**): sample/starter code shipped for exercises, not application code
+#     Artemis maintains for quality (e.g. npm-dependency checks on template package.json files).
+# Other tools (ESLint, Stylelint, PMD) still analyze the code they apply to.
 engines:
   opengrep: # Semgrep — SAST security scanning
     exclude_paths:
       - "src/test/**"
       - "src/test/**/*"
       - "**/*.spec.ts"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
   bandit: # Python security scanning
     exclude_paths:
       - "src/test/**"
@@ -16,3 +22,5 @@ engines:
       - "**/test_*.py"
       - "**/*_test.py"
       - "**/tests/**"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
