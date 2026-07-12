@@ -13,7 +13,7 @@ export class SafeHtmlPipe implements PipeTransform {
      * markup and entities (e.g. <sub>, <sup>, <strong>, &infin;) that existing callers rely on.
      * @param value The HTML to sanitize and render.
      */
-    transform(value: string): SafeHtml {
+    transform(value: string | null | undefined): SafeHtml {
         return this.sanitizer.bypassSecurityTrustHtml(DOMPurify.sanitize(value ?? ''));
     }
 }
