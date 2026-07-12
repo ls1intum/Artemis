@@ -5,35 +5,5 @@
         <addColumn tableName="attachment">
             <column name="sha256_hash" type="varchar(64)"/>
         </addColumn>
-
-        <createTable tableName="iris_lecture_unit_sync_state">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" primaryKeyName="pk_iris_lecture_unit_sync_state" nullable="false"/>
-            </column>
-            <column name="lecture_unit_id" type="bigint">
-                <constraints nullable="false" unique="true" uniqueConstraintName="uk_iris_lecture_unit_sync_state_lecture_unit_id"/>
-            </column>
-            <column name="metadata_hash" type="varchar(64)"/>
-            <column name="last_synced_metadata_hash" type="varchar(64)"/>
-            <column name="visibility_hash" type="varchar(64)"/>
-            <column name="last_synced_visibility_hash" type="varchar(64)"/>
-            <column name="status" type="varchar(30)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="retry_count" type="integer" defaultValueNumeric="0">
-                <constraints nullable="false"/>
-            </column>
-            <column name="next_retry_at" type="timestamp"/>
-            <column name="last_error_key" type="varchar(255)"/>
-        </createTable>
-
-        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="iris_lecture_unit_sync_state"
-                                 constraintName="fk_iris_lecture_unit_sync_state_lecture_unit_id" referencedColumnNames="id" referencedTableName="lecture_unit"
-                                 onDelete="CASCADE" onUpdate="RESTRICT"/>
-
-        <createIndex indexName="idx_iris_lecture_unit_sync_state_status_retry" tableName="iris_lecture_unit_sync_state">
-            <column name="status"/>
-            <column name="next_retry_at"/>
-        </createIndex>
     </changeSet>
 </databaseChangeLog>
