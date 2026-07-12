@@ -184,6 +184,54 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidConfiguration).toBe(false);
         });
 
+        it('should invalidate the configuration when an exam text exceeds the maximum length', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10001);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(true);
+            expect(component.areExamTextsValid).toBe(false);
+            expect(component.isValidConfiguration).toBe(false);
+
+            examWithoutExercises.confirmationStartText = 'a'.repeat(10000);
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isExamTextTooLong(examWithoutExercises.confirmationStartText)).toBe(false);
+            expect(component.areExamTextsValid).toBe(true);
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
+        it('should invalidate the configuration when any of the individual exam texts exceeds the maximum length', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const tooLong = 'a'.repeat(10001);
+            expect(component.areExamTextsValid).toBe(true);
+
+            examWithoutExercises.startText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.startText = undefined;
+
+            examWithoutExercises.endText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.endText = undefined;
+
+            examWithoutExercises.confirmationEndText = tooLong;
+            expect(component.areExamTextsValid).toBe(false);
+            examWithoutExercises.confirmationEndText = undefined;
+
+            expect(component.areExamTextsValid).toBe(true);
+        });
+
+        it('should treat missing or exactly-limit exam texts as within the limit', () => {
+            expect(component.isExamTextTooLong(undefined)).toBe(false);
+            expect(component.isExamTextTooLong('')).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10000))).toBe(false);
+            expect(component.isExamTextTooLong('a'.repeat(10001))).toBe(true);
+        });
+
         it('should show channel name input for test exams', async () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.channelName = 'test-exam';
