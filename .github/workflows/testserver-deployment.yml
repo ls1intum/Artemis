@@ -51,10 +51,14 @@ jobs:
     runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Print Inputs
+        env:
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Environment: ${{ github.event.inputs.environment_name }}"
-          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
+          echo "Branch: $BRANCH_NAME"
+          echo "Environment: $ENVIRONMENT_NAME"
+          echo "Triggered by: $TRIGGERED_BY"
           echo "RAW_URL: ${{ env.RAW_URL }}"
 
   determine-build-context:
