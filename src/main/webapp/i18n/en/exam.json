@@ -542,9 +542,11 @@
             "bonus": "Bonus",
             "testExam": {
                 "realExam": "Exam",
+                "realExamTooltip": "Students must be registered before the exam. All registered students share a synchronous end time for their attempt.",
                 "testExam": "Test Exam",
+                "testExamTooltip": "No student registration required. Students can start and practice multiple times within the working window.",
                 "testExamWithSimulation": "Test Exam with Simulation",
-                "testExamWithSimulationTooltip": "Students can start one live attempt first. Repeatable practice attempts open immediately after the simulation working time is over. Ideally, the start of the working window is during a lecture.",
+                "testExamWithSimulationTooltip": "Before the start date plus working time, the exam behaves like a real exam: students must be registered and all share a synchronous end time. Afterwards it switches to test exam mode, allowing unlimited practice attempts. Ideally, the start date is set during a lecture.",
                 "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",

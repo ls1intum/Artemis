@@ -542,9 +542,11 @@
             "bonus": "Bonus",
             "testExam": {
                 "realExam": "Klausur",
+                "realExamTooltip": "Studierende müssen vor der Klausur registriert werden. Alle registrierten Studierenden haben einen synchronen Abgabezeitpunkt.",
                 "testExam": "Testklausur",
+                "testExamTooltip": "Keine Registrierung der Studierenden erforderlich. Studierende können innerhalb des Bearbeitungsfensters mehrfach starten und üben.",
                 "testExamWithSimulation": "Testklausur mit Simulation",
-                "testExamWithSimulationTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden direkt nach Ablauf der Simulationsbearbeitungszeit freigeschaltet. Idealerweise findet der Beginn der Bearbeitungszeit während einer Vorlesung statt.",
+                "testExamWithSimulationTooltip": "Vor dem Startdatum plus Bearbeitungszeit verhält sich die Klausur wie eine echte Klausur: Studierende müssen registriert sein und haben einen synchronen Abgabezeitpunkt. Danach wechselt sie in den Testklausurmodus und ermöglicht unbegrenzte Übungsversuche. Idealerweise findet der Starttermin während einer Vorlesung statt.",
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
