@@ -36,11 +36,16 @@ jobs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
     steps:
       - name: Print inputs
+        env:
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
+          ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name }}
+          TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
         run: |
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Commit SHA: ${{ github.event.inputs.commit_sha }}"
-          echo "Environment: ${{ github.event.inputs.environment_name }}"
-          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
+          echo "Branch: $BRANCH_NAME"
+          echo "Commit SHA: $COMMIT_SHA"
+          echo "Environment: $ENVIRONMENT_NAME"
+          echo "Triggered by: $TRIGGERED_BY"
 
       - name: Fetch workflow runs by branch and commit
         id: get_workflow_run
