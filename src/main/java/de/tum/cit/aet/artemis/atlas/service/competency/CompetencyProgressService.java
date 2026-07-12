@@ -271,12 +271,19 @@ public class CompetencyProgressService {
             // inserts one, and the second insert violates the competency_user primary key.
             //
             // Previously this exception was swallowed, which silently DROPPED this thread's freshly computed
-            // progress/confidence. Instead, re-apply this thread's values to the row the winning thread created
-            // via a single targeted, idempotent UPDATE. Unlike a merge/save on a detached entity (which would
-            // re-insert the row if it had been concurrently deleted between a re-fetch and the flush), this
-            // updates the existing row or affects zero rows if it is already gone — so it can never resurrect a
-            // deleted row. DB-portable: relies only on the unique constraint + the standard
-            // DataIntegrityViolationException, not on a vendor-specific upsert.
+            // progress/confidence. Instead, reconcile the row the winning thread created via a single targeted,
+            // idempotent UPDATE. Two properties matter:
+            // - RECOMPUTE first from the current DB state: the concurrent winner may have based its insert on
+            // newer data than this thread saw before the race, so re-applying our pre-race values could
+            // overwrite the row with a staler result.
+            // - The UPDATE touches the existing row, or affects zero rows if it is already gone — so, unlike a
+            // merge/save on a detached entity, it can never resurrect a concurrently deleted row.
+            // DB-portable: relies only on the unique constraint + the standard DataIntegrityViolationException,
+            // not on a vendor-specific upsert.
+            Set<CompetencyExerciseMasteryCalculationDTO> latestExerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyIdAndUser(competencyId, user);
+            Set<CompetencyLectureUnitMasteryCalculationDTO> latestLectureUnitInfos = courseCompetencyRepository.findAllLectureUnitInfoByCompetencyIdAndUser(competencyId, user);
+            calculateProgress(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
+            calculateConfidence(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
             int updatedRows = competencyProgressRepository.updateProgressAndConfidence(competencyId, user.getId(), studentProgress.getProgress(), studentProgress.getConfidence(),
                     studentProgress.getConfidenceReason());
             if (updatedRows == 0) {

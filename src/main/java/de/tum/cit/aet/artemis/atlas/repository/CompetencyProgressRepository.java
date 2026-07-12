@@ -64,7 +64,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
     @Modifying
     @Query("""
             UPDATE CompetencyProgress cp
-            SET cp.progress = :progress, cp.confidence = :confidence, cp.confidenceReason = :confidenceReason
+            SET cp.progress = :progress, cp.confidence = :confidence, cp.confidenceReason = :confidenceReason, cp.lastModifiedDate = CURRENT_TIMESTAMP
             WHERE cp.competency.id = :competencyId
                 AND cp.user.id = :userId
             """)

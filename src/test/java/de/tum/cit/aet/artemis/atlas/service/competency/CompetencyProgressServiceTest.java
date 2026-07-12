@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -115,6 +116,11 @@ class CompetencyProgressServiceTest {
         verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), progressCaptor.capture(), confidenceCaptor.capture(), any());
         assertThat(progressCaptor.getValue()).isEqualTo(ownAttempt.getProgress());
         assertThat(confidenceCaptor.getValue()).isEqualTo(ownAttempt.getConfidence());
+
+        // The conflict path recomputes from the DB before writing (once for the initial attempt, once for the
+        // reconcile), so it does not re-apply this thread's potentially-stale pre-race values.
+        verify(courseCompetencyRepository, times(2)).findAllExerciseInfoByCompetencyIdAndUser(anyLong(), any(User.class));
+        verify(courseCompetencyRepository, times(2)).findAllLectureUnitInfoByCompetencyIdAndUser(anyLong(), any(User.class));
 
         // Learning-path propagation still runs after a reconciled progress update.
         verify(learningPathService).updateLearningPathProgress(COURSE_ID, USER_ID);
