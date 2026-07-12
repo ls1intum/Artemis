@@ -33,7 +33,7 @@ For full configuration details of each option, see [Choose and connect an embedd
 
 <Callout variant={CalloutVariant.info}>
 
-  You do not have to pick the most powerful embedder. Keyword-only search (`none`) is zero-cost to operate and covers most administrative search needs. Semantic re-ranking is additive — you can start with `none` and migrate later by dropping the collections and reindexing.
+  You do not have to pick the most powerful embedder. Keyword-only search (`none`) is zero-cost to operate and covers most administrative search needs. Choose the vectorizer before indexing production data: Artemis does not currently provide a full reindex operation for changing it later.
 
 </Callout>
 
@@ -203,7 +203,7 @@ artemis:
 
 ### Option 3 — Keyword-only (no embedder)
 
-Use this when semantic similarity is not a priority, you want the simplest possible setup, or you plan to migrate to an embedder later.
+Use this when semantic similarity is not a priority or you want the simplest possible setup.
 
 ```yaml
 artemis:
@@ -214,7 +214,7 @@ artemis:
 
 **Compose file:** `docker/weaviate.yml`.
 
-No embedder is provisioned. All search uses Weaviate's built-in BM25 index. You can migrate to a semantic embedder later by dropping the existing collections and reindexing — collection schema is created fresh on next startup.
+No embedder is provisioned. All search uses Weaviate's built-in BM25 index. Artemis does not currently provide a full reindex operation, so switching an existing production collection to a semantic embedder requires separate migration tooling.
 
 ---
 
@@ -245,7 +245,7 @@ Artemis validates the connection at startup. If validation fails (wrong host, mi
 
 <Callout variant={CalloutVariant.info}>
 
-  Setting `vectorizer-module: none` (keyword-only mode) is a fully supported production choice. Artemis will store and search text using Weaviate's BM25 index with no embedding overhead. You can switch to a semantic embedder at any time by changing the property, dropping the existing collections, and reindexing — see [Reindex / migration runbook](#reindex--migration-runbook) below.
+  Setting `vectorizer-module: none` (keyword-only mode) is a fully supported production choice. Artemis will store and search text using Weaviate's BM25 index with no embedding overhead. Treat the vectorizer choice as immutable after indexing production data because Artemis does not currently provide a full reindex operation.
 
 </Callout>
 
@@ -254,15 +254,17 @@ Artemis validates the connection at startup. If validation fails (wrong host, mi
 Artemis exposes a dedicated Weaviate indicator at the Spring Boot management endpoint:
 
 ```bash
-curl -s https://your-artemis-host/management/health | jq '.components.weaviate'
+curl -s \
+     -H "Authorization: Bearer <admin-access-token>" \
+     https://your-artemis-host/management/health | jq '.components.weaviate'
 ```
 
-A healthy response looks like:
+Health component details are visible only to authenticated users with `ROLE_ADMIN` or `ROLE_SUPER_ADMIN`. A healthy response looks like:
 
 ```json
 {
   "status": "UP",
-  "details": { "version": "1.37.9" }
+  "details": { "Address": "https://your-weaviate-host:443" }
 }
 ```
 
@@ -307,7 +309,7 @@ artemis:
     collection-prefix: Artemis_   # e.g. "Artemis_" — must be non-empty when sharing with Pyris
 ```
 
-The prefix is prepended to every collection Artemis creates. Changing it later is a breaking change — all existing collections must be dropped and reindexed (see [Reindex / migration runbook](#reindex--migration-runbook)).
+The prefix is prepended to every collection Artemis creates. Treat it as immutable after indexing production data. Changing it points Artemis at new, initially empty collections, and Artemis does not currently provide a full reindex operation to repopulate them.
 
 ### Vectorizer module — Artemis-only concern
 
@@ -347,7 +349,7 @@ Artemis uses Weaviate's gRPC interface (default port **50051**) for efficient qu
 
 ---
 
-## Operate (backups, upgrades, reindex, troubleshooting)
+## Operate (backups, upgrades, recovery, troubleshooting)
 
 ### Backups and restore
 
@@ -359,7 +361,7 @@ Weaviate backups capture the full data volume (all collections, vectors, and met
 
 <Callout variant={CalloutVariant.info}>
 
-  Weaviate collections can be fully rebuilt from Artemis's source data by dropping them and triggering a reindex. A backup is therefore most valuable for preserving large volumes of embedded data that would be expensive to re-embed (e.g., with a metered OpenAI key). For keyword-only (`none`) deployments, restoring from Artemis's database is often faster than restoring a Weaviate backup.
+  Artemis does not currently provide a full reindex operation. Keep tested Weaviate backups for recovery and before any schema-affecting configuration change; dropping an Artemis collection otherwise loses indexed data that cannot be repopulated automatically.
 
 </Callout>
 
@@ -378,44 +380,23 @@ Weaviate follows semantic versioning. The shipped Compose files pin the image to
 
 </Callout>
 
-### Reindex / migration runbook
+### Schema changes and recovery
 
-Artemis checks at startup whether the stored collection schema matches the expected schema (vectorizer module, model, base URL, and vector dimensions). If a drift is detected, Artemis **logs a warning but does not auto-migrate**. There is no live migration path — you must manually drop and recreate the affected collections.
+Artemis creates the Weaviate schema at startup and synchronizes entities incrementally when they are created, updated, or deleted. It does **not** currently provide an admin endpoint or scheduled job that fully rebuilds global-search data from the Artemis database.
 
-**Trigger conditions for a full reindex:**
+The following changes require a full rebuild that Artemis cannot currently perform:
 
 - Changing `vectorizer-module` (e.g., `none` → `text2vec-openai`)
 - Changing `open-ai-embedding-model` (different model = different dimensions or embedding space)
 - Changing `open-ai-base-url` to a different model provider
-- Changing `collection-prefix` (collections under the old prefix are orphaned)
+- Changing `collection-prefix` (Artemis starts using a different namespace)
 - Upgrading to an embedder with different output dimensions
 
-**Runbook:**
-
-```bash
-# 1. Stop Artemis (to prevent writes during the reindex)
-#    (Your deployment-specific stop command — e.g., systemctl stop artemis)
-
-# 2. Drop all Artemis-owned collections via the Weaviate REST API.
-#    Replace <prefix> with your collection-prefix value (e.g., "Artemis_").
-#    Artemis's primary collection is <prefix>SearchableEntities; Artemis may also create
-#    schema-version helper collections — check your Weaviate instance for any <prefix>-prefixed
-#    collections and delete each one. Never delete bare Pyris collections (Lectures, Faqs, etc.).
-curl -X DELETE \
-     -H "Authorization: Bearer your-weaviate-api-key" \
-     https://your-weaviate-host/v1/schema/<prefix>SearchableEntities
-
-# 3. Update artemis.weaviate.* properties in application-prod.yml with the new settings.
-
-# 4. Start Artemis. It recreates all collections with the new schema on startup.
-
-# 5. Trigger a full reindex via the admin API or wait for the scheduled reindex job.
-#    (See the Artemis developer documentation for the reindex endpoint.)
-```
+Do not drop the existing Artemis collections to apply these changes. To recover from accidental schema drift, revert to the matching configuration and restore a compatible Weaviate backup. An intentional migration requires separate one-time migration or reindex tooling that is not shipped with Artemis; implement and validate that tooling before changing production configuration.
 
 <Callout variant={CalloutVariant.warning}>
 
-  All previously indexed data is lost when collections are dropped. Users will see no semantic search results until the reindex completes. Plan the migration during a maintenance window.
+  Dropping an Artemis collection loses all previously indexed data, and restarting Artemis only recreates an empty schema. Take and test a backup before schema-affecting work.
 
 </Callout>
 
@@ -448,7 +429,7 @@ Artemis's `WeaviateValidator` runs at startup and fails fast on misconfiguration
 | `open-ai-base-url` is blank | `vectorizer-module: text2vec-openai` set but `open-ai-base-url` missing | Add `open-ai-base-url` to your profile |
 | `gpu-api-key` is blank | `text2vec-openai` set but `gpu-api-key` missing | Add `gpu-api-key` (your embedding endpoint API key) |
 | `Cannot connect to Weaviate` | Host unreachable or wrong port | Check `http-host`, `http-port`, and firewall rules |
-| `Collection schema drift` | Stored schema does not match configured schema | Follow the [reindex runbook](#reindex--migration-runbook) |
+| `Collection schema drift` | Stored schema does not match configured schema | Revert to the matching configuration and restore a compatible backup; do not drop the collection |
 
 <Callout variant={CalloutVariant.info}>
 
