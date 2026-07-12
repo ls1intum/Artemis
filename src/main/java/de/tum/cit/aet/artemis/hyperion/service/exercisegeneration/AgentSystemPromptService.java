@@ -202,9 +202,9 @@ public class AgentSystemPromptService {
                 WHERE FILES GO (important — the layout is NOT the language default): the verifier assembles the test project with your assignment checked out into an `assignment/` \
                 directory next to the tests. Before writing code, read the test project's build file (e.g. tests/pom.xml or tests/build.gradle) to see exactly which directories \
                 it compiles as the assignment sources and as the test sources, and put your files there. Keep the same module/package name across solution, template, and tests so \
-                the shared tests resolve against both. The harness build files may contain CI directory placeholders like ${studentParentWorkingDirectoryName} or \
-                ${solutionWorkingDirectory}; the verifier substitutes these for you to match its layout, so leave them EXACTLY as seeded — do NOT replace a placeholder with a literal \
-                path (e.g. rewriting a cabal `hs-source-dirs: ${solutionWorkingDirectory}/src` to `assignment/solution/src`), which passes your local build but breaks real CI.%s
+                the shared tests resolve against both. NEVER write a ${...} placeholder (${studentWorkingDirectory}, ${solutionWorkingDirectory}, ${packageName}, …) into any file: \
+                every path in your workspace is already resolved, nothing substitutes one afterwards, and under real CI it expands to an EMPTY string — a harness line like \
+                `rm -rf ${solutionWorkingDirectory}` becomes `rm -rf `. Write the real path you see in the workspace. The verifier rejects a produced file that still contains one.%s
 
                 KEEP THE TEST HARNESS INTACT: the test project's build file and ESPECIALLY its test-runner and result-REPORT configuration — the JUnit/surefire reporter, jest-junit, \
                 nextest's junit output, go-junit-report, the `test:ci` script, the dune/cabal test stanza, the Python `Tests.py` harness — are already correct and are EXACTLY what \

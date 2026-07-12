@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -319,5 +320,25 @@ class ExerciseIntegrityGateTest {
         var reasons = ExerciseIntegrityGate.selfComparisonHarnessReasons(map("test.cabal", cabal, "test/Test.hs", testHs));
         assertThat(reasons).hasSize(1);
         assertThat(reasons.get(0)).contains("import qualified Reference as Sol").doesNotContain("import qualified Solution as Sol");
+    }
+
+    @Test
+    void rawPlaceholderReasons_rejectsAPlaceholderInContent_becauseRealCiExpandsItToNothing() {
+        // The original Haskell failure: a run.sh committed with the placeholder intact ran `rm -rf ` and `find / -type l` under real CI. Nothing substitutes it after generation,
+        // so the exercise must not be accepted with one.
+        var placeholders = Set.of("${solutionWorkingDirectory}", "${packageName}");
+
+        var reasons = ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, map("run.sh", "rm -rf ${solutionWorkingDirectory}"), "tests");
+
+        assertThat(reasons).hasSize(1);
+        assertThat(reasons.get(0)).contains("run.sh").contains("${solutionWorkingDirectory}").contains("rm -rf ");
+    }
+
+    @Test
+    void rawPlaceholderReasons_rejectsAPlaceholderInAPath_andAcceptsAResolvedTree() {
+        var placeholders = Set.of("${packageNameFolder}");
+
+        assertThat(ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, map("src/${packageNameFolder}/Sort.java", "class Sort {}"), "solution")).hasSize(1);
+        assertThat(ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, map("src/de/test/Sort.java", "class Sort {}"), "solution")).isEmpty();
     }
 }

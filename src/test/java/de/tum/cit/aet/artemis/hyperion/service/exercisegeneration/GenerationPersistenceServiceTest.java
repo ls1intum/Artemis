@@ -168,19 +168,15 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_normalizesCheckoutPlaceholders_inEveryCommittedRepository_soNoHarnessShipsRawPlaceholders() throws Exception {
-        // The agent's sandbox harness can carry (or re-introduce) raw ${...} checkout placeholders — most visibly the Haskell run.sh, whose
-        // ${studentParentWorkingDirectoryName}/
-        // ${solutionWorkingDirectory} expand to empty strings under real CI (`find / -type l`, `rm -rf`), failing the build so no test case syncs. The persist must re-run the same
-        // production placeholder substitution exercise creation applies, on EACH committed repository's working copy, so the committed harness is byte-identical to an
-        // instructor-created one. We assert the normalization happens for all three repositories (template, solution, tests).
+    void persist_doesNotRewriteTheProducedTree_soTheCommittedBytesAreTheBytesTheOracleBuilt() throws Exception {
+        // Persist used to re-run the production placeholder substitution here, repairing a raw ${...} the oracle had accepted. That made the committed exercise differ from the one
+        // that was verified. A raw placeholder is now rejected by the verifier instead (ExerciseIntegrityGate.rawPlaceholderReasons), so persist has nothing left to repair.
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
 
-        service.persist(exercise, user, outcome);
+        service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), ""));
 
-        verify(programmingExerciseRepositoryService, times(3)).replacePlaceholders(exercise, repository);
+        verify(programmingExerciseRepositoryService, never()).replacePlaceholders(any(), any());
     }
 
     @Test

@@ -802,7 +802,7 @@ class AuthoritativeVerificationServiceTest {
 
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(4242L)).thenReturn(categories);
-            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
+            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo), Optional.empty());
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
         }
 
@@ -882,7 +882,7 @@ class AuthoritativeVerificationServiceTest {
             var graded = category("Security", CategoryState.GRADED, 2.0);
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(7L)).thenReturn(Set.of(graded));
-            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo));
+            var verifier = new AuthoritativeVerificationService(sandboxBuildCommandService(), Optional.of(repo), Optional.empty());
             BuildReportSpec solution = BuildReportSpec.withScaReports(List.of(DEFAULT_BOUND_NAMES), List.of(), Map.of("ruff.sarif", RUFF_STYLE_SARIF), 0);
             VerificationResult result = verifier.verify(new ScriptedSandbox(solution, failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise);
             assertThat(result.accepted()).as("a SARIF finding in a non-graded derived category must not penalise (production category derivation, not a wildcard match)").isTrue();

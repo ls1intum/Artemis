@@ -341,6 +341,35 @@ final class ExerciseIntegrityGate {
      * @param solutionFiles the produced SOLUTION repository files (repository-relative; residue already stripped)
      * @return a single reason listing the leaked paths, or empty when no leak
      */
+    /**
+     * Rejects a produced file that still carries a raw {@code ${...}} placeholder in its content or its path.
+     * <p>
+     * Exercise creation resolves every placeholder in the scaffold and Hyperion resolves them in the reference sample, so a raw one can only be something the agent wrote or
+     * copied.
+     * It is invisible to the build — a shell harness expands {@code ${solutionWorkingDirectory}} to an empty string, so {@code rm -rf ${solutionWorkingDirectory}} becomes
+     * {@code rm -rf } and a build that passed in the sandbox destroys its own checkout in real CI. Nothing downstream substitutes it: the committed bytes are the bytes the oracle
+     * built.
+     *
+     * @param placeholders   the placeholders this exercise resolves (the keys are the literal {@code ${...}} strings)
+     * @param producedFiles  the produced files of one repository, keyed by repository-relative path
+     * @param repositoryName the repository name, for the message
+     * @return one reason per offending file, or empty when none carries a placeholder
+     */
+    static List<String> rawPlaceholderReasons(Set<String> placeholders, Map<String, String> producedFiles, String repositoryName) {
+        List<String> reasons = new ArrayList<>();
+        for (Map.Entry<String, String> file : producedFiles.entrySet()) {
+            for (String placeholder : placeholders) {
+                if (file.getKey().contains(placeholder) || file.getValue().contains(placeholder)) {
+                    reasons.add("The " + repositoryName + " file '" + file.getKey() + "' still contains the placeholder " + placeholder
+                            + ". Nothing substitutes it after generation: under real CI it expands to an empty string (so a harness command like `rm -rf " + placeholder
+                            + "` becomes `rm -rf `). Write the real path instead.");
+                    break;
+                }
+            }
+        }
+        return reasons;
+    }
+
     static List<String> solutionLeakReasons(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (templateFiles == null || templateFiles.isEmpty() || solutionFiles == null || solutionFiles.isEmpty()) {
             return List.of();

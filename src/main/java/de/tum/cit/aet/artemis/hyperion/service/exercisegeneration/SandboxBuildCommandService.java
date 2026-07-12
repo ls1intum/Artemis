@@ -120,10 +120,6 @@ public class SandboxBuildCommandService {
         // Tests go at the language's real checkout path (root for Java/Python, a "tests/" subdir for C/Go/OCaml/…) so phase scripts that `cd` into it resolve.
         String testDestination = recipe.testDir().isEmpty() ? "$BUILD_DIR" : "$BUILD_DIR/" + recipe.testDir();
         String phaseSection = buildPhaseSection(recipe.phases());
-        // CI placeholder values for the seeded harness, mapped to the real checkout layout. With no solution checkout the solution placeholder never appears, so its fallback is
-        // moot.
-        String solutionPlaceholderValue = recipe.solutionDir().isEmpty() ? "assignment" : recipe.solutionDir();
-        String testPlaceholderValue = recipe.testDir().isEmpty() ? "." : recipe.testDir();
         // Materialize a sibling solution/ EXACTLY when real CI would (language defines a solution checkout path — Haskell/OCaml — AND the exercise checks it out), so the harness
         // reference (e.g. the Haskell cabal's `library solution`) resolves. Other languages get no solution/, keeping their differential unchanged.
         boolean materializeSolution = recipe.materializesSolution();
@@ -154,15 +150,9 @@ public class SandboxBuildCommandService {
                 mkdir -p "$BUILD_DIR/assignment"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$BUILD_DIR/assignment"/ 2>/dev/null || true
                 @@SOLUTION_COPY@@
-                # Substitute the CI directory placeholders inside the COPIED test harness, exactly as production exercise-creation does, so a seeded harness resolves against THIS build
-                # tree without the agent editing it. The student parent working directory is assignment/ (the chosen assignment, copied in both runs); the solution and test working
-                # directories use the language's real CI checkout layout. Build-tree copy only — the seeded source files are untouched.
-                find "$TEST_DEST" -type f 2>/dev/null | while IFS= read -r f; do
-                    sed -e 's#${studentWorkingDirectory}#/assignment/src#g' \\
-                        -e 's#${studentParentWorkingDirectoryName}#assignment#g' \\
-                        -e 's#${solutionWorkingDirectory}#@@SOLUTION_DIR@@#g' \\
-                        -e 's#${testWorkingDirectory}#@@TEST_DIR@@#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
-                done
+                # No placeholder substitution here, deliberately. Exercise creation already resolves every ${...} in the seeded repositories, so a raw placeholder can only come from
+                # the agent (writing one, or copying an unresolved reference/ file). Substituting it here would hide it: the build would pass in the sandbox and the SAME raw string
+                # would reach real CI, where `${solutionWorkingDirectory}` expands to nothing and `rm -rf ${...}` becomes `rm -rf `. Letting the build fail is the point.
                 # Anti-forgery: delete every pre-existing report XML before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports written
                 # this run are collected.
                 find "$BUILD_DIR" -type f \\( @@REPORT_FIND@@ \\) -delete 2>/dev/null || true
@@ -199,9 +189,9 @@ public class SandboxBuildCommandService {
                 exit $rc
                 """;
         return script.replace("@@WORKSPACE@@", GenerationWorkspaceService.WORKSPACE).replace("@@REPORTS_DIR@@", REPORTS_DIR).replace("@@TEST_DEST@@", testDestination)
-                .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@SOLUTION_DIR@@", solutionPlaceholderValue).replace("@@TEST_DIR@@", testPlaceholderValue)
-                .replace("@@REPORT_FIND@@", findExpression).replace("@@PHASES@@", phaseSection).replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression))
-                .replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR).replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER);
+                .replace("@@SOLUTION_COPY@@", solutionCopySection).replace("@@REPORT_FIND@@", findExpression).replace("@@PHASES@@", phaseSection)
+                .replace("@@SCA_COLLECT@@", buildScaCollectSection(scaFindExpression)).replace("@@NAME_SEP@@", COLLECTED_NAME_SEPARATOR)
+                .replace("@@JUNIT_TOKEN@@", COLLECTED_JUNIT_TOKEN).replace("@@COLLECTED_MARKER@@", COLLECTED_MARKER);
     }
 
     /**

@@ -705,15 +705,55 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        // Directory and file names carry placeholders too, and renaming needs the checked-out repository; the content replacements are language-independent (see
+        // placeholderReplacements).
+        switch (programmingLanguage) {
+            case JAVA, KOTLIN ->
+                FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
+            case SWIFT -> renameSwiftPathPlaceholders(programmingExercise, repository);
+            default -> {
+                // only JVM and Swift templates encode a placeholder in a path
+            }
+        }
+        final Map<String, String> replacements = placeholderReplacements(programmingExercise);
+        // forceTextExtensions includes ".sh": FileUtil otherwise classifies shell scripts as binary and skips them, but a test harness can drive its build through a committed
+        // shell script (Haskell's run.sh) whose checkout placeholders MUST be substituted — left raw they expand to empty strings under CI (`find /`, `rm -rf `) and the build
+        // fails.
+        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"), Set.of(".sh"));
+    }
+
+    /**
+     * The {@code ${...}} to real-value mapping for this exercise: the package/exercise/packaging names and the CI checkout directories, plus the placeholders that appear in
+     * template PATHS ({@code ${packageNameFolder}}, {@code ${packageNameFile}}, {@code ${appName}}) so a caller can resolve a template path as well as its content.
+     * <p>
+     * Exposed because it is the single source of truth for what a resolved repository looks like: exercise creation substitutes it into the scaffold, Hyperion substitutes it into
+     * the read-only reference sample it seeds to the agent, and the generation integrity gate rejects a produced file that still contains any of these keys.
+     *
+     * @param programmingExercise the exercise whose language, package name, title and checkout paths resolve the placeholders
+     * @return the replacements, keyed by the literal placeholder
+     */
+    public Map<String, String> placeholderReplacements(final ProgrammingExercise programmingExercise) {
         final Map<String, String> replacements = new HashMap<>();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
+                replacements.put(PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
-            case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
+            case SWIFT -> {
+                // The client already provides a clean package name, but the API must not be abusable for injection, so the name is sanitized here too.
+                final String cleanPackageName = programmingExercise.getPackageName().replaceAll("[^a-zA-Z\\d]", "");
+                if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+                    replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
+                }
+                else {
+                    replacements.put(PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
+                    replacements.put(PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
+                    replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
+                }
+            }
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             default -> {
                 // no special package name replacements needed for other programming languages
@@ -749,10 +789,7 @@ public class ProgrammingExerciseRepositoryService {
         if ((programmingLanguage == ProgrammingLanguage.JAVA && projectType != null && projectType.isGradle()) || programmingLanguage == ProgrammingLanguage.RUST) {
             replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH, studentWorkingDirectory + "/src");
         }
-        // forceTextExtensions includes ".sh": FileUtil otherwise classifies shell scripts as binary and skips them, but a test harness can drive its build through a committed
-        // shell script (Haskell's run.sh) whose checkout placeholders MUST be substituted — left raw they expand to empty strings under CI (`find /`, `rm -rf `) and the build
-        // fails.
-        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"), Set.of(".sh"));
+        return replacements;
     }
 
     /**
@@ -763,24 +800,18 @@ public class ProgrammingExerciseRepositoryService {
      * @param repository          The repository in which the replacements are performed.
      * @throws IOException Thrown if accessing repository files fails.
      */
-    private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+    /** Renames the Swift directories and files whose names carry a placeholder; the matching content replacements come from {@link #placeholderReplacements}. */
+    private void renameSwiftPathPlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
         final Path repositoryLocalPath = getRepoAbsoluteLocalPath(repository);
-        final String packageName = programmingExercise.getPackageName();
-        // The client already provides a clean package name, but we have to make sure that no one abuses the API for injection.
-        // So usually, the name should not change.
-        final String cleanPackageName = packageName.replaceAll("[^a-zA-Z\\d]", "");
+        final String cleanPackageName = programmingExercise.getPackageName().replaceAll("[^a-zA-Z\\d]", "");
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             FileUtil.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, cleanPackageName);
             FileUtil.replaceVariablesInFilename(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, cleanPackageName);
-
-            replacements.put(PACKAGE_NAME_PLACEHOLDER, cleanPackageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
             FileUtil.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
             FileUtil.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
-
-            replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
         }
     }
 

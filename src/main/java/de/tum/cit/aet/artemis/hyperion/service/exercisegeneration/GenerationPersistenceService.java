@@ -309,9 +309,6 @@ public class GenerationPersistenceService {
             String content = entry.getValue();
             repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
         }
-        // The produced tree can re-introduce raw ${...} placeholders (e.g. from the reference's run.sh); normalize to real-CI values as exercise creation does (idempotent if
-        // clean).
-        programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
     }
 
     /**

@@ -30,7 +30,7 @@ class GenerationWorkspaceServiceTest {
     private static GenerationWorkspaceService newService() {
         return new GenerationWorkspaceService(mock(de.tum.cit.aet.artemis.localvc.service.GitService.class),
                 mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class),
-                mock(de.tum.cit.aet.artemis.core.service.ResourceLoaderService.class));
+                mock(de.tum.cit.aet.artemis.core.service.ResourceLoaderService.class), mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService.class));
     }
 
     private static org.springframework.core.io.Resource fakeResource(String uri, byte[] content) throws Exception {
@@ -50,20 +50,26 @@ class GenerationWorkspaceServiceTest {
         org.springframework.core.io.Resource sampleTest = fakeResource("file:/x/src/main/resources/templates/java/test/testFiles/behavior/SortingExampleBehaviorTest.java",
                 "class T {}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         org.springframework.core.io.Resource binaryAsset = fakeResource("file:/x/templates/java/test/wrapper.jar", new byte[] { 1, 0, 2 });
+        // The classpath template carries a raw placeholder in BOTH its path and its content, exactly as templates/java/solution does.
         org.springframework.core.io.Resource sampleSolution = fakeResource("jar:file:/a.war!/WEB-INF/classes/templates/java/solution/src/Foo.java",
-                "class Foo {}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                "package ${packageName};\nclass Foo {}".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         when(loader.getFileResources(java.nio.file.Path.of("templates", "java", "test"))).thenReturn(new org.springframework.core.io.Resource[] { sampleTest, binaryAsset });
         when(loader.getFileResources(java.nio.file.Path.of("templates", "java", "solution"))).thenReturn(new org.springframework.core.io.Resource[] { sampleSolution });
 
+        var repositoryService = mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService.class);
+        when(repositoryService.placeholderReplacements(any())).thenReturn(java.util.Map.of("${packageNameFolder}", "de/test", "${packageName}", "de.test"));
         var service = new GenerationWorkspaceService(mock(de.tum.cit.aet.artemis.localvc.service.GitService.class),
-                mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class), loader);
+                mock(de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration.class), mock(SandboxBuildCommandService.class), loader, repositoryService);
         var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
         exercise.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
 
         Map<String, String> reference = service.readReferenceSample(exercise);
 
-        assertThat(reference).containsEntry("reference/test/testFiles/behavior/SortingExampleBehaviorTest.java", "class T {}").containsEntry("reference/solution/src/Foo.java",
-                "class Foo {}");
+        assertThat(reference).containsEntry("reference/test/testFiles/behavior/SortingExampleBehaviorTest.java", "class T {}");
+        // Resolved in the path AND the content: the agent may copy a reference file into the exercise, and nothing substitutes a ${...} after generation - under real CI it
+        // expands to an empty string.
+        assertThat(reference).as("the reference sample is seeded resolved, never with raw placeholders").containsEntry("reference/solution/src/Foo.java",
+                "package de.test;\nclass Foo {}");
         assertThat(reference).as("binary assets are skipped, not packed as corrupt UTF-8").doesNotContainKey("reference/test/wrapper.jar");
     }
 

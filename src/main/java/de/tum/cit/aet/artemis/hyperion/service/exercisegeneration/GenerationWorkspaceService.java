@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 
 /**
  * Assembles the unified agent workspace (problem statement plus the template, solution, and test repositories, each in its own directory) into the sandbox and reads the produced
@@ -75,12 +76,16 @@ public class GenerationWorkspaceService {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     public GenerationWorkspaceService(GitService gitService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService) {
+            SandboxBuildCommandService sandboxBuildCommandService, ResourceLoaderService resourceLoaderService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService) {
         this.gitService = gitService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.resourceLoaderService = resourceLoaderService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
     }
 
     /**
@@ -141,16 +146,19 @@ public class GenerationWorkspaceService {
         }
         String languageDir = exercise.getProgrammingLanguage().name().toLowerCase(Locale.ROOT);
         Map<String, String> reference = new LinkedHashMap<>();
+        // Classpath templates carry raw ${...} in their content AND in their paths; exercise creation resolves them in the scaffold, so the reference sample must be resolved the
+        // same way. Seeding it raw would hand the agent a file it can copy into the exercise, and a raw placeholder expands to an empty string in real CI.
+        Map<String, String> placeholders = programmingExerciseRepositoryService.placeholderReplacements(exercise);
         int[] remainingBytes = { MAX_REFERENCE_TOTAL_BYTES };
         for (String area : List.of("test", "solution")) {
-            addReferenceArea(reference, languageDir, area, remainingBytes);
+            addReferenceArea(reference, languageDir, area, remainingBytes, placeholders);
         }
         // Languages whose templates live only under a project-type subdirectory (e.g. C: templates/c/{gcc,fact}) have no language-level test/solution; fall back to the project
         // type.
         if (reference.isEmpty() && exercise.getProjectType() != null) {
             String projectTypeRelativeBase = languageDir + "/" + exercise.getProjectType().name().toLowerCase(Locale.ROOT);
             for (String area : List.of("test", "solution")) {
-                addReferenceArea(reference, projectTypeRelativeBase, area, remainingBytes);
+                addReferenceArea(reference, projectTypeRelativeBase, area, remainingBytes, placeholders);
             }
         }
         return reference;
@@ -161,7 +169,7 @@ public class GenerationWorkspaceService {
      * language
      * template root), respecting the remaining byte budget. Robust across filesystem and jar resources via the {@code /templates/<languageRelativeBase>/} URI marker.
      */
-    private void addReferenceArea(Map<String, String> reference, String languageRelativeBase, String area, int[] remainingBytes) {
+    private void addReferenceArea(Map<String, String> reference, String languageRelativeBase, String area, int[] remainingBytes, Map<String, String> placeholders) {
         String marker = "/templates/" + languageRelativeBase + "/";
         Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates").resolve(languageRelativeBase).resolve(area));
         for (Resource resource : resources) {
@@ -182,13 +190,25 @@ public class GenerationWorkspaceService {
                 if (content.length == 0 || content.length > MAX_REFERENCE_FILE_BYTES || BinaryContent.isBinary(content)) {
                     continue;
                 }
-                reference.put(REFERENCE_DIR + "/" + relativePath, new String(content, StandardCharsets.UTF_8));
+                reference.put(REFERENCE_DIR + "/" + resolvePlaceholders(relativePath, placeholders),
+                        resolvePlaceholders(new String(content, StandardCharsets.UTF_8), placeholders));
                 remainingBytes[0] -= content.length;
             }
             catch (IOException | RuntimeException e) {
                 log.debug("Skipping reference sample resource {}: {}", resource, e.getMessage());
             }
         }
+    }
+
+    /** Replaces every {@code ${...}} the exercise resolves; a placeholder with no mapping (a language that does not define it) is left alone rather than blanked. */
+    private static String resolvePlaceholders(String text, Map<String, String> placeholders) {
+        String resolved = text;
+        for (Map.Entry<String, String> placeholder : placeholders.entrySet()) {
+            if (placeholder.getValue() != null) {
+                resolved = resolved.replace(placeholder.getKey(), placeholder.getValue());
+            }
+        }
+        return resolved;
     }
 
     /**

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 
 /**
  * Decides whether a generated exercise is correct, independently of what the agent reports, by running the {@code verify.sh} recipe in the sandbox once against the solution and
@@ -105,16 +106,21 @@ public class AuthoritativeVerificationService {
      */
     private final Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository;
 
+    /** Resolves the exercise's {@code ${...}} placeholder set for the raw-placeholder gate; Optional because it lives in the core profile, where the gate then fails open. */
+    private final Optional<ProgrammingExerciseRepositoryService> programmingExerciseRepositoryService;
+
     // @Autowired disambiguates from the package-private test constructor; with two constructors and no annotation Spring fails to instantiate the bean.
     @Autowired
     public AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
-            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository) {
+            Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository,
+            Optional<ProgrammingExerciseRepositoryService> programmingExerciseRepositoryService) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
     }
 
     AuthoritativeVerificationService(SandboxBuildCommandService sandboxBuildCommandService) {
-        this(sandboxBuildCommandService, Optional.empty());
+        this(sandboxBuildCommandService, Optional.empty(), Optional.empty());
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
@@ -231,14 +237,33 @@ public class AuthoritativeVerificationService {
         boolean noSelfComparison = selfComparisonReasons.isEmpty();
         reasons.addAll(selfComparisonReasons);
 
+        List<String> rawPlaceholderReasons = rawPlaceholderReasons(exercise, producedTemplateFiles, producedSolutionFiles, producedTestsFiles);
+        boolean noRawPlaceholder = rawPlaceholderReasons.isEmpty();
+        reasons.addAll(rawPlaceholderReasons);
+
         boolean extractionSound = checkExtractionSound(extractionFailedRepositories, reasons);
 
-        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && extractionSound;
+        boolean accepted = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noSelfComparison && noRawPlaceholder && extractionSound;
         if (!accepted) {
-            log.info("Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
-                    + "extractionSound={}", solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, extractionSound);
+            log.info(
+                    "Authoritative verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, noSelfComparison={}, "
+                            + "noRawPlaceholder={}, extractionSound={}",
+                    solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, noSelfComparison, noRawPlaceholder, extractionSound);
         }
         return new VerificationResult(accepted, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons);
+    }
+
+    /** Collects the raw-placeholder reasons across the three produced repositories, resolving the placeholder set from the exercise itself. */
+    private List<String> rawPlaceholderReasons(ProgrammingExercise exercise, Map<String, String> templateFiles, Map<String, String> solutionFiles, Map<String, String> testsFiles) {
+        if (programmingExerciseRepositoryService.isEmpty()) {
+            // No core profile: the exercise cannot be persisted from this node anyway, so the gate has nothing to protect. Fail open.
+            return List.of();
+        }
+        Set<String> placeholders = programmingExerciseRepositoryService.orElseThrow().placeholderReplacements(exercise).keySet();
+        List<String> reasons = new ArrayList<>(ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, testsFiles, "tests"));
+        reasons.addAll(ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, solutionFiles, "solution"));
+        reasons.addAll(ExerciseIntegrityGate.rawPlaceholderReasons(placeholders, templateFiles, "template"));
+        return reasons;
     }
 
     /**

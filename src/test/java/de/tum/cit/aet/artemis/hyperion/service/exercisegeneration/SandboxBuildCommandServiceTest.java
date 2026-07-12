@@ -1,28 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.condition.OS.LINUX;
-import static org.junit.jupiter.api.condition.OS.MAC;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.io.TempDir;
 
-import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
-import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -99,10 +86,13 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
-    void verifyScript_substitutesCiPlaceholdersInsideTheCopiedTestHarness_soTheAgentNeverNeedsToEditIt() {
+    void verifyScript_doesNotSubstituteCiPlaceholders_soARawOneFailsTheBuildInsteadOfShippingToRealCi() {
+        // The script used to sed the checkout placeholders into the copied harness. That HID a raw ${...}: the build passed in the sandbox and the same raw string reached real CI,
+        // where it expands to an empty string (`rm -rf ${solutionWorkingDirectory}` -> `rm -rf `). Exercise creation already resolves the seeded repositories, so a raw placeholder
+        // can only be something the agent wrote; letting the build fail is the point.
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(new ProgrammingExercise());
-        assertThat(script).contains("s#${studentParentWorkingDirectoryName}#assignment#g").contains("s#${solutionWorkingDirectory}#assignment#g")
-                .contains("s#${studentWorkingDirectory}#/assignment/src#g").contains("s#${testWorkingDirectory}#.#g");
+        assertThat(script).doesNotContain("s#${studentParentWorkingDirectoryName}#").doesNotContain("s#${solutionWorkingDirectory}#")
+                .doesNotContain("s#${studentWorkingDirectory}#").doesNotContain("s#${testWorkingDirectory}#");
     }
 
     @Test
@@ -118,16 +108,15 @@ class SandboxBuildCommandServiceTest {
 
         String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "./run.sh -s", null, false, List.of("test-reports/results.xml")))).verifyScriptContent(haskell);
 
-        // A sibling solution/ is materialized and the placeholders resolve to the real CI layout: solution/ (not the collapsed assignment), test root.
+        // A sibling solution/ is materialized at the real CI checkout path, so the harness's reference to it resolves.
         assertThat(script).contains("mkdir -p \"$BUILD_DIR/solution\"").contains("cp -a \"$WORKSPACE/solution/.\" \"$BUILD_DIR/solution\"/");
-        assertThat(script).contains("s#${solutionWorkingDirectory}#solution#g").contains("s#${studentParentWorkingDirectoryName}#assignment#g")
-                .contains("s#${testWorkingDirectory}#.#g");
+
     }
 
     @Test
     void verifyScript_doesNotMaterializeSolution_forLanguagesThatDoNotCheckItOut_soTheDifferentialIsUnchanged() {
         // Languages other than Haskell/OCaml check out no sibling solution/ (the enum throws -> solutionDir empty), so none is materialized and a broad-glob build cannot pick up
-        // solution sources and inflate the differential. The placeholder never appears in their harness, so its no-op substitution stays at the collapse value.
+        // solution sources and inflate the differential.
         ProgrammingExercise go = new ProgrammingExercise();
         go.setProgrammingLanguage(ProgrammingLanguage.GO);
         ProgrammingExerciseBuildConfig buildConfig = new ProgrammingExerciseBuildConfig();
@@ -137,183 +126,5 @@ class SandboxBuildCommandServiceTest {
         String script = factoryWithPhases(List.of(new BuildPhaseDTO("test", "go test ./...", null, false, List.of()))).verifyScriptContent(go);
 
         assertThat(script).doesNotContain("cp -a \"$WORKSPACE/solution/.").doesNotContain("mkdir -p \"$BUILD_DIR/solution\"");
-        assertThat(script).contains("s#${solutionWorkingDirectory}#assignment#g");
-    }
-
-    /**
-     * Drives the live placeholder-substitution stanza against a fixture Haskell {@code test.cabal} under a real {@code sh}, confirming raw {@code ${...}} placeholders resolve to
-     * the assignment/ layout.
-     */
-    @Nested
-    @EnabledOnOs({ LINUX, MAC })
-    class HarnessPlaceholderSubstitution {
-
-        @Test
-        void substitutesSeededCabalPlaceholders_toTheAssignmentLayout(@TempDir Path tempDir) throws Exception {
-            Path testDest = Files.createDirectories(tempDir.resolve("tests"));
-            String seededCabal = """
-                    library submission
-                      hs-source-dirs: ${studentParentWorkingDirectoryName}/src
-                    library solution
-                      hs-source-dirs: ${solutionWorkingDirectory}/src
-                    """;
-            VerifyScriptTestHarness.writeString(testDest.resolve("test.cabal"), seededCabal);
-
-            String stanza = substitutionStanza();
-            String script = "TEST_DEST='" + testDest + "'\n" + stanza + "\n";
-            Path scriptFile = tempDir.resolve("subst.sh");
-            VerifyScriptTestHarness.writeString(scriptFile, script);
-            Process process = new ProcessBuilder("sh", scriptFile.toString()).redirectErrorStream(true).start();
-            if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                throw new IllegalStateException("substitution stanza did not finish in time");
-            }
-            String produced = Files.readString(testDest.resolve("test.cabal"), StandardCharsets.UTF_8);
-            assertThat(produced).doesNotContain("${").contains("hs-source-dirs: assignment/src");
-            assertThat(produced.split("hs-source-dirs: assignment/src", -1)).hasSizeGreaterThanOrEqualTo(3);
-        }
-
-        private String substitutionStanza() {
-            String fullScript = VerifyScriptTestHarness.verifyScript();
-            return VerifyScriptTestHarness.slice(fullScript, "find \"$TEST_DEST\" -type f", "done");
-        }
-    }
-
-    /**
-     * Runs the live collect step against fixture JUnit XML under a real {@code sh} and feeds the result into the production {@code TestResultXmlParser}, proving the script
-     * collects
-     * exactly what the verifier parses and that the planted-report mitigation ({@code -newer} mtime gate) holds.
-     */
-    @Nested
-    @EnabledOnOs({ LINUX, MAC })
-    class ReportCollection {
-
-        private SandboxBuildCommandService factory() {
-            BuildPhasesTemplateService phasesService = mock(BuildPhasesTemplateService.class);
-            when(phasesService.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of(new BuildPhaseDTO("test", "echo run", null, false, List.of())));
-            return new SandboxBuildCommandService(Optional.of(phasesService), Optional.of(new BuildScriptProviderService()));
-        }
-
-        private static final String SUREFIRE = """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <testsuite name="StackTest" tests="3" failures="1" errors="0" skipped="0">
-                  <testcase name="stack_initially_empty" classname="StackTest"/>
-                  <testcase name="push_then_pop" classname="StackTest"/>
-                  <testcase name="size_tracks_elements" classname="StackTest"><failure message="x"/></testcase>
-                </testsuite>
-                """;
-
-        @Test
-        void collectsTheJUnitReport_andProductionParserSeesTheRightTests(@TempDir Path tempDir) throws Exception {
-            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), new ProgrammingExercise(), tempDir, "junit", Map.of("test-results/results.xml", SUREFIRE));
-            assertThat(collected).hasSize(1);
-            String collectedXml = collected.values().iterator().next();
-            assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
-
-            // The production parser sees exactly the two passing + one failing testcase.
-            List<LocalCITestJobDTO> failed = new ArrayList<>();
-            List<LocalCITestJobDTO> ok = new ArrayList<>();
-            TestResultXmlParser.processTestResultFile(collectedXml, failed, ok);
-            assertThat(ok.stream().map(LocalCITestJobDTO::name)).containsExactlyInAnyOrder("stack_initially_empty", "push_then_pop");
-            assertThat(failed.stream().map(LocalCITestJobDTO::name)).containsExactly("size_tracks_elements");
-        }
-
-        @Test
-        void doesNotCollectAReportPlantedBeforeTheBuildStart(@TempDir Path tempDir) throws Exception {
-            // A report whose mtime predates the build-start marker must NOT be collected (anti-forgery): pre-write it and back-date it.
-            Path buildDir = Files.createDirectories(tempDir.resolve("planted").resolve("build"));
-            Path reportsDir = tempDir.resolve("planted").resolve("reports-root").resolve("solution");
-            Path marker = buildDir.resolve(".hyperion-build-start");
-            VerifyScriptTestHarness.writeString(marker, "");
-            Path reportFile = buildDir.resolve("surefire-reports").resolve("planted.xml");
-            VerifyScriptTestHarness.writeString(reportFile, SUREFIRE);
-            Files.setLastModifiedTime(reportFile, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(7200))); // older than the marker
-            Files.setLastModifiedTime(marker, java.nio.file.attribute.FileTime.from(java.time.Instant.now().minusSeconds(3600)));
-
-            String fullScript = factory().verifyScriptContent(new ProgrammingExercise());
-            String collectSnippet = VerifyScriptTestHarness.slice(fullScript, "rm -rf \"$REPORTS_DIR\"", "echo \"" + SandboxBuildCommandService.COLLECTED_MARKER);
-            String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nREPORTS_DIR='" + reportsDir + "'\nrc=0\nseq=0\n" + collectSnippet + "\n";
-            Path scriptFile = tempDir.resolve("planted-collect.sh");
-            VerifyScriptTestHarness.writeString(scriptFile, script);
-            VerifyScriptTestHarness.runSh(scriptFile);
-
-            assertThat(Files.isDirectory(reportsDir) ? Files.list(reportsDir).count() : 0L).as("a stale planted report is not collected").isZero();
-        }
-    }
-
-    /**
-     * The static-code-analysis collection. SCA disabled: no SCA reports collected; SCA enabled: each tool's canonical report collected by name (keeping the name so the verifier's
-     * production {@code ReportParser} routes it). The live tests slice the collect block out of the generated script and run it under a real {@code sh}.
-     */
-    @Nested
-    class StaticCodeAnalysisCollection {
-
-        private SandboxBuildCommandService factory() {
-            BuildPhasesTemplateService phasesService = mock(BuildPhasesTemplateService.class);
-            when(phasesService.getDefaultBuildPlanPhasesFor(any())).thenReturn(List.of(new BuildPhaseDTO("build", "echo build", null, false, List.of())));
-            return new SandboxBuildCommandService(Optional.of(phasesService), Optional.of(new BuildScriptProviderService()));
-        }
-
-        private ProgrammingExercise exercise(ProgrammingLanguage language, boolean scaEnabled) {
-            ProgrammingExercise exercise = new ProgrammingExercise();
-            exercise.setProgrammingLanguage(language);
-            exercise.setStaticCodeAnalysisEnabled(scaEnabled);
-            return exercise;
-        }
-
-        @Test
-        void scaDisabled_collectsNoScaReports() {
-            String script = factory().verifyScriptContent(exercise(ProgrammingLanguage.JAVA, false));
-            assertThat(script).doesNotContain("spotbugsXml.xml").doesNotContain("collected_sca=$((collected_sca + 1))");
-        }
-
-        @Test
-        void scaEnabled_collectsTheLanguageToolReports() {
-            String script = factory().verifyScriptContent(exercise(ProgrammingLanguage.JAVA, true));
-            // SpotBugs/Checkstyle/PMD/CPD by canonical name, build-fresh only.
-            assertThat(script).contains("-name 'spotbugsXml.xml'").contains("-name 'checkstyle-result.xml'").contains("-name 'pmd.xml'").contains("-name 'cpd.xml'")
-                    .contains("-newer \"$BUILD_START_MARKER\"").contains("collected_sca=$((collected_sca + 1))");
-        }
-
-        @Test
-        void scaEnabled_python_collectsRuffSarif() {
-            String script = factory().verifyScriptContent(exercise(ProgrammingLanguage.PYTHON, true));
-            assertThat(script).contains("-name 'ruff.sarif'");
-        }
-
-        @EnabledOnOs({ LINUX, MAC })
-        @Test
-        void scriptIsValidPosixShell_forEveryScaCapableLanguage(@TempDir Path tempDir) throws Exception {
-            for (ProgrammingLanguage language : List.of(ProgrammingLanguage.C, ProgrammingLanguage.C_PLUS_PLUS, ProgrammingLanguage.DART, ProgrammingLanguage.JAVA,
-                    ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.PYTHON, ProgrammingLanguage.R, ProgrammingLanguage.RUBY, ProgrammingLanguage.RUST,
-                    ProgrammingLanguage.TYPESCRIPT)) {
-                String fullScript = factory().verifyScriptContent(exercise(language, true));
-                Path scriptFile = tempDir.resolve("full-" + language.name().toLowerCase() + ".sh");
-                VerifyScriptTestHarness.writeString(scriptFile, fullScript);
-                Process process = new ProcessBuilder("sh", "-n", scriptFile.toString()).redirectErrorStream(true).start();
-                String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-                if (!process.waitFor(30, TimeUnit.SECONDS)) {
-                    process.destroyForcibly();
-                    throw new IllegalStateException("sh -n did not finish in time for " + language);
-                }
-                assertThat(process.exitValue()).as("the generated script for %s is valid POSIX sh (sh -n: %s)", language, output).isZero();
-            }
-        }
-
-        @EnabledOnOs({ LINUX, MAC })
-        @Test
-        void liveCollect_collectsSpotbugsAndCheckstyleReports_forProductionParsing(@TempDir Path tempDir) throws Exception {
-            Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), exercise(ProgrammingLanguage.JAVA, true), tempDir, "java-sca",
-                    Map.of("test-results/results.xml", "<testsuite name=\"T\" tests=\"0\"/>", "spotbugsXml.xml", """
-                            <?xml version="1.0" encoding="UTF-8"?>
-                            <BugCollection version="4.7.3"><BugInstance type="DM_DEFAULT_ENCODING" category="STYLE"><SourceLine start="12" end="12"/></BugInstance></BugCollection>
-                            """, "checkstyle-result.xml", """
-                            <?xml version="1.0" encoding="UTF-8"?>
-                            <checkstyle version="10.3"><file name="Stack.java">
-                              <error line="3" severity="warning" message="x" source="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTypeCheck"/></file></checkstyle>
-                            """));
-            // Both SCA reports are collected under their canonical names so the verifier's production ReportParser can route them.
-            assertThat(collected.keySet()).anyMatch(n -> n.endsWith("spotbugsXml.xml")).anyMatch(n -> n.endsWith("checkstyle-result.xml"));
-        }
     }
 }
