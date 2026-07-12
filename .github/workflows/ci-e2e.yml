@@ -162,8 +162,6 @@ jobs:
             cat slow-query-summary.md 2>/dev/null || echo ""
             echo 'EOF_SLOW_QUERY_MARKER'
           } >> "$GITHUB_OUTPUT"
-        env:
-          ARTEMIS_BASE_URL: http://localhost:8080
 
       - name: Upload slow-query report artifact (Phase 1)
         if: ${{ !cancelled() }}
@@ -377,8 +375,6 @@ jobs:
             cat slow-query-summary.md 2>/dev/null || echo ""
             echo 'EOF_SLOW_QUERY_MARKER'
           } >> "$GITHUB_OUTPUT"
-        env:
-          ARTEMIS_BASE_URL: http://localhost:8080
 
       - name: Upload slow-query report artifact (Phase 2)
         if: ${{ !cancelled() }}
@@ -592,8 +588,6 @@ jobs:
             cat slow-query-summary.md 2>/dev/null || echo ""
             echo 'EOF_SLOW_QUERY_MARKER'
           } >> "$GITHUB_OUTPUT"
-        env:
-          ARTEMIS_BASE_URL: http://localhost:8080
 
       - name: Upload slow-query report artifact (All PR)
         if: ${{ !cancelled() }}
@@ -771,8 +765,6 @@ jobs:
         if: ${{ !cancelled() }}
         shell: bash
         run: bash supporting_scripts/analyze_slow_queries_runtime.sh || true
-        env:
-          ARTEMIS_BASE_URL: http://localhost:8080
 
       - name: Upload slow-query report artifact (Non-PR)
         if: ${{ !cancelled() }}
