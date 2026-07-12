@@ -790,9 +790,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         CreateAnswerPostDTO newReply = new CreateAnswerPostDTO("A normal student reply", new ParentPostDTO(savedParent.getId()));
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", newReply, AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
-        // Because a pending Iris reply is attached, the post is delivered per-user, never on the shared course-wide topic that students subscribe to.
-        verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && topic.contains("/courses/")), any());
-
         // The student receives the update without the pending Iris reply ...
         verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + student1.getId() + "/notifications/conversations"), (Object) argThat(
                 payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().noneMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
@@ -800,6 +797,10 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // ... while a tutor still receives it so the review controls stay live.
         verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + tutor.getId() + "/notifications/conversations"), (Object) argThat(
                 payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
+
+        // Because a pending Iris reply is attached, the post is delivered per-user, never on the shared course-wide topic that students subscribe to.
+        // Asserted after the per-user deliveries above so the broadcast has actually been dispatched by the time we check the course-wide topic was never used.
+        verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && topic.contains("/courses/")), any());
     }
 
     // GET answer-messages-source-posts (forwarded-message source previews must not leak answer posts the caller cannot access)

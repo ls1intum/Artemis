@@ -109,8 +109,8 @@ public class AutonomousTutorService {
     /**
      * Handles the status update from the autonomous tutor pipeline. Artemis decides whether to
      * publish, hold for review, or discard the response based solely on the confidence score:
-     * {@code >= 0.95} auto-publishes, {@code [0.80, 0.95)} stores the reply as unverified for tutor
-     * review, {@code < 0.80} or missing confidence is discarded.
+     * {@code >= 0.85} auto-publishes, {@code [0.70, 0.85)} stores the reply as unverified for tutor
+     * review, {@code < 0.70} or missing confidence is discarded.
      *
      * @param job          the autonomous tutor job containing post and course IDs
      * @param statusUpdate the status update from Pyris containing the generated response

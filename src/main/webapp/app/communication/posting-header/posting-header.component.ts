@@ -20,12 +20,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TagModule } from 'primeng/tag';
 
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
     styleUrls: ['../metis.component.scss'],
-    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent, TagModule],
 })
 export class PostingHeaderComponent implements OnInit {
     lastReadDate = input<dayjs.Dayjs>();

@@ -78,11 +78,7 @@
     padding: 0.3rem 0.65rem;
     border: 1px solid var(--bs-border-color);
     border-radius: 0.15rem;
-    background: #fff;
-
-    :root[prime-ng-use-dark-theme='true'] & {
-        background: var(--bs-body-bg);
-    }
+    background: var(--bs-body-bg);
     cursor: pointer;
     font-size: 0.8rem;
     font-weight: 500;
