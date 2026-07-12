@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Router } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
 import { ActiveFeatureToggles, FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -13,11 +13,11 @@ describe('GocastGuard', () => {
     let guard: GocastGuard;
     let router: Router;
     let featureSubject: BehaviorSubject<ActiveFeatureToggles>;
+    let redirectTree: UrlTree;
 
     beforeEach(() => {
-        const routerMock = {
-            navigate: vi.fn(),
-        };
+        redirectTree = {} as UrlTree;
+        const routerMock = { createUrlTree: vi.fn().mockReturnValue(redirectTree) };
 
         TestBed.configureTestingModule({
             providers: [GocastGuard, { provide: FeatureToggleService, useClass: MockFeatureToggleService }, { provide: Router, useValue: routerMock }],
@@ -35,7 +35,7 @@ describe('GocastGuard', () => {
         const canActivate = await firstValueFrom(guard.canActivate());
 
         expect(canActivate).toBe(true);
-        expect(router.navigate).not.toHaveBeenCalled();
+        expect(router.createUrlTree).not.toHaveBeenCalled();
     });
 
     it('should deny access and redirect to /course-management when the Gocast feature toggle is inactive', async () => {
@@ -43,7 +43,7 @@ describe('GocastGuard', () => {
 
         const canActivate = await firstValueFrom(guard.canActivate());
 
-        expect(canActivate).toBe(false);
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(canActivate).toBe(redirectTree);
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/course-management']);
     });
 });

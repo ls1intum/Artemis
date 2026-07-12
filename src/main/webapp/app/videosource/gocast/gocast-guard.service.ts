@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { CanActivate, Router, UrlTree } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 
@@ -18,15 +18,11 @@ export class GocastGuard implements CanActivate {
      *
      * @return an observable that emits true when Gocast is enabled, false otherwise
      */
-    canActivate(): Observable<boolean> {
+    canActivate(): Observable<boolean | UrlTree> {
         return this.featureToggleService.getFeatureToggleActive(FeatureToggle.Gocast).pipe(
             take(1),
             map((isActive) => {
-                if (!isActive) {
-                    this.router.navigate(['/course-management']);
-                    return false;
-                }
-                return true;
+                return isActive ? true : this.router.createUrlTree(['/course-management']);
             }),
         );
     }
