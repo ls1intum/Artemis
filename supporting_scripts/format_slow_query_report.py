@@ -15,6 +15,11 @@ import json
 import sys
 from datetime import timezone, datetime
 
+# GitHub caps issue/PR comment bodies at 65536 characters. A "run all tests" pass can collect
+# thousands of findings, so only the worst offenders are rendered inline; the rest are still
+# available in the uploaded JSON artifact.
+MAX_ROWS_PER_SECTION = 20
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -58,16 +63,23 @@ def build_slow_queries_section(slow_queries: list, threshold_ms: int) -> str:
     if not slow_queries:
         return f"✅ **No slow queries** detected (threshold: {threshold_ms} ms)\n"
 
+    ranked = sorted(slow_queries, key=lambda q: q.get("executionTimeMs", 0), reverse=True)
+    shown = ranked[:MAX_ROWS_PER_SECTION]
+    hidden_count = len(ranked) - len(shown)
+
     lines = [
         f"### 🐢 Slow Queries ({len(slow_queries)} found, threshold: {threshold_ms} ms)\n",
         "| # | Duration | Endpoint | Test | SQL (truncated) |",
         "|---|----------|----------|------|-----------------|",
     ]
-    for i, q in enumerate(slow_queries, start=1):
+    for i, q in enumerate(shown, start=1):
         endpoint = fmt_endpoint(q.get("httpMethod"), q.get("httpEndpoint"))
         test = f"`{q['testName']}`" if q.get("testName") else "—"
         sql = trunc(q.get("sql", ""))
         lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {endpoint} | {test} | `{sql}` |")
+    if hidden_count > 0:
+        lines.append("")
+        lines.append(f"_Showing the {len(shown)} slowest. {hidden_count} more not shown — see the uploaded slow-query report artifact (JSON) for the full list._")
     return "\n".join(lines) + "\n"
 
 
@@ -75,16 +87,23 @@ def build_n1_section(n1_suspects: list, n1_threshold: int) -> str:
     if not n1_suspects:
         return f"✅ **No N+1 patterns** detected (threshold: >{n1_threshold} occurrences per request)\n"
 
+    ranked = sorted(n1_suspects, key=lambda s: s.get("occurrences", 0), reverse=True)
+    shown = ranked[:MAX_ROWS_PER_SECTION]
+    hidden_count = len(ranked) - len(shown)
+
     lines = [
         f"### 🔁 N+1 Query Suspects ({len(n1_suspects)} found, threshold: >{n1_threshold}×/request)\n",
         "| # | Occurrences | Endpoint | Test | SQL template (truncated) |",
         "|---|-------------|----------|------|--------------------------|",
     ]
-    for i, s in enumerate(n1_suspects, start=1):
+    for i, s in enumerate(shown, start=1):
         endpoint = fmt_endpoint(s.get("httpMethod"), s.get("httpEndpoint"))
         test = f"`{s['testName']}`" if s.get("testName") else "—"
         sql = trunc(s.get("normalizedSql", ""))
         lines.append(f"| {i} | **{s['occurrences']}×** | {endpoint} | {test} | `{sql}` |")
+    if hidden_count > 0:
+        lines.append("")
+        lines.append(f"_Showing the {len(shown)} worst. {hidden_count} more not shown — see the uploaded slow-query report artifact (JSON) for the full list._")
     return "\n".join(lines) + "\n"
 
 
