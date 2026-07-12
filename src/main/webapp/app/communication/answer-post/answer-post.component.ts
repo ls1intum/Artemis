@@ -6,6 +6,7 @@ import {
     OnInit,
     Renderer2,
     ViewContainerRef,
+    computed,
     effect,
     inject,
     input,
@@ -18,8 +19,10 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
@@ -27,7 +30,10 @@ import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -41,6 +47,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgClass,
+        FormsModule,
         FaIconComponent,
         TranslateDirective,
         NgbTooltip,
@@ -53,11 +60,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
         CdkConnectedOverlay,
         EmojiPickerComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
+    private alertService = inject(AlertService);
 
     lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
     isLastAnswer = input<boolean>(false);
@@ -81,9 +90,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
+    readonly faCheck = faCheck;
+    readonly faTriangleExclamation = faTriangleExclamation;
+    readonly faXmark = faXmark;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
     readonly mayEdit = signal<boolean>(false);
     readonly mayDelete = signal<boolean>(false);
+    readonly isVerifying = signal(false);
+    readonly isEditingIrisReply = signal(false);
+    editedIrisContent = '';
 
     constructor() {
         super();
@@ -162,6 +177,72 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit.set(value);
+    }
+
+    /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
+    readonly isUnverifiedIris = computed(() => {
+        const posting = this.posting();
+        return !!posting && posting.author?.bot === true && posting.verified === false;
+    });
+
+    /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
+    get mayVerify(): boolean {
+        return this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    /**
+     * Approves the current Iris answer, optionally replacing its content. The websocket update
+     * broadcast by the server will refresh the cached post and remove the badge from the UI.
+     */
+    approveAnswer(content?: string): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+            next: (verified) => {
+                this.posting.set(Object.assign(new AnswerPost(), verified));
+                this.isEditingIrisReply.set(false);
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'approve', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
+    }
+
+    /** Switches to inline-edit mode so the tutor can adjust the Iris content before approving. */
+    editAnswer(): void {
+        this.editedIrisContent = this.posting()?.content ?? '';
+        this.isEditingIrisReply.set(true);
+    }
+
+    /** Cancels inline editing without making any changes. */
+    cancelEditAnswer(): void {
+        this.isEditingIrisReply.set(false);
+        this.editedIrisContent = '';
+    }
+
+    /** Rejects an unverified Iris answer by deleting it directly (no undo timer). */
+    rejectAnswer(): void {
+        const posting = this.posting();
+        if (!posting?.id || this.isVerifying()) {
+            return;
+        }
+        this.isVerifying.set(true);
+        this.metisService.deleteAnswerPost(posting).subscribe({
+            next: () => {
+                this.isVerifying.set(false);
+            },
+            error: (err: HttpErrorResponse) => {
+                captureException(err, { extra: { action: 'reject', postingId: posting.id } });
+                onError(this.alertService, err);
+                this.isVerifying.set(false);
+            },
+        });
     }
 
     /**

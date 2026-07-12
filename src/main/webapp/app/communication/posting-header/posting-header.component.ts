@@ -8,7 +8,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
-import { faRobot, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faTriangleExclamation, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -35,6 +35,7 @@ export class PostingHeaderComponent implements OnInit {
     hasChannelModerationRights = input<boolean>(false);
     isCommunicationPage = input<boolean>();
     isDeleted = input<boolean>(false);
+    isUnverifiedIris = input<boolean>(false);
 
     isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
@@ -53,6 +54,7 @@ export class PostingHeaderComponent implements OnInit {
     // Icons
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
+    readonly faTriangleExclamation = faTriangleExclamation;
 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);

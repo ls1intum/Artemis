@@ -39,6 +39,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     course: Course;
     currentPostContextFilter?: PostContextFilter;
+    readonly isAtLeastTutor = signal(false);
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
 
@@ -74,6 +75,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     ngOnInit() {
         this.subscribeToMetis();
+        this.isAtLeastTutor.set(this.metisService.metisUserIsAtLeastTutorInCourse());
         this.resetFormGroup();
         this.commandMetisToFetchPosts(true);
     }
@@ -162,6 +164,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
+            filterToUnverifiedIris: this.isAtLeastTutor() && searchConfig.filterToUnverifiedIris,
             sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
@@ -207,6 +210,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             filterToCourseWide: false,
             filterToUnresolved: false,
             filterToAnsweredOrReacted: false,
+            filterToUnverifiedIris: false,
         });
     }
 
@@ -221,6 +225,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
         searchConfig.sortingOrder = this.sortingOrder();
         this.commandMetisToFetchPosts(true);
     }
@@ -237,5 +242,6 @@ export class CourseWideSearchConfig {
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToAnsweredOrReacted: boolean;
+    filterToUnverifiedIris: boolean;
     sortingOrder: SortDirection;
 }

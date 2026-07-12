@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -76,6 +79,8 @@ public class AnswerMessageService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final TransactionTemplate transactionTemplate;
+
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
@@ -84,7 +89,8 @@ public class AnswerMessageService extends PostingService {
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
-            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            Optional<AutonomousTutorApi> autonomousTutorApi, PlatformTransactionManager transactionManager,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -94,6 +100,7 @@ public class AnswerMessageService extends PostingService {
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
@@ -266,9 +273,21 @@ public class AnswerMessageService extends PostingService {
 
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);
-        Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
-        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
+
+        // Tutors are allowed to reject (delete) unverified Iris replies even if they are not the author, but
+        // only within conversations they actually belong to — mirroring mayUpdateOrDeleteAnswerMessageElseThrow,
+        // so a tutor cannot reject a reply in a restricted channel they are not a member of.
+        Conversation conversation;
+        if (answerMessage.isUnverifiedIrisReply() && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            Long conversationId = answerMessage.getPost().getConversation().getId();
+            conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, user, Optional.empty());
+            conversation = conversationService.getConversationById(conversationId);
+        }
+        else {
+            conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        }
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
@@ -308,8 +327,109 @@ public class AnswerMessageService extends PostingService {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
     }
 
+    public AnswerPost findByIdWithPessimisticWriteLock(Long answerMessageId) {
+        return answerPostRepository.findAnswerMessageByIdWithPessimisticWriteLockElseThrow(answerMessageId);
+    }
+
     public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
         return answerPostRepository.findByIdIn(answerMessageIds);
+    }
+
+    /**
+     * Same as {@link #findByIdIn(List)} but filters out unverified Iris-generated answers when the
+     * requesting user is not at least a tutor in the given course. Used to prevent students from
+     * resolving unverified Iris content via direct id lookup (e.g. when following a forwarded link).
+     *
+     * @param courseId         id of the course used for the role check
+     * @param answerMessageIds requested answer post ids
+     * @return list of visible answer posts
+     */
+    public List<AnswerPost> findVisibleByIdIn(Long courseId, List<Long> answerMessageIds) {
+        List<AnswerPost> answerPosts = answerPostRepository.findByIdIn(answerMessageIds);
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(courseId)) {
+            return answerPosts;
+        }
+        return answerPosts.stream().filter(answerPost -> !answerPost.isUnverifiedIrisReply()).toList();
+    }
+
+    /**
+     * Approves an Iris-generated answer message so that it becomes visible to students. The tutor may
+     * optionally provide updated content to edit-and-approve in a single request. The answer is
+     * marked as verified, the verifier and verification timestamp are recorded, and the post is
+     * re-broadcast to all participants of the conversation so student clients receive the now-visible
+     * reply.
+     *
+     * @param courseId        id of the course the answer message belongs to
+     * @param answerMessageId id of the answer message to verify
+     * @param verifyDto       optional updated content; if null or blank, the existing content is kept
+     * @return the persisted, verified answer message
+     */
+    public AnswerPost verifyAnswerMessage(Long courseId, Long answerMessageId, VerifyAnswerMessageDTO verifyDto) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        var verificationResult = transactionTemplate.execute(status -> verifyAnswerMessageWithinTransaction(courseId, answerMessageId, verifyDto, user, course));
+
+        // Strip any other unverified Iris siblings before broadcast so students never receive their content via the post update.
+        verificationResult.answerMessage().getPost().getAnswers()
+                .removeIf(answer -> !Objects.equals(answer.getId(), verificationResult.answerMessage().getId()) && answer.isUnverifiedIrisReply());
+
+        sendMentionNotificationForAnswerMessage(course, verificationResult.conversation(), verificationResult.answerMessage(), verificationResult.mentionedUsers());
+        this.preparePostAndBroadcast(verificationResult.answerMessage(), course);
+        return verificationResult.answerMessage();
+    }
+
+    private VerificationResult verifyAnswerMessageWithinTransaction(Long courseId, Long answerMessageId, VerifyAnswerMessageDTO verifyDto, User user, Course course) {
+        AnswerPost existingAnswerMessage = this.findByIdWithPessimisticWriteLock(answerMessageId);
+        if (!existingAnswerMessage.getPost().getConversation().getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Answer message does not belong to the specified course", METIS_ANSWER_POST_ENTITY_NAME, "invalidCourse");
+        }
+        if (!existingAnswerMessage.getAuthor().isBot()) {
+            throw new BadRequestAlertException("Only Iris-generated answers can be verified", METIS_ANSWER_POST_ENTITY_NAME, "notIrisAnswer");
+        }
+        if (existingAnswerMessage.isVerified()) {
+            throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
+        }
+        // The acting tutor must belong to the conversation, mirroring mayUpdateOrDeleteAnswerMessageElseThrow:
+        // any course member may verify in a course-wide channel, but a restricted channel requires membership.
+        conversationService.isMemberOrCreateForCourseWideElseThrow(existingAnswerMessage.getPost().getConversation().getId(), user, Optional.empty());
+
+        Set<User> mentionedUsers = Set.of();
+        if (verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank()) {
+            mentionedUsers = parseUserMentions(course, verifyDto.content());
+            existingAnswerMessage.setContent(verifyDto.content());
+            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
+        }
+        existingAnswerMessage.setVerified(true);
+        existingAnswerMessage.setVerifiedBy(user);
+        existingAnswerMessage.setVerifiedAt(ZonedDateTime.now());
+
+        AnswerPost savedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        Conversation conversation = conversationService.getConversationById(savedAnswerMessage.getPost().getConversation().getId());
+        savedAnswerMessage.getPost().setConversation(conversation);
+
+        return new VerificationResult(savedAnswerMessage, conversation, mentionedUsers);
+    }
+
+    private void sendMentionNotificationForAnswerMessage(Course course, Conversation conversation, AnswerPost answerMessage, Set<User> mentionedUsers) {
+        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
+                .filter(mentionedUser -> !Objects.equals(mentionedUser.getId(), answerMessage.getAuthor().getId())).toList();
+
+        if (mentionedUserRecipients.isEmpty()) {
+            return;
+        }
+
+        var post = answerMessage.getPost();
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
+                answerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(),
+                answerMessage.getCreationDate().toString(), answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(),
+                answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversation.getId(), answerMessage.getAuthor().isBot());
+
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+    }
+
+    private record VerificationResult(AnswerPost answerMessage, Conversation conversation, Set<User> mentionedUsers) {
     }
 
     /**

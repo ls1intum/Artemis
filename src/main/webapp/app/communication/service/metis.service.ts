@@ -396,27 +396,33 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * Approves an Iris-generated answer post (optionally with edited content). The websocket update
+     * triggered server-side will refresh cached posts so no manual cache mutation is needed here.
+     */
+    verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
+        return this.answerPostService.verify(this.courseId, answerPost.id!, content).pipe(map((res) => res.body!));
+    }
+
+    /**
      * deletes an answer post by invoking the post service
      * @param {AnswerPost} answerPost to be deleted
      */
-    deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService
-            .delete(this.courseId, answerPost)
-            .pipe(
-                tap(() => {
-                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
-                    if (indexOfCachedPost > -1) {
-                        // Delete the answer if it still exists (might already be deleted due to WebSocket message)
-                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
-                        if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
-                            this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                        }
+    deleteAnswerPost(answerPost: AnswerPost): Observable<void> {
+        return this.answerPostService.delete(this.courseId, answerPost).pipe(
+            map(() => undefined),
+            tap(() => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    // Delete the answer if it still exists (might already be deleted due to WebSocket message)
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
+                    if (indexOfAnswer > -1) {
+                        this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
-                }),
-            )
-            .subscribe();
+                }
+            }),
+        );
     }
 
     /**
