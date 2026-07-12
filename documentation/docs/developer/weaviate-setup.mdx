@@ -429,9 +429,11 @@ artemis:
 For a remote OpenAI-compatible GPU server, use:
 
 ```yaml
-        open-ai-base-url: https://your-gpu-server/api/
+        open-ai-base-url: https://your-gpu-server
         gpu-api-key: <your-api-key>
 ```
+
+If your provider requires an additional base path (for example, `/api`), append it according to the provider's documentation.
 
 ### Vectorizer Configuration
 
