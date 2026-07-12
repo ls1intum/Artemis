@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * violates the {@code competency_user} primary key.
  * <p>
  * On that conflict the losing thread reconciles via a single idempotent UPDATE
- * ({@link CompetencyProgressRepository#updateProgressAndConfidence}) rather than swallowing the exception. These
+ * ({@link CompetencyProgressTestRepository#updateProgressAndConfidence}) rather than swallowing the exception. These
  * tests verify it does not propagate the exception, re-applies (does not drop) the freshly computed progress, and
  * — crucially — does not resurrect a row that was concurrently deleted (zero rows updated → skip, no learning-path
  * propagation).
@@ -55,7 +55,7 @@ class CompetencyProgressServiceTest {
     private static final long COURSE_ID = 7L;
 
     @Mock
-    private CompetencyProgressRepository competencyProgressRepository;
+    private CompetencyProgressTestRepository competencyProgressRepository;
 
     @Mock
     private LearningPathService learningPathService;
