@@ -265,8 +265,30 @@ public class CompetencyProgressService {
             competencyProgressRepository.save(studentProgress);
         }
         catch (DataIntegrityViolationException e) {
-            // In rare instances of initially creating a progress entity, async updates might run in parallel.
-            // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+            // Root cause: updateCompetencyProgress does a non-atomic find-then-insert. Multiple @Async progress
+            // updates for the SAME (competency, user) can run in parallel (e.g. two quick lecture-unit
+            // completions, or a completion racing an exercise submission). Each finds no existing row, so each
+            // inserts one, and the second insert violates the competency_user primary key.
+            //
+            // Previously this exception was swallowed, which silently DROPPED this thread's freshly computed
+            // progress/confidence. Instead, re-fetch the row the winning thread just created and re-apply this
+            // thread's values as an UPDATE. The UPDATE cannot hit the unique constraint, and the entity has no
+            // @Version, so this converges deterministically without a further conflict. (updateCompetencyProgress
+            // is not @Transactional, so the failed insert's transaction is already rolled back and the re-fetch +
+            // update below run in their own clean transactions.) DB-portable: relies only on the unique
+            // constraint + the standard DataIntegrityViolationException, not on a vendor-specific upsert.
+            CompetencyProgress reconciled = competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
+            if (reconciled == null) {
+                // The concurrently created row was deleted again (competency/user cleanup) before we could
+                // reconcile. Nothing to persist; return the in-memory values without learning-path propagation.
+                log.debug("Competency progress row vanished during concurrent creation, skipping persistence.");
+                return studentProgress;
+            }
+            reconciled.setProgress(studentProgress.getProgress());
+            reconciled.setConfidence(studentProgress.getConfidence());
+            reconciled.setConfidenceReason(studentProgress.getConfidenceReason());
+            competencyProgressRepository.save(reconciled);
+            studentProgress = reconciled;
         }
         catch (org.hibernate.ObjectNotFoundException e) {
             // The competency was deleted between the findById above and the flush triggered by save (or
