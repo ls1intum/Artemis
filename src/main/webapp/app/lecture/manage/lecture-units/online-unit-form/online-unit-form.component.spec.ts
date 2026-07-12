@@ -13,7 +13,7 @@ import { of } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -33,7 +33,7 @@ describe('OnlineUnitFormComponent', () => {
                 OnlineUnitFormComponent,
                 FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(CompetencySelectionComponent),
+                MockComponent(CompetencySelectionPrimengComponent),
             ],
             providers: [
                 MockProvider(OnlineUnitService),

@@ -12,7 +12,7 @@ import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
 import { GocastStreamPickerComponent } from 'app/videosource/gocast/gocast-stream-picker.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
@@ -46,7 +46,7 @@ function urlValidator(control: AbstractControl) {
         ReactiveFormsModule,
         TranslateDirective,
         FormDateTimePickerComponent,
-        CompetencySelectionComponent,
+        CompetencySelectionPrimengComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
         GocastStreamPickerComponent,
