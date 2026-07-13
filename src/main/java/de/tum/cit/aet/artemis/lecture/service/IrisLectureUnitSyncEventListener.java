@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -97,7 +99,10 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private static String getCurrentHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
-        return updateKind == LectureContentUpdateKind.METADATA ? state.getMetadataHash() : state.getVisibilityHash();
+        Map<LectureContentUpdateKind, String> currentHashes = new EnumMap<>(LectureContentUpdateKind.class);
+        currentHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
+        currentHashes.put(LectureContentUpdateKind.VISIBILITY, state.getVisibilityHash());
+        return currentHashes.get(updateKind);
     }
 
     private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedHash) {

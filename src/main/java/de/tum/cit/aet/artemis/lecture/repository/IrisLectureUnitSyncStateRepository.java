@@ -43,10 +43,7 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
      */
     @Transactional
     default void updateWithLectureUnitLock(long lectureUnitId, Consumer<IrisLectureUnitSyncState> transition) {
-        if (findAttachmentVideoUnitForUpdateById(lectureUnitId).isEmpty()) {
-            return;
-        }
-        findByLectureUnitId(lectureUnitId).ifPresent(state -> {
+        findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId)).ifPresent(state -> {
             transition.accept(state);
             saveAndFlush(state);
         });

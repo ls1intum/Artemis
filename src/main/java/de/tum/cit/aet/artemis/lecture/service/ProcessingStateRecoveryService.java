@@ -67,16 +67,8 @@ public class ProcessingStateRecoveryService {
 
         log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
 
-        int resetCount = 0;
-        for (LectureUnitProcessingState state : activeStates) {
-            // Do NOT treat an Iris restart as content-processing failure. The job was lost
-            // by infrastructure, so retry budget must be preserved across rollouts/restarts.
-            if (resetToIdleForRecovery(state)) {
-                resetCount++;
-            }
-        }
-
-        return resetCount;
+        // Do NOT treat an Iris restart as content-processing failure. The job was lost by infrastructure, so retry budget must be preserved across rollouts/restarts.
+        return Math.toIntExact(activeStates.stream().filter(this::resetToIdleForRecovery).count());
     }
 
     /**

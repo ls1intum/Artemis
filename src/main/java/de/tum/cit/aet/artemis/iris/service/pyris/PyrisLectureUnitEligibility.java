@@ -9,12 +9,9 @@ final class PyrisLectureUnitEligibility {
     }
 
     static boolean isProcessable(AttachmentVideoUnit attachmentVideoUnit) {
-        String videoSource = attachmentVideoUnit.getVideoSource();
-        return !attachmentVideoUnit.getLecture().isTutorialLecture() && (videoSource != null && !videoSource.isBlank() || hasProcessablePdf(attachmentVideoUnit));
-    }
-
-    private static boolean hasProcessablePdf(AttachmentVideoUnit attachmentVideoUnit) {
-        return attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE
-                && attachmentVideoUnit.getAttachment().getLink() != null && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf");
+        boolean hasVideo = java.util.Optional.ofNullable(attachmentVideoUnit.getVideoSource()).filter(videoSource -> !videoSource.isBlank()).isPresent();
+        boolean hasPdf = java.util.Optional.ofNullable(attachmentVideoUnit.getAttachment()).filter(attachment -> attachment.getAttachmentType() == AttachmentType.FILE)
+                .map(attachment -> attachment.getLink()).filter(link -> link.endsWith(".pdf")).isPresent();
+        return !attachmentVideoUnit.getLecture().isTutorialLecture() && java.util.List.of(hasVideo, hasPdf).contains(true);
     }
 }
