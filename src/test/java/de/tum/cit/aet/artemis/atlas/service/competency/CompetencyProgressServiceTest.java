@@ -102,7 +102,7 @@ class CompetencyProgressServiceTest {
     @Test
     void shouldReconcileConcurrentProgressCreationWithoutDroppingTheUpdate() {
         // The reconcile UPDATE finds the row the winning thread created and updates it.
-        when(competencyProgressRepository.updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any())).thenReturn(1);
+        when(competencyProgressRepository.updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any(), any())).thenReturn(1);
 
         assertThatCode(() -> competencyProgressService.updateCompetencyProgress(COMPETENCY_ID, user)).doesNotThrowAnyException();
 
@@ -113,7 +113,7 @@ class CompetencyProgressServiceTest {
 
         ArgumentCaptor<Double> progressCaptor = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<Double> confidenceCaptor = ArgumentCaptor.forClass(Double.class);
-        verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), progressCaptor.capture(), confidenceCaptor.capture(), any());
+        verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), progressCaptor.capture(), confidenceCaptor.capture(), any(), any());
         assertThat(progressCaptor.getValue()).isEqualTo(ownAttempt.getProgress());
         assertThat(confidenceCaptor.getValue()).isEqualTo(ownAttempt.getConfidence());
 
@@ -129,13 +129,13 @@ class CompetencyProgressServiceTest {
     @Test
     void shouldSkipPersistenceWhenTheRowVanishedDuringReconciliation() {
         // The row the winner created was deleted again before the reconcile UPDATE -> zero rows affected.
-        when(competencyProgressRepository.updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any())).thenReturn(0);
+        when(competencyProgressRepository.updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any(), any())).thenReturn(0);
 
         assertThatCode(() -> competencyProgressService.updateCompetencyProgress(COMPETENCY_ID, user)).doesNotThrowAnyException();
 
         // No resurrection (a targeted UPDATE, not a merge/insert), and no learning-path propagation for a row that
         // no longer exists.
-        verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any());
+        verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any(), any());
         verify(learningPathService, never()).updateLearningPathProgress(anyLong(), anyLong());
     }
 }

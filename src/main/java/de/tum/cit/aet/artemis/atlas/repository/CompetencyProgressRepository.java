@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -58,18 +59,22 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
      * @param progress         the recomputed progress value
      * @param confidence       the recomputed confidence score
      * @param confidenceReason the recomputed confidence reason
+     * @param lastModifiedDate the modification timestamp to record (the bulk UPDATE bypasses {@code @LastModifiedDate}
+     *                             auditing, so it is passed explicitly; an {@link Instant} parameter avoids the
+     *                             {@code CURRENT_TIMESTAMP}-to-{@code Instant} type mismatch and stays DB-portable)
      * @return the number of rows updated (0 if the row no longer exists)
      */
     @Transactional // ok: a single targeted, idempotent UPDATE on the concurrency-conflict reconciliation path
     @Modifying
     @Query("""
             UPDATE CompetencyProgress cp
-            SET cp.progress = :progress, cp.confidence = :confidence, cp.confidenceReason = :confidenceReason, cp.lastModifiedDate = CURRENT_TIMESTAMP
+            SET cp.progress = :progress, cp.confidence = :confidence, cp.confidenceReason = :confidenceReason, cp.lastModifiedDate = :lastModifiedDate
             WHERE cp.competency.id = :competencyId
                 AND cp.user.id = :userId
             """)
     int updateProgressAndConfidence(@Param("competencyId") long competencyId, @Param("userId") long userId, @Param("progress") Double progress,
-            @Param("confidence") Double confidence, @Param("confidenceReason") CompetencyProgressConfidenceReason confidenceReason);
+            @Param("confidence") Double confidence, @Param("confidenceReason") CompetencyProgressConfidenceReason confidenceReason,
+            @Param("lastModifiedDate") Instant lastModifiedDate);
 
     @Query("""
             SELECT cp

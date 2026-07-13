@@ -285,7 +285,7 @@ public class CompetencyProgressService {
             calculateProgress(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
             calculateConfidence(latestExerciseInfos, latestLectureUnitInfos, studentProgress);
             int updatedRows = competencyProgressRepository.updateProgressAndConfidence(competencyId, user.getId(), studentProgress.getProgress(), studentProgress.getConfidence(),
-                    studentProgress.getConfidenceReason());
+                    studentProgress.getConfidenceReason(), Instant.now());
             if (updatedRows == 0) {
                 // The concurrently created row was deleted again (competency/user cleanup) before we could
                 // reconcile. Nothing to persist; return the in-memory values without learning-path propagation.
