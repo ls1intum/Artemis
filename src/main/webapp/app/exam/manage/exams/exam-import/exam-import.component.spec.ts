@@ -198,6 +198,22 @@ describe('Exam Import Component', () => {
         },
     );
 
+    it('should perform import of exercise groups AND alert with the source count when a source exercise is unavailable', async () => {
+        // The server sets skipAlert on this error, so without the dedicated branch the user would only see a generic 400
+        // without the affected-exercise count or removal guidance.
+        const preCheckError = new HttpErrorResponse({
+            error: { errorKey: 'sourceExerciseUnavailable', numberOfInvalidProgrammingExercises: 2, skipAlert: true },
+            status: 400,
+        });
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        await performImport(importSpy, { reject: preCheckError });
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.sourceExerciseUnavailable', { number: 2 });
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
+    });
+
     it('should perform import of exercise groups AND correctly process arbitrary exception from server', async () => {
         const error = new HttpErrorResponse({
             status: 400,

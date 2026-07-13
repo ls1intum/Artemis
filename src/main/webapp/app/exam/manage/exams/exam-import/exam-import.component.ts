@@ -139,6 +139,11 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                         this.exam.update((exam) => ({ ...exam!, exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
                         this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
+                    } else if (errorKey === 'sourceExerciseUnavailable') {
+                        // The server sets skipAlert on this error, so without an explicit branch the user would only see a
+                        // generic 400 with no count or removal guidance.
+                        const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+                        this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.sourceExerciseUnavailable', { number: numberOfInvalidProgrammingExercises });
                     } else {
                         onError(this.alertService, httpErrorResponse);
                     }
