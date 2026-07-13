@@ -35,6 +35,14 @@ jhipster:
     Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
 </Callout>
 
+### Database Credentials
+
+The database services used by `docker/artemis-prod-postgres.yml` and `docker/artemis-prod-mysql.yml` extend the shared `docker/postgres.yml`/`docker/mysql.yml` service definitions, which default to `docker/postgres/default.env` and `docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.
+
+<Callout variant={CalloutVariant.warning}>
+    Never run a production deployment with the default database env files. Override the database service's `env_file` with your own file that sets a real `POSTGRES_PASSWORD` (Postgres) or `MYSQL_ROOT_PASSWORD`/a dedicated application user and password (MySQL) before exposing the deployment to any network the database container is reachable from.
+</Callout>
+
 ## LDAP Authentication
 
 Artemis supports authenticating users against an external LDAP (Lightweight Directory Access Protocol) server. When enabled, users can log in using their institutional credentials, and Artemis will automatically retrieve user information such as name, email, and registration number from the LDAP directory.

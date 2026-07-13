@@ -16,13 +16,22 @@ tasks.cyclonedxDirectBom {
 
 // Task to generate client SBOM using @cyclonedx/cdxgen (universal CycloneDX generator).
 tasks.register("generateClientSbom", PnpmTask) {
-    dependsOn pnpmInstall
     // `sbom:generate` filters the dependency list against build/resources/main/static (only
     // dependencies actually bundled into the built client are kept), so it must not run before
-    // that directory has been populated. There is no other edge forcing this ordering: nothing
-    // else consumes `webapp`'s output as a Gradle input/output, only as a file the pnpm script
-    // reads directly, so Gradle cannot infer the ordering on its own.
-    mustRunAfter "webapp"
+    // that directory has been populated. `dependsOn` (not `mustRunAfter`) because nothing else
+    // consumes `webapp`'s output as a Gradle input/output, only as a file this task's pnpm
+    // script reads directly: without a hard dependency, running this task standalone (e.g. via
+    // `generateAllSbom`) would never pull `webapp` into the graph at all.
+    //
+    // Both dependencies are only wired up when -Pprod -Psbom are both set, matching the enabled
+    // check below: without them this task is disabled anyway (Gradle's `enabled = false` skips a
+    // task's own actions but NOT its dependencies), so leaving either dependency unconditional
+    // would still force real work (installing pnpm dependencies, or worse, a full multi-minute
+    // Angular production build) for anyone running `generateClientSbom`/`generateAllSbom`
+    // directly without realizing -Psbom is also required, for zero SBOM output.
+    if (project.hasProperty("prod") && project.hasProperty("sbom")) {
+        dependsOn pnpmInstall, "webapp"
+    }
     args = ["run", "sbom:generate"]
     description = "Generate CycloneDX SBOM for client-side pnpm dependencies"
     group = "reporting"
