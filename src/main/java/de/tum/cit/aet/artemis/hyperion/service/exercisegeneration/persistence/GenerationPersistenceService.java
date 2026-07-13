@@ -197,16 +197,6 @@ public class GenerationPersistenceService {
         return new RecoveryPersistResult(draftBranch, savedRepositories);
     }
 
-    /**
-     * Writes the produced files and commits them to an isolated branch (never the default branch), pushing only that branch. Uses the same orphan-mirroring as the default-branch
-     * commit. A commit/push failure is propagated so recovery reports a real failure rather than a half-saved draft.
-     *
-     * @param exercise       the exercise being recovered
-     * @param user           the commit author
-     * @param repositoryType the repository to write
-     * @param producedFiles  the files to commit (the sandbox-final tree)
-     * @param draftBranch    the isolated branch to push the draft to
-     */
     private boolean commitDraftToIsolatedBranch(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String repositoryBranch,
             String draftBranch) {
         if (producedFiles == null || producedFiles.isEmpty()) {
@@ -482,15 +472,6 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    /**
-     * Triggers the canonical tests build (when a tests commit exists) so test-case grading follows the committed tests, re-applies the build-gate zero-weighting, and records a new
-     * exercise version so open editors and search see the committed state — the post-commit steps shared by {@link #persist} and {@link #resyncAfterRevert}. Accepted generation
-     * treats version creation as mandatory; revert keeps it best-effort because the repository reset is already the desired recovery action.
-     *
-     * @param exercise        the exercise whose test cases to sync and version to record
-     * @param user            the exercise-version author
-     * @param testsCommitHash the tests repository's commit HEAD driving the test-case-sync build; {@code null} skips the build
-     */
     private void syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, String testsCommitHash, boolean failOnFinalizationFailure) {
         syncTestCasesAndRecordVersion(exercise, user, testsCommitHash, failOnFinalizationFailure, () -> {
         });
@@ -639,15 +620,6 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, targetProblemStatement, targetTitle);
     }
 
-    /**
-     * Force-resets committed repositories in reverse order after a failed multi-repository persist. Failures do not stop later compensation but make the result incomplete; a
-     * repository without a captured prior commit cannot be reverted.
-     *
-     * @param exercise         the exercise whose repositories are compensated
-     * @param committed        the repositories that were successfully committed and must be reverted
-     * @param prePersistHashes the pre-persist commit hash captured per repository before it was written
-     * @return {@code true} if every committed repository was reverted; {@code false} if any could not be
-     */
     private boolean compensate(ProgrammingExercise exercise, String repositoryBranch, List<RepositoryType> committed, Map<RepositoryType, String> prePersistHashes,
             Map<RepositoryType, String> postPersistHashes) {
         boolean fullyReverted = true;
@@ -703,18 +675,6 @@ public class GenerationPersistenceService {
         return fullyReverted;
     }
 
-    /**
-     * Writes the produced files and commits, making the committed tree mirror the sandbox-final {@code producedFiles} (see {@link #deleteOrphanedFiles} for why). The
-     * repository's pre-persist HEAD is captured into {@code prePersistHashes} BEFORE the commit, so the caller can revert this repository if a later one fails. A commit failure is
-     * propagated so the caller does not report success after only some repositories were written.
-     *
-     * @param exercise         the exercise being persisted
-     * @param user             the commit author
-     * @param repositoryType   the repository to write
-     * @param producedFiles    the files to commit (the sandbox-final tree the oracle validated)
-     * @param prePersistHashes accumulator the captured pre-persist commit hash is written into
-     * @return the new commit hash, or {@code null} when there was nothing to commit
-     */
     private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, String seedHead,
             String repositoryBranch, String commitMessage, Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
         if (producedFiles == null || producedFiles.isEmpty()) {
@@ -815,17 +775,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /**
-     * Makes the working copy mirror the sandbox-final {@code producedFiles}: removes the files the agent did not produce (see {@link #deleteOrphanedFiles}) then writes
-     * every
-     * produced file. Shared by the default-branch and isolated draft-branch commits so both produce an identical tree; the caller decides how to commit it.
-     *
-     * @param exercise       the exercise being persisted (drives the placeholder normalization)
-     * @param repository     the checked-out repository working copy
-     * @param repositoryType the repository type
-     * @param producedFiles  the files to write (the sandbox-final tree)
-     * @throws IOException if writing a file into the working copy fails
-     */
     private void mirrorProducedFilesIntoWorkingCopy(ProgrammingExercise exercise, Repository repository, RepositoryType repositoryType, Map<String, String> producedFiles)
             throws IOException {
         Map<String, String> safeProducedFiles = new LinkedHashMap<>();
@@ -906,15 +855,6 @@ public class GenerationPersistenceService {
         return normalized;
     }
 
-    /**
-     * Deletes every tracked text file the agent did not produce, so the committed tree mirrors the sandbox-final state rather than overlaying onto the scaffolded sample (which
-     * would orphan the sample's test sources, structure oracle, or harness into real grading). A delete failure aborts the persist: a leftover tracked file means the committed
-     * tree would differ from the sandbox tree the oracle verified.
-     *
-     * @param repository     the checked-out repository working copy
-     * @param repositoryType the repository type (for logging)
-     * @param producedPaths  the repository-relative paths the agent produced (the files that must survive)
-     */
     private void deleteOrphanedFiles(Repository repository, RepositoryType repositoryType, Set<String> producedPaths) {
         Map<String, FileType> trackedFiles = repositoryService.getFiles(repository);
         Path repositoryRoot = repository.getLocalPath();
@@ -939,10 +879,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /**
-     * The signal needed to detect that the {@link #triggerTestsBuild triggered} tests-build has finished processing: the solution participation, tests commit hash, and latest
-     * result before the build. Production associates TEST build results by participation + commit hash + submission type, not by the specific submission id created here.
-     */
     private record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
     }
 
@@ -966,14 +902,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /**
-     * For C/C++ FACT exercises the synced report includes build-gate cases (CompileSort/TestConfigure) that PASS on the compiling template; the differential oracle exempts them
-     * ({@link BuildGateTestNames}) but production grades every case, so without this a student submitting the untouched template would score above 0%. Waits (bounded) for the
-     * freshly triggered tests-build to finish re-syncing, then zero-weights the build gates to match the oracle. Idempotent and a no-op for languages without build-gate cases.
-     *
-     * @param exerciseId the generated exercise whose build-gate test cases should be excluded from grading
-     * @param signal     the pre-trigger baseline identifying the triggered build to wait for
-     */
     private void zeroWeightBuildGateTestCases(long exerciseId, TestsBuildSignal signal, boolean failOnError) {
         try {
             Set<ProgrammingExerciseTestCase> testCases = awaitBuildProcessedTestCaseSet(exerciseId, signal, failOnError);
@@ -1001,15 +929,6 @@ public class GenerationPersistenceService {
         }
     }
 
-    /**
-     * Waits (bounded by {@link #testCaseSyncTimeout}) for the tests-build triggered by {@link #triggerTestsBuild} to finish processing, then returns the re-synced test-case set.
-     * The wait keys on a newer TEST result for the same tests commit hash. The grading pipeline saves the freshly re-synced cases strictly before it saves that result, so seeing
-     * it guarantees the complete set is already committed while matching production's commit-hash based result association.
-     *
-     * @param exerciseId the exercise whose test-case set to await
-     * @param signal     the pre-trigger baseline (solution participation and its latest result id) identifying the build to wait for
-     * @return the test-case set once the triggered build's result is visible, or the last set read after a best-effort timeout
-     */
     private Set<ProgrammingExerciseTestCase> awaitBuildProcessedTestCaseSet(long exerciseId, TestsBuildSignal signal, boolean failOnTimeout) throws InterruptedException {
         long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
         while (System.nanoTime() < deadline) {
