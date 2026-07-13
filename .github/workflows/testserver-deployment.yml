@@ -59,7 +59,7 @@ jobs:
           echo "Branch: $BRANCH_NAME"
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
-          echo "RAW_URL: ${{ env.RAW_URL }}"
+          echo "RAW_URL: $RAW_URL"
 
   determine-build-context:
     name: Determine Build Context
@@ -237,7 +237,7 @@ jobs:
       # Download artemis-server-cli from GH without cloning the Repo
       - name: Fetch Artemis CLI
         run: |
-          wget ${{ env.RAW_URL }}/artemis-server-cli
+          wget "$RAW_URL/artemis-server-cli"
           chmod +x artemis-server-cli
 
       # Configure SSH Key
