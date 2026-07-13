@@ -207,13 +207,17 @@ public class AttachmentVideoUnitResource {
         if (updateIntent == null) {
             throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
         }
+        boolean isFileChange = updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
+        if (isFileChange && attachment == null) {
+            throw new BadRequestAlertException("File update requests must include attachment metadata", ENTITY_NAME, "attachmentRequiredForFileChange");
+        }
         if (isStaleAttachmentPartWithoutFile(updateIntent, file, existingAttachmentVideoUnit, attachment)) {
             throw new BadRequestAlertException("Creating an attachment requires a file", ENTITY_NAME, "fileRequiredForNewAttachment");
         }
         if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && file != null) {
             throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
         }
-        if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && (!hasFile || attachment == null)) {
+        if (isFileChange && !hasFile) {
             throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
         }
     }
