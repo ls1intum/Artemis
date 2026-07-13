@@ -97,6 +97,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
             FROM AnswerPost answerPost
                 JOIN FETCH answerPost.author
                 JOIN FETCH answerPost.post post
+                LEFT JOIN FETCH post.author
                 JOIN FETCH post.conversation
             WHERE answerPost.id = :answerPostId
             """)

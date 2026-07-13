@@ -753,10 +753,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         });
 
         // The answer is now persisted as verified, with the reviewing tutor and a verification timestamp recorded.
+        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         AnswerPost verifiedAnswer = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
         assertThat(verifiedAnswer.isVerified()).isTrue();
         assertThat(verifiedAnswer.getVerifiedBy()).isNotNull();
-        assertThat(verifiedAnswer.getVerifiedBy().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        // verifiedBy is a lazy association; the test session is closed here, so compare by id (a proxy id access does not trigger loading).
+        assertThat(verifiedAnswer.getVerifiedBy().getId()).isEqualTo(tutor1.getId());
         assertThat(verifiedAnswer.getVerifiedAt()).isNotNull();
 
         // The verified (now student-visible) post is broadcast to participants.
