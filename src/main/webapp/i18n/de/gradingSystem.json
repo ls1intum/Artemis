@@ -120,6 +120,12 @@
             "deleted": "Notenschlüssel wurde gelöscht",
             "plagiarismGrade": "Plagiatsnote",
             "noParticipationGrade": "Nicht Teilgenommen Note"
+        },
+        "gradingScaleUpdate": {
+            "courseMaxPoints": "Maximale Kurspunktzahl",
+            "coursePresentationScore": "Präsentationswertung des Kurses",
+            "examMaxPoints": "Maximale Klausurpunktzahl",
+            "presentationsNumber": "Anzahl der Präsentationen"
         }
     }
 }

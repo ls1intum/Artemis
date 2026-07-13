@@ -120,6 +120,12 @@
             "deleted": "Grading key has been deleted",
             "plagiarismGrade": "Plagiarism Grade",
             "noParticipationGrade": "No-participation Grade"
+        },
+        "gradingScaleUpdate": {
+            "courseMaxPoints": "Maximum course points",
+            "coursePresentationScore": "Course presentation score",
+            "examMaxPoints": "Maximum exam points",
+            "presentationsNumber": "Number of presentations"
         }
     }
 }
