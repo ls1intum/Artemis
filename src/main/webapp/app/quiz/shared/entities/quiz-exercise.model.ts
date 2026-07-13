@@ -77,9 +77,8 @@ export type QuizExerciseStatisticUpdate = Pick<QuizExercise, 'id' | 'quizQuestio
  */
 export function mergeQuizExerciseStatisticUpdate(quizExercise: QuizExercise, update: QuizExerciseStatisticUpdate): QuizExercise {
     const currentQuestions = new Map(quizExercise.quizQuestions?.map((question) => [question.id, question]));
-    const quizQuestions = update.quizQuestions?.map((question) => ({ ...currentQuestions.get(question.id), ...question })) ?? quizExercise.quizQuestions;
-    const mergedQuizExercise: QuizExercise = { ...quizExercise, ...update, quizQuestions };
-    return mergedQuizExercise;
+    const quizQuestions = update.quizQuestions?.map((question) => Object.assign({}, currentQuestions.get(question.id), question)) ?? quizExercise.quizQuestions;
+    return Object.assign({}, quizExercise, update, { quizQuestions });
 }
 
 export function resetQuizForExam(exercise: QuizExercise) {

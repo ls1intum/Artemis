@@ -9,8 +9,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.EntityManager;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -91,9 +89,6 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -118,7 +113,7 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @Tag("benchmark")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void benchmarkInstructorWorkflows() throws Exception {
+    void shouldBenchmarkInstructorWorkflowsWhenBenchmarkTagIsIncluded() throws Exception {
         List<BenchmarkResult> results = new ArrayList<>();
         for (BenchmarkDataSet dataSet : BenchmarkDataSet.values()) {
             results.add(runBenchmark("Load quiz for editing", dataSet, this::prepareLoadScenario));
@@ -132,14 +127,14 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @Tag("benchmark")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void benchmarkReEvaluationWorkflow() throws Exception {
+    void shouldBenchmarkReEvaluationWorkflowWhenBenchmarkTagIsIncluded() throws Exception {
         logResults(List.of(runBenchmark("Re-evaluate 100 submissions", BenchmarkDataSet.TYPICAL, this::prepareReEvaluationScenario)));
     }
 
     @Test
     @Tag("benchmark")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void benchmarkStudentSubmissionWorkflow() throws Exception {
+    void shouldBenchmarkStudentSubmissionWorkflowWhenBenchmarkTagIsIncluded() throws Exception {
         logResults(List.of(runBenchmark("Submit student answer", BenchmarkDataSet.TYPICAL, this::preparePracticeSubmissionScenario)));
     }
 
@@ -156,7 +151,7 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     private Measurement measureScenario(BenchmarkScenario scenario) throws Exception {
-        flushAndClearPersistenceContext();
+        quizExerciseTestRepository.flushAndClearPersistenceContext();
         queryInterceptor.startQueryCapture();
         long startNanos = System.nanoTime();
         MvcResult result;
@@ -169,7 +164,7 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
 
             assertThat(result.getResponse().getStatus()).isEqualTo(scenario.expectedStatus().value());
             Long targetQuizId = scenario.verifier().verifyAndResolveTargetQuiz(result);
-            entityManager.clear();
+            quizExerciseTestRepository.flushAndClearPersistenceContext();
             QuizExercise persistedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(targetQuizId);
             long persistedDefinitionBytes = objectMapper.writeValueAsBytes(QuizExerciseCreateDTO.of(persistedQuiz)).length;
             return Measurement.of(elapsedNanos, scenario.requestBytes(), result.getResponse().getContentAsByteArray().length, persistedDefinitionBytes, capturedQueries);
@@ -423,11 +418,6 @@ class QuizPersistenceBenchmarkTest extends AbstractQuizExerciseIntegrationTest {
         }
         question.setText(questionText.toString());
         return question;
-    }
-
-    private void flushAndClearPersistenceContext() {
-        quizExerciseTestRepository.flush();
-        entityManager.clear();
     }
 
     private static long countWriteStatements(List<String> queries) {

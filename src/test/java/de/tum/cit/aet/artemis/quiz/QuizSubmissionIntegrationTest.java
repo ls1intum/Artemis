@@ -217,7 +217,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateStatisticsPublishesRedactedDTOWithoutMutatingQuiz() throws Exception {
+    void shouldPublishRedactedDTOWithoutMutatingQuizWhenUpdatingStatistics() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 2, true, ZonedDateTime.now());
         participationUtilService.addSubmission(quizExercise, submission, TEST_PREFIX + "student1");
@@ -236,10 +236,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         JsonNode dragAndDropQuestion = findQuestionByType(payload.path("quizQuestions"), "drag-and-drop");
         JsonNode shortAnswerQuestion = findQuestionByType(payload.path("quizQuestions"), "short-answer");
         assertThat(multipleChoiceQuestion.path("quizQuestionStatistic").path("answerCounters")).isNotEmpty();
-        assertThat(multipleChoiceQuestion.path("answerOptions").get(0).has("isCorrect")).isFalse();
-        assertThat(dragAndDropQuestion.has("correctMappings")).isFalse();
-        assertThat(shortAnswerQuestion.has("solutions")).isFalse();
-        assertThat(shortAnswerQuestion.has("correctMappings")).isFalse();
+        assertThat(multipleChoiceQuestion.path("answerOptions").get(0).get("isCorrect")).isNull();
+        assertThat(dragAndDropQuestion.get("correctMappings")).isNull();
+        assertThat(shortAnswerQuestion.get("solutions")).isNull();
+        assertThat(shortAnswerQuestion.get("correctMappings")).isNull();
 
         MultipleChoiceQuestion persistedMultipleChoiceQuestion = (MultipleChoiceQuestion) quizWithStatistics.getQuizQuestions().getFirst();
         DragAndDropQuestion persistedDragAndDropQuestion = (DragAndDropQuestion) quizWithStatistics.getQuizQuestions().get(1);
@@ -393,7 +393,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmitPracticeResponseDoesNotMutatePersistedAggregate() throws Exception {
+    void shouldNotMutatePersistedAggregateWhenSubmittingPracticeQuiz() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), QuizMode.SYNCHRONIZED);
         quizExercise = quizExerciseService.save(quizExercise);
         QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 2, true, null);
@@ -402,8 +402,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
                 JsonNode.class, HttpStatus.OK);
 
         JsonNode responseSubmission = response.path("submission");
-        assertThat(responseSubmission.has("results")).isFalse();
-        assertThat(responseSubmission.path("participation").path("exercise").has("course")).isFalse();
+        assertThat(responseSubmission.get("results")).isNull();
+        assertThat(responseSubmission.path("participation").path("exercise").get("course")).isNull();
         assertThat(findQuestionByType(responseSubmission.path("participation").path("exercise").path("quizQuestions"), "short-answer").path("solutions")).isNotEmpty();
 
         QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
@@ -1216,14 +1216,14 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
             JsonNode response = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, JsonNode.class,
                     HttpStatus.OK);
-            assertThat(response.path("submitted").asBoolean()).isTrue();
+            assertThat(response.path("submitted").asBoolean()).as("live quiz submission should be marked as submitted").isTrue();
             assertThat(response.path("submittedAnswers")).hasSize(quizSubmission.getSubmittedAnswers().size());
             assertThat(response.path("submissionDate").asText()).isNotBlank();
 
             JsonNode shortAnswer = findSubmittedAnswerByType(response.path("submittedAnswers"), "short-answer");
-            assertThat(shortAnswer.path("quizQuestion").has("solutions")).isFalse();
+            assertThat(shortAnswer.path("quizQuestion").get("solutions")).isNull();
             for (JsonNode submittedText : shortAnswer.path("submittedTexts")) {
-                assertThat(submittedText.has("isCorrect")).isFalse();
+                assertThat(submittedText.get("isCorrect")).isNull();
             }
 
             QuizSubmission reloadedSubmission = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(response.path("id").asLong());

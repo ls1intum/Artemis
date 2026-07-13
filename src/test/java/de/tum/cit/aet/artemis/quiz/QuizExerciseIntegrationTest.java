@@ -1959,24 +1959,24 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         String content = result.getResponse().getContentAsString();
 
         JsonNode json = objectMapper.readTree(content);
-        assertThat(json.has("quizQuestions")).isTrue();
-        assertThat(json.get("quizQuestions").size()).isEqualTo(3);
+        assertThat(json.get("quizQuestions")).isNotNull();
+        assertThat(json.get("quizQuestions")).hasSize(3);
 
         JsonNode questions = json.get("quizQuestions");
         JsonNode multipleChoiceQuestion = findQuestionByType(questions, "multiple-choice");
         JsonNode dragAndDropQuestion = findQuestionByType(questions, "drag-and-drop");
         JsonNode shortAnswerQuestion = findQuestionByType(questions, "short-answer");
 
-        assertThat(multipleChoiceQuestion.has("explanation")).isFalse();
+        assertThat(multipleChoiceQuestion.get("explanation")).isNull();
         for (JsonNode answerOption : multipleChoiceQuestion.path("answerOptions")) {
-            assertThat(answerOption.has("isCorrect")).isFalse();
-            assertThat(answerOption.has("explanation")).isFalse();
+            assertThat(answerOption.get("isCorrect")).isNull();
+            assertThat(answerOption.get("explanation")).isNull();
         }
-        assertThat(dragAndDropQuestion.has("explanation")).isFalse();
-        assertThat(dragAndDropQuestion.has("correctMappings")).isFalse();
-        assertThat(shortAnswerQuestion.has("explanation")).isFalse();
-        assertThat(shortAnswerQuestion.has("correctMappings")).isFalse();
-        assertThat(shortAnswerQuestion.has("solutions")).isFalse();
+        assertThat(dragAndDropQuestion.get("explanation")).isNull();
+        assertThat(dragAndDropQuestion.get("correctMappings")).isNull();
+        assertThat(shortAnswerQuestion.get("explanation")).isNull();
+        assertThat(shortAnswerQuestion.get("correctMappings")).isNull();
+        assertThat(shortAnswerQuestion.get("solutions")).isNull();
 
         QuizExerciseWithQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithQuestionsDTO.class);
         assertThat(dto.quizQuestions()).hasSize(3);

@@ -32,7 +32,7 @@ class QuizMessagingServiceTest {
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void startedBatchPayloadContainsQuestionsWithoutSolutions() throws Exception {
+    void shouldOmitSolutionsWhenSendingStartedBatchPayload() throws Exception {
         WebsocketMessagingService websocketMessagingService = mock(WebsocketMessagingService.class);
         QuizMessagingService quizMessagingService = new QuizMessagingService(new MappingJackson2HttpMessageConverter(objectMapper), mock(GroupNotificationService.class),
                 websocketMessagingService);
@@ -53,10 +53,10 @@ class QuizMessagingServiceTest {
         JsonNode multipleChoiceQuestion = findQuestionByType(payload.path("quizQuestions"), "multiple-choice");
         JsonNode dragAndDropQuestion = findQuestionByType(payload.path("quizQuestions"), "drag-and-drop");
         JsonNode shortAnswerQuestion = findQuestionByType(payload.path("quizQuestions"), "short-answer");
-        assertThat(multipleChoiceQuestion.path("answerOptions").get(0).has("isCorrect")).isFalse();
-        assertThat(dragAndDropQuestion.has("correctMappings")).isFalse();
-        assertThat(shortAnswerQuestion.has("solutions")).isFalse();
-        assertThat(shortAnswerQuestion.has("correctMappings")).isFalse();
+        assertThat(multipleChoiceQuestion.path("answerOptions").get(0).get("isCorrect")).isNull();
+        assertThat(dragAndDropQuestion.get("correctMappings")).isNull();
+        assertThat(shortAnswerQuestion.get("solutions")).isNull();
+        assertThat(shortAnswerQuestion.get("correctMappings")).isNull();
     }
 
     private static QuizExercise createActiveQuiz() {

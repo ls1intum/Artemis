@@ -23,7 +23,7 @@ class QuizExerciseStatisticUpdateDTOTest {
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void statisticUpdateContainsCountersWithoutSolutionsOrEntityMutation() throws Exception {
+    void shouldContainCountersWithoutSolutionsOrEntityMutationWhenCreatingStatisticUpdate() throws Exception {
         QuizExercise quizExercise = createQuizWithStatistics();
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
@@ -36,15 +36,15 @@ class QuizExerciseStatisticUpdateDTOTest {
 
         assertThat(root.path("id").asLong()).isEqualTo(42L);
         assertThat(multipleChoiceNode.path("quizQuestionStatistic").path("answerCounters")).hasSize(2);
-        assertThat(multipleChoiceNode.path("answerOptions").get(0).has("isCorrect")).isFalse();
-        assertThat(multipleChoiceNode.path("answerOptions").get(0).has("explanation")).isFalse();
+        assertThat(multipleChoiceNode.path("answerOptions").get(0).get("isCorrect")).isNull();
+        assertThat(multipleChoiceNode.path("answerOptions").get(0).get("explanation")).isNull();
         JsonNode counterAnswer = multipleChoiceNode.path("quizQuestionStatistic").path("answerCounters").get(0).path("answer");
-        assertThat(counterAnswer.has("isCorrect")).isFalse();
-        assertThat(counterAnswer.has("explanation")).isFalse();
-        assertThat(dragAndDropNode.has("correctMappings")).isFalse();
+        assertThat(counterAnswer.get("isCorrect")).isNull();
+        assertThat(counterAnswer.get("explanation")).isNull();
+        assertThat(dragAndDropNode.get("correctMappings")).isNull();
         assertThat(dragAndDropNode.path("quizQuestionStatistic").path("dropLocationCounters")).hasSize(4);
-        assertThat(shortAnswerNode.has("solutions")).isFalse();
-        assertThat(shortAnswerNode.has("correctMappings")).isFalse();
+        assertThat(shortAnswerNode.get("solutions")).isNull();
+        assertThat(shortAnswerNode.get("correctMappings")).isNull();
         assertThat(shortAnswerNode.path("quizQuestionStatistic").path("shortAnswerSpotCounters")).hasSize(2);
 
         assertThat(multipleChoiceQuestion.getAnswerOptions()).extracting(option -> option.isIsCorrect()).containsExactly(true, false);

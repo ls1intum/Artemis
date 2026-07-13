@@ -8,8 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.EntityManager;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -56,9 +54,6 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private EntityManager entityManager;
-
     @TempDir
     private Path exportDirectory;
 
@@ -68,7 +63,7 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    void exportPreservesQuestionComponentsAndStudentRawAnswers() throws Exception {
+    void shouldPreserveQuestionComponentsAndStudentRawAnswersWhenExportingQuiz() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.INDIVIDUAL);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         dragAndDropQuestion.getDragItems().forEach(dragItem -> dragItem.setPictureFilePath(null));
@@ -98,7 +93,7 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
         JsonNode questions = exerciseJson.path("quizQuestions");
         assertThat(questions).hasSize(3);
         for (JsonNode answerOption : findQuestionByType(questions, "multiple-choice").path("answerOptions")) {
-            assertThat(answerOption.path("id").isIntegralNumber()).isTrue();
+            assertThat(answerOption.path("id").isIntegralNumber()).as("answer option ID should be an integral number").isTrue();
         }
         assertThat(findQuestionByType(questions, "drag-and-drop").path("dragItems")).isNotEmpty();
         assertThat(findQuestionByType(questions, "drag-and-drop").path("dropLocations")).isNotEmpty();
@@ -112,7 +107,7 @@ class QuizExerciseExportIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(Files.readString(multipleChoiceAnswers)).contains("Multiple Choice Question:", "selected answer");
         assertThat(Files.readString(shortAnswerAnswers)).contains("Short Answer Question:", "IS", "LONG");
 
-        entityManager.clear();
+        quizExerciseTestRepository.flushAndClearPersistenceContext();
         QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         assertThat(reloadedQuiz.getCourseViaExerciseGroupOrCourseMember()).isNotNull();
         assertThat(((ShortAnswerQuestion) reloadedQuiz.getQuizQuestions().get(2)).getSolutions()).isNotEmpty();

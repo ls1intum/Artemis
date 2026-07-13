@@ -10,7 +10,7 @@ class HibernateQueryInterceptorTest {
     private final HibernateQueryInterceptor interceptor = new HibernateQueryInterceptor();
 
     @Test
-    void queryCaptureRecordsStatementsAndPreservesCountOnlyBehavior() {
+    void shouldRecordStatementsAndPreserveCountOnlyBehaviorWhenCapturingQueries() {
         interceptor.startQueryCapture();
 
         assertThat(interceptor.inspect("select 1")).isEqualTo("select 1");
@@ -28,7 +28,7 @@ class HibernateQueryInterceptorTest {
     }
 
     @Test
-    void stoppingCaptureClearsThreadLocalState() {
+    void shouldClearThreadLocalStateWhenStoppingCapture() {
         assertThat(interceptor.stopQueryCapture().count()).isZero();
         assertThat(interceptor.stopQueryCapture().queries()).isEmpty();
 
