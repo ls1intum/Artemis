@@ -206,7 +206,7 @@ class AttachmentVideoUnitServiceTest {
     @Test
     void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
-                Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService);
+                Optional.empty(), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService);
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 
