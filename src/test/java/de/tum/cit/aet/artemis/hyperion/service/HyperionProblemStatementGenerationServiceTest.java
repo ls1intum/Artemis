@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -80,6 +81,217 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_GENERATION"), any());
+    }
+
+    @Test
+    void generateProblemStatement_promptAvoidsPrematureTaskBindingsAndImplementationDetails() {
+        String generatedDraft = "Generated draft problem statement";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a Java exercise about rover movement");
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).reduce("", (left, right) -> left + "\n" + right);
+
+        assertThat(promptText).contains("Do not include Artemis task bindings or raw task markers");
+        assertThat(promptText).contains("Do not invent test method names");
+        assertThat(promptText).contains("Do not prescribe a solution architecture unless the instructor explicitly asked for one");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsDraftWithGenerationArtifacts() {
+        String artifactDraft = """
+                # Library Rules
+
+                [task][Implement checkout summaries](testOverdueFees)
+
+                @startuml
+                class LibraryProcessor
+                @enduml
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsDraftWithLegacyStructuralTestNames() {
+        String artifactDraft = """
+                # Sorting Design
+
+                Students implement sorting behavior. The structural tests use testClass[Sorter] and testMethods[Sorter].
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a sorting exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsUnrequestedJsonExportEvenWhenUserAskedForGenericExport() {
+        String artifactDraft = """
+                # Data Export
+
+                Students should implement CSV summaries and a JSON export.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a CSV export exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsPublicApiDetailsWhenInstructorAvoidsExactNames() {
+        String artifactDraft = """
+                # Event Scheduler
+
+                ## Public API
+                | Method | Purpose |
+                | --- | --- |
+                | `boolean addEvent(String id)` | Adds an event. |
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Avoid prescribing exact class names and method names"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_repairsDraftOnceWhenFirstAttemptContainsArtifacts() {
+        String artifactDraft = """
+                # Event Scheduler
+
+                [task][Add events](testAddEvent)
+
+                @startuml
+                class Scheduler
+                @enduml
+                """;
+        String repairedDraft = """
+                # Event Scheduler
+
+                Students reason about intervals, recurring events, conflicts, and invalid ranges.
+
+                ## Example
+                | Existing interval | Candidate interval | Conflict? |
+                | --- | --- | --- |
+                | 10:00-11:00 | 11:00-12:00 | No, when the end is exclusive. |
+                """;
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(repairedDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course,
+                "Avoid prescribing an implementation strategy or exact class names");
+
+        assertThat(resp.draftProblemStatement()).isEqualTo(repairedDraft.trim());
+    }
+
+    @Test
+    void generateProblemStatement_allowsPublicApiDetailsWhenInstructorExplicitlyPermitsThem() {
+        String apiDraft = """
+                # Rover Movement
+
+                ## Public API
+                Students implement `boolean execute(String commands)`.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(apiDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "You may choose the public API for this exercise");
+
+        assertThat(resp.draftProblemStatement()).isEqualTo(apiDraft.trim());
+    }
+
+    @Test
+    void generateProblemStatement_rejectsUnrequestedStudentTestingRequirements() {
+        String artifactDraft = """
+                # Scheduler
+
+                Students must write unit tests covering the provided test suite scenarios.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_rejectsUnrequestedScopeCreepAndContradictoryExamples() {
+        String artifactDraft = """
+                # Scheduler
+
+                - **(Optional) Remove an event**
+                - Define a maximum recurrence limit to prevent resource exhaustion.
+
+                | Action | Result |
+                | --- | --- |
+                | Add event E | Conflict with D because they do not overlap; therefore no conflict. |
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(artifactDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void generateProblemStatement_allowsExplicitlyRequestedOptionalJsonOrPerformanceContent() {
+        String requestedContentDraft = """
+                # Data Export Benchmark
+
+                Students implement a JSON export for measured records.
+
+                ## Optional Challenge
+                Compare the performance benchmark for two input sizes.
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(requestedContentDraft)))));
+
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course,
+                "Create an optional challenge with JSON export and a performance benchmark");
+
+        assertThat(resp.draftProblemStatement()).isEqualTo(requestedContentDraft.trim());
     }
 
     @Test

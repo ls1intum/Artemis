@@ -295,7 +295,7 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void acceptedAdaptationWithOnlyAdvisoryFindings_stopsInsteadOfRiskingUnrequestedPolish() {
+    void acceptedAdaptationWithOnlyAdvisoryFindingsRequiresReviewDraft() {
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed());
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class))).thenReturn(accepted());
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any())).thenReturn(reportWith("add assertion messages"));
@@ -303,7 +303,7 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = service.generate(exercise, user, "Change remove only and preserve everything else", "job", GenerationMode.ADAPT, () -> false, null, null,
                 response -> {
                 })) {
-            assertThat(outcome.isAccepted()).isTrue();
+            assertThat(outcome.isAccepted()).isFalse();
             assertThat(outcome.specFidelityReport().hasFindings()).isTrue();
         }
         verify(agentLoopRunner).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());

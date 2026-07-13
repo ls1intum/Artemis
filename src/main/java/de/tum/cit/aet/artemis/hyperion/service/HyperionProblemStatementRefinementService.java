@@ -149,7 +149,7 @@ public class HyperionProblemStatementRefinementService {
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
         refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText, sanitizedPrompt);
     }
 
     /**
@@ -223,7 +223,7 @@ public class HyperionProblemStatementRefinementService {
         refinedProblemStatementText = stripLineNumbers(refinedProblemStatementText);
         refinedProblemStatementText = stripWrapperMarkers(refinedProblemStatementText);
 
-        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText);
+        return validateAndReturnResponse(sanitizedProblemStatement, refinedProblemStatementText, sanitizedInstruction);
     }
 
     /**
@@ -364,8 +364,12 @@ public class HyperionProblemStatementRefinementService {
      * acceptable because leading/trailing blank lines carry no semantic meaning in
      * a problem statement.
      */
-    private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText) {
+    private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText, String sanitizedInstruction) {
         String trimmedRefined = refinedProblemStatementText.trim();
+
+        if (!HyperionUtils.containsFinalTaskBindings(originalProblemStatementText)) {
+            HyperionUtils.validateDraftProblemStatementHygiene(trimmedRefined, sanitizedInstruction, "ProblemStatementRefinement");
+        }
 
         if (trimmedRefined.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
             log.warn("Refined problem statement exceeds maximum length: {} characters (max {})", trimmedRefined.length(), MAX_PROBLEM_STATEMENT_LENGTH);

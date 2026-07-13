@@ -247,13 +247,18 @@ public class GenerationTaskService {
     private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
             GenerationProgressEmitter emitter) {
         boolean scopeBlocked = outcome.specFidelityReport().hasBlockingFindings();
+        boolean verifiedWithQualityFindings = outcome.verification() != null && outcome.verification().accepted() && outcome.specFidelityReport().hasFindings();
         String scopeReason = outcome.specFidelityReport().findings().stream().filter(
                 finding -> finding.kind() == SpecFidelityReport.Kind.UNREQUESTED_ADAPTATION_CHANGE || finding.kind() == SpecFidelityReport.Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE)
                 .map(SpecFidelityReport.Finding::detail).collect(Collectors.joining(" "));
-        String reason = scopeBlocked ? scopeReason : outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
+        String qualityReason = outcome.specFidelityReport().findings().stream().map(SpecFidelityReport.Finding::detail).collect(Collectors.joining(" "));
+        String reason = scopeBlocked ? scopeReason
+                : verifiedWithQualityFindings ? qualityReason
+                        : outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
         try {
             emitter.progress(scopeBlocked ? "Build and grading checks passed, but the adaptation-scope review requires manual review. Saving an isolated draft."
-                    : "Verification did not pass. Saving the best-effort draft and recording what to review.");
+                    : verifiedWithQualityFindings ? "Build and grading checks passed, but the quality review requires manual review. Saving an isolated draft."
+                            : "Verification did not pass. Saving the best-effort draft and recording what to review.");
             GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId, () -> jobService.isOwnedActiveJob(exerciseId, jobId));
             int issueCount = result.reviewThreadCount();
             // Rejected drafts are isolated from the live exercise, regardless of whether this was a new generation or an adaptation. The instructor can inspect the draft branch
@@ -266,7 +271,8 @@ public class GenerationTaskService {
             // could not be attached), which the message states explicitly.
             String outcomeSummary = scopeBlocked
                     ? "Build and grading checks passed, but the adaptation changed content outside the requested scope or its scope could not be verified."
-                    : "The generated draft did not pass verification.";
+                    : verifiedWithQualityFindings ? "Build and grading checks passed, but the quality review found unresolved exercise-quality gaps."
+                            : "The generated draft did not pass verification.";
             String message = issueCount < 0
                     ? outcomeSummary + " The review notes could not be attached automatically — open the exercise and review it manually before grading." + placement + " " + reason
                     : outcomeSummary + " " + issueCount + " issue(s) to review were added to the exercise." + placement + " " + reason;

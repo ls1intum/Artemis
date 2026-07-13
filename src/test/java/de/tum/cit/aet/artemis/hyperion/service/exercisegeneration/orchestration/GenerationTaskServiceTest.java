@@ -115,7 +115,11 @@ class GenerationTaskServiceTest {
 
     /** Builds a run-completing outcome that holds the mock orchestrator + sandbox, so try-with-resources close() is observable as a destroyQuietly call. */
     private GenerationOutcome outcomeWith(AgentLoopResult.Status status, VerificationResult verification) {
-        return new GenerationOutcome(new AgentLoopResult(status, 5, "done"), verification, SESSION_ID, orchestrator, sandbox, Map.of(), "", SpecFidelityReport.empty(), Map.of());
+        return outcomeWith(status, verification, SpecFidelityReport.empty());
+    }
+
+    private GenerationOutcome outcomeWith(AgentLoopResult.Status status, VerificationResult verification, SpecFidelityReport specFidelityReport) {
+        return new GenerationOutcome(new AgentLoopResult(status, 5, "done"), verification, SESSION_ID, orchestrator, sandbox, Map.of(), "", specFidelityReport, Map.of());
     }
 
     private void run(GenerationMode mode, GenerationOutcome outcome) {
@@ -219,6 +223,22 @@ class GenerationTaskServiceTest {
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         assertThat(sentEvents().getLast().message()).contains("1 review note was added").doesNotContain("spec-fidelity").doesNotContain("note(s)");
+    }
+
+    @Test
+    void verifiedRunWithQualityFindings_isSavedAsReviewDraftInsteadOfLiveExercise() {
+        SpecFidelityReport report = new SpecFidelityReport(List
+                .of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "obstacle edge case", "The generated tests do not cover obstacle edge cases.")));
+        when(recoveryService.recover(any(), any(), any(), anyString(), any())).thenReturn(
+                new GenerationRecoveryService.RecoveryResult(1, "hyperion-draft/job-1", Set.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS)));
+
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), report));
+
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(sentEvents().getLast().liveExerciseChanged()).isFalse();
+        assertThat(sentEvents().getLast().message()).contains("quality review found unresolved exercise-quality gaps");
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any());
+        verify(recoveryService).recover(any(), any(), any(), anyString(), any());
     }
 
     @Test

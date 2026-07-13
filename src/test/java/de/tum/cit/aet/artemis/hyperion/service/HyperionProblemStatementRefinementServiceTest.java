@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -83,6 +84,84 @@ class HyperionProblemStatementRefinementServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
         verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_REFINEMENT_GLOBAL"), any());
+    }
+
+    @Test
+    void refineProblemStatement_promptPreservesExactBindingsAndArtemisUml() {
+        String originalStatement = """
+                # Sorting Strategy
+
+                [task][Implement strategy selection](testSortsAscending,testRejectsNullInput)
+
+                @startuml
+                testsColor(testSortsAscending)
+                class SortStrategy
+                @enduml
+                """;
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(originalStatement + "\nRefined.")))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make the wording clearer");
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(promptCaptor.capture());
+        String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).reduce("", (left, right) -> left + "\n" + right);
+
+        assertThat(promptText).contains("Preserve existing `[task][...](...)` bindings");
+        assertThat(promptText).contains("Do not invent `testClass[...]`, `testMethods[...]`, display names, or structural placeholders");
+        assertThat(promptText).doesNotContain("[task][Task Description](testClass[TestClassName]");
+        assertThat(promptText).contains("Preserve Artemis-specific PlantUML helpers such as `testsColor(...)`");
+    }
+
+    @Test
+    void refineProblemStatement_rejectsDraftRefinementThatAddsTaskBindings() {
+        String originalStatement = "# Library Rules\n\nStudents compute summaries for checkout events.";
+        String refinedStatement = "# Library Rules\n\n[task][Compute overdue fees](testOverdueFees)";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Make it clearer"))
+                .isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("generation-only artifacts");
+    }
+
+    @Test
+    void refineProblemStatement_allowsFinalStatementWithExistingExactBindings() {
+        String originalStatement = "# Sorting\n\n[task][Sort ascending](testSortsAscending)\nImplement sorting.";
+        String refinedStatement = "# Sorting\n\n[task][Sort ascending](testSortsAscending)\nImplement sorting for integer arrays.";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Clarify wording");
+
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
+    }
+
+    @Test
+    void refineProblemStatement_allowsExistingTaskBindingWithParenthesizedTestIdentifier() {
+        String originalStatement = "# Parsing\n\n[task][Reject malformed input](testRejectsInput(String))\nReject malformed commands.";
+        String refinedStatement = "# Parsing\n\n[task][Reject malformed input](testRejectsInput(String))\nReject malformed commands without changing state.";
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(refinedStatement)))));
+
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, originalStatement, "Clarify wording");
+
+        assertThat(resp.refinedProblemStatement()).isEqualTo(refinedStatement);
     }
 
     @Test

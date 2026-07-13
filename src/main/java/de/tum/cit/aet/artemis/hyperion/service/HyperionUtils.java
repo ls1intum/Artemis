@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
@@ -81,6 +84,42 @@ final class HyperionUtils {
 
     /** Pattern matching a line that starts with a line-number prefix: one or more digits followed by a colon and a space. */
     private static final Pattern LINE_NUMBER_PREFIX = Pattern.compile("^\\d+: ");
+
+    private static final Pattern FINAL_TASK_BINDING = Pattern.compile("\\[task]\\[[^\\]]*\\]\\((.*)\\)");
+
+    private static final List<Pattern> FORBIDDEN_DRAFT_ARTIFACTS = List.of(Pattern.compile("\\[\\s*tasks?\\s*]", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("@(?:start|end)uml", Pattern.CASE_INSENSITIVE), Pattern.compile("\\b(?:solution|template|test) repository\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\b(?:verifier|test runner|hidden tests)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\btest(?:Class|Methods|Attributes|Constructors)\\[[^\\]]+]", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\btest[A-Z][A-Za-z0-9_]*\\s*\\(", Pattern.CASE_INSENSITIVE), Pattern.compile("adjust accordingly in tests", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\bconflict\\b[^\\n]{0,160}\\bdo\\s+\\*?\\*?not\\*?\\*?\\s+overlap\\b[^\\n]{0,160}\\bno conflict\\b", Pattern.CASE_INSENSITIVE));
+
+    private static final List<ConditionalDraftArtifact> CONDITIONAL_DRAFT_ARTIFACTS = List.of(
+            new ConditionalDraftArtifact(Pattern.compile("(?:^\\s*#{1,6}\\s*(?:optional challenges?|extra credit)\\b|\\*\\*\\(Optional\\)|\\bif you choose to expose\\b)",
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE), Pattern.compile("\\b(?:optional|challenge|extra credit)\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(
+                    Pattern.compile("\\b(?:performance benchmark|benchmarking task|throughput benchmark|resource exhaustion|upper limit|maximum recurrence limit|"
+                            + "thread-safe|thread safety|concurrent use)\\b", Pattern.CASE_INSENSITIVE),
+                    Pattern.compile("\\b(?:performance|benchmark|throughput|time complexity|resource|limit|thread|concurren)\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(
+                    Pattern.compile("\\b(?:provided test suite|test suite|students?\\s+(?:must|should|need to|are required to)\\s+(?:write|create|provide)\\s+unit tests?)\\b",
+                            Pattern.CASE_INSENSITIVE),
+                    Pattern.compile("\\b(?:unit tests?|testing|test suite)\\b", Pattern.CASE_INSENSITIVE)),
+            new ConditionalDraftArtifact(Pattern.compile("\\bJSON export\\b", Pattern.CASE_INSENSITIVE), Pattern.compile("\\bJSON\\b", Pattern.CASE_INSENSITIVE)));
+
+    private static final Pattern PUBLIC_API_DETAILS = Pattern.compile("(?:^\\s*#{1,6}\\s*(?:public|required) API\\b|\\|\\s*Method\\s*\\|\\s*Purpose|"
+            + "\\b(?:public\\s+)?(?:boolean|int|long|double|String|void|List<[^>]+>|Map<[^>]+>)\\s+[a-zA-Z_]\\w*\\s*\\()", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+    private static final Pattern API_AVOIDANCE_REQUEST = Pattern.compile(
+            "\\b(?:avoid|do not|don't|without|not)\\b[^.\\n]{0,100}\\b(?:exact|specific|particular|prescrib|assum)\\w*\\b[^.\\n]{0,100}\\b(?:class|method|api|implementation)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern API_PERMISSION_REQUEST = Pattern.compile(
+            "\\b(?:public API|method signature|method signatures|specific class|specific method|fixed API|you may choose the public API|choose the public API)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    private record ConditionalDraftArtifact(Pattern contentPattern, Pattern requestPattern) {
+    }
 
     private HyperionUtils() {
         // utility class
@@ -180,6 +219,38 @@ final class HyperionUtils {
         }
         String sanitized = sanitizeInput(description);
         return sanitized.isBlank() ? DEFAULT_COURSE_DESCRIPTION : sanitized;
+    }
+
+    /**
+     * Whether the problem statement already contains final Artemis task bindings.
+     */
+    static boolean containsFinalTaskBindings(String problemStatement) {
+        return problemStatement != null && FINAL_TASK_BINDING.matcher(problemStatement).find();
+    }
+
+    /**
+     * Rejects generation-only artifacts in early draft problem statements before they can seed exercise generation.
+     */
+    static void validateDraftProblemStatementHygiene(String problemStatement, String sanitizedPrompt, String errorKeyPrefix) {
+        List<String> findings = new ArrayList<>();
+        if (FORBIDDEN_DRAFT_ARTIFACTS.stream().anyMatch(pattern -> pattern.matcher(problemStatement).find())) {
+            findings.add("forbidden draft artifact");
+        }
+        if (CONDITIONAL_DRAFT_ARTIFACTS.stream()
+                .anyMatch(artifact -> artifact.contentPattern().matcher(problemStatement).find() && !artifact.requestPattern().matcher(sanitizedPrompt).find())) {
+            findings.add("unrequested draft artifact");
+        }
+        boolean apiAvoidanceRequested = API_AVOIDANCE_REQUEST.matcher(sanitizedPrompt).find();
+        boolean apiExplicitlyPermitted = API_PERMISSION_REQUEST.matcher(sanitizedPrompt).find();
+        boolean contradictsApiAvoidance = PUBLIC_API_DETAILS.matcher(problemStatement).find() && (apiAvoidanceRequested || !apiExplicitlyPermitted);
+        if (contradictsApiAvoidance) {
+            findings.add("public API details");
+        }
+
+        if (!findings.isEmpty()) {
+            throw new InternalServerErrorAlertException("Generated problem statement contains generation-only artifacts: " + String.join(", ", findings), "ProblemStatement",
+                    errorKeyPrefix + ".generatedProblemStatementContainsArtifacts");
+        }
     }
 
     /**

@@ -54,7 +54,7 @@ public final class GenerationOutcome implements AutoCloseable {
     private final String capturedProblemStatement;
 
     /**
-     * Spec-fidelity findings. Coverage findings are advisory; a high-confidence unrequested adaptation change prevents direct persistence to the live exercise.
+     * Spec-fidelity findings. Any remaining finding prevents direct persistence to the live exercise; verified drafts with unresolved quality gaps are kept for manual review.
      */
     private final SpecFidelityReport specFidelityReport;
 
@@ -107,7 +107,7 @@ public final class GenerationOutcome implements AutoCloseable {
      * @return {@code true} only when verification accepted the exercise
      */
     public boolean isAccepted() {
-        return verification != null && verification.accepted() && !specFidelityReport.hasBlockingFindings();
+        return verification != null && verification.accepted() && !specFidelityReport.hasFindings();
     }
 
     public AgentLoopResult loopResult() {

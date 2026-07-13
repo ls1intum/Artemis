@@ -40,6 +40,15 @@ public class HyperionProblemStatementGenerationService {
 
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
 
+    private static final String HYGIENE_REPAIR_INSTRUCTION = """
+
+            The previous draft was rejected by automated hygiene checks. Rewrite it from scratch.
+            Keep it student-facing and behavioral. Use only these headings: title, Introduction, Required Behaviors, Boundary Cases, Worked Examples, and Instructor Decisions Before Final Generation.
+            Do not include task markers, test names, grader internals, UML, optional extras, benchmarks, student test-suite work, or any checklist item about tests unless the instructor explicitly requested them.
+            Do not include optional/removable side features, resource-limit discussions, thread-safety/concurrency requirements, or examples that say both conflict and no conflict.
+            If the instructor asked to avoid exact names, do not use the words API, operation, method, class, unit test, tests, test suite, optional, benchmark, UML, repository, grader, or hidden. Remove every API heading, operation table, method-like operation name, exact class name, and Java code example; use neutral prose or input/output tables instead.
+            """;
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -106,16 +115,34 @@ public class HyperionProblemStatementGenerationService {
                 builder -> builder.withCourse(course.getId()).withUser(userId));
 
         // Defensively strip artifacts the LLM may have copied from the prompt template
-        if (generatedProblemStatement != null) {
-            generatedProblemStatement = stripLineNumbers(generatedProblemStatement);
-            generatedProblemStatement = stripWrapperMarkers(generatedProblemStatement);
-            generatedProblemStatement = generatedProblemStatement.trim();
-        }
+        generatedProblemStatement = cleanGeneratedProblemStatement(generatedProblemStatement);
 
         boolean isEmptyResponse = generatedProblemStatement == null || generatedProblemStatement.isBlank();
         if (isEmptyResponse) {
             throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
                     "ProblemStatementGeneration.problemStatementGenerationNull");
+        }
+
+        try {
+            HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
+        }
+        catch (InternalServerErrorAlertException hygieneFailure) {
+            log.info("Generated draft problem statement failed hygiene checks for course [{}]; retrying once with repair instructions", course.getId());
+            try {
+                chatResponse = chatClient.prompt().system(systemPrompt + HYGIENE_REPAIR_INSTRUCTION).user(userMessage).call().chatResponse();
+                generatedProblemStatement = cleanGeneratedProblemStatement(LLMTokenUsageService.extractResponseText(chatResponse));
+            }
+            catch (Exception e) {
+                log.error("Error repairing generated problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
+                throw hygieneFailure;
+            }
+            llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
+                    builder -> builder.withCourse(course.getId()).withUser(userId));
+            if (generatedProblemStatement == null || generatedProblemStatement.isBlank()) {
+                throw new InternalServerErrorAlertException("Generated problem statement is null or empty", "ProblemStatement",
+                        "ProblemStatementGeneration.problemStatementGenerationNull");
+            }
+            HyperionUtils.validateDraftProblemStatementHygiene(generatedProblemStatement, sanitizedPrompt, "ProblemStatementGeneration");
         }
 
         // Validate response length
@@ -126,6 +153,14 @@ public class HyperionProblemStatementGenerationService {
         }
 
         return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+    }
+
+    @Nullable
+    private static String cleanGeneratedProblemStatement(@Nullable String generatedProblemStatement) {
+        if (generatedProblemStatement == null) {
+            return null;
+        }
+        return stripWrapperMarkers(stripLineNumbers(generatedProblemStatement)).trim();
     }
 
 }
