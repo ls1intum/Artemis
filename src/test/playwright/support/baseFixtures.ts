@@ -96,89 +96,6 @@ async function prewarmChunks(browser: Browser): Promise<void> {
     }
 }
 
-/**
- * A trimmed, diverse subset of {@link PREWARM_ROUTES} used by the per-test in-context warm-up
- * ({@link warmChunksInContext}). Four routes cover the heaviest, most distinct lazy modules the
- * failing tests hit (course-management shell, atlas competency/learning-path, exam management,
- * student course view); keeping it small bounds the per-test warm-up cost.
- */
-const WARM_ROUTES = [
-    `/course-management/${SEED_COURSES.atlas1.id}`,
-    `/course-management/${SEED_COURSES.atlas1.id}/learning-path-management`,
-    `/course-management/${SEED_COURSES.examManagement.id}/exams`,
-    `/courses/${SEED_COURSES.general.id}`,
-];
-
-/**
- * EXPERIMENT (getResponseBody flake): warm the JS/CSS chunks into the CURRENT test's own browser
- * context, so the test's real navigations serve them from cache instead of re-downloading. Fewer
- * large chunk responses churning Chromium's per-renderer network buffer means the small `/api`
- * response bodies tests read via `waitForResponse().json()` are far less likely to be evicted before
- * the read ("Network.getResponseBody: No data found for resource").
- *
- * Why in-context and not the worker-scoped {@link prewarmChunks}: Playwright gives each test a fresh,
- * non-persistent (incognito) context whose HTTP cache is per-context and in-memory — it does NOT
- * share the browser's on-disk cache. So the worker prewarm, which warms a throwaway context that is
- * then closed, cannot populate the caches the tests actually use. Warming inside the test's own
- * context is what makes the cache hit land where it matters.
- *
- * Isolation-safe: the suite uses no `storageState`, so the context is clean (logged out) when this
- * runs. We borrow the cached admin JWT only to reach the authenticated lazy routes, then clear all
- * cookies + origin storage so the test starts from the same clean state it would have otherwise.
- * Best-effort throughout. Gated to CI (where the flake manifests at worker scale); disable with
- * PW_WARM_CACHE=off.
- */
-let warmCacheStatusLogged = false;
-
-async function warmChunksInContext(page: Page): Promise<void> {
-    const jwt = readAdminJwt();
-    if (!jwt) {
-        if (!warmCacheStatusLogged) {
-            warmCacheStatusLogged = true;
-            console.log('[warm-cache] skipped — admin JWT not available');
-        }
-        return;
-    }
-    if (!warmCacheStatusLogged) {
-        warmCacheStatusLogged = true;
-        console.log(`[warm-cache] in-context chunk warm-up ACTIVE (${WARM_ROUTES.length} routes per test)`);
-    }
-
-    const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
-    const url = new URL(baseURL);
-    const ctx = page.context();
-
-    await ctx.addCookies([
-        {
-            name: 'jwt',
-            value: jwt,
-            domain: url.hostname,
-            path: '/',
-            httpOnly: false,
-            secure: url.protocol === 'https:',
-            sameSite: 'Lax',
-        },
-    ]);
-
-    for (const route of WARM_ROUTES) {
-        await page.goto(baseURL + route, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => {});
-    }
-
-    // Reset to the clean, logged-out state the test expects (it performs its own login/setup).
-    await ctx.clearCookies().catch(() => {});
-    await page
-        .evaluate(() => {
-            try {
-                localStorage.clear();
-                sessionStorage.clear();
-            } catch {
-                /* storage may be inaccessible on some origins — ignore */
-            }
-        })
-        .catch(() => {});
-    await page.goto('about:blank').catch(() => {});
-}
-
 const test = baseTest.extend<
     {
         autoTestFixture: string;
@@ -203,44 +120,6 @@ const test = baseTest.extend<
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
-
-            // Enlarge Chrome's per-renderer network resource buffer (default ~10 MB) so response bodies are
-            // not evicted before a test reads them. Under Angular 22 + parallel E2E load, cold-context JS-chunk
-            // re-fetches (large responses) churn the default buffer fast enough to drop the small API response
-            // bodies, causing intermittent "Network.getResponseBody: No data found for resource" on
-            // page.waitForResponse(...).json(). maxTotalBufferSize/maxResourceBufferSize are renderer-level, so
-            // enlarging them here keeps those bodies retrievable. Best-effort.
-            try {
-                const cdpSession = await page.context().newCDPSession(page);
-                await cdpSession.send('Network.enable', {
-                    maxTotalBufferSize: 256 * 1024 * 1024,
-                    maxResourceBufferSize: 128 * 1024 * 1024,
-                });
-            } catch {
-                // Ignore — if the CDP command is unavailable the eager-buffer handler below still helps.
-            }
-
-            // Eagerly buffer API response bodies as they arrive. Playwright caches a response body the
-            // first time it is read, so a later `response.json()` in a test returns that cached copy instead
-            // of issuing a fresh CDP `Network.getResponseBody` call. Under the Angular 22 runtime + parallel
-            // load, that late CDP read intermittently returns "No data found for resource with given
-            // identifier" because the browser has already evicted the body from its per-page network buffer
-            // by the time the test reads it (the request itself succeeded server-side). Reading the body the
-            // moment the response event fires — while it is still buffered — makes those reads deterministic.
-            // Best-effort (`.catch`) and scoped to `/api/` responses to avoid buffering large static assets.
-            page.on('response', (response) => {
-                if (response.url().includes('/api/')) {
-                    void response.body().catch(() => {});
-                }
-            });
-
-            // EXPERIMENT: warm the app's JS/CSS chunks into this test's context before it runs, so the
-            // test's navigations hit the cache and don't churn the network buffer that holds the /api
-            // response bodies. Only in CI (where the getResponseBody flake manifests); PW_WARM_CACHE=off
-            // disables it. Runs before coverage start so its navigations are not counted.
-            if (process.env.CI && process.env.PW_WARM_CACHE !== 'off') {
-                await warmChunksInContext(page).catch(() => {});
-            }
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 
