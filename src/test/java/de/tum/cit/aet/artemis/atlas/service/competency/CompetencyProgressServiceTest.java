@@ -131,8 +131,11 @@ class CompetencyProgressServiceTest {
         // The row the winner created was deleted again before the reconcile UPDATE -> zero rows affected.
         when(competencyProgressRepository.updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any(), any())).thenReturn(0);
 
-        assertThatCode(() -> competencyProgressService.updateCompetencyProgress(COMPETENCY_ID, user)).doesNotThrowAnyException();
+        CompetencyProgress result = competencyProgressService.updateCompetencyProgress(COMPETENCY_ID, user);
 
+        // The cleanup-race path returns the in-memory computed progress (never null), so synchronous callers that
+        // read getProgress()/getConfidence() do not NPE.
+        assertThat(result).isNotNull();
         // No resurrection (a targeted UPDATE, not a merge/insert), and no learning-path propagation for a row that
         // no longer exists.
         verify(competencyProgressRepository).updateProgressAndConfidence(eq(COMPETENCY_ID), eq(USER_ID), any(), any(), any(), any());
