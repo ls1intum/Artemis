@@ -35,6 +35,16 @@ $graded-color: #28a745;
     }
 }
 
+:host-context([prime-ng-use-dark-theme='true']) .participation-mode {
+    ::ng-deep .p-togglebutton-checked {
+        background: var(--p-surface-800, #262b31);
+    }
+
+    #participation-mode-badge {
+        background: var(--p-surface-800, #262b31);
+    }
+}
+
 .participation-mode--practice {
     ::ng-deep .p-togglebutton-checked .participation-mode-item,
     ::ng-deep .p-togglebutton-checked .participation-mode-item * {
