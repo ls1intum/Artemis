@@ -1,0 +1,9 @@
+:host {
+    display: block;
+}
+
+// CdkTable renders the native <table>/<thead>/<tbody>; make the sticky header opaque so scrolled
+// rows do not show through. Colors come from the token utilities on the header row in the template.
+.cdk-table {
+    width: 100%;
+}

@@ -1,0 +1,37 @@
+<div class="flex flex-wrap items-center justify-between gap-4 py-2 text-sm text-muted-color" data-testid="tum-ui-paginator">
+    <div class="flex items-center gap-1">
+        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isFirst()" (clicked)="goToFirst()" data-testid="paginator-first">
+            <fa-icon [icon]="faAnglesLeft" />
+            <span class="sr-only" jhiTranslate="global.paginator.first"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isFirst()" (clicked)="goToPrevious()" data-testid="paginator-previous">
+            <fa-icon [icon]="faAngleLeft" />
+            <span class="sr-only" jhiTranslate="global.paginator.previous"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isLast()" (clicked)="goToNext()" data-testid="paginator-next">
+            <fa-icon [icon]="faAngleRight" />
+            <span class="sr-only" jhiTranslate="global.paginator.next"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="secondary" [text]="true" size="small" [disabled]="disabled() || isLast()" (clicked)="goToLast()" data-testid="paginator-last">
+            <fa-icon [icon]="faAnglesRight" />
+            <span class="sr-only" jhiTranslate="global.paginator.last"></span>
+        </tum-ui-button>
+    </div>
+
+    <span data-testid="paginator-report">{{ 'global.item-count' | artemisTranslate: { first: rangeBegin(), second: rangeEnd(), total: totalRecords() } }}</span>
+
+    <label class="flex items-center gap-2">
+        <span jhiTranslate="global.paginator.rowsPerPage"></span>
+        <select
+            class="rounded-md border border-surface bg-surface-0 px-2 py-1 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
+            [value]="pageSize()"
+            [disabled]="disabled()"
+            (change)="onPageSizeChange($any($event.target).value)"
+            data-testid="paginator-page-size"
+        >
+            @for (option of pageSizeOptions(); track option) {
+                <option [value]="option">{{ option }}</option>
+            }
+        </select>
+    </label>
+</div>

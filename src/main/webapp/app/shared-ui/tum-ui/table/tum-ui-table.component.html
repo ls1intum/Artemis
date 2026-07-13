@@ -1,0 +1,93 @@
+@if (showSearch()) {
+    <div class="mb-2">
+        <div class="relative max-w-xs">
+            <fa-icon [icon]="faMagnifyingGlass" class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-color" />
+            <input
+                type="search"
+                [placeholder]="searchPlaceholder() | artemisTranslate"
+                [attr.aria-label]="searchPlaceholder() | artemisTranslate"
+                (input)="onSearchInput($any($event.target).value)"
+                class="w-full rounded-md border border-surface bg-surface-0 py-2 pl-8 pr-3 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
+                data-testid="tum-ui-table-search"
+            />
+        </div>
+    </div>
+}
+
+<div
+    class="relative"
+    [class.overflow-auto]="scrollable()"
+    [class.flex-1]="scrollHeight() === 'flex'"
+    [class.min-h-0]="scrollHeight() === 'flex'"
+    [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
+>
+    <table cdk-table [dataSource]="rows()" [class]="tableClasses()" data-testid="tum-ui-table">
+        @for (col of columns(); track columnName(col, $index)) {
+            <ng-container [cdkColumnDef]="columnName(col, $index)">
+                <th
+                    cdk-header-cell
+                    *cdkHeaderCellDef
+                    scope="col"
+                    [style.width]="col.width"
+                    [attr.aria-sort]="ariaSortFor(col)"
+                    class="border-b border-surface px-3 py-2 text-left font-semibold text-surface-700 dark:text-surface-0"
+                >
+                    @if (col.sort && col.field) {
+                        <button type="button" class="inline-flex items-center gap-1 hover:text-primary" (click)="onSortClick(col)">
+                            @if (col.headerKey) {
+                                <span [jhiTranslate]="col.headerKey"></span>
+                            } @else {
+                                <span>{{ col.header }}</span>
+                            }
+                            <fa-icon [icon]="sortIconFor(col)" class="text-xs" />
+                        </button>
+                    } @else if (col.headerKey) {
+                        <span [jhiTranslate]="col.headerKey"></span>
+                    } @else {
+                        <span>{{ col.header }}</span>
+                    }
+                </th>
+                <td cdk-cell *cdkCellDef="let row; let i = index" class="border-b border-surface px-3 py-2 text-surface-900 dark:text-surface-0">
+                    @if (col.templateRef) {
+                        <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: cellParams(row, col, i) }" />
+                    } @else {
+                        {{ resolveValue(row, col) }}
+                    }
+                </td>
+            </ng-container>
+        }
+
+        @if (rowActions(); as actions) {
+            <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
+                <th cdk-header-cell *cdkHeaderCellDef class="border-b border-surface px-3 py-2"></th>
+                <td cdk-cell *cdkCellDef="let row" class="border-b border-surface px-3 py-2 text-right">
+                    <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
+                </td>
+            </ng-container>
+        }
+
+        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="bg-surface-0 dark:bg-surface-900"></tr>
+        <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()"></tr>
+
+        <tr *cdkNoDataRow>
+            <td [attr.colspan]="displayedColumns().length" class="px-3 py-6 text-center text-muted-color">
+                <span [jhiTranslate]="emptyMessage()"></span>
+            </td>
+        </tr>
+    </table>
+
+    @if (loading()) {
+        <div class="absolute inset-0 flex items-center justify-center bg-surface-0/60 dark:bg-surface-900/60" aria-hidden="true" data-testid="tum-ui-table-loading">
+            <span class="h-6 w-6 animate-spin rounded-full border-2 border-surface border-t-primary"></span>
+        </div>
+    }
+</div>
+
+<tum-ui-paginator
+    [totalRecords]="totalRecords()"
+    [page]="currentPage()"
+    [pageSize]="effectivePageSize()"
+    [pageSizeOptions]="pageSizeOptions()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+/>

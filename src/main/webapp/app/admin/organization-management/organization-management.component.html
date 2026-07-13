@@ -7,14 +7,16 @@
         </button>
     </div>
     <div class="flex-1 min-h-0">
-        <jhi-table-view
-            [cols]="columns()"
-            [vals]="organizations()"
-            [totalRows]="totalCount()"
-            (onLazyLoad)="loadOrganizations($event)"
+        <tum-ui-table
+            [columns]="columns()"
+            [rows]="organizations()"
+            [totalRecords]="totalCount()"
+            (lazyLoad)="loadOrganizations($event)"
             [rowActions]="organizationActions"
             [loading]="isLoading()"
-            [options]="tableOptions"
+            [striped]="true"
+            [scrollable]="true"
+            scrollHeight="flex"
         />
     </div>
 </div>

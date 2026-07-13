@@ -325,7 +325,14 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
+        "paginator": {
+            "first": "First page",
+            "previous": "Previous page",
+            "next": "Next page",
+            "last": "Last page",
+            "rowsPerPage": "Rows per page"
+        }
     },
     "entity": {
         "actions": "Actions",
