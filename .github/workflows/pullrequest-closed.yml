@@ -4,6 +4,9 @@ on:
   pull_request_target:
     types: [closed]
 
+permissions:
+  contents: read
+
 jobs:
   # If a PR is closed the docker image should be deleted to save space
   purge-image:
