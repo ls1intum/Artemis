@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
-import { Browser, Locator, Page, Response, expect } from '@playwright/test';
+import { Browser, Locator, Page, Request, Response, expect } from '@playwright/test';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
@@ -41,6 +41,29 @@ function isResponseBodyEvicted(error: unknown): boolean {
 }
 
 /**
+ * Per-page store of non-GET API response bodies captured at the network layer (page.route().fetch() in
+ * baseFixtures) before Chrome can evict them from its per-renderer buffer. A truly evicted non-GET body
+ * cannot be recovered read-side (it must not be replayed — side effects), so it is captured at request
+ * time instead. Keyed by the intercepted Request, the same instance readResponseJson sees via
+ * response.request().
+ */
+const capturedApiResponseBodies = new WeakMap<Page, WeakMap<Request, Buffer>>();
+
+/** Store a network-layer-captured response body; called by the route handler in baseFixtures. */
+export function storeCapturedApiResponseBody(page: Page, request: Request, body: Buffer): void {
+    let perPage = capturedApiResponseBodies.get(page);
+    if (!perPage) {
+        perPage = new WeakMap<Request, Buffer>();
+        capturedApiResponseBodies.set(page, perPage);
+    }
+    perPage.set(request, body);
+}
+
+function getCapturedApiResponseBody(response: Response): Buffer | undefined {
+    return capturedApiResponseBodies.get(response.frame().page())?.get(response.request());
+}
+
+/**
  * Read a Playwright {@link Response} body as JSON, resilient to Chrome's CDP
  * "Network.getResponseBody: No data found for resource" eviction race.
  *
@@ -55,10 +78,18 @@ function isResponseBodyEvicted(error: unknown): boolean {
  *      the side effect, e.g. create a second entity);
  *   4. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
  *
- * Note: a truly evicted **non-GET** body cannot be recovered read-side (step 4). Reducing the eviction
- * itself is handled elsewhere (enlarged CDP network buffer + per-test chunk warm-up in baseFixtures).
+ * Note: a truly evicted **non-GET** body cannot be recovered read-side (step 4), so those bodies are
+ * captured at the network layer at request time (page.route().fetch() in baseFixtures) and read from
+ * that store first — see storeCapturedApiResponseBody.
  */
 export async function readResponseJson<T = any>(response: Response): Promise<T> {
+    // Prefer a body captured at the network layer (baseFixtures route interception): it survives
+    // Chrome's per-renderer buffer eviction and is the only reliable source for non-GET responses,
+    // whose evicted bodies cannot be replayed read-side (see step 4 below).
+    const capturedBody = getCapturedApiResponseBody(response);
+    if (capturedBody) {
+        return JSON.parse(capturedBody.toString('utf-8')) as T;
+    }
     try {
         return (await response.json()) as T;
     } catch (error) {

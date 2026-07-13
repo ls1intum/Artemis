@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript } from './utils';
+import { addE2EInitScript, storeCapturedApiResponseBody } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -233,6 +233,30 @@ const test = baseTest.extend<
                     void response.body().catch(() => {});
                 }
             });
+
+            // Capture non-GET API response bodies at the network layer so tests can read them even when
+            // Chrome evicts the body from its per-renderer buffer before the read (the getResponseBody
+            // flake). page.route().fetch() issues the request from Node and holds the body in Node memory —
+            // eviction-proof, and unlike the read-side replay in readResponseJson it works for POST/PUT/DELETE
+            // (whose responses must not be replayed). GETs stay on the normal path: they are already
+            // recoverable via replay, and skipping them avoids buffering any streaming/SSE endpoint (all GET).
+            // Best-effort — any failure falls back to route.continue() (the prior behaviour). CI-only;
+            // PW_API_CAPTURE=off disables it.
+            if (process.env.CI && process.env.PW_API_CAPTURE !== 'off') {
+                await page.route('**/api/**', async (route) => {
+                    if (route.request().method() === 'GET') {
+                        await route.continue();
+                        return;
+                    }
+                    try {
+                        const apiResponse = await route.fetch();
+                        storeCapturedApiResponseBody(page, route.request(), await apiResponse.body());
+                        await route.fulfill({ response: apiResponse });
+                    } catch {
+                        await route.continue().catch(() => {});
+                    }
+                });
+            }
 
             // EXPERIMENT: warm the app's JS/CSS chunks into this test's context before it runs, so the
             // test's navigations hit the cache and don't churn the network buffer that holds the /api
