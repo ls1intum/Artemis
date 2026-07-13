@@ -2305,6 +2305,60 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
+    /**
+     * Test-run counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: test runs are exempt
+     * from quiz masking (the server never strips their quiz solutions and the client's {@code resultsArePublished}
+     * treats test runs as published immediately), so the test-run summary wire must carry the quiz solutions even
+     * while the real exam's results are NOT yet published. Gating the summary projection only on
+     * {@code areResultsPublishedYet()} regressed exactly this: an instructor finishing a test run saw no quiz
+     * right/wrong on its summary.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunSummaryWireServesQuizSolutionsBeforePublishResults() throws Exception {
+        var testRun = createTestRun();
+        // pin the interesting state: the real exam's results are NOT published, only the test-run exemption applies
+        testRunExam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        testRunExam = examRepository.save(testRunExam);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        var testRunResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/test-runs/" + testRun.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/submit", testRunResponse, HttpStatus.OK, null);
+
+        JsonNode summaryWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId() + "/summary",
+                HttpStatus.OK, JsonNode.class);
+
+        boolean sawQuizQuestionWithSolution = false;
+        for (JsonNode exercise : summaryWire.get("exercises")) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            for (JsonNode question : questions) {
+                switch (question.get("type").asText()) {
+                    case "multiple-choice" -> {
+                        long correctOptions = 0;
+                        for (JsonNode option : question.get("answerOptions")) {
+                            if (option.path("isCorrect").asBoolean(false)) {
+                                correctOptions++;
+                            }
+                        }
+                        assertThat(correctOptions).as("unpublished test-run summary MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
+                        sawQuizQuestionWithSolution = true;
+                    }
+                    case "drag-and-drop", "short-answer" -> {
+                        assertThat(question.path("correctMappings").isEmpty()).as("unpublished test-run summary wire must carry correctMappings").isFalse();
+                        sawQuizQuestionWithSolution = true;
+                    }
+                    default -> {
+                    }
+                }
+            }
+        }
+        assertThat(sawQuizQuestionWithSolution).as("test-run summary wire exposed a quiz question to solution-check").isTrue();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
