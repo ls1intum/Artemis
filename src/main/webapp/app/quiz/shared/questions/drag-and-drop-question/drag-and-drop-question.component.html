@@ -125,7 +125,7 @@
                                     (onDragOver)="preventDefault($event)"
                                     (onDragLeave)="preventDefault($event)"
                                     cdkDropList
-                                    [cdkDropListAutoScrollStep]="60"
+                                    [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                                 >
                                     @if (dragItemForDropLocation(dropLocation)) {
                                         <jhi-drag-item
@@ -292,7 +292,7 @@
                         (onDragOver)="preventDefault($event)"
                         (onDragLeave)="preventDefault($event)"
                         cdkDropList
-                        [cdkDropListAutoScrollStep]="60"
+                        [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                     >
                         @for (dragItem of getUnassignedDragItems(); track dragItem; let i = $index) {
                             <jhi-drag-item
