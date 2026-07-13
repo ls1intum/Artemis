@@ -1272,9 +1272,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             } else if (this.quizExercise().dueDate && ((!this.quizExercise().quizEnded && this.submission().submitted) || (this.remainingTimeSeconds() < 0 && hasAnyAnswer))) {
                 info.showResultsAvailable = true;
                 info.resultsAvailableDate = this.quizExercise().dueDate;
-            } else if (this.waitingForQuizStart() && this.quizExercise().duration) {
-                info.showDuration = true;
-                info.durationText = this.durationFromSecondsPipe.transform(this.quizExercise().duration!);
+            } else if (this.waitingForQuizStart()) {
+                const duration = this.quizExercise().duration;
+                if (duration) {
+                    info.showDuration = true;
+                    info.durationText = this.durationFromSecondsPipe.transform(duration);
+                }
             }
         }
         this._liveHeaderInfo.set(info);
