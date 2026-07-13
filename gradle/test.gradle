@@ -130,7 +130,9 @@ test {
             includeTags includedTags
         }
     } else {
-        useJUnitPlatform()
+        useJUnitPlatform {
+            excludeTags "nightly-lti", "benchmark"
+        }
         // Always execute "shared"-folder when executing module-specifc tests
         includedModules += "shared"
         filter { testFilter ->
@@ -170,8 +172,12 @@ test {
         testClassesDirs = testing.suites.test.sources.output.classesDirs
         classpath = testing.suites.test.sources.runtimeClasspath
         useJUnitPlatform {
-            // Match the default `test` task: nightly suites are opt-in via -DincludeTags='nightly-lti'.
-            excludeTags "nightly-lti", "benchmark"
+            if (includedTags.size() > 0) {
+                includeTags includedTags
+            } else {
+                // Match the default `test` task: long-running suites are opt-in via -DincludeTags.
+                excludeTags "nightly-lti", "benchmark"
+            }
         }
         exclude "**/*IT*", "**/*IntTest*"
         testLogging.showStandardStreams = true
