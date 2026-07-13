@@ -4,6 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { SplitterModule } from 'primeng/splitter';
 import { TabsModule } from 'primeng/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,7 +24,7 @@ export class PanelDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
