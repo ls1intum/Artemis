@@ -29,6 +29,10 @@ env:
   # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
   build_workflow_name: ci.yml
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   check-build-status:
     runs-on: [self-hosted, artemis-prod-deployment]
