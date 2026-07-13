@@ -45,16 +45,10 @@ public class LectureContentUpdateClassifierService {
         }
         Objects.requireNonNull(before, "before");
         var updateKinds = java.util.EnumSet.noneOf(LectureContentUpdateKind.class);
-        addIfRequired(updateKinds, LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult));
-        addIfRequired(updateKinds, LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after));
-        addIfRequired(updateKinds, LectureContentUpdateKind.METADATA, isMetadataUpdate(before, after));
+        Map.of(LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult), LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after),
+                LectureContentUpdateKind.METADATA, isMetadataUpdate(before, after)).entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey)
+                .forEach(updateKinds::add);
         return updateKinds;
-    }
-
-    private static void addIfRequired(Set<LectureContentUpdateKind> updateKinds, LectureContentUpdateKind updateKind, boolean required) {
-        if (required) {
-            updateKinds.add(updateKind);
-        }
     }
 
     private static boolean isContentUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
@@ -63,7 +57,8 @@ public class LectureContentUpdateClassifierService {
     }
 
     private static boolean hasAttachmentFileContentUpdate(AttachmentFileUpdateResult fileUpdateResult) {
-        return fileUpdateResult != null && (fileUpdateResult.fileBytesChanged() || fileUpdateResult.attachmentAdded() || fileUpdateResult.attachmentRemoved());
+        return java.util.Optional.ofNullable(fileUpdateResult)
+                .map(result -> java.util.List.of(result.fileBytesChanged(), result.attachmentAdded(), result.attachmentRemoved()).contains(true)).orElse(false);
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
