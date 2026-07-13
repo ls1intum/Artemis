@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -209,6 +212,62 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         assertThat(importedProgrammingExercise.getPackageName()).isEqualTo(sourceExercise.getPackageName());
         assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
         assertThat(importedProgrammingExercise.getExerciseGroup().getExam().getCourse()).isEqualTo(course1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithSingleProgrammingExercise_omittedShortNameFallsBackToSource() throws Exception {
+        // Regression fence: ExerciseImportDTO's title/shortName/points overrides are @Nullable, so a minimal client request
+        // may omit them (they arrive as null on the exam-import skeleton). Before the fix, the omitted short name was only
+        // backfilled from the source inside addExercisesToExerciseGroup, which runs AFTER
+        // preCheckProgrammingExercisesForTitleAndShortNameUniqueness. The VCS/CI precheck therefore called
+        // getShortName().replaceAll(...) on a null short name and aborted the whole import with an NPE. The fallback must
+        // happen before the precheck, so a programming exercise whose overrides are omitted imports successfully and keeps
+        // the source's title and short name.
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
+                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+        doReturn("build-plan").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).enablePlan(any(), any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+
+        // Build a minimal exam-import payload whose single programming ExerciseImportDTO omits the title/shortName/points
+        // overrides (all null), exactly as a spec-compliant-but-minimal client request would look.
+        ExamImportDTO base = ExamImportDTO.of(sourceExam, course1.getId());
+        ExerciseGroupImportDTO sourceGroupDTO = base.exerciseGroups().getFirst();
+        ExerciseImportDTO minimalExercise = new ExerciseImportDTO(sourceExercise.getId(), sourceExercise.getExerciseType(), null, null, null, null);
+        ExerciseGroupImportDTO groupDTO = new ExerciseGroupImportDTO(sourceGroupDTO.title(), sourceGroupDTO.isMandatory(), List.of(minimalExercise));
+        ExamImportDTO importDTO = new ExamImportDTO(base.title(), base.testExam(), base.examWithAttendanceCheck(), base.visibleDate(), base.startDate(), base.endDate(),
+                base.publishResultsDate(), base.examStudentReviewStart(), base.examStudentReviewEnd(), base.gracePeriod(), base.workingTime(), base.startText(), base.endText(),
+                base.confirmationStartText(), base.confirmationEndText(), base.examMaxPoints(), base.randomizeExerciseOrder(), base.numberOfExercisesInExam(),
+                base.numberOfCorrectionRoundsInExam(), base.examiner(), base.moduleNumber(), base.courseName(), base.exampleSolutionPublicationDate(), base.channelName(),
+                base.courseId(), List.of(groupDTO));
+
+        // The import must NOT NPE in the precheck; it succeeds and imports the programming exercise.
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, HttpStatus.CREATED)
+                .exam();
+
+        assertThat(received.getExerciseGroups()).hasSize(1);
+        Exercise importedExercise = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
+        assertThat(importedExercise).isInstanceOf(ProgrammingExercise.class);
+        ProgrammingExercise importedProgrammingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) importedExercise);
+
+        // The omitted short name and title fall back to the DB source's values (source-first).
+        assertThat(importedProgrammingExercise.getShortName()).isEqualTo(sourceExercise.getShortName());
+        assertThat(importedProgrammingExercise.getTitle()).isEqualTo(sourceExercise.getTitle());
+        assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
     }
 
     @Test

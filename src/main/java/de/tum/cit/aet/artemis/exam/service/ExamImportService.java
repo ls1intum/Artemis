@@ -320,6 +320,15 @@ public class ExamImportService {
         List<Exercise> programmingExercises = exerciseGroups.stream().flatMap(group -> group.getExercises().stream())
                 .filter(exercise -> exercise.getExerciseType() == ExerciseType.PROGRAMMING).toList();
 
+        // Backfill any omitted title/short name/points overrides from the reloaded DB source BEFORE the uniqueness and
+        // VCS/CI prechecks read them. ExerciseImportDTO#toEntity carries an omitted override as a null skeleton field
+        // (see ExerciseImportDTO#toEntity), and ProgrammingExerciseValidationService#preCheckProjectExistsOnVCSOrCI calls
+        // getShortName().replaceAll(...) which would NPE on a null short name, aborting the whole import. The
+        // addExercisesToExerciseGroup path also backfills these fields (via copyProgrammingExerciseInformationForExamImport),
+        // but it runs after this precheck, so the fallback must happen here as well. The merge keeps source-first +
+        // non-null-override semantics, so an explicit non-null client override still wins.
+        backfillOmittedProgrammingBasisOverridesFromSource(programmingExercises);
+
         // check for duplicated titles
         boolean duplicatedTitles = checkForAndRemoveDuplicatedTitlesAndShortNames(programmingExercises, true);
         if (duplicatedTitles) {
@@ -334,6 +343,31 @@ public class ExamImportService {
         int numberOfInvalidProgrammingExercises = checkForExistingProjectAndRemoveTitleShortName(programmingExercises, courseShortName);
         if (numberOfInvalidProgrammingExercises > 0) {
             throw new ExamConfigurationException(exerciseGroups, numberOfInvalidProgrammingExercises, "invalidKey");
+        }
+    }
+
+    /**
+     * Backfills the omitted client-editable basis overrides (title, short name, max points, bonus points) of the given
+     * programming exercise skeletons from their reloaded DB source exercise, so the uniqueness and VCS/CI prechecks read
+     * non-null values. A skeleton built from {@link de.tum.cit.aet.artemis.exam.dto.ExerciseImportDTO} carries an omitted
+     * override as {@code null}; leaving the short name {@code null} makes the VCS/CI precheck NPE (it calls
+     * {@code getShortName().replaceAll(...)}).
+     * <p>
+     * Skeletons whose four override fields are all non-null are skipped without a source reload. This keeps the
+     * entity-shaped course-to-course import a no-op (those skeletons are real source exercises with all four fields set) and
+     * preserves source-first + non-null-override semantics: {@link #backfillOmittedBasisOverridesFromSource} only fills the
+     * fields that were omitted, so an explicit client override still wins.
+     *
+     * @param programmingExercises the programming exercise skeletons to backfill in place (each carries its source id)
+     */
+    private void backfillOmittedProgrammingBasisOverridesFromSource(List<Exercise> programmingExercises) {
+        for (Exercise exercise : programmingExercises) {
+            boolean allOverridesPresent = exercise.getTitle() != null && exercise.getShortName() != null && exercise.getMaxPoints() != null && exercise.getBonusPoints() != null;
+            Long sourceExerciseId = exercise.getId();
+            if (allOverridesPresent || sourceExerciseId == null) {
+                continue;
+            }
+            programmingExerciseRepository.findById(sourceExerciseId).ifPresent(source -> backfillOmittedBasisOverridesFromSource(exercise, source));
         }
     }
 
