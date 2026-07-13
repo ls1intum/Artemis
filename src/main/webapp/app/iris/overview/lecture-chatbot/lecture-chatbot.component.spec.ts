@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { LectureChatbotComponent } from './lecture-chatbot.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { of } from 'rxjs';
 
 describe('LectureChatbotComponent', () => {
     let fixture: ComponentFixture<LectureChatbotComponent>;
@@ -13,12 +12,7 @@ describe('LectureChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureChatbotComponent],
-            providers: [
-                MockProvider(IrisChatService, {
-                    switchTo: vi.fn(),
-                    currentChatMode: vi.fn(() => of(ChatServiceMode.LECTURE)),
-                }),
-            ],
+            providers: [MockProvider(IrisChatService, { openChat: vi.fn() })],
         })
             .overrideComponent(LectureChatbotComponent, {
                 set: {
@@ -32,12 +26,12 @@ describe('LectureChatbotComponent', () => {
         irisChatService = TestBed.inject(IrisChatService);
     });
 
-    it('switches to lecture chat mode when lectureId is provided', async () => {
+    it('opens the lecture chat context when lectureId is provided', async () => {
         fixture.componentRef.setInput('lectureId', 42);
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(irisChatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
+        expect(irisChatService.openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
     });
 
     it('toggleChatHistory does nothing when base chatbot is not available', () => {

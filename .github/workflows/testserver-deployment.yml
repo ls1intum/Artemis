@@ -59,7 +59,7 @@ jobs:
           echo "Branch: $BRANCH_NAME"
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
-          echo "RAW_URL: ${{ env.RAW_URL }}"
+          echo "RAW_URL: $RAW_URL"
 
   determine-build-context:
     name: Determine Build Context
@@ -75,14 +75,14 @@ jobs:
         id: get_pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          REPO_NAME: ${{ github.repository }}
         run: |
-          BRANCH_NAME=${{ github.event.inputs.branch_name }}
           IS_MAIN_OR_DEVELOP=false
 
-          REPO_NAME=${{ github.repository }}
           echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop' in $REPO_NAME (excluding forks)."
 
-          PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
+          PR_DETAILS=$(gh api "repos/$REPO_NAME/pulls" \
             --paginate \
             --jq ".[] | select(.head.repo.full_name == \"$REPO_NAME\" and .head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
 
@@ -99,7 +99,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
 
             # Fetch the latest commit SHA of the branch
-            LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
+            LATEST_SHA=$(gh api "repos/$REPO_NAME/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
 
             if [ -z "$LATEST_SHA" ]; then
               echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
@@ -237,7 +237,7 @@ jobs:
       # Download artemis-server-cli from GH without cloning the Repo
       - name: Fetch Artemis CLI
         run: |
-          wget ${{ env.RAW_URL }}/artemis-server-cli
+          wget "$RAW_URL/artemis-server-cli"
           chmod +x artemis-server-cli
 
       # Configure SSH Key
