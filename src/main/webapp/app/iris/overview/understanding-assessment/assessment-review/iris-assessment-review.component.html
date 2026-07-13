@@ -1,10 +1,10 @@
 <h2 class="mb-5">
-    <span>{{ course.title }} - {{ exercise.title }} - {{ assessment.student?.name }} ({{ assessment.student?.login }})</span>
+    <span>{{ course().title }} - {{ exercise().title }} - {{ assessment().student?.name }} ({{ assessment().student?.login }})</span>
 </h2>
 <jhi-data-table
-    [isLoading]="isLoading"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-    [allEntities]="rows"
+    [isSearching]="false"
+    [allEntities]="rows()"
     entityType="qaexchange"
     [searchEntityFilterEnabled]="false"
     [showSearchField]="false"
@@ -62,11 +62,10 @@
         </ngx-datatable>
     </ng-template>
 </jhi-data-table>
-@if (assessment && assessment.verdict !== null) {
+@if (assessment() && assessment().verdict !== null) {
     <span class="iris-verdict">
         {{ 'artemisApp.iris.assessmentReview.verdict.assessedAs' | artemisTranslate }}
-        {{ 'artemisApp.iris.assessmentReview.verdict.' + translateIrisVerdict(assessment.verdict!) | artemisTranslate }}
-        ({{ 'artemisApp.iris.assessmentReview.verdict.explain.' + translateIrisVerdict(assessment.verdict!) | artemisTranslate }}).
+        {{ 'artemisApp.iris.assessmentReview.verdict.' + verdictTranslationSuffix() | artemisTranslate }}.
     </span>
 }
 <div class="d-flex align-items-center gap-2 ms-auto mt-3">
@@ -74,8 +73,8 @@
         jhi-exercise-action-button
         class="btn-success"
         [buttonIcon]="faCheck"
-        [overwriteDisabled]="assessment.verdictReview === IrisVerdictReview.ACCEPTED"
-        [buttonLabel]="('artemisApp.iris.assessmentReview.accept' | artemisTranslate) + getPointChangeString(IrisVerdictReview.ACCEPTED)"
+        [overwriteDisabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED"
+        [buttonLabel]="'artemisApp.iris.assessmentReview.accept' | artemisTranslate"
         [smallButton]="true"
         [hideLabelMobile]="false"
         (click)="acceptAnswers()"
@@ -86,19 +85,18 @@
         jhi-exercise-action-button
         class="btn-danger"
         [buttonIcon]="faX"
-        [overwriteDisabled]="assessment.verdictReview === IrisVerdictReview.REJECTED"
-        [buttonLabel]="('artemisApp.iris.assessmentReview.reject' | artemisTranslate) + getPointChangeString(IrisVerdictReview.REJECTED)"
+        [overwriteDisabled]="assessment().verdictReview === IrisVerdictReview.REJECTED"
+        [buttonLabel]="'artemisApp.iris.assessmentReview.reject' | artemisTranslate"
         [smallButton]="true"
         [hideLabelMobile]="false"
         (click)="rejectAnswers()"
         placement="right auto"
         container="body"
     ></button>
-    @if (assessment && (assessment.verdictReview === IrisVerdictReview.ACCEPTED || assessment.verdictReview === IrisVerdictReview.REJECTED)) {
+    @if (assessment() && (assessment().verdictReview === IrisVerdictReview.ACCEPTED || assessment().verdictReview === IrisVerdictReview.REJECTED)) {
         <span>
             {{ 'artemisApp.iris.assessmentReview.review.reviewedAs' | artemisTranslate }}
-            {{ 'artemisApp.iris.assessmentReview.review.' + translateReview(assessment.verdictReview!) | artemisTranslate }}
-            ({{ assessment.verifiedPoints ?? 0 }} {{ 'artemisApp.iris.assessmentReview.review.pointsVerified' | artemisTranslate }}).
+            {{ 'artemisApp.iris.assessmentReview.review.' + reviewTranslationSuffix() | artemisTranslate }}.
         </span>
     }
 </div>

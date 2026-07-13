@@ -14,6 +14,8 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
+import { IrisPipeEventDTO } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
+
 export type Response<T> = Observable<HttpResponse<T>>;
 
 /**
@@ -162,11 +164,15 @@ export class IrisChatHttpService {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
 
-    startPromptingMode<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.patch<T>(`${this.apiPrefix}/${identifier}/sessions/current/prompting`, null, { observe: 'response' });
+    startPromptingMode<IrisSessionDTO>(identifier: string): Response<IrisSessionDTO> {
+        const exerciseId = identifier.split('/').pop();
+        if (!exerciseId) {
+            throw new Error('Exercise id is missing from the session identifier');
+        }
+        return this.httpClient.patch<IrisSessionDTO>(`${this.apiPrefix}/programming-exercises/${exerciseId}/sessions/current/prompting`, null, { observe: 'response' });
     }
 
-    getLatestEvent(participationId: number): Observable<EventType> {
-        return this.httpClient.get<EventType>(`${this.apiPrefix}/programming-exercise-chat/${participationId}/latest-event`);
+    getLatestEvent(participationId: number): Observable<IrisPipeEventDTO> {
+        return this.httpClient.get<IrisPipeEventDTO>(`${this.apiPrefix}/participations/${participationId}/latest-event`);
     }
 }

@@ -1,38 +1,78 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
 import { faStopwatch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-quiz-timer-bar',
     templateUrl: './quiz-timer-bar.component.html',
     styleUrl: './quiz-timer-bar.component.scss',
     imports: [FaIconComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuizTimerBarComponent {
-    style?: string;
+    timeLimit = input(0);
+    timerExpiresAt = input<dayjs.Dayjs>();
+    open = input(false);
+    readonly timerExpired = output<void>();
 
-    @Input() timeLimit: number;
-    @Input() remainingSeconds: number | undefined;
-    @Input() open: boolean;
-
-    faStopwatch = faStopwatch;
+    protected readonly faStopwatch = faStopwatch;
 
     protected readonly JSON = JSON;
 
-    get displayedRemainingSeconds(): number {
-        if (this.remainingSeconds === undefined) {
-            // This is to show a full bar while fade-in and fade-out of bar
-            return this.timeLimit;
-        }
-        return Math.max(this.remainingSeconds, 0);
-    }
+    private readonly remainingSeconds = signal<number | undefined>(undefined);
 
-    get progress(): number {
-        if (this.timeLimit <= 0) {
+    protected readonly displayedRemainingSeconds = computed(() => this.remainingSeconds() ?? this.timeLimit());
+
+    protected readonly progress = computed(() => {
+        const timeLimit = this.timeLimit();
+
+        if (timeLimit <= 0) {
             return 100;
         }
 
-        return Math.max(0, Math.min(100, (this.displayedRemainingSeconds / this.timeLimit) * 100));
+        return Math.max(0, Math.min(100, (this.displayedRemainingSeconds() / timeLimit) * 100));
+    });
+
+    constructor() {
+        // effect is needed here because timer API is non-reactive
+        effect((onCleanup) => {
+            const timerExpiresAt = this.timerExpiresAt();
+
+            if (timerExpiresAt === undefined) {
+                this.remainingSeconds.set(undefined);
+                return;
+            }
+
+            let intervalId: ReturnType<typeof setInterval> | undefined;
+
+            const updateRemainingSeconds = (): boolean => {
+                const remainingSeconds = Math.max(timerExpiresAt.diff(dayjs(), 'second'), 0);
+
+                this.remainingSeconds.set(remainingSeconds);
+
+                if (remainingSeconds === 0) {
+                    if (intervalId !== undefined) {
+                        clearInterval(intervalId);
+                    }
+
+                    this.timerExpired.emit();
+                    return false;
+                }
+
+                return true;
+            };
+
+            if (updateRemainingSeconds()) {
+                intervalId = setInterval(updateRemainingSeconds, 1000);
+            }
+
+            onCleanup(() => {
+                if (intervalId !== undefined) {
+                    clearInterval(intervalId);
+                }
+            });
+        });
     }
 }

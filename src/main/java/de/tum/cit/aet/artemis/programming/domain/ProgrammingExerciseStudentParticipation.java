@@ -41,6 +41,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JoinColumn(name = "iris_assessment_id", referencedColumnName = "id", unique = true)
     private IrisAssessment irisAssessment;
 
+    @Nullable
+    @OneToOne
+    @JoinColumn(name = "iris_assessment_in_class_id", referencedColumnName = "id", unique = true)
+    private IrisAssessment irisAssessmentInClass;
+
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
     }
@@ -123,5 +128,14 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setIrisAssessment(@Nullable IrisAssessment assessment) {
         this.irisAssessment = assessment;
+    }
+
+    @Nullable
+    public IrisAssessment getIrisAssessmentInClass() {
+        return irisAssessmentInClass;
+    }
+
+    public void setIrisAssessmentInClass(@Nullable IrisAssessment irisAssessmentInClass) {
+        this.irisAssessmentInClass = irisAssessmentInClass;
     }
 }

@@ -13,8 +13,6 @@
             </column>
 
             <column name="verdict" type="VARCHAR(255)"/>
-            <column name="verified_score" type="DOUBLE"/>
-            <column name="verified_score_old" type="DOUBLE"/>
             <column name="student_id" type="bigint"/>
             <column name="exercise_id" type="bigint"/>
         </createTable>

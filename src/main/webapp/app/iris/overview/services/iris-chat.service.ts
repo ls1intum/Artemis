@@ -7,7 +7,7 @@ import { BehaviorSubject, Observable, Subject, Subscription, catchError, from, m
 import { switchMap } from 'rxjs/operators';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { EventType, IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
@@ -29,6 +29,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { IrisPipeEvent, IrisPipeEventDTO } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
 
 export { ChatServiceMode } from 'app/iris/shared/entities/iris-session-context.model';
 export type { SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -86,7 +87,7 @@ export class IrisChatService implements OnDestroy {
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
-    latestEvent: Subject<EventType | undefined> = new Subject<EventType | undefined>();
+    latestEvent: Subject<IrisPipeEvent | undefined> = new Subject<IrisPipeEvent | undefined>();
     stopTimer$ = new Subject<void>();
 
     // Flips to true once the first session-load attempt has produced a result (success OR
@@ -1087,18 +1088,18 @@ export class IrisChatService implements OnDestroy {
         return this.chatSessions.asObservable();
     }
 
-    public currentLatestEvent(): Observable<EventType | undefined> {
+    public currentLatestEvent(): Observable<IrisPipeEvent | undefined> {
         return this.latestEvent.asObservable();
     }
 
-    public loadLatestEvent(participationId: number | undefined): Observable<EventType | undefined> {
+    public loadLatestEvent(participationId: number | undefined): Observable<IrisPipeEvent> {
         if (participationId === undefined) {
             throw new Error('participation id is undefined');
         }
-        return this.http.getLatestEvent(participationId);
+        return this.http.getLatestEvent(participationId).pipe(map((dto: IrisPipeEventDTO) => dto.event));
     }
 
-    public startPromptingMode(): Observable<IrisExerciseChatSession> {
+    public startPromptingMode(): Observable<IrisSessionDTO> {
         return from(this.clearChat()).pipe(
             switchMap(() => {
                 if (!this.sessionHttpIdentifier) {
@@ -1107,7 +1108,7 @@ export class IrisChatService implements OnDestroy {
 
                 return this.http.startPromptingMode(this.sessionHttpIdentifier);
             }),
-            map((response: HttpResponse<IrisExerciseChatSession>) => {
+            map((response: HttpResponse<IrisSessionDTO>) => {
                 if (response.body) {
                     return response.body;
                 } else {

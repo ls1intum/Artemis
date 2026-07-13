@@ -79,13 +79,18 @@
                 "practice": "Übung",
                 "graded": "Bewertet"
             },
-            "startPrompting": "Verständnis prüfen",
-            "verifiedScore": "Bestätigte Punkte",
+            "prompting": {
+                "start": "Verständnis prüfen",
+                "currently": "Wird überprüft",
+                "finished": "Quiz abgeschlossen",
+                "noSubmission": "Keine Abgabe"
+            },
             "reviewIrisAssessment": {
-                "needsReview": "Review nötig",
+                "suspicious": "Auffällig",
+                "unsuspicious": "Unauffällig",
                 "missing": "Überprüfung fehlt",
-                "reviewable": "Review möglich",
-                "reviewed": "Review erledigt"
+                "accepted": "Akzeptiert",
+                "rejected": "Abgelehnt"
             }
         }
     }

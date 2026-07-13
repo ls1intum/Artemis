@@ -1,5 +1,5 @@
 package de.tum.cit.aet.artemis.iris.domain.promptuser;
 
-public enum IrisVerdictReview {
-    ACCEPTED, REJECTED
+public enum IrisVerdict {
+    SUSPICIOUS, UNSUSPICIOUS
 }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
@@ -6,57 +6,64 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { Course } from 'app/course/shared/entities/course.model';
-import { IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
+import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RouterLink } from '@angular/router';
-import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
     templateUrl: './iris-review-assessment-button.component.html',
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, CommonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IrisReviewAssessmentButtonComponent implements OnInit {
-    @Input()
-    course: Course;
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    participation: ProgrammingExerciseStudentParticipation;
-    @Input()
-    smallButton: boolean;
-    @Input()
-    hideLabelMobile = false;
+export class IrisReviewAssessmentButtonComponent {
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly participation = input.required<ProgrammingExerciseStudentParticipation>();
+    readonly smallButton = input.required<boolean>();
+    readonly hideLabelMobile = input(false);
 
-    needsAttention = false;
-    irisAssessment: IrisAssessment | undefined;
-
-    readonly faBrain = faBrain;
-
-    ngOnInit() {
-        this.irisAssessment = this.participation.irisAssessment;
-        this.needsAttention =
-            this.irisAssessment?.verdictReview === IrisVerdictReview.NEEDS_REVIEW ||
-            this.irisAssessment?.verdictReview === undefined ||
-            this.irisAssessment?.verdictReview === null;
-    }
-
-    getLabel(): string {
-        const label = 'artemisApp.exerciseActions.reviewIrisAssessment.';
-
-        switch (this.irisAssessment?.verdictReview) {
-            case IrisVerdictReview.REVIEWABLE:
-                return label + 'reviewable';
-            case IrisVerdictReview.NEEDS_REVIEW:
-                return label + 'needsReview';
-            case IrisVerdictReview.REJECTED:
-            case IrisVerdictReview.ACCEPTED:
-                return label + 'reviewed';
-            default:
-                return label + 'missing';
-        }
-    }
-
+    protected readonly faBrain = faBrain;
     protected readonly FeatureToggle = FeatureToggle;
+
+    protected readonly irisAssessment = computed(() => this.participation().irisAssessment);
+
+    protected readonly verdictReview = computed(() => this.irisAssessment()?.verdictReview);
+    protected readonly verdict = computed(() => this.irisAssessment()?.verdict);
+
+    // Returns true when the assessment is either suspicious but not yet reviewed, reviewed as rejected oder the quiz has not been done yet (verdict is missing)
+    protected readonly needsAttention = computed(() => {
+        const verdictReview = this.verdictReview();
+        const verdict = this.verdict();
+
+        return (
+            ((verdictReview === undefined || verdictReview === null) && verdict === IrisVerdict.SUSPICIOUS) ||
+            verdictReview === IrisVerdictReview.REJECTED ||
+            verdict === undefined ||
+            verdict === null
+        );
+    });
+
+    protected readonly label = computed(() => {
+        const labelPrefix = 'artemisApp.exerciseActions.reviewIrisAssessment.';
+
+        switch (this.verdictReview()) {
+            case IrisVerdictReview.REJECTED:
+                return `${labelPrefix}rejected`;
+            case IrisVerdictReview.ACCEPTED:
+                return `${labelPrefix}accepted`;
+            default:
+                switch (this.verdict()) {
+                    case IrisVerdict.UNSUSPICIOUS:
+                        return `${labelPrefix}unsuspicious`;
+                    case IrisVerdict.SUSPICIOUS:
+                        return `${labelPrefix}suspicious`;
+                    default:
+                        return `${labelPrefix}missing`;
+                }
+        }
+    });
+    protected readonly IrisPipeEvent = IrisPipeEvent;
 }

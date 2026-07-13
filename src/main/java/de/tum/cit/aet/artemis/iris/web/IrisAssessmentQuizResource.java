@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_IRIS)
 @Lazy
 @RestController
-@RequestMapping("api/iris/assessment-quiz")
+@RequestMapping("api/iris/programming-exercises/")
 public class IrisAssessmentQuizResource {
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
@@ -57,13 +57,13 @@ public class IrisAssessmentQuizResource {
     }
 
     /**
-     * PATCH assessment-quiz/{exerciseId}/defocus: Signals a tab-defocus event while prompting.
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/defocus: Signals a tab-defocus event while prompting.
      * The quiz is stopped and the corresponding verdict and reasoning is saved. Also, the tab_defocus event is sent to te pipeline.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)}
      */
-    @PatchMapping("{exerciseId}/defocus")
+    @PatchMapping("{exerciseId}/assessment-quiz/defocus")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<Void> registerDefocusForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -76,13 +76,13 @@ public class IrisAssessmentQuizResource {
     }
 
     /**
-     * PATCH assessment-quiz/{exerciseId}/time-ran-out: Starts the timer for the current prompting session.
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/start-timer: Starts the timer for the current prompting session.
      * The current time is saved.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data
      */
-    @PatchMapping("{exerciseId}/start-timer")
+    @PatchMapping("{exerciseId}/assessment-quiz/start-timer")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisQuizTimerDTO> startTimerForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -94,12 +94,12 @@ public class IrisAssessmentQuizResource {
     }
 
     /**
-     * PATCH assessment-quiz/{exerciseId}/time-ran-out: Stops the timer for the current prompting session.
+     * PATCH programming-exercises/{exerciseId}/assessment-quiz/stop-timer: Stops the timer for the current prompting session.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)}
      */
-    @PatchMapping("{exerciseId}/stop-timer")
+    @PatchMapping("{exerciseId}/assessment-quiz/stop-timer")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<Void> stopTimerForCurrentSession(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);

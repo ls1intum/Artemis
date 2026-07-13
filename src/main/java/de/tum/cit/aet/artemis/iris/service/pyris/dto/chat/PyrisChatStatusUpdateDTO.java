@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.chat;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -18,7 +19,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 public record PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
         @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories,
         @Nullable String partialResult, @Nullable Integer partialSeq, @Nullable List<PyrisActivityDTO> activities, @Nullable Integer activitySeq,
-        @JsonProperty("final") @Nullable Boolean finalResult,  @Nullable String event, @Nullable IrisVerdictDTO verdict) {
+        @JsonProperty("final") @Nullable Boolean finalResult,  @Nullable String event, @Nullable @Valid IrisVerdictDTO verdict) {
 
     public PyrisChatStatusUpdateDTO(@Nullable String result, PyrisRunState runState, @Nullable PyrisStatusErrorDTO error, @Nullable String sessionTitle,
             @Nullable List<String> suggestions, @Nullable List<LLMRequest> tokens, @Nullable List<MemirisMemoryDTO> accessedMemories,

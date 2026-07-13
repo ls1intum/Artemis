@@ -79,13 +79,18 @@
                 "practice": "Practice",
                 "graded": "Graded"
             },
-            "startPrompting": "Assess understanding",
-            "verifiedScore": "Verified score",
+            "prompting": {
+                "start": "Assess understanding",
+                "currently": "Currently prompting",
+                "finished": "Quiz completed",
+                "noSubmission": "No submission"
+            },
             "reviewIrisAssessment": {
-                "needsReview": "Needs review",
+                "suspicious": "Suspicious",
+                "unsuspicious": "Unsuspicious",
                 "missing": "Missing assessment",
-                "reviewable": "Reviewable",
-                "reviewed": "Already reviewed"
+                "accepted": "Accepted",
+                "rejected": "Rejected"
             }
         }
     }

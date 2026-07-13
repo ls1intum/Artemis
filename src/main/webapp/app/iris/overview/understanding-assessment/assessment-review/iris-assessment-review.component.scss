@@ -1,6 +1,6 @@
 :host ::ng-deep .bootstrap.separated-columns .datatable-header-cell:not(:last-child),
 :host ::ng-deep .bootstrap.separated-columns .datatable-body-cell:not(:last-child) {
-    border-right: 10px solid #303130;
+    border-right: 10px solid var(--secondary);
 }
 
 ::ng-deep .ngx-datatable .datatable-body-cell {

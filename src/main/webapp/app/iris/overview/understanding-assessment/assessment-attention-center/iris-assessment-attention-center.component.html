@@ -1,4 +1,4 @@
-@if (course.isAtLeastInstructor && this.assessmentEnabled) {
+@if (course().isAtLeastInstructor && this.assessmentEnabled()) {
     <jhi-card-wrapper title="entity.assessmentAttentionCenter">
         <div class="d-flex justify-content-center align-items-center mt-n1 pt-2 pb-1 mb-3">
             <fa-icon [icon]="faBrain" class="me-2" size="lg" />
@@ -6,10 +6,10 @@
             <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ms-1" />
         </div>
         <jhi-button
-            [btnType]="needsAttention ? ButtonType.ERROR : ButtonType.SUCCESS"
+            [btnType]="needsAttention() ? ButtonType.ERROR : ButtonType.SUCCESS"
             [btnSize]="ButtonSize.MEDIUM"
-            [title]="needsAttention ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
-            [routerLink]="['/course-management', course.id, 'iris-assessment']"
+            [title]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
+            [routerLink]="reviewLink()"
             [jhiFeatureToggle]="FeatureToggle.PromptingMode"
         />
     </jhi-card-wrapper>

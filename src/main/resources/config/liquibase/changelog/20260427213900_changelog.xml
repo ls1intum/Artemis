@@ -7,6 +7,8 @@
         <addColumn tableName="iris_sub_settings">
             <column name="min_questions" type="tinyint unsigned" defaultValueNumeric="3"/>
             <column name="max_questions" type="tinyint unsigned" defaultValueNumeric="5"/>
+            <column name="time_limit_question" type="int unsigned" defaultValueNumeric="20"/>
+            <column name="time_limit_in_class" type="int unsigned" defaultValueNumeric="15"/>
         </addColumn>
 
         <addColumn tableName="iris_settings">

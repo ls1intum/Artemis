@@ -7,14 +7,14 @@ import { IrisQuizTimerDTO } from 'app/iris/shared/entities/iris-quiz-timer-dto.m
 export class IrisAssessmentQuizService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/iris/assessment-quiz';
+    public resourceUrl = 'api/iris/programming-exercises';
 
     /**
      * registers a tab-defocus event while quiz is active and ends the quiz
      * @param exerciseId The unique identifier of the exercise
      */
     registerDefocusForCurrentSession(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/defocus`, {}, { observe: 'response' });
+        return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/defocus`, {}, { observe: 'response' });
     }
 
     /**
@@ -22,7 +22,7 @@ export class IrisAssessmentQuizService {
      * @param exerciseId The unique identifier of the exercise
      */
     startTimer(exerciseId: number): Observable<HttpResponse<IrisQuizTimerDTO>> {
-        return this.http.patch<IrisQuizTimerDTO>(`${this.resourceUrl}/${exerciseId}/start-timer`, {}, { observe: 'response' });
+        return this.http.patch<IrisQuizTimerDTO>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/start-timer`, {}, { observe: 'response' });
     }
 
     /**
@@ -30,6 +30,6 @@ export class IrisAssessmentQuizService {
      * @param exerciseId The unique identifier of the exercise
      */
     stopTimer(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/stop-timer`, {}, { observe: 'response' });
+        return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/assessment-quiz/stop-timer`, {}, { observe: 'response' });
     }
 }

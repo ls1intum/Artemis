@@ -1,15 +1,15 @@
 <div class="d-flex justify-content-between align-items-center flex-wrap">
     <h2 class="mb-0">
-        <span>{{ exercise.title }}</span>
+        <span>{{ exercise().title }}</span>
     </h2>
 
-    @if (!exercise.exerciseGroup) {
+    @if (!exercise().exerciseGroup) {
         <div class="d-flex gap-2 ms-auto">
-            <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm">
+            <a [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']" class="btn btn-primary btn-sm">
                 <fa-icon [icon]="faListAlt" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
             </a>
-            <a [routerLink]="['/course-management', course.id, 'programming-exercises', exercise.id, 'scores']" class="tab-item btn btn-sm btn-info">
+            <a [routerLink]="['/course-management', course().id, 'programming-exercises', exercise().id, 'scores']" class="tab-item btn btn-sm btn-info">
                 <fa-icon [icon]="faTable" />
                 <span jhiTranslate="entity.action.scores"></span>
             </a>
@@ -17,9 +17,9 @@
     }
 </div>
 <jhi-data-table
-    [isLoading]="isLoading"
+    [isLoading]="isLoading()"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-    [allEntities]="participations"
+    [allEntities]="participationRows()"
     entityType="participation"
     [searchEntityFilterEnabled]="false"
     [showSearchField]="false"
@@ -47,16 +47,16 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
-                    @if (exercise.isAtLeastInstructor) {
+                    @if (exercise().isAtLeastInstructor) {
                         <span>
-                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
-                                {{ value.student?.name || value.team?.name }}
+                            <a [routerLink]="value.participationLink">
+                                {{ value.student?.name }}
                             </a>
                         </span>
                     }
-                    @if (!exercise.isAtLeastInstructor) {
+                    @if (!exercise().isAtLeastInstructor) {
                         <span>
-                            {{ value.student?.name || value.team?.name }}
+                            {{ value.student?.name }}
                         </span>
                     }
                 </ng-template>
@@ -74,21 +74,6 @@
             </ngx-datatable-column>
             <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
                 <ng-template ngx-datatable-header-template>
-                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort(verifiedScoreSortFieldProperty)">
-                        <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.iris.assessmentReviewOverview.verifiedScore"></span>
-                        <fa-icon [icon]="controls.iconForSortPropField(verifiedScoreSortFieldProperty)" />
-                    </span>
-                </ng-template>
-                <ng-template ngx-datatable-cell-template let-value="value">
-                    <div class="w-100 text-center">
-                        @if (value.irisVerifiedScore) {
-                            {{ value.irisVerifiedScore }}
-                        }
-                    </div>
-                </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
-                <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort(submissionCountSortFieldProperty)">
                         <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.submissionCount"></span>
                         <fa-icon [icon]="controls.iconForSortPropField(submissionCountSortFieldProperty)" />
@@ -96,8 +81,8 @@
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
                     <div class="w-100 text-center">
-                        @if (exercise.isAtLeastInstructor) {
-                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="value.participationLink">
                                 {{ value.submissionCount }}
                             </a>
                         } @else {
@@ -106,20 +91,20 @@
                     </div>
                 </ng-template>
             </ngx-datatable-column>
-            @if (exercise.isAtLeastInstructor) {
+            @if (exercise().isAtLeastInstructor) {
                 <ngx-datatable-column prop="" [minWidth]="350" [width]="400">
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="button-header">
                             <div class="mb-2">
-                                @if (getRepositoryLink(value)) {
+                                @if (value.repositoryUri) {
                                     <jhi-code-button
                                         class="me-1"
                                         [smallButtons]="true"
-                                        [repositoryUri]="getRepositoryLink(value) || ''"
+                                        [repositoryUri]="value.repositoryUri || ''"
                                         [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
                                     />
                                 }
-                                @if (buildPlanId(value) && !localCIEnabled) {
+                                @if (value.buildPlanId && !localCIEnabled) {
                                     <a target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
                                         <fa-icon class="me-1" [icon]="faFileCode" />
                                         Build plan
@@ -127,14 +112,14 @@
                                 }
                                 <!-- TODO This should ideally be a course management route. Used for the code editor where instructors can add commits to student repositories. -->
                                 <a
-                                    [routerLink]="['/courses', course.id, 'exercises', 'programming-exercises', exercise.id, 'code-editor', value.id]"
+                                    [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', value.id]"
                                     class="btn btn-info btn-sm me-1"
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                                 >
                                     <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
                                     Online editor
                                 </a>
-                                <jhi-iris-review-assessment-button class="me-1" [smallButton]="true" [course]="course" [exercise]="exercise" [participation]="value" />
+                                <jhi-iris-review-assessment-button class="me-1" [smallButton]="true" [course]="course()" [exercise]="exercise()" [participation]="value" />
                             </div>
                         </div>
                     </ng-template>

@@ -378,7 +378,7 @@
                                 <jhi-iris-thinking-bubble [message]="thinkingMessage()" />
                             </div>
                         }
-                        <jhi-quiz-timer-bar [open]="currentlyPrompting && remainingSeconds !== undefined" [timeLimit]="timeLimit" [remainingSeconds]="remainingSeconds" />
+                        <jhi-quiz-timer-bar [open]="currentlyPrompting()" [timeLimit]="timeLimit()" [timerExpiresAt]="timerExpiresAt()" (timerExpired)="timerExpired()" />
                         @if (shouldShowStatusBar()) {
                             <jhi-chat-status-bar [runInfo]="runInfo()" />
                         }

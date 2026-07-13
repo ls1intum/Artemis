@@ -40,7 +40,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
-import { Subscription, interval } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -1568,24 +1568,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             default:
                 return undefined;
         }
-    }
-
-    getRemainingSeconds() {
-        return this.timerExpiresAt == undefined ? undefined : this.timerExpiresAt.diff(dayjs(), 'second');
-    }
-
-    private updateRemainingSeconds(): void {
-        this.remainingSeconds = this.getRemainingSeconds();
-
-        if (this.remainingSeconds !== undefined && this.remainingSeconds < 0) {
-            this.timerSubscription?.unsubscribe();
-            this.onTimerExpired();
-        }
-    }
-
-    private onTimerExpired(): void {
-        //call updateStateDialog(), and set currentlyPrompting and promptingInitiated to false
-        this.timerExpired.emit();
     }
 
     protected readonly ChatServiceMode = ChatServiceMode;

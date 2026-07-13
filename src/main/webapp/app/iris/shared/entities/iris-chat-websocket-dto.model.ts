@@ -1,4 +1,7 @@
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
+import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared/entities/iris-activity.model';
@@ -9,13 +12,13 @@ import { IrisActivityItem, IrisRunState, IrisStatusError } from 'app/iris/shared
  */
 export interface IrisChatWebsocketDTO {
     type: IrisChatWebsocketPayloadType;
-    event?: EventType; // used to do things when iris event occurs (e.g. start timer when start prompting mode)
     message?: IrisMessageResponseDTO;
     runState?: IrisRunState;
     error?: IrisStatusError;
     activities?: IrisActivityItem[];
     activitySeq?: number;
     final?: boolean;
+    event?: IrisPipeEvent; // used to do things when iris event occurs (e.g. start timer when start prompting mode)
     rateLimitInfo?: IrisRateLimitInformation;
     suggestions?: string[];
     sessionTitle?: string;
@@ -29,12 +32,4 @@ export enum IrisChatWebsocketPayloadType {
     MESSAGE = 'MESSAGE',
     STATUS = 'STATUS',
     PARTIAL = 'PARTIAL',
-}
-
-export enum EventType {
-    BUILD_WITH_POINTS = 'BUILD_WITH_POINTS',
-    USER_INITIATES_PROMPTING = 'USER_INITIATES_PROMPTING',
-    FIRST_QUESTION = 'FIRST_QUESTION',
-    NEXT_QUESTION = 'NEXT_QUESTION',
-    PROMPTING_FINISHED = 'PROMPTING_FINISHED',
 }

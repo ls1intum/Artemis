@@ -1,63 +1,70 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
+import { merge, of, switchMap, take } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { Subscription } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
 
 @Component({
     selector: 'jhi-start-prompting-button',
     templateUrl: './start-prompting-button.component.html',
     imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IrisStartPromptingButtonComponent implements OnInit, OnDestroy {
-    private irisChatService = inject(IrisChatService);
+export class IrisStartPromptingButtonComponent {
+    private readonly irisChatService = inject(IrisChatService);
 
-    readonly FeatureToggle = FeatureToggle;
+    readonly exercise = input.required<Exercise>();
+    readonly participation = input<StudentParticipation>();
+    readonly smallButtons = input.required<boolean>();
+    readonly hideLabelMobile = input(false);
 
-    @Input()
-    exercise: Exercise;
-    @Input()
-    participation: StudentParticipation | undefined;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    hideLabelMobile = false;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly faBrain = faBrain;
 
-    isEnabled = false;
-    isPromptingMode = false;
+    protected readonly isPromptingMode = signal(false);
 
-    private eventSubscription: Subscription;
+    private readonly initialEvent$ = toObservable(this.participation).pipe(
+        switchMap((participation) => {
+            if (participation?.id === undefined) {
+                return of(undefined);
+            }
 
-    // Icons
-    faBrain = faBrain;
+            return this.irisChatService.loadLatestEvent(participation.id);
+        }),
+    );
 
-    ngOnInit() {
-        // Initialize with latest event from Server
-        if (this.participation !== undefined) {
-            this.irisChatService.loadLatestEvent(this.participation.id).subscribe((event) => {
-                this.isEnabled = event === EventType.BUILD_WITH_POINTS;
-            });
+    protected readonly latestEvent = toSignal(merge(this.initialEvent$, this.irisChatService.currentLatestEvent()), { initialValue: undefined });
+
+    protected readonly canBeStarted = computed(() => !this.isPromptingMode() && this.latestEvent() === IrisPipeEvent.BUILD_WITH_POINTS);
+
+    protected readonly buttonLabel = computed(() => {
+        if (this.canBeStarted()) {
+            return 'artemisApp.exerciseActions.prompting.start';
+        } else if (this.latestEvent() === IrisPipeEvent.PROMPTING_FINISHED) {
+            return 'artemisApp.exerciseActions.prompting.finished';
+        } else if (this.isPromptingMode()) {
+            return 'artemisApp.exerciseActions.prompting.currently';
+        } else {
+            return 'artemisApp.exerciseActions.prompting.noSubmission';
+        }
+    });
+
+    protected startPromptingMode(): void {
+        if (!this.canBeStarted()) {
+            return;
         }
 
-        // From now on enabled status is set by events received by websocket messages
-        this.eventSubscription = this.irisChatService.currentLatestEvent().subscribe((event) => {
-            this.isEnabled = event === EventType.BUILD_WITH_POINTS;
-        });
+        this.isPromptingMode.set(true);
+
+        this.irisChatService.startPromptingMode().pipe(take(1)).subscribe();
     }
 
-    ngOnDestroy() {
-        this.eventSubscription.unsubscribe();
-    }
-
-    startPromptingMode() {
-        this.isEnabled = false;
-        this.isPromptingMode = !this.isPromptingMode;
-        this.irisChatService.startPromptingMode().subscribe();
-    }
+    protected readonly IrisPipeEvent = IrisPipeEvent;
 }

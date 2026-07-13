@@ -1,18 +1,15 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
 
 @Entity
 @DiscriminatorValue("SS")
@@ -22,11 +19,6 @@ public class StudentScore extends ParticipantScore {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Nullable
-    @OneToOne
-    @JoinColumn(name = "iris_assessment_id", referencedColumnName = "id", unique = true)
-    private IrisAssessment assessment;
 
     public User getUser() {
         return user;
@@ -53,14 +45,5 @@ public class StudentScore extends ParticipantScore {
 
         return "StudentScore{" + "id=" + id + ", userId=" + userId + ", exerciseId=" + exerciseId + ", lastResultId=" + lastResultId + ", lastResultScore=" + lastResultScore
                 + ", lastRatedResultId=" + lastRatedResultId + ", lastRatedResultScore=" + lastRatedScore + '}';
-    }
-
-    @Nullable
-    public IrisAssessment getAssessment() {
-        return assessment;
-    }
-
-    public void setAssessment(@Nullable IrisAssessment assessment) {
-        this.assessment = assessment;
     }
 }

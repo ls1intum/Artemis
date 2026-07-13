@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.time.ZonedDateTime;
@@ -293,97 +292,79 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Informs prompt-user pipeline if new points must be verified, else informs Iris about a progress stall event, if the student has not improved their score in the last 3
-     * submissions.
+     * Informs Iris about a progress stall event, if the student has not improved their score in the last 3
+     * submissions. If not, prompt-user pipeline sends build with points message if latest result has points.
+     * In this order to prevent spamming by sending two messages at once.
      */
     private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-
-        // Check if prompt user pipeline needs to be informed
-        if (checkIfExplainPromptingMode(studentParticipation, latestSubmission)) {
-            return;
-        }
-
         var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(studentParticipation.getProgrammingExercise(), false);
-        var settings = combinedSettings.irisProgrammingExerciseChatSettings();
-        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.PROGRESS_STALLED)) {
-            return;
-        }
+        boolean progressStalledSent = false;
 
-        // TODO: Reduce this call to the last 5 submissions or sth
-        var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
+        if (combinedSettings.irisProgrammingExerciseChatSettings().enabled() && IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.PROGRESS_STALLED)) {
+            // TODO: Reduce this call to the last 5 submissions or sth
+            var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
-        double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
+            double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
 
-        // Check if the user has already successfully submitted before
-        var successfulSubmission = recentSubmissions.stream()
-                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == successThreshold);
+            // Check if the user has already successfully submitted before
+            var successfulSubmission = recentSubmissions.stream()
+                    .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == successThreshold);
 
-        if (!successfulSubmission && recentSubmissions.size() >= 3) {
-            var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
+            if (!successfulSubmission && recentSubmissions.size() >= 3) {
+                var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
-            // Check if the student needs intervention based on their recent score trajectory
-            var needsIntervention = needsIntervention(listOfScores);
-            if (needsIntervention) {
-                log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
-                var user = studentParticipation.getStudent().orElseThrow();
-                var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
-                try {
-                    CompletableFuture.runAsync(() -> requestAndHandleResponseExerciseChat(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
-                            Optional.of(settings), Optional.of(user), Optional.of(latestSubmission)));
+                // Check if the student needs intervention based on their recent score trajectory
+                var needsIntervention = needsIntervention(listOfScores);
+                if (needsIntervention) {
+                    log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
+                    var user = studentParticipation.getStudent().orElseThrow();
+                    var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
+                    try {
+                        progressStalledSent = true;
+                        CompletableFuture.runAsync(() -> requestAndHandleResponseExerciseChat(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()),
+                                Optional.of(combinedSettings.irisProgrammingExerciseChatSettings()), Optional.of(user), Optional.of(latestSubmission)));
+                    }
+                    catch (Exception e) {
+                        log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
+                    }
                 }
-                catch (Exception e) {
-                    log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
+            }
+            else {
+                log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
+                if (successfulSubmission) {
+                    log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
+                            studentParticipation.getParticipant().getName());
                 }
             }
         }
-        else {
-            log.info("Submission was not successful for user {}", studentParticipation.getParticipant().getName());
-            if (successfulSubmission) {
-                log.info("User {} has already successfully submitted before, so we do not inform Iris about the submission failure",
-                        studentParticipation.getParticipant().getName());
-            }
+        if (!progressStalledSent && combinedSettings.irisPromptUserSettings().enabled() && latestSubmission.getLatestResult() != null
+                && latestSubmission.getLatestResult().getScore() > 0) {
+            explainPromptingMode(studentParticipation, latestSubmission, combinedSettings.irisPromptUserSettings());
         }
     }
 
     /**
-     * Informs Iris prompting pipeline when new points were achieved in the latest build.
+     * Informs Iris prompting pipeline about a successful build.
      */
-    private boolean checkIfExplainPromptingMode(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var student = studentParticipation.getStudent().orElseThrow();
+    private void explainPromptingMode(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission,
+            IrisCombinedPromptUserSubSettingsDTO settings) {
         var exercise = studentParticipation.getProgrammingExercise();
 
-        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
-        var settings = combinedSettings.irisPromptUserSettings();
-        if (!settings.enabled()) {
-            return false;
-        }
+        var student = studentParticipation.getStudent().orElseThrow();
 
         // An Assessment object is needed because from now on are Iris Pipeline Events saved (even when no assessment session is started)
-        IrisAssessment assessment = irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId())
-                .orElseGet(() -> irisAssessmentService.createNewAssessment(studentParticipation));
-        var verifiedScore = assessment.getVerifiedScore();
+        irisAssessmentRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId()).orElseGet(() -> irisAssessmentService.createNewAssessment(studentParticipation));
 
-        // Check if new highest number of points were achieved
-        boolean newUnverifiedScore = latestSubmission.getLatestResult() != null && (verifiedScore == null || latestSubmission.getLatestResult().getScore() > verifiedScore);
+        var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, student, false);
 
-        log.info("verified score is: {}\nscore is: {}\n", verifiedScore, latestSubmission.getLatestResult().getScore());
-
-        if (newUnverifiedScore) {
-            log.info("User {} has achieved a new high score which now must be verified", studentParticipation.getParticipant().getName());
-            var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, student, false);
-
-            try {
-                CompletableFuture.runAsync(() -> requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.BUILD_WITH_POINTS.name()), Optional.of(settings),
-                        Optional.of(latestSubmission)));
-            }
-            catch (Exception e) {
-                log.error("Error while sending build with points message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
-            }
+        try {
+            CompletableFuture.runAsync(
+                    () -> requestAndHandleResponsePromptUser(session, Optional.of(IrisPipeEvent.BUILD_WITH_POINTS.name()), Optional.of(settings), Optional.of(latestSubmission)));
+            log.info("Sent build with points message to user {}", studentParticipation.getParticipant().getName());
         }
-        else {
-            log.info("Submission did not achieve new highest score of points for user {}", studentParticipation.getParticipant().getName());
+        catch (Exception e) {
+            log.error("Error while sending build with points message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
         }
-        return newUnverifiedScore;
     }
 
     /**
@@ -553,7 +534,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         var promptingMessages = session.getMessages().stream().filter(m -> Boolean.TRUE.equals(m.getInPromptingMode())).skip(1) // drop the first question (which is the quiz
-                                                                                                                                // explanation and not needed for review)
+                // explanation and not needed for review)
                 .toList();
         var irisMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.LLM)).toList();
         var userMessages = promptingMessages.stream().filter(m -> m.getSender().equals(IrisMessageSender.USER)).toList();
@@ -599,7 +580,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (!session.isInPromptingModePipeline()) {
             throw new IllegalStateException("Timer was started while not in prompting mode");
         }
-        ZonedDateTime expiresAt = ZonedDateTime.now().plusSeconds(IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, true).irisPromptUserSettings();
+        ZonedDateTime expiresAt = ZonedDateTime.now().plusSeconds(settings.timeLimitQuestion());
 
         // schedule pipeline to run with TIMER_RAN_OUT event when expiresAt is reached
         ScheduledFuture<?> future = taskScheduler.schedule(
@@ -607,7 +589,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         quizTimers.put(session.getId(), future);
 
-        return new IrisQuizTimerDTO(expiresAt, IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS);
+        log.info("timeLimitQuestion: " + settings.timeLimitQuestion());
+
+        return new IrisQuizTimerDTO(expiresAt, settings.timeLimitQuestion());
     }
 
     public void stopTimerForCurrentSession(ProgrammingExercise exercise, User user) {
@@ -617,12 +601,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     private void stopTimerForSession(IrisProgrammingExerciseChatSession session) {
-        log.info("Stopping timer for session {}, timers={}", session.getId(), quizTimers.keySet());
         // cancel pipeline task
         ScheduledFuture<?> future = quizTimers.remove(session.getId());
 
         if (future != null) {
-            log.info("done={}, cancelled={}", future.isDone(), future.isCancelled());
             future.cancel(false);
         }
     }

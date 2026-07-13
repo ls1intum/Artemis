@@ -1,0 +1,16 @@
+.filter-multiselect-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-multiselect-icon {
+    position: absolute;
+    left: 0.75rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.filter-multiselect .p-multiselect-label {
+    padding-left: 2.25rem;
+}

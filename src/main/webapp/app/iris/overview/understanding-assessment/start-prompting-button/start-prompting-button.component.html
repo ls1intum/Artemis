@@ -2,13 +2,13 @@
     <button
         (click)="startPromptingMode()"
         jhi-exercise-action-button
-        [id]="'start-prompting-' + exercise.id!"
+        [id]="'start-prompting-' + exercise().id!"
         [buttonIcon]="faBrain"
-        class="start-prompting"
+        [class.btn-success]="latestEvent() === IrisPipeEvent.PROMPTING_FINISHED"
         [jhiFeatureToggle]="FeatureToggle.PromptingMode"
-        [buttonLabel]="'artemisApp.exerciseActions.startPrompting' | artemisTranslate"
-        [smallButton]="smallButtons"
-        [hideLabelMobile]="hideLabelMobile"
-        [overwriteDisabled]="!isEnabled"
+        [buttonLabel]="buttonLabel() | artemisTranslate"
+        [smallButton]="smallButtons()"
+        [hideLabelMobile]="hideLabelMobile()"
+        [overwriteDisabled]="!canBeStarted()"
     ></button>
 </ng-container>

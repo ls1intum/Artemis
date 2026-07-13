@@ -192,11 +192,18 @@
                         "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     },
                     "questionLimits": {
-                        "title": "Fragen Limits",
+                        "title": "Fragenlimits",
                         "lowerLimit": "Minimale Anzahl an Fragen",
                         "lowerLimitTooltip": "Die minimale Anzahl an Fragen, die Iris Studierenden stellen muss, bevor eine Einschätzung abgegeben wird.",
                         "upperLimit": "Maximale Anzahl an Fragen",
                         "upperLimitTooltip": "Die maximale Anzahl an Fragen, die Iris Studierenden stellen darf, bevor eine Einschätzung abgegeben wird."
+                    },
+                    "timeLimits": {
+                        "title": "Zeitlimits",
+                        "question": "Zeit pro Frage in Sekunden",
+                        "questionTooltip": "Die verfügbare Bearbeitungszeit pro Frage in Sekunden. Wird diese überschritten, gilt das Quiz als nicht bestanden.",
+                        "inClass": "Zeitfenster des Präsenzquiz in Minuten",
+                        "inClassTooltip": "Die Zeitspanne in Minuten, die den TeilnehmerInnen für die Bearbeitung des Präsenzquiz zur Verfügung steht. Die Zeitmessung beginnt, sobald der Instruktor das Quiz startet."
                     }
                 },
                 "title": "Iris Einstellungen"
@@ -414,12 +421,11 @@
             "assessmentReviewOverview": {
                 "title": "Iris Bewertungen",
                 "showMissingAssessment": "Fehlende Bewertung",
-                "showNeedsReview": "Review benötigt",
+                "showSuspicious": "Auffällig",
+                "showUnsuspicious": "Unauffällig",
                 "showRejected": "Abgelehnt",
-                "showReviewable": "Review möglich",
                 "showAccepted": "Akzeptiert",
-                "showAll": "Alle",
-                "verifiedScore": "Bestätigte Punkte"
+                "showAll": "Kein Filter"
             },
             "assessmentReview": {
                 "title": "Iris Bewertungsergebnisse",
@@ -428,22 +434,17 @@
                     "answer": "Antwort",
                     "reasoning": "Einschätzung"
                 },
-                "accept": "Akzeptieren (Punkte bestätigen)",
-                "reject": "Ablehnen (dieses Build-Ergebnis nicht zählen)",
+                "accept": "Antworten akzeptieren",
+                "reject": "Antworten ablehnen",
                 "verdict": {
                     "assessedAs": "Iris bewertet diese Befragung als",
                     "suspicious": "auffällig",
-                    "unsuspicious": "zufriedenstellend",
-                    "explain": {
-                        "suspicious": "Punkte werden standardmäßig nicht gezählt",
-                        "unsuspicious": "Antworten werden standardmäßig akzeptiert"
-                    }
+                    "unsuspicious": "zufriedenstellend"
                 },
                 "review": {
                     "reviewedAs": "Befragung wurde",
                     "accepted": "akzeptiert",
-                    "rejected": "abgelehnt",
-                    "pointsVerified": "Punkte bestätigt"
+                    "rejected": "abgelehnt"
                 }
             }
         },

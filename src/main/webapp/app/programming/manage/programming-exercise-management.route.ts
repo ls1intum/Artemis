@@ -11,6 +11,7 @@ import {
 } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { IrisAssessmentReviewComponent } from 'app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { IrisAssessmentReviewResolver } from 'app/iris/overview/services/iris-assessment-review-resolver.service';
 
 export const routes: Routes = [
     {
@@ -167,5 +168,8 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.iris.assessmentReview.title',
         },
         canActivate: [UserRouteAccessService, IrisGuard],
+        resolve: {
+            reviewData: IrisAssessmentReviewResolver,
+        },
     },
 ];

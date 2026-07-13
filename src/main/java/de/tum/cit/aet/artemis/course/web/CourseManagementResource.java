@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -336,17 +337,17 @@ public class CourseManagementResource {
     }
 
     /**
-     * GET /courses/:courseId/assessment-attention-state : Returns whether the iris assessment of a course needs to be inspected
+     * GET /courses/:courseId/assessment-attention-state : Returns whether the iris assessment of a course needs to be inspected.
+     * This is the case when at least one suspicious result has not been reviewed.
      *
      * @param courseId the id of the course to get the state from
      * @return {@link IrisAssessmentAttentionDTO} with the corresponding boolean
      */
     @GetMapping("courses/{courseId}/assessment-attention-state")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
         log.debug("REST request to get assessment state of Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         return ResponseEntity.ok((new IrisAssessmentAttentionDTO(irisAssessmentService.assessmentAttentionNeededInCourse(course))));
     }

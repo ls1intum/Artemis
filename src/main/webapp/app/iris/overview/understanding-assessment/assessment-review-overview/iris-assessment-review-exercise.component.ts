@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input, output } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -22,6 +21,13 @@ import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/understan
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 
+interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
+    readonly participationLink?: Array<string | number>;
+    readonly repositoryUri?: string;
+    readonly repositoryViewLink?: Array<string | number>;
+    readonly codeEditorLink?: Array<string | number>;
+}
+
 @Component({
     selector: 'jhi-iris-assessment-review-exercise',
     templateUrl: './iris-assessment-review-exercise.component.html',
@@ -39,19 +45,15 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
         FaIconComponent,
         DataTableComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IrisAssessmentReviewExerciseComponent implements OnInit {
-    @Input()
-    participations: ProgrammingExerciseStudentParticipation[] = [];
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    course!: Course;
-    @Input()
-    isLoading: boolean = false;
+export class IrisAssessmentReviewExerciseComponent {
+    participations = input<ProgrammingExerciseStudentParticipation[]>([]);
+    exercise = input.required<ProgrammingExercise>();
+    course = input.required<Course>();
+    isLoading = input(false);
 
-    @Output()
-    refresh = new EventEmitter<void>();
+    refresh = output<void>();
 
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faListAlt = faListAlt;
@@ -63,42 +65,35 @@ export class IrisAssessmentReviewExerciseComponent implements OnInit {
     protected readonly AssessmentType = AssessmentType;
     protected readonly submissionCountSortFieldProperty = 'submissionCount';
     protected readonly studentLoginSortFieldProperty = 'student.login';
-    protected readonly verifiedScoreSortFieldProperty = 'irisVerifiedScore';
     protected readonly nameSortFieldProperty = 'student.name';
 
     private profileService = inject(ProfileService);
 
-    localCIEnabled = true;
+    protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
-    ngOnInit() {
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-    }
+    protected readonly participationRows = computed<AssessmentParticipationViewModel[]>(() =>
+        this.participations().map((participation) => ({
+            ...participation,
+            participationLink: [
+                '/course-management',
+                this.course().id!.toString(),
+                `${this.exercise().type}-exercises`,
+                this.exercise().id!.toString(),
+                'participations',
+                participation.id!.toString(),
+                'submissions',
+            ],
+            repositoryUri: participation.userIndependentRepositoryUri,
+        })),
+    );
 
-    getExerciseParticipationsLink(participationId: number): string[] {
-        return [
-            '/course-management',
-            this.course.id!.toString(),
-            this.exercise.type + '-exercises',
-            this.exercise.id!.toString(),
-            'participations',
-            participationId.toString(),
-            'submissions',
-        ];
-    }
+    protected readonly exerciseParticipationsLink = computed(() => [
+        '/course-management',
+        this.course().id,
+        `${this.exercise().type}-exercises`,
+        this.exercise().id,
+        'participations',
+    ]);
 
-    /**
-     * Returns the build plan id for a participation
-     * @param participation Participation for which to return the build plan id
-     */
-    buildPlanId(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
-    }
-
-    /**
-     * Returns the link to the repository of a participation
-     * @param participation Participation for which to get the link for
-     */
-    getRepositoryLink(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
-    }
+    protected readonly exerciseScoresLink = computed(() => ['/course-management', this.course().id, 'programming-exercises', this.exercise().id, 'scores']);
 }

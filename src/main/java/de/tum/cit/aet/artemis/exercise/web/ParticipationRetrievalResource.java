@@ -43,9 +43,6 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.QuizParticipationService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
@@ -73,13 +70,8 @@ public class ParticipationRetrievalResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     public ParticipationRetrievalResource(ParticipationService participationService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            SubmissionRepository submissionRepository) {
             SubmissionRepository submissionRepository, QuizParticipationService quizParticipationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.participationService = participationService;
@@ -90,8 +82,6 @@ public class ParticipationRetrievalResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.quizParticipationService = quizParticipationService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**

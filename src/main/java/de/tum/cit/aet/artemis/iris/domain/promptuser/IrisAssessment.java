@@ -40,21 +40,14 @@ public class IrisAssessment extends DomainObject {
     private Exercise exercise;
 
     @Nullable
+    @Enumerated(EnumType.STRING)
     @Column(name = "verdict")
-    private String verdict;
+    private IrisVerdict verdict;
 
     @Nullable
     @Enumerated(EnumType.STRING)
     @Column(name = "verdict_review")
     private IrisVerdictReview verdictReview;
-
-    @Nullable
-    @Column(name = "verified_score")
-    private Double verifiedScore;
-
-    @Nullable
-    @Column(name = "verified_score_old")
-    private Double verifiedScoreOld;
 
     @ElementCollection
     @CollectionTable(name = "iris_reasoning", joinColumns = @JoinColumn(name = "iris_assessment_id"))
@@ -76,11 +69,11 @@ public class IrisAssessment extends DomainObject {
     }
 
     @Nullable
-    public String getVerdict() {
+    public IrisVerdict getVerdict() {
         return verdict;
     }
 
-    public void setVerdict(@Nullable String verdict) {
+    public void setVerdict(@Nullable IrisVerdict verdict) {
         this.verdict = verdict;
     }
 
@@ -91,24 +84,6 @@ public class IrisAssessment extends DomainObject {
 
     public void setVerdictReview(@Nullable IrisVerdictReview verdictReview) {
         this.verdictReview = verdictReview;
-    }
-
-    @Nullable
-    public Double getVerifiedScore() {
-        return verifiedScore;
-    }
-
-    public void setVerifiedScore(@Nullable Double verifiedScore) {
-        this.verifiedScore = verifiedScore;
-    }
-
-    @Nullable
-    public Double getVerifiedScoreOld() {
-        return verifiedScoreOld;
-    }
-
-    public void setVerifiedScoreOld(@Nullable Double verifiedScoreOld) {
-        this.verifiedScoreOld = verifiedScoreOld;
     }
 
     public List<String> getReasoning() {
@@ -150,6 +125,6 @@ public class IrisAssessment extends DomainObject {
         Long exerciseId = getExercise() != null ? getExercise().getId() : null;
 
         return "IrisAssessment{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", verdict=" + verdict + ", verdictReview=" + verdictReview
-                + ", verifiedScore=" + verifiedScore + ", verifiedScoreOld=" + verifiedScoreOld + ", lastEvent=" + lastEvent + '}';
+                + ", lastEvent=" + lastEvent + '}';
     }
 }

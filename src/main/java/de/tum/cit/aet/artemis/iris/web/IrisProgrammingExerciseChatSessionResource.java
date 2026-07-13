@@ -10,19 +10,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisPipeEvent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
@@ -33,7 +29,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
  * REST controller for managing {@link IrisProgrammingExerciseChatSession}.
@@ -60,14 +55,9 @@ public class IrisProgrammingExerciseChatSessionResource {
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     protected IrisProgrammingExerciseChatSessionResource(IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, UserRepository userRepository,
             ProgrammingExerciseRepository exerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, IrisExerciseChatSessionService irisExerciseChatSessionService,
-            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, IrisExerciseChatSessionService irisExerciseChatSessionService) {
         this.irisExerciseChatSessionRepository = irisExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -76,8 +66,6 @@ public class IrisProgrammingExerciseChatSessionResource {
         this.irisRateLimitService = irisRateLimitService;
         this.exerciseRepository = exerciseRepository;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
-        this.authorizationCheckService = authorizationCheckService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -144,25 +132,6 @@ public class IrisProgrammingExerciseChatSessionResource {
         return ResponseEntity.created(new URI(uriString)).body(session);
     }
 
-    /**
-     * PATCH programming-exercise-chat/{exerciseId}/sessions/current/prompting: Activates prompting mode in the current iris session for the programming exercise.
-     *
-     * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated iris session for the exercise or {@code 404 (Not Found)} if no session exists
-     */
-    @PatchMapping("{exerciseId}/sessions/current/prompting")
-    @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisProgrammingExerciseChatSession> startPromptingModeForCurrentSession(@PathVariable Long exerciseId) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        ProgrammingExercise programmingExercise = validateExercise(exercise);
-
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        var session = irisExerciseChatSessionService.startPromptingModeForCurrentSession(programmingExercise, user);
-        return ResponseEntity.ok(session);
-    }
-
     private static ProgrammingExercise validateExercise(ProgrammingExercise exercise) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
@@ -181,26 +150,4 @@ public class IrisProgrammingExerciseChatSessionResource {
         }
     }
 
-    /**
-     * {participationId}/latest-event: gets the last iris pipeline event for iris assessment of participation.
-     *
-     * @param participationId of the participation
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the latest event, or null if no assessment or event happened yet
-     */
-    @GetMapping("{participationId}/latest-event")
-    public ResponseEntity<IrisPipeEvent> getLastEvent(@PathVariable Long participationId) {
-        var participation = programmingExerciseStudentParticipationRepository.findById(participationId).orElseThrow();
-        if (!authorizationCheckService.isAtLeastStudentForExercise(participation.getExercise())) {
-            throw new AccessForbiddenException();
-        }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROMPT_USER, participation.getExercise());
-
-        var assessment = participation.getIrisAssessment();
-
-        if (assessment == null) {
-            return ResponseEntity.ok(null);
-        }
-
-        return ResponseEntity.ok(assessment.getLastEvent());
-    }
 }

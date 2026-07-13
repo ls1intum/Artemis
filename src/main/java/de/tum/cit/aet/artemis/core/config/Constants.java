@@ -201,7 +201,17 @@ public final class Constants {
     // This value determines the initial value of the upper question limit in Iris sub-settings for prompting mode.
     public static final int IRIS_PROMPTING_MODE_MAX_QUESTION_INIT = 5;
 
-    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_SECONDS = 15;
+    // This value limits the time per question allowed as upper limit in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX = 180;
+
+    // This value limits the time to finish the in-class quiz allowed as upper limit in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX = 30;
+
+    // This value determines the initial value of time per question in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_INIT = 20;
+
+    // This value determines the initial value of the time to finish the in-class quiz in Iris sub-settings for prompting mode.
+    public static final int IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_INIT = 15;
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 

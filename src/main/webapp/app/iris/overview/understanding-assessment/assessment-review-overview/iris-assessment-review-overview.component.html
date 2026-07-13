@@ -1,41 +1,48 @@
 <div class="d-flex flex-wrap">
     <div class="d-flex flex-fill align-items-center mr-auto">
-        <div class="me-2" aria-label="Filter Dropdown" ngbDropdown [autoClose]="false">
-            <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
-                <fa-icon [icon]="faFilter" />
-                <span class="d-s-none d-md-inline"
-                    >{{
-                        'artemisApp.exercise.scoresFilter'
-                            | artemisTranslate: { filter: ('artemisApp.iris.assessmentReviewOverview.show' + reviewCriteria.filterProp | artemisTranslate) }
-                    }}
-                    ({{ participationsPerFilter.get(reviewCriteria.filterProp) ?? 0 }})
-                </span>
-            </button>
-            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                @for (filter of FilterProp | keyvalue; track filter) {
-                    <li>
-                        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                            <input type="radio" [ngModel]="reviewCriteria.filterProp" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
-                            <span class="ms-1">
-                                {{ 'artemisApp.iris.assessmentReviewOverview.show' + filter.value | artemisTranslate }}
-                                ({{ participationsPerFilter.get(filter.value) ?? 0 }})
-                            </span>
-                        </label>
-                    </li>
-                }
-            </ul>
+        <div class="me-2">
+            <div class="filter-multiselect-wrapper">
+                <fa-icon class="filter-multiselect-icon" [icon]="faFilter" />
+
+                <p-multiselect
+                    inputId="filter-dropdown-button"
+                    styleClass="filter-multiselect"
+                    [options]="filterOptions()"
+                    [ngModel]="selectedFilters()"
+                    (ngModelChange)="updateParticipationFilters($event)"
+                    optionValue="value"
+                    [showToggleAll]="false"
+                    [showClear]="true"
+                    [filter]="false"
+                    [placeholder]="'artemisApp.iris.assessmentReviewOverview.showAll' | artemisTranslate"
+                    [ariaLabel]="'artemisApp.exercise.scoresFilter' | artemisTranslate"
+                >
+                    <ng-template #selecteditems let-selectedItems>
+                        <span class="d-none d-md-inline">
+                            @for (selectedItem of selectedItems; track getFilterValue(selectedItem); let last = $last) {
+                                @let filter = getFilterValue(selectedItem);
+
+                                {{ 'artemisApp.iris.assessmentReviewOverview.show' + filter | artemisTranslate }}
+                                ({{ participationsPerFilter().get(filter) ?? 0 }})
+
+                                @if (!last) {
+                                    <span>, </span>
+                                }
+                            }
+                        </span>
+                    </ng-template>
+
+                    <ng-template #item let-filter>
+                        <span class="text-nowrap">
+                            {{ filter.translationKey | artemisTranslate }}
+                            ({{ filter.count }})
+                        </span>
+                    </ng-template>
+                </p-multiselect>
+            </div>
         </div>
-        @if (allSearchedAndFilteredParticipations.length && participationsPerFilter.get(reviewCriteria.filterProp) !== allSearchedAndFilteredParticipations.length) {
-            <span
-                jhiTranslate="artemisApp.exercise.showingOfResults"
-                [translateValues]="{
-                    filtered: participationsPerFilter.get(reviewCriteria.filterProp),
-                    total: allSearchedAndFilteredParticipations.length,
-                    percent: ((participationsPerFilter.get(reviewCriteria.filterProp) ?? 0) * 100) / allSearchedAndFilteredParticipations.length | number: '1.0-1',
-                }"
-            ></span>
-        }
     </div>
+
     <div class="p-2">
         <div class="button-toolbar">
             <button class="btn btn-primary btn-sm" (click)="refresh()">
@@ -45,19 +52,20 @@
         </div>
     </div>
 </div>
+
 <jhi-data-table
-    [isLoading]="isLoading"
+    [isLoading]="isLoading()"
     entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
     showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
     searchPlaceholderTranslation="artemisApp.exercise.searchForStudents"
     searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"
-    [allEntities]="relevantExercises"
+    [allEntities]="relevantExercises()"
     entityType="ExerciseViewModel"
     [searchEntityFilterEnabled]="false"
     [showPageSizeDropdown]="true"
-    [isSearching]="isSearching"
-    [searchNoResults]="searchNoResults"
-    [isTransitioning]="isTransitioning"
+    [isSearching]="isSearching()"
+    [searchNoResults]="searchNoResults()"
+    [isTransitioning]="false"
     [searchTextFromEntity]="searchTextFromParticipation"
     [searchResultFormatter]="searchResultFormatter"
     [onSearchWrapper]="searchAllParticipations"
@@ -82,8 +90,8 @@
                             style="width: 100%; display: block"
                             [exercise]="value.exercise"
                             [participations]="value.searchedAndFilteredParticipations"
-                            [course]="course"
-                            [isLoading]="isLoading"
+                            [course]="course()"
+                            [isLoading]="isLoading()"
                             (refresh)="refresh()"
                         />
                     }

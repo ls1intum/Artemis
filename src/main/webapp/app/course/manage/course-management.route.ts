@@ -305,8 +305,12 @@ export const courseManagementRoutes: Routes = [
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
+                            loadWithExercises: true,
                         },
                         canActivate: [UserRouteAccessService, IrisGuard],
+                        resolve: {
+                            course: CourseManagementResolve,
+                        },
                     },
                     {
                         path: 'iris-settings',

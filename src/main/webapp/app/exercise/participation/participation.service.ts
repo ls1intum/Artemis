@@ -133,14 +133,6 @@ export class ParticipationService {
             );
     }
 
-    findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
-        return this.http
-            .get<ProgrammingExerciseStudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations/non-zero-latest-score`, {
-                observe: 'response',
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseStudentParticipation[]>) => this.processParticipationEntityArrayResponseType(res)));
-    }
-
     delete(participationId: number, req?: any): Observable<HttpResponse<any>> {
     searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
         const params: Record<string, string | number> = {
@@ -343,7 +335,7 @@ export class ParticipationService {
      * This method bundles recurring conversion steps for Participation EntityArrayResponses.
      * @param participationRes
      */
-    private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
+    public processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
         this.convertParticipationResponseArrayDatesFromServer(participationRes);
         this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
         return participationRes;

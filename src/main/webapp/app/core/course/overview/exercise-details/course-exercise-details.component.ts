@@ -57,10 +57,8 @@ import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-deta
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
-import { EventType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStartPromptingButtonComponent } from 'app/iris/overview/understanding-assessment/start-prompting-button/start-prompting-button.component';
-import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event-dto.model';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -99,7 +97,6 @@ interface InstructorActionItem {
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
         IrisStartPromptingButtonComponent,
-        InformationBoxComponent,
     ],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
@@ -159,14 +156,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
-    irisVerifiedScore: InformationBox = {
-        title: 'artemisApp.exerciseActions.verifiedScore',
-        content: {
-            type: 'string',
-            value: '',
-        },
-        isContentComponent: false,
-    };
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -211,7 +200,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.loadComplaintAndLatestRatedResult();
-            this.updateIrisVerifiedScoreDisplay();
         });
     }
 
@@ -305,7 +293,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             this.exercise.studentParticipations = this.studentParticipations;
             this.updateStudentParticipations();
-            this.updateIrisVerifiedScoreDisplay();
             this.sortResults();
             // Add exercise to studentParticipation, as the result component is dependent on its existence.
             this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
@@ -368,13 +355,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
         this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
         this.numberOfPracticeResults = this.practiceStudentParticipation?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
-    }
-
-    private updateIrisVerifiedScoreDisplay() {
-        const verifiedPoints = (this.gradedStudentParticipation as ProgrammingExerciseStudentParticipation).irisAssessment?.verifiedScore ?? 0;
-        if (this.exercise.type === ExerciseType.PROGRAMMING && !this.exercise.exerciseGroup && this.irisSettings?.irisPromptUserSettings?.enabled) {
-            this.irisVerifiedScore.content.value = `${verifiedPoints} / ${this.exercise.maxPoints}`;
-        }
     }
 
     /**
@@ -575,5 +555,5 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     protected readonly hasResults = hasResults;
-    protected readonly EventType = EventType;
+    protected readonly EventType = IrisPipeEvent;
 }
