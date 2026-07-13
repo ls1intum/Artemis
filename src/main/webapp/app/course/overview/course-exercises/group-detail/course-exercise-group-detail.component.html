@@ -30,7 +30,10 @@
                     <jhi-information-box [informationBoxData]="dateBox">
                         @switch (dateBox.content.type) {
                             @case ('timeAgo') {
-                                <span [ngClass]="'text-' + dateBox.contentColor" contentComponent>{{ dateBox.content.value | artemisTimeAgo }}</span>
+                                <!-- Dynamic state colour: bind the brand token directly rather than composing a Bootstrap class name. -->
+                                <span [style.color]="dateBox.contentColor === 'danger' ? 'var(--danger)' : undefined" contentComponent>{{
+                                    dateBox.content.value | artemisTimeAgo
+                                }}</span>
                             }
                             @case ('dateTime') {
                                 <span contentComponent>{{ dateBox.content.value | artemisDate }}</span>

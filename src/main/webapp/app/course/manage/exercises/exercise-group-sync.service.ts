@@ -69,19 +69,27 @@ export class ExerciseGroupSyncService {
         const updatedExercises = exercises.map((exercise) => {
             if (exercise.id === undefined) return exercise;
             const newRef = refByExerciseId.get(exercise.id);
+            // Both maps are filled from the same DTO ids above, so they are populated together — look the group DTO up
+            // alongside the reference rather than asserting it is present.
+            const groupDto = groupDtoByExerciseId.get(exercise.id);
             if (newRef?.id === exercise.exerciseVariantGroup?.id) return exercise;
-            if (newRef === undefined) {
+            if (newRef === undefined || groupDto === undefined) {
                 // The exercise was removed from its group. The server keeps the exercise's own dates on
                 // unassignment, so only drop the group reference here — do not blank the timeline.
                 const detached = Object.assign({}, exercise);
                 detached.exerciseVariantGroup = undefined;
                 return detached;
             }
-            const updated = this.applyGroupTimelineToMember(exercise, groupDtoByExerciseId.get(exercise.id)!, now);
+            const updated = this.applyGroupTimelineToMember(exercise, groupDto, now);
             updated.exerciseVariantGroup = newRef;
             return updated;
         });
-        const exercisesById = new Map(updatedExercises.filter((exercise) => exercise.id !== undefined).map((exercise) => [exercise.id!, exercise]));
+        const exercisesById = new Map<number, Exercise>();
+        for (const exercise of updatedExercises) {
+            if (exercise.id !== undefined) {
+                exercisesById.set(exercise.id, exercise);
+            }
+        }
         return { exercises: updatedExercises, groups: dtos.map((dto) => toCourseExerciseGroup(dto, exercisesById)) };
     }
 
@@ -98,16 +106,20 @@ export class ExerciseGroupSyncService {
         const quizInfoById = new Map(quizzes.map((quiz) => [quiz.id, { quizBatches: quiz.quizBatches, isEditable: quiz.isEditable }]));
         const replacements = new Map<number, Exercise>();
         const merged = exercises.map((exercise) => {
-            if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
-                const quiz = Object.assign({}, exercise as QuizExercise);
-                const info = quizInfoById.get(exercise.id)!;
-                quiz.quizBatches = info.quizBatches;
-                quiz.isEditable = info.isEditable;
-                this.applyQuizClientState(quiz);
-                replacements.set(exercise.id, quiz);
-                return quiz;
+            if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) {
+                return exercise;
             }
-            return exercise;
+            // A single lookup: an absent entry means this quiz was not among the ones loaded, so leave it untouched.
+            const info = quizInfoById.get(exercise.id);
+            if (info === undefined) {
+                return exercise;
+            }
+            const quiz = Object.assign({}, exercise as QuizExercise);
+            quiz.quizBatches = info.quizBatches;
+            quiz.isEditable = info.isEditable;
+            this.applyQuizClientState(quiz);
+            replacements.set(exercise.id, quiz);
+            return quiz;
         });
         if (replacements.size === 0) {
             return undefined;

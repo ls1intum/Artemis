@@ -8,11 +8,12 @@ import {
     CreateExerciseVariantGroupDTO,
     ExerciseVariantGroupDTO,
     ExerciseVariantGroupService,
+    PersistableGroup,
+    isPersistableGroup,
     toCourseExerciseGroup,
     toCreateGroupPayload,
     toUpdateGroupPayload,
 } from 'app/course/manage/exercises/exercise-variant-group.service';
-import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseVariantGroupService', () => {
@@ -127,7 +128,7 @@ describe('ExerciseVariantGroupService', () => {
     });
 
     describe('payload mappers', () => {
-        const group: CourseExerciseGroup = {
+        const group: PersistableGroup = {
             id: 7,
             title: 'Loop variants',
             maxPoints: 10,
@@ -135,6 +136,12 @@ describe('ExerciseVariantGroupService', () => {
             dueDate: dayjs('2026-02-02T00:00:00Z'),
             exercises: [{ id: 1, type: ExerciseType.TEXT } as Exercise],
         };
+
+        it('recognises only a group with a non-empty title as persistable', () => {
+            expect(isPersistableGroup(group)).toBe(true);
+            expect(isPersistableGroup({ id: 7 })).toBe(false);
+            expect(isPersistableGroup({ id: 7, title: '   ' })).toBe(false);
+        });
 
         it('maps the edit dialog view model to the create payload (without id and members)', () => {
             const payload = toCreateGroupPayload(group);
@@ -151,7 +158,7 @@ describe('ExerciseVariantGroupService', () => {
         });
 
         it('maps the edit dialog view model to the update payload including the id', () => {
-            const payload = toUpdateGroupPayload(group);
+            const payload = toUpdateGroupPayload(group, 7);
             expect(payload.id).toBe(7);
             expect(payload.title).toBe('Loop variants');
         });

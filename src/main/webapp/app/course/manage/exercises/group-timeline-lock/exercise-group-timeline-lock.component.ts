@@ -4,7 +4,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, isPersistableGroup, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -67,26 +67,15 @@ export class ExerciseGroupTimelineLockComponent {
 
     onSave(updated: CourseExerciseGroup): void {
         const courseId = this.resolvedCourseId();
-        if (courseId === undefined || updated.id === undefined) {
+        const groupId = updated.id;
+        // The modal's Save button already enforces a non-empty title; narrowing here makes that guarantee explicit.
+        if (courseId === undefined || groupId === undefined || !isPersistableGroup(updated)) {
             return;
         }
-        this.exerciseVariantGroupService
-            .updateGroup(courseId, {
-                id: updated.id,
-                // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
-                title: updated.title!,
-                maxPoints: updated.maxPoints,
-                releaseDate: updated.releaseDate,
-                startDate: updated.startDate,
-                dueDate: updated.dueDate,
-                assessmentDueDate: updated.assessmentDueDate,
-                exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
-                buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
-            })
-            .subscribe({
-                next: (dto) => this.exerciseChange.emit(withGroupTimeline(this.exercise(), dto)),
-                error: (error: HttpErrorResponse) => this.alertService.addErrorAlert(error.error?.title ?? error.message, error.error?.message, error.error?.params),
-            });
+        this.exerciseVariantGroupService.updateGroup(courseId, toUpdateGroupPayload(updated, groupId)).subscribe({
+            next: (dto) => this.exerciseChange.emit(withGroupTimeline(this.exercise(), dto)),
+            error: (error: HttpErrorResponse) => this.alertService.addErrorAlert(error.error?.title ?? error.message, error.error?.message, error.error?.params),
+        });
     }
 }
 

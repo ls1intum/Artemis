@@ -21,6 +21,19 @@ export interface ExerciseVariantGroupDTO {
     exerciseIds?: number[];
 }
 
+/** The date fields a group payload carries, as the client holds them. */
+interface GroupDateFields {
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+}
+
+/** The same payload with its dates serialised to the ISO strings the server expects on the wire. */
+type WithSerialisedDates<T> = Omit<T, keyof GroupDateFields> & { [K in keyof GroupDateFields]?: string };
+
 /** Payload for creating a variant group (the owning course comes from the request path). */
 export interface CreateExerciseVariantGroupDTO {
     title: string;
@@ -78,35 +91,42 @@ export class ExerciseVariantGroupService {
         return group;
     }
 
-    private convertDatesToClient<
-        T extends {
-            releaseDate?: dayjs.Dayjs;
-            startDate?: dayjs.Dayjs;
-            dueDate?: dayjs.Dayjs;
-            assessmentDueDate?: dayjs.Dayjs;
-            exampleSolutionPublicationDate?: dayjs.Dayjs;
-            buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
-        },
-    >(group: T): T {
-        return {
-            ...group,
-            releaseDate: convertDateFromClient(group.releaseDate),
-            startDate: convertDateFromClient(group.startDate),
-            dueDate: convertDateFromClient(group.dueDate),
-            assessmentDueDate: convertDateFromClient(group.assessmentDueDate),
-            exampleSolutionPublicationDate: convertDateFromClient(group.exampleSolutionPublicationDate),
-            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate),
-        };
+    /**
+     * Serialises the group's dates into the ISO strings the server expects.
+     *
+     * The result is a request body, not a `T`: `convertDateFromClient` returns a string, so the date fields are no
+     * longer `dayjs.Dayjs`. The previous implementation spread the group into an object literal and still declared `T`
+     * as the return type — TypeScript cannot check that through a generic spread, so the mismatch went unnoticed. The
+     * return type now says what the value actually is.
+     */
+    private convertDatesToClient<T extends GroupDateFields>(group: T): WithSerialisedDates<T> {
+        const body = Object.assign({}, group) as Record<string, unknown>;
+        body.releaseDate = convertDateFromClient(group.releaseDate);
+        body.startDate = convertDateFromClient(group.startDate);
+        body.dueDate = convertDateFromClient(group.dueDate);
+        body.assessmentDueDate = convertDateFromClient(group.assessmentDueDate);
+        body.exampleSolutionPublicationDate = convertDateFromClient(group.exampleSolutionPublicationDate);
+        body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate);
+        return body as WithSerialisedDates<T>;
     }
 }
 
 /**
- * Maps the edit dialog's view model to the create payload. The caller guarantees a non-empty title (the dialog's Save
- * button enforces this).
+ * A group that carries everything the server needs to persist it. `title` is optional on the view model but required
+ * by the payload, so the guarantee is expressed in the type rather than asserted with `!` at the mapping site — callers
+ * narrow through {@link isPersistableGroup} first.
  */
-export function toCreateGroupPayload(group: CourseExerciseGroup): CreateExerciseVariantGroupDTO {
+export type PersistableGroup = CourseExerciseGroup & { title: string };
+
+/** Whether the group has the non-empty title the server requires (the edit dialog's Save button enforces this). */
+export function isPersistableGroup(group: CourseExerciseGroup): group is PersistableGroup {
+    return !!group.title?.trim();
+}
+
+/** Maps the edit dialog's view model to the create payload. */
+export function toCreateGroupPayload(group: PersistableGroup): CreateExerciseVariantGroupDTO {
     return {
-        title: group.title!,
+        title: group.title,
         maxPoints: group.maxPoints,
         releaseDate: group.releaseDate,
         startDate: group.startDate,
@@ -117,9 +137,11 @@ export function toCreateGroupPayload(group: CourseExerciseGroup): CreateExercise
     };
 }
 
-/** Maps the edit dialog's view model to the update payload; the caller guarantees id and title are set. */
-export function toUpdateGroupPayload(group: CourseExerciseGroup): ExerciseVariantGroupDTO {
-    return { id: group.id!, ...toCreateGroupPayload(group) };
+/** Maps the edit dialog's view model to the update payload. The id is passed separately, so it cannot be missing. */
+export function toUpdateGroupPayload(group: PersistableGroup, id: number): ExerciseVariantGroupDTO {
+    const payload: ExerciseVariantGroupDTO = toCreateGroupPayload(group);
+    payload.id = id;
+    return payload;
 }
 
 /**

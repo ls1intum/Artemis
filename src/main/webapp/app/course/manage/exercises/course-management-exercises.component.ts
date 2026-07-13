@@ -45,7 +45,13 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { ExerciseVariantGroupService, toCourseExerciseGroup, toCreateGroupPayload, toUpdateGroupPayload } from 'app/course/manage/exercises/exercise-variant-group.service';
+import {
+    ExerciseVariantGroupService,
+    isPersistableGroup,
+    toCourseExerciseGroup,
+    toCreateGroupPayload,
+    toUpdateGroupPayload,
+} from 'app/course/manage/exercises/exercise-variant-group.service';
 import { CourseExerciseCard, ExerciseManagementView, buildCourseExerciseCards } from 'app/course/manage/exercises/course-exercise-cards';
 import { ExerciseGroupSyncService } from 'app/course/manage/exercises/exercise-group-sync.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
@@ -540,27 +546,26 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onGroupEditModalSave(updated: CourseExerciseGroup, isNew: boolean): void {
         const courseId = this.course()?.id;
-        if (courseId === undefined) {
+        // The modal's Save button already enforces a non-empty title; narrowing here makes that guarantee explicit
+        // instead of asserting it at the mapping site.
+        if (courseId === undefined || !isPersistableGroup(updated)) {
             return;
         }
         if (isNew) {
-            this.exerciseVariantGroupService
-                // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
-                .createGroup(courseId, toCreateGroupPayload(updated))
-                .subscribe({
-                    next: (dto) => {
-                        const created = toCourseExerciseGroup(dto, this.exercisesById());
-                        this.groups.set([...this.groups(), created]);
-                        this.rebuildCards();
-                    },
-                    error: (errorRes: HttpErrorResponse) =>
-                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
-                });
+            this.exerciseVariantGroupService.createGroup(courseId, toCreateGroupPayload(updated)).subscribe({
+                next: (dto) => {
+                    const created = toCourseExerciseGroup(dto, this.exercisesById());
+                    this.groups.set([...this.groups(), created]);
+                    this.rebuildCards();
+                },
+                error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
+            });
             return;
         }
 
-        if (updated.id !== undefined) {
-            this.exerciseVariantGroupService.updateGroup(courseId, toUpdateGroupPayload(updated)).subscribe({
+        const groupId = updated.id;
+        if (groupId !== undefined) {
+            this.exerciseVariantGroupService.updateGroup(courseId, toUpdateGroupPayload(updated, groupId)).subscribe({
                 next: (dto) => {
                     // The group timeline may have changed. Re-sync each member exercise's own date fields and quiz
                     // client state (mirroring the server-side re-sync) so member dates and quiz badges / lifecycle
