@@ -137,19 +137,23 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             """)
     long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
 
-    // The hasAssistantResponse column treats any non-user message as a response (sender <> 'USER') rather than an allow-list
-    // of assistant types, so it stays correct if new (non-user) message senders are added to IrisMessageSender in the future.
+    // hasAssistantResponse treats a later non-user message as a response, but excludes CTXSWAP markers: those are
+    // system-generated context-switch markers, not assistant answers. Without this exclusion a user message followed
+    // only by a CTXSWAP marker would be miscounted as answered. The next-message lookup skips CTXSWAP for the same
+    // reason, so a user -> CTXSWAP -> LLM sequence still reports the LLM message as the response (and its latency).
     @Query(nativeQuery = true, value = """
             SELECT u.id AS userMsgId, u.session_id AS sessionId, u.sent_at AS sentAt,
                 (SELECT m2.sender FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
+                   AND m2.sender <> 'CTXSWAP'
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSender,
                 (SELECT m2.sent_at FROM iris_message m2
                  WHERE m2.session_id = u.session_id
                    AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
+                   AND m2.sender <> 'CTXSWAP'
                    AND NOT (m2.sender = 'LLM' AND COALESCE(m2.intermediate, FALSE) = TRUE)
                  ORDER BY m2.sent_at, m2.id LIMIT 1
                 ) AS nextSentAt,
@@ -157,7 +161,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
                 CASE WHEN EXISTS (
                     SELECT 1 FROM iris_message m3
                     WHERE m3.session_id = u.session_id
-                      AND m3.sender <> 'USER'
+                      AND m3.sender NOT IN ('USER', 'CTXSWAP')
                       AND NOT (m3.sender = 'LLM' AND COALESCE(m3.intermediate, FALSE) = TRUE)
                       AND (m3.sent_at > u.sent_at OR (m3.sent_at = u.sent_at AND m3.id > u.id))
                 ) THEN 1 ELSE 0 END AS hasAssistantResponse
