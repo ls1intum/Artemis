@@ -100,6 +100,9 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
+# Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
+# out of the Debian repos and would break the image build over time.
+# hadolint ignore=DL3008
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
