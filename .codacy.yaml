@@ -9,7 +9,11 @@
 #   - supporting_scripts/** : internal developer/CI tooling (coverage reporting, course setup,
 #     transcription, benchmarks). Not part of the deployed application and not exposed to
 #     untrusted end-user input, so its subprocess/XML/tmp findings are advisory noise.
-# Other tools (ESLint, Stylelint, PMD) still analyze the code they apply to.
+# The quality linters below (CodeNarc, ShellCheck, PyLint) also exclude the programming-exercise
+# templates for the same reason: the Jenkins pipeline / build-script / helper scaffolding shipped
+# for exercises is starter code, not application code Artemis maintains for quality. They still
+# analyze the rest of the repository (e.g. supporting_scripts for PyLint). ESLint, Stylelint, and
+# PMD still analyze the code they apply to.
 engines:
   opengrep: # Semgrep — SAST security scanning
     exclude_paths:
@@ -47,3 +51,15 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
+  codenarc: # Groovy linting — exercise-template Jenkins pipelines are scaffolding, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+  shellcheck: # shell linting — exercise-template build scripts are scaffolding, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+  pylintpython3: # Python linting — exercise-template scripts are scaffolding, not app code
+    exclude_paths:
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
