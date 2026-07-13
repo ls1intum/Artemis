@@ -1,0 +1,78 @@
+# tum-aet UI kit
+
+Owned, dependency-light Angular UI components for Artemis (working name of the future
+`@tumaet/ui-angular` library). This folder is an in-repo pilot: the components live here first so we
+can iterate quickly against real admin screens, then extract them into a standalone package once the
+API has settled.
+
+## Why this exists
+
+PrimeNG 22+ moved to a commercial license, so it is no longer a viable long-term dependency for an
+open-source project. Rather than swap one third-party component library for another, we own a small
+set of components built directly on **Angular CDK** (the unstyled, MIT-licensed behavior primitives)
+and **Tailwind CSS v4** (our semantic design tokens). We control the behavior, the accessibility, and
+the look, and we carry only a primitive (CDK) as a dependency. The same component contracts are meant
+to be shared across TUM apps (Artemis, TumApply, and future Angular apps) so a TUM user learns each UI
+concept once.
+
+PrimeNG stays installed during the migration. These components are additive and use distinct
+`tum-ui-*` selectors, so they coexist with the existing PrimeNG and ng-bootstrap components that are
+still being migrated.
+
+## Principles
+
+- **Angular 21 signal APIs only**: `input()` / `input.required()`, `output()`, `model()`,
+  `computed()`, `viewChild()`, `inject()`. No legacy decorators.
+- **Standalone + `OnPush`**, zoneless-safe.
+- **Token-only styling**: semantic Tailwind tokens (`bg-primary`, `text-surface-*`,
+  `text-muted-color`, `bg/text/border-state-*`, and the accessible `*-solid` / `*-strong` tones). Never
+  raw Tailwind palette colors, `--p-*` primitives, or Bootstrap classes. Dark mode comes for free
+  because the tokens resolve per theme.
+- **Accessibility is part of the contract**: real semantics (`role`, `aria-*`), keyboard support,
+  focus management, and WCAG AA (>= 4.5:1) text contrast, verified in tests.
+- **No PrimeNG / Bootstrap / ng-bootstrap** imports. The only runtime UI dependency is `@angular/cdk`.
+
+## Components
+
+| Component       | Selector                                   | Purpose                                                                                                                                    |
+| --------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Button          | `tum-ui-button`                            | Native `<button>` with severity / size / outlined / text variants; forwards `ariaLabel` for icon-only use.                                 |
+| Tag             | `tum-ui-tag`                               | Presentational status pill (tinted background, accessible label).                                                                          |
+| Tooltip         | `[tumUiTooltip]`                           | Hover + focus tooltip on the shared overlay, with `aria-describedby` wiring.                                                               |
+| Popover         | `tum-ui-popover` + `[tumUiPopoverTrigger]` | Content-projected `role="dialog"` panel; closes on backdrop click + Escape, traps focus.                                                   |
+| Table           | `tum-ui-table<T>`                          | Generic CDK-table data grid: dynamic columns, single-column server-side sort, lazy load, global search, row actions, striped / scrollable. |
+| Paginator       | `tum-ui-paginator`                         | First / prev / next / last + page-size selector; emits `pageChange` / `pageSizeChange`.                                                    |
+| Date picker     | `tum-ui-date-picker`                       | `dayjs`-backed date + time picker with a hand-built calendar; implements the Signal Forms `FormValueControl` contract.                     |
+| Overlay service | `TumUiOverlayService`                      | Shared CDK overlay substrate (connected positioning, flip, reposition-on-scroll, backdrop) that tooltip / popover / date picker build on.  |
+
+Each component lives in its own folder with a colocated `*.spec.ts`. Variant class maps live in a small
+`*.variants.ts` (a local, dependency-free take on class-variance-authority).
+
+## Styling tokens
+
+Contrast-critical tones are defined per theme in `content/scss/themes/_default-variables.scss` (light)
+and `_dark-variables.scss` (dark), auto-emitted as CSS custom properties, and exposed to Tailwind in
+`tailwind.css`:
+
+- `--color-state-*` = the brand state color (`bg-state-success/15` tints, borders).
+- `--color-*-solid` = a fill dark enough for white text (solid buttons), dark in both themes.
+- `--color-*-strong` = the accessible on-surface text tone (outlined / text buttons, tag labels);
+  a dark shade on light surfaces, a light shade on dark.
+
+Every foreground/background pairing is asserted at >= 4.5:1 in both themes by
+[`tum-ui-state-contrast.spec.ts`](./tum-ui-state-contrast.spec.ts).
+
+## Testing
+
+Vitest with `setupTestBed({ zoneless: true })`, colocated with each component. Overlay geometry and
+real pointer interception are not headless-verifiable, so specs assert the wiring and the semantics;
+placement, z-order, and pointer capture are verified visually and in Playwright.
+
+## Adding a component
+
+1. Create a folder under `tum-ui/` with the component, an optional `*.variants.ts`, and a `*.spec.ts`.
+2. Build on `@angular/cdk` primitives and `TumUiOverlayService` for anchored overlays.
+3. Use only semantic tokens; add new tokens in the theme variable files + `tailwind.css` if needed.
+4. Cover behavior, semantics, and (for colored surfaces) contrast.
+
+See the full guide: **[UI Kit guidelines](../../../../../documentation/docs/developer/guidelines/tum-ui-kit.mdx)**.

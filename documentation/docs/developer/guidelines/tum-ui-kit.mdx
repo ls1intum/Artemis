@@ -1,0 +1,290 @@
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+# UI Kit (tum-aet-ui)
+
+The **tum-aet UI kit** is Artemis' own set of Angular UI components, built directly on
+[Angular CDK](https://material.angular.dev/cdk/categories) and Tailwind CSS v4. It lives in
+`src/main/webapp/app/shared-ui/tum-ui/` and is the intended long-term replacement for third-party
+component libraries in the client.
+
+<Callout variant={CalloutVariant.info}>
+    **Working name:** `@tumaet/ui-angular`. The components live in-repo first (a pilot against real admin screens) and will be extracted into a standalone package once the API has
+    settled. Treat the folder as a library: keep components self-contained, dependency-light, and consistent.
+</Callout>
+
+## Why we own our components
+
+PrimeNG 22+ moved to a commercial license and can no longer be a long-term dependency for an
+open-source project. Instead of replacing one third-party component library with another, we own a
+small set of components and depend only on a primitive:
+
+- **Angular CDK** provides the hard, unstyled behavior (overlay positioning, focus trapping, tables,
+  a11y helpers). It is MIT-licensed, maintained by the Angular team, and tracks the latest Angular
+  features (standalone, signals).
+- **Tailwind CSS v4** provides our semantic design tokens, so the look is ours and dark mode is free.
+
+This also serves a cross-app goal: the same component contracts are meant to be shared across TUM
+Angular apps (Artemis, TumApply, and future apps) so a TUM user learns each UI concept once. React
+apps in the fleet mirror the same concepts with their own primitive stack.
+
+<Callout variant={CalloutVariant.warning}>
+    **Coexistence during migration.** PrimeNG and ng-bootstrap stay installed while the client migrates. The kit components are additive and use distinct `tum-ui-*` selectors, so
+    they never collide with the components they will eventually replace. Migrate screen by screen; do not rip out PrimeNG wholesale.
+</Callout>
+
+## Principles
+
+- **Signal APIs only** — `input()` / `input.required()`, `output()`, `model()`, `computed()`,
+  `viewChild()`, `inject()`. No legacy decorators. See [Client Development](/developer/guidelines/client-development).
+- **Standalone + `ChangeDetectionStrategy.OnPush`**, zoneless-safe.
+- **Token-only styling** — only semantic Tailwind tokens (see [Design tokens](#design-tokens--accessibility)).
+  Never raw palette colors, `--p-*` primitives, or Bootstrap classes.
+- **Accessibility is part of the contract** — correct roles and `aria-*`, keyboard support, focus
+  management, and WCAG AA (>= 4.5:1) text contrast, all verified in tests.
+- **Only `@angular/cdk`** as a runtime UI dependency. No PrimeNG / Bootstrap / ng-bootstrap imports.
+
+## Architecture
+
+### Overlay substrate
+
+Every anchored overlay (tooltip, popover, date picker, and later menu / select) builds on one shared
+service, `TumUiOverlayService`, so they share a single positioning contract: connected positioning
+with a flipped fallback on collision, `push` to stay in the viewport, and reposition-on-scroll.
+
+```typescript
+const overlayRef = overlayService.createConnectedOverlay(origin, 'bottom', /* hasBackdrop */ true);
+overlayRef.attach(new TemplatePortal(templateRef, viewContainerRef));
+overlayRef.backdropClick().subscribe(() => close());
+```
+
+<Callout variant={CalloutVariant.danger}>
+    **CDK overlay backdrops need structural CSS.** Artemis does not import the CDK `overlay-prebuilt` stylesheet, so the kit ships its own backdrop rule (`.tum-ui-overlay-backdrop`
+    in `content/scss/global.scss`: `position: fixed; inset: 0; pointer-events: auto`). Without it a transparent backdrop has no size and outside clicks pass straight through, so
+    `backdropClick()` never fires. Any new overlay that needs a click-catching backdrop must use this backdrop class (the overlay service sets it by default).
+</Callout>
+
+### Variant maps
+
+Instead of adding a `class-variance-authority` dependency, each component with visual variants keeps a
+tiny local map in a `*.variants.ts` file that returns Tailwind class strings. This keeps styling
+declarative, testable, and dependency-free.
+
+## Design tokens & accessibility
+
+Colors use semantic tokens only (see also [Client Theming](/developer/guidelines/client-theming)). The
+kit adds two accessible companion tones on top of the brand state colors, defined per theme in
+`content/scss/themes/_default-variables.scss` and `_dark-variables.scss`, auto-emitted as CSS custom
+properties, and exposed to Tailwind in `tailwind.css`:
+
+| Token                                                                              | Meaning                                                                                         | Used by                                                |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `--color-state-*` (`state-danger`, `state-success`, `state-warning`, `state-info`) | The brand state color.                                                                          | Tints (`bg-state-success/15`), borders.                |
+| `--color-*-solid` (`primary-solid`, `state-danger-solid`, …)                       | A fill dark enough for **white** text. Dark in both themes.                                     | Solid buttons (`bg-…-solid` + `text-surface-0`).       |
+| `--color-*-strong` (`primary-strong`, `state-danger-strong`, …)                    | The accessible **on-surface text** tone. A dark shade on light surfaces, a light shade on dark. | Outlined / text buttons, tag labels (`text-…-strong`). |
+
+<Callout variant={CalloutVariant.warning}>
+    **WCAG AA is enforced by a test.** The raw brand state colors (for example `#28a745` success) do not reach 4.5:1 against white as text or behind white text, which is why solid
+    buttons and tag labels use the `-solid` / `-strong` tones. `shared-ui/tum-ui/tum-ui-state-contrast.spec.ts` recomputes the rendered contrast (replicating the sRGB `color-mix`)
+    and fails if any severity / variant / theme pairing drops below 4.5:1. If you add or change a tone, keep that spec in sync.
+</Callout>
+
+Dark mode is automatic: the tokens resolve to their per-theme values, so a single class such as
+`text-state-danger-strong` is correct in both themes without a `dark:` variant.
+
+## Components
+
+### Button — `tum-ui-button`
+
+A native `<button>` with severity / size variants.
+
+| Input              | Type                                                                                  | Default     | Notes                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| `severity`         | `'primary' \| 'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'primary'` |                                                                        |
+| `size`             | `'small' \| 'default' \| 'large'`                                                     | `'default'` |                                                                        |
+| `outlined`         | `boolean`                                                                             | `false`     | Transparent fill, colored border + text.                               |
+| `text`             | `boolean`                                                                             | `false`     | Text-only (no border).                                                 |
+| `disabled`         | `boolean`                                                                             | `false`     |                                                                        |
+| `icon`             | `IconProp`                                                                            | –           | FontAwesome icon rendered before the label.                            |
+| `type`             | `'button' \| 'submit'`                                                                | `'button'`  |                                                                        |
+| `ariaLabel`        | `string`                                                                              | –           | Forwarded to the inner `<button>`. **Required for icon-only buttons.** |
+| `clicked` (output) | `MouseEvent`                                                                          |             | Emitted on click when enabled.                                         |
+
+```html
+<tum-ui-button severity="secondary" size="small" [outlined]="true" (clicked)="scrollTo('features')"> {{ 'artemisApp.features.title' | artemisTranslate }} </tum-ui-button>
+
+<!-- Icon-only: the glyph carries no text, so an accessible name is mandatory -->
+<tum-ui-button [icon]="faTrash" severity="danger" ariaLabel="Delete" (clicked)="delete()" />
+```
+
+<Callout variant={CalloutVariant.danger}>
+    An `aria-label` placed on the `<tum-ui-button>` host sits on the wrong element and leaves the real
+    button unnamed. Always pass the `ariaLabel` **input** for icon-only buttons.
+</Callout>
+
+### Tag — `tum-ui-tag`
+
+A presentational status pill (no behavior). Colored severities use a tinted background with the
+accessible `-strong` label tone; `secondary` / `contrast` use the surface ramp.
+
+| Input      | Type                                                                     | Default                             |
+| ---------- | ------------------------------------------------------------------------ | ----------------------------------- |
+| `severity` | `'secondary' \| 'success' \| 'info' \| 'warn' \| 'danger' \| 'contrast'` | `'secondary'`                       |
+| `value`    | `string`                                                                 | – (falls back to projected content) |
+| `rounded`  | `boolean`                                                                | `false`                             |
+
+```html
+<tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" />
+```
+
+### Tooltip — `[tumUiTooltip]`
+
+Hover + focus tooltip built on the overlay substrate, with `aria-describedby` wiring so the bubble is
+announced. Hover and keyboard focus are tracked independently, so the tooltip stays visible while
+either is active.
+
+| Input                     | Type                                     | Default       |
+| ------------------------- | ---------------------------------------- | ------------- |
+| `tumUiTooltip`            | `string` (required)                      | –             |
+| `tumUiTooltipPlacement`   | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'`       |
+| `showDelay` / `hideDelay` | `number`                                 | `150` / `100` |
+
+```html
+<button tumUiTooltip="Refresh" tumUiTooltipPlacement="bottom">…</button>
+```
+
+### Popover — `tum-ui-popover` + `[tumUiPopoverTrigger]`
+
+A content-projected `role="dialog"` panel. Closes on backdrop click and Escape, traps and restores
+focus (`cdkTrapFocus`), and is exposed as a modal dialog (`aria-modal="true"`).
+
+| Input                 | Type                                     | Notes                           |
+| --------------------- | ---------------------------------------- | ------------------------------- |
+| `placement`           | `'top' \| 'bottom' \| 'left' \| 'right'` | Default `'bottom'`.             |
+| `ariaLabel`           | `string` (**required**)                  | Accessible name for the dialog. |
+| `openChange` (output) | `boolean`                                |                                 |
+
+```html
+<button [tumUiPopoverTrigger]="filters">Filters</button>
+<tum-ui-popover #filters ariaLabel="Filter options">
+    <!-- projected content -->
+</tum-ui-popover>
+```
+
+### Table — `tum-ui-table<T>`
+
+A generic data grid on `@angular/cdk/table`: dynamic columns, single-column server-side sort, lazy
+load, debounced global search, row actions, striped / scrollable with a sticky header.
+
+Key inputs: `columns` (`ColumnDef<T>[]`, required), `rows` (`T[]`, required), `totalRecords`,
+`loading`, `rowActions` (a `TemplateRef`), `striped`, `scrollable`, `scrollHeight`, `showSearch`,
+`pageSize`, `pageSizeOptions`, `initialSortField` / `initialSortOrder`. Output: `lazyLoad`
+(`TumUiTableLazyEvent` with `first`, `rows`, `sortField?`, `sortOrder?`, `globalFilter?`).
+
+```html
+<tum-ui-table
+    [columns]="columns()"
+    [rows]="organizations()"
+    [totalRecords]="totalItems()"
+    [rowActions]="actions"
+    [loading]="isLoading()"
+    [striped]="true"
+    [scrollable]="true"
+    scrollHeight="flex"
+    (lazyLoad)="loadOrganizations($event)"
+/>
+```
+
+`buildDbQueryFromLazyEvent(event)` converts a `TumUiTableLazyEvent` into the standard
+`SearchTermPageableSearch` used by paged Artemis endpoints (`page = floor(first / rows)`,
+`sortedColumn ?? 'id'`, sorting order from the `±1` sort direction).
+
+<Callout variant={CalloutVariant.info}>
+    The table renders a native `<table>` with `<th scope="col">`, `aria-sort` on the active column, and a
+    real `<button>` sort trigger — not `role="grid"`. Sticky headers need an opaque background and a bounded
+    scroll container (`scrollHeight="flex"`).
+</Callout>
+
+### Paginator — `tum-ui-paginator`
+
+Standalone paginator (the table embeds one, but it is reusable). Inputs: `totalRecords`, `page`
+(0-based), `pageSize`, `pageSizeOptions`, `disabled`. Outputs: `pageChange`, `pageSizeChange`.
+
+### Date picker — `tum-ui-date-picker`
+
+A `dayjs`-backed date + time picker with a hand-built, keyboard-navigable calendar (roving tabindex,
+arrows / Home / End / PageUp / PageDown), a 24h time field, and the shared overlay for the panel.
+
+| Input                  | Type                                                     | Default                                    |
+| ---------------------- | -------------------------------------------------------- | ------------------------------------------ |
+| `value` (`model`)      | `dayjs.Dayjs \| undefined`                               | `undefined`                                |
+| `error`                | `boolean`                                                | `false`                                    |
+| `disabled`             | `boolean`                                                | `false`                                    |
+| `inputId`              | `string`                                                 | `'date-input-field'`                       |
+| `labelName`            | `string`                                                 | –                                          |
+| `pickerType`           | `TumUiDatePickerType` (`CALENDAR` / `TIMER` / `DEFAULT`) | `DEFAULT`                                  |
+| `baseZIndex`           | `number`                                                 | `1060`                                     |
+| `valueChange` (output) | `void`                                                   | Emitted on every commit / validity change. |
+
+```html
+<tum-ui-date-picker [value]="deleteFrom()" (valueChange)="onFromChange(picker.value())" #picker />
+```
+
+#### Signal Forms
+
+The picker implements the [Signal Forms](https://angular.dev/guide/signals) `FormValueControl` contract
+(type-only import from `@angular/forms/signals`). That interface's only required member is a `value`
+model, which the picker already exposes, so it is bindable via `[field]` with **no** `ControlValueAccessor`.
+
+```typescript
+import type { FormValueControl } from '@angular/forms/signals';
+
+export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | undefined> {
+    readonly value = model<dayjs.Dayjs | undefined>(undefined);
+}
+```
+
+<Callout variant={CalloutVariant.info}>
+    Prefer Signal Forms (`FormValueControl`) over the legacy `ControlValueAccessor` for new form controls. It is the modern, signal-native binding and needs far less boilerplate.
+</Callout>
+
+## Testing
+
+Use Vitest with `setupTestBed({ zoneless: true })`, colocated with the component (see
+[Client Tests](/developer/guidelines/client-tests)).
+
+- Assert **behavior and semantics** (roles, `aria-*`, emitted events, class outputs).
+- Overlay geometry, z-order, and real pointer interception are **not** headless-verifiable (jsdom does
+  not apply CSS). Assert the wiring (backdrop class present, `backdropClick()` closes) and verify the
+  visual behavior manually or in Playwright.
+- For colored surfaces, add or extend the **contrast regression** in `tum-ui-state-contrast.spec.ts`.
+- The strict spec compile (`tsc -p tsconfig.spec.json`) enforces member visibility, so specs must use
+  public members. Run it before pushing.
+
+## Migrating to the kit
+
+| Legacy                                                     | Replacement                                      |
+| ---------------------------------------------------------- | ------------------------------------------------ |
+| `<p-button>` / `<button pButton>`                          | `<tum-ui-button>`                                |
+| `<p-tag>`                                                  | `<tum-ui-tag>`                                   |
+| `pTooltip` / `NgbTooltip`                                  | `[tumUiTooltip]`                                 |
+| `NgbPopover` / `p-overlaypanel` / `NgbModal` (lightweight) | `tum-ui-popover`                                 |
+| `<jhi-table-view>` / `<p-table>`                           | `<tum-ui-table>` (+ `buildDbQueryFromLazyEvent`) |
+| `<jhi-date-time-picker>` / `<p-datepicker>`                | `<tum-ui-date-picker>`                           |
+
+Migrate one screen at a time and keep the existing component for everything else. Because the kit uses
+distinct selectors and the PrimeNG / ng-bootstrap dependencies stay installed, a partial migration is
+always safe to ship, and a rollback is just reverting the touched screen.
+
+<Callout variant={CalloutVariant.warning}>
+    **Styling coexistence guardrails.** Three lock lists must stay consistent: the ESLint `no-bootstrap-classes` glob, the Stylelint hex / `--bs-` override, and the Tailwind
+    `@source` allowlist in `tailwind.css`. They all cover `shared-ui/tum-ui/**` recursively, so new component subfolders need no edits. The
+    `rules/migration-source-coverage.spec.mjs` test enforces the invariant.
+</Callout>
+
+## Roadmap
+
+- Extract the settled components into `@tumaet/ui-angular` and consume it from Artemis and TumApply.
+- Grow the set as screens migrate (menu, select, dialog service, and more), always on CDK primitives.
+- Keep the contracts aligned with the React kits used elsewhere in the TUM fleet so concepts transfer
+  across apps.
