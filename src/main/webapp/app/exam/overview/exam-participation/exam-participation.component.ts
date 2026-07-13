@@ -1,4 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -69,6 +70,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     templateUrl: './exam-participation.component.html',
     styleUrls: ['./exam-participation.scss'],
     imports: [
+        CdkScrollable,
         TestRunRibbonComponent,
         ExamParticipationCoverComponent,
         NgClass,

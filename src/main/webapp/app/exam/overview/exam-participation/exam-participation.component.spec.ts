@@ -1262,6 +1262,56 @@ describe('ExamParticipationComponent', () => {
             expect(comp.isActive()).toBe(false);
             expect(serverNowSpy).toHaveBeenCalledOnce();
         });
+
+        it('should not be active if there is no exam and it is not a test run', () => {
+            comp.testRunId.set(0);
+            comp.exam.set(undefined!);
+            expect(comp.isActive()).toBe(false);
+        });
+    });
+
+    describe('isVisible without an exam', () => {
+        it('should not be visible if there is no exam and it is not a test run', () => {
+            comp.testRunId.set(0);
+            comp.exam.set(undefined!);
+            expect(comp.isVisible()).toBe(false);
+        });
+    });
+
+    describe('sidebar toggle', () => {
+        it('should register the sidebar toggle callback and invoke it', () => {
+            const toggle = vi.fn();
+            comp.setSidebarToggle(true, toggle);
+            expect(comp.isSidebarCollapsed()).toBe(true);
+
+            comp.toggleSidebar();
+            expect(toggle).toHaveBeenCalledOnce();
+        });
+
+        it('should not fail when toggling the sidebar before a callback is registered', () => {
+            expect(() => comp.toggleSidebar()).not.toThrow();
+        });
+    });
+
+    describe('isGracePeriodOver', () => {
+        it('should be falsy when the grace period end date is not set', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(undefined!);
+            expect(comp.isGracePeriodOver()).toBeFalsy();
+        });
+
+        it('should be over when the grace period end date is before the server date', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().subtract(1, 'days'));
+            const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isGracePeriodOver()).toBe(true);
+            expect(serverNowSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not be over when the grace period end date is after the server date', () => {
+            comp.individualStudentEndDateWithGracePeriod.set(dayjs().add(1, 'days'));
+            const serverNowSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
+            expect(comp.isGracePeriodOver()).toBe(false);
+            expect(serverNowSpy).toHaveBeenCalledOnce();
+        });
     });
 
     it('should clear autoSaveInterval when exam ended', () => {
