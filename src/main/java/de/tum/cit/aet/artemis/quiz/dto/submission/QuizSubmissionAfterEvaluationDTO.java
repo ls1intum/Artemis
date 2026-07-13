@@ -29,9 +29,23 @@ public record QuizSubmissionAfterEvaluationDTO(Long id, String submissionExercis
      * @return a DTO containing the evaluated submission data
      */
     public static QuizSubmissionAfterEvaluationDTO of(QuizSubmission submission) {
+        return of(submission, true);
+    }
+
+    /**
+     * Creates the evaluated submission embedded in a practice-result response without repeating the enclosing result.
+     *
+     * @param submission the evaluated quiz submission
+     * @return the evaluated submission without nested results
+     */
+    public static QuizSubmissionAfterEvaluationDTO forPractice(QuizSubmission submission) {
+        return of(submission, false);
+    }
+
+    private static QuizSubmissionAfterEvaluationDTO of(QuizSubmission submission, boolean includeResults) {
         List<ResultAfterEvaluationDTO> results = null;
         Set<SubmittedAnswerAfterEvaluationDTO> submittedAnswers = Set.of();
-        if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
+        if (includeResults && Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
             results = submission.getResults().stream().map(ResultAfterEvaluationDTO::of).toList();
         }
         if (Hibernate.isInitialized(submission.getSubmittedAnswers()) && submission.getSubmittedAnswers() != null) {

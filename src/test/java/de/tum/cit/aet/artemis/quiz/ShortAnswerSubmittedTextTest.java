@@ -6,8 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.ShortAnswerSubmittedTextDTO;
 
 class ShortAnswerSubmittedTextTest {
 
@@ -25,6 +27,19 @@ class ShortAnswerSubmittedTextTest {
         shortAnswerSubmittedAnswer.setQuizQuestion(shortAnswerQuestion);
         shortAnswerSubmittedText = new ShortAnswerSubmittedText();
         shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
+    }
+
+    @Test
+    void beforeEvaluationDTOOmitsDerivedCorrectness() {
+        shortAnswerSubmittedText.setText("student answer");
+        shortAnswerSubmittedText.setIsCorrect(true);
+        shortAnswerSubmittedText.setSpot(new ShortAnswerSpot().spotNr(1).width(10));
+
+        ShortAnswerSubmittedTextDTO dto = ShortAnswerSubmittedTextDTO.beforeEvaluation(shortAnswerSubmittedText);
+
+        assertThat(dto.text()).isEqualTo("student answer");
+        assertThat(dto.isCorrect()).isNull();
+        assertThat(dto.spot().spotNr()).isEqualTo(1);
     }
 
     /**

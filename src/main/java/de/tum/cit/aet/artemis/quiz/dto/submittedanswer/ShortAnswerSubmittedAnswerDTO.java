@@ -15,4 +15,15 @@ public record ShortAnswerSubmittedAnswerDTO(Set<ShortAnswerSubmittedTextDTO> sub
                 "short-answer");
     }
 
+    /**
+     * Creates the student-facing answer representation used before evaluation details may be published.
+     *
+     * @param shortAnswerSubmittedAnswer the submitted answer
+     * @return the submitted texts without derived correctness values
+     */
+    public static ShortAnswerSubmittedAnswerDTO beforeEvaluation(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+        return new ShortAnswerSubmittedAnswerDTO(
+                shortAnswerSubmittedAnswer.getSubmittedTexts().stream().map(ShortAnswerSubmittedTextDTO::beforeEvaluation).collect(Collectors.toSet()), "short-answer");
+    }
+
 }

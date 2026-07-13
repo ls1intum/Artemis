@@ -8,7 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -43,6 +43,7 @@ const question = {
 const course = { id: 1 } as Course;
 let quizExercise = {
     id: 4,
+    title: 'Quiz title',
     started: true,
     course,
     quizQuestions: [question],
@@ -57,6 +58,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     let fixture: ComponentFixture<ShortAnswerQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
+    let websocketService: MockWebsocketService;
     let accountSpy: any;
     let quizServiceFindSpy: any;
 
@@ -81,6 +83,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
                 accountService = TestBed.inject(AccountService);
+                websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
                 quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
@@ -88,6 +91,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     afterEach(() => {
         quizExercise = {
             id: 4,
+            title: 'Quiz title',
             started: true,
             course,
             quizQuestions: [question],
@@ -121,6 +125,24 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
+        });
+
+        it('should merge solution-free statistic updates into the loaded quiz', () => {
+            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const updatedStatistic = { shortAnswerSpotCounters: [{ spot: answerSpot, ratedCounter: 2, unRatedCounter: 3 }] } as ShortAnswerQuestionStatistic;
+            const update = {
+                id: 4,
+                quizQuestions: [{ id: 1, spots: [answerSpot], text: 'Test Question', quizQuestionStatistic: updatedStatistic } as ShortAnswerQuestion],
+            } as QuizExerciseStatisticUpdate;
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/4', update);
+
+            expect(comp.quizExercise.title).toBe('Quiz title');
+            expect(comp.question.quizQuestionStatistic).toBe(updatedStatistic);
+            expect((comp.question as ShortAnswerQuestion).solutions).toEqual([shortAnswerSolution]);
+            expect((comp.question as ShortAnswerQuestion).correctMappings).toEqual([shortAnswerMapping]);
+            expect(comp.sampleSolutions).toEqual([shortAnswerSolution]);
         });
     });
 

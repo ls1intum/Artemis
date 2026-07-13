@@ -16,4 +16,15 @@ public record QuizExerciseWithSolutionDTO(@JsonUnwrapped QuizExerciseWithoutQues
                 quizExercise.getQuizQuestions().stream().map(QuizQuestionWithSolutionDTO::of).toList());
     }
 
+    /**
+     * Creates the solution-bearing quiz representation embedded in a practice-result response.
+     *
+     * @param quizExercise the practice quiz
+     * @return the quiz with solutions but without redundant course data
+     */
+    public static QuizExerciseWithSolutionDTO forPractice(QuizExercise quizExercise) {
+        return new QuizExerciseWithSolutionDTO(QuizExerciseWithoutQuestionsDTO.forPractice(quizExercise),
+                quizExercise.getQuizQuestions().stream().map(QuizQuestionWithSolutionDTO::of).toList());
+    }
+
 }

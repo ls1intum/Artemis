@@ -27,6 +27,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +37,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -70,6 +74,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseStatisticUpdateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -211,6 +216,41 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateStatisticsPublishesRedactedDTOWithoutMutatingQuiz() throws Exception {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 2, true, ZonedDateTime.now());
+        participationUtilService.addSubmission(quizExercise, submission, TEST_PREFIX + "student1");
+        Submission submissionWithResult = participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(submission),
+                true);
+        Result result = submissionWithResult.getResults().getFirst();
+        QuizExercise quizWithStatistics = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+
+        quizStatisticService.updateStatistics(Set.of(result), quizWithStatistics);
+
+        ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/statistic/" + quizExercise.getId()), payloadCaptor.capture());
+        assertThat(payloadCaptor.getValue()).isInstanceOf(QuizExerciseStatisticUpdateDTO.class);
+        JsonNode payload = JsonObjectMapper.get().valueToTree(payloadCaptor.getValue());
+        JsonNode multipleChoiceQuestion = findQuestionByType(payload.path("quizQuestions"), "multiple-choice");
+        JsonNode dragAndDropQuestion = findQuestionByType(payload.path("quizQuestions"), "drag-and-drop");
+        JsonNode shortAnswerQuestion = findQuestionByType(payload.path("quizQuestions"), "short-answer");
+        assertThat(multipleChoiceQuestion.path("quizQuestionStatistic").path("answerCounters")).isNotEmpty();
+        assertThat(multipleChoiceQuestion.path("answerOptions").get(0).has("isCorrect")).isFalse();
+        assertThat(dragAndDropQuestion.has("correctMappings")).isFalse();
+        assertThat(shortAnswerQuestion.has("solutions")).isFalse();
+        assertThat(shortAnswerQuestion.has("correctMappings")).isFalse();
+
+        MultipleChoiceQuestion persistedMultipleChoiceQuestion = (MultipleChoiceQuestion) quizWithStatistics.getQuizQuestions().getFirst();
+        DragAndDropQuestion persistedDragAndDropQuestion = (DragAndDropQuestion) quizWithStatistics.getQuizQuestions().get(1);
+        ShortAnswerQuestion persistedShortAnswerQuestion = (ShortAnswerQuestion) quizWithStatistics.getQuizQuestions().get(2);
+        assertThat(persistedMultipleChoiceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(persistedDragAndDropQuestion.getCorrectMappings()).isNotEmpty();
+        assertThat(persistedShortAnswerQuestion.getSolutions()).isNotEmpty();
+        assertThat(persistedShortAnswerQuestion.getCorrectMappings()).isNotEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testQuizSubmit_partial_points() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
@@ -349,6 +389,37 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) questions.get(2);
         assertThat(saQuestion.getCorrectMappings()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizSubmitPracticeResponseDoesNotMutatePersistedAggregate() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(5), QuizMode.SYNCHRONIZED);
+        quizExercise = quizExerciseService.save(quizExercise);
+        QuizSubmission submission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 2, true, null);
+
+        JsonNode response = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", QuizSubmissionFromStudentDTO.of(submission),
+                JsonNode.class, HttpStatus.OK);
+
+        JsonNode responseSubmission = response.path("submission");
+        assertThat(responseSubmission.has("results")).isFalse();
+        assertThat(responseSubmission.path("participation").path("exercise").has("course")).isFalse();
+        assertThat(findQuestionByType(responseSubmission.path("participation").path("exercise").path("quizQuestions"), "short-answer").path("solutions")).isNotEmpty();
+
+        QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        assertThat(reloadedQuiz.getCourseViaExerciseGroupOrCourseMember()).isNotNull();
+        assertThat(reloadedQuiz.getQuizPointStatistic()).isNotNull();
+        assertThat(reloadedQuiz.getQuizQuestions()).allSatisfy(question -> assertThat(question.getQuizQuestionStatistic()).isNotNull());
+        MultipleChoiceQuestion reloadedMultipleChoiceQuestion = (MultipleChoiceQuestion) reloadedQuiz.getQuizQuestions().getFirst();
+        DragAndDropQuestion reloadedDragAndDropQuestion = (DragAndDropQuestion) reloadedQuiz.getQuizQuestions().get(1);
+        ShortAnswerQuestion reloadedShortAnswerQuestion = (ShortAnswerQuestion) reloadedQuiz.getQuizQuestions().get(2);
+        assertThat(reloadedMultipleChoiceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(reloadedDragAndDropQuestion.getCorrectMappings()).isNotEmpty();
+        assertThat(reloadedShortAnswerQuestion.getSolutions()).isNotEmpty();
+        assertThat(reloadedShortAnswerQuestion.getCorrectMappings()).isNotEmpty();
+
+        QuizSubmission reloadedSubmission = quizSubmissionTestRepository.findWithEagerResultAndFeedbackById(responseSubmission.path("id").asLong()).orElseThrow();
+        assertThat(reloadedSubmission.getResults()).isNotEmpty();
     }
 
     @Test
@@ -1097,6 +1168,24 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         verify(websocketMessagingService, never()).sendMessageToUser(any(), eq(topic), any());
     }
 
+    private static JsonNode findQuestionByType(JsonNode questions, String type) {
+        for (JsonNode question : questions) {
+            if (type.equals(question.path("type").asText())) {
+                return question;
+            }
+        }
+        throw new AssertionError("Missing quiz question of type " + type);
+    }
+
+    private static JsonNode findSubmittedAnswerByType(JsonNode submittedAnswers, String type) {
+        for (JsonNode submittedAnswer : submittedAnswers) {
+            if (type.equals(submittedAnswer.path("type").asText())) {
+                return submittedAnswer;
+            }
+        }
+        throw new AssertionError("Missing submitted answer of type " + type);
+    }
+
     @Nested
     @Isolated
     class QuizSubmitLiveModeIsolatedTest {
@@ -1125,14 +1214,28 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
 
-            QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
-                    QuizSubmission.class, HttpStatus.OK);
-            // check whether submission flag was updated
-            assertThat(updatedSubmission.isSubmitted()).isTrue();
-            // check whether all answers were submitted properly
-            assertThat(updatedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
-            // check whether submission date was set
-            assertThat(updatedSubmission.getSubmissionDate()).isNotNull();
+            JsonNode response = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission, JsonNode.class,
+                    HttpStatus.OK);
+            assertThat(response.path("submitted").asBoolean()).isTrue();
+            assertThat(response.path("submittedAnswers")).hasSize(quizSubmission.getSubmittedAnswers().size());
+            assertThat(response.path("submissionDate").asText()).isNotBlank();
+
+            JsonNode shortAnswer = findSubmittedAnswerByType(response.path("submittedAnswers"), "short-answer");
+            assertThat(shortAnswer.path("quizQuestion").has("solutions")).isFalse();
+            for (JsonNode submittedText : shortAnswer.path("submittedTexts")) {
+                assertThat(submittedText.has("isCorrect")).isFalse();
+            }
+
+            QuizSubmission reloadedSubmission = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(response.path("id").asLong());
+            assertThat(reloadedSubmission.getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
+            QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+            MultipleChoiceQuestion reloadedMultipleChoiceQuestion = (MultipleChoiceQuestion) reloadedQuiz.getQuizQuestions().getFirst();
+            DragAndDropQuestion reloadedDragAndDropQuestion = (DragAndDropQuestion) reloadedQuiz.getQuizQuestions().get(1);
+            ShortAnswerQuestion reloadedShortAnswerQuestion = (ShortAnswerQuestion) reloadedQuiz.getQuizQuestions().get(2);
+            assertThat(reloadedMultipleChoiceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+            assertThat(reloadedDragAndDropQuestion.getCorrectMappings()).isNotEmpty();
+            assertThat(reloadedShortAnswerQuestion.getSolutions()).isNotEmpty();
+            assertThat(reloadedShortAnswerQuestion.getCorrectMappings()).isNotEmpty();
         }
 
         @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

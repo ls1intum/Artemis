@@ -15,6 +15,16 @@ public record ResultAfterEvaluationWithSubmissionDTO(@JsonUnwrapped ResultAfterE
     public static ResultAfterEvaluationWithSubmissionDTO of(Result result) {
         return new ResultAfterEvaluationWithSubmissionDTO(ResultAfterEvaluationDTO.of(result), QuizSubmissionForResultDTO.of((QuizSubmission) result.getSubmission()));
     }
+
+    /**
+     * Creates the practice-result response without mutating entities to remove redundant nested data.
+     *
+     * @param result the evaluated practice result
+     * @return the practice response projection
+     */
+    public static ResultAfterEvaluationWithSubmissionDTO forPractice(Result result) {
+        return new ResultAfterEvaluationWithSubmissionDTO(ResultAfterEvaluationDTO.of(result), QuizSubmissionForResultDTO.forPractice((QuizSubmission) result.getSubmission()));
+    }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -23,6 +33,11 @@ record QuizSubmissionForResultDTO(@JsonUnwrapped QuizSubmissionAfterEvaluationDT
     public static QuizSubmissionForResultDTO of(QuizSubmission submission) {
         return new QuizSubmissionForResultDTO(QuizSubmissionAfterEvaluationDTO.of(submission),
                 StudentQuizParticipationWithSolutionsDTO.of((StudentParticipation) submission.getParticipation()));
+    }
+
+    static QuizSubmissionForResultDTO forPractice(QuizSubmission submission) {
+        return new QuizSubmissionForResultDTO(QuizSubmissionAfterEvaluationDTO.forPractice(submission),
+                StudentQuizParticipationWithSolutionsDTO.forPractice((StudentParticipation) submission.getParticipation()));
     }
 
 }

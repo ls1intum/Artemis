@@ -7,7 +7,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { PointCounter } from 'app/quiz/shared/entities/point-counter.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { round } from 'app/foundation/util/utils';
@@ -88,9 +88,9 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             }
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.quizDataSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                if (quiz.quizPointStatistic) {
-                    this.loadNewData(quiz.quizPointStatistic);
+            this.quizDataSubscription = this.websocketService.subscribe<QuizExerciseStatisticUpdate>(this.websocketChannelForData).subscribe((update) => {
+                if (update.quizPointStatistic) {
+                    this.loadNewData(update.quizPointStatistic);
                 }
             });
         });

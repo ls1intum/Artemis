@@ -1962,13 +1962,43 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(json.has("quizQuestions")).isTrue();
         assertThat(json.get("quizQuestions").size()).isEqualTo(3);
 
-        // Check no solutions, e.g. MC no isCorrect
-        JsonNode mc = json.get("quizQuestions").get(0);
-        JsonNode ao = mc.get("answerOptions").get(0);
-        assertThat(ao.has("isCorrect")).isFalse();
+        JsonNode questions = json.get("quizQuestions");
+        JsonNode multipleChoiceQuestion = findQuestionByType(questions, "multiple-choice");
+        JsonNode dragAndDropQuestion = findQuestionByType(questions, "drag-and-drop");
+        JsonNode shortAnswerQuestion = findQuestionByType(questions, "short-answer");
+
+        assertThat(multipleChoiceQuestion.has("explanation")).isFalse();
+        for (JsonNode answerOption : multipleChoiceQuestion.path("answerOptions")) {
+            assertThat(answerOption.has("isCorrect")).isFalse();
+            assertThat(answerOption.has("explanation")).isFalse();
+        }
+        assertThat(dragAndDropQuestion.has("explanation")).isFalse();
+        assertThat(dragAndDropQuestion.has("correctMappings")).isFalse();
+        assertThat(shortAnswerQuestion.has("explanation")).isFalse();
+        assertThat(shortAnswerQuestion.has("correctMappings")).isFalse();
+        assertThat(shortAnswerQuestion.has("solutions")).isFalse();
 
         QuizExerciseWithQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithQuestionsDTO.class);
         assertThat(dto.quizQuestions()).hasSize(3);
+
+        QuizExercise reloadedQuiz = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        MultipleChoiceQuestion reloadedMultipleChoiceQuestion = (MultipleChoiceQuestion) reloadedQuiz.getQuizQuestions().getFirst();
+        DragAndDropQuestion reloadedDragAndDropQuestion = (DragAndDropQuestion) reloadedQuiz.getQuizQuestions().get(1);
+        ShortAnswerQuestion reloadedShortAnswerQuestion = (ShortAnswerQuestion) reloadedQuiz.getQuizQuestions().get(2);
+        assertThat(reloadedMultipleChoiceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
+        assertThat(reloadedMultipleChoiceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+        assertThat(reloadedDragAndDropQuestion.getCorrectMappings()).isNotEmpty();
+        assertThat(reloadedShortAnswerQuestion.getSolutions()).isNotEmpty();
+        assertThat(reloadedShortAnswerQuestion.getCorrectMappings()).isNotEmpty();
+    }
+
+    private static JsonNode findQuestionByType(JsonNode questions, String type) {
+        for (JsonNode question : questions) {
+            if (type.equals(question.path("type").asText())) {
+                return question;
+            }
+        }
+        throw new AssertionError("Missing quiz question of type " + type);
     }
 
     @Test

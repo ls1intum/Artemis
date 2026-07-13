@@ -70,6 +70,18 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     }
 }
 
+export type QuizExerciseStatisticUpdate = Pick<QuizExercise, 'id' | 'quizQuestions' | 'quizPointStatistic'>;
+
+/**
+ * Applies a solution-free statistic websocket update without discarding metadata or solutions from the exercise originally loaded for an instructor.
+ */
+export function mergeQuizExerciseStatisticUpdate(quizExercise: QuizExercise, update: QuizExerciseStatisticUpdate): QuizExercise {
+    const currentQuestions = new Map(quizExercise.quizQuestions?.map((question) => [question.id, question]));
+    const quizQuestions = update.quizQuestions?.map((question) => ({ ...currentQuestions.get(question.id), ...question })) ?? quizExercise.quizQuestions;
+    const mergedQuizExercise: QuizExercise = { ...quizExercise, ...update, quizQuestions };
+    return mergedQuizExercise;
+}
+
 export function resetQuizForExam(exercise: QuizExercise) {
     resetForImport(exercise);
 

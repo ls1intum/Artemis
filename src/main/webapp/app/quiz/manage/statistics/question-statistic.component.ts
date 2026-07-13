@@ -1,6 +1,6 @@
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizExerciseStatisticUpdate, mergeQuizExerciseStatisticUpdate } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -72,8 +72,10 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
             // ask for new Data if the websocket for new statistical data was notified
-            this.statisticSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
-                this.loadQuiz(quiz, true);
+            this.statisticSubscription = this.websocketService.subscribe<QuizExerciseStatisticUpdate>(this.websocketChannelForData).subscribe((update) => {
+                if (this.quizExercise) {
+                    this.loadQuiz(mergeQuizExerciseStatisticUpdate(this.quizExercise, update), true);
+                }
             });
         });
     }

@@ -27,23 +27,37 @@ public record StudentQuizParticipationWithSolutionsDTO(@JsonUnwrapped StudentQui
      * @return the created StudentQuizParticipationWithSolutionsDTO object
      */
     public static StudentQuizParticipationWithSolutionsDTO of(final StudentParticipation studentParticipation) {
+        return of(studentParticipation, false);
+    }
+
+    /**
+     * Creates the participation embedded in a practice-result response without redundant course and nested result data.
+     *
+     * @param studentParticipation the practice participation
+     * @return the practice response projection
+     */
+    public static StudentQuizParticipationWithSolutionsDTO forPractice(final StudentParticipation studentParticipation) {
+        return of(studentParticipation, true);
+    }
+
+    private static StudentQuizParticipationWithSolutionsDTO of(final StudentParticipation studentParticipation, boolean practiceResponse) {
         Exercise participationExercise = studentParticipation.getExercise();
         Set<Submission> submissions = studentParticipation.getSubmissions();
         if (!(participationExercise instanceof QuizExercise quizExercise)) {
-            // Return null if the exercise is not a QuizExercise
             return null;
         }
 
         if (!Hibernate.isInitialized(submissions) || submissions == null) {
             submissions = Set.of();
         }
-        submissions = submissions.stream().filter(submission -> submission instanceof QuizSubmission).collect(Collectors.toSet());
+        submissions = submissions.stream().filter(QuizSubmission.class::isInstance).collect(Collectors.toSet());
 
-        Set<QuizSubmissionAfterEvaluationDTO> submissionsAfterEvaluation = submissions.stream().map(submission -> (QuizSubmission) submission)
-                .map(QuizSubmissionAfterEvaluationDTO::of).collect(Collectors.toSet());
+        Set<QuizSubmissionAfterEvaluationDTO> submissionsAfterEvaluation = submissions.stream().map(QuizSubmission.class::cast)
+                .map(submission -> practiceResponse ? QuizSubmissionAfterEvaluationDTO.forPractice(submission) : QuizSubmissionAfterEvaluationDTO.of(submission))
+                .collect(Collectors.toSet());
+        QuizExerciseWithSolutionDTO exerciseDTO = practiceResponse ? QuizExerciseWithSolutionDTO.forPractice(quizExercise) : QuizExerciseWithSolutionDTO.of(quizExercise);
 
-        return new StudentQuizParticipationWithSolutionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithSolutionDTO.of(quizExercise),
-                submissionsAfterEvaluation);
+        return new StudentQuizParticipationWithSolutionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), exerciseDTO, submissionsAfterEvaluation);
     }
 
 }

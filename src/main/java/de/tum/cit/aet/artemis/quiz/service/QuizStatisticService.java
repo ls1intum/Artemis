@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseStatisticUpdateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
@@ -191,10 +192,8 @@ public class QuizStatisticService {
                 }
             }
             quizQuestionStatisticRepository.saveAll(quizQuestionStatistics);
-            // notify users via websocket about new results for the statistics.
-            // filters out solution information
-            quiz.filterForStatisticWebsocket();
-            websocketMessagingService.sendMessage("/topic/statistic/" + quiz.getId(), quiz);
+            // Notify users without modifying the persisted quiz aggregate to redact solutions.
+            websocketMessagingService.sendMessage("/topic/statistic/" + quiz.getId(), QuizExerciseStatisticUpdateDTO.of(quiz));
         }
     }
 

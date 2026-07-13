@@ -18,4 +18,14 @@ public record ShortAnswerSubmittedTextDTO(String text, Boolean isCorrect, ShortA
         return new ShortAnswerSubmittedTextDTO(submittedText.getText(), submittedText.isIsCorrect(), ShortAnswerSpotDTO.of(submittedText.getSpot()));
     }
 
+    /**
+     * Creates a representation for responses sent before evaluation details may be published.
+     *
+     * @param submittedText the submitted short answer text
+     * @return the raw submitted text and spot without the derived correctness value
+     */
+    public static ShortAnswerSubmittedTextDTO beforeEvaluation(final ShortAnswerSubmittedText submittedText) {
+        return new ShortAnswerSubmittedTextDTO(submittedText.getText(), null, ShortAnswerSpotDTO.of(submittedText.getSpot()));
+    }
+
 }
