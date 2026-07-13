@@ -1027,13 +1027,15 @@ class LectureContentProcessingServiceTest {
             recoverableState.setPhase(ProcessingPhase.INGESTING);
 
             when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(failingState, recoverableState));
-            when(processingStateRepository.save(any())).thenThrow(new IllegalStateException("database unavailable")).thenAnswer(invocation -> invocation.getArgument(0));
+            when(processingStateRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenThrow(new IllegalStateException("database unavailable"));
             when(transcriptionRepository.findByLectureUnit_Id(secondUnit.getId())).thenReturn(Optional.empty());
 
             assertThatThrownBy(recoveryService::handleIrisReset).isInstanceOf(IllegalStateException.class).hasMessageContaining("Failed to recover all");
 
+            assertThat(failingState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
             assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            verify(processingStateRepository, times(2)).save(any());
+            verify(processingStateRepository).save(recoverableState);
             verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
     }

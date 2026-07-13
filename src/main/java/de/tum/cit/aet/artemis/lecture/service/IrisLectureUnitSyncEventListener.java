@@ -77,7 +77,12 @@ public class IrisLectureUnitSyncEventListener {
     }
 
     private void synchronize(Long lectureUnitId, LectureContentUpdateKind updateKind, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
-        syncStateRepository.findByLectureUnitId(lectureUnitId).ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
+        try {
+            syncStateRepository.findByLectureUnitId(lectureUnitId).ifPresent(state -> synchronize(state, updateKind, projectedSlideHiddenUntilBySlideNumber));
+        }
+        catch (Exception e) {
+            log.warn("Could not load Iris lecture unit sync state {}", lectureUnitId, e);
+        }
     }
 
     private void synchronize(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
@@ -101,7 +106,8 @@ public class IrisLectureUnitSyncEventListener {
         }
         catch (Exception e) {
             try {
-                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> markRetry(currentState, e));
+                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> Optional.of(currentState)
+                        .filter(candidate -> isDirtyForUpdateKind(candidate, updateKind)).ifPresent(candidate -> markRetry(candidate, e)));
             }
             catch (Exception persistenceException) {
                 log.warn("Could not persist retry state for Iris lecture unit sync {}", state.getLectureUnitId(), persistenceException);
@@ -114,6 +120,16 @@ public class IrisLectureUnitSyncEventListener {
         dispatchedHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
         dispatchedHashes.put(LectureContentUpdateKind.VISIBILITY, dispatchedVisibilityHash);
         return dispatchedHashes.get(updateKind);
+    }
+
+    private static boolean isDirtyForUpdateKind(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
+        Map<LectureContentUpdateKind, String> currentHashes = new EnumMap<>(LectureContentUpdateKind.class);
+        currentHashes.put(LectureContentUpdateKind.METADATA, state.getMetadataHash());
+        currentHashes.put(LectureContentUpdateKind.VISIBILITY, state.getVisibilityHash());
+        Map<LectureContentUpdateKind, String> syncedHashes = new EnumMap<>(LectureContentUpdateKind.class);
+        syncedHashes.put(LectureContentUpdateKind.METADATA, state.getLastSyncedMetadataHash());
+        syncedHashes.put(LectureContentUpdateKind.VISIBILITY, state.getLastSyncedVisibilityHash());
+        return !Objects.equals(currentHashes.get(updateKind), syncedHashes.get(updateKind));
     }
 
     private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedHash) {

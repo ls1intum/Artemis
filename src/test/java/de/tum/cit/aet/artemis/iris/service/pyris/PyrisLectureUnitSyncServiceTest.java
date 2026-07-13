@@ -111,6 +111,8 @@ class PyrisLectureUnitSyncServiceTest {
         ZonedDateTime hiddenUntil = ZonedDateTime.parse("2026-07-03T10:15:30+02:00[Europe/Berlin]");
         unit.setReleaseDate(null);
         unit.getAttachment().setReleaseDate(releaseDate);
+        unit.getAttachment().setLink("missing/path/that/must/not/be/read.PDF");
+        unit.setVideoSource(null);
         when(irisSettingsService.isEnabledForCourse(unit.getLecture().getCourse())).thenReturn(true);
 
         String token = service.updateLectureUnitVisibilityInPyris(unit, List.of(slide(3, null), slide(1, hiddenUntil), slide(2, null)));
