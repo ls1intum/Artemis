@@ -332,6 +332,13 @@
             "next": "Nächste Seite",
             "last": "Letzte Seite",
             "rowsPerPage": "Einträge pro Seite"
+        },
+        "datePicker": {
+            "open": "Kalender öffnen",
+            "clear": "Löschen",
+            "done": "Fertig",
+            "time": "Uhrzeit",
+            "invalid": "Bitte ein gültiges Datum mit Uhrzeit eingeben."
         }
     },
     "entity": {

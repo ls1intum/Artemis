@@ -1,0 +1,76 @@
+<div class="flex flex-col gap-1">
+    @if (!hideLabelName() && labelName()) {
+        <label [attr.for]="inputId()" class="font-semibold text-surface-900 dark:text-surface-0">{{ labelName()! | artemisTranslate }}</label>
+    }
+
+    <div #triggerWrapper class="relative flex items-center">
+        <input
+            [id]="inputId()"
+            type="text"
+            [value]="inputText()"
+            [disabled]="disabled()"
+            placeholder="dd.mm.yyyy hh:mm"
+            [attr.aria-invalid]="showErrorBorder()"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="isOpen() ? 'true' : 'false'"
+            (input)="onInput($any($event.target).value)"
+            (blur)="onBlur($any($event.target).value)"
+            class="w-full rounded-md border bg-surface-0 py-2 pl-3 pr-16 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
+            [class.border-surface]="!showErrorBorder()"
+            [class.border-state-danger]="showErrorBorder()"
+            data-testid="tum-ui-date-picker-input"
+        />
+        @if (showClear() && !disabled()) {
+            <button
+                type="button"
+                class="absolute right-9 text-muted-color hover:text-surface-900 dark:hover:text-surface-0"
+                (click)="clear()"
+                [attr.aria-label]="'global.datePicker.clear' | artemisTranslate"
+                data-testid="tum-ui-date-picker-clear"
+            >
+                <fa-icon [icon]="faXmark" />
+            </button>
+        }
+        <button
+            type="button"
+            class="absolute right-2 text-muted-color hover:text-primary"
+            [disabled]="disabled()"
+            (click)="toggle()"
+            [attr.aria-label]="'global.datePicker.open' | artemisTranslate"
+            data-testid="tum-ui-date-picker-trigger"
+        >
+            <fa-icon [icon]="faCalendar" />
+        </button>
+    </div>
+
+    @if (!hideValidationMessage() && showErrorBorder()) {
+        <span class="text-sm text-state-danger" jhiTranslate="global.datePicker.invalid" data-testid="tum-ui-date-picker-error"></span>
+    }
+</div>
+
+<ng-template #panel>
+    <div
+        class="rounded-md border border-surface bg-surface-0 p-3 shadow-lg dark:bg-surface-800"
+        role="dialog"
+        [attr.aria-label]="'global.datePicker.open' | artemisTranslate"
+        cdkTrapFocus
+        [cdkTrapFocusAutoCapture]="true"
+    >
+        <tum-ui-calendar [selected]="value()" [activeMonth]="activeMonth()" (daySelected)="onDaySelect($event)" (monthChange)="activeMonth.set($event)" />
+        <div class="mt-3 flex items-center justify-between gap-3">
+            <label class="flex items-center gap-2 text-sm text-surface-900 dark:text-surface-0">
+                <span jhiTranslate="global.datePicker.time"></span>
+                <input
+                    type="time"
+                    [value]="timeText()"
+                    (input)="onTimeChange($any($event.target).value)"
+                    class="rounded-md border border-surface bg-surface-0 px-2 py-1 text-surface-900 dark:bg-surface-800 dark:text-surface-0"
+                    data-testid="tum-ui-date-picker-time"
+                />
+            </label>
+            <tum-ui-button severity="secondary" [text]="true" size="small" (clicked)="close()" data-testid="tum-ui-date-picker-done">
+                <span jhiTranslate="global.datePicker.done"></span>
+            </tum-ui-button>
+        </div>
+    </div>
+</ng-template>

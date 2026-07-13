@@ -18,10 +18,10 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <jhi-date-time-picker
+                    <tum-ui-date-picker
                         #deleteFromPicker
                         [inputId]="'deleteFromDate-' + operation.name"
-                        [pickerType]="DateTimePickerType.DEFAULT"
+                        [pickerType]="TumUiDatePickerType.DEFAULT"
                         [value]="operation.deleteFrom"
                         (valueChange)="onDeleteFromChange(operation, deleteFromPicker.isValid() ? deleteFromPicker.value() : undefined)"
                         [error]="!operation.datesValid()"
@@ -35,10 +35,10 @@
             </td>
             <td>
                 @if (operation.name !== 'deleteOrphans') {
-                    <jhi-date-time-picker
+                    <tum-ui-date-picker
                         #deleteToPicker
                         [inputId]="'deleteToDate-' + operation.name"
-                        [pickerType]="DateTimePickerType.DEFAULT"
+                        [pickerType]="TumUiDatePickerType.DEFAULT"
                         [value]="operation.deleteTo"
                         (valueChange)="onDeleteToChange(operation, deleteToPicker.isValid() ? deleteToPicker.value() : undefined)"
                         [error]="!operation.datesValid()"

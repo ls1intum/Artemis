@@ -332,6 +332,13 @@
             "next": "Next page",
             "last": "Last page",
             "rowsPerPage": "Rows per page"
+        },
+        "datePicker": {
+            "open": "Open calendar",
+            "clear": "Clear",
+            "done": "Done",
+            "time": "Time",
+            "invalid": "Please enter a valid date and time."
         }
     },
     "entity": {
