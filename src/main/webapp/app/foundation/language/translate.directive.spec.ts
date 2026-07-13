@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { of } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -63,5 +64,32 @@ describe('TranslateDirective', () => {
         dynamicFixture.componentInstance.key.set('test');
         dynamicFixture.detectChanges();
         expect(spy).toHaveBeenCalledWith('test', undefined);
+    });
+
+    it('sanitizes the translated value before assigning to innerHTML (XSS via translateValues)', () => {
+        // Simulate a translation whose interpolated translateValues carry user-controlled markup (e.g. a course
+        // title). ngx-translate does not HTML-escape interpolation params, so the directive must sanitize.
+        spy.mockReturnValue(of('Course <img src="x" onerror="alert(1)"><script>alert(2)</script> title') as ReturnType<typeof translateService.get>);
+
+        const fixture = TestBed.createComponent(TestTranslateDirectiveComponent);
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement.querySelector('div');
+
+        expect(element.innerHTML).not.toContain('onerror');
+        expect(element.innerHTML).not.toContain('<script');
+        expect(element.innerHTML).not.toContain('alert(2)');
+        // benign text around the stripped payload is preserved
+        expect(element.textContent).toContain('Course');
+    });
+
+    it('preserves benign inline markup in the translated value', () => {
+        spy.mockReturnValue(of('Click <a href="/x"><strong>here</strong></a>') as ReturnType<typeof translateService.get>);
+
+        const fixture = TestBed.createComponent(TestTranslateDirectiveComponent);
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement.querySelector('div');
+
+        expect(element.innerHTML).toContain('<strong>here</strong>');
+        expect(element.innerHTML).toContain('href="/x"');
     });
 });
