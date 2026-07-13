@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -35,6 +36,9 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -71,16 +75,22 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
         // task/coverage RESTRICT constraints that a seeded, task-linked test case would also hit.
         ProgrammingExerciseTestCase testCase = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("cascadeTest").active(true)
                 .weight(1.).bonusMultiplier(1.).bonusPoints(0.).visibility(Visibility.ALWAYS));
-        Feedback feedback = feedbackRepository.save(new Feedback().detailText("references the test case").testCase(testCase));
+        // A detail text over FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH (1000) forces a long_feedback_text child row, so
+        // this also covers the feedback -> long_feedback_text link in the same delete chain (a failed-test feedback
+        // with a long detail text is exactly the case a build result can produce during the deletion race).
+        Feedback feedback = feedbackRepository.save(new Feedback().detailText("x".repeat(1500)).testCase(testCase));
         long feedbackId = feedback.getId();
         assertThat(feedbackRepository.findById(feedbackId)).isPresent();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isPresent();
 
-        // feedback.test_case_id is now ON DELETE CASCADE: deleting the test case must remove the referencing
-        // feedback rather than fail on the previous RESTRICT constraint.
+        // feedback.test_case_id and long_feedback_text.feedback_id are now ON DELETE CASCADE: deleting the test
+        // case must remove the referencing feedback AND its long feedback text rather than fail on the previous
+        // RESTRICT constraints. The database performs the whole chain; JPA is not involved.
         testCaseRepository.deleteById(testCase.getId());
 
         assertThat(testCaseRepository.findById(testCase.getId())).isEmpty();
         assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).isEmpty();
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {

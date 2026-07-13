@@ -4,9 +4,15 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        Change the feedback -> programming_exercise_test_case foreign key (feedback.test_case_id) from
-        ON DELETE RESTRICT to ON DELETE CASCADE.
+        Make the feedback -> programming_exercise_test_case delete chain cascade at the database level.
 
+        Two foreign keys are switched from ON DELETE RESTRICT to ON DELETE CASCADE in one migration because
+        they form a single parent -> child -> grandchild chain that must be deletable atomically by the database:
+
+            programming_exercise_test_case  -(feedback.test_case_id)->          feedback
+            feedback                        -(long_feedback_text.feedback_id)-> long_feedback_text
+
+        (1) feedback.test_case_id (FK_feedback_test_case_id):
         A test-case feedback is produced by, and only meaningful together with, the programming_exercise_test_case
         it references. Test cases are never deleted on their own (they are deactivated, not removed); they are
         removed only when their programming exercise is deleted, via the cascade/orphan-removal on
@@ -22,16 +28,33 @@
         test case, closing the race cluster-wide (it is enforced by the database, independent of which node
         processes the build result or runs the deletion) without any application-level transaction or cross-node
         coordination. This mirrors the participant_score -> result SET NULL fix (changelog 20260708093000).
+
+        (2) long_feedback_text.feedback_id (fk_long_feedback_to_feedback):
+        A failed-test feedback whose detail text exceeds Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH (1000 chars)
+        spawns a long_feedback_text child row (Feedback.setDetailText). In the normal deletion path this child is
+        removed by JPA (Feedback.longFeedbackText is cascade=ALL, orphanRemoval=true), so the RESTRICT never bit.
+        But the database-level cascade added in (1) bypasses JPA entirely: when the database deletes a feedback row
+        as the child of a test-case delete, the still-RESTRICT long_feedback_text child would block that delete and
+        the original exercise deletion would still 500. Switching this FK to ON DELETE CASCADE as well lets the
+        database remove the long_feedback_text grandchild together with its feedback, so the whole chain deletes
+        atomically. This only aligns the database with the ownership JPA already declares (orphanRemoval=true);
+        a long_feedback_text is overflow storage that is never meaningful without its feedback (1:1 via the unique
+        index on feedback_id).
     -->
     <!--
-        The constraint is re-added with validate="true" (the default), i.e. a normal validated foreign key on both
-        PostgreSQL and MySQL. Only the ON DELETE action changes (RESTRICT -> CASCADE); the referential integrity is
-        identical, so the pre-existing rows already satisfy it. We deliberately do NOT use validate="false"
-        (PostgreSQL NOT VALID): it is a Postgres-only lock optimization that MySQL (a supported production database)
-        ignores, so keeping the default guarantees identical, well-understood behavior on both engines.
+        Both constraints are re-added with validate="true" (the default), i.e. normal validated foreign keys on
+        both PostgreSQL and MySQL. Only the ON DELETE action changes (RESTRICT -> CASCADE); the referential
+        integrity is identical, so the pre-existing rows already satisfy it. We deliberately do NOT use
+        validate="false" (PostgreSQL NOT VALID): it is a Postgres-only lock optimization that MySQL (a supported
+        production database) ignores, so keeping the default guarantees identical, well-understood behavior on both
+        engines.
     -->
     <changeSet id="20260713120000-1-feedback-test-case-fk-cascade" author="artemis">
         <dropForeignKeyConstraint baseTableName="feedback" constraintName="FK_feedback_test_case_id"/>
         <addForeignKeyConstraint baseColumnNames="test_case_id" baseTableName="feedback" constraintName="FK_feedback_test_case_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_test_case" validate="true"/>
+    </changeSet>
+    <changeSet id="20260713120000-2-long-feedback-text-fk-cascade" author="artemis">
+        <dropForeignKeyConstraint baseTableName="long_feedback_text" constraintName="fk_long_feedback_to_feedback"/>
+        <addForeignKeyConstraint baseColumnNames="feedback_id" baseTableName="long_feedback_text" constraintName="fk_long_feedback_to_feedback" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="feedback" validate="true"/>
     </changeSet>
 </databaseChangeLog>
