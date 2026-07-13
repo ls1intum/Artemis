@@ -296,6 +296,19 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(button.nativeElement.disabled).toBe(true);
         });
 
+        it('should disable the programming feedback button if the submission state is omitted', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+            setupComponentInputs(exercise);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('button'));
+            expect(button).not.toBeNull();
+            expect(button.nativeElement.disabled).toBe(true);
+        });
+
         it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', async () => {
             vi.useFakeTimers();
             setAthenaEnabled(true);
@@ -744,7 +757,7 @@ describe('RequestFeedbackButtonComponent', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
+        setupComponentInputs(exercise, true);
 
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
 
@@ -760,14 +773,14 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(button.nativeElement.disabled).toBe(true);
     });
 
-    it('should display programming exercise button without disabled attribute', async () => {
+    it('should enable the programming feedback button for a submitted participation', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(true);
         // Set user with accepted LLM usage so button is visible
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
+        setupComponentInputs(exercise, true);
 
         await initAndTick();
 

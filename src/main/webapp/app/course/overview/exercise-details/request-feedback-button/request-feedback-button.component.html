@@ -16,7 +16,7 @@
                 class="btn btn-primary"
                 (click)="requestAIFeedback()"
                 [class.btn-sm]="smallButtons()"
-                [disabled]="isSubmitted() === false || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
+                [disabled]="!isSubmitted() || isFeedbackGenerationInProgress() || isFeedbackLimitReached()"
                 [id]="'request-feedback-' + exercise().id"
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />

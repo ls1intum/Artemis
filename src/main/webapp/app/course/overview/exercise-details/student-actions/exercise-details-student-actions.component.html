@@ -131,7 +131,11 @@
                         />
                     }
                     @if (exercise().allowFeedbackRequests && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
-                        <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
+                        <jhi-request-feedback-button
+                            [exercise]="exercise()"
+                            [smallButtons]="smallButtons()"
+                            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
+                        />
                     }
                     <!--                    </ng-container>-->
                 }
