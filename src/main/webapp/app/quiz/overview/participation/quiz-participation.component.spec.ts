@@ -15,6 +15,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -166,6 +167,7 @@ describe('QuizParticipationComponent - live mode', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -752,6 +754,7 @@ describe('QuizParticipationComponent - preview mode', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -845,6 +848,7 @@ describe('QuizParticipationComponent - practice mode', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -940,6 +944,7 @@ describe('QuizParticipationComponent - solution mode', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -1021,6 +1026,7 @@ describe('QuizParticipationComponent - relativeTimeText', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -1105,6 +1111,7 @@ describe('QuizParticipationComponent - applySelection', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -1194,6 +1201,7 @@ describe('QuizParticipationComponent - showResult', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
@@ -1298,6 +1306,7 @@ describe('QuizParticipationComponent - onSaveError', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 ParticipationService,
+                ArtemisDurationFromSecondsPipe,
                 QuizExerciseService,
                 QuizParticipationService,
                 ArtemisQuizService,
