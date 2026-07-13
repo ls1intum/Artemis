@@ -44,6 +44,11 @@ env:
 #     • anything else → build the branch on-the-fly
 #  3. Deploy the resolved Docker image to the requested environment
 # ------------------------------------------------------------------------------
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
 jobs:
   # Log the inputs for debugging
   log-inputs:
