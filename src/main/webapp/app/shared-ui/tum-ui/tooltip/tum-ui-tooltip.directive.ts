@@ -50,7 +50,10 @@ export class TumUiTooltipDirective implements OnDestroy {
     }
 
     protected scheduleHide(): void {
+        // Clear BOTH timers (mirror of scheduleShow): a re-hover/focus that arrives during the hide
+        // delay must not leave an orphaned hide timer that later hides a re-shown tooltip.
         clearTimeout(this.showTimer);
+        clearTimeout(this.hideTimer);
         this.hideTimer = setTimeout(() => this.hideNow(), this.hideDelay());
     }
 

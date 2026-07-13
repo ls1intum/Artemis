@@ -23,14 +23,15 @@ export class TumUiPopoverComponent implements OnDestroy {
     private readonly viewContainerRef = inject(ViewContainerRef);
 
     readonly placement = input<TumUiOverlayPlacement>('bottom');
-    /** Accessible name announced for the role="dialog" panel. Strongly recommended for screen readers. */
-    readonly ariaLabel = input<string>();
+    /** Accessible name announced for the role="dialog" panel. Required: a dialog must have a name. */
+    readonly ariaLabel = input.required<string>();
     readonly openChange = output<boolean>();
 
     private readonly panel = viewChild.required('panel', { read: TemplateRef });
     private overlayRef?: OverlayRef;
     readonly isOpen = signal(false);
 
+    /** Open the popover anchored to `origin`. No-op if already open. */
     open(origin: ElementRef<HTMLElement> | HTMLElement): void {
         if (this.isOpen()) {
             return;
@@ -47,6 +48,7 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.openChange.emit(true);
     }
 
+    /** Close the popover and dispose its overlay. No-op if already closed. */
     close(): void {
         if (!this.isOpen()) {
             return;
@@ -57,6 +59,7 @@ export class TumUiPopoverComponent implements OnDestroy {
         this.openChange.emit(false);
     }
 
+    /** Open the popover if closed, or close it if open. */
     toggle(origin: ElementRef<HTMLElement> | HTMLElement): void {
         if (this.isOpen()) {
             this.close();

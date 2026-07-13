@@ -9,7 +9,7 @@ import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-u
 @Component({
     template: `
         <button [tumUiPopoverTrigger]="pop" data-testid="trigger">Open</button>
-        <tum-ui-popover #pop>Panel content</tum-ui-popover>
+        <tum-ui-popover #pop ariaLabel="Test popover">Panel content</tum-ui-popover>
     `,
     imports: [TumUiPopoverTriggerDirective, TumUiPopoverComponent],
 })

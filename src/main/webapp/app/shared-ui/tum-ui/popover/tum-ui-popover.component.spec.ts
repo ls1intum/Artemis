@@ -14,6 +14,7 @@ describe('TumUiPopoverComponent', () => {
         await TestBed.configureTestingModule({ imports: [TumUiPopoverComponent] }).compileComponents();
         fixture = TestBed.createComponent(TumUiPopoverComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('ariaLabel', 'Test popover');
         fixture.detectChanges();
         origin = document.createElement('button');
         document.body.appendChild(origin);
