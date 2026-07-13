@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Change the feedback -> programming_exercise_test_case foreign key (feedback.test_case_id) from
+        ON DELETE RESTRICT to ON DELETE CASCADE.
+
+        A test-case feedback is produced by, and only meaningful together with, the programming_exercise_test_case
+        it references. Test cases are never deleted on their own (they are deactivated, not removed); they are
+        removed only when their programming exercise is deleted, via the cascade/orphan-removal on
+        ProgrammingExercise.testCases. In that flow the referencing feedback is being deleted anyway (through the
+        participation -> result -> feedback cascade), so nothing legitimately keeps a feedback pointing at a
+        deleted test case.
+
+        RESTRICT was therefore both unnecessary and harmful: during exercise deletion the async build-result
+        processing (ProgrammingExerciseGradingService.processNewProgrammingExerciseResult) can save a result with
+        feedback referencing a test case in the window while the exercise's deleteById cascade removes those test
+        cases, and the test-case delete then violated FK_feedback_test_case_id (intermittent HTTP 500,
+        SQLState 23503). ON DELETE CASCADE makes the database delete any such dependent feedback together with the
+        test case, closing the race cluster-wide (it is enforced by the database, independent of which node
+        processes the build result or runs the deletion) without any application-level transaction or cross-node
+        coordination. This mirrors the participant_score -> result SET NULL fix (changelog 20260708093000).
+    -->
+    <!--
+        The constraint is re-added with validate="true" (the default), i.e. a normal validated foreign key on both
+        PostgreSQL and MySQL. Only the ON DELETE action changes (RESTRICT -> CASCADE); the referential integrity is
+        identical, so the pre-existing rows already satisfy it. We deliberately do NOT use validate="false"
+        (PostgreSQL NOT VALID): it is a Postgres-only lock optimization that MySQL (a supported production database)
+        ignores, so keeping the default guarantees identical, well-understood behavior on both engines.
+    -->
+    <changeSet id="20260713120000-1-feedback-test-case-fk-cascade" author="artemis">
+        <dropForeignKeyConstraint baseTableName="feedback" constraintName="FK_feedback_test_case_id"/>
+        <addForeignKeyConstraint baseColumnNames="test_case_id" baseTableName="feedback" constraintName="FK_feedback_test_case_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_test_case" validate="true"/>
+    </changeSet>
+</databaseChangeLog>
