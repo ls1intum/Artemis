@@ -204,7 +204,8 @@ public class AttachmentVideoUnitService {
         if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
             contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
         }
-        else if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
+
+        if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
             irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);
         }
 

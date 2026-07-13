@@ -161,6 +161,19 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
+        service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
+                Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService);
+        var unit = attachmentVideoUnit("Old name", null);
+        var dto = new AttachmentVideoUnitDTO(LECTURE_UNIT_ID, "New name", unit.getReleaseDate(), unit.getDescription(), "https://video.example/updated", null,
+                AttachmentUpdateIntent.NO_FILE_CHANGE);
+
+        service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
+
+        verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
+    }
+
+    @Test
     void updateAttachmentVideoUnitMarksMetadataAndVisibilityDirtyWhenBothChange() {
         var unit = attachmentVideoUnit("Old name", null);
         var updatedReleaseDate = unit.getReleaseDate().plusDays(1);

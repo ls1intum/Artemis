@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -1010,6 +1011,30 @@ class LectureContentProcessingServiceTest {
             verify(processingStateRepository, never()).save(any());
             verify(transcriptionRepository, never()).findByLectureUnit_Id(anyLong());
             verify(websocketMessagingService, never()).sendMessage(anyString(), any());
+        }
+
+        @Test
+        void shouldContinueRecoveringOtherStatesAndReportIncompleteRecovery() {
+            LectureUnitProcessingState failingState = new LectureUnitProcessingState(testUnit);
+            failingState.setId(301L);
+            failingState.setPhase(ProcessingPhase.TRANSCRIBING);
+
+            AttachmentVideoUnit secondUnit = new AttachmentVideoUnit();
+            secondUnit.setId(201L);
+            secondUnit.setLecture(testLecture);
+            LectureUnitProcessingState recoverableState = new LectureUnitProcessingState(secondUnit);
+            recoverableState.setId(302L);
+            recoverableState.setPhase(ProcessingPhase.INGESTING);
+
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(failingState, recoverableState));
+            when(processingStateRepository.save(any())).thenThrow(new IllegalStateException("database unavailable")).thenAnswer(invocation -> invocation.getArgument(0));
+            when(transcriptionRepository.findByLectureUnit_Id(secondUnit.getId())).thenReturn(Optional.empty());
+
+            assertThatThrownBy(recoveryService::handleIrisReset).isInstanceOf(IllegalStateException.class).hasMessageContaining("Failed to recover all");
+
+            assertThat(recoverableState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            verify(processingStateRepository, times(2)).save(any());
+            verify(websocketMessagingService).sendMessage(anyString(), any(LectureUnitCombinedStatusDTO.class));
         }
     }
 }

@@ -142,6 +142,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                     api.handleIrisReset();
                 }
                 catch (Exception e) {
+                    previouslyUp.set(false);
                     log.error("Failed to reset in-flight jobs after Iris restart", e);
                 }
             });

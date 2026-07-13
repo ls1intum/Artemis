@@ -68,7 +68,25 @@ public class ProcessingStateRecoveryService {
         log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
 
         // Do NOT treat an Iris restart as content-processing failure. The job was lost by infrastructure, so retry budget must be preserved across rollouts/restarts.
-        return Math.toIntExact(activeStates.stream().filter(this::resetToIdleForRecovery).count());
+        int resetCount = 0;
+        RuntimeException firstFailure = null;
+        for (LectureUnitProcessingState state : activeStates) {
+            try {
+                if (resetToIdleForRecovery(state)) {
+                    resetCount++;
+                }
+            }
+            catch (RuntimeException e) {
+                log.error("Failed to recover processing state {} after Iris restart", state.getId(), e);
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+            }
+        }
+        if (firstFailure != null) {
+            throw new IllegalStateException("Failed to recover all in-flight jobs after Iris restart", firstFailure);
+        }
+        return resetCount;
     }
 
     /**
