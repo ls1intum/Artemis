@@ -461,8 +461,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly ghostText = computed(() => {
         const input = this.newMessageTextContent();
         const labels = this.interpolatedLabels();
-        if (!input || !labels.length || !this.isExerciseOrLectureMode()) {
+        if (!labels.length || !this.isExerciseOrLectureMode()) {
             return '';
+        }
+        // With an empty, focused textarea the rotating placeholder freezes on a single
+        // example phrase; offer that whole phrase as the ghost suggestion so Tab completes it.
+        if (!input) {
+            return this.isFocused() && this.shouldUseRotatingPlaceholder() ? this.currentPlaceholder() : '';
         }
         const inputLower = input.toLowerCase();
         const match = labels.find((label) => label.toLowerCase().startsWith(inputLower));
@@ -471,6 +476,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     readonly textareaPlaceholder = computed(() => {
         if (this.chipPreviewText()) return '';
+        // When focused with empty input, the ghost overlay renders the example phrase (so Tab can
+        // complete it); suppress the native placeholder to avoid drawing the same phrase twice.
+        if (this.ghostText() && !this.newMessageTextContent()) return '';
         if (this.shouldUseRotatingPlaceholder() && !this.isInputDisabled() && this.currentPlaceholder()) {
             return this.currentPlaceholder();
         }
@@ -529,14 +537,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     onTextareaFocus(): void {
         this.isFocused.set(true);
-        this.stopCycling();
+        // Cycling is not stopped on focus: as long as the textarea is empty the placeholder keeps
+        // rotating (the cycling effect is the single source of truth). Typing stops it via the
+        // non-empty guard, and clearing the text again lets it resume.
     }
 
     onTextareaBlur(): void {
         this.isFocused.set(false);
-        if (!this.newMessageTextContent() && this.shouldUseRotatingPlaceholder()) {
-            this.startCycling();
-        }
     }
 
     constructor() {
@@ -739,7 +746,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Placeholder cycling lifecycle
         effect((onCleanup) => {
-            const shouldCycle = this.shouldUseRotatingPlaceholder() && !this.newMessageTextContent() && !this.isFocused() && !this.isInputDisabled();
+            // Cycle whenever the textarea is empty (focused or not); typing halts it via the
+            // non-empty guard, and clearing the text resumes it.
+            const shouldCycle = this.shouldUseRotatingPlaceholder() && !this.newMessageTextContent() && !this.isInputDisabled();
             if (shouldCycle) {
                 this.startCycling();
             } else {
