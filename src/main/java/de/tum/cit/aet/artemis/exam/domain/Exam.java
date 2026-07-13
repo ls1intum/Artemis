@@ -51,6 +51,10 @@ public class Exam extends DomainObject {
     @Enumerated(EnumType.STRING)
     private ExamMode examMode = ExamMode.REAL;
 
+    @Deprecated(forRemoval = true)
+    @Column(name = "test_exam")
+    private boolean testExam;
+
     /**
      * This boolean indicates whether attendance is checked during exam
      */
@@ -190,6 +194,7 @@ public class Exam extends DomainObject {
 
     public void setExamMode(ExamMode examMode) {
         this.examMode = examMode == null ? ExamMode.REAL : examMode;
+        this.testExam = examMode != ExamMode.REAL;
     }
 
     public boolean isExamWithAttendanceCheck() {
