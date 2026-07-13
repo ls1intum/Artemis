@@ -231,6 +231,7 @@ class AttachmentVideoUnitServiceTest {
     @Test
     void updateAttachmentVideoUnitProjectsRequestedSlideVisibilityForByteChangedPdfUpload() {
         var attachment = attachment();
+        attachment.setStudentVersion("attachments/student-unit.pdf");
         var unit = attachmentVideoUnit("Unit", attachment);
         var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
         var uploadedFile = new MockMultipartFile("file", "unit.pdf", "application/pdf", "different content".getBytes(StandardCharsets.UTF_8));
@@ -245,6 +246,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(contentProcessingService).triggerProcessing(unit);
         verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit, hiddenPages, pageOrder);
+        assertThat(attachment.getStudentVersion()).isNull();
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(1, null).containsEntry(2, hiddenUntil).hasSize(2);

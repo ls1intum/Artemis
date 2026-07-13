@@ -165,18 +165,16 @@ public class AttachmentVideoUnitService {
                 if (hasUploadedFile) {
                     fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                 }
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, hasUploadedFile && fileUpdateResult.fileBytesChanged());
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hasUploadedFile && fileUpdateResult.fileBytesChanged());
+
+                Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                savedAttachmentVideoUnit.setAttachment(savedAttachment);
 
                 if (isFileNeutralSlideMetadataUpdate) {
-                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
                     slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
                     attachmentService.regenerateStudentVersion(savedAttachment);
                 }
                 else if (hasUploadedFile) {
-                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
-
                     if (fileUpdateResult.fileBytesChanged()) {
                         log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
                                 fileUpdateResult.newVersion());
@@ -197,10 +195,6 @@ public class AttachmentVideoUnitService {
                         slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
                         attachmentService.regenerateStudentVersion(savedAttachment);
                     }
-                }
-                else {
-                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 }
             }
         }
@@ -324,17 +318,15 @@ public class AttachmentVideoUnitService {
      * @param existingAttachment                   the existing attachment
      * @param updateAttachment                     the new attachment containing updated information
      * @param attachmentVideoUnit                  the attachment video unit to update
-     * @param hiddenPages                          the hidden pages in the attachment
-     * @param clearStudentVersionWhenNoHiddenPages whether to clear the student version when hiddenPages is absent or empty
+     * @param clearStudentVersion whether to clear the persisted student version
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages,
-            boolean clearStudentVersionWhenNoHiddenPages) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, boolean clearStudentVersion) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (clearStudentVersionWhenNoHiddenPages && (hiddenPages == null || hiddenPages.isEmpty()) && existingAttachment.getStudentVersion() != null) {
+        if (clearStudentVersion && existingAttachment.getStudentVersion() != null) {
             existingAttachment.setStudentVersion(null);
         }
     }
