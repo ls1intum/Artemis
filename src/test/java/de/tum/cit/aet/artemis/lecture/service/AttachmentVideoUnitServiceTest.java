@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -14,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +27,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -128,7 +129,6 @@ class AttachmentVideoUnitServiceTest {
         when(uploadedFile.isEmpty()).thenReturn(false);
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
-        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class))).thenReturn(CompletableFuture.completedFuture(null));
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, null, null, Set.of());
 
@@ -147,7 +147,11 @@ class AttachmentVideoUnitServiceTest {
         existingSlide.setId(21L);
         existingSlide.setSlideNumber(1);
         existingSlide.setHidden(null);
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(existingSlide));
+        var visibleSlide = new Slide();
+        visibleSlide.setId(22L);
+        visibleSlide.setSlideNumber(2);
+        visibleSlide.setHidden(null);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(existingSlide, visibleSlide));
         var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
         var uploadedFile = mock(MultipartFile.class);
         when(uploadedFile.isEmpty()).thenReturn(false);
@@ -163,11 +167,19 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, hiddenPages, List.of(new SlideOrderDTO("21", 1)), Set.of());
 
         verify(slideSplitterService).updateSlideMetadata(unit, hiddenPages);
+        verify(attachmentService).regenerateStudentVersion(attachment);
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
-        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsOnlyKeys(1);
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsOnlyKeys(1, 2);
         assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(1).toInstant()).isEqualTo(hiddenUntil.toInstant());
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber().get(2)).isNull();
+
+        var allSlidesHidden = List.of(new HiddenPageInfoDTO("21", hiddenUntil, null), new HiddenPageInfoDTO("22", hiddenUntil, null));
+        var noFileChangeDto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        assertThatThrownBy(() -> service.updateAttachmentVideoUnit(unit, noFileChangeDto, attachment, null, false, allSlidesHidden, null, Set.of()))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("no visible pages");
+        verify(slideSplitterService, never()).updateSlideMetadata(unit, allSlidesHidden);
     }
 
     @Test

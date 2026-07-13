@@ -4,11 +4,13 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -166,6 +169,14 @@ public class AttachmentVideoUnitService {
                     fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                 }
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hasUploadedFile && fileUpdateResult.fileBytesChanged());
+
+                if (isFileNeutralSlideMetadataUpdate) {
+                    var visibleSlideIds = slideRepository.findAllByAttachmentVideoUnitId(savedAttachmentVideoUnit.getId()).stream().map(slide -> String.valueOf(slide.getId()))
+                            .collect(Collectors.toSet());
+                    hiddenPages.forEach(hiddenPage -> visibleSlideIds.remove(hiddenPage.slideId()));
+                    visibleSlideIds.stream().findAny()
+                            .orElseThrow(() -> new BadRequestAlertException("Cannot create a student version with no visible pages", "attachmentVideoUnit", "noVisiblePages"));
+                }
 
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
