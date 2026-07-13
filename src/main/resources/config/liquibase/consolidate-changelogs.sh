@@ -135,16 +135,17 @@ apply_lb "$PROJECT_DIR"  "jdbc:postgresql://localhost:$PG_NEW_PORT/Artemis" arte
 # --- Step 5: Dump schemas ---
 echo "=== Step 4: Dumping schemas ==="
 
-MYSQL_EXCLUDE="--ignore-table=artemis.DATABASECHANGELOG --ignore-table=artemis.DATABASECHANGELOGLOCK --ignore-table=artemis.migration_changelog --ignore-table=artemis.artemis_version"
-PG_EXCLUDE="-T databasechangelog -T databasechangeloglock -T migration_changelog -T artemis_version"
+# Arrays so each flag stays a separate argument (see SC2086 — these must not be a single word-split string).
+MYSQL_EXCLUDE=(--ignore-table=artemis.DATABASECHANGELOG --ignore-table=artemis.DATABASECHANGELOGLOCK --ignore-table=artemis.migration_changelog --ignore-table=artemis.artemis_version)
+PG_EXCLUDE=(-T databasechangelog -T databasechangeloglock -T migration_changelog -T artemis_version)
 
-docker exec av-mysql-dev mysqldump -u root --no-data --skip-comments --skip-add-drop-table --skip-add-locks --skip-disable-keys $MYSQL_EXCLUDE artemis 2>/dev/null | \
+docker exec av-mysql-dev mysqldump -u root --no-data --skip-comments --skip-add-drop-table --skip-add-locks --skip-disable-keys "${MYSQL_EXCLUDE[@]}" artemis 2>/dev/null | \
     sed 's/ AUTO_INCREMENT=[0-9]*//' > "$DUMP_DIR/mysql-develop-schema.sql"
-docker exec av-mysql-new mysqldump -u root --no-data --skip-comments --skip-add-drop-table --skip-add-locks --skip-disable-keys $MYSQL_EXCLUDE artemis 2>/dev/null | \
+docker exec av-mysql-new mysqldump -u root --no-data --skip-comments --skip-add-drop-table --skip-add-locks --skip-disable-keys "${MYSQL_EXCLUDE[@]}" artemis 2>/dev/null | \
     sed 's/ AUTO_INCREMENT=[0-9]*//' > "$DUMP_DIR/mysql-new-schema.sql"
 
-docker exec av-pg-dev pg_dump -U artemis -d Artemis --schema-only --no-owner --no-privileges --no-comments $PG_EXCLUDE 2>/dev/null > "$DUMP_DIR/pg-develop-schema.sql"
-docker exec av-pg-new pg_dump -U artemis -d Artemis --schema-only --no-owner --no-privileges --no-comments $PG_EXCLUDE 2>/dev/null > "$DUMP_DIR/pg-new-schema.sql"
+docker exec av-pg-dev pg_dump -U artemis -d Artemis --schema-only --no-owner --no-privileges --no-comments "${PG_EXCLUDE[@]}" 2>/dev/null > "$DUMP_DIR/pg-develop-schema.sql"
+docker exec av-pg-new pg_dump -U artemis -d Artemis --schema-only --no-owner --no-privileges --no-comments "${PG_EXCLUDE[@]}" 2>/dev/null > "$DUMP_DIR/pg-new-schema.sql"
 
 # --- Step 6: Compare ---
 echo ""

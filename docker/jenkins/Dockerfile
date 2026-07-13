@@ -13,15 +13,20 @@ RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
 # ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 
 # setup docker
+# Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
+# out of the Debian repos and would break the image build over time.
+# hadolint ignore=DL3008
 RUN apt-get update -y \
-    && apt-get install -qqy apt-transport-https ca-certificates curl gnupg2 software-properties-common
+    && apt-get install -qqy --no-install-recommends apt-transport-https ca-certificates curl gnupg2 software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
 RUN add-apt-repository \
    "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian \
    $(lsb_release -cs) \
    stable"
+# hadolint ignore=DL3008
 RUN apt-get update -y \
-    && apt-get -y install docker-ce && rm -rf /var/apt/cache/*
+    && apt-get -y install --no-install-recommends docker-ce && rm -rf /var/apt/cache/*
 RUN usermod -aG docker jenkins
 
 USER jenkins
