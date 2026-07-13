@@ -76,13 +76,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           IS_MAIN_OR_DEVELOP=false
 
-          REPO_NAME=${{ github.repository }}
           echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop' in $REPO_NAME (excluding forks)."
 
-          PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
+          PR_DETAILS=$(gh api "repos/$REPO_NAME/pulls" \
             --paginate \
             --jq ".[] | select(.head.repo.full_name == \"$REPO_NAME\" and .head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
 
@@ -99,7 +99,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
 
             # Fetch the latest commit SHA of the branch
-            LATEST_SHA=$(gh api "repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
+            LATEST_SHA=$(gh api "repos/$REPO_NAME/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
 
             if [ -z "$LATEST_SHA" ]; then
               echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
