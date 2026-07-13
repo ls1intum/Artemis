@@ -318,7 +318,6 @@ public class ParticipationResource {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
-        var latestResult = participation.findLatestResult();
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) {
             var submissions = submissionRepository.findAllByParticipationId(participation.getId());
             // Only count real submitted entries, not auto-created placeholders
@@ -328,6 +327,7 @@ public class ParticipationResource {
             }
         }
 
+        var latestResult = participation.findLatestResult();
         boolean hasFeedbackBeenRequested = latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate() != null
                 && latestResult.getCompletionDate().isAfter(now());
         if (hasFeedbackBeenRequested) {
