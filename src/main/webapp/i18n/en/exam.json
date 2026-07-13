@@ -531,6 +531,7 @@
             "endText": "Exam end text",
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
+            "textTooLong": "This text is too long. Please use at most {{ max }} characters.",
             "assessmentDashboard": "Assessment",
             "studentExams": "Student Exams",
             "students": "Students",

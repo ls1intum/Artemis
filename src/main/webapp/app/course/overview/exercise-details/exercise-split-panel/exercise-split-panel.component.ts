@@ -222,7 +222,9 @@ export class ExerciseSplitPanelComponent {
             const exercise = this.exercise();
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
-                this.chatService.switchTo(mode, exercise.id);
+                const exerciseId = exercise.id;
+                // Use untracked to avoid re-running this effect when chatService state changes
+                untracked(() => this.chatService.openChat(mode, exerciseId));
             }
         });
         effect(() => {
