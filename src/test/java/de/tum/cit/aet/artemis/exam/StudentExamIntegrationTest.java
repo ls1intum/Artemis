@@ -2302,6 +2302,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             }
         }
         assertThat(sawQuiz).as("unpublished summary wire exposed a quiz exercise to mask-check").isTrue();
+
+        // The detail projection follows the same publish gate (its summary consumers only render results once
+        // published), so the not-yet-published instructor detail wire must stay solution-hidden too.
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        JsonNode detailWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamWithSubmissions.getId(),
+                HttpStatus.OK, JsonNode.class);
+        assertExerciseWireMasksQuizSolutions(detailWire.get("studentExam").get("exercises"), "unpublished instructor detail");
         deleteExamWithInstructor(exam1);
     }
 
@@ -2329,8 +2336,23 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         JsonNode summaryWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId() + "/summary",
                 HttpStatus.OK, JsonNode.class);
 
+        assertExerciseWireCarriesQuizSolutions(summaryWire.get("exercises"), "unpublished test-run summary");
+
+        // The instructor test-run summary route resolves its student exam via the DETAIL endpoint (getStudentExam ->
+        // StudentExamWithGradeDTO.studentExam), so the detail projection must apply the same test-run exemption.
+        JsonNode detailWire = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/" + testRun.getId(), HttpStatus.OK,
+                JsonNode.class);
+        assertExerciseWireCarriesQuizSolutions(detailWire.get("studentExam").get("exercises"), "unpublished test-run detail");
+    }
+
+    /**
+     * Asserts that the given {@code exercises} wire node carries the quiz solutions the summary UI renders: at least one
+     * multiple-choice option flagged {@code isCorrect} and non-empty {@code correctMappings} on drag-and-drop /
+     * short-answer questions.
+     */
+    private static void assertExerciseWireCarriesQuizSolutions(JsonNode exercises, String context) {
         boolean sawQuizQuestionWithSolution = false;
-        for (JsonNode exercise : summaryWire.get("exercises")) {
+        for (JsonNode exercise : exercises) {
             JsonNode questions = exercise.get("quizQuestions");
             if (questions == null) {
                 continue;
@@ -2344,11 +2366,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                                 correctOptions++;
                             }
                         }
-                        assertThat(correctOptions).as("unpublished test-run summary MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
+                        assertThat(correctOptions).as(context + " MC wire must reveal the correct answer option via isCorrect").isGreaterThanOrEqualTo(1);
                         sawQuizQuestionWithSolution = true;
                     }
                     case "drag-and-drop", "short-answer" -> {
-                        assertThat(question.path("correctMappings").isEmpty()).as("unpublished test-run summary wire must carry correctMappings").isFalse();
+                        assertThat(question.path("correctMappings").isEmpty()).as(context + " wire must carry correctMappings").isFalse();
                         sawQuizQuestionWithSolution = true;
                     }
                     default -> {
@@ -2356,7 +2378,52 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 }
             }
         }
-        assertThat(sawQuizQuestionWithSolution).as("test-run summary wire exposed a quiz question to solution-check").isTrue();
+        assertThat(sawQuizQuestionWithSolution).as(context + " wire exposed a quiz question to solution-check").isTrue();
+    }
+
+    /**
+     * Asserts that the given {@code exercises} wire node keeps the quiz questions solution-hidden: no {@code explanation},
+     * no multiple-choice {@code isCorrect}, empty drag-and-drop / short-answer {@code correctMappings}.
+     */
+    private static void assertExerciseWireMasksQuizSolutions(JsonNode exercises, String context) {
+        boolean sawQuiz = false;
+        for (JsonNode exercise : exercises) {
+            JsonNode questions = exercise.get("quizQuestions");
+            if (questions == null) {
+                continue;
+            }
+            sawQuiz = true;
+            for (JsonNode question : questions) {
+                assertThat(question.has("explanation")).as(context + " quiz question must not leak explanation").isFalse();
+                if ("multiple-choice".equals(question.get("type").asText())) {
+                    for (JsonNode option : question.get("answerOptions")) {
+                        assertThat(option.has("isCorrect")).as(context + " MC option must not leak isCorrect").isFalse();
+                    }
+                }
+                else {
+                    assertThat(question.path("correctMappings").isEmpty()).as(context + " must not leak correctMappings").isTrue();
+                }
+            }
+        }
+        assertThat(sawQuiz).as(context + " wire exposed a quiz exercise to mask-check").isTrue();
+    }
+
+    /**
+     * Instructor-detail counterpart to {@link #testSummaryWireServesQuizSolutionsAfterPublishResults()}: the instructor
+     * student-exam summary route resolves its student exam via {@code getStudentExam}
+     * ({@code StudentExamWithGradeDTO.studentExam} = the detail projection) into the same shared summary component, so
+     * once results are published the DETAIL wire must carry the quiz solutions as well — fixing only the student
+     * {@code /summary} endpoint regressed exactly this instructor path.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testInstructorDetailWireServesQuizSolutionsAfterPublishResults() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
+
+        JsonNode detailWire = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId(), HttpStatus.OK,
+                JsonNode.class);
+        assertExerciseWireCarriesQuizSolutions(detailWire.get("studentExam").get("exercises"), "published instructor detail");
+        deleteExamWithInstructor(exam1);
     }
 
     @Test

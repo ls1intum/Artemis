@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.quiz.dto.question;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Common supertype of the two exam quiz-question projections, so a single {@code quizQuestions} list can carry either
  * the solution-hidden conduction shape ({@link QuizQuestionWithoutSolutionDTO}) or the full post-publish summary shape
@@ -15,6 +17,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  * superset (the without-solution fields are simply absent/null on a masked payload), so a payload of either shape reads
  * back losslessly without a wire-level discriminator.
  */
+@Schema(oneOf = { QuizQuestionWithSolutionDTO.class,
+        QuizQuestionWithoutSolutionDTO.class }, description = "Exam quiz question projection: solution-hidden during conduction and before results are published, full solutions afterwards (and on test runs)")
 @JsonDeserialize(as = QuizQuestionWithSolutionDTO.class)
 public sealed interface QuizQuestionForExamDTO permits QuizQuestionWithSolutionDTO, QuizQuestionWithoutSolutionDTO {
 }

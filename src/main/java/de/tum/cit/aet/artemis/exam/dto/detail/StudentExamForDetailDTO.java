@@ -59,9 +59,16 @@ public record StudentExamForDetailDTO(long id, Integer workingTime, Boolean star
         var entitySessions = studentExam.getExamSessions();
         List<ExamSessionForDetailDTO> examSessions = (entitySessions == null || !Hibernate.isInitialized(entitySessions)) ? null
                 : entitySessions.stream().map(ExamSessionForDetailDTO::of).toList();
+        // Same publish policy as the summary projection: this DTO feeds the instructor student-exam / test-run summary
+        // screens (route-resolved via getStudentExam into the shared ExamResultSummaryComponent), which render quiz
+        // right/wrong once results are published — and immediately for test runs, which are exempt from quiz masking.
+        // Before that point the questions stay solution-hidden (the pre-DTO instructor wire was unmasked even
+        // pre-publish, but no consumer reads the solutions before the summary shows results, so the projection
+        // deliberately follows the render gate).
+        boolean includeQuizSolutions = studentExam.isTestRun() || studentExam.areResultsPublishedYet();
         var entityExercises = studentExam.getExercises();
         List<ExamExerciseForConductionDTO> exercises = (entityExercises == null || !Hibernate.isInitialized(entityExercises)) ? null
-                : entityExercises.stream().map(ExamExerciseForConductionDTO::of).toList();
+                : entityExercises.stream().map(exercise -> ExamExerciseForConductionDTO.of(exercise, includeQuizSolutions)).toList();
         return new StudentExamForDetailDTO(studentExam.getId(), studentExam.getWorkingTime(), studentExam.isStarted(), studentExam.getStartedDate(), studentExam.isSubmitted(),
                 studentExam.getSubmissionDate(), studentExam.isTestRun(), studentExam.isEnded(), studentExam.isFinished(), studentExam.getCreatedDate(),
                 UserForDetailDTO.of(studentExam.getUser()), ExamForSummaryDTO.of(studentExam.getExam()), examSessions, exercises);
