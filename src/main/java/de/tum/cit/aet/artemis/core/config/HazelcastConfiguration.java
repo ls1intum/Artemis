@@ -266,7 +266,7 @@ public class HazelcastConfiguration {
      * Creates the Spring {@link CacheManager} backed by Hazelcast.
      *
      * <p>
-     * <strong>Rationale:</strong> Using Hazelcast as the cache backend (vs. local caches like Caffeine)
+     * <strong>Rationale:</strong> Using Hazelcast as the cache implementation (vs. local caches like Caffeine)
      * provides distributed coherence across all Artemis nodes via Hazelcast IMaps. This is the
      * caching layer for {@code @Cacheable} on read-heavy lookups with explicit eviction:
      * <ul>

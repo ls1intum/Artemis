@@ -102,7 +102,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
-    /** Whether the per-thread "Adapt with feedback" action may be offered — host-gated to contexts where agentic adaptation is supported (Hyperion enabled AND the LocalCI backend). */
+    /** Whether the per-thread "Adapt with feedback" action may be offered — host-gated to contexts where agentic adaptation is supported (Hyperion enabled AND LocalCI active). */
     readonly adaptReviewCommentThreadEnabled = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();

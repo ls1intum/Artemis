@@ -103,7 +103,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         }
     });
 
-    test('starts generation through the real Hyperion backend, exposes admin slot usage, and cancels the running job', async ({ browser, page, login }) => {
+    test('starts generation through the real Hyperion workflow, exposes admin slot usage, and cancels the running job', async ({ browser, page, login }) => {
         test.setTimeout(180_000);
         await page.setViewportSize({ width: 1024, height: 768 });
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
@@ -171,7 +171,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         runningJobId = undefined;
     });
 
-    test('starts adaptation through the real Hyperion backend with instructor instructions', async ({ page, login }) => {
+    test('starts adaptation through the real Hyperion workflow with instructor instructions', async ({ page, login }) => {
         test.setTimeout(180_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);
@@ -274,7 +274,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: '@slow' }, () =>
         }
     });
 
-    test('surfaces external LLM failures through the real Hyperion backend and unlocks the UI', async ({ browser, page, login }) => {
+    test('surfaces external LLM failures through the real Hyperion workflow and unlocks the UI', async ({ browser, page, login }) => {
         test.setTimeout(240_000);
         const initialLlmRequests = await getHyperionLlmMockRequestCount(page);
         await openEditor(page, login, exercise!);

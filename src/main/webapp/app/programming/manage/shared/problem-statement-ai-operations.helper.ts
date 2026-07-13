@@ -65,7 +65,7 @@ export class ProblemStatementAiOperationsHelper {
     /** Tracks the current problem statement content for shouldShowGenerateButton. */
     readonly currentProblemStatement = signal('');
 
-    /** Whether the Hyperion module feature is active. Gates the non-CI features (problem-statement drafting/refinement/consistency), which work under any CI backend. */
+    /** Whether the Hyperion module feature is active. Gates the non-CI features (problem-statement drafting/refinement/consistency), which work with any CI system. */
     readonly hyperionEnabled: boolean;
 
     /**

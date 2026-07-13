@@ -263,7 +263,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
-    /** Whether the integrated LocalCI backend is active. Agentic whole-exercise generation needs it (the server disables the generate endpoint under Jenkins), so it also gates the "Generate entire exercise" affordance. */
+    /** Whether LocalCI is active. Agentic whole-exercise generation needs it (the server disables the generate endpoint under Jenkins), so it also gates the "Generate entire exercise" affordance. */
     localCiEnabledForAi = signal<boolean>(false);
 
     public get hyperionEnabled(): boolean {

@@ -180,7 +180,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Creates a thread in the active exercise and reconciles local thread state.
      *
      * @param thread The thread payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after successful server persistence.
      */
     createThreadInContext(thread: CreateCommentThread, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -240,7 +240,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param threadId The target thread id.
      * @param comment The reply payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after successful server persistence.
      */
     createReplyInContext(threadId: number, comment: CreateComment, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -273,7 +273,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      *
      * @param commentId The comment id to update.
      * @param content The updated content payload.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after successful server persistence.
      */
     updateCommentInContext(commentId: number, content: UpdateCommentContent, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;
@@ -305,7 +305,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * Marks an inline-fix suggestion as applied for a consistency-check comment in the active exercise context.
      *
      * @param commentId The consistency comment id.
-     * @param onSuccess Callback invoked only after successful backend persistence.
+     * @param onSuccess Callback invoked only after successful server persistence.
      */
     markInlineFixAppliedInContext(commentId: number, onSuccess?: ReviewCommentSuccessCallback): void {
         const exerciseId = this.activeExerciseId;

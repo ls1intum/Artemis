@@ -57,8 +57,8 @@ import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalTopic;
 
 /**
  * Round-trip test for the multi-node interactive-sandbox relay: it wires a {@link RemoteInteractiveSandboxClient} (core node) to an {@link InteractiveSandboxRelayHandler} (build
- * agent) through the in-JVM {@link LocalTopic} backend of the {@link DistributedTopic} abstraction, with the agent's local {@link InteractiveSandboxService} mocked so no Docker is
- * needed.
+ * agent) through the in-JVM {@link LocalTopic} implementation of the {@link DistributedTopic} abstraction, with the agent's local {@link InteractiveSandboxService} mocked so no
+ * Docker is needed.
  * <p>
  * It proves the contract the orchestrator relies on: createSession encodes affinity into the handle, exec returns the agent's stdout/exit, copy-in/copy-out round-trip the tar
  * bytes, destroy is idempotent, an oversize copy-in payload is rejected before it reaches the wire, and a request for a different agent short name is ignored by the handler. It

@@ -42,7 +42,7 @@ PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
-# Hyperion exercise-generation e2e support: keep the Artemis/Hyperion backend real
+# Hyperion exercise-generation e2e support: keep the Artemis/Hyperion services real
 # and replace only the external OpenAI-compatible GPU endpoint with a tiny local
 # mock. Enabled for full-suite runs and Hyperion-filtered runs; disabled for
 # unrelated filtered runs. Set RUN_HYPERION=true/false to override. Set
