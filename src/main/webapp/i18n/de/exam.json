@@ -535,6 +535,7 @@
             "endText": "Information zum Klausurende",
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
+            "textTooLong": "Dieser Text ist zu lang. Bitte verwende höchstens {{ max }} Zeichen.",
             "assessmentDashboard": "Bewertung",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
