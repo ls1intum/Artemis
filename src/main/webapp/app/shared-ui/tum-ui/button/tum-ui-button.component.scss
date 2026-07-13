@@ -1,0 +1,24 @@
+:host {
+    display: inline-flex;
+}
+
+// Structural styling only. Colors come from the token utility classes on the element (see
+// tum-ui-button.variants.ts). Metrics chosen to match the PrimeNG Aura button; the focus ring is
+// keyed to brand CSS vars (sanctioned, same source primeng-artemis-theme.ts uses).
+.tum-ui-btn {
+    appearance: none;
+    line-height: 1.25;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 2px var(--module-bg),
+            0 0 0 4px var(--primary);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}

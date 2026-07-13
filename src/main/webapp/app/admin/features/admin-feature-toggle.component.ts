@@ -2,14 +2,16 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
+import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
 import { MessageModule } from 'primeng/message';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -71,14 +73,16 @@ type ModuleFeatureInfo = {
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TooltipModule,
-        TagModule,
-        ButtonModule,
         ToggleSwitchModule,
         MessageModule,
         FormsModule,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        TumUiButtonComponent,
+        TumUiTagComponent,
+        TumUiTooltipDirective,
+        TumUiPopoverComponent,
+        TumUiPopoverTriggerDirective,
     ],
 })
 export class AdminFeatureToggleComponent implements OnInit {
@@ -97,6 +101,7 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
+    protected readonly faCircleInfo = faCircleInfo;
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];

@@ -1,0 +1,6 @@
+<button [type]="type()" [class]="buttonClasses()" [disabled]="disabled()" (click)="onClick($event)">
+    @if (icon(); as buttonIcon) {
+        <fa-icon [icon]="buttonIcon" />
+    }
+    <ng-content />
+</button>
