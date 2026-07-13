@@ -31,3 +31,19 @@ engines:
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
       - "supporting_scripts/**/*"
+  checkov: # IaC / secrets scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
+  trivy: # dependency-vulnerability / secret scanning
+    exclude_paths:
+      - "src/test/**"
+      - "src/test/**/*"
+      - "src/main/resources/templates/**"
+      - "src/main/resources/templates/**/*"
+      - "supporting_scripts/**"
+      - "supporting_scripts/**/*"
