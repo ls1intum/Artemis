@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -27,7 +30,7 @@ public class LectureContentUpdateClassifierService {
      */
     public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
         Set<LectureContentUpdateKind> updateKinds = classifyAll(before, after, fileUpdateResult);
-        return java.util.List.of(LectureContentUpdateKind.DELETE, LectureContentUpdateKind.CONTENT, LectureContentUpdateKind.VISIBILITY, LectureContentUpdateKind.METADATA).stream()
+        return List.of(LectureContentUpdateKind.DELETE, LectureContentUpdateKind.CONTENT, LectureContentUpdateKind.VISIBILITY, LectureContentUpdateKind.METADATA).stream()
                 .filter(updateKinds::contains).findFirst().orElse(LectureContentUpdateKind.NONE);
     }
 
@@ -44,10 +47,16 @@ public class LectureContentUpdateClassifierService {
             return Set.of(LectureContentUpdateKind.DELETE);
         }
         Objects.requireNonNull(before, "before");
-        var updateKinds = java.util.EnumSet.noneOf(LectureContentUpdateKind.class);
-        Map.of(LectureContentUpdateKind.CONTENT, isContentUpdate(before, after, fileUpdateResult), LectureContentUpdateKind.VISIBILITY, isVisibilityUpdate(before, after),
-                LectureContentUpdateKind.METADATA, isMetadataUpdate(before, after)).entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey)
-                .forEach(updateKinds::add);
+        var updateKinds = EnumSet.noneOf(LectureContentUpdateKind.class);
+        if (isContentUpdate(before, after, fileUpdateResult)) {
+            updateKinds.add(LectureContentUpdateKind.CONTENT);
+        }
+        if (isVisibilityUpdate(before, after)) {
+            updateKinds.add(LectureContentUpdateKind.VISIBILITY);
+        }
+        if (isMetadataUpdate(before, after)) {
+            updateKinds.add(LectureContentUpdateKind.METADATA);
+        }
         return updateKinds;
     }
 
@@ -57,8 +66,8 @@ public class LectureContentUpdateClassifierService {
     }
 
     private static boolean hasAttachmentFileContentUpdate(AttachmentFileUpdateResult fileUpdateResult) {
-        return java.util.Optional.ofNullable(fileUpdateResult)
-                .map(result -> java.util.List.of(result.fileBytesChanged(), result.attachmentAdded(), result.attachmentRemoved()).contains(true)).orElse(false);
+        return Optional.ofNullable(fileUpdateResult).map(result -> List.of(result.fileBytesChanged(), result.attachmentAdded(), result.attachmentRemoved()).contains(true))
+                .orElse(false);
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
@@ -71,7 +80,7 @@ public class LectureContentUpdateClassifierService {
     }
 
     private static boolean representSameInstant(ZonedDateTime before, ZonedDateTime after) {
-        return Objects.equals(java.util.Optional.ofNullable(before).map(ZonedDateTime::toInstant), java.util.Optional.ofNullable(after).map(ZonedDateTime::toInstant));
+        return Objects.equals(Optional.ofNullable(before).map(ZonedDateTime::toInstant), Optional.ofNullable(after).map(ZonedDateTime::toInstant));
     }
 
     private static boolean isMetadataUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {

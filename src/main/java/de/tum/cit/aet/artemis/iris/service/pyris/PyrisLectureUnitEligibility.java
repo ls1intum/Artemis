@@ -14,6 +14,6 @@ final class PyrisLectureUnitEligibility {
         boolean hasVideo = java.util.Optional.ofNullable(attachmentVideoUnit.getVideoSource()).filter(videoSource -> !videoSource.isBlank()).isPresent();
         boolean hasPdf = java.util.Optional.ofNullable(attachmentVideoUnit.getAttachment()).filter(attachment -> attachment.getAttachmentType() == AttachmentType.FILE)
                 .map(attachment -> attachment.getLink()).filter(link -> link.toLowerCase(Locale.ROOT).endsWith(".pdf")).isPresent();
-        return !attachmentVideoUnit.getLecture().isTutorialLecture() && java.util.List.of(hasVideo, hasPdf).contains(true);
+        return !attachmentVideoUnit.getLecture().isTutorialLecture() && (hasVideo || hasPdf);
     }
 }

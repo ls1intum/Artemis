@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -66,7 +64,7 @@ public class IrisLectureUnitSyncDispatchService {
                     .orElseGet(() -> slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()));
             api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit, slides);
             var snapshot = new LectureContentUpdateSnapshot(attachmentVideoUnit.getId(), null, null, null, null, null, null, null, attachmentVideoUnit.resolveReleaseDate(),
-                    toSlideHiddenUntilBySlideNumber(slides));
+                    SlideVisibilitySnapshotHelper.toSortedHiddenUntilBySlideNumber(slides));
             return IrisLectureUnitSyncService.visibilityHash(snapshot);
         }).orElse(null);
     }
@@ -80,9 +78,4 @@ public class IrisLectureUnitSyncDispatchService {
         }).toList();
     }
 
-    private static Map<Integer, ZonedDateTime> toSlideHiddenUntilBySlideNumber(List<Slide> slides) {
-        var slideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
-        slides.stream().sorted(Comparator.comparingInt(Slide::getSlideNumber)).forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
-        return slideHiddenUntilBySlideNumber;
-    }
 }
