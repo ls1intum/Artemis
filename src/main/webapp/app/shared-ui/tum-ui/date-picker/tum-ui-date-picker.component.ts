@@ -98,6 +98,16 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         return !(this.error() || !this.isInputValid());
     }
 
+    /**
+     * Whether the currently typed text parses to a valid date, independent of the external `error` input.
+     * Consumers should gate `(valueChange)` on this rather than {@link isValid}: otherwise, once the consumer
+     * flags an external error (e.g. a from>to range), `isValid()` stays false and every subsequent edit would
+     * propagate `undefined`, wiping the value so the error could never be corrected.
+     */
+    hasValidInput(): boolean {
+        return this.isInputValid();
+    }
+
     protected onInput(raw: string): void {
         this.inputText.set(raw);
         const parsed = parseDisplay(raw);

@@ -71,6 +71,21 @@ describe('TumUiDatePickerComponent', () => {
         expect(component.isValid()).toBe(false);
     });
 
+    it('reports valid parsed input via hasValidInput() even while an external [error] is set', () => {
+        // Regression: consumers gate (valueChange) on hasValidInput(), NOT isValid(). An external error
+        // (e.g. a from>to range) must not suppress a genuinely-parsed value, or the error can never be
+        // corrected (the value would be wiped to undefined on every edit).
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+        fixture.componentRef.setInput('error', true);
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false); // combined validity reflects the external error
+        expect(component.hasValidInput()).toBe(true); // but the typed date still parses
+        // Typing garbage flips hasValidInput() to false regardless of the external error.
+        input().value = 'not a date';
+        input().dispatchEvent(new Event('input'));
+        expect(component.hasValidInput()).toBe(false);
+    });
+
     it('opens the calendar overlay on trigger click and closes via Done', () => {
         fixture.debugElement.query(By.css('[data-testid="tum-ui-date-picker-trigger"]')).nativeElement.click();
         fixture.detectChanges();
