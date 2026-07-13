@@ -197,12 +197,12 @@ public class AttachmentVideoUnitService {
 
     private void triggerContentProcessingForUpdateKinds(AttachmentVideoUnit savedAttachmentVideoUnit, LectureContentUpdateSnapshot afterSnapshot,
             Set<LectureContentUpdateKind> updateKinds) {
-        if (updateKinds.isEmpty() || contentProcessingService.isEmpty()) {
+        if (updateKinds.isEmpty()) {
             return;
         }
 
         if (updateKinds.contains(LectureContentUpdateKind.CONTENT)) {
-            contentProcessingService.get().triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(service -> service.triggerProcessing(savedAttachmentVideoUnit));
         }
         else if (updateKinds.contains(LectureContentUpdateKind.METADATA)) {
             irisLectureUnitSyncService.markMetadataDirtyAfterCommit(afterSnapshot);

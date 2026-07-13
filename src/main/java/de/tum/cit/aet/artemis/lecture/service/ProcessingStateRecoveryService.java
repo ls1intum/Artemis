@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
@@ -58,7 +57,6 @@ public class ProcessingStateRecoveryService {
      *
      * @return the number of jobs that were reset
      */
-    @Transactional
     public int handleIrisReset() {
         List<LectureUnitProcessingState> activeStates = processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
 
@@ -69,13 +67,16 @@ public class ProcessingStateRecoveryService {
 
         log.warn("Iris reset: recovering {} in-flight jobs", activeStates.size());
 
+        int resetCount = 0;
         for (LectureUnitProcessingState state : activeStates) {
             // Do NOT treat an Iris restart as content-processing failure. The job was lost
             // by infrastructure, so retry budget must be preserved across rollouts/restarts.
-            resetToIdleForRecovery(state);
+            if (resetToIdleForRecovery(state)) {
+                resetCount++;
+            }
         }
 
-        return activeStates.size();
+        return resetCount;
     }
 
     /**
@@ -83,11 +84,11 @@ public class ProcessingStateRecoveryService {
      *
      * @param state the stuck processing state to reset
      */
-    void resetToIdleForRecovery(LectureUnitProcessingState state) {
+    boolean resetToIdleForRecovery(LectureUnitProcessingState state) {
         LectureUnit lectureUnit = state.getLectureUnit();
         if (lectureUnit == null) {
             log.warn("Skipping recovery for processing state {} because its lecture unit is missing", state.getId());
-            return;
+            return false;
         }
         log.info("Recovering interrupted unit {} (was {}) - resetting to IDLE, retry budget preserved", lectureUnit.getId(), state.getPhase());
         state.setPhase(ProcessingPhase.IDLE);
@@ -99,6 +100,7 @@ public class ProcessingStateRecoveryService {
 
         TranscriptionStatus txStatus = transcriptionRepository.findByLectureUnit_Id(lectureUnit.getId()).map(LectureTranscription::getTranscriptionStatus).orElse(null);
         notifyProcessingStateChange(state, txStatus);
+        return true;
     }
 
     private void notifyProcessingStateChange(LectureUnitProcessingState state, TranscriptionStatus transcriptionStatus) {

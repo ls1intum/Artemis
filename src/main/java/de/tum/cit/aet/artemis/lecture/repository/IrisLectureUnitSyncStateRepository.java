@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.repository;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import jakarta.persistence.LockModeType;
 
@@ -32,6 +33,24 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
     Optional<AttachmentVideoUnit> findAttachmentVideoUnitForUpdateById(@Param("lectureUnitId") long lectureUnitId);
 
     List<IrisLectureUnitSyncState> findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List<String> statuses, ZonedDateTime now);
+
+    /**
+     * Applies a synchronization-state transition while holding the owning lecture-unit lock. Reloading the current state after acquiring the lock preserves dirty hashes
+     * written while a Pyris request was in flight.
+     *
+     * @param lectureUnitId the attachment video unit id
+     * @param transition    the transition to apply to the current state
+     */
+    @Transactional
+    default void updateWithLectureUnitLock(long lectureUnitId, Consumer<IrisLectureUnitSyncState> transition) {
+        if (findAttachmentVideoUnitForUpdateById(lectureUnitId).isEmpty()) {
+            return;
+        }
+        findByLectureUnitId(lectureUnitId).ifPresent(state -> {
+            transition.accept(state);
+            saveAndFlush(state);
+        });
+    }
 
     /**
      * Atomically creates or updates the dirty synchronization state while holding a lock on the owning lecture unit. Locking the always-existing parent row also serializes

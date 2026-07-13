@@ -1001,9 +1001,11 @@ class LectureContentProcessingServiceTest {
             LectureUnitProcessingState orphanedState = new LectureUnitProcessingState();
             orphanedState.setId(300L);
             orphanedState.setPhase(ProcessingPhase.INGESTING);
+            when(processingStateRepository.findByPhaseIn(any())).thenReturn(List.of(orphanedState));
 
-            recoveryService.resetToIdleForRecovery(orphanedState);
+            int resetCount = recoveryService.handleIrisReset();
 
+            assertThat(resetCount).isZero();
             assertThat(orphanedState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
             verify(processingStateRepository, never()).save(any());
             verify(transcriptionRepository, never()).findByLectureUnit_Id(anyLong());

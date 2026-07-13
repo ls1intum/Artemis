@@ -82,21 +82,30 @@ public class IrisLectureUnitSyncEventListener {
                 return;
             }
 
+            String dispatchedHash = getCurrentHash(state, updateKind);
             syncDispatchService.triggerSyncForUpdateKind(unit, updateKind);
-            markSynced(state, updateKind);
+            syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> markSynced(currentState, updateKind, dispatchedHash));
         }
         catch (Exception e) {
-            markRetry(state, e);
+            try {
+                syncStateRepository.updateWithLectureUnitLock(state.getLectureUnitId(), currentState -> markRetry(currentState, e));
+            }
+            catch (Exception persistenceException) {
+                log.warn("Could not persist retry state for Iris lecture unit sync {}", state.getLectureUnitId(), persistenceException);
+            }
         }
-        syncStateRepository.save(state);
     }
 
-    private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
+    private static String getCurrentHash(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind) {
+        return updateKind == LectureContentUpdateKind.METADATA ? state.getMetadataHash() : state.getVisibilityHash();
+    }
+
+    private static void markSynced(IrisLectureUnitSyncState state, LectureContentUpdateKind updateKind, String dispatchedHash) {
         if (updateKind == LectureContentUpdateKind.METADATA) {
-            state.setLastSyncedMetadataHash(state.getMetadataHash());
+            state.setLastSyncedMetadataHash(dispatchedHash);
         }
         if (updateKind == LectureContentUpdateKind.VISIBILITY) {
-            state.setLastSyncedVisibilityHash(state.getVisibilityHash());
+            state.setLastSyncedVisibilityHash(dispatchedHash);
         }
         if (isClean(state)) {
             state.setRetryCount(0);
@@ -120,7 +129,7 @@ public class IrisLectureUnitSyncEventListener {
         int retryCount = state.getRetryCount() + 1;
         state.setRetryCount(retryCount);
         state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
-        state.setNextRetryAt(ZonedDateTime.now().plusMinutes(Math.min(MAX_RETRY_DELAY_MINUTES, 1L << Math.min(retryCount, 5))));
+        state.setNextRetryAt(ZonedDateTime.now().plusMinutes(Math.min(MAX_RETRY_DELAY_MINUTES, 1L << Math.min(retryCount, 6))));
         state.setLastErrorKey(exception.getClass().getSimpleName());
     }
 }

@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -104,17 +103,6 @@ public class PyrisLectureUnitSyncService {
     }
 
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()
-                && hasProcessableContent(attachmentVideoUnit);
-    }
-
-    private boolean hasProcessableContent(AttachmentVideoUnit attachmentVideoUnit) {
-        String videoSource = attachmentVideoUnit.getVideoSource();
-        return videoSource != null && !videoSource.isBlank() || hasProcessablePdf(attachmentVideoUnit);
-    }
-
-    private boolean hasProcessablePdf(AttachmentVideoUnit attachmentVideoUnit) {
-        return attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE
-                && attachmentVideoUnit.getAttachment().getLink() != null && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf");
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
     }
 }
