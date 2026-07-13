@@ -92,6 +92,8 @@ import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
 import { createActiveSuggestionChips } from './iris-chatbot-suggestion-chips';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
+import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-selection/iris-context-switch-divider.component';
+import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 // Session history time bucket boundaries (in days ago)
@@ -148,6 +150,7 @@ const LIVE_DRAFT_CATCH_UP_MS = 400;
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
+        IrisContextSwitchDividerComponent,
         CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
@@ -210,11 +213,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return message.content?.some((c) => isMcqContent(c) || isMcqSetContent(c)) ?? false;
     }
 
+    private readonly currentChatMode = computed(() => this.chatService.displayContext()?.mode);
+    readonly relatedEntityRoute = computed<string | undefined>(() =>
+        this.computeRelatedEntityRoute(this.chatService.committedContext()?.mode, this.chatService.committedContext()?.entityId),
+    );
+    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.chatService.committedContext()?.mode));
+
     // Observable-derived signals (using toSignal for reactive state)
-    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
-    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
 
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
@@ -1404,7 +1409,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return false;
         }
 
-        const currentEntityId = this.currentRelatedEntityId();
+        const currentEntityId = this.chatService.displayContext()?.entityId;
         if (currentEntityId === undefined) {
             return session.entityId === undefined;
         }
@@ -1464,15 +1469,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        if (this.isChatHistoryAvailable()) {
-            // Dashboard: always create a new session with the course as context
-            const courseId = this.chatService.getCourseId();
-            if (courseId !== undefined) {
-                this.chatService.switchToNewSession(ChatServiceMode.COURSE, courseId);
-                return;
-            }
-        }
-        this.chatService.clearChat();
+        // startFreshChat() re-applies the lecture/exercise page context itself once the new session
+        // loads, so we no longer stage it here — see the JSDoc on IrisChatService.startFreshChat.
+        this.chatService.startFreshChat();
     }
 
     openAboutIrisModal(): void {
@@ -1520,18 +1519,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
-        if (!currentChatMode || !currentRelatedEntityId) {
-            return undefined;
-        }
-        switch (currentChatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-            case ChatServiceMode.TEXT_EXERCISE:
-                return `../exercises/${currentRelatedEntityId}`;
-            case ChatServiceMode.LECTURE:
-                return `../lectures/${currentRelatedEntityId}`;
-            default:
-                return undefined;
-        }
+        return routeForContext(this.chatService.getCourseId(), currentChatMode, currentRelatedEntityId);
     }
 
     private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {

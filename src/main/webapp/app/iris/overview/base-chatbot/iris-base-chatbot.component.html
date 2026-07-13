@@ -265,6 +265,9 @@
                                         </div>
                                     </div>
                                 }
+                                @if (message.sender === IrisSender.CTXSWAP) {
+                                    <jhi-iris-context-switch-divider [message]="message" />
+                                }
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
                                         @if (getActivities(message).length) {

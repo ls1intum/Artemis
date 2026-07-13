@@ -656,4 +656,67 @@ describe('FileUploadSubmissionComponent', () => {
             expect(component.isActive()).toBe(false);
         });
     });
+
+    describe('filePathUrl population from input submission', () => {
+        it('should populate filePathUrl when inputSubmission has filePath but no filePathUrl', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            submission.filePath = 'file-upload-exercises/123/submissions/456/test.pdf';
+            submission.filePathUrl = undefined;
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()?.filePathUrl).toBe('api/core/files/file-upload-exercises/123/submissions/456/test.pdf');
+        });
+
+        it('should not overwrite filePathUrl when it is already set', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            submission.filePath = 'file-upload-exercises/123/submissions/456/test.pdf';
+            submission.filePathUrl = '/already/set/url.pdf';
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()?.filePathUrl).toBe('/already/set/url.pdf');
+        });
+
+        it('should not set filePathUrl when filePath is undefined', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            submission.filePath = undefined;
+            submission.filePathUrl = undefined;
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submission()?.filePathUrl).toBeUndefined();
+        });
+
+        it('should render the download button when filePathUrl is populated from filePath', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            submission.filePath = 'file-upload-exercises/123/submissions/456/test.pdf';
+            submission.filePathUrl = undefined;
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const downloadSection = fixture.nativeElement.querySelector('.card-text');
+            expect(downloadSection).toBeTruthy();
+        });
+    });
 });
