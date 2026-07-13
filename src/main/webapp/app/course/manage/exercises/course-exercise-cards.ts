@@ -69,7 +69,13 @@ function resolveContext(context: CourseExerciseCardContext): ResolvedContext {
             }
         }
     }
-    return { ...context, owningGroupByExerciseId };
+    return {
+        exercises: context.exercises,
+        groups: context.groups,
+        searchTerm: context.searchTerm,
+        translate: context.translate,
+        owningGroupByExerciseId,
+    };
 }
 
 /** The group whose shared timeline governs the exercise, or undefined for ungrouped exercises. */

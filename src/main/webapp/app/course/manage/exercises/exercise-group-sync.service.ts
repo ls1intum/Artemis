@@ -73,7 +73,9 @@ export class ExerciseGroupSyncService {
             if (newRef === undefined) {
                 // The exercise was removed from its group. The server keeps the exercise's own dates on
                 // unassignment, so only drop the group reference here — do not blank the timeline.
-                return { ...exercise, exerciseVariantGroup: undefined };
+                const detached = Object.assign({}, exercise);
+                detached.exerciseVariantGroup = undefined;
+                return detached;
             }
             const updated = this.applyGroupTimelineToMember(exercise, groupDtoByExerciseId.get(exercise.id)!, now);
             updated.exerciseVariantGroup = newRef;
@@ -97,7 +99,7 @@ export class ExerciseGroupSyncService {
         const replacements = new Map<number, Exercise>();
         const merged = exercises.map((exercise) => {
             if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
-                const quiz = { ...(exercise as QuizExercise) };
+                const quiz = Object.assign({}, exercise as QuizExercise);
                 const info = quizInfoById.get(exercise.id)!;
                 quiz.quizBatches = info.quizBatches;
                 quiz.isEditable = info.isEditable;

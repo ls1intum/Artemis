@@ -573,7 +573,9 @@ export class CourseManagementExercisesComponent implements OnInit {
                     this.exercises.set(refreshedExercises);
                     const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
                     const mapped = toCourseExerciseGroup(dto, refreshedById);
-                    this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
+                    // Merge onto the existing group rather than replacing it: the DTO carries no `order`, so mapping
+                    // alone would drop the client-side display order.
+                    this.groups.set(this.groups().map((group) => (group.id === updated.id ? Object.assign(new CourseExerciseGroup(), group, mapped) : group)));
                     this.rebuildCards();
                 },
                 error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
