@@ -191,4 +191,23 @@ describe('ThemeService', () => {
         expect(winSpy).toHaveBeenCalledOnce();
         expect(returnedElement.style.display).toBe(initialDisplayClass);
     });
+
+    it('should keep dark theme visible on screen while printing', async () => {
+        const winSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+        const overrideElement = { rel: 'stylesheet', media: '', style: { display: '' }, remove: vi.fn() };
+        vi.spyOn(document, 'getElementById').mockReturnValue(overrideElement as unknown as HTMLElement);
+
+        // Capture the rel attribute during window.print() to verify the stylesheet stays active on screen
+        let relDuringPrint: string | undefined;
+        winSpy.mockImplementation(() => {
+            relDuringPrint = overrideElement.rel;
+        });
+
+        await service.print();
+
+        // The stylesheet must remain rel="stylesheet" at all times
+        expect(relDuringPrint).toBe('stylesheet');
+        // After printing, rel must still be intact
+        expect(overrideElement.rel).toBe('stylesheet');
+    });
 });
