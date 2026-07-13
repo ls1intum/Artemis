@@ -214,7 +214,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('AI feedback indicator', () => {
         it('should render an accessible indicator for Athena results', () => {
-            const result = createResult(1, 50);
+            const result = createResult(1, 50, { participation: undefined });
             result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
@@ -228,7 +228,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should not render an indicator for normal automatic results', () => {
-            const result = createResult(1, 50);
+            const result = createResult(1, 50, { participation: undefined });
             result.assessmentType = AssessmentType.AUTOMATIC;
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
