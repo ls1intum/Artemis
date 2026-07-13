@@ -1,8 +1,12 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { EMPTY } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
@@ -34,6 +38,39 @@ export interface TableGroupChange {
     group: CourseExerciseGroup | undefined;
 }
 
+/**
+ * Everything one table row renders, derived once per row instead of per change-detection cycle. Template bindings must
+ * read these fields rather than call the (argument-taking) helper methods they are built from — a method call in a
+ * binding cannot be memoized by Angular and re-runs on every check, which on a table this size adds up.
+ */
+interface ExerciseRow {
+    /** The raw entity, still needed for drag payloads, the child components and the plain field reads. */
+    exercise: Exercise;
+    icon: IconProp;
+    titleLink: (string | number)[] | undefined;
+    releaseDate: dayjs.Dayjs | undefined;
+    dueDate: dayjs.Dayjs | undefined;
+    assessmentDueDate: dayjs.Dayjs | undefined;
+    difficultyBadgeClass: string;
+    owningGroupId: number | undefined;
+    isQuizNonIndividual: boolean;
+    nonIndividualQuizTooltip: string | undefined;
+    /** i18n key for the quiz status badge, or `undefined` when no badge should be shown. */
+    quizStatusLabel: string | undefined;
+    quizStatusClass: string;
+    /** i18n key for the quiz mode badge, or `undefined` when the quiz has no mode. */
+    quizModeKey: string | undefined;
+    hasCategories: boolean;
+    /** True when the row has neither categories nor any quiz badge, so the "none" placeholder is shown instead. */
+    showNoCategoriesPlaceholder: boolean;
+}
+
+/** Sort indicator (caret icon + `aria-sort` value) for one column header. */
+interface SortIndicator {
+    icon: IconProp;
+    ariaSort: 'ascending' | 'descending' | 'none';
+}
+
 @Component({
     selector: 'jhi-exercise-table',
     templateUrl: './exercise-table.component.html',
@@ -60,9 +97,16 @@ export interface TableGroupChange {
         ExerciseCategoriesComponent,
         ExerciseActionsComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
+
+    /**
+     * Emits on every language switch. `TranslateService.instant` is not signal-tracked, so any computed that builds a
+     * translated string must read this to be re-derived when the language changes (same approach as ArtemisTranslatePipe).
+     */
+    private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
@@ -86,11 +130,8 @@ export class ExerciseTableComponent {
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
-    protected readonly ExerciseType = ExerciseType;
+    /** Only the enums the template still references need a passthrough; the rest are used from TypeScript only. */
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly DifficultyLevel = DifficultyLevel;
-    protected readonly QuizStatus = QuizStatus;
-    protected readonly QuizMode = QuizMode;
 
     protected readonly faSort = faSort;
     protected readonly faCaretUp = faCaretUp;
@@ -135,6 +176,45 @@ export class ExerciseTableComponent {
             }
             return asc ? cmp : -cmp;
         });
+    });
+
+    /** The rendered rows: every value the row template needs, derived once per row rather than per change-detection cycle. */
+    readonly rows = computed<ExerciseRow[]>(() => {
+        // The tooltip is a translated string, so re-derive the rows on a language switch.
+        this.languageChange();
+        return this.sortedExercises().map((exercise) => {
+            const quiz = exercise.type === ExerciseType.QUIZ ? this.asQuiz(exercise) : undefined;
+            const quizStatusLabel = quiz ? this.quizStatusLabel(quiz) : undefined;
+            const hasCategories = (exercise.categories?.length ?? 0) > 0;
+            return {
+                exercise,
+                icon: this.icon(exercise),
+                titleLink: this.titleLink(exercise),
+                releaseDate: this.effectiveReleaseDate(exercise),
+                dueDate: this.effectiveDueDate(exercise),
+                assessmentDueDate: this.effectiveAssessmentDueDate(exercise),
+                difficultyBadgeClass: this.difficultyBadgeClass(exercise),
+                owningGroupId: this.owningGroupId(exercise),
+                isQuizNonIndividual: this.isQuizNonIndividual(exercise),
+                nonIndividualQuizTooltip: this.nonIndividualQuizTooltip(exercise),
+                quizStatusLabel,
+                quizStatusClass: quiz ? this.quizStatusClass(quiz) : '',
+                quizModeKey: quiz?.quizMode ? this.quizModeKey(quiz) : undefined,
+                hasCategories,
+                showNoCategoriesPlaceholder: !hasCategories && !quiz?.quizMode && !quizStatusLabel,
+            };
+        });
+    });
+
+    /** Caret icon and `aria-sort` value per sortable column, so the header does not call a method per binding. */
+    readonly sortIndicators = computed<Record<SortColumn, SortIndicator>>(() => {
+        const indicatorFor = (column: SortColumn): SortIndicator => ({ icon: this.sortIcon(column), ariaSort: this.ariaSort(column) });
+        return {
+            title: indicatorFor('title'),
+            dueDate: indicatorFor('dueDate'),
+            points: indicatorFor('points'),
+            difficulty: indicatorFor('difficulty'),
+        };
     });
 
     /**
@@ -185,13 +265,17 @@ export class ExerciseTableComponent {
         return map;
     });
 
-    readonly groupOptions = computed(() => [
-        { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
-        ...this.groups().map((g) => ({
-            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
-            value: g.id,
-        })),
-    ]);
+    readonly groupOptions = computed(() => {
+        // The labels are translated strings, so rebuild the options on a language switch.
+        this.languageChange();
+        return [
+            { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
+            ...this.groups().map((g) => ({
+                label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
+                value: g.id,
+            })),
+        ];
+    });
 
     sortBy(col: SortColumn): void {
         if (this.sortColumn() === col) {
@@ -303,15 +387,17 @@ export class ExerciseTableComponent {
         return exercise;
     }
 
-    protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {
+    exerciseTrackKey(exercise: Exercise): unknown {
         if (exercise.type !== ExerciseType.QUIZ || exercise.id === undefined) return exercise.id ?? exercise;
         const q = exercise as QuizExercise;
-        // In zoneless Angular, ngFor embedded views may not re-evaluate when let-exercise gets a new
+        // In zoneless Angular, ngFor embedded views may not re-evaluate when the row gets a new
         // object reference with the same id. Including the properties that drive lifecycle-button
         // rendering forces the row to be destroyed/recreated when they change, so the fresh
         // exercise-actions instance always sees the up-to-date exercise.
         return `${exercise.id}|${q.exerciseVariantGroup?.id ?? ''}|${q.status ?? ''}|${q.visibleToStudents ?? ''}`;
-    };
+    }
+
+    protected readonly rowTrackBy = (_index: number, row: ExerciseRow): unknown => this.exerciseTrackKey(row.exercise);
 
     /**
      * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.

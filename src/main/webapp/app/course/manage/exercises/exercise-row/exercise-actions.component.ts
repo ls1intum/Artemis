@@ -1,4 +1,5 @@
 import {
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     DestroyRef,
@@ -82,6 +83,7 @@ const SAFETY_MARGIN_PX = 8;
     templateUrl: './exercise-actions.component.html',
     styleUrl: './exercise-actions.component.scss',
     imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, TooltipModule, ArtemisTranslatePipe, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
@@ -327,6 +329,23 @@ export class ExerciseActionsComponent {
             }
         }
         return new Set(actions.slice(0, keepFrom).map((action) => action.id));
+    });
+
+    /**
+     * The inline main buttons with their per-item render state precomputed, so the template reads plain fields instead of
+     * calling `signatureOf(...)` and `hiddenIds().has(...)` on every change-detection cycle. `context` is built here too
+     * so the `ngTemplateOutlet` binding keeps a stable object identity across cycles.
+     */
+    protected readonly inlineActions = computed(() => {
+        // The signature embeds a translated label, so re-derive it on a language switch.
+        this.languageVersion();
+        const hidden = this.hiddenIds();
+        return this.mainActions().map((action) => ({
+            action,
+            signature: this.signatureOf(action),
+            hidden: hidden.has(action.id),
+            context: { $implicit: action, inMenu: false },
+        }));
     });
 
     readonly hasOverflow = computed<boolean>(() => this.hiddenIds().size > 0);

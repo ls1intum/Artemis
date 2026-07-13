@@ -665,6 +665,9 @@ export class CourseScoresComponent implements OnInit {
         return this.localize(this.excessVariantPointsAsDeduction(points));
     }
 
+    readonly localizedMaxExcessVariantPoints = computed(() => this.localizeExcessVariantPoints(this.maxNumberOfExcessVariantPoints()));
+    readonly localizedAverageExcessVariantPoints = computed(() => this.localizeExcessVariantPoints(this.averageNumberOfExcessVariantPoints()));
+
     /**
      * Method for exporting the csv with the needed data
      */

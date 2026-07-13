@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
     imports: [FormsModule, InputTextModule, InputNumberModule, ButtonModule, TooltipModule, FaIconComponent, ExerciseTimelineComponent, ArtemisTranslatePipe, TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;

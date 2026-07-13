@@ -11,9 +11,9 @@
 
     <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
          resizing only toggles that class, it never recreates buttons. -->
-    @for (action of mainActions(); track action.id) {
-        <span #inlineItem class="inline-item" [attr.data-signature]="signatureOf(action)" [class.d-none]="hiddenIds().has(action.id)">
-            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+    @for (item of inlineActions(); track item.action.id) {
+        <span #inlineItem class="inline-item" [attr.data-signature]="item.signature" [class.d-none]="item.hidden">
+            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="item.context" />
         </span>
     }
     <button

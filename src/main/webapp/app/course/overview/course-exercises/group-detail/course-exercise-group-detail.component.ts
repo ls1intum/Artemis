@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EnvironmentInjector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, EnvironmentInjector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -47,6 +47,7 @@ import { TooltipModule } from 'primeng/tooltip';
     /* preserveWhitespaces: false is required here because the global tsconfig sets preserveWhitespaces: true,
      * which inserts whitespace text nodes that break [contentComponent] slot matching in jhi-information-box. */
     preserveWhitespaces: false,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);

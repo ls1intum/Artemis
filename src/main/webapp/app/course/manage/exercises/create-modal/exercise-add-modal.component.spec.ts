@@ -103,8 +103,11 @@ describe('ExerciseAddModalComponent', () => {
             expect(emitted).toEqual([false]);
         });
 
-        it('resolves the dialog header through the translate service', () => {
-            expect(component.dialogHeader).toBe('artemisApp.exerciseManagement.addModal.header');
+        it('renders the translated dialog header', () => {
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            expect(document.body.querySelector('.p-dialog-title')?.textContent).toBe('artemisApp.exerciseManagement.addModal.header');
         });
     });
 

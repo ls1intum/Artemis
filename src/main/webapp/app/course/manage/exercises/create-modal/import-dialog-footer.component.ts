@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,6 +23,7 @@ export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
     </div>`,
     styles: [':host { width: 100%; }'],
     imports: [ButtonModule, FaIconComponent, TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImportDialogFooterComponent {
     private readonly dialogRef = inject(DynamicDialogRef);

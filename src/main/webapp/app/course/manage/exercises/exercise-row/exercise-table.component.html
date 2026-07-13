@@ -6,7 +6,7 @@
     [cdkDropListDisabled]="!showDragHandle()"
     (cdkDropListDropped)="onDrop($event)"
 >
-    <p-table [value]="sortedExercises()" [rowTrackBy]="rowTrackBy" size="small" styleClass="p-datatable-sm" [scrollable]="true">
+    <p-table [value]="rows()" [rowTrackBy]="rowTrackBy" size="small" styleClass="p-datatable-sm" [scrollable]="true">
         <ng-template pTemplate="header">
             <tr>
                 @if (showCheckbox()) {
@@ -20,43 +20,43 @@
                 <th
                     class="sort-col"
                     tabindex="0"
-                    [attr.aria-sort]="ariaSort('title')"
+                    [attr.aria-sort]="sortIndicators().title.ariaSort"
                     (click)="sortBy('title')"
                     (keydown.enter)="onSortKeydown($event, 'title')"
                     (keydown.space)="onSortKeydown($event, 'title')"
                 >
-                    <span jhiTranslate="artemisApp.exercise.title"></span> <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" />
+                    <span jhiTranslate="artemisApp.exercise.title"></span> <fa-icon [icon]="sortIndicators().title.icon" class="text-muted ms-1" />
                 </th>
                 <th
                     class="sort-col col-dates"
                     tabindex="0"
-                    [attr.aria-sort]="ariaSort('dueDate')"
+                    [attr.aria-sort]="sortIndicators().dueDate.ariaSort"
                     (click)="sortBy('dueDate')"
                     (keydown.enter)="onSortKeydown($event, 'dueDate')"
                     (keydown.space)="onSortKeydown($event, 'dueDate')"
                 >
-                    <span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span> <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" />
+                    <span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span> <fa-icon [icon]="sortIndicators().dueDate.icon" class="text-muted ms-1" />
                 </th>
                 <th
                     class="sort-col"
                     tabindex="0"
-                    [attr.aria-sort]="ariaSort('points')"
+                    [attr.aria-sort]="sortIndicators().points.ariaSort"
                     (click)="sortBy('points')"
                     (keydown.enter)="onSortKeydown($event, 'points')"
                     (keydown.space)="onSortKeydown($event, 'points')"
                 >
-                    <span jhiTranslate="artemisApp.exercise.points"></span> <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" />
+                    <span jhiTranslate="artemisApp.exercise.points"></span> <fa-icon [icon]="sortIndicators().points.icon" class="text-muted ms-1" />
                 </th>
                 @if (!showGroupSelector()) {
                     <th
                         class="sort-col"
                         tabindex="0"
-                        [attr.aria-sort]="ariaSort('difficulty')"
+                        [attr.aria-sort]="sortIndicators().difficulty.ariaSort"
                         (click)="sortBy('difficulty')"
                         (keydown.enter)="onSortKeydown($event, 'difficulty')"
                         (keydown.space)="onSortKeydown($event, 'difficulty')"
                     >
-                        <span jhiTranslate="artemisApp.exercise.difficulty"></span> <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" />
+                        <span jhiTranslate="artemisApp.exercise.difficulty"></span> <fa-icon [icon]="sortIndicators().difficulty.icon" class="text-muted ms-1" />
                     </th>
                 }
                 @if (showGroupSelector()) {
@@ -66,20 +66,20 @@
                 <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
             </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-exercise>
-            <tr [attr.id]="'exercise-card-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
+        <ng-template pTemplate="body" let-row>
+            <tr [attr.id]="'exercise-card-' + row.exercise.id" cdkDrag [cdkDragData]="row.exercise" [cdkDragDisabled]="!showDragHandle()">
                 <div *cdkDragPreview class="exercise-drag-preview">
                     @if (showTypeIcon()) {
-                        <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
+                        <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
                     }
-                    <span class="fw-semibold">{{ exercise.title }}</span>
+                    <span class="fw-semibold">{{ row.exercise.title }}</span>
                 </div>
                 @if (showCheckbox()) {
                     <td>
                         <p-checkbox
                             [binary]="true"
-                            [ngModel]="exercise.id !== undefined && selectedIds().has(exercise.id)"
-                            (ngModelChange)="exercise.id !== undefined && selectionToggle.emit(exercise.id)"
+                            [ngModel]="row.exercise.id !== undefined && selectedIds().has(row.exercise.id)"
+                            (ngModelChange)="row.exercise.id !== undefined && selectionToggle.emit(row.exercise.id)"
                         />
                     </td>
                 }
@@ -87,37 +87,37 @@
                     <td>
                         <span
                             cdkDragHandle
-                            [cdkDragHandleDisabled]="isQuizNonIndividual(exercise)"
+                            [cdkDragHandleDisabled]="row.isQuizNonIndividual"
                             class="pi pi-bars drag-handle"
-                            [class.disabled]="isQuizNonIndividual(exercise)"
-                            [title]="nonIndividualQuizTooltip(exercise) ?? ('artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate)"
+                            [class.disabled]="row.isQuizNonIndividual"
+                            [title]="row.nonIndividualQuizTooltip ?? ('artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate)"
                         ></span>
                     </td>
                 }
                 <td class="col-title">
                     @if (showTypeIcon()) {
-                        <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
+                        <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
                     }
-                    <a class="fw-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
+                    <a class="fw-semibold" [routerLink]="row.titleLink">{{ row.exercise.title }}</a>
                 </td>
                 <td class="col-dates">
                     <div class="d-flex flex-column small">
-                        @if (effectiveReleaseDate(exercise)) {
+                        @if (row.releaseDate) {
                             <div>
                                 <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
-                                {{ effectiveReleaseDate(exercise) | artemisDate }}
+                                {{ row.releaseDate | artemisDate }}
                             </div>
                         }
-                        @if (effectiveDueDate(exercise)) {
+                        @if (row.dueDate) {
                             <div>
                                 <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
-                                {{ effectiveDueDate(exercise) | artemisDate }}
+                                {{ row.dueDate | artemisDate }}
                             </div>
                         }
-                        @if (effectiveAssessmentDueDate(exercise)) {
+                        @if (row.assessmentDueDate) {
                             <div>
                                 <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
-                                {{ effectiveAssessmentDueDate(exercise) | artemisDate }}
+                                {{ row.assessmentDueDate | artemisDate }}
                             </div>
                         }
                     </div>
@@ -125,12 +125,12 @@
                 <td class="text-nowrap col-points">
                     <div class="d-flex flex-column">
                         <span>
-                            {{ exercise.maxPoints }}pts
-                            @if (exercise.bonusPoints) {
-                                <span class="text-muted small">(+{{ exercise.bonusPoints }})</span>
+                            {{ row.exercise.maxPoints }}pts
+                            @if (row.exercise.bonusPoints) {
+                                <span class="text-muted small">(+{{ row.exercise.bonusPoints }})</span>
                             }
                         </span>
-                        @switch (exercise.includedInOverallScore) {
+                        @switch (row.exercise.includedInOverallScore) {
                             @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
                                 <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
                             }
@@ -145,8 +145,8 @@
                 </td>
                 @if (!showGroupSelector()) {
                     <td>
-                        @if (exercise.difficulty) {
-                            <span class="badge {{ difficultyBadgeClass(exercise) }}">{{ exercise.difficulty }}</span>
+                        @if (row.exercise.difficulty) {
+                            <span class="badge {{ row.difficultyBadgeClass }}">{{ row.exercise.difficulty }}</span>
                         } @else {
                             <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                         }
@@ -154,41 +154,37 @@
                 }
                 @if (showGroupSelector()) {
                     <td>
-                        <span [pTooltip]="nonIndividualQuizTooltip(exercise)" tooltipPosition="top">
+                        <span [pTooltip]="row.nonIndividualQuizTooltip" tooltipPosition="top">
                             <p-select
                                 [options]="groupOptions()"
-                                [ngModel]="owningGroupId(exercise)"
-                                (ngModelChange)="onGroupSelect(exercise, $event)"
+                                [ngModel]="row.owningGroupId"
+                                (ngModelChange)="onGroupSelect(row.exercise, $event)"
                                 optionLabel="label"
                                 optionValue="value"
                                 size="small"
                                 styleClass="col-group-select"
                                 appendTo="body"
-                                [disabled]="isQuizNonIndividual(exercise)"
+                                [disabled]="row.isQuizNonIndividual"
                             />
                         </span>
                     </td>
                 }
                 <td>
-                    @if (exercise.type === ExerciseType.QUIZ) {
-                        @let q = asQuiz(exercise);
-                        @let statusLabel = quizStatusLabel(q);
-                        @if (statusLabel) {
-                            <span class="badge {{ quizStatusClass(q) }} small me-1">{{ statusLabel | artemisTranslate }}</span>
-                        }
-                        @if (q.quizMode) {
-                            <span class="badge bg-light text-dark border small me-1">{{ quizModeKey(q) | artemisTranslate }}</span>
-                        }
+                    @if (row.quizStatusLabel) {
+                        <span class="badge {{ row.quizStatusClass }} small me-1">{{ row.quizStatusLabel | artemisTranslate }}</span>
                     }
-                    @if (exercise.categories && exercise.categories.length > 0) {
-                        <jhi-exercise-categories [exercise]="exercise" />
-                    } @else if (exercise.type !== ExerciseType.QUIZ || (!asQuiz(exercise).quizMode && !quizStatusLabel(asQuiz(exercise)))) {
+                    @if (row.quizModeKey) {
+                        <span class="badge bg-light text-dark border small me-1">{{ row.quizModeKey | artemisTranslate }}</span>
+                    }
+                    @if (row.hasCategories) {
+                        <jhi-exercise-categories [exercise]="row.exercise" />
+                    } @else if (row.showNoCategoriesPlaceholder) {
                         <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                     }
                 </td>
                 <td class="col-actions">
                     <jhi-exercise-actions
-                        [exercise]="exercise"
+                        [exercise]="row.exercise"
                         [courseId]="courseId()"
                         [course]="course()"
                         (exerciseUpdated)="exerciseUpdated.emit($event)"

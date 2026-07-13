@@ -1,5 +1,5 @@
 <p-dialog
-    [header]="dialogHeader"
+    [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate"
     [visible]="visible()"
     (visibleChange)="visibleChange.emit($event)"
     [modal]="true"

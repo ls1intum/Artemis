@@ -1,14 +1,29 @@
+import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
+import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+
+/** Stands in for the real actions component, whose service tree is irrelevant to what the table template renders. */
+@Component({ selector: 'jhi-exercise-actions', template: '' })
+class ExerciseActionsStubComponent {
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
+    readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
+    readonly quizActionsMinWidth = output<number>();
+}
 
 describe('ExerciseTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -18,8 +33,14 @@ describe('ExerciseTableComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ExerciseTableComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            // The row template renders RouterLink, so the rendering tests below need a router.
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(ExerciseTableComponent, {
+                remove: { imports: [ExerciseActionsComponent] },
+                add: { imports: [ExerciseActionsStubComponent] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExerciseTableComponent);
         component = fixture.componentInstance;
@@ -278,17 +299,88 @@ describe('ExerciseTableComponent', () => {
         });
 
         it('tracks quiz rows by lifecycle-relevant state and other rows by id', () => {
-            const trackBy = component['rowTrackBy'];
+            const trackKey = (exercise: Exercise) => component.exerciseTrackKey(exercise);
             const text = { id: 1, type: ExerciseType.TEXT } as Exercise;
-            expect(trackBy(0, text)).toBe(1);
+            expect(trackKey(text)).toBe(1);
 
             const draft = { type: ExerciseType.TEXT } as Exercise;
-            expect(trackBy(0, draft)).toBe(draft);
+            expect(trackKey(draft)).toBe(draft);
 
             const quiz = { id: 2, type: ExerciseType.QUIZ, status: QuizStatus.VISIBLE, visibleToStudents: true } as QuizExercise;
-            const key = trackBy(0, quiz);
+            const key = trackKey(quiz);
             expect(key).toContain('2|');
-            expect(trackBy(0, { ...quiz, status: QuizStatus.ACTIVE } as QuizExercise)).not.toBe(key);
+            expect(trackKey({ ...quiz, status: QuizStatus.ACTIVE } as QuizExercise)).not.toBe(key);
+        });
+    });
+
+    /**
+     * The row template reads precomputed `ExerciseRow` fields, and PrimeNG's `let-row` context is untyped, so a wrong
+     * field name would silently render nothing rather than fail to compile. These tests render the table for real.
+     */
+    describe('rendering', () => {
+        const quiz = {
+            id: 7,
+            title: 'Quiz exercise',
+            type: ExerciseType.QUIZ,
+            maxPoints: 10,
+            difficulty: DifficultyLevel.HARD,
+            quizMode: QuizMode.SYNCHRONIZED,
+            status: QuizStatus.VISIBLE,
+            dueDate: dayjs('2026-03-01T10:00:00Z'),
+        } as QuizExercise;
+
+        function renderRows(exercises: Exercise[]): HTMLElement {
+            fixture.componentRef.setInput('exercises', exercises);
+            fixture.detectChanges();
+            return fixture.nativeElement as HTMLElement;
+        }
+
+        it('renders a row per exercise with its title link, points and difficulty badge', () => {
+            const text = { id: 3, title: 'Text exercise', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
+            const element = renderRows([text]);
+
+            const link = element.querySelector('.col-title a') as HTMLAnchorElement;
+            expect(link.textContent).toContain('Text exercise');
+            expect(link.getAttribute('href')).toBe('/course-management/1/text-exercises/3');
+            expect(element.querySelector('.col-points')?.textContent).toContain('5pts');
+            expect(element.querySelector('.badge.bg-success')?.textContent).toContain(DifficultyLevel.EASY);
+        });
+
+        it('renders the effective dates of a row', () => {
+            // Scoped to the body cell: the header also carries `col-dates`.
+            const element = renderRows([quiz]);
+            expect(element.querySelector('td.col-dates')?.textContent).toContain('artemisApp.exercise.due');
+        });
+
+        it('renders the quiz status and mode badges for a quiz row', () => {
+            const element = renderRows([quiz]);
+            const badges = Array.from(element.querySelectorAll('.badge')).map((badge) => badge.textContent ?? '');
+
+            expect(badges.some((text) => text.includes('artemisApp.quizExercise.quizStatus.visible'))).toBe(true);
+            expect(badges.some((text) => text.includes('artemisApp.quizExercise.quizMode.synchronized'))).toBe(true);
+        });
+
+        it('renders the "none" placeholder only when a row has neither categories nor a quiz badge', () => {
+            const bare = { id: 4, title: 'Bare', type: ExerciseType.TEXT, maxPoints: 1 } as Exercise;
+            expect(renderRows([bare]).textContent).toContain('artemisApp.exerciseManagement.table.none');
+            // The quiz row carries status and mode badges, so the categories cell must not fall back to the placeholder.
+            expect(renderRows([quiz]).querySelector('.badge')).not.toBeNull();
+        });
+
+        it('disables the drag handle for a non-individual quiz', () => {
+            fixture.componentRef.setInput('showDragHandle', true);
+            const handle = renderRows([quiz]).querySelector('.drag-handle') as HTMLElement;
+            expect(handle.classList).toContain('disabled');
+        });
+
+        it('reflects the active sort column in the header', () => {
+            renderRows([quiz]);
+            const titleHeader = fixture.nativeElement.querySelectorAll('th.sort-col')[0] as HTMLElement;
+            expect(titleHeader.getAttribute('aria-sort')).toBe('ascending');
+
+            component.sortBy('title');
+            fixture.detectChanges();
+            expect(titleHeader.getAttribute('aria-sort')).toBe('descending');
         });
     });
 });

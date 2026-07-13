@@ -181,7 +181,7 @@
                                 <th>{{ maxNumberOfPresentationPoints() }}</th>
                             }
                             @if (courseHasExerciseVariants()) {
-                                <th>{{ localizeExcessVariantPoints(maxNumberOfExcessVariantPoints()) }}</th>
+                                <th>{{ localizedMaxExcessVariantPoints() }}</th>
                             }
                             <th>{{ maxNumberOfOverallPoints() }}</th>
                             @if (gradingScaleExists()) {
@@ -221,7 +221,7 @@
                                 </th>
                             }
                             @if (courseHasExerciseVariants()) {
-                                <th>{{ localizeExcessVariantPoints(averageNumberOfExcessVariantPoints()) }}</th>
+                                <th>{{ localizedAverageExcessVariantPoints() }}</th>
                             }
                             <th>
                                 {{ localize(averageNumberOfOverallPoints()) }}

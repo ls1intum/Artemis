@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     // that span, so we re-apply the class here to keep the dialog title's font weight/size (otherwise it renders smaller).
     template: `<span class="p-dialog-title" [jhiTranslate]="headerKey" [translateValues]="headerParams"></span>`,
     imports: [TranslateDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DialogTranslateHeaderComponent {
     private readonly config = inject(DynamicDialogConfig);

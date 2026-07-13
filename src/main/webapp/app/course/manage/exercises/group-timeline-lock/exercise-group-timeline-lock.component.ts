@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,6 +19,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',
     template: '',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseGroupTimelineLockComponent {
     readonly exercise = input.required<Exercise>();
