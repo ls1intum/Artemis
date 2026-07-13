@@ -3,7 +3,7 @@ import { addCoverageReport } from 'monocart-reporter';
 import fs from 'fs';
 import path from 'path';
 import { SEED_COURSES } from './seedData';
-import { addE2EInitScript } from './utils';
+import { addE2EInitScript, storeCapturedApiResponseBody } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
@@ -120,6 +120,43 @@ const test = baseTest.extend<
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
+
+            // Capture the response bodies of the few non-GET "create" endpoints whose body a test reads for
+            // the new entity's id. Once Chromium evicts such a body from its per-renderer inspector buffer
+            // it cannot be recovered read-side (a non-GET must not be replayed — side effects). route.fetch()
+            // issues the request from Node and holds the body in Node memory (eviction-proof); we store it for
+            // readResponseJson and fulfill the page with the same response. The URL matcher restricts this to
+            // ONLY these endpoints (not '**/api/**'), so it adds no measurable overhead elsewhere and cannot
+            // become the global interception that regressed the suite. Any error falls back to
+            // route.continue(). CI-only; PW_API_CAPTURE=off disables it.
+            if (process.env.CI && process.env.PW_API_CAPTURE !== 'off') {
+                const isCapturedCreateEndpoint = (url: URL): boolean => {
+                    const p = url.pathname;
+                    return (
+                        p.endsWith('/api/admin/courses') || // course creation
+                        /\/api\/(?:course|core)\/courses\/\d+$/.test(p) || // course update
+                        /\/api\/communication\/courses\/\d+\/channels$/.test(p) || // channel creation
+                        /\/api\/communication\/courses\/\d+\/group-chats$/.test(p) || // group-chat creation
+                        p.endsWith('/api/lecture/lectures') // lecture creation
+                    );
+                };
+                await page.route(
+                    (url) => isCapturedCreateEndpoint(url),
+                    async (route) => {
+                        if (route.request().method() === 'GET') {
+                            await route.continue();
+                            return;
+                        }
+                        try {
+                            const apiResponse = await route.fetch();
+                            storeCapturedApiResponseBody(page, route.request(), await apiResponse.body());
+                            await route.fulfill({ response: apiResponse });
+                        } catch {
+                            await route.continue().catch(() => {});
+                        }
+                    },
+                );
+            }
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';
 

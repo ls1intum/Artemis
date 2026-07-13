@@ -263,6 +263,6 @@ export class CourseCreationPage {
         );
         await this.page.click('#save-entity');
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 }
